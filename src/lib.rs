@@ -1,26 +1,36 @@
-pub fn three_sum_closest(nums: Vec<i32>, target: i32) -> i32 {
-    let mut nums = nums;
-    nums.sort_unstable();
-    let mut closest: i32 = nums[0..3].iter().sum();
+pub fn letter_combinations(digits: &str) -> Vec<String> {
+    let digits: Vec<_> = digits.chars().rev().collect();
+    solve(&digits)
+}
 
-    for i in 0..nums.len() - 2 {
-        let mut left = i + 1;
-        let mut right = nums.len() - 1;
-
-        while left < right {
-            let curr = nums[i] + nums[left] + nums[right];
-            if (curr - target).abs() < (closest - target).abs() {
-                closest = curr
-            }
-            match curr.cmp(&target) {
-                std::cmp::Ordering::Less => left += 1,
-                std::cmp::Ordering::Equal => return closest,
-                std::cmp::Ordering::Greater => right -= 1,
+fn solve(digits: &[char]) -> Vec<String> {
+    match digits.first() {
+        None => vec![],
+        Some(&digit) => {
+            let right = solve(&digits[1..]);
+            if right.is_empty() {
+                encode(digit).map(|c| c.to_string()).collect()
+            } else {
+                encode(digit)
+                    .flat_map(|ch| right.iter().map(move |s| format!("{s}{ch}")))
+                    .collect()
             }
         }
     }
+}
 
-    closest
+fn encode(digit: char) -> impl Iterator<Item = char> {
+    match digit {
+        '2' => "abc".chars(),
+        '3' => "def".chars(),
+        '4' => "ghi".chars(),
+        '5' => "jkl".chars(),
+        '6' => "mno".chars(),
+        '7' => "pqrs".chars(),
+        '8' => "tuv".chars(),
+        '9' => "wxyz".chars(),
+        _ => unreachable!(),
+    }
 }
 
 #[cfg(test)]
@@ -30,15 +40,21 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(three_sum_closest(vec![-1, 2, 1, -4], 1), 2);
-        debug_assert_eq!(three_sum_closest(vec![0, 0, 0], 1), 0);
+        {
+            let mut res = letter_combinations("23");
+            res.sort_unstable();
+            debug_assert_eq!(res, ["ad", "ae", "af", "bd", "be", "bf", "cd", "ce", "cf"]);
+        }
+        {
+            debug_assert_eq!(letter_combinations(""), Vec::<String>::new());
+        }
+        {
+            let mut res = letter_combinations("2");
+            res.sort_unstable();
+            debug_assert_eq!(res, ["a", "b", "c"]);
+        }
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(
-            three_sum_closest(vec![4, 0, 5, -5, 3, 3, 0, -4, -5], -2),
-            -2
-        )
-    }
+    fn test() {}
 }
