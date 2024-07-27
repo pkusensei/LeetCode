@@ -1,19 +1,40 @@
-pub fn max_area(height: &[i32]) -> i32 {
-    let mut left = 0;
-    let mut right = height.len() - 1;
-    let mut res = 0;
-    while right > left {
-        let a = right - left;
-        let h = if height[left] < height[right] {
-            left += 1;
-            height[left - 1]
-        } else {
-            right -= 1;
-            height[right + 1]
-        };
-        res = res.max(a as i32 * h);
+pub fn int_to_roman(num: i32) -> String {
+    if !(1..=3999).contains(&num) {
+        return String::new();
     }
-    res
+
+    [
+        thousands,
+        |v| encode(v, 100, 'C', 'D', 'M'),
+        |v| encode(v, 10, 'X', 'L', 'C'),
+        |v| encode(v, 1, 'I', 'V', 'X'),
+    ]
+    .into_iter()
+    .filter_map(|func| func(num))
+    .fold(String::new(), |acc, r| format!("{acc}{r}"))
+}
+
+fn thousands(num: i32) -> Option<String> {
+    match num / 1000 {
+        0 => None,
+        n @ 1..=3 => Some("M".repeat(n as _)),
+        _ => None,
+    }
+}
+
+fn encode(mut num: i32, order: i32, single: char, fifth: char, tenth: char) -> Option<String> {
+    num %= 10 * order;
+
+    match (num / (5 * order), (num % (5 * order)) / order) {
+        (1, 4) => Some(format!("{single}{tenth}")),
+        (0, 4) => Some(format!("{single}{fifth}")),
+        (x @ 0..=1, y @ 0..=3) => {
+            let mut s: String = std::iter::repeat(fifth).take(x as _).collect();
+            s.extend(std::iter::repeat(single).take(y as _));
+            Some(s)
+        }
+        _ => None,
+    }
 }
 
 #[cfg(test)]
@@ -23,8 +44,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(max_area(&[1, 8, 6, 2, 5, 4, 8, 3, 7]), 49);
-        debug_assert_eq!(max_area(&[1, 1]), 1);
+        debug_assert_eq!(int_to_roman(3749), "MMMDCCXLIX");
+        debug_assert_eq!(int_to_roman(58), "LVIII");
+        debug_assert_eq!(int_to_roman(1994), "MCMXCIV");
     }
 
     #[test]
