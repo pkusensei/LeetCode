@@ -1,39 +1,39 @@
-pub fn int_to_roman(num: i32) -> String {
-    if !(1..=3999).contains(&num) {
-        return String::new();
-    }
+pub fn roman_to_int(s: &str) -> i32 {
+    let mut iter = s.chars().rev().peekable();
+    let mut res = 0;
+    while let Some(ch) = iter.next() {
+        res += decode(ch);
+        match ch {
+            'V' | 'X' if iter.peek().is_some_and(|c| *c == 'I') => {
+                res -= decode('I');
+                iter.next();
+            }
 
-    [
-        thousands,
-        |v| encode(v, 100, 'C', 'D', 'M'),
-        |v| encode(v, 10, 'X', 'L', 'C'),
-        |v| encode(v, 1, 'I', 'V', 'X'),
-    ]
-    .into_iter()
-    .filter_map(|func| func(num))
-    .fold(String::new(), |acc, r| format!("{acc}{r}"))
-}
+            'L' | 'C' if iter.peek().is_some_and(|c| *c == 'X') => {
+                res -= decode('X');
+                iter.next();
+            }
 
-fn thousands(num: i32) -> Option<String> {
-    match num / 1000 {
-        0 => None,
-        n @ 1..=3 => Some("M".repeat(n as _)),
-        _ => None,
-    }
-}
-
-fn encode(mut num: i32, order: i32, single: char, fifth: char, tenth: char) -> Option<String> {
-    num %= 10 * order;
-
-    match (num / (5 * order), (num % (5 * order)) / order) {
-        (1, 4) => Some(format!("{single}{tenth}")),
-        (0, 4) => Some(format!("{single}{fifth}")),
-        (x @ 0..=1, y @ 0..=3) => {
-            let mut s: String = std::iter::repeat(fifth).take(x as _).collect();
-            s.extend(std::iter::repeat(single).take(y as _));
-            Some(s)
+            'D' | 'M' if iter.peek().is_some_and(|c| *c == 'C') => {
+                res -= decode('C');
+                iter.next();
+            }
+            _ => (),
         }
-        _ => None,
+    }
+    res
+}
+
+const fn decode(ch: char) -> i32 {
+    match ch {
+        'I' => 1,
+        'V' => 5,
+        'X' => 10,
+        'L' => 50,
+        'C' => 100,
+        'D' => 500,
+        'M' => 1000,
+        _ => unreachable!(),
     }
 }
 
@@ -44,9 +44,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(int_to_roman(3749), "MMMDCCXLIX");
-        debug_assert_eq!(int_to_roman(58), "LVIII");
-        debug_assert_eq!(int_to_roman(1994), "MCMXCIV");
+        debug_assert_eq!(roman_to_int("III"), 3);
+        debug_assert_eq!(roman_to_int("LVIII"), 58);
+        debug_assert_eq!(roman_to_int("MCMXCIV"), 1994);
     }
 
     #[test]
