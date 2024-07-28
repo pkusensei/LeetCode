@@ -9,47 +9,56 @@ Test3();
 
 void Test1()
 {
-    ListNode n1 = new(1, new(2, new(4)));
+    ListNode n1 = new(1, new(4, new(5)));
     ListNode n2 = new(1, new(3, new(4)));
-    var ans = MergeTwoLists(n1, n2);
-    Console.WriteLine(ans); // [1,1,2,3,4,4]
+    ListNode n3 = new(2, new(6));
+    var ans = MergeKLists([n1, n2, n3]);
+    Console.WriteLine(ans); // [1,1,2,3,4,4,5,6]
 }
 
 void Test2()
 {
-    ListNode n1 = null;
-    ListNode n2 = null;
-    var ans = MergeTwoLists(n1, n2);
-    Console.WriteLine(ans);
+    Console.WriteLine(MergeKLists([]));
 }
 
 void Test3()
 {
-    ListNode n1 = null;
-    ListNode n2 = new(0);
-    var ans = MergeTwoLists(n1, n2);
-    Console.WriteLine(ans); // [0]
+    Console.WriteLine(MergeKLists([null])); // []
 }
 
 
-ListNode MergeTwoLists(ListNode list1, ListNode list2)
+ListNode MergeKLists(ListNode[] lists)
 {
-    if (list1 is null) { return list2; }
-    if (list2 is null) { return list1; }
+    var queue = new PriorityQueue<ListNode, int>();
+    foreach (var item in lists)
+    {
+        if (item is ListNode node)
+        {
+            queue.Enqueue(node, node.val);
+        }
+    }
+    if (!queue.TryDequeue(out var head, out var _))
+    {
+        return null;
+    }
 
-    ListNode head;
-    if (list1.val < list2.val)
+    var curr = head;
+    if (head is ListNode n && n.next is not null)
     {
-        head = list1;
-        list1 = list1.next;
-        head.next = MergeTwoLists(list1, list2);
+        queue.Enqueue(n.next, n.next.val);
     }
-    else
+
+    while (queue.TryDequeue(out var node, out var _))
     {
-        head = list2;
-        list2 = list2.next;
-        head.next = MergeTwoLists(list1, list2);
+        curr.next = node;
+        curr = curr.next;
+        node = node.next;
+        if (node is not null)
+        {
+            queue.Enqueue(node, node.val);
+        }
     }
+
     return head;
 }
 
