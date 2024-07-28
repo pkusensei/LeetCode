@@ -1,64 +1,56 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
-using System.Diagnostics;
+using System.Text;
 
 Test1();
 Test2();
 Test3();
-Test4();
 
 
 void Test1()
 {
-    ListNode n1 = new(1, new(2, new(3, new(4, new(5)))));
-    ListNode n2 = new(1, new(2, new(3, new(5))));
-    var ans = RemoveNthFromEnd(n1, 2);
-    Console.WriteLine(ans);
-    Console.WriteLine(n2);
+    ListNode n1 = new(1, new(2, new(4)));
+    ListNode n2 = new(1, new(3, new(4)));
+    var ans = MergeTwoLists(n1, n2);
+    Console.WriteLine(ans); // [1,1,2,3,4,4]
 }
 
 void Test2()
 {
-    ListNode n = new(1);
-    Debug.Assert(RemoveNthFromEnd(n, 1) == null);
+    ListNode n1 = null;
+    ListNode n2 = null;
+    var ans = MergeTwoLists(n1, n2);
+    Console.WriteLine(ans);
 }
 
 void Test3()
 {
-    ListNode n1 = new(1, new(2));
-    ListNode n2 = new(1);
-    var ans = RemoveNthFromEnd(n1, 1);
-    Console.WriteLine(ans);
-    Console.WriteLine(n2);
-
+    ListNode n1 = null;
+    ListNode n2 = new(0);
+    var ans = MergeTwoLists(n1, n2);
+    Console.WriteLine(ans); // [0]
 }
 
-void Test4()
-{
-    ListNode n1 = new(1, new(2));
-    ListNode n2 = new(2);
-    var ans = RemoveNthFromEnd(n1, 2);
-    Console.WriteLine(ans);
-    Console.WriteLine(n2);
-}
 
-ListNode RemoveNthFromEnd(ListNode head, int n)
+ListNode MergeTwoLists(ListNode list1, ListNode list2)
 {
-    ListNode lst = new(0, head);
-    (ListNode node, int step) fast = (lst, 0);
-    (ListNode node, int step) slow = (lst, 0);
-    while (fast.node.next is not null)
+    if (list1 is null) { return list2; }
+    if (list2 is null) { return list1; }
+
+    ListNode head;
+    if (list1.val < list2.val)
     {
-        fast.node = fast.node.next;
-        fast.step += 1;
-        if (slow.step + n < fast.step)
-        {
-            slow.step += 1;
-            slow.node = slow.node.next;
-        }
+        head = list1;
+        list1 = list1.next;
+        head.next = MergeTwoLists(list1, list2);
     }
-    slow.node.next = slow.node.next.next;
-    return lst.next;
+    else
+    {
+        head = list2;
+        list2 = list2.next;
+        head.next = MergeTwoLists(list1, list2);
+    }
+    return head;
 }
 
 
@@ -70,5 +62,19 @@ class ListNode
     {
         this.val = val;
         this.next = next;
+    }
+
+    public override string ToString()
+    {
+        var curr = this;
+        var sb = new StringBuilder("[");
+        while (curr is ListNode n)
+        {
+            sb.AppendFormat("{0}, ", n.val);
+            curr = n.next;
+        }
+        sb.Remove(sb.Length - 2, 2);
+        sb.Append(']');
+        return sb.ToString();
     }
 }
