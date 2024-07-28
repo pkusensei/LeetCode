@@ -1,36 +1,55 @@
-pub fn letter_combinations(digits: &str) -> Vec<String> {
-    let digits: Vec<_> = digits.chars().rev().collect();
-    solve(&digits)
+pub fn four_sum(nums: Vec<i32>, target: i32) -> Vec<Vec<i32>> {
+    let mut nums = nums;
+    nums.sort_unstable();
+    k_sum(&nums, target as _, 0, 4)
 }
 
-fn solve(digits: &[char]) -> Vec<String> {
-    match digits.first() {
-        None => vec![],
-        Some(&digit) => {
-            let right = solve(&digits[1..]);
-            if right.is_empty() {
-                encode(digit).map(|c| c.to_string()).collect()
-            } else {
-                encode(digit)
-                    .flat_map(|ch| right.iter().map(move |s| format!("{s}{ch}")))
-                    .collect()
+fn k_sum(nums: &[i32], target: i64, start: usize, k: i32) -> Vec<Vec<i32>> {
+    let mut res = vec![];
+    if start == nums.len() {
+        return res;
+    }
+
+    let average = target / k as i64;
+    if nums[start] as i64 > average || nums.last().is_some_and(|&n| (n as i64) < average) {
+        return res;
+    }
+
+    if k == 2 {
+        return two_sum(nums, target, start);
+    }
+
+    for i in start..nums.len() {
+        if i == start || nums.get(i - 1).is_some_and(|&n| n != nums[i]) {
+            for subset in k_sum(nums, target - nums[i] as i64, i + 1, k - 1) {
+                let mut v = vec![nums[i]];
+                v.extend(subset);
+                res.push(v)
             }
         }
     }
+
+    res
 }
 
-fn encode(digit: char) -> impl Iterator<Item = char> {
-    match digit {
-        '2' => "abc".chars(),
-        '3' => "def".chars(),
-        '4' => "ghi".chars(),
-        '5' => "jkl".chars(),
-        '6' => "mno".chars(),
-        '7' => "pqrs".chars(),
-        '8' => "tuv".chars(),
-        '9' => "wxyz".chars(),
-        _ => unreachable!(),
+fn two_sum(nums: &[i32], target: i64, start: usize) -> Vec<Vec<i32>> {
+    let mut res = vec![];
+    let (mut left, mut right) = (start, nums.len() - 1);
+    while left < right {
+        let curr = nums[left] + nums[right];
+        if (curr as i64) < target || (left > start && nums[left] == nums[left - 1]) {
+            // curr is smaller || skip repeating numbers
+            left += 1
+        } else if curr as i64 > target || (right < nums.len() - 1 && nums[right] == nums[right + 1])
+        {
+            right -= 1;
+        } else {
+            res.push(vec![nums[left], nums[right]]);
+            left += 1;
+            right -= 1
+        }
     }
+    res
 }
 
 #[cfg(test)]
@@ -41,20 +60,64 @@ mod tests {
     #[test]
     fn basics() {
         {
-            let mut res = letter_combinations("23");
+            let mut res: Vec<_> = four_sum(vec![1, 0, -1, 0, -2, 2], 0)
+                .into_iter()
+                .map(|mut v| {
+                    v.sort_unstable();
+                    v
+                })
+                .collect();
             res.sort_unstable();
-            debug_assert_eq!(res, ["ad", "ae", "af", "bd", "be", "bf", "cd", "ce", "cf"]);
-        }
+            debug_assert_eq!(
+                res,
+                vec![vec![-2, -1, 1, 2], vec![-2, 0, 0, 2], vec![-1, 0, 0, 1]]
+            )
+        };
         {
-            debug_assert_eq!(letter_combinations(""), Vec::<String>::new());
-        }
-        {
-            let mut res = letter_combinations("2");
+            let mut res: Vec<_> = four_sum(vec![2, 2, 2, 2, 2], 8)
+                .into_iter()
+                .map(|mut v| {
+                    v.sort_unstable();
+                    v
+                })
+                .collect();
             res.sort_unstable();
-            debug_assert_eq!(res, ["a", "b", "c"]);
-        }
+            debug_assert_eq!(res, vec![vec![2, 2, 2, 2]])
+        };
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        {
+            let mut res: Vec<_> = four_sum(vec![-2, -1, -1, 1, 1, 2, 2], 0)
+                .into_iter()
+                .map(|mut v| {
+                    v.sort_unstable();
+                    v
+                })
+                .collect();
+            res.sort_unstable();
+            debug_assert_eq!(res, vec![vec![-2, -1, 1, 2], vec![-1, -1, 1, 1]])
+        };
+        {
+            let mut res: Vec<_> = four_sum(
+                vec![
+                    -1000000000,
+                    -1000000000,
+                    1000000000,
+                    -1000000000,
+                    -1000000000,
+                ],
+                294967296,
+            )
+            .into_iter()
+            .map(|mut v| {
+                v.sort_unstable();
+                v
+            })
+            .collect();
+            res.sort_unstable();
+            debug_assert_eq!(res, Vec::<Vec<_>>::new())
+        };
+    }
 }
