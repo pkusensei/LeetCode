@@ -1,80 +1,68 @@
 ﻿// See https://aka.ms/new-console-template for more information
-Console.WriteLine("Hello, World!");
 
+using System.Diagnostics;
+
+Test1();
 Test2();
+Test3();
+Test4();
+
 
 void Test1()
 {
-    ListNode l1 = new(2, new(4, new(3)));
-    ListNode l2 = new(5, new(6, new(4)));
-    ListNode l3 = new(7, new(0, new(8)));
-    ListNode ans = AddTwoNumbers(l1, l2);
-    System.Diagnostics.Debug.Assert(l3 == ans);
+    ListNode n1 = new(1, new(2, new(3, new(4, new(5)))));
+    ListNode n2 = new(1, new(2, new(3, new(5))));
+    var ans = RemoveNthFromEnd(n1, 2);
+    Console.WriteLine(ans);
+    Console.WriteLine(n2);
 }
 
 void Test2()
 {
-    ListNode l1 = new(5);
-    ListNode l2 = new(5);
-    ListNode l3 = new(0, new(1));
-    ListNode ans = AddTwoNumbers(l1, l2);
-    System.Diagnostics.Debug.Assert(l3 == ans);
-
+    ListNode n = new(1);
+    Debug.Assert(RemoveNthFromEnd(n, 1) == null);
 }
 
-ListNode AddTwoNumbers(ListNode l1, ListNode l2)
+void Test3()
 {
-    var carry = 0;
-    ListNode head = null;
-    ListNode curr = null;
-    while (l1 is not null && l2 is not null)
-    {
-        var v1 = l1.val;
-        l1 = l1.next;
-        var v2 = l2.val;
-        l2 = l2.next;
+    ListNode n1 = new(1, new(2));
+    ListNode n2 = new(1);
+    var ans = RemoveNthFromEnd(n1, 1);
+    Console.WriteLine(ans);
+    Console.WriteLine(n2);
 
-        var sum = v1 + v2 + carry;
-        carry = sum / 10;
-        var node = new ListNode(sum % 10);
-        if (head is null)
-        {
-            head = node;
-            curr = head;
-        }
-        else
-        {
-            curr.next = node;
-            curr = curr.next;
-        }
-    }
-    var prev = curr;
-    if (l1 is not null)
-    {
-        curr.next = l1;
-    }
-    else if (l2 is not null)
-    {
-        curr.next = l2;
-    }
-    curr = curr.next;
-    while (carry > 0 && curr is not null)
-    {
-        var val = curr.val;
-        curr.val = (val + carry) % 10;
-        carry = (val + carry) / 10;
-        prev = curr;
-        curr = curr.next;
-    }
-    if (carry > 0 && curr is null)
-    {
-        prev.next = new ListNode(carry);
-    }
-
-    return head;
 }
 
-public class ListNode
+void Test4()
+{
+    ListNode n1 = new(1, new(2));
+    ListNode n2 = new(2);
+    var ans = RemoveNthFromEnd(n1, 2);
+    Console.WriteLine(ans);
+    Console.WriteLine(n2);
+}
+
+ListNode RemoveNthFromEnd(ListNode head, int n)
+{
+    ListNode lst = new(0, head);
+    (ListNode node, int step) fast = (lst, 0);
+    (ListNode node, int step) slow = (lst, 0);
+    while (fast.node.next is not null)
+    {
+        fast.node = fast.node.next;
+        fast.step += 1;
+        if (slow.step + n < fast.step)
+        {
+            slow.step += 1;
+            slow.node = slow.node.next;
+        }
+    }
+    slow.node.next = slow.node.next.next;
+    return lst.next;
+}
+
+
+class ListNode
 {
     public int val;
     public ListNode next;
@@ -84,4 +72,3 @@ public class ListNode
         this.next = next;
     }
 }
-
