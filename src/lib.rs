@@ -1,33 +1,28 @@
-use std::collections::HashMap;
+// https://en.wikipedia.org/wiki/Permutation#Generation_in_lexicographic_order
+pub fn next_permutation(nums: &mut [i32]) {
+    // Find the largest index i such that a[i] < a[i + 1].
+    // If no such index exists, the permutation is the last permutation.
+    let Some(i) =
+        nums.windows(2)
+            .enumerate()
+            .rev()
+            .find_map(|(idx, w)| if w[0] < w[1] { Some(idx) } else { None })
+    else {
+        nums.sort_unstable();
+        return;
+    };
 
-pub fn find_substring(s: &str, words: &[&str]) -> Vec<i32> {
-    let count = words.len();
-    let unit_len = words.first().map(|s| s.len()).unwrap_or_default();
-    let sub_len = count * unit_len;
-    if !(1..=s.len()).contains(&sub_len) {
-        return vec![];
+    // Find the largest index j, such that i < j && a[i] < a[j].
+    if let Some(j) = nums.iter().enumerate().rev().find_map(|(idx, v)| {
+        if i < idx && nums[i] < *v {
+            Some(idx)
+        } else {
+            None
+        }
+    }) {
+        nums.swap(i, j);
     }
-
-    let subs: HashMap<&[u8], i32> = words.iter().fold(HashMap::new(), |mut acc, word| {
-        *acc.entry(word.as_bytes()).or_insert(0) += 1;
-        acc
-    });
-    s.as_bytes()
-        .windows(sub_len)
-        .enumerate()
-        .filter_map(|(idx, w)| {
-            let sub: HashMap<&[u8], i32> =
-                w.chunks(unit_len).fold(HashMap::new(), |mut acc, chunk| {
-                    *acc.entry(chunk).or_insert(0) += 1;
-                    acc
-                });
-            if subs == sub {
-                Some(idx as i32)
-            } else {
-                None
-            }
-        })
-        .collect()
+    nums[i + 1..].reverse()
 }
 
 #[cfg(test)]
@@ -36,21 +31,21 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            find_substring("barfoothefoobarman", &["foo", "bar"]),
-            [0, 9]
-        );
-        debug_assert_eq!(
-            find_substring(
-                "wordgoodgoodgoodbestword",
-                &["word", "good", "best", "word"]
-            ),
-            []
-        );
-        debug_assert_eq!(
-            find_substring("barfoofoobarthefoobarman", &["bar", "foo", "the"]),
-            [6, 9, 12]
-        )
+        {
+            let mut nums = vec![1, 2, 3];
+            next_permutation(&mut nums);
+            debug_assert_eq!(nums, [1, 3, 2]);
+        }
+        {
+            let mut nums = vec![3, 2, 1];
+            next_permutation(&mut nums);
+            debug_assert_eq!(nums, [1, 2, 3]);
+        }
+        {
+            let mut nums = vec![1, 1, 5];
+            next_permutation(&mut nums);
+            debug_assert_eq!(nums, [1, 5, 1]);
+        }
     }
 
     #[test]
