@@ -9,57 +9,53 @@ Test3();
 
 void Test1()
 {
-    ListNode n1 = new(1, new(4, new(5)));
-    ListNode n2 = new(1, new(3, new(4)));
-    ListNode n3 = new(2, new(6));
-    var ans = MergeKLists([n1, n2, n3]);
-    Console.WriteLine(ans); // [1,1,2,3,4,4,5,6]
+    ListNode n = new(1, new(2, new(3, new(4))));
+    var ans = SwapPairs(n);
+    Console.WriteLine(ans); // [2,1,4,3]
 }
 
 void Test2()
 {
-    Console.WriteLine(MergeKLists([]));
+    Console.WriteLine(SwapPairs(null));
 }
 
 void Test3()
 {
-    Console.WriteLine(MergeKLists([null])); // []
+    Console.WriteLine(SwapPairs(new(1))); // []
 }
 
 
-ListNode MergeKLists(ListNode[] lists)
+ListNode SwapPairs(ListNode head)
 {
-    var queue = new PriorityQueue<ListNode, int>();
-    foreach (var item in lists)
+    ListNode lst = new(0, head);
+    (ListNode node, int step) fast = (lst, 0);
+    (ListNode node, int step) slow = (lst, 0);
+
+    while (fast.node is not null)
     {
-        if (item is ListNode node)
+        fast.node = fast.node.next;
+        fast.step += 1;
+
+        if (slow.step + 2 < fast.step)
         {
-            queue.Enqueue(node, node.val);
+            slow.node = slow.node.next;
+            slow.step += 1;
+        }
+
+        if ((fast.step & 1) == 0 && fast.node is not null)
+        {
+            // slow prev fast 
+            //  0    1    2    3
+            //  0    2    1    3
+            var prev = slow.node.next;
+            prev.next = fast.node.next;
+            fast.node.next = prev;
+            slow.node.next = fast.node;
+            fast.node = slow.node.next.next;
         }
     }
-    if (!queue.TryDequeue(out var head, out var _))
-    {
-        return null;
-    }
 
-    var curr = head;
-    if (head is ListNode n && n.next is not null)
-    {
-        queue.Enqueue(n.next, n.next.val);
-    }
-
-    while (queue.TryDequeue(out var node, out var _))
-    {
-        curr.next = node;
-        curr = curr.next;
-        node = node.next;
-        if (node is not null)
-        {
-            queue.Enqueue(node, node.val);
-        }
-    }
-
-    return head;
+    return lst.next;
 }
 
 
