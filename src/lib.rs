@@ -1,18 +1,16 @@
-pub fn search_range(nums: &[i32], target: i32) -> Vec<i32> {
-    if nums.is_empty() {
-        return vec![-1, -1];
-    }
-    let left = nums.partition_point(|&n| n < target);
-
-    if left == nums.len() || target != nums[left] {
-        vec![-1, -1]
-    } else {
-        let mut curr = left;
-        while nums.get(curr).is_some_and(|&n| n == target) {
-            curr += 1;
-        }
-        vec![left as i32, curr as i32 - 1]
-    }
+pub fn num_teams(rating: &[i32]) -> i32 {
+    rating
+        .iter()
+        .cloned()
+        .enumerate()
+        .map(|(idx, rat)| {
+            let left_inc = rating[..idx].iter().filter(|&&n| n < rat).count();
+            let right_inc = rating[idx + 1..].iter().filter(|&&n| rat < n).count();
+            let left_dec = rating[..idx].iter().filter(|&&n| n > rat).count();
+            let right_dec = rating[idx + 1..].iter().filter(|&&n| rat > n).count();
+            left_inc * right_inc + left_dec * right_dec
+        })
+        .sum::<usize>() as _
 }
 
 #[cfg(test)]
@@ -21,9 +19,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(search_range(&[5, 7, 7, 8, 8, 10], 8), [3, 4]);
-        debug_assert_eq!(search_range(&[5, 7, 7, 8, 8, 10], 6), [-1, -1]);
-        debug_assert_eq!(search_range(&[], 0), [-1, -1]);
+        debug_assert_eq!(num_teams(&[2, 5, 3, 4, 1]), 3);
+        debug_assert_eq!(num_teams(&[2, 1, 3]), 0);
+        debug_assert_eq!(num_teams(&[1, 2, 3, 4]), 4);
     }
 
     #[test]
