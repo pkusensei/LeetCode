@@ -1,28 +1,31 @@
-// https://en.wikipedia.org/wiki/Permutation#Generation_in_lexicographic_order
-pub fn next_permutation(nums: &mut [i32]) {
-    // Find the largest index i such that a[i] < a[i + 1].
-    // If no such index exists, the permutation is the last permutation.
-    let Some(i) =
-        nums.windows(2)
-            .enumerate()
-            .rev()
-            .find_map(|(idx, w)| if w[0] < w[1] { Some(idx) } else { None })
-    else {
-        nums.sort_unstable();
-        return;
-    };
-
-    // Find the largest index j, such that i < j && a[i] < a[j].
-    if let Some(j) = nums.iter().enumerate().rev().find_map(|(idx, v)| {
-        if i < idx && nums[i] < *v {
-            Some(idx)
-        } else {
-            None
+pub fn longest_valid_parentheses(s: &str) -> i32 {
+    // ")()())" => [0, 1, 1, 1, 1]
+    let mut bits: Vec<bool> = (0..s.len()).map(|_| false).collect();
+    let mut stack = vec![];
+    for (idx, ch) in s.bytes().enumerate() {
+        if stack.is_empty() || ch == b'(' {
+            stack.push((idx, ch));
+        } else if ch == b')' {
+            if let Some(&(i, b'(')) = stack.last() {
+                stack.pop();
+                bits[i] = true;
+                bits[idx] = true;
+            } else {
+                stack.push((idx, ch))
+            }
         }
-    }) {
-        nums.swap(i, j);
     }
-    nums[i + 1..].reverse()
+    let mut consecutive = 0;
+    let mut res = 0;
+    for b in bits {
+        if b {
+            consecutive += 1;
+            res = res.max(consecutive);
+        } else {
+            consecutive = 0
+        }
+    }
+    res
 }
 
 #[cfg(test)]
@@ -31,21 +34,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        {
-            let mut nums = vec![1, 2, 3];
-            next_permutation(&mut nums);
-            debug_assert_eq!(nums, [1, 3, 2]);
-        }
-        {
-            let mut nums = vec![3, 2, 1];
-            next_permutation(&mut nums);
-            debug_assert_eq!(nums, [1, 2, 3]);
-        }
-        {
-            let mut nums = vec![1, 1, 5];
-            next_permutation(&mut nums);
-            debug_assert_eq!(nums, [1, 5, 1]);
-        }
+        debug_assert_eq!(longest_valid_parentheses("(()"), 2);
+        debug_assert_eq!(longest_valid_parentheses(")()())"), 4);
+        debug_assert_eq!(longest_valid_parentheses(""), 0);
     }
 
     #[test]
