@@ -1,41 +1,35 @@
-pub fn count_and_say(n: i32) -> String {
-    let start = "1".to_string();
-    if n < 2 {
-        start
-    } else {
-        let mut res = start;
-        for _ in 0..n - 1 {
-            let pairs = str_to_pairs(&res);
-            res = pairs_to_str(&pairs);
-        }
-        res
-    }
+use std::collections::HashSet;
+
+pub fn combination_sum(candidates: Vec<i32>, target: i32) -> Vec<Vec<i32>> {
+    let mut nums = candidates;
+    nums.sort_unstable_by_key(|&n| std::cmp::Reverse(n));
+    solve(&nums, target).into_iter().collect()
 }
 
-fn str_to_pairs(s: &str) -> Vec<(char, i32)> {
-    let mut curr = '0';
-    let mut count = 0;
-    let mut res = vec![];
-    for ch in s.chars() {
-        if curr == ch {
-            count += 1
-        } else if curr != ch && count > 0 {
-            res.push((curr, count));
-            curr = ch;
-            count = 1;
-        } else {
-            curr = ch;
-            count = 1
-        }
+fn solve(nums: &[i32], target: i32) -> HashSet<Vec<i32>> {
+    match nums {
+        [] => HashSet::new(),
+        [head, tail @ ..] => match target.cmp(head) {
+            std::cmp::Ordering::Less => solve(tail, target),
+            std::cmp::Ordering::Equal => {
+                let mut res = solve(tail, target);
+                res.insert(vec![*head]);
+                res
+            }
+            std::cmp::Ordering::Greater => {
+                let mut res = solve(tail, target);
+                res.extend(solve(tail, target - head).into_iter().map(|mut v| {
+                    v.push(*head);
+                    v
+                }));
+                res.extend(solve(nums, target - head).into_iter().map(|mut v| {
+                    v.push(*head);
+                    v
+                }));
+                res
+            }
+        },
     }
-    res.push((curr, count));
-    res
-}
-
-fn pairs_to_str(pairs: &[(char, i32)]) -> String {
-    pairs
-        .iter()
-        .fold(String::new(), |acc, p| format!("{}{}{}", acc, p.1, p.0))
 }
 
 #[cfg(test)]
@@ -44,8 +38,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(count_and_say(4), "1211");
-        debug_assert_eq!(count_and_say(1), "1");
+        debug_assert_eq!(
+            combination_sum(vec![2, 3, 6, 7], 7),
+            [vec![2, 2, 3], vec![7]]
+        );
+        debug_assert_eq!(
+            combination_sum(vec![2, 3, 5], 8),
+            [vec![2, 2, 2, 2], vec![2, 3, 3], vec![3, 5]]
+        );
+        debug_assert_eq!(combination_sum(vec![2], 1), Vec::<Vec<i32>>::new())
     }
 
     #[test]
