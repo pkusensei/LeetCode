@@ -1,54 +1,46 @@
-use std::collections::HashMap;
+pub fn solve_sudoku(board: &mut Vec<Vec<char>>) {
+    solve(board);
+}
 
-pub fn is_valid_sudoku(board: &[&[char]; 9]) -> bool {
-    for r in board {
-        let row: HashMap<char, i32> =
-            r.iter()
-                .filter(|ch| ch.is_ascii_digit())
-                .fold(HashMap::new(), |mut acc, &ch| {
-                    *acc.entry(ch).or_insert(0) += 1;
-                    acc
-                });
-        if row.values().any(|&v| v > 1) {
-            return false;
-        }
-    }
-    for x in 0..9 {
-        let col = (0..9)
-            .map(|y| board[y][x])
-            .fold(HashMap::new(), |mut acc, ch| {
-                if ch.is_ascii_digit() {
-                    *acc.entry(ch).or_insert(0) += 1;
+fn solve(board: &mut Vec<Vec<char>>) -> bool {
+    for row in 0..9 {
+        for col in 0..9 {
+            if board[row][col] == '.' {
+                for num in '1'..='9' {
+                    if check_num(board, num, row, col) {
+                        board[row][col] = num;
+                        if solve(board) {
+                            return true;
+                        } else {
+                            board[row][col] = '.'
+                        }
+                    }
                 }
-                acc
-            });
-        if col.values().any(|&v| v > 1) {
-            return false;
-        }
-    }
-
-    check_three_rows(board, &[0, 1, 2])
-        && check_three_rows(board, &[3, 4, 5])
-        && check_three_rows(board, &[6, 7, 8])
-}
-
-fn check_three_rows(board: &[&[char]], ys: &[usize; 3]) -> bool {
-    check_square(board, &[0, 1, 2], ys)
-        && check_square(board, &[3, 4, 5], ys)
-        && check_square(board, &[6, 7, 8], ys)
-}
-
-fn check_square(board: &[&[char]], xs: &[usize; 3], ys: &[usize; 3]) -> bool {
-    let mut res = HashMap::new();
-    for &y in ys {
-        for &x in xs {
-            let ch = board[y][x];
-            if ch.is_ascii_digit() {
-                *res.entry(ch).or_insert(0) += 1
+                return false;
             }
         }
     }
-    res.values().all(|&v| v == 1)
+    true
+}
+
+fn check_num(board: &[Vec<char>], num: char, row: usize, col: usize) -> bool {
+    if (0..9).any(|x| board[row][x] == num) {
+        return false;
+    }
+    if board.iter().any(|row| row[col] == num) {
+        return false;
+    }
+    let start_row = row - row % 3;
+    let start_col = col - col % 3;
+    for i in 0..3 {
+        for j in 0..3 {
+            if board[i + start_row][j + start_col] == num {
+                return false;
+            }
+        }
+    }
+
+    true
 }
 
 #[cfg(test)]
@@ -57,33 +49,31 @@ mod tests {
 
     #[test]
     fn basics() {
+        let mut board = vec![
+            vec!['5', '3', '.', '.', '7', '.', '.', '.', '.'],
+            vec!['6', '.', '.', '1', '9', '5', '.', '.', '.'],
+            vec!['.', '9', '8', '.', '.', '.', '.', '6', '.'],
+            vec!['8', '.', '.', '.', '6', '.', '.', '.', '3'],
+            vec!['4', '.', '.', '8', '.', '3', '.', '.', '1'],
+            vec!['7', '.', '.', '.', '2', '.', '.', '.', '6'],
+            vec!['.', '6', '.', '.', '.', '.', '2', '8', '.'],
+            vec!['.', '.', '.', '4', '1', '9', '.', '.', '5'],
+            vec!['.', '.', '.', '.', '8', '.', '.', '7', '9'],
+        ];
+        solve_sudoku(&mut board);
         debug_assert_eq!(
-            is_valid_sudoku(&[
-                &['5', '3', '.', '.', '7', '.', '.', '.', '.'],
-                &['6', '.', '.', '1', '9', '5', '.', '.', '.'],
-                &['.', '9', '8', '.', '.', '.', '.', '6', '.'],
-                &['8', '.', '.', '.', '6', '.', '.', '.', '3'],
-                &['4', '.', '.', '8', '.', '3', '.', '.', '1'],
-                &['7', '.', '.', '.', '2', '.', '.', '.', '6'],
-                &['.', '6', '.', '.', '.', '.', '2', '8', '.'],
-                &['.', '.', '.', '4', '1', '9', '.', '.', '5'],
-                &['.', '.', '.', '.', '8', '.', '.', '7', '9']
-            ]),
-            true
-        );
-        debug_assert_eq!(
-            is_valid_sudoku(&[
-                &['8', '3', '.', '.', '7', '.', '.', '.', '.'],
-                &['6', '.', '.', '1', '9', '5', '.', '.', '.'],
-                &['.', '9', '8', '.', '.', '.', '.', '6', '.'],
-                &['8', '.', '.', '.', '6', '.', '.', '.', '3'],
-                &['4', '.', '.', '8', '.', '3', '.', '.', '1'],
-                &['7', '.', '.', '.', '2', '.', '.', '.', '6'],
-                &['.', '6', '.', '.', '.', '.', '2', '8', '.'],
-                &['.', '.', '.', '4', '1', '9', '.', '.', '5'],
-                &['.', '.', '.', '.', '8', '.', '.', '7', '9']
-            ]),
-            false
+            board,
+            [
+                ['5', '3', '4', '6', '7', '8', '9', '1', '2'],
+                ['6', '7', '2', '1', '9', '5', '3', '4', '8'],
+                ['1', '9', '8', '3', '4', '2', '5', '6', '7'],
+                ['8', '5', '9', '7', '6', '1', '4', '2', '3'],
+                ['4', '2', '6', '8', '5', '3', '7', '9', '1'],
+                ['7', '1', '3', '9', '2', '4', '8', '5', '6'],
+                ['9', '6', '1', '5', '3', '7', '2', '8', '4'],
+                ['2', '8', '7', '4', '1', '9', '6', '3', '5'],
+                ['3', '4', '5', '2', '8', '6', '1', '7', '9']
+            ]
         );
     }
 
