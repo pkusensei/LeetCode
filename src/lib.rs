@@ -1,16 +1,16 @@
-pub fn first_missing_positive(nums: &[i32]) -> i32 {
-    let n = nums.len();
-    let mut seen: Vec<_> = (0..=n).map(|_| false).collect();
-    for &num in nums {
-        if (1..=n).contains(&(num as usize)) {
-            seen[num as usize] = true;
+pub fn minimum_deletions(s: &str) -> i32 {
+    let mut stack = vec![];
+    let mut res = 0;
+    for ch in s.chars() {
+        if stack.last().is_some_and(|&c| c == 'b') && ch == 'a' {
+            // number of "ba" pairs == number of deletions
+            stack.pop();
+            res += 1;
+        } else {
+            stack.push(ch)
         }
     }
-    seen.into_iter()
-        .enumerate()
-        .skip(1)
-        .find_map(|(i, b)| if !b { Some(i as i32) } else { None })
-        .unwrap_or(n as i32 + 1)
+    res
 }
 
 #[cfg(test)]
@@ -19,9 +19,10 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(first_missing_positive(&[1, 2, 0]), 3);
-        debug_assert_eq!(first_missing_positive(&[3, 4, -1, 1]), 2);
-        debug_assert_eq!(first_missing_positive(&[7, 8, 9, 11, 12]), 1)
+        debug_assert_eq!(minimum_deletions("aababbab"), 2);
+        debug_assert_eq!(minimum_deletions("bbaaaaabb"), 2);
+        // debug_assert_eq!(trap(vec![0, 1, 0, 2, 1, 0, 1, 3, 2, 1, 2, 1]), 6);
+        // debug_assert_eq!(trap(vec![4, 2, 0, 3, 2, 5]), 9);
     }
 
     #[test]
