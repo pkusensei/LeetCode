@@ -13,11 +13,14 @@ fn solve(
     last_match: usize,
 ) -> bool {
     if h_idx == haystack.len() {
-        return p_idx == pattern.len() || pattern[p_idx..].iter().all(|&c| c == '*');
+        return pattern[p_idx..].iter().all(|&c| c == '*');
     }
 
     if h_idx < haystack.len() {
-        if p_idx < pattern.len() && (pattern[p_idx] == '?' || haystack[h_idx] == pattern[p_idx]) {
+        if pattern
+            .get(p_idx)
+            .is_some_and(|&p| p == '?' || haystack[h_idx] == p)
+        {
             return solve(
                 haystack,
                 pattern,
@@ -26,7 +29,7 @@ fn solve(
                 last_star,
                 last_match,
             );
-        } else if p_idx < pattern.len() && pattern[p_idx] == '*' {
+        } else if pattern.get(p_idx).is_some_and(|&p| p == '*') {
             return solve(haystack, pattern, h_idx, p_idx + 1, Some(p_idx), h_idx);
         } else if let Some(star) = last_star {
             return solve(
