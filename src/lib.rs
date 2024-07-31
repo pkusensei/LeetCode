@@ -1,33 +1,45 @@
-pub fn multiply(num1: &str, num2: &str) -> String {
-    let num1: Vec<_> = num1.bytes().map(|b| b - b'0').collect();
-    let num2: Vec<_> = num2.bytes().map(|b| b - b'0').collect();
-    let mut digits: Vec<u8> = vec![0; num1.len() + num2.len()];
+pub fn is_match(s: &str, p: &str) -> bool {
+    let haystack: Vec<_> = s.chars().collect();
+    let pattern: Vec<_> = p.chars().collect();
+    solve(&haystack, &pattern, 0, 0, None, 0)
+}
 
-    for (i, &a) in num1.iter().rev().enumerate() {
-        let mut carry = 0;
-        for (j, &b) in num2.iter().rev().enumerate() {
-            let sum = digits[i + j] + a * b + carry;
-            digits[i + j] = sum % 10;
-            carry = sum / 10;
+fn solve(
+    haystack: &[char],
+    pattern: &[char],
+    h_idx: usize,
+    p_idx: usize,
+    last_star: Option<usize>,
+    last_match: usize,
+) -> bool {
+    if h_idx == haystack.len() {
+        return p_idx == pattern.len() || pattern[p_idx..].iter().all(|&c| c == '*');
+    }
+
+    if h_idx < haystack.len() {
+        if p_idx < pattern.len() && (pattern[p_idx] == '?' || haystack[h_idx] == pattern[p_idx]) {
+            return solve(
+                haystack,
+                pattern,
+                h_idx + 1,
+                p_idx + 1,
+                last_star,
+                last_match,
+            );
+        } else if p_idx < pattern.len() && pattern[p_idx] == '*' {
+            return solve(haystack, pattern, h_idx, p_idx + 1, Some(p_idx), h_idx);
+        } else if let Some(star) = last_star {
+            return solve(
+                haystack,
+                pattern,
+                last_match,
+                star + 1,
+                last_star,
+                last_match + 1,
+            );
         }
-        if carry > 0 {
-            digits[i + num2.len()] = carry
-        }
     }
-    while digits.last().is_some_and(|&b| b == 0) {
-        digits.pop();
-    }
-    let res: String = digits
-        .into_iter()
-        .rev()
-        .map(|b| char::from(b + b'0'))
-        .collect();
-    if res.is_empty() {
-        // digits are all 0s and popped
-        0.to_string()
-    } else {
-        res
-    }
+    false
 }
 
 #[cfg(test)]
@@ -36,12 +48,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(multiply("2", "3"), "6");
-        debug_assert_eq!(multiply("123", "456"), "56088")
+        debug_assert_eq!(is_match("aa", "a"), false);
+        debug_assert_eq!(is_match("aa", "*"), true);
+        debug_assert_eq!(is_match("cb", "?a"), false)
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(multiply("0", "0"), "0");
-    }
+    fn test() {}
 }
