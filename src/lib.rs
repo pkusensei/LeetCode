@@ -1,13 +1,22 @@
-pub fn minimum_deletions(s: &str) -> i32 {
-    let mut stack = vec![];
+pub fn trap(height: &[i32]) -> i32 {
+    if height.len() < 2 {
+        return 0;
+    }
+
+    let mut left = 0;
+    let mut right = height.len() - 1;
+    let mut left_max = height[left];
+    let mut right_max = height[right];
     let mut res = 0;
-    for ch in s.chars() {
-        if stack.last().is_some_and(|&c| c == 'b') && ch == 'a' {
-            // number of "ba" pairs == number of deletions
-            stack.pop();
-            res += 1;
+    while left < right {
+        if left_max < right_max {
+            left += 1;
+            left_max = left_max.max(height[left]);
+            res += left_max - height[left];
         } else {
-            stack.push(ch)
+            right -= 1;
+            right_max = right_max.max(height[right]);
+            res += right_max - height[right];
         }
     }
     res
@@ -19,10 +28,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(minimum_deletions("aababbab"), 2);
-        debug_assert_eq!(minimum_deletions("bbaaaaabb"), 2);
-        // debug_assert_eq!(trap(vec![0, 1, 0, 2, 1, 0, 1, 3, 2, 1, 2, 1]), 6);
-        // debug_assert_eq!(trap(vec![4, 2, 0, 3, 2, 5]), 9);
+        debug_assert_eq!(trap(&[0, 1, 0, 2, 1, 0, 1, 3, 2, 1, 2, 1]), 6);
+        debug_assert_eq!(trap(&[4, 2, 0, 3, 2, 5]), 9);
     }
 
     #[test]
