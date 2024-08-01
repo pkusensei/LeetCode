@@ -1,23 +1,23 @@
-use std::collections::HashSet;
-
-pub fn permute_unique(nums: &[i32]) -> Vec<Vec<i32>> {
-    match nums {
-        [head] => vec![vec![*head]],
-        [head, tail @ ..] => {
-            let mut res = HashSet::new();
-            for mut candid in permute_unique(tail) {
-                for i in 0..candid.len() {
-                    let mut v = candid.clone();
-                    v.insert(i, *head);
-                    res.insert(v);
-                }
-                candid.push(*head);
-                res.insert(candid);
-            }
-            res.into_iter().collect()
+pub fn rotate(matrix: &mut [Vec<i32>]) {
+    let n = matrix.len();
+    // transpose
+    for i in 0..n {
+        for j in 0..i {
+            swap(matrix, (i, j), (j, i));
         }
-        [] => unreachable!(),
     }
+    // reverse
+    for i in 0..n {
+        for j in 0..n / 2 {
+            swap(matrix, (i, j), (i, n - 1 - j))
+        }
+    }
+}
+
+fn swap(matrix: &mut [Vec<i32>], (row1, col1): (usize, usize), (row2, col2): (usize, usize)) {
+    let temp = matrix[row1][col1];
+    matrix[row1][col1] = matrix[row2][col2];
+    matrix[row2][col2] = temp;
 }
 
 #[cfg(test)]
@@ -26,21 +26,29 @@ mod tests {
 
     #[test]
     fn basics() {
-        // debug_assert_eq!(
-        //     permute(&[1, 2, 3]),
-        //     vec![
-        //         vec![1, 2, 3],
-        //         vec![1, 3, 2],
-        //         vec![2, 1, 3],
-        //         vec![2, 3, 1],
-        //         vec![3, 1, 2],
-        //         vec![3, 2, 1]
-        //     ]
-        // );
-        debug_assert_eq!(
-            permute_unique(&[1, 1, 2]),
-            vec![vec![1, 1, 2], vec![1, 2, 1], vec![2, 1, 1]]
-        );
+        {
+            let mut v = vec![vec![1, 2, 3], vec![4, 5, 6], vec![7, 8, 9]];
+            rotate(&mut v);
+            debug_assert_eq!(v, [[7, 4, 1], [8, 5, 2], [9, 6, 3]]);
+        }
+        {
+            let mut v = vec![
+                vec![5, 1, 9, 11],
+                vec![2, 4, 8, 10],
+                vec![13, 3, 6, 7],
+                vec![15, 14, 12, 16],
+            ];
+            rotate(&mut v);
+            debug_assert_eq!(
+                v,
+                [
+                    [15, 13, 2, 5],
+                    [14, 3, 4, 1],
+                    [12, 6, 8, 9],
+                    [16, 7, 10, 11]
+                ]
+            )
+        }
     }
 
     #[test]
