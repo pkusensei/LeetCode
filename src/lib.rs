@@ -1,21 +1,24 @@
-pub fn permute(nums: &[i32]) -> Vec<Vec<i32>> {
-    match nums {
-        [head] => vec![vec![*head]],
+use std::collections::HashSet;
+
+pub fn permute_unique(nums: &[i32]) -> Vec<Vec<i32>> {
+    let res = match nums {
+        [head] => HashSet::from([vec![*head]]),
         [head, tail @ ..] => {
-            let mut res = vec![];
-            for mut candid in permute(tail) {
+            let mut res = HashSet::new();
+            for mut candid in permute_unique(tail) {
                 for i in 0..candid.len() {
                     let mut v = candid.clone();
                     v.insert(i, *head);
-                    res.push(v);
+                    res.insert(v);
                 }
                 candid.push(*head);
-                res.push(candid)
+                res.insert(candid);
             }
             res
         }
         [] => unreachable!(),
-    }
+    };
+    res.into_iter().collect()
 }
 
 #[cfg(test)]
@@ -35,8 +38,10 @@ mod tests {
         //         vec![3, 2, 1]
         //     ]
         // );
-        debug_assert_eq!(permute(&[0, 1]), vec![vec![0, 1], vec![1, 0]]);
-        debug_assert_eq!(permute(&[1]), vec![vec![1]]);
+        debug_assert_eq!(
+            permute_unique(&[1, 1, 2]),
+            vec![vec![1, 1, 2], vec![1, 2, 1], vec![2, 1, 1]]
+        );
     }
 
     #[test]
