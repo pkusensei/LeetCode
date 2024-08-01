@@ -1,8 +1,8 @@
 use std::collections::HashSet;
 
 pub fn permute_unique(nums: &[i32]) -> Vec<Vec<i32>> {
-    let res = match nums {
-        [head] => HashSet::from([vec![*head]]),
+    match nums {
+        [head] => vec![vec![*head]],
         [head, tail @ ..] => {
             let mut res = HashSet::new();
             for mut candid in permute_unique(tail) {
@@ -14,11 +14,10 @@ pub fn permute_unique(nums: &[i32]) -> Vec<Vec<i32>> {
                 candid.push(*head);
                 res.insert(candid);
             }
-            res
+            res.into_iter().collect()
         }
         [] => unreachable!(),
-    };
-    res.into_iter().collect()
+    }
 }
 
 #[cfg(test)]
