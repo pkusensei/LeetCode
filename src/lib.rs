@@ -1,27 +1,63 @@
-pub fn min_swaps(nums: Vec<i32>) -> i32 {
-    let ones = nums.iter().sum::<i32>() as _;
-    if !(2..nums.len() - 1).contains(&ones) {
-        return 0;
-    }
-    let mut expanded = nums.clone();
-    expanded.extend(nums);
-    let mut prev = 0;
-    let mut res = i32::MAX;
-    for i in 0..expanded.len() / 2 {
-        prev = count(&expanded, i, ones, prev);
-        res = res.min(prev);
-    }
-    res
+pub fn group_anagrams<'a>(strs: &[&'a str]) -> Vec<Vec<&'a str>> {
+    use std::collections::HashMap;
+    let res: HashMap<i128, Vec<_>> = strs.iter().fold(HashMap::new(), |mut acc, &s| {
+        let hash = s.bytes().fold(1, |acc, b| acc * letter_to_prime(b));
+        acc.entry(hash).or_default().push(s);
+        acc
+    });
+    res.into_values().collect()
 }
 
-fn count(nums: &[i32], start: usize, size: usize, prev: i32) -> i32 {
-    if start == 0 {
-        nums[0..size].iter().filter(|&&n| n == 0).count() as _
-    } else {
-        let front = if nums[start - 1] == 0 { -1 } else { 0 };
-        let back = if nums[start + size - 1] == 0 { 1 } else { 0 };
-        prev + front + back
+const fn letter_to_prime(byte: u8) -> i128 {
+    match byte {
+        b'a' => 2,
+        b'b' => 3,
+        b'c' => 5,
+        b'd' => 7,
+        b'e' => 11,
+        b'f' => 13,
+        b'g' => 17,
+        b'h' => 19,
+        b'i' => 23,
+        b'j' => 29,
+        b'k' => 31,
+        b'l' => 37,
+        b'm' => 41,
+        b'n' => 43,
+        b'o' => 47,
+        b'p' => 53,
+        b'q' => 59,
+        b'r' => 61,
+        b's' => 67,
+        b't' => 71,
+        b'u' => 73,
+        b'v' => 79,
+        b'w' => 83,
+        b'x' => 89,
+        b'y' => 97,
+        b'z' => 101,
+        _ => unreachable!(),
     }
+}
+
+#[allow(unused)]
+fn f1<'a>(strs: &[&'a str]) -> Vec<Vec<&'a str>> {
+    use std::collections::BTreeMap;
+    fn count(s: &str) -> BTreeMap<u8, i32> {
+        s.bytes().fold(BTreeMap::new(), |mut acc, b| {
+            *acc.entry(b).or_insert(0) += 1;
+            acc
+        })
+    }
+
+    let res: BTreeMap<BTreeMap<u8, i32>, Vec<&str>> =
+        strs.iter().fold(BTreeMap::new(), |mut acc, s| {
+            let m = count(s);
+            acc.entry(m).or_default().push(s);
+            acc
+        });
+
+    res.into_values().collect()
 }
 
 #[cfg(test)]
@@ -30,9 +66,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(min_swaps(vec![0, 1, 0, 1, 1, 0, 0]), 1);
-        debug_assert_eq!(min_swaps(vec![0, 1, 1, 1, 0, 0, 1, 1, 0]), 2);
-        debug_assert_eq!(min_swaps(vec![1, 1, 0, 0, 1]), 0);
+        // debug_assert_eq!(
+        //     group_anagrams(&["eat", "tea", "tan", "ate", "nat", "bat"]),
+        //     [vec!["bat"], vec!["nat", "tan"], vec!["ate", "eat", "tea"]]
+        // );
+        debug_assert_eq!(group_anagrams(&[""]), [[""]]);
+        debug_assert_eq!(group_anagrams(&["a"]), [["a"]]);
     }
 
     #[test]
