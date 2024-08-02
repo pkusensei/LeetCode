@@ -1,23 +1,27 @@
-pub fn rotate(matrix: &mut [Vec<i32>]) {
-    let n = matrix.len();
-    // transpose
-    for i in 0..n {
-        for j in 0..i {
-            swap(matrix, (i, j), (j, i));
-        }
+pub fn min_swaps(nums: Vec<i32>) -> i32 {
+    let ones = nums.iter().sum::<i32>() as _;
+    if !(2..nums.len() - 1).contains(&ones) {
+        return 0;
     }
-    // reverse
-    for i in 0..n {
-        for j in 0..n / 2 {
-            swap(matrix, (i, j), (i, n - 1 - j))
-        }
+    let mut expanded = nums.clone();
+    expanded.extend(nums);
+    let mut prev = 0;
+    let mut res = i32::MAX;
+    for i in 0..expanded.len() / 2 {
+        prev = count(&expanded, i, ones, prev);
+        res = res.min(prev);
     }
+    res
 }
 
-fn swap(matrix: &mut [Vec<i32>], (row1, col1): (usize, usize), (row2, col2): (usize, usize)) {
-    let temp = matrix[row1][col1];
-    matrix[row1][col1] = matrix[row2][col2];
-    matrix[row2][col2] = temp;
+fn count(nums: &[i32], start: usize, size: usize, prev: i32) -> i32 {
+    if start == 0 {
+        nums[0..size].iter().filter(|&&n| n == 0).count() as _
+    } else {
+        let front = if nums[start - 1] == 0 { -1 } else { 0 };
+        let back = if nums[start + size - 1] == 0 { 1 } else { 0 };
+        prev + front + back
+    }
 }
 
 #[cfg(test)]
@@ -26,29 +30,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        {
-            let mut v = vec![vec![1, 2, 3], vec![4, 5, 6], vec![7, 8, 9]];
-            rotate(&mut v);
-            debug_assert_eq!(v, [[7, 4, 1], [8, 5, 2], [9, 6, 3]]);
-        }
-        {
-            let mut v = vec![
-                vec![5, 1, 9, 11],
-                vec![2, 4, 8, 10],
-                vec![13, 3, 6, 7],
-                vec![15, 14, 12, 16],
-            ];
-            rotate(&mut v);
-            debug_assert_eq!(
-                v,
-                [
-                    [15, 13, 2, 5],
-                    [14, 3, 4, 1],
-                    [12, 6, 8, 9],
-                    [16, 7, 10, 11]
-                ]
-            )
-        }
+        debug_assert_eq!(min_swaps(vec![0, 1, 0, 1, 1, 0, 0]), 1);
+        debug_assert_eq!(min_swaps(vec![0, 1, 1, 1, 0, 0, 1, 1, 0]), 2);
+        debug_assert_eq!(min_swaps(vec![1, 1, 0, 0, 1]), 0);
     }
 
     #[test]
