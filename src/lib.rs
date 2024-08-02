@@ -1,17 +1,21 @@
-pub fn can_jump(nums: &[i32]) -> bool {
-    let (mut slow, mut fast) = (0, 0);
-    while fast < nums.len() - 1 {
-        let long_jump = (slow..=fast)
-            .map(|n| n + nums[n] as usize)
-            .max()
-            .unwrap_or_default();
-        slow = fast + 1;
-        fast = fast.max(long_jump);
-        if fast < slow {
-            return false;
+pub fn merge(intervals: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
+    if intervals.len() <= 1 {
+        return intervals;
+    }
+    let mut intervals = intervals;
+    intervals.sort_unstable();
+    let mut res = vec![];
+    let mut curr = intervals[0].to_vec();
+    for it in intervals.into_iter().skip(1) {
+        if it[0] <= curr[1] {
+            curr[1] = curr[1].max(it[1])
+        } else {
+            res.push(curr);
+            curr = it
         }
     }
-    true
+    res.push(curr);
+    res
 }
 
 #[cfg(test)]
@@ -20,14 +24,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(can_jump(&[2, 3, 1, 1, 4]));
-        debug_assert!(!can_jump(&[3, 2, 1, 0, 4]));
+        debug_assert_eq!(
+            merge(vec![vec![1, 3], vec![2, 6], vec![8, 10], vec![15, 18]]),
+            [[1, 6], [8, 10], [15, 18]]
+        );
+        debug_assert_eq!(merge(vec![vec![1, 4], vec![4, 5]]), [[1, 5]]);
     }
 
     #[test]
     fn test() {
-        debug_assert!(can_jump(&[2, 5, 0, 0]));
-        debug_assert!(can_jump(&[1, 2]));
-        debug_assert!(can_jump(&[5, 9, 3, 2, 1, 0, 2, 3, 3, 1, 0, 0]));
+        debug_assert_eq!(merge(vec![vec![1, 4], vec![2, 3]]), [[1, 4]]);
     }
 }
