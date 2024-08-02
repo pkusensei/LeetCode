@@ -1,42 +1,29 @@
-pub fn solve_n_queens(n: i32) -> Vec<Vec<String>> {
+pub fn total_n_queens(n: i32) -> i32 {
     match n {
-        1 => vec![vec!["Q".to_string()]],
-        4..=9 => {
-            let boards = solve(n as _, 0, vec![]);
-            boards
-                .into_iter()
-                .map(|board| {
-                    board
-                        .into_iter()
-                        .map(|col| {
-                            let mut s: Vec<_> = vec!['.'; n as _];
-                            s[col] = 'Q';
-                            s.into_iter().collect()
-                        })
-                        .collect()
-                })
-                .collect()
-        }
-        _ => vec![],
+        1 => 1,
+        4..=9 => solve(n as _, 0, vec![]),
+        _ => 0,
     }
 }
 
-fn solve(n: usize, row: usize, board: Vec<usize>) -> Vec<Vec<usize>> {
+fn solve(n: usize, row: usize, board: Vec<usize>) -> i32 {
     // board: Vec<usize>
     // index as row, board[row] == col
     if row == n {
-        return vec![board];
+        return 1;
     }
 
-    let mut res = vec![];
-    for col in 0..n {
-        if check(&board, row, col) {
-            let mut temp = board.clone();
-            temp.push(col);
-            res.extend(solve(n, row + 1, temp))
-        }
-    }
-    res
+    (0..n)
+        .filter_map(|col| {
+            if check(&board, row, col) {
+                let mut temp = board.clone();
+                temp.push(col);
+                Some(solve(n, row + 1, temp))
+            } else {
+                None
+            }
+        })
+        .sum()
 }
 
 fn check(board: &[usize], row: usize, col: usize) -> bool {
@@ -54,14 +41,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            solve_n_queens(4),
-            [
-                [".Q..", "...Q", "Q...", "..Q."],
-                ["..Q.", "Q...", "...Q", ".Q.."]
-            ]
-        );
-        debug_assert_eq!(solve_n_queens(1), [["Q"]]);
+        debug_assert_eq!(total_n_queens(4), 2);
+        debug_assert_eq!(total_n_queens(1), 1);
     }
 
     #[test]
