@@ -1,62 +1,17 @@
-pub fn spiral_order(matrix: &[&[i32]]) -> Vec<i32> {
-    let row_limit = matrix.len();
-    let col_limit = matrix.first().map(|row| row.len()).unwrap_or_default();
-    if row_limit * col_limit == 0 {
-        return vec![];
+pub fn can_jump(nums: &[i32]) -> bool {
+    let (mut slow, mut fast) = (0, 0);
+    while fast < nums.len() - 1 {
+        let long_jump = (slow..=fast)
+            .map(|n| n + nums[n] as usize)
+            .max()
+            .unwrap_or_default();
+        slow = fast + 1;
+        fast = fast.max(long_jump);
+        if fast < slow {
+            return false;
+        }
     }
-
-    let (mut row_min, mut row_max) = (0, row_limit - 1);
-    let (mut col_min, mut col_max) = (0, col_limit - 1);
-
-    let (mut row, mut col) = (0, 0);
-    let mut res = vec![];
-    loop {
-        while col < col_max {
-            res.push(matrix[row][col]);
-            col += 1;
-        }
-        res.push(matrix[row][col]);
-        if res.len() >= row_limit * col_limit {
-            break;
-        }
-
-        row_min += 1;
-        row = row_min;
-        while row < row_max {
-            res.push(matrix[row][col]);
-            row += 1;
-        }
-        res.push(matrix[row][col]);
-        if res.len() >= row_limit * col_limit {
-            break;
-        }
-
-        col_max -= 1;
-        col = col_max;
-        while col > col_min {
-            res.push(matrix[row][col]);
-            col -= 1;
-        }
-        res.push(matrix[row][col]);
-        if res.len() >= row_limit * col_limit {
-            break;
-        }
-
-        row_max -= 1;
-        row = row_max;
-        while row > row_min {
-            res.push(matrix[row][col]);
-            row -= 1;
-        }
-        res.push(matrix[row][col]);
-        if res.len() >= row_limit * col_limit {
-            break;
-        }
-
-        col_min += 1;
-        col = col_min
-    }
-    res
+    true
 }
 
 #[cfg(test)]
@@ -65,16 +20,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            spiral_order(&[&[1, 2, 3], &[4, 5, 6], &[7, 8, 9]]),
-            [1, 2, 3, 6, 9, 8, 7, 4, 5]
-        );
-        debug_assert_eq!(
-            spiral_order(&[&[1, 2, 3, 4], &[5, 6, 7, 8], &[9, 10, 11, 12]]),
-            [1, 2, 3, 4, 8, 12, 11, 10, 9, 5, 6, 7]
-        )
+        debug_assert!(can_jump(&[2, 3, 1, 1, 4]));
+        debug_assert!(!can_jump(&[3, 2, 1, 0, 4]));
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert!(can_jump(&[2, 5, 0, 0]));
+        debug_assert!(can_jump(&[1, 2]));
+        debug_assert!(can_jump(&[5, 9, 3, 2, 1, 0, 2, 3, 3, 1, 0, 0]));
+    }
 }
