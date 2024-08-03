@@ -1,81 +1,66 @@
-﻿using System.Text;
+﻿using System.Collections;
+using System.Diagnostics;
+using System.Text;
 
 Test1();
 Test2();
-
+Console.WriteLine("!!Test Passed!!");
 
 void Test1()
 {
-    ListNode n = new(1, new(2, new(3, new(4, new(5)))));
-    var ans = ReverseKGroup(n, 2);
-    Console.WriteLine(ans); // [2,1,4,3,5]
+    ListNode n = RotateRight(ListNode.Make([1, 2, 3, 4, 5]), 2);
+    var a = "[4,5,1,2,3]";
+    Debug.Assert(n.ToString() == a, $"Output: {n}\nExpect: {a}");
 }
 
 void Test2()
 {
-    ListNode n = new(1, new(2, new(3, new(4, new(5)))));
-    var ans = ReverseKGroup(n, 3);
-    Console.WriteLine(ans); // [3,2,1,4,5]
+    ListNode n = RotateRight(ListNode.Make([0, 1, 2]), 4);
+    var a = "[2,0,1]";
+    Debug.Assert(n.ToString() == a, $"Output: {n}\nExpect: {a}");
 }
 
 
-ListNode ReverseKGroup(ListNode head, int k)
+ListNode RotateRight(ListNode head, int k)
 {
-    if (k < 2) { return head; }
-
-    ListNode lst = new(0, head);
-    (ListNode node, int step) fast = (lst, 0);
-    (ListNode node, int step) slow = (lst, 0);
-
-    while (fast.node is not null)
+    ListNode dummy = new(0, head);
+    var length = Length(dummy);
+    if (length < 2)
     {
-        fast.node = fast.node.next;
-        fast.step += 1;
-
-        if (slow.step + k < fast.step)
-        {
-            slow.node = slow.node.next;
-            slow.step += 1;
-        }
-
-        if (fast.step % k == 0 && fast.node is not null)
-        {
-            // slow first     fast next
-            //  0    1    2    3    4
-            //  0    3    2    1    4
-            var next = fast.node.next;
-            var first = slow.node.next;
-            var (left, right) = ReverseK(first, fast.node, k);
-            slow.node.next = left;
-            right.next = next;
-            fast.node = right;
-        }
+        return head;
     }
-    return lst.next;
+
+    k %= length;
+    for (int i = 0; i < k; i++)
+    {
+        var tail = dummy.next;
+        var prev = dummy;
+        while (tail.next is not null)
+        {
+            // 1 -> 2
+            prev = tail;
+            tail = tail.next;
+        }
+        prev.next = null;
+        tail.next = dummy.next;
+        dummy.next = tail;
+    }
+
+    return dummy.next;
 }
 
-(ListNode, ListNode) ReverseK(ListNode left, ListNode right, int k)
+int Length(ListNode dummy)
 {
-    if (k == 2) { return SwapPair(left); }
-
-    var first = left;
-    left = left.next;
-    (left, right) = ReverseK(left, right, k - 1);
-    first.next = null;
-    right.next = first;
-    return (left, first);
+    var count = 0;
+    while (dummy.next is not null)
+    {
+        dummy = dummy.next;
+        count += 1;
+    }
+    return count;
 }
 
-(ListNode, ListNode) SwapPair(ListNode head)
-{
-    var left = head.next;
-    var right = head;
-    left.next = right;
-    right.next = null;
-    return (left, right);
-}
-
-class ListNode
+class ListNode : IEnumerable<int>
 {
     public int val;
     public ListNode next;
@@ -85,17 +70,45 @@ class ListNode
         this.next = next;
     }
 
+    public static ListNode Make(IEnumerable<int> nums)
+    {
+        ListNode dummy = new(0, null);
+        var curr = dummy;
+        foreach (var num in nums)
+        {
+            var temp = new ListNode(num, null);
+            curr.next = temp;
+            curr = curr.next;
+        }
+        return dummy.next;
+    }
+
+    public IEnumerator<int> GetEnumerator()
+    {
+        var curr = this;
+        while (curr is not null)
+        {
+            yield return curr.val;
+            curr = curr.next;
+        }
+    }
+
     public override string ToString()
     {
         var curr = this;
         var sb = new StringBuilder("[");
         while (curr is ListNode n)
         {
-            sb.AppendFormat("{0}, ", n.val);
+            sb.AppendFormat("{0},", n.val);
             curr = n.next;
         }
-        sb.Remove(sb.Length - 2, 2);
+        sb.Remove(sb.Length - 1, 1);
         sb.Append(']');
         return sb.ToString();
+    }
+
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
     }
 }
