@@ -1,9 +1,16 @@
-pub fn merge(intervals: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
+pub fn insert(mut intervals: Vec<Vec<i32>>, new_interval: Vec<i32>) -> Vec<Vec<i32>> {
+    let i = intervals
+        .iter()
+        .position(|v| v[0] > new_interval[0])
+        .unwrap_or(intervals.len());
+    intervals.insert(i, new_interval);
+    merge(intervals)
+}
+
+fn merge(intervals: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
     if intervals.len() <= 1 {
         return intervals;
     }
-    let mut intervals = intervals;
-    intervals.sort_unstable();
     let mut res = vec![];
     let mut curr = intervals[0].to_vec();
     for it in intervals.into_iter().skip(1) {
@@ -25,10 +32,22 @@ mod tests {
     #[test]
     fn basics() {
         debug_assert_eq!(
-            merge(vec![vec![1, 3], vec![2, 6], vec![8, 10], vec![15, 18]]),
-            [[1, 6], [8, 10], [15, 18]]
+            insert(vec![vec![1, 3], vec![6, 9]], vec![2, 5]),
+            [[1, 5], [6, 9]]
         );
-        debug_assert_eq!(merge(vec![vec![1, 4], vec![4, 5]]), [[1, 5]]);
+        debug_assert_eq!(
+            insert(
+                vec![
+                    vec![1, 2],
+                    vec![3, 5],
+                    vec![6, 7],
+                    vec![8, 10],
+                    vec![12, 16]
+                ],
+                vec![4, 8]
+            ),
+            [[1, 2], [3, 10], [12, 16]]
+        );
     }
 
     #[test]
