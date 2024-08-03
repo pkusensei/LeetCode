@@ -1,27 +1,63 @@
-pub fn insert(mut intervals: Vec<Vec<i32>>, new_interval: Vec<i32>) -> Vec<Vec<i32>> {
-    let i = intervals
-        .iter()
-        .position(|v| v[0] > new_interval[0])
-        .unwrap_or(intervals.len());
-    intervals.insert(i, new_interval);
-    merge(intervals)
-}
+pub fn generate_matrix(n: i32) -> Vec<Vec<i32>> {
+    let (mut row_min, mut row_max) = (0, n as usize - 1);
+    let (mut col_min, mut col_max) = (0, n as usize - 1);
 
-fn merge(intervals: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
-    if intervals.len() <= 1 {
-        return intervals;
-    }
-    let mut res = vec![];
-    let mut curr = intervals[0].to_vec();
-    for it in intervals.into_iter().skip(1) {
-        if it[0] <= curr[1] {
-            curr[1] = curr[1].max(it[1])
-        } else {
-            res.push(curr);
-            curr = it
+    let (mut row, mut col) = (0, 0);
+    let mut res = vec![vec![0; n as usize]; n as usize];
+    let mut curr = 1;
+    loop {
+        while col < col_max {
+            res[row][col] = curr;
+            col += 1;
+            curr += 1
         }
+        res[row][col] = curr;
+        curr += 1;
+        if curr > n * n {
+            break;
+        }
+
+        row_min += 1;
+        row = row_min;
+        while row < row_max {
+            res[row][col] = curr;
+            curr += 1;
+            row += 1;
+        }
+        res[row][col] = curr;
+        curr += 1;
+        if curr > n * n {
+            break;
+        }
+
+        col_max -= 1;
+        col = col_max;
+        while col > col_min {
+            res[row][col] = curr;
+            curr += 1;
+            col -= 1;
+        }
+        res[row][col] = curr;
+        curr += 1;
+        if curr > n * n {
+            break;
+        }
+
+        row_max -= 1;
+        row = row_max;
+        while row > row_min {
+            res[row][col] = curr;
+            curr += 1;
+            row -= 1;
+        }
+        res[row][col] = curr;
+        curr += 1;
+        if curr > n * n {
+            break;
+        }
+        col_min += 1;
+        col = col_min
     }
-    res.push(curr);
     res
 }
 
@@ -31,27 +67,10 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            insert(vec![vec![1, 3], vec![6, 9]], vec![2, 5]),
-            [[1, 5], [6, 9]]
-        );
-        debug_assert_eq!(
-            insert(
-                vec![
-                    vec![1, 2],
-                    vec![3, 5],
-                    vec![6, 7],
-                    vec![8, 10],
-                    vec![12, 16]
-                ],
-                vec![4, 8]
-            ),
-            [[1, 2], [3, 10], [12, 16]]
-        );
+        debug_assert_eq!(generate_matrix(3), [[1, 2, 3], [8, 9, 4], [7, 6, 5]]);
+        debug_assert_eq!(generate_matrix(1), [[1]]);
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(merge(vec![vec![1, 4], vec![2, 3]]), [[1, 4]]);
-    }
+    fn test() {}
 }
