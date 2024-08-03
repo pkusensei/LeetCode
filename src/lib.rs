@@ -1,23 +1,28 @@
-pub fn plus_one(mut digits: Vec<i32>) -> Vec<i32> {
-    if digits.is_empty() {
-        return vec![1];
+pub fn add_binary(a: &str, b: &str) -> String {
+    let mut a: Vec<_> = a.bytes().rev().map(|b| b - b'0').collect();
+    let mut b: Vec<_> = b.bytes().rev().map(|b| b - b'0').collect();
+    let length = a.len().max(b.len());
+    while a.len() < length {
+        a.push(0);
+    }
+    while b.len() < length {
+        b.push(0);
     }
 
-    digits.reverse();
-        let mut carry = 1;
-        for v in digits.iter_mut() {
-            if carry == 0 {
-                break;
-            }
-            let sum = *v + carry;
-            carry = sum / 10;
-            *v = sum % 10;
-        }
+    let mut res = Vec::with_capacity(length + 1);
+    let mut carry = 0;
+    for (n1, n2) in a.into_iter().zip(b) {
+        let sum = n1 + n2 + carry;
+        res.push(sum % 2);
+        carry = sum / 2;
+    }
     if carry > 0 {
-        digits.push(carry)
-    };
-    digits.reverse();
-    digits
+        res.push(carry);
+    }
+    res.into_iter()
+        .rev()
+        .map(|b| char::from(b + b'0'))
+        .collect()
 }
 
 #[cfg(test)]
@@ -26,9 +31,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(plus_one(vec![1, 2, 3]), [1, 2, 4]);
-        debug_assert_eq!(plus_one(vec![4, 3, 2, 1]), [4, 3, 2, 2]);
-        debug_assert_eq!(plus_one(vec![9]), [1, 0]);
+        debug_assert_eq!(add_binary("11", "1"), "100");
+        debug_assert_eq!(add_binary("1010", "1011"), "10101");
     }
 
     #[test]
