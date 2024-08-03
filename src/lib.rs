@@ -1,24 +1,11 @@
-pub fn get_permutation(n: i32, k: i32) -> String {
-    let digits: Vec<_> = (1..=n).filter_map(|n| u8::try_from(n).ok()).collect();
-    solve(digits, n, k - 1) // 0 indexed
-}
-
-fn solve(mut digits: Vec<u8>, n: i32, k: i32) -> String {
-    if n == 1 {
-        return digits[0].to_string();
+pub fn unique_paths(m: i32, n: i32) -> i32 {
+    let mut dp = vec![1; n as usize];
+    for _ in 1..m {
+        for j in 1..n {
+            dp[j as usize] += dp[j as usize - 1];
+        }
     }
-    let group = factorial(n - 1);
-    let idx = k / group;
-    let ch = digits.remove(idx as _);
-    format!("{}{}", ch, solve(digits, n - 1, k % group))
-}
-
-const fn factorial(n: i32) -> i32 {
-    if n < 2 {
-        1
-    } else {
-        n * factorial(n - 1)
-    }
+    *dp.last().unwrap()
 }
 
 #[cfg(test)]
@@ -27,9 +14,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(get_permutation(3, 3), "213");
-        debug_assert_eq!(get_permutation(4, 9), "2314");
-        debug_assert_eq!(get_permutation(3, 1), "123");
+        debug_assert_eq!(unique_paths(3, 7), 28);
+        debug_assert_eq!(unique_paths(3, 2), 3);
     }
 
     #[test]
