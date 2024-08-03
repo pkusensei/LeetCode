@@ -1,14 +1,15 @@
-pub fn climb_stairs(n: i32) -> i32 {
-    if n < 2 {
-        return 1;
-    }
-    let mut dp = vec![0; n as usize];
-    dp[0] = 1;
-    dp[1] = 2;
-    for i in 2..(n as usize) {
-        dp[i] = dp[i - 1] + dp[i - 2];
-    }
-    *dp.last().unwrap()
+pub fn simplify_path(path: &str) -> String {
+        let mut stack = vec![];
+        for s in path.split('/').filter(|s| !s.is_empty()) {
+            match s {
+                "." => (),
+                ".." => {
+                    stack.pop();
+                }
+                _ => stack.push(s),
+            }
+        }
+        format!("/{}", stack.join("/"))
 }
 
 #[cfg(test)]
@@ -17,8 +18,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(climb_stairs(2), 2);
-        debug_assert_eq!(climb_stairs(3), 3);
+        debug_assert_eq!(simplify_path("/home/"), "/home");
+        debug_assert_eq!(simplify_path("/home//foo/"), "/home/foo");
+        debug_assert_eq!(
+            simplify_path("/home/user/Documents/../Pictures"),
+            "/home/user/Pictures"
+        );
+        debug_assert_eq!(simplify_path("/../"), "/");
+        debug_assert_eq!(simplify_path("/.../a/../b/c/../d/./"), "/.../b/d");
     }
 
     #[test]
