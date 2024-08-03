@@ -1,11 +1,9 @@
 pub fn get_permutation(n: i32, k: i32) -> String {
-    let digits: Vec<_> = (1..=n)
-        .map(|n| char::from_digit(n as _, 10).unwrap())
-        .collect();
+    let digits: Vec<_> = (1..=n).filter_map(|n| u8::try_from(n).ok()).collect();
     solve(digits, n, k - 1) // 0 indexed
 }
 
-fn solve(mut digits: Vec<char>, n: i32, k: i32) -> String {
+fn solve(mut digits: Vec<u8>, n: i32, k: i32) -> String {
     if n == 1 {
         return digits[0].to_string();
     }
