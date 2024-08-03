@@ -1,40 +1,38 @@
-pub fn min_distance(word1: &str, word2: &str) -> i32 {
-    if word1.is_empty() {
-        return word2.len() as _;
+pub fn set_zeroes(matrix: &mut [Vec<i32>]) {
+    let row = matrix.len();
+    let col = matrix.first().map(|v| v.len()).unwrap_or_default();
+    if row * col == 0 {
+        return;
     }
-    if word2.is_empty() {
-        return word1.len() as _;
-    }
-    if word1 == word2 {
-        return 0;
-    }
-    let row = word1.len();
-    let col = word2.len();
-    let mut dp = vec![vec![0; col + 1]; row + 1];
 
-    // First row and col means
-    // The dist between string of length x and empty string is x
-    for (j, v) in dp[0].iter_mut().enumerate() {
-        *v = j;
-    }
-    for (i, v) in dp.iter_mut().enumerate() {
-        v[0] = i
-    }
-    let w1 = word1.as_bytes();
-    let w2 = word2.as_bytes();
-    for i in 1..=row {
-        for j in 1..=col {
-            if w1[i - 1] == w2[j - 1] {
-                dp[i][j] = dp[i - 1][j - 1];
-            } else {
-                // replacing i-1 with j-1
-                // delete i-1 from word1
-                // insert j-1 into word1
-                dp[i][j] = 1 + dp[i - 1][j - 1].min(dp[i - 1][j]).min(dp[i][j - 1]);
+    let row_flag = matrix[0].iter().any(|&n| n == 0);
+    let col_flag = (0..row).any(|r| matrix[r][0] == 0);
+
+    for i in 1..row {
+        for j in 1..col {
+            if matrix[i][j] == 0 {
+                matrix[i][0] = 0;
+                matrix[0][j] = 0;
             }
         }
     }
-    dp[row][col] as _
+    for i in 1..row {
+        for j in 1..col {
+            if matrix[i][0] == 0 || matrix[0][j] == 0 {
+                matrix[i][j] = 0;
+            }
+        }
+    }
+    if row_flag {
+        for v in matrix[0].iter_mut() {
+            *v = 0
+        }
+    }
+    if col_flag {
+        for v in matrix.iter_mut() {
+            v[0] = 0
+        }
+    }
 }
 
 #[cfg(test)]
@@ -43,10 +41,24 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(min_distance("horse", "ros"), 3);
-        debug_assert_eq!(min_distance("intention", "execution"), 5);
+        {
+            let mut v = vec![vec![1, 1, 1], vec![1, 0, 1], vec![1, 1, 1]];
+            set_zeroes(&mut v);
+            debug_assert_eq!(v, [[1, 0, 1], [0, 0, 0], [1, 0, 1]]);
+        }
+        {
+            let mut v = vec![vec![0, 1, 2, 0], vec![3, 4, 5, 2], vec![1, 3, 1, 5]];
+            set_zeroes(&mut v);
+            debug_assert_eq!(v, [[0, 0, 0, 0], [0, 4, 5, 0], [0, 3, 1, 0]]);
+        }
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        {
+            let mut v = vec![vec![1, 0]];
+            set_zeroes(&mut v);
+            debug_assert_eq!(v, [[0, 0]]);
+        }
+    }
 }
