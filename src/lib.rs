@@ -1,47 +1,76 @@
-pub fn range_sum(nums: &[i32], _n: i32, left: i32, right: i32) -> i32 {
-    const MODULUS: i32 = 10i32.pow(9) + 7;
+use std::collections::HashMap;
 
-    let mut queue: std::collections::BinaryHeap<_> = nums
-        .iter()
-        .copied()
-        .enumerate()
-        .map(|(i, num)| Pair { num, end: i })
-        .collect();
-    let mut res = 0;
-    for i in 1..=right {
-        // or 0..right; but later: left - 1 <= i
-        let Some(Pair { num, end }) = queue.pop() else {
-            return res;
-        };
-        if left <= i {
-            res = (res + num) % MODULUS;
+pub fn min_window(s: &str, t: &str) -> String {
+    let (s1, s2) = (s.len(), t.len());
+    if s1 < s2 {
+        return String::new();
+    }
+    if s == t {
+        return s.to_string();
+    }
+
+    let needle = t.bytes().fold(HashMap::new(), |mut acc, b| {
+        *acc.entry(b).or_insert(0) += 1;
+        acc
+    });
+    let hay = s.as_bytes();
+    let mut pairs = vec![];
+    let (mut left, mut right) = (0, t.len());
+    let mut window = hay[left..right].iter().fold(HashMap::new(), |mut acc, &b| {
+        if needle.contains_key(&b) {
+            *acc.entry(b).or_insert(0) += 1;
         }
-        if let Some(&n) = nums.get(end + 1) {
-            queue.push(Pair {
-                num: num + n,
-                end: end + 1,
-            });
+        acc
+    });
+    right = expand_right(&mut window, &needle, right, hay);
+    if contains(&window, &needle) {
+        pairs.push((left, right));
+    }
+    while left + t.len() < right {
+        if needle.contains_key(&hay[left]) {
+            if let Some(v) = window.get_mut(&hay[left]) {
+                *v -= 1
+            }
+            left += 1;
+            // if contains == true, expand_right does nothing
+            right = expand_right(&mut window, &needle, right, hay);
+            if contains(&window, &needle) {
+                pairs.push((left, right));
+            }
+        } else {
+            left += 1;
+            if contains(&window, &needle) {
+                pairs.push((left, right));
+            }
         }
     }
-    res
+    pairs
+        .into_iter()
+        .min_by_key(|(l, r)| r - l)
+        .map(|(l, r)| s[l..r].to_string())
+        .unwrap_or_default()
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-struct Pair {
-    num: i32,
-    end: usize,
-}
-
-impl PartialOrd for Pair {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(other))
+fn expand_right(
+    window: &mut HashMap<u8, i32>,
+    needle: &HashMap<u8, i32>,
+    mut right: usize,
+    hay: &[u8],
+) -> usize {
+    while !contains(window, needle) && right < hay.len() {
+        if needle.contains_key(&hay[right]) {
+            *window.entry(hay[right]).or_insert(0) += 1;
+        }
+        right += 1
     }
+    right
 }
 
-impl Ord for Pair {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        other.num.cmp(&self.num).then(self.end.cmp(&other.end))
-    }
+fn contains(window: &HashMap<u8, i32>, needle: &HashMap<u8, i32>) -> bool {
+    window.len() == needle.len()
+        && needle
+            .iter()
+            .all(|(k, v)| window.get(k).is_some_and(|count| count >= v))
 }
 
 #[cfg(test)]
@@ -50,12 +79,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(range_sum(&[1, 2, 3, 4], 4, 1, 2), 3);
-        debug_assert_eq!(range_sum(&[1, 2, 3, 4], 4, 1, 5), 13);
-        debug_assert_eq!(range_sum(&[1, 2, 3, 4], 4, 3, 4), 6);
-        debug_assert_eq!(range_sum(&[1, 2, 3, 4], 4, 1, 10), 50);
+        debug_assert_eq!(min_window("ADOBECODEBANC", "ABC"), "BANC");
+        debug_assert_eq!(min_window("a", "a"), "a");
+        debug_assert_eq!(min_window("a", "aa"), "");
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(min_window("ab", "A"), "")
+    }
 }
