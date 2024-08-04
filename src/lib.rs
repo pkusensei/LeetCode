@@ -1,21 +1,21 @@
 pub fn sort_colors(nums: &mut [i32]) {
-        if nums.len() < 2 {
-            return;
+    if nums.len() < 2 {
+        return;
+    }
+    let (mut left, mut right) = (0, nums.len() - 1);
+    let mut i = 0;
+    while left < right && i <= right {
+        if nums[i] == 0 {
+            nums.swap(i, left);
+            left += 1;
+            i += 1;
+        } else if nums[i] == 2 {
+            nums.swap(i, right);
+            right -= 1;
+        } else {
+            i += 1
         }
-        let (mut left, mut right) = (0, nums.len() - 1);
-        let mut i = 0;
-        while left < right && i <= right {
-            if nums[i] == 0 {
-                nums.swap(i, left);
-                left += 1;
-                i += 1;
-            } else if nums[i] == 2 {
-                nums.swap(i, right);
-                right -= 1;
-            } else {
-                i += 1
-            }
-        }
+    }
 }
 
 #[cfg(test)]
