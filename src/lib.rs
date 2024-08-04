@@ -1,19 +1,20 @@
-pub fn combine(n: i32, k: i32) -> Vec<Vec<i32>> {
-    if k == 1 {
-        (1..=n).map(|n| vec![n]).collect()
-    } else if k < n {
-        // use n
-        combine(n - 1, k - 1)
-            .into_iter()
-            .map(|mut v| {
-                v.push(n);
-                v
-            })
-            .chain(combine(n - 1, k)) // skip n
-            .collect()
-    } else {
-        // k == n
-        vec![(1..=n).collect()]
+pub fn subsets(nums: &[i32]) -> Vec<Vec<i32>> {
+    solve(nums)
+}
+
+fn solve(nums: &[i32]) -> Vec<Vec<i32>> {
+    match nums {
+        [head] => vec![vec![], vec![*head]],
+        [head, tail @ ..] if !tail.is_empty() => {
+            let mut res = vec![];
+            for mut v in solve(tail) {
+                res.push(v.clone());
+                v.push(*head);
+                res.push(v)
+            }
+            res
+        }
+        _ => unreachable!(),
     }
 }
 
@@ -24,10 +25,19 @@ mod tests {
     #[test]
     fn basics() {
         // debug_assert_eq!(
-        //     combine(4, 2),
-        //     [[1, 2], [1, 3], [1, 4], [2, 3], [2, 4], [3, 4]]
+        //     subsets(&[1, 2, 3]),
+        //     [
+        //         vec![],
+        //         vec![1],
+        //         vec![2],
+        //         vec![1, 2],
+        //         vec![3],
+        //         vec![1, 3],
+        //         vec![2, 3],
+        //         vec![1, 2, 3]
+        //     ]
         // );
-        debug_assert_eq!(combine(1, 1), [[1]])
+        debug_assert_eq!(subsets(&[0]), [vec![], vec![0]])
     }
 
     #[test]
