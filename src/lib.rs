@@ -73,7 +73,7 @@ fn neighbors((x, y): (usize, usize)) -> impl Iterator<Item = (usize, usize)> {
         (x, y + 1),
     ]
     .into_iter()
-    .filter(move |&(nx, ny)| nx != x || ny != y)
+    .filter(move |&(nx, ny)| (nx, ny) != (x, y))
 }
 
 #[cfg(test)]
