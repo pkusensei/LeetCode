@@ -1,14 +1,14 @@
 pub fn largest_rectangle_area(heights: &[i32]) -> i32 {
-        let it = heights.iter().copied().enumerate();
-        let prevs = smallers(heights, it.clone());
-        let mut nexts = smallers(heights, it.clone().rev());
-        nexts.reverse();
+    let it = heights.iter().copied().enumerate();
+    let prevs = smallers(heights, it.clone());
+    let mut nexts = smallers(heights, it.clone().rev());
+    nexts.reverse();
 
-        it.fold(0, |acc, (idx, num)| {
-            let left = prevs[idx].unwrap_or(-1);
-            let right = nexts[idx].unwrap_or(heights.len() as i32);
-            acc.max((right - left - 1) * num)
-        })
+    it.fold(0, |acc, (idx, num)| {
+        let left = prevs[idx].unwrap_or(-1);
+        let right = nexts[idx].unwrap_or(heights.len() as i32);
+        acc.max((right - left - 1) * num)
+    })
 }
 
 fn smallers(nums: &[i32], it: impl Iterator<Item = (usize, i32)>) -> Vec<Option<i32>> {
