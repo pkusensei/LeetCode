@@ -4,40 +4,56 @@ using System.Text;
 
 Test1();
 Test2();
+Test3();
 Console.WriteLine("!!Test Passed!!");
 
 void Test1()
 {
-    ListNode n = DeleteDuplicates(ListNode.Make([1, 1, 2]));
-    var a = "[1,2]";
+    ListNode n = Partition(ListNode.Make([1, 4, 3, 2, 5, 2]), 3);
+    var a = "[1,2,2,4,3,5]";
     Debug.Assert(n.ToString() == a, $"Output: {n}\nExpect: {a}");
 }
 
 void Test2()
 {
-    ListNode n = DeleteDuplicates(ListNode.Make([1, 1, 2, 3, 3]));
-    var a = "[1,2,3]";
+    ListNode n = Partition(ListNode.Make([2, 1]), 2);
+    var a = "[1,2]";
     Debug.Assert(n.ToString() == a, $"Output: {n}\nExpect: {a}");
 }
 
-
-ListNode DeleteDuplicates(ListNode head)
+void Test3()
 {
-        if (head is null) { return head; }
+    ListNode n = Partition(ListNode.Make([4, 3, 2, 5, 2]), 3);
+    var a = "[2,2,4,3,5]";
+    Debug.Assert(n.ToString() == a, $"Output: {n}\nExpect: {a}");
+}
 
-        var curr = head;
-        while (curr is not null && curr.next is not null)
+ListNode Partition(ListNode head, int x)
+{
+    if (head is null) { return head; }
+
+    (ListNode small, ListNode large) = (new(0), new(0));
+    var (cs, cl) = (small, large);
+    while (head is not null)
+    {
+        if (head.val < x)
         {
-            if (curr.val == curr.next.val)
-            {
-                curr.next = curr.next.next;
-            }
-            else
-            {
-                curr = curr.next;
-            }
+            cs.next = head;
+            cs = cs.next;
+            head = head.next;
+            cs.next = null;
         }
-        return head;
+        else
+        {
+            cl.next = head;
+            cl = cl.next;
+            head = head.next;
+            cl.next = null;
+        }
+    }
+    cs.next = large.next;
+
+    return small.next;
 }
 
 class ListNode : IEnumerable<int>
