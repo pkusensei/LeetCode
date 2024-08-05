@@ -8,56 +8,41 @@ Console.WriteLine("!!Test Passed!!");
 
 void Test1()
 {
-    ListNode n = RotateRight(ListNode.Make([1, 2, 3, 4, 5]), 2);
-    var a = "[4,5,1,2,3]";
+    ListNode n = DeleteDuplicates(ListNode.Make([1, 2, 3, 3, 4, 4, 5]));
+    var a = "[1,2,5]";
     Debug.Assert(n.ToString() == a, $"Output: {n}\nExpect: {a}");
 }
 
 void Test2()
 {
-    ListNode n = RotateRight(ListNode.Make([0, 1, 2]), 4);
-    var a = "[2,0,1]";
+    ListNode n = DeleteDuplicates(ListNode.Make([1, 1, 1, 2, 3]));
+    var a = "[2,3]";
     Debug.Assert(n.ToString() == a, $"Output: {n}\nExpect: {a}");
 }
 
 
-ListNode RotateRight(ListNode head, int k)
+ListNode DeleteDuplicates(ListNode head)
 {
     ListNode dummy = new(0, head);
-    var length = Length(dummy);
-    if (length < 2)
+    var (slow, fast) = (dummy, dummy.next);
+    while (fast is not null)
     {
-        return head;
-    }
-
-    k %= length;
-    for (int i = 0; i < k; i++)
-    {
-        var tail = dummy.next;
-        var prev = dummy;
-        while (tail.next is not null)
+        while (fast.next is not null && fast.val == fast.next.val)
         {
-            // 1 -> 2
-            prev = tail;
-            tail = tail.next;
+            fast = fast.next;
         }
-        prev.next = null;
-        tail.next = dummy.next;
-        dummy.next = tail;
-    }
 
+        if (slow.next == fast)
+        {
+            slow = slow.next;
+        }
+        else
+        {
+            slow.next = fast.next;
+        }
+        fast = fast.next;
+    }
     return dummy.next;
-}
-
-int Length(ListNode dummy)
-{
-    var count = 0;
-    while (dummy.next is not null)
-    {
-        dummy = dummy.next;
-        count += 1;
-    }
-    return count;
 }
 
 class ListNode : IEnumerable<int>
