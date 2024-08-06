@@ -24,4 +24,40 @@ public class TreeNode
         }
         return res;
     }
+
+    public static List<TreeNode> GenerateTrees(int n)
+    {
+        return Solve(1, n, []);
+
+        static List<TreeNode> Solve(int start, int end, Dictionary<(int, int), List<TreeNode>> seen)
+        {
+            if (start > end)
+            {
+                return [null];
+            }
+
+            if (seen.TryGetValue((start, end), out var trees))
+            {
+                return trees;
+            }
+
+            List<TreeNode> res = [];
+            for (int curr = start; curr <= end; curr++)
+            {
+                var leftTree = Solve(start, curr - 1, seen);
+                var rightTree = Solve(curr + 1, end, seen);
+                foreach (var left in leftTree)
+                {
+                    foreach (var right in rightTree)
+                    {
+                        TreeNode root = new(curr, left, right);
+                        res.Add(root);
+                    }
+                }
+            }
+            seen.Add((start, end), res);
+            return res;
+        }
+
+    }
 }
