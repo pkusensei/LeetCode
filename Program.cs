@@ -4,56 +4,42 @@ using System.Text;
 
 Test1();
 Test2();
-Test3();
 Console.WriteLine("!!Test Passed!!");
 
 void Test1()
 {
-    ListNode n = Partition(ListNode.Make([1, 4, 3, 2, 5, 2]), 3);
-    var a = "[1,2,2,4,3,5]";
+    ListNode n = ReverseBetween(ListNode.Make([1, 2, 3, 4, 5]), 2, 4);
+    var a = "[1,4,3,2,5]";
     Debug.Assert(n.ToString() == a, $"Output: {n}\nExpect: {a}");
 }
 
 void Test2()
 {
-    ListNode n = Partition(ListNode.Make([2, 1]), 2);
-    var a = "[1,2]";
+    ListNode n = ReverseBetween(ListNode.Make([5]), 1, 1);
+    var a = "[5]";
     Debug.Assert(n.ToString() == a, $"Output: {n}\nExpect: {a}");
 }
 
-void Test3()
+
+ListNode ReverseBetween(ListNode head, int left, int right)
 {
-    ListNode n = Partition(ListNode.Make([4, 3, 2, 5, 2]), 3);
-    var a = "[2,2,4,3,5]";
-    Debug.Assert(n.ToString() == a, $"Output: {n}\nExpect: {a}");
-}
+        if (head is null || left == right) { return head; }
 
-ListNode Partition(ListNode head, int x)
-{
-    if (head is null) { return head; }
-
-    (ListNode small, ListNode large) = (new(0), new(0));
-    var (cs, cl) = (small, large);
-    while (head is not null)
-    {
-        if (head.val < x)
+        ListNode dummy = new(0, head);
+        var prev = dummy;
+        for (int i = 0; i < left - 1; i++)
         {
-            cs.next = head;
-            cs = cs.next;
-            head = head.next;
-            cs.next = null;
+            prev = prev.next;
         }
-        else
+        var curr = prev.next;
+        for (int i = 0; i < right - left; i++)
         {
-            cl.next = head;
-            cl = cl.next;
-            head = head.next;
-            cl.next = null;
+            var temp = curr.next;
+            curr.next = temp.next;
+            temp.next = prev.next;
+            prev.next = temp;
         }
-    }
-    cs.next = large.next;
-
-    return small.next;
+        return dummy.next;
 }
 
 class ListNode : IEnumerable<int>
