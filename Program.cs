@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Text;
 
 Test1();
 Test2();
@@ -7,24 +6,25 @@ Console.WriteLine("!!Test Passed!!");
 
 void Test1()
 {
-    TreeNode p = TreeNode.Make([1, 2, 3]);
-    TreeNode q = TreeNode.Make([1, 2, 3]);
-    Debug.Assert(IsSameTree(p, q));
+    TreeNode n = TreeNode.Make([1, 2, 2, 3, 4, 4, 3]);
+    Debug.Assert(IsSymmetric(n));
 }
 
 void Test2()
 {
-    TreeNode p = TreeNode.Make([1, 2, 1]);
-    TreeNode q = TreeNode.Make([1, 1, 2]);
-    Debug.Assert(!IsSameTree(p, q));
+    TreeNode n = TreeNode.Make([1, 2, 2, null, 3, null, 3]);
+    Debug.Assert(!IsSymmetric(n));
 }
 
-bool IsSameTree(TreeNode p, TreeNode q)
+bool IsSymmetric(TreeNode root)
 {
-    if (p is null && q is null) { return true; }
-    else if (p is null && q is not null || p is not null && q is null) { return false; }
-    else
-    {
-        return p.val == q.val && IsSameTree(p.left, q.left) && IsSameTree(p.right, q.right);
-    }
+    if (root is null) { return true; }
+    return Solve(root.left, root.right);
+}
+
+bool Solve(TreeNode left, TreeNode right)
+{
+    if (left is null && right is null) { return true; }
+    if (left is null && right is not null || left is not null && right is null) { return false; }
+    return left.val == right.val && Solve(left.left, right.right) && Solve(left.right, right.left);
 }
