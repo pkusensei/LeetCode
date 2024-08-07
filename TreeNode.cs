@@ -58,6 +58,32 @@ public class TreeNode
         return res;
     }
 
+    public static TreeNode Make(IList<int?> values)
+    {
+        if (values.Count == 0 || !values[0].HasValue) { return null; }
+
+        TreeNode root = new(values[0].Value);
+        var queue = new Queue<TreeNode>();
+        queue.Enqueue(root);
+        var i = 1;
+        while (queue.TryDequeue(out var curr) && i < values.Count)
+        {
+            if (i < values.Count && values[i].HasValue)
+            {
+                curr.left = new TreeNode(values[i].Value);
+                queue.Enqueue(curr.left);
+            }
+            i += 1;
+            if (i < values.Count && values[i].HasValue)
+            {
+                curr.right = new TreeNode(values[i].Value);
+                queue.Enqueue(curr.right);
+            }
+            i += 1;
+        }
+        return root;
+    }
+
     public static List<TreeNode> GenerateTrees(int n)
     {
         return Solve(1, n, []);
@@ -91,6 +117,5 @@ public class TreeNode
             seen.Add((start, end), res);
             return res;
         }
-
     }
 }

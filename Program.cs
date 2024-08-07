@@ -7,7 +7,7 @@ Console.WriteLine("!!Test Passed!!");
 
 void Test1()
 {
-    TreeNode n = new(1, new(3, null, new(2)));
+    TreeNode n = TreeNode.Make([1, 3, null, null, 2]);
     RecoverTree(n);
     var a = "[3,1,null,null,2]";
     Debug.Assert(n.ToString() == a, $"Output: {n}\nExpect: {a}");
@@ -15,9 +15,9 @@ void Test1()
 
 void Test2()
 {
-    TreeNode n = new(5, new(3, new(-2147483648), new(2)), new(9));
+    TreeNode n = TreeNode.Make([3, 1, 4, null, null, 2]);
     RecoverTree(n);
-    var a = "[5,2,9,-2147483648,3]";
+    var a = "[2,1,4,null,null,3]";
     Debug.Assert(n.ToString() == a, $"Output: {n}\nExpect: {a}");
 
 }
