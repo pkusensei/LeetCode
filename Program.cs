@@ -6,33 +6,60 @@ Console.WriteLine("!!Test Passed!!");
 
 void Test1()
 {
-    var n = BuildTree([9, 3, 15, 20, 7], [9, 15, 7, 20, 3]);
-    var a = "[3,9,20,null,null,15,7]";
+    var n = LevelOrderBottom(TreeNode.Make([3, 9, 20, null, null, 15, 7]));
+    var a = "[[15,7],[9,20],[3]]";
     Debug.Assert(n.ToString() == a, $"Expect: {n}\nOutput: {a}");
 }
 
 void Test2()
 {
-    var n = BuildTree([-1], [-1]);
-    var a = "[-1]";
+    var n = LevelOrderBottom(TreeNode.Make([1]));
+    var a = "[[1]]";
     Debug.Assert(n.ToString() == a, $"Expect: {n}\nOutput: {a}");
 }
 
-TreeNode BuildTree(int[] inorder, int[] postorder)
+IList<IList<int>> LevelOrderBottom(TreeNode root)
 {
-    if (postorder.Length == 0 || inorder.Length == 0) { return null; }
-    var root = new TreeNode(postorder.Last());
-    if (postorder.Length == 1) { return root; }
+    var res = new List<IList<int>>();
+    if (root is null) { return res; }
 
-    var root_idx = Array.FindIndex(inorder, num => num == root.val);
+    var curr_level = 0;
+    var curr = new List<int>();
+    foreach (var (node, level) in PreorderFlatten(root))
+    {
+        if (level == curr_level)
+        {
+            if (node is not null) { curr.Add(node.val); }
+        }
+        else
+        {
+            curr_level = level;
+            res.Add(curr);
+            curr = [];
+            if (node is not null) { curr.Add(node.val); }
+        }
+    }
+    if (curr.Count > 0) { res.Add(curr); }
+    res.Reverse();
+    return res;
+}
 
-    var left_in = inorder.Take(root_idx).ToArray();
-    var right_in = inorder.Skip(root_idx + 1).ToArray();
-    var left_post = postorder.SkipLast(1).Where(num => left_in.Contains(num)).ToArray();
-    var right_post = postorder.SkipLast(1).Where(num => right_in.Contains(num)).ToArray();
-
-    root.left = BuildTree(left_in, left_post);
-    root.right = BuildTree(right_in, right_post);
-
-    return root;
+IEnumerable<(TreeNode node, int level)> PreorderFlatten(TreeNode root)
+{
+    var queue = new Queue<(TreeNode, int)>();
+    queue.Enqueue((root, 0));
+    while (queue.TryDequeue(out var item))
+    {
+        var (node, level) = item;
+        if (node is not null)
+        {
+            yield return item;
+            queue.Enqueue((node.left, level + 1));
+            queue.Enqueue((node.right, level + 1));
+        }
+        else
+        {
+            yield return item;
+        }
+    }
 }
