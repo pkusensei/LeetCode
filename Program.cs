@@ -7,18 +7,37 @@ Console.WriteLine("!!Test Passed!!");
 
 void Test1()
 {
-    var n = Print(GenerateTrees(3));
-    var a = "[1,3,2]";
-    Debug.Assert(n.ToString() == a, $"Output: {n}\nExpect: {a}");
+    var n = NumTrees(3);
+    var a = 5;
+    Debug.Assert(n == a, $"Output: {n}\nExpect: {a}");
 }
 
 void Test2()
 {
 }
 
-IList<TreeNode> GenerateTrees(int n)
+int NumTrees(int n)
 {
-    return TreeNode.GenerateTrees(n);
+    var values = new int[n + 1];
+    values[0] = 1;
+    values[1] = 1;
+    return Solve(n, values);
+}
+
+int Solve(int n, int[] values)
+{
+    if (values[n] != 0)
+    {
+        return values[n];
+    }
+
+    var res = 0;
+    for (int i = 0; i < n; i++)
+    {
+        res += Solve(i, values) * Solve(n - i - 1, values);
+    }
+    values[n] = res;
+    return res;
 }
 
 string Print<T>(IList<T> values)
