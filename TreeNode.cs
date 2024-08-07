@@ -1,3 +1,5 @@
+using System.Text;
+
 public class TreeNode
 {
     public int val;
@@ -10,17 +12,48 @@ public class TreeNode
         this.right = right;
     }
 
-    public List<int> InorderTrav()
+    public override string ToString()
     {
-        List<int> res = [];
-        if (left is not null)
+        var sb = new StringBuilder();
+        sb.Append('[');
+        foreach (var item in InorderFlatten())
         {
-            res.AddRange(left.InorderTrav());
+            if (item is not null)
+            {
+                sb.AppendFormat($"{item.val},");
+            }
+            else
+            {
+                sb.Append("null,");
+            }
         }
-        res.Add(val);
-        if (right is not null)
+        sb.Remove(sb.Length - 1, 1);
+        sb.Append(']');
+
+        return sb.ToString();
+    }
+
+    public List<TreeNode> InorderFlatten()
+    {
+        var queue = new Queue<TreeNode>();
+        queue.Enqueue(this);
+        List<TreeNode> res = [];
+        while (queue.TryDequeue(out var node))
         {
-            res.AddRange(right.InorderTrav());
+            if (node is not null)
+            {
+                res.Add(node);
+                queue.Enqueue(node.left);
+                queue.Enqueue(node.right);
+            }
+            else
+            {
+                res.Add(null);
+            }
+        }
+        while (res.Last() is null)
+        {
+            res.RemoveAt(res.Count - 1);
         }
         return res;
     }
