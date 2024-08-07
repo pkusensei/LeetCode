@@ -7,51 +7,24 @@ Console.WriteLine("!!Test Passed!!");
 
 void Test1()
 {
-    TreeNode n = TreeNode.Make([1, 3, null, null, 2]);
-    RecoverTree(n);
-    var a = "[3,1,null,null,2]";
-    Debug.Assert(n.ToString() == a, $"Output: {n}\nExpect: {a}");
+    TreeNode p = TreeNode.Make([1, 2, 3]);
+    TreeNode q = TreeNode.Make([1, 2, 3]);
+    Debug.Assert(IsSameTree(p, q));
 }
 
 void Test2()
 {
-    TreeNode n = TreeNode.Make([3, 1, 4, null, null, 2]);
-    RecoverTree(n);
-    var a = "[2,1,4,null,null,3]";
-    Debug.Assert(n.ToString() == a, $"Output: {n}\nExpect: {a}");
-
+    TreeNode p = TreeNode.Make([1, 2, 1]);
+    TreeNode q = TreeNode.Make([1, 1, 2]);
+    Debug.Assert(!IsSameTree(p, q));
 }
 
-void RecoverTree(TreeNode root)
+bool IsSameTree(TreeNode p, TreeNode q)
 {
-    (TreeNode fst, TreeNode snd) = (null, null);
-    TreeNode prev = new(int.MinValue);
-    Solve(root, ref fst, ref snd, ref prev);
-    (snd.val, fst.val) = (fst.val, snd.val);
-}
-
-void Solve(TreeNode node, ref TreeNode fst, ref TreeNode snd, ref TreeNode prev)
-{
-    if (node is null) { return; }
-
-    Solve(node.left, ref fst, ref snd, ref prev);
-    if (fst is null && prev.val > node.val)
+    if (p is null && q is null) { return true; }
+    else if (p is null && q is not null || p is not null && q is null) { return false; }
+    else
     {
-        fst = prev;
+        return p.val == q.val && IsSameTree(p.left, q.left) && IsSameTree(p.right, q.right);
     }
-    if (fst is not null && prev.val > node.val)
-    {
-        snd = node;
-    }
-    prev = node;
-    Solve(node.right, ref fst, ref snd, ref prev);
-}
-
-string Print<T>(IList<T> values)
-{
-    var sb = new StringBuilder();
-    sb.Append('[');
-    sb.AppendJoin(',', values);
-    sb.Append([']']);
-    return sb.ToString();
 }
