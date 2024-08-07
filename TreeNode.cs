@@ -16,7 +16,13 @@ public class TreeNode
     {
         var sb = new StringBuilder();
         sb.Append('[');
-        foreach (var item in InorderFlatten())
+        var nodes = InorderFlatten().ToList();
+        while (nodes.Last() is null)
+        {
+            nodes.RemoveAt(nodes.Count - 1);
+        }
+
+        foreach (var item in nodes)
         {
             if (item is not null)
             {
@@ -33,29 +39,23 @@ public class TreeNode
         return sb.ToString();
     }
 
-    public List<TreeNode> InorderFlatten()
+    public IEnumerable<TreeNode> InorderFlatten()
     {
         var queue = new Queue<TreeNode>();
         queue.Enqueue(this);
-        List<TreeNode> res = [];
         while (queue.TryDequeue(out var node))
         {
             if (node is not null)
             {
-                res.Add(node);
+                yield return node;
                 queue.Enqueue(node.left);
                 queue.Enqueue(node.right);
             }
             else
             {
-                res.Add(null);
+                yield return null;
             }
         }
-        while (res.Last() is null)
-        {
-            res.RemoveAt(res.Count - 1);
-        }
-        return res;
     }
 
     public static TreeNode Make(IList<int?> values)
