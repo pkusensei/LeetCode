@@ -6,27 +6,33 @@ Console.WriteLine("!!Test Passed!!");
 
 void Test1()
 {
-    TreeNode n = TreeNode.Make([3, 9, 20, null, null, 15, 7]);
-    var s = MaxDepth(n);
-    var a = 3;
-    Debug.Assert(s == a, $"Expect: {s}\nOutput: {a}");
+    var n = BuildTree([3, 9, 20, 15, 7], [9, 3, 15, 20, 7]);
+    var a = "[3,9,20,null,null,15,7]";
+    Debug.Assert(n.ToString() == a, $"Expect: {n}\nOutput: {a}");
 }
 
 void Test2()
 {
-    TreeNode n = TreeNode.Make([1, null, 2]);
-    var s = MaxDepth(n);
-    var a = 2;
-    Debug.Assert(s == a, $"Expect: {s}\nOutput: {a}");
+    var n = BuildTree([-1], [-1]);
+    var a = "[-1]";
+    Debug.Assert(n.ToString() == a, $"Expect: {n}\nOutput: {a}");
 }
 
-int MaxDepth(TreeNode root)
+TreeNode BuildTree(int[] preorder, int[] inorder)
 {
-    return Dfs(root, 1);
-}
+    if (preorder.Length == 0 || inorder.Length == 0) { return null; }
+    var root = new TreeNode(preorder[0]);
+    if (preorder.Length == 1) { return root; }
 
-int Dfs(TreeNode root, int depth)
-{
-    if (root is null) { return depth - 1; }
-    return Math.Max(Dfs(root.left, depth + 1), Dfs(root.right, depth + 1));
+    var root_idx = Array.FindIndex(inorder, num => num == preorder[0]);
+
+    var left_in = inorder.Take(root_idx).ToArray();
+    var right_in = inorder.Skip(root_idx + 1).ToArray();
+    var left_pre = preorder.Skip(1).Where(num => left_in.Contains(num)).ToArray();
+    var right_pre = preorder.Skip(1).Where(num => right_in.Contains(num)).ToArray();
+
+    root.left = BuildTree(left_pre, left_in);
+    root.right = BuildTree(right_pre, right_in);
+
+    return root;
 }

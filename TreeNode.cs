@@ -16,7 +16,7 @@ public class TreeNode
     {
         var sb = new StringBuilder();
         sb.Append('[');
-        var nodes = InorderFlatten().ToList();
+        var nodes = PreorderFlatten().ToList();
         while (nodes.Last() is null)
         {
             nodes.RemoveAt(nodes.Count - 1);
@@ -39,7 +39,7 @@ public class TreeNode
         return sb.ToString();
     }
 
-    public IEnumerable<TreeNode> InorderFlatten()
+    public IEnumerable<TreeNode> PreorderFlatten()
     {
         var queue = new Queue<TreeNode>();
         queue.Enqueue(this);
