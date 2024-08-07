@@ -7,37 +7,30 @@ Console.WriteLine("!!Test Passed!!");
 
 void Test1()
 {
-    var n = NumTrees(3);
-    var a = 5;
-    Debug.Assert(n == a, $"Output: {n}\nExpect: {a}");
+    TreeNode n = new(5, new(4), new(6, new(3), new(7)));
+    Debug.Assert(!IsValidBST(n));
 }
 
 void Test2()
 {
+    TreeNode n = new(2, new(1), new(3));
+    Debug.Assert(IsValidBST(n));
 }
 
-int NumTrees(int n)
+bool IsValidBST(TreeNode root)
 {
-    var values = new int[n + 1];
-    values[0] = 1;
-    values[1] = 1;
-    return Solve(n, values);
+    return Solve(root, long.MinValue, long.MaxValue);
 }
 
-int Solve(int n, int[] values)
+bool Solve(TreeNode root, long small, long large)
 {
-    if (values[n] != 0)
-    {
-        return values[n];
-    }
+    if (root is null) { return true; }
 
-    var res = 0;
-    for (int i = 0; i < n; i++)
+    if (small < root.val && root.val < large)
     {
-        res += Solve(i, values) * Solve(n - i - 1, values);
+        return Solve(root.left, small, root.val) && Solve(root.right, root.val, large);
     }
-    values[n] = res;
-    return res;
+    return false;
 }
 
 string Print<T>(IList<T> values)
