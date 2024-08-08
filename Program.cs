@@ -2,42 +2,47 @@
 
 Test1();
 Test2();
-Test3();
 Console.WriteLine("!!Test Passed!!");
 
 void Test1()
 {
     var n = TreeNode.Make([3, 9, 20, null, null, 15, 7]);
-    Debug.Assert(IsBalanced(n));
+    var s = MinDepth(n);
+    var a = 2;
+    Debug.Assert(s == a, $"Output: {s}\nExpected:{a}");
 }
 
 void Test2()
 {
-    var n = TreeNode.Make([1, 2, 2, 3, 3, null, null, 4, 4]);
-    Debug.Assert(!IsBalanced(n));
+    var n = TreeNode.Make([2, null, 3, null, 4, null, 5, null, 6]);
+    var s = MinDepth(n);
+    var a = 5;
+    Debug.Assert(s == a, $"Output: {s}\nExpected:{a}");
 }
 
-void Test3()
+int MinDepth(TreeNode root)
 {
-    TreeNode n = null;
-    Debug.Assert(IsBalanced(n));
-}
+    if (root is null) { return 0; }
 
-bool IsBalanced(TreeNode root)
-{
-    return Solve(root, 0).Item1;
-}
-
-(bool, int) Solve(TreeNode root, int depth)
-{
-    if (root is null) { return (true, depth); }
-    (var l, var ldepth) = Solve(root.left, depth + 1);
-    (var r, var rdepth) = Solve(root.right, depth + 1);
-    var maxDepth = Math.Max(ldepth, rdepth);
-    if (l && r)
+    var queue = new Queue<(TreeNode, int)>();
+    queue.Enqueue((root, 1));
+    while (queue.TryDequeue(out var item))
     {
-        if (Math.Abs(ldepth - rdepth) <= 1) { return (true, maxDepth); }
-        else { return (false, maxDepth); }
+        (var node, int depth) = item;
+        if (node.left is null && node.right is null)
+        {
+            return depth;
+        }
+        if (node.left is not null)
+        {
+            queue.Enqueue((node.left, depth + 1));
+        }
+        if (node.right is not null)
+        {
+            queue.Enqueue((node.right, depth + 1));
+        }
+
     }
-    else { return (false, maxDepth); }
+    return 0;
 }
+
