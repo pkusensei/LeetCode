@@ -2,59 +2,42 @@
 
 Test1();
 Test2();
+Test3();
 Console.WriteLine("!!Test Passed!!");
 
 void Test1()
 {
-    var n = SortedListToBST(ListNode.Make([-10, -3, 0, 5, 9]));
-    var a = "[0,-3,9,-10,null,5]";
-    Debug.Assert(n.ToString() == a, $"Expect: {n}\nOutput: {a}");
+    var n = TreeNode.Make([3, 9, 20, null, null, 15, 7]);
+    Debug.Assert(IsBalanced(n));
 }
 
 void Test2()
 {
-    var n = SortedListToBST(ListNode.Make([]));
-    Debug.Assert(n is null);
+    var n = TreeNode.Make([1, 2, 2, 3, 3, null, null, 4, 4]);
+    Debug.Assert(!IsBalanced(n));
 }
 
-TreeNode SortedListToBST(ListNode head)
+void Test3()
 {
-    if (head is null) { return null; }
-    if (head.next is null) { return new(head.val); }
+    TreeNode n = null;
+    Debug.Assert(IsBalanced(n));
+}
 
-    ListNode dummy = new(0, head);
-    (var slow, var fast) = (dummy, dummy);
-    var step = 0;
-    while (fast.next is not null)
+bool IsBalanced(TreeNode root)
+{
+    return Solve(root, 0).Item1;
+}
+
+(bool, int) Solve(TreeNode root, int depth)
+{
+    if (root is null) { return (true, depth); }
+    (var l, var ldepth) = Solve(root.left, depth + 1);
+    (var r, var rdepth) = Solve(root.right, depth + 1);
+    var maxDepth = Math.Max(ldepth, rdepth);
+    if (l && r)
     {
-        fast = fast.next;
-        step += 1;
-        if (step == 2)
-        {
-            slow = slow.next;
-            step = 0;
-        }
+        if (Math.Abs(ldepth - rdepth) <= 1) { return (true, maxDepth); }
+        else { return (false, maxDepth); }
     }
-    var temp = slow.next;
-    slow.next = null;
-    var root = new TreeNode()
-    {
-        val = temp.val,
-        left = SortedListToBST(dummy.next),
-        right = SortedListToBST(temp.next)
-    };
-    return root;
-}
-
-TreeNode Solve(int[] nums, int left, int right)
-{
-    if (left == right) { return null; }
-    if (left + 1 == right) { return new(nums[left]); }
-    var mid = (right - left) / 2 + left;
-    return new()
-    {
-        val = nums[mid],
-        left = Solve(nums, left, mid),
-        right = Solve(nums, mid + 1, right)
-    };
+    else { return (false, maxDepth); }
 }
