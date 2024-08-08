@@ -1,27 +1,58 @@
-pub fn is_interleave(s1: &str, s2: &str, s3: &str) -> bool {
-    if s1.len() + s2.len() != s3.len() {
-        return false;
-    }
+pub fn spiral_matrix_iii(rows: i32, cols: i32, r_start: i32, c_start: i32) -> Vec<Vec<i32>> {
+        const SIDE: i32 = 2;
+        let mut turn = 1;
+        let mut res = Vec::with_capacity((rows * cols) as usize);
+        let mut dir = Dir::East;
+        let mut curr = [r_start, c_start];
+        res.push(curr);
+        let mut step = 0;
+        let mut side = 0;
 
-    let mut dp = vec![vec![false; s2.len() + 1]; s1.len() + 1];
-    dp[0][0] = true;
-    for (i1, (b1, b3)) in s1.bytes().zip(s3.bytes()).enumerate() {
-        dp[i1 + 1][0] = dp[i1][0] && b1 == b3;
-    }
-    for (i2, (b2, b3)) in s2.bytes().zip(s3.bytes()).enumerate() {
-        dp[0][i2 + 1] = dp[0][i2] && b2 == b3;
-    }
+        while res.len() < (rows * cols) as usize {
+            curr = dir.walk(curr);
+            if (0..rows).contains(&curr[0]) && (0..cols).contains(&curr[1]) {
+                res.push(curr);
+            }
+            step += 1;
+            if step == turn {
+                step = 0;
+                side += 1;
+                dir = dir.turn();
+                if side == SIDE {
+                    side = 0;
+                    turn += 1
+                }
+            }
+        }
+        res.into_iter().map(|v| v.into()).collect()
+}
 
-    for (i1, b1) in s1.bytes().enumerate().map(|(i, b)| (i + 1, b)) {
-        for (i2, b2) in s2.bytes().enumerate().map(|(i, b)| (i + 1, b)) {
-            // start with s3[1] because
-            // dp[0][..] and dp[..][0] have compared s1[0] and s2[0] against s3[0]
-            // s3[0] option is already exhausted
-            let b3 = s3.as_bytes()[i1 + i2 - 1];
-            dp[i1][i2] = (dp[i1 - 1][i2] && b1 == b3) || (dp[i1][i2 - 1] && b2 == b3);
+#[derive(Debug, Clone, Copy)]
+enum Dir {
+    East,
+    South,
+    West,
+    North,
+}
+
+impl Dir {
+    fn turn(self) -> Self {
+        match self {
+            Dir::East => Self::South,
+            Dir::South => Self::West,
+            Dir::West => Self::North,
+            Dir::North => Self::East,
         }
     }
-    dp[s1.len()][s2.len()]
+
+    fn walk(self, [row, col]: [i32; 2]) -> [i32; 2] {
+        match self {
+            Dir::East => [row, col + 1],
+            Dir::South => [row + 1, col],
+            Dir::West => [row, col - 1],
+            Dir::North => [row - 1, col],
+        }
+    }
 }
 
 #[cfg(test)]
@@ -30,9 +61,21 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(is_interleave("aabcc", "dbbca", "aadbbcbcac"), true);
-        debug_assert_eq!(is_interleave("aabcc", "dbbca", "aadbbbaccc"), false);
-        debug_assert_eq!(is_interleave("", "", ""), true);
+        debug_assert_eq!(
+            spiral_matrix_iii(1, 4, 0, 0),
+            [[0, 0], [0, 1], [0, 2], [0, 3]]
+        );
+        #[rustfmt::skip]
+        debug_assert_eq!(
+            spiral_matrix_iii(5, 6, 1, 4),
+            [
+                [1, 4], [1, 5], [2, 5], [2, 4], [2, 3], [1, 3],
+                [0, 3], [0, 4], [0, 5], [3, 5], [3, 4], [3, 3], 
+                [3, 2], [2, 2], [1, 2], [0, 2], [4, 5], [4, 4], 
+                [4, 3], [4, 2], [4, 1], [3, 1], [2, 1], [1, 1],
+                [0, 1], [4, 0], [3, 0], [2, 0], [1, 0], [0, 0]
+            ]
+        );
     }
 
     #[test]
