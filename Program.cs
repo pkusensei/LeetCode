@@ -6,60 +6,32 @@ Console.WriteLine("!!Test Passed!!");
 
 void Test1()
 {
-    var n = LevelOrderBottom(TreeNode.Make([3, 9, 20, null, null, 15, 7]));
-    var a = "[[15,7],[9,20],[3]]";
+    var n = SortedArrayToBST([-10, -3, 0, 5, 9]);
+    var a = "[0,-3,9,-10,null,5]";
     Debug.Assert(n.ToString() == a, $"Expect: {n}\nOutput: {a}");
 }
 
 void Test2()
 {
-    var n = LevelOrderBottom(TreeNode.Make([1]));
-    var a = "[[1]]";
+    var n = SortedArrayToBST([1, 3]);
+    var a = "[3,1]";
     Debug.Assert(n.ToString() == a, $"Expect: {n}\nOutput: {a}");
 }
 
-IList<IList<int>> LevelOrderBottom(TreeNode root)
+TreeNode SortedArrayToBST(int[] nums)
 {
-    var res = new List<IList<int>>();
-    if (root is null) { return res; }
-
-    var curr_level = 0;
-    var curr = new List<int>();
-    foreach (var (node, level) in PreorderFlatten(root))
-    {
-        if (level == curr_level)
-        {
-            if (node is not null) { curr.Add(node.val); }
-        }
-        else
-        {
-            curr_level = level;
-            res.Add(curr);
-            curr = [];
-            if (node is not null) { curr.Add(node.val); }
-        }
-    }
-    if (curr.Count > 0) { res.Add(curr); }
-    res.Reverse();
-    return res;
+    return Solve(nums, 0, nums.Length);
 }
 
-IEnumerable<(TreeNode node, int level)> PreorderFlatten(TreeNode root)
+TreeNode Solve(int[] nums, int left, int right)
 {
-    var queue = new Queue<(TreeNode, int)>();
-    queue.Enqueue((root, 0));
-    while (queue.TryDequeue(out var item))
+    if (left == right) { return null; }
+    if (left + 1 == right) { return new(nums[left]); }
+    var mid = (right - left) / 2 + left;
+    return new()
     {
-        var (node, level) = item;
-        if (node is not null)
-        {
-            yield return item;
-            queue.Enqueue((node.left, level + 1));
-            queue.Enqueue((node.right, level + 1));
-        }
-        else
-        {
-            yield return item;
-        }
-    }
+        val = nums[mid],
+        left = Solve(nums, left, mid),
+        right = Solve(nums, mid + 1, right)
+    };
 }
