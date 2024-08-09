@@ -7,6 +7,13 @@ pub fn generate(num_rows: i32) -> Vec<Vec<i32>> {
         .collect()
 }
 
+pub fn get_row(row_index: i32) -> Vec<i32> {
+        let mut seen = HashMap::new();
+        (0..=row_index)
+            .map(|k| n_choose_k(row_index, k, &mut seen))
+            .collect()
+}
+
 fn n_choose_k(n: i32, k: i32, seen: &mut HashMap<(i32, i32), i32>) -> i32 {
     if k == 0 || k == n {
         1
@@ -37,6 +44,10 @@ mod tests {
             ]
         );
         debug_assert_eq!(generate(1), [[1]]);
+
+        debug_assert_eq!(get_row(3), [1, 3, 3, 1]);
+        debug_assert_eq!(get_row(0), [1]);
+        debug_assert_eq!(get_row(1), [1, 1]);
     }
 
     #[test]
