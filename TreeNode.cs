@@ -1,15 +1,54 @@
 using System.Text;
 
-public class TreeNode
+public abstract class NodeBase<T> where T : NodeBase<T>, new()
 {
     public int val;
-    public TreeNode left;
-    public TreeNode right;
-    public TreeNode(int val = 0, TreeNode left = null, TreeNode right = null)
+    public T left;
+    public T right;
+
+    public IEnumerable<T> PreorderFlatten()
     {
-        this.val = val;
-        this.left = left;
-        this.right = right;
+        var queue = new Queue<T>();
+        queue.Enqueue((T)this);
+        while (queue.TryDequeue(out var node))
+        {
+            if (node is not null)
+            {
+                yield return node;
+                queue.Enqueue(node.left);
+                queue.Enqueue(node.right);
+            }
+            else
+            {
+                yield return null;
+            }
+        }
+    }
+
+    public static T Make(IList<int?> values)
+    {
+        if (values.Count == 0 || !values[0].HasValue) { return null; }
+
+        T root = new() { val = values[0].Value };
+        var queue = new Queue<T>();
+        queue.Enqueue(root);
+        var i = 1;
+        while (queue.TryDequeue(out var curr) && i < values.Count)
+        {
+            if (i < values.Count && values[i].HasValue)
+            {
+                curr.left = new T { val = values[i].Value };
+                queue.Enqueue(curr.left);
+            }
+            i += 1;
+            if (i < values.Count && values[i].HasValue)
+            {
+                curr.right = new() { val = values[i].Value };
+                queue.Enqueue(curr.right);
+            }
+            i += 1;
+        }
+        return root;
     }
 
     public override string ToString()
@@ -38,50 +77,16 @@ public class TreeNode
 
         return sb.ToString();
     }
+}
 
-    public IEnumerable<TreeNode> PreorderFlatten()
+public class TreeNode : NodeBase<TreeNode>
+{
+    public TreeNode() { }
+    public TreeNode(int val = 0, TreeNode left = null, TreeNode right = null)
     {
-        var queue = new Queue<TreeNode>();
-        queue.Enqueue(this);
-        while (queue.TryDequeue(out var node))
-        {
-            if (node is not null)
-            {
-                yield return node;
-                queue.Enqueue(node.left);
-                queue.Enqueue(node.right);
-            }
-            else
-            {
-                yield return null;
-            }
-        }
-    }
-
-    public static TreeNode Make(IList<int?> values)
-    {
-        if (values.Count == 0 || !values[0].HasValue) { return null; }
-
-        TreeNode root = new(values[0].Value);
-        var queue = new Queue<TreeNode>();
-        queue.Enqueue(root);
-        var i = 1;
-        while (queue.TryDequeue(out var curr) && i < values.Count)
-        {
-            if (i < values.Count && values[i].HasValue)
-            {
-                curr.left = new TreeNode(values[i].Value);
-                queue.Enqueue(curr.left);
-            }
-            i += 1;
-            if (i < values.Count && values[i].HasValue)
-            {
-                curr.right = new TreeNode(values[i].Value);
-                queue.Enqueue(curr.right);
-            }
-            i += 1;
-        }
-        return root;
+        this.val = val;
+        this.left = left;
+        this.right = right;
     }
 
     public static List<TreeNode> GenerateTrees(int n)
@@ -117,5 +122,19 @@ public class TreeNode
             seen.Add((start, end), res);
             return res;
         }
+    }
+}
+
+public class Node : NodeBase<Node>
+{
+    public Node next;
+    public Node() { }
+    public Node(int _val) { val = _val; }
+    public Node(int _val, Node _left, Node _right, Node _next)
+    {
+        val = _val;
+        left = _left;
+        right = _right;
+        next = _next;
     }
 }
