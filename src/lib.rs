@@ -1,43 +1,26 @@
-pub fn num_magic_squares_inside(grid: &[&[i32]]) -> i32 {
-    let row = grid.len();
-    let col = grid.first().map(|r| r.len()).unwrap_or_default();
-    if row < 3 || col < 3 {
+pub fn num_distinct(s: &str, t: &str) -> i32 {
+    let (s1, s2) = (s.len(), t.len());
+    if s1 < s2 {
         return 0;
     }
-    let mut res = 0;
-    for r in 0..=row - 3 {
-        for c in 0..=col - 3 {
-            if check(grid, r, c) {
-                res += 1;
+    let mut dp = vec![vec![0; s2 + 1]; s1 + 1];
+    for i1 in 0..=s1 {
+        // form emtry string from s
+        dp[i1][0] = 1;
+    }
+    for (i1, b1) in s.bytes().enumerate().map(|(i, b)| (i + 1, b)) {
+        for (i2, b2) in t.bytes().enumerate().map(|(i, b)| (i + 1, b)) {
+            // to form t[..i2-1] from s[..i1-1] <== dp[i1][i2]
+            if b1 == b2 {
+                // include s[i1-1]
+                dp[i1][i2] = dp[i1 - 1][i2 - 1] + dp[i1 - 1][i2];
+            } else {
+                // use only s[..i1-2]
+                dp[i1][i2] = dp[i1 - 1][i2];
             }
         }
     }
-    res
-}
-
-fn check(grid: &[&[i32]], row: usize, col: usize) -> bool {
-    let mut nums = [0; 9];
-    for r in row..row + 3 {
-        for c in col..col + 3 {
-            if !(1..=9).contains(&grid[r][c]) {
-                return false;
-            }
-            nums[grid[r][c] as usize - 1] += 1;
-        }
-    }
-    if !nums.into_iter().all(|n| n == 1) {
-        return false;
-    }
-
-    let sum: i32 = grid[row][col..col + 3].iter().sum();
-
-    grid[row + 1][col..col + 3].iter().sum::<i32>() == sum
-        && grid[row + 2][col..col + 3].iter().sum::<i32>() == sum
-        && grid[row][col] + grid[row + 1][col] + grid[row + 2][col] == sum
-        && grid[row][col + 1] + grid[row + 1][col + 1] + grid[row + 2][col + 1] == sum
-        && grid[row][col + 2] + grid[row + 1][col + 2] + grid[row + 2][col + 2] == sum
-        && grid[row][col] + grid[row + 1][col + 1] + grid[row + 2][col + 2] == sum
-        && grid[row][col + 2] + grid[row + 1][col + 1] + grid[row + 2][col] == sum
+    dp[s1][s2]
 }
 
 #[cfg(test)]
@@ -46,22 +29,10 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            num_magic_squares_inside(&[&[4, 3, 8, 4], &[9, 5, 1, 9], &[2, 7, 6, 2]]),
-            1
-        );
-        debug_assert_eq!(num_magic_squares_inside(&[&[8]]), 0);
+        debug_assert_eq!(num_distinct("rabbbit", "rabbit"), 3);
+        debug_assert_eq!(num_distinct("babgbag", "bag"), 5);
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(
-            num_magic_squares_inside(&[&[5, 5, 5], &[5, 5, 5], &[5, 5, 5]]),
-            0
-        );
-        debug_assert_eq!(
-            num_magic_squares_inside(&[&[10, 3, 5], &[1, 6, 11], &[7, 9, 2]]),
-            0
-        );
-    }
+    fn test() {}
 }
