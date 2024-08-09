@@ -1,30 +1,18 @@
-use std::collections::HashMap;
-
-pub fn generate(num_rows: i32) -> Vec<Vec<i32>> {
-    let mut seen = HashMap::new();
-    (0..num_rows)
-        .map(|n| (0..=n).map(|k| n_choose_k(n, k, &mut seen)).collect())
-        .collect()
-}
-
-pub fn get_row(row_index: i32) -> Vec<i32> {
-        let mut seen = HashMap::new();
-        (0..=row_index)
-            .map(|k| n_choose_k(row_index, k, &mut seen))
-            .collect()
-}
-
-fn n_choose_k(n: i32, k: i32, seen: &mut HashMap<(i32, i32), i32>) -> i32 {
-    if k == 0 || k == n {
-        1
-    } else {
-        if let Some(r) = seen.get(&(n, k)) {
-            return *r;
+pub fn minimum_total(triangle: &[&[i32]]) -> i32 {
+    let mut res = vec![triangle[0][0]];
+    for row in triangle.iter().skip(1) {
+        let mut curr = vec![];
+        for (idx, v) in row.iter().enumerate() {
+            let (n1, n2) = (
+                res.get(idx.saturating_sub(1)).copied(),
+                res.get(idx).copied(),
+            );
+            let n = n1.unwrap_or(i32::MAX).min(n2.unwrap_or(i32::MAX));
+            curr.push(*v + n);
         }
-        let r = n_choose_k(n - 1, k - 1, seen) + n_choose_k(n - 1, k, seen);
-        seen.insert((n, k), r);
-        r
+        res = curr;
     }
+    res.into_iter().min().unwrap_or_default()
 }
 
 #[cfg(test)]
@@ -34,20 +22,10 @@ mod tests {
     #[test]
     fn basics() {
         debug_assert_eq!(
-            generate(5),
-            &[
-                vec![1],
-                vec![1, 1],
-                vec![1, 2, 1],
-                vec![1, 3, 3, 1],
-                vec![1, 4, 6, 4, 1]
-            ]
+            minimum_total(&[&[2], &[3, 4], &[6, 5, 7], &[4, 1, 8, 3]]),
+            11
         );
-        debug_assert_eq!(generate(1), [[1]]);
-
-        debug_assert_eq!(get_row(3), [1, 3, 3, 1]);
-        debug_assert_eq!(get_row(0), [1]);
-        debug_assert_eq!(get_row(1), [1, 1]);
+        debug_assert_eq!(minimum_total(&[&[-10]]), -10);
     }
 
     #[test]
