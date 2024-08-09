@@ -40,26 +40,26 @@ void Test4()
 
 Node Connect(Node root)
 {
-        if (root is null) { return root; }
-        (Node node, int level) curr = (null, -1);
-        var queue = new Queue<(Node node, int level)>();
-        queue.Enqueue((root, 0));
-        while (queue.TryDequeue(out var item))
+    if (root is null) { return root; }
+    (Node node, int level) curr = (null, -1);
+    var queue = new Queue<(Node node, int level)>();
+    queue.Enqueue((root, 0));
+    while (queue.TryDequeue(out var item))
+    {
+        if (curr.level == item.level)
         {
-            if (curr.level == item.level)
-            {
-                curr.node.next = item.node;
-            }
-            (var left, var right) = (item.node.left, item.node.right);
-            curr = item;
-            if (left is not null)
-            {
-                queue.Enqueue((left, curr.level + 1));
-            }
-            if (right is not null)
-            {
-                queue.Enqueue((right, curr.level + 1));
-            }
+            curr.node.next = item.node;
         }
-        return root;
+        (var left, var right) = (item.node.left, item.node.right);
+        curr = item;
+        if (left is not null)
+        {
+            queue.Enqueue((left, curr.level + 1));
+        }
+        if (right is not null)
+        {
+            queue.Enqueue((right, curr.level + 1));
+        }
+    }
+    return root;
 }
