@@ -7,45 +7,51 @@ Console.WriteLine("!!Test Passed!!");
 
 void Test1()
 {
-    var n = TreeNode.Make([5, 4, 8, 11, null, 13, 4, 7, 2, null, null, 5, 1]);
-    var r = PathSum(n, 22);
-    IList<IList<int>> a = [[5, 4, 11, 2], [5, 8, 4, 5]];
-    Debug.Assert(r == a, $"Output: {r}\nExpect: {a}");
+    var n = TreeNode.Make([1, 2, 5, 3, 4, null, 6]);
+    Flatten(n);
+    var a = "[1,null,2,null,3,null,4,null,5,null,6]";
+    Debug.Assert(n.ToString() == a, $"Output: {n}\nExpect: {a}");
 }
 
 void Test2()
 {
-    var n = TreeNode.Make([1, 2, 3]);
-    var r = PathSum(n, 5);
-    List<IList<int>> a = [];
-    Debug.Assert(r == a, $"Output: {r}\nExpect: {a}");
+    var n = TreeNode.Make([]);
+    Flatten(n);
+    var a = "[]";
+    Debug.Assert(n is null, $"Output: {n}\nExpect: {a}");
 }
 
 void Test3()
 {
-    var n = TreeNode.Make([]);
-    var r = PathSum(n, 1);
-    List<IList<int>> a = [];
-    Debug.Assert(r == a, $"Output: {r}\nExpect: {a}");
+    var n = TreeNode.Make([0]);
+    Flatten(n);
+    var a = "[0]";
+    Debug.Assert(n.ToString() == a, $"Output: {n}\nExpect: {a}");
 }
 
-IList<IList<int>> PathSum(TreeNode root, int targetSum)
+void Flatten(TreeNode root)
 {
-    if (root is null) { return []; }
+    root = Solve(root).head;
+}
 
-    var target = targetSum - root.val;
-    if (root.left is null && root.right is null && target == 0)
+(TreeNode head, TreeNode tail) Solve(TreeNode root)
+{
+    if (root is null) { return (null, null); }
+
+    (var head, var tail) = (root, root);
+    (var left, var right) = (root.left, root.right);
+    (root.left, root.right) = (null, null);
+    (var lhead, var ltail) = Solve(left);
+    (var rhead, var rtail) = Solve(right);
+    if (lhead is not null)
     {
-        return [[root.val]];
+        root.right = lhead;
+        tail = ltail;
     }
-    var res = new List<IList<int>>();
-    foreach (var item in PathSum(root.left, target).Concat(PathSum(root.right, target)))
+    if (rhead is not null)
     {
-        if (item is not null)
-        {
-            item.Insert(0, root.val);
-            res.Add(item);
-        }
+        tail.right = rhead;
+        tail = rtail;
     }
-    return res;
+    return (head, tail);
 }
