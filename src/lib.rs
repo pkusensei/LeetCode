@@ -1,18 +1,16 @@
-pub fn minimum_total(triangle: &[&[i32]]) -> i32 {
-    let mut res = vec![triangle[0][0]];
-    for row in triangle.iter().skip(1) {
-        let mut curr = vec![];
-        for (idx, v) in row.iter().enumerate() {
-            let (n1, n2) = (
-                res.get(idx.saturating_sub(1)).copied(),
-                res.get(idx).copied(),
-            );
-            let n = n1.unwrap_or(i32::MAX).min(n2.unwrap_or(i32::MAX));
-            curr.push(*v + n);
-        }
-        res = curr;
+pub fn max_profit(prices: &[i32]) -> i32 {
+    if prices.len() < 2 {
+        return 0;
     }
-    res.into_iter().min().unwrap_or_default()
+    let mut buy = prices[0];
+    let mut profit = 0;
+    for &num in &prices[1..] {
+        // save current minimum
+        buy = buy.min(num);
+        // for all bigger numbers on the right
+        profit = profit.max(num - buy);
+    }
+    profit
 }
 
 #[cfg(test)]
@@ -21,11 +19,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            minimum_total(&[&[2], &[3, 4], &[6, 5, 7], &[4, 1, 8, 3]]),
-            11
-        );
-        debug_assert_eq!(minimum_total(&[&[-10]]), -10);
+        debug_assert_eq!(max_profit(&[7, 1, 5, 3, 6, 4]), 5);
+        debug_assert_eq!(max_profit(&[7, 6, 4, 3, 1]), 0);
     }
 
     #[test]
