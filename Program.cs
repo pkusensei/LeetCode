@@ -1,57 +1,62 @@
 ﻿using System.Diagnostics;
 
-Test1();
+// Test1();
 Test2();
 Test3();
+Test4();
 Console.WriteLine("!!Test Passed!!");
 
 void Test1()
 {
-    var n = TreeNode.Make([1, 2, 5, 3, 4, null, 6]);
-    Flatten(n);
-    var a = "[1,null,2,null,3,null,4,null,5,null,6]";
-    Debug.Assert(n.ToString() == a, $"Output: {n}\nExpect: {a}");
+    var n = Node.Make([1, 2, 3, 4, 5, 6, 7]);
+    var s = Connect(n);
+    var a = "[1,#,2,3,#,4,5,6,7,#]";
+    Debug.Assert(s.ToString() == a, $"Output: {n}\nExpect: {a}");
 }
 
 void Test2()
 {
-    var n = TreeNode.Make([]);
-    Flatten(n);
+    var n = Node.Make([]);
+    var s = Connect(n);
     var a = "[]";
-    Debug.Assert(n is null, $"Output: {n}\nExpect: {a}");
+    Debug.Assert(s is null, $"Output: {n}\nExpect: {a}");
 }
 
 void Test3()
 {
-    var n = TreeNode.Make([0]);
-    Flatten(n);
-    var a = "[0]";
-    Debug.Assert(n.ToString() == a, $"Output: {n}\nExpect: {a}");
+    var n = Node.Make([-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
+    var s = Connect(n);
+    var a = "[-1,#,0,1,#,2,3,4,5,#,6,7,8,9,10,11,12,13,#]";
+    Debug.Assert(s.ToString() == a, $"Output: {n}\nExpect: {a}");
 }
 
-void Flatten(TreeNode root)
+void Test4()
 {
-    root = Solve(root).head;
+    var n = Node.Make([1, -4, -3, 5, -2, -2, -5]);
+    var s = Connect(n);
+    var a = "[1,#,-4,-3,#,5,-2,-2,-5,#]";
+    Debug.Assert(s.ToString() == a, $"Output: {n}\nExpect: {a}");
 }
 
-(TreeNode head, TreeNode tail) Solve(TreeNode root)
+Node Connect(Node root)
 {
-    if (root is null) { return (null, null); }
-
-    (var head, var tail) = (root, root);
-    (var left, var right) = (root.left, root.right);
-    (root.left, root.right) = (null, null);
-    (var lhead, var ltail) = Solve(left);
-    (var rhead, var rtail) = Solve(right);
-    if (lhead is not null)
+    if (root is null) { return root; }
+    (Node node, int level) curr = (null, -1);
+    var queue = new Queue<(Node node, int level)>();
+    queue.Enqueue((root, 0));
+    while (queue.TryDequeue(out var item))
     {
-        root.right = lhead;
-        tail = ltail;
+        if (curr.level == item.level)
+        {
+            curr.node.next = item.node;
+        }
+        (var left, var right) = (item.node.left, item.node.right);
+        curr = item;
+        if (left is not null)
+        {
+            queue.Enqueue((left, curr.level + 1));
+            queue.Enqueue((right, curr.level + 1));
+        }
     }
-    if (rhead is not null)
-    {
-        tail.right = rhead;
-        tail = rtail;
-    }
-    return (head, tail);
+    return root;
 }

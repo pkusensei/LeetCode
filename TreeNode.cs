@@ -37,7 +37,7 @@ public abstract class NodeBase<T> where T : NodeBase<T>, new()
         {
             if (i < values.Count && values[i].HasValue)
             {
-                curr.left = new T { val = values[i].Value };
+                curr.left = new() { val = values[i].Value };
                 queue.Enqueue(curr.left);
             }
             i += 1;
