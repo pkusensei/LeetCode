@@ -4,62 +4,63 @@ Test1();
 Test2();
 Test3();
 Test4();
+Test5();
 Console.WriteLine("!!Test Passed!!");
 
 void Test1()
 {
-    var n = Node.Make([1, 2, 3, 4, 5, null, 7]);
-    var s = Connect(n);
-    var a = "[1,#,2,3,#,4,5,7,#]";
-    Debug.Assert(s.ToString() == a, $"Output: {n}\nExpect: {a}");
+    var n = TreeNode.Make([1, 2, 3]);
+    var s = MaxPathSum(n);
+    var a = 6;
+    Debug.Assert(s == a, $"Output: {s}\nExpect: {a}");
 }
 
 void Test2()
 {
-    var n = Node.Make([]);
-    var s = Connect(n);
-    var a = "[]";
-    Debug.Assert(s is null, $"Output: {n}\nExpect: {a}");
+    var n = TreeNode.Make([-10, 9, 20, null, null, 15, 7]);
+    var s = MaxPathSum(n);
+    var a = 42;
+    Debug.Assert(s == a, $"Output: {s}\nExpect: {a}");
 }
 
 void Test3()
 {
-    var n = Node.Make([-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
-    var s = Connect(n);
-    var a = "[-1,#,0,1,#,2,3,4,5,#,6,7,8,9,10,11,12,13,#]";
-    Debug.Assert(s.ToString() == a, $"Output: {n}\nExpect: {a}");
+    var n = TreeNode.Make([1, 2]);
+    var s = MaxPathSum(n);
+    var a = 3;
+    Debug.Assert(s == a, $"Output: {s}\nExpect: {a}");
 }
 
 void Test4()
 {
-    var n = Node.Make([1, -4, -3, 5, -2, -2, -5]);
-    var s = Connect(n);
-    var a = "[1,#,-4,-3,#,5,-2,-2,-5,#]";
-    Debug.Assert(s.ToString() == a, $"Output: {n}\nExpect: {a}");
+    var n = TreeNode.Make([2, -1]);
+    var s = MaxPathSum(n);
+    var a = 2;
+    Debug.Assert(s == a, $"Output: {s}\nExpect: {a}");
 }
 
-Node Connect(Node root)
+void Test5()
 {
-    if (root is null) { return root; }
-    (Node node, int level) curr = (null, -1);
-    var queue = new Queue<(Node node, int level)>();
-    queue.Enqueue((root, 0));
-    while (queue.TryDequeue(out var item))
-    {
-        if (curr.level == item.level)
-        {
-            curr.node.next = item.node;
-        }
-        (var left, var right) = (item.node.left, item.node.right);
-        curr = item;
-        if (left is not null)
-        {
-            queue.Enqueue((left, curr.level + 1));
-        }
-        if (right is not null)
-        {
-            queue.Enqueue((right, curr.level + 1));
-        }
-    }
-    return root;
+    var n = TreeNode.Make([1, -2, -3, 1, 3, -2, null, -1]);
+    var s = MaxPathSum(n);
+    var a = 3;
+    Debug.Assert(s == a, $"Output: {s}\nExpect: {a}");
+}
+
+
+int MaxPathSum(TreeNode root)
+{
+    return Solve(root).treeSum;
+}
+
+(int branchSum, int treeSum) Solve(TreeNode root)
+{
+    if (root is null) { return (0, int.MinValue); }
+
+    (var lb, var lt) = Solve(root.left);
+    (var rb, var rt) = Solve(root.right);
+    (lb, rb) = (Math.Max(0, lb), Math.Max(0, rb));
+
+    var treeSum = Math.Max(Math.Max(lt, rt), root.val + lb + rb);
+    return (Math.Max(lb, rb) + root.val, treeSum);
 }
