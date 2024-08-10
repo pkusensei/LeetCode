@@ -1,38 +1,16 @@
-pub fn max_profit(prices: &[i32]) -> i32 {
-    let size = prices.len();
-    let mut dp = vec![vec![vec![-1; 3]; 2]; size];
-    solve(0, 1, 2, prices, &mut dp)
-}
-
-fn solve(
-    idx: usize,
-    buy: usize,
-    transaction: usize,
-    prices: &[i32],
-    dp: &mut [Vec<Vec<i32>>],
-) -> i32 {
-    if idx == prices.len() || transaction == 0 {
-        return 0;
-    }
-    if dp[idx][buy][transaction] != -1 {
-        return dp[idx][buy][transaction];
-    }
-
-    let profit = if buy == 1 {
-        // no buy on idx
-        let a = solve(idx + 1, 1, transaction, prices, dp);
-        // buy on idx
-        let b = solve(idx + 1, 0, transaction, prices, dp) - prices[idx];
-        a.max(b)
-    } else {
-        // no sell on idx
-        let a = solve(idx + 1, 0, transaction, prices, dp);
-        // sell on idx
-        let b = solve(idx + 1, 1, transaction - 1, prices, dp) + prices[idx];
-        a.max(b)
-    };
-    dp[idx][buy][transaction] = profit;
-    profit
+pub fn is_palindrome(s: &str) -> bool {
+    let it = s.bytes().filter_map(|b| {
+        if b.is_ascii_alphanumeric() {
+            Some(b.to_ascii_lowercase())
+        } else {
+            None
+        }
+    });
+    it.clone()
+        .rev()
+        .take(s.len())
+        .zip(it.take(s.len()))
+        .all(|(b1, b2)| b1 == b2)
 }
 
 #[cfg(test)]
@@ -41,13 +19,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(max_profit(&[3, 3, 5, 0, 0, 3, 1, 4]), 6);
-        debug_assert_eq!(max_profit(&[1, 2, 3, 4, 5]), 4);
-        debug_assert_eq!(max_profit(&[7, 6, 4, 3, 1]), 0);
+        debug_assert!(is_palindrome("A man, a plan, a canal: Panama"));
+        debug_assert!(!is_palindrome("race a car"));
+        debug_assert!(is_palindrome(" "));
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(max_profit(&[1, 2, 4, 2, 5, 7, 2, 4, 9, 0]), 13);
-    }
+    fn test() {}
 }
