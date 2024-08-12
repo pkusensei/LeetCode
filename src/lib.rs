@@ -1,56 +1,31 @@
-pub fn min_cut(s: &str) -> i32 {
-    if is_palindrome(s) {
-        return 0;
+pub fn can_complete_circuit(gas: &[i32], cost: &[i32]) -> i32 {
+    if gas.iter().sum::<i32>() < cost.iter().sum::<i32>() {
+        return -1;
     }
 
-    let size = s.len();
-    let s = s.as_bytes();
-    let mut dp: Vec<i32> = (0..size as i32).collect();
-    for mid in 0..size {
-        let mut left = mid;
-        let mut right = mid;
-        while right < size && s[left] == s[right] {
-            let temp = if left == 0 { 0 } else { dp[left - 1] + 1 };
-            dp[right] = dp[right].min(temp);
-            if left == 0 {
-                break;
+    gas.iter()
+        .zip(cost)
+        .enumerate()
+        .fold((0, 0), |(sum, start), (idx, (&gas, &cost))| {
+            let sum = sum + gas - cost;
+            if sum < 0 {
+                (0, idx + 1)
+            } else {
+                (sum, start)
             }
-            left -= 1;
-            right += 1;
-        }
-
-        left = mid;
-        right = mid + 1;
-        while right < size && s[left] == s[right] {
-            let temp = if left == 0 { 0 } else { dp[left - 1] + 1 };
-            dp[right] = dp[right].min(temp);
-            if left == 0 {
-                break;
-            }
-            left -= 1;
-            right += 1;
-        }
-    }
-    dp.pop().unwrap()
+        })
+        .1 as i32
 }
 
-// ...[left..right]..
-// if [left..right] is palindrome
-// to cut at ...right ..
-//           ........^..
-// it needs 1+cut[left-1]
-// if [left..right].. is palindrome
-// cut[right] is 0
-
-fn is_palindrome(s: &str) -> bool {
-    if s.len() < 2 {
-        return true;
-    }
-    s.bytes()
-        .rev()
-        .zip(s.bytes().take(s.len() / 2 + 1))
-        .all(|(b1, b2)| b1 == b2)
-}
+// fn is_palindrome(s: &str) -> bool {
+//     if s.len() < 2 {
+//         return true;
+//     }
+//     s.bytes()
+//         .rev()
+//         .zip(s.bytes().take(s.len() / 2 + 1))
+//         .all(|(b1, b2)| b1 == b2)
+// }
 
 // type Coord = (usize, usize);
 
@@ -71,9 +46,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(min_cut("aab"), 1);
-        debug_assert_eq!(min_cut("a"), 0);
-        debug_assert_eq!(min_cut("ab"), 1);
+        debug_assert_eq!(can_complete_circuit(&[1, 2, 3, 4, 5], &[3, 4, 5, 1, 2]), 3);
+        debug_assert_eq!(can_complete_circuit(&[2, 3, 4], &[3, 4, 3]), -1);
     }
 
     #[test]
