@@ -1,6 +1,6 @@
 using System.Text;
 
-public abstract class NodeBase<T> where T : NodeBase<T>, new()
+public abstract class TreeNodeBase<T> where T : TreeNodeBase<T>, new()
 {
     public int val;
     public T left;
@@ -79,7 +79,7 @@ public abstract class NodeBase<T> where T : NodeBase<T>, new()
     }
 }
 
-public class TreeNode : NodeBase<TreeNode>
+public class TreeNode : TreeNodeBase<TreeNode>
 {
     public TreeNode() { }
     public TreeNode(int val = 0, TreeNode left = null, TreeNode right = null)
@@ -125,16 +125,16 @@ public class TreeNode : NodeBase<TreeNode>
     }
 }
 
-public class Node : NodeBase<Node>
-{
-    public Node next;
-    public Node() { }
-    public Node(int _val) { val = _val; }
-    public Node(int _val, Node _left, Node _right, Node _next)
-    {
-        val = _val;
-        left = _left;
-        right = _right;
-        next = _next;
-    }
-}
+// public class Node : TreeNodeBase<Node>
+// {
+//     public Node next;
+//     public Node() { }
+//     public Node(int _val) { val = _val; }
+//     public Node(int _val, Node _left, Node _right, Node _next)
+//     {
+//         val = _val;
+//         left = _left;
+//         right = _right;
+//         next = _next;
+//     }
+// }
