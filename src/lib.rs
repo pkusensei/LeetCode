@@ -1,17 +1,5 @@
-pub fn candy(ratings: &[i32]) -> i32 {
-    let size = ratings.len();
-    let mut nums = vec![1; size];
-    for i in 1..size {
-        if ratings[i - 1] < ratings[i] {
-            nums[i] = 1 + nums[i - 1];
-        }
-    }
-    for i in (0..size - 1).rev() {
-        if ratings[i] > ratings[i + 1] {
-            nums[i] = nums[i].max(1 + nums[i + 1])
-        }
-    }
-    nums.into_iter().sum()
+pub fn single_number(nums: &[i32]) -> i32 {
+    nums.iter().fold(0, |acc, num| acc ^ num)
 }
 
 // fn is_palindrome(s: &str) -> bool {
@@ -43,8 +31,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(candy(&[1, 0, 2]), 5);
-        debug_assert_eq!(candy(&[1, 2, 2]), 4);
+        debug_assert_eq!(single_number(&[2, 2, 1]), 1);
+        debug_assert_eq!(single_number(&[4, 1, 2, 1, 2]), 4);
+        debug_assert_eq!(single_number(&[1]), 1);
     }
 
     #[test]
