@@ -1,20 +1,17 @@
-pub fn can_complete_circuit(gas: &[i32], cost: &[i32]) -> i32 {
-    if gas.iter().sum::<i32>() < cost.iter().sum::<i32>() {
-        return -1;
+pub fn candy(ratings: &[i32]) -> i32 {
+    let size = ratings.len();
+    let mut nums = vec![1; size];
+    for i in 1..size {
+        if ratings[i - 1] < ratings[i] {
+            nums[i] = 1 + nums[i - 1];
+        }
     }
-
-    gas.iter()
-        .zip(cost)
-        .enumerate()
-        .fold((0, 0), |(sum, start), (idx, (&gas, &cost))| {
-            let sum = sum + gas - cost;
-            if sum < 0 {
-                (0, idx + 1)
-            } else {
-                (sum, start)
-            }
-        })
-        .1 as i32
+    for i in (0..size - 1).rev() {
+        if ratings[i] > ratings[i + 1] {
+            nums[i] = nums[i].max(1 + nums[i + 1])
+        }
+    }
+    nums.into_iter().sum()
 }
 
 // fn is_palindrome(s: &str) -> bool {
@@ -46,8 +43,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(can_complete_circuit(&[1, 2, 3, 4, 5], &[3, 4, 5, 1, 2]), 3);
-        debug_assert_eq!(can_complete_circuit(&[2, 3, 4], &[3, 4, 3]), -1);
+        debug_assert_eq!(candy(&[1, 0, 2]), 5);
+        debug_assert_eq!(candy(&[1, 2, 2]), 4);
     }
 
     #[test]
