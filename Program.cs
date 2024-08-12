@@ -1,152 +1,77 @@
 ﻿using System.Diagnostics;
-using System.Text;
 
 Test1();
 Test2();
+Test3();
 
 Console.WriteLine("!!Test Passed!!");
 
 void Test1()
 {
-    var n = Node.Make([[2, 4], [1, 3], [2, 4], [1, 3]]);
-    var s = CloneGraph(n);
-    var a = "[[2,4],[1,3],[2,4],[1,3]]";
+    var n = Node.Make([[7, null], [13, 0], [11, 4], [10, 2], [1, 0]]);
+    var s = CopyRandomList(n);
+    var a = "[[7,null],[13,0],[11,4],[10,2],[1,0]]";
     Debug.Assert(s.ToString() == a, $"Output: {s}\nExpect: {a}");
 }
 
 void Test2()
 {
-    var n = Node.Make([[]]);
-    var s = CloneGraph(n);
-    var a = "[[]]";
+    var n = Node.Make([[1, 1], [2, 1]]);
+    var s = CopyRandomList(n);
+    var a = "[[1,1],[2,1]]";
     Debug.Assert(s.ToString() == a, $"Output: {s}\nExpect: {a}");
 }
 
 void Test3()
 {
-    var n = Node.Make([]);
-    var s = CloneGraph(n);
-    var a = "[]";
-    Debug.Assert(s is null, $"Output: {n}\nExpect: {a}");
-
+    var n = Node.Make([[3, null], [3, 0], [3, null]]);
+    var s = CopyRandomList(n);
+    var a = "[[3,null],[3,0],[3,null]]";
+    Debug.Assert(s.ToString() == a, $"Output: {s}\nExpect: {a}");
 }
 
-Node CloneGraph(Node node)
+
+Node CopyRandomList(Node head)
 {
-    if (node is null) { return null; }
+    if (head is null) { return null; }
 
-    var queue = new Queue<Node>();
-    var dict = new Dictionary<int, (Node, List<int>)>();
-    var seen = new HashSet<int>();
-
-    queue.Enqueue(node);
-    while (queue.TryDequeue(out var curr))
+    var curr = head;
+    while (curr is not null)
     {
-        if (!seen.Add(curr.val)) { continue; }
-
-        var nums = curr.neighbors.Select(n => n.val).ToList();
-        dict.Add(curr.val, (new(curr.val), nums));
-        foreach (var item in curr.neighbors)
+        Node temp = new(curr.val)
         {
-            queue.Enqueue(item);
-        }
-    }
-    foreach (var (curr, values) in dict.Values)
-    {
-        curr.neighbors = values.Select(num => dict[num].Item1).ToList();
-    }
-
-    return dict[1].Item1;
-}
-
-public class Node
-{
-    public int val;
-    public IList<Node> neighbors;
-
-    public Node()
-    {
-        val = 0;
-        neighbors = [];
+            random = curr.random,
+            next = curr.next
+        };
+        curr.next = temp;
+        curr = temp.next;
     }
 
-    public Node(int _val)
+    curr = head.next;
+    while (curr.next is not null)
     {
-        val = _val;
-        neighbors = [];
-    }
-
-    public Node(int _val, List<Node> _neighbors)
-    {
-        val = _val;
-        neighbors = _neighbors;
-    }
-
-    public override string ToString()
-    {
-        if (neighbors.Count == 0) { return "[[]]"; }
-
-        var values = Flatten().OrderBy(p => p.Key).Select(p => p.Value).ToList();
-        var sb = new StringBuilder();
-        sb.Append('[');
-        foreach (var item in values)
+        if (curr.random is not null)
         {
-            sb.Append('[');
-            sb.AppendJoin(',', item);
-            sb.Append("],");
+            curr.random = curr.random.next;
         }
-        sb.Replace(',', ']', sb.Length - 1, 1);
-        return sb.ToString();
+        curr = curr.next.next;
     }
-
-    public IDictionary<int, HashSet<int>> Flatten()
+    if (curr.random is not null)
     {
-        var res = new Dictionary<int, HashSet<int>>();
-        var queue = new Queue<Node>();
-        var seen = new HashSet<int>();
-        queue.Enqueue(this);
-        while (queue.TryDequeue(out var curr))
-        {
-            if (!seen.Add(curr.val)) { continue; }
-
-            foreach (var neighbor in curr.neighbors)
-            {
-                if (res.TryGetValue(curr.val, out var lst))
-                {
-                    lst.Add(neighbor.val);
-                }
-                else
-                {
-                    res.Add(curr.val, [neighbor.val]);
-                }
-                if (res.TryGetValue(neighbor.val, out var lst2))
-                {
-                    lst2.Add(curr.val);
-                }
-                else
-                {
-                    res.Add(neighbor.val, [curr.val]);
-                }
-                queue.Enqueue(neighbor);
-            }
-        }
-        return res;
+        curr.random = curr.random.next;
     }
 
-    public static Node Make(IList<IList<int>> values)
+    var old = head;
+    var res = head.next;
+    curr = res;
+    while (curr.next is not null)
     {
-        var dict = new Dictionary<int, Node>();
-        for (int i = 0; i < values.Count; i++)
-        {
-            dict.Add(i + 1, new(i + 1));
-        }
-        foreach (var (idx, lst) in values.Select((v, i) => (i + 1, v)))
-        {
-            foreach (var neighbor in lst)
-            {
-                dict[idx].neighbors.Add(dict[neighbor]);
-            }
-        }
-        return dict.Count == 0 ? null : dict[1];
+        old.next = curr.next;
+        old = old.next;
+        curr.next = curr.next.next;
+        curr = curr.next;
     }
+    old.next = null;
+
+    return res;
 }

@@ -138,3 +138,95 @@ public class TreeNode : TreeNodeBase<TreeNode>
 //         next = _next;
 //     }
 // }
+
+// public class Node
+// {
+//     public int val;
+//     public IList<Node> neighbors;
+
+//     public Node()
+//     {
+//         val = 0;
+//         neighbors = [];
+//     }
+
+//     public Node(int _val)
+//     {
+//         val = _val;
+//         neighbors = [];
+//     }
+
+//     public Node(int _val, List<Node> _neighbors)
+//     {
+//         val = _val;
+//         neighbors = _neighbors;
+//     }
+
+//     public override string ToString()
+//     {
+//         if (neighbors.Count == 0) { return "[[]]"; }
+
+//         var values = Flatten().OrderBy(p => p.Key).Select(p => p.Value).ToList();
+//         var sb = new StringBuilder();
+//         sb.Append('[');
+//         foreach (var item in values)
+//         {
+//             sb.Append('[');
+//             sb.AppendJoin(',', item);
+//             sb.Append("],");
+//         }
+//         sb.Replace(',', ']', sb.Length - 1, 1);
+//         return sb.ToString();
+//     }
+
+//     public IDictionary<int, HashSet<int>> Flatten()
+//     {
+//         var res = new Dictionary<int, HashSet<int>>();
+//         var queue = new Queue<Node>();
+//         var seen = new HashSet<int>();
+//         queue.Enqueue(this);
+//         while (queue.TryDequeue(out var curr))
+//         {
+//             if (!seen.Add(curr.val)) { continue; }
+
+//             foreach (var neighbor in curr.neighbors)
+//             {
+//                 if (res.TryGetValue(curr.val, out var lst))
+//                 {
+//                     lst.Add(neighbor.val);
+//                 }
+//                 else
+//                 {
+//                     res.Add(curr.val, [neighbor.val]);
+//                 }
+//                 if (res.TryGetValue(neighbor.val, out var lst2))
+//                 {
+//                     lst2.Add(curr.val);
+//                 }
+//                 else
+//                 {
+//                     res.Add(neighbor.val, [curr.val]);
+//                 }
+//                 queue.Enqueue(neighbor);
+//             }
+//         }
+//         return res;
+//     }
+
+//     public static Node Make(IList<IList<int>> values)
+//     {
+//         var dict = new Dictionary<int, Node>();
+//         for (int i = 0; i < values.Count; i++)
+//         {
+//             dict.Add(i + 1, new(i + 1));
+//         }
+//         foreach (var (idx, lst) in values.Select((v, i) => (i + 1, v)))
+//         {
+//             foreach (var neighbor in lst)
+//             {
+//                 dict[idx].neighbors.Add(dict[neighbor]);
+//             }
+//         }
+//         return dict.Count == 0 ? null : dict[1];
+//     }
+// }
