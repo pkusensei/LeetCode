@@ -1,41 +1,39 @@
-pub fn partition(s: &str) -> Vec<Vec<String>> {
-    solve(s, 0)
-        .into_iter()
-        .map(|v| v.into_iter().rev().map(|s| s.to_string()).collect())
-        .collect()
+use std::collections::BinaryHeap;
+
+#[derive(Debug, Clone)]
+struct KthLargest {
+    k: usize,
+    nums: BinaryHeap<std::cmp::Reverse<i32>>,
 }
 
-fn solve(s: &str, start: usize) -> Vec<Vec<&str>> {
-    if start + 1 == s.len() {
-        return vec![vec![&s[start..]]];
-    }
-
-    let mut res = vec![];
-    for end in start + 1..s.len() {
-        let curr = &s[start..end];
-        if is_palindrome(curr) {
-            let temp = solve(s, end).into_iter().map(|mut v| {
-                v.push(curr);
-                v
-            });
-            res.extend(temp);
+impl KthLargest {
+    fn new(k: i32, nums: Vec<i32>) -> Self {
+        let k = k as usize;
+        let mut nums: BinaryHeap<_> = nums.into_iter().map(std::cmp::Reverse).collect();
+        while nums.len() > k {
+            nums.pop(); // only k elements necessary to keep
         }
+        Self { k, nums }
     }
-    if is_palindrome(&s[start..]) {
-        res.push(vec![&s[start..]])
+
+    fn add(&mut self, val: i32) -> i32 {
+        self.nums.push(std::cmp::Reverse(val));
+        while self.nums.len() > self.k {
+            self.nums.pop();
+        }
+        self.nums.peek().unwrap().0
     }
-    res
 }
 
-fn is_palindrome(s: &str) -> bool {
-    if s.len() < 2 {
-        return true;
-    }
-    s.bytes()
-        .rev()
-        .zip(s.bytes().take(s.len() / 2 + 1))
-        .all(|(b1, b2)| b1 == b2)
-}
+// fn is_palindrome(s: &str) -> bool {
+//     if s.len() < 2 {
+//         return true;
+//     }
+//     s.bytes()
+//         .rev()
+//         .zip(s.bytes().take(s.len() / 2 + 1))
+//         .all(|(b1, b2)| b1 == b2)
+// }
 
 // type Coord = (usize, usize);
 
@@ -56,13 +54,16 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(partition("aab"), [vec!["a", "a", "b"], vec!["aa", "b"]]);
-        debug_assert_eq!(partition("a"), [["a"]]);
+        {
+            let mut kth = KthLargest::new(3, vec![4, 5, 8, 2]);
+            debug_assert_eq!(kth.add(3), 4);
+            debug_assert_eq!(kth.add(5), 5);
+            debug_assert_eq!(kth.add(10), 5);
+            debug_assert_eq!(kth.add(9), 8);
+            debug_assert_eq!(kth.add(4), 8);
+        }
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(partition("bb"), [vec!["b", "b"], vec!["bb"]]);
-        debug_assert_eq!(partition("cdd"), [vec!["c", "d", "d"], vec!["c", "dd"]]);
-    }
+    fn test() {}
 }
