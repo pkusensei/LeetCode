@@ -1,24 +1,30 @@
-pub fn single_number(nums: &[i32]) -> i32 {
-    fn solve(nums: &[i32]) -> i32 {
-        let (mut ones, mut twos) = (0, 0);
-        for &num in nums {
-            ones ^= num & !twos;
-            twos ^= num & !ones;
-        }
-        ones
-    }
+pub fn word_break(s: &str, word_dict: &[&str]) -> bool {
+    let size = s.len();
+    let mut dp = vec![false; size + 1];
+    solve(&mut dp, s, word_dict, 0, &mut vec![None; size + 1]);
+    *dp.last().unwrap()
+}
 
-    let mut ans = 0;
-    // count 1s on every bit
-    // count%3 reveals the bit from the single
-    for i in 0..32 {
-        let sum = nums.iter().fold(0, |acc, &num| {
-            let n = (num >> i) & 1;
-            acc + n
-        });
-        ans |= (sum % 3) << i;
+fn solve(
+    dp: &mut [bool],
+    s: &str,
+    word_dict: &[&str],
+    start: usize,
+    seen: &mut [Option<bool>],
+) -> bool {
+    if start == s.len() {
+        return true;
     }
-    ans
+    if let Some(b) = seen[start] {
+        return b;
+    }
+    for word in word_dict {
+        if s[start..].strip_prefix(word).is_some() {
+            dp[start + word.len()] |= solve(dp, s, word_dict, start + word.len(), seen);
+        }
+    }
+    seen[start] = Some(dp[start]);
+    dp[start]
 }
 
 // fn is_palindrome(s: &str) -> bool {
@@ -50,10 +56,17 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(single_number(&[2, 2, 3, 2]), 3);
-        debug_assert_eq!(single_number(&[0, 1, 0, 1, 0, 1, 99]), 99);
+        debug_assert!(word_break("leetcode", &["leet", "code"]));
+        debug_assert!(word_break("applepenapple", &["apple", "pen"]));
+        debug_assert!(!word_break(
+            "catsandog",
+            &["cats", "dog", "sand", "and", "cat"]
+        ));
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert!(!word_break("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab", 
+        &["a","aa","aaa","aaaa","aaaaa","aaaaaa","aaaaaaa","aaaaaaaa","aaaaaaaaa","aaaaaaaaaa"]));
+    }
 }
