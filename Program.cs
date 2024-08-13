@@ -8,57 +8,57 @@ Console.WriteLine("!!Test Passed!!");
 
 void Test1()
 {
-    var n = ListNode.Make([3, 2, 0, -4], 1);
-    var s = DetectCycle(n);
-    Debug.Assert(s.val == 2);
+    var n = ListNode.Make([1, 2, 3, 4]);
+    ReorderList(n);
+    var a = "[1,4,2,3]";
+    Debug.Assert(n.ToString() == a, $"Output: {n}\nExpect: {a}");
 }
 
 void Test2()
 {
-    var n = ListNode.Make([1, 2], 0);
-    var s = DetectCycle(n);
-    Debug.Assert(s.val == 1);
+    var n = ListNode.Make([1, 2, 3, 4, 5]);
+    ReorderList(n);
+    var a = "[1,5,2,4,3]";
+    Debug.Assert(n.ToString() == a, $"Output: {n}\nExpect: {a}");
 }
 
 void Test3()
 {
-    var n = ListNode.Make([1], -1);
-    var s = DetectCycle(n);
-    Debug.Assert(s is null);
 }
 
-ListNode DetectCycle(ListNode head)
+void ReorderList(ListNode head)
 {
-    if (head is null) { return null; }
+    if (head is null) { return; }
 
-    (var slow, var fast) = (head, head);
-    var hasCycle = false;
-    while (fast is not null && fast.next is not null)
+    var mid = FindMiddleNode(head);
+    var right = mid.next;
+    mid.next = null;
+    var stack = new Stack<ListNode>();
+    while (right is not null)
+    {
+        stack.Push(right);
+        right = right.next;
+    }
+    var left = head;
+    while (stack.TryPop(out var node))
+    {
+        var temp = left.next;
+        left.next = node;
+        node.next = temp;
+        left = temp;
+    }
+}
+
+ListNode FindMiddleNode(ListNode head)
+{
+    var curr = head;
+    if (curr is null || curr.next is null) { return curr; }
+
+    (var slow, var fast) = (curr, curr);
+    while (fast.next is not null && fast.next.next is not null)
     {
         slow = slow.next;
         fast = fast.next.next;
-        if (slow == fast) { hasCycle = true; break; }
-    }
-    if (!hasCycle) { return null; }
-
-    slow = head;
-    while (slow != fast)
-    {
-        slow = slow.next;
-        fast = fast.next;
     }
     return slow;
-}
-
-bool HasCycle(ListNode head)
-{
-    if (head is null) { return false; }
-    (var slow, var fast) = (head, head);
-    while (fast is not null && fast.next is not null)
-    {
-        slow = slow.next;
-        fast = fast.next.next;
-        if (slow == fast) { return true; }
-    }
-    return false;
 }

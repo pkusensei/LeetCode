@@ -46,6 +46,19 @@ public class ListNode : ListNodeBase<ListNode>, IEnumerable<int>
         return dummy.next;
     }
 
+    public ListNode FindMiddleNode()
+    {
+        var curr = this;
+        if (curr is null || curr.next is null) { return curr; }
+
+        (var slow, var fast) = (curr, curr);
+        while (fast.next is not null && fast.next.next is not null)
+        {
+            slow = slow.next;
+            fast = fast.next.next;
+        }
+        return slow;
+    }
 
     public IEnumerator<int> GetEnumerator()
     {
