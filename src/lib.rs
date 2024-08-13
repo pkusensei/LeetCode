@@ -1,30 +1,26 @@
-pub fn word_break(s: &str, word_dict: &[&str]) -> bool {
-    let size = s.len();
-    let mut dp = vec![false; size + 1];
-    solve(&mut dp, s, word_dict, 0, &mut vec![None; size + 1]);
-    *dp.last().unwrap()
+pub fn word_break(s: &str, word_dict: &[&str]) -> Vec<String> {
+    let mut res = vec![];
+    solve(s, word_dict, 0, &mut res, &mut vec![]);
+    res.into_iter().map(|v| v.join(" ")).collect()
 }
 
-fn solve(
-    dp: &mut [bool],
+fn solve<'a>(
     s: &str,
-    word_dict: &[&str],
+    word_dict: &[&'a str],
     start: usize,
-    seen: &mut [Option<bool>],
-) -> bool {
+    res: &mut Vec<Vec<&'a str>>,
+    curr: &mut Vec<&'a str>,
+) {
     if start == s.len() {
-        return true;
-    }
-    if let Some(b) = seen[start] {
-        return b;
+        res.push(curr.clone());
     }
     for word in word_dict {
         if s[start..].strip_prefix(word).is_some() {
-            dp[start + word.len()] |= solve(dp, s, word_dict, start + word.len(), seen);
+            curr.push(word);
+            solve(s, word_dict, start + word.len(), res, curr);
+            curr.pop();
         }
     }
-    seen[start] = Some(dp[start]);
-    dp[start]
 }
 
 // fn is_palindrome(s: &str) -> bool {
@@ -56,17 +52,27 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(word_break("leetcode", &["leet", "code"]));
-        debug_assert!(word_break("applepenapple", &["apple", "pen"]));
-        debug_assert!(!word_break(
-            "catsandog",
-            &["cats", "dog", "sand", "and", "cat"]
-        ));
+        debug_assert_eq!(
+            word_break("catsanddog", &["cats", "dog", "sand", "and", "cat"]),
+            ["cats and dog", "cat sand dog"]
+        );
+        debug_assert_eq!(
+            word_break("catsandog", &["cats", "dog", "sand", "and", "cat"]),
+            [""; 0]
+        );
+        debug_assert_eq!(
+            word_break(
+                "pineapplepenapple",
+                &["apple", "pen", "applepen", "pine", "pineapple"]
+            ),
+            [
+                "pine apple pen apple",
+                "pineapple pen apple",
+                "pine applepen apple"
+            ]
+        );
     }
 
     #[test]
-    fn test() {
-        debug_assert!(!word_break("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab", 
-        &["a","aa","aaa","aaaa","aaaaa","aaaaaa","aaaaaaa","aaaaaaaa","aaaaaaaaa","aaaaaaaaaa"]));
-    }
+    fn test() {}
 }
