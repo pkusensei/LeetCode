@@ -28,6 +28,25 @@ public class ListNode : ListNodeBase<ListNode>, IEnumerable<int>
         return dummy.next;
     }
 
+    public static ListNode Make(IEnumerable<int> nums, int pos)
+    {
+        ListNode dummy = new(0, null);
+        var curr = dummy;
+        ListNode loop = null;
+        var count = 0;
+        foreach (var num in nums)
+        {
+            var temp = new ListNode(num, null);
+            curr.next = temp;
+            curr = curr.next;
+            if (pos == count) { loop = curr; }
+            count += 1;
+        }
+        curr.next = loop;
+        return dummy.next;
+    }
+
+
     public IEnumerator<int> GetEnumerator()
     {
         var curr = this;
