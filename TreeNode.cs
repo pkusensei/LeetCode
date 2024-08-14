@@ -18,9 +18,50 @@ public abstract class TreeNodeBase<T> where T : TreeNodeBase<T>, new()
                 queue.Enqueue(node.left);
                 queue.Enqueue(node.right);
             }
+            else { yield return null; }
+        }
+    }
+
+    public IEnumerable<T> PreorderFlatten()
+    {
+        var stack = new Stack<T>();
+        stack.Push((T)this);
+        while (stack.TryPop(out var node))
+        {
+            if (node is not null)
+            {
+                yield return node;
+                stack.Push(node.right);
+                stack.Push(node.left);
+            }
+            else { yield return null; }
+        }
+    }
+
+    IEnumerable<T> PostorderFlatten()
+    {
+        var stack = new Stack<T>();
+        var curr = (T)this;
+        T last = null;
+        while (curr is not null || stack.Count > 0)
+        {
+            if (curr is not null)
+            {
+                stack.Push(curr);
+                curr = curr.left;
+            }
             else
             {
-                yield return null;
+                var peek = stack.Peek();
+                if (peek.right is not null && last != peek.right)
+                {
+                    curr = peek.right;
+                }
+                else
+                {
+                    yield return peek;
+                    last = stack.Pop();
+                }
             }
         }
     }
