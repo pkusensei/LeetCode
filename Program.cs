@@ -10,15 +10,15 @@ Console.WriteLine("!!Test Passed!!");
 void Test1()
 {
     var n = TreeNode.Make([1, null, 2, 3]);
-    var s = PreorderTraversal(n);
-    var a = "[1,2,3]";
+    var s = PostorderTraversal(n);
+    var a = "[3,2,1]";
     Debug.Assert(Print(s) == a, $"Output: {Print(s)}\nExpect: {a}");
 }
 
 void Test2()
 {
     var n = TreeNode.Make([]);
-    var s = PreorderTraversal(n);
+    var s = PostorderTraversal(n);
     var a = "[]";
     Debug.Assert(Print(s) == a, $"Output: {Print(s)}\nExpect: {a}");
 }
@@ -26,17 +26,13 @@ void Test2()
 void Test3()
 {
     var n = TreeNode.Make([1]);
-    var s = PreorderTraversal(n);
+    var s = PostorderTraversal(n);
     var a = "[1]";
     Debug.Assert(Print(s) == a, $"Output: {Print(s)}\nExpect: {a}");
 }
 
 void Test4()
 {
-    var n = TreeNode.Make([1, 4, 3, 2]);
-    var s = PreorderTraversal(n);
-    var a = "[1,4,2,3]";
-    Debug.Assert(Print(s) == a, $"Output: {Print(s)}\nExpect: {a}");
 }
 
 IList<int> PreorderTraversal(TreeNode root)
@@ -53,6 +49,37 @@ IList<int> PreorderTraversal(TreeNode root)
             res.Add(node.val);
             stack.Push(node.right);
             stack.Push(node.left);
+        }
+    }
+    return res;
+}
+
+IList<int> PostorderTraversal(TreeNode root)
+{
+    var res = new List<int>();
+    if (root is null) { return res; }
+    var stack = new Stack<TreeNode>();
+    var curr = root;
+    TreeNode last = null;
+    while (curr is not null || stack.Count > 0)
+    {
+        if (curr is not null)
+        {
+            stack.Push(curr);
+            curr = curr.left;
+        }
+        else
+        {
+            var peek = stack.Peek();
+            if (peek.right is not null && last != peek.right)
+            {
+                curr = peek.right;
+            }
+            else
+            {
+                res.Add(peek.val);
+                last = stack.Pop();
+            }
         }
     }
     return res;
