@@ -3,26 +3,8 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn eval_rpn(tokens: &[&str]) -> i32 {
-    fn arith_op(stack: &mut Vec<i32>, func: fn(i32, i32) -> i32) {
-        let (a, b) = (stack.pop().unwrap(), stack.pop().unwrap());
-        stack.push(func(b, a))
-    }
-
-    let mut stack = vec![];
-    for token in tokens {
-        match *token {
-            "+" => arith_op(&mut stack, |a, b| a + b),
-            "-" => arith_op(&mut stack, |a, b| a - b),
-            "*" => arith_op(&mut stack, |a, b| a * b),
-            "/" => arith_op(&mut stack, |a, b| a / b),
-            _ => {
-                let num = token.parse::<i32>().unwrap_or(1);
-                stack.push(num);
-            }
-        }
-    }
-    stack[0]
+pub fn reverse_words(s: &str) -> String {
+    s.split_whitespace().rev().collect::<Vec<_>>().join(" ")
 }
 
 #[cfg(test)]
@@ -31,12 +13,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(eval_rpn(&["2", "1", "+", "3", "*"]), 9);
-        debug_assert_eq!(eval_rpn(&["4", "13", "5", "/", "+"]), 6);
-        debug_assert_eq!(
-            eval_rpn(&["10", "6", "9", "3", "+", "-11", "*", "/", "*", "17", "+", "5", "+"]),
-            22
-        );
+        debug_assert_eq!(reverse_words("the sky is blue"), "blue is sky the");
+        debug_assert_eq!(reverse_words("  hello world  "), "world hello");
+        debug_assert_eq!(reverse_words("a good   example"), "example good a");
     }
 
     #[test]
