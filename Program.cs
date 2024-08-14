@@ -9,97 +9,75 @@ Console.WriteLine("!!Test Passed!!");
 
 void Test1()
 {
-    var n = TreeNode.Make([1, null, 2, 3]);
-    var s = PostorderTraversal(n);
-    var a = "[3,2,1]";
-    Debug.Assert(Print(s) == a, $"Output: {Print(s)}\nExpect: {a}");
+    var cache = new LRUCache(2);
+    cache.Put(1, 1); // cache is {1=1}
+    cache.Put(2, 2); // cache is {1=1, 2=2}
+    Debug.Assert(cache.Get(1) == 1);    // return 1
+    cache.Put(3, 3); // LRU key was 2, evicts key 2, cache is {1=1, 3=3}
+    Debug.Assert(cache.Get(2) == -1);    // returns -1 (not found)
+    cache.Put(4, 4); // LRU key was 1, evicts key 1, cache is {4=4, 3=3}
+    Debug.Assert(cache.Get(1) == -1);    // return -1 (not found)
+    Debug.Assert(cache.Get(3) == 3);    // return 3
+    Debug.Assert(cache.Get(4) == 4);    // return 4
 }
 
 void Test2()
 {
-    var n = TreeNode.Make([]);
-    var s = PostorderTraversal(n);
-    var a = "[]";
-    Debug.Assert(Print(s) == a, $"Output: {Print(s)}\nExpect: {a}");
 }
 
 void Test3()
 {
-    var n = TreeNode.Make([1]);
-    var s = PostorderTraversal(n);
-    var a = "[1]";
-    Debug.Assert(Print(s) == a, $"Output: {Print(s)}\nExpect: {a}");
 }
 
 void Test4()
 {
 }
 
-IList<int> PreorderTraversal(TreeNode root)
+public class LRUCache
 {
-    var res = new List<int>();
-    if (root is null) { return res; }
+    public LinkedList<(int k, int v)> List { get; }
+    public Dictionary<int, LinkedListNode<(int k, int v)>> Map { get; }
+    public int Capacity { get; }
+    public int Count { get; private set; }
 
-    var stack = new Stack<TreeNode>();
-    stack.Push(root);
-    while (stack.TryPop(out var node))
+    public LRUCache(int capacity)
     {
-        if (node is not null)
-        {
-            res.Add(node.val);
-            stack.Push(node.right);
-            stack.Push(node.left);
-        }
+        List = [];
+        Map = [];
+        Capacity = capacity;
+        Count = 0;
     }
-    return res;
-}
 
-IList<int> PostorderTraversal(TreeNode root)
-{
-    var res = new List<int>();
-    if (root is null) { return res; }
-    var stack = new Stack<TreeNode>();
-    var curr = root;
-    TreeNode last = null;
-    while (curr is not null || stack.Count > 0)
+    public int Get(int key)
     {
-        if (curr is not null)
+        if (Map.TryGetValue(key, out var node))
         {
-            stack.Push(curr);
-            curr = curr.left;
+            List.Remove(node);
+            List.AddFirst(node);
+            return node.Value.v;
+        }
+        return -1;
+    }
+
+    public void Put(int key, int value)
+    {
+        if (Map.TryGetValue(key, out var node))
+        {
+            List.Remove(node);
+            List.AddFirst((key, value));
+            Map[key] = List.First;
         }
         else
         {
-            var peek = stack.Peek();
-            if (peek.right is not null && last != peek.right)
+            Count += 1;
+            if (Count > Capacity)
             {
-                curr = peek.right;
+                var lru = List.Last;
+                List.RemoveLast();
+                Map.Remove(lru.Value.k);
             }
-            else
-            {
-                res.Add(peek.val);
-                last = stack.Pop();
-            }
+            List.AddFirst((key, value));
+            Map.Add(key, List.First);
         }
     }
-    return res;
-}
-
-string Print(IEnumerable<int> values)
-{
-    var sb = new StringBuilder();
-    sb.Append('[');
-    foreach (var item in values)
-    {
-        sb.AppendFormat("{0},", item);
-    }
-    if (sb.Length > 1)
-    {
-        sb.Replace(',', ']', sb.Length - 1, 1);
-    }
-    else
-    {
-        sb.Append(']');
-    }
-    return sb.ToString();
 }
