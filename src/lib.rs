@@ -3,25 +3,20 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_product(nums: &[i32]) -> i32 {
-    // NOTE: cast to f64 for extreme test cases
+pub fn find_min(nums: &[i32]) -> i32 {
     if nums.len() < 2 {
-        return nums.first().copied().unwrap_or(0);
+        return nums[0];
     }
-    let (mut curr_min, mut curr_max) = (nums[0], nums[0]);
-    let mut res = curr_max;
-    for &num in &nums[1..] {
-        if num == 0 {
-            (curr_min, curr_max) = (1, 1);
-            res = res.max(0)
-        } else {
-            let temp = num.max(curr_max * num).max(curr_min * num);
-            curr_min = num.min(curr_max * num).min(curr_min * num);
-            curr_max = temp;
-            res = res.max(curr_max)
+    let (mut low, mut high) = (0, nums.len() - 1);
+    while low < high {
+        let mid = (high - low) / 2 + low;
+        match nums[mid].cmp(&nums[high]) {
+            std::cmp::Ordering::Less => high = mid,
+            std::cmp::Ordering::Equal => (),
+            std::cmp::Ordering::Greater => low = mid + 1,
         }
     }
-    res
+    nums[low]
 }
 
 #[cfg(test)]
@@ -30,8 +25,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(max_product(&[2, 3, -2, 4]), 6);
-        debug_assert_eq!(max_product(&[-2, 0, -1]), 0);
+        debug_assert_eq!(find_min(&[3, 4, 5, 1, 2]), 1);
+        debug_assert_eq!(find_min(&[4, 5, 6, 7, 0, 1, 2]), 0);
+        debug_assert_eq!(find_min(&[11, 13, 15, 17]), 11);
     }
 
     #[test]
