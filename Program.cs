@@ -8,7 +8,7 @@ Console.WriteLine("!!Test Passed!!");
 void Test1()
 {
     var n = ListNode.Make([4, 2, 1, 3]);
-    var s = InsertionSortList(n);
+    var s = SortList(n);
     var a = "[1,2,3,4]";
     Debug.Assert(s.ToString() == a, $"Output:{s}\nExpect:{a}");
 }
@@ -16,37 +16,48 @@ void Test1()
 void Test2()
 {
     var n = ListNode.Make([-1, 5, 3, 4, 0]);
-    var s = InsertionSortList(n);
+    var s = SortList(n);
     var a = "[-1,0,3,4,5]";
     Debug.Assert(s.ToString() == a, $"Output:{s}\nExpect:{a}");
 }
 
-ListNode InsertionSortList(ListNode head)
+ListNode SortList(ListNode head)
 {
-    if (head is null) { return null; }
-    (ListNode dummy1, ListNode dummy2) = (new(0, head), new(0, head.next));
-    head.next = null;
-    while (dummy2.next is not null)
+    if (head is null || head.next is null) { return head; }
+    (var slow, var fast) = (head, head);
+    ListNode prev = null;
+    while (fast is not null && fast.next is not null)
     {
-        var curr = dummy2.next;
-        dummy2.next = curr.next;
+        prev = slow;
+        fast = fast.next.next;
+        slow = slow.next;
+    }
+    prev.next = null;
+    var left = SortList(head);
+    var right = SortList(slow);
+    return Merge(left, right);
+}
 
-        if (curr.val < dummy1.next.val)
+ListNode Merge(ListNode left, ListNode right)
+{
+    ListNode dummy = new(0);
+    var curr = dummy;
+
+    while (left is not null && right is not null)
+    {
+        if (left.val < right.val)
         {
-            curr.next = dummy1.next;
-            dummy1.next = curr;
+            curr.next = left;
+            left = left.next;
         }
         else
         {
-            (var prev, var next) = (dummy1, dummy1.next);
-            while (next is not null && next.val < curr.val)
-            {
-                prev = next;
-                next = next.next;
-            }
-            curr.next = next;
-            prev.next = curr;
+            curr.next = right;
+            right = right.next;
         }
+        curr = curr.next;
     }
-    return dummy1.next;
+    if (left is not null) { curr.next = left; }
+    if (right is not null) { curr.next = right; }
+    return dummy.next;
 }
