@@ -6,7 +6,7 @@ public abstract class TreeNodeBase<T> where T : TreeNodeBase<T>, new()
     public T left;
     public T right;
 
-    public IEnumerable<T> PreorderFlatten()
+    public IEnumerable<T> LevelOrderFlatten()
     {
         var queue = new Queue<T>();
         queue.Enqueue((T)this);
@@ -55,7 +55,7 @@ public abstract class TreeNodeBase<T> where T : TreeNodeBase<T>, new()
     {
         var sb = new StringBuilder();
         sb.Append('[');
-        var nodes = PreorderFlatten().ToList();
+        var nodes = LevelOrderFlatten().ToList();
         while (nodes.Last() is null)
         {
             nodes.RemoveAt(nodes.Count - 1);
