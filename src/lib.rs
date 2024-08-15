@@ -3,35 +3,39 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn lemonade_change(bills: &[i32]) -> bool {
-    let mut five = 0;
-    let mut ten = 0;
+#[derive(Debug, Clone, Default)]
+struct MinStack {
+    nums: Vec<i32>,
+    mins: Vec<i32>,
+}
 
-    for &b in bills.iter() {
-        match b {
-            5 => five += 1,
-            10 => {
-                if five > 0 {
-                    five -= 1;
-                    ten += 1;
-                } else {
-                    return false;
-                }
-            }
-            20 => {
-                if ten > 0 && five > 0 {
-                    ten -= 1;
-                    five -= 1;
-                } else if five >= 3 {
-                    five -= 3;
-                } else {
-                    return false;
-                }
-            }
-            _ => unreachable!(),
+impl MinStack {
+    fn new() -> Self {
+        Default::default()
+    }
+
+    fn push(&mut self, val: i32) {
+        self.nums.push(val);
+        match self.mins.last() {
+            Some(&m) if m >= val => self.mins.push(val),
+            None => self.mins.push(val),
+            _ => (),
         }
     }
-    true
+
+    fn pop(&mut self) {
+        if self.mins.last().copied() >= self.nums.pop() {
+            self.mins.pop();
+        }
+    }
+
+    fn top(&self) -> i32 {
+        self.nums.last().copied().unwrap_or(0)
+    }
+
+    fn get_min(&self) -> i32 {
+        self.mins.last().copied().unwrap_or(0)
+    }
 }
 
 #[cfg(test)]
@@ -40,12 +44,16 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(lemonade_change(&[5, 5, 5, 10, 20]));
-        debug_assert!(!lemonade_change(&[5, 5, 10, 10, 20]));
+        let mut stack = MinStack::new();
+        stack.push(-2);
+        stack.push(0);
+        stack.push(-3);
+        debug_assert_eq!(stack.get_min(), -3); // return -3
+        stack.pop();
+        stack.top(); // return 0
+        debug_assert_eq!(stack.get_min(), -2); // return -2
     }
 
     #[test]
-    fn test() {
-        debug_assert!(lemonade_change(&[5, 5, 5, 20]));
-    }
+    fn test() {}
 }
