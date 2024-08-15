@@ -3,32 +3,36 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_gap(nums: &[i32]) -> i32 {
-    let size = nums.len();
-    let (low, high) = (
-        nums.iter().min().copied().unwrap_or(0),
-        nums.iter().max().copied().unwrap_or(0),
-    );
-    if size <= 2 || low == high {
-        return high - low;
+pub fn compare_version(version1: &str, version2: &str) -> i32 {
+    let (mut it1, mut it2) = (version1.split('.'), version2.split('.'));
+    loop {
+        match (it1.next(), it2.next()) {
+            (None, None) => break,
+            (Some(s1), Some(s2)) => {
+                let n1 = s1.parse::<u32>().unwrap();
+                let n2 = s2.parse::<u32>().unwrap();
+                if n1 > n2 {
+                    return 1;
+                }
+                if n1 < n2 {
+                    return -1;
+                }
+            }
+            (Some(s1), None) => {
+                let n1 = s1.parse::<u32>().unwrap();
+                if n1 > 0 {
+                    return 1;
+                }
+            }
+            (None, Some(s2)) => {
+                let n2 = s2.parse::<u32>().unwrap();
+                if n2 > 0 {
+                    return -1;
+                }
+            }
+        }
     }
-
-    // let bucket_size = (high - low) / (size as i32 - 1);
-    let mut buckets = vec![vec![]; size - 1];
-    for &num in nums.iter() {
-        let idx = if num == high {
-            size - 2
-        } else {
-            ((num - low) * (size as i32 - 1) / (high - low)) as usize
-        };
-        buckets[idx].push(num);
-    }
-    let buckets: Vec<_> = buckets.into_iter().filter(|v| !v.is_empty()).collect();
-    buckets
-        .windows(2)
-        .map(|w| w[1].iter().min().unwrap() - w[0].iter().max().unwrap())
-        .max()
-        .unwrap()
+    0
 }
 
 #[cfg(test)]
@@ -37,8 +41,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(maximum_gap(&[3, 6, 9, 1]), 3);
-        debug_assert_eq!(maximum_gap(&[10]), 0);
+        debug_assert_eq!(compare_version("1.2", "1.10"), -1);
+        debug_assert_eq!(compare_version("1.01", "1.001"), 0);
+        debug_assert_eq!(compare_version("1.0", "1.0.0.0"), 0);
     }
 
     #[test]
