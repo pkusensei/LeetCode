@@ -3,39 +3,21 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-#[derive(Debug, Clone, Default)]
-struct MinStack {
-    nums: Vec<i32>,
-    mins: Vec<i32>,
-}
-
-impl MinStack {
-    fn new() -> Self {
-        Default::default()
-    }
-
-    fn push(&mut self, val: i32) {
-        self.nums.push(val);
-        match self.mins.last() {
-            Some(&m) if m >= val => self.mins.push(val),
-            None => self.mins.push(val),
-            _ => (),
+pub fn find_peak_element(nums: &[i32]) -> i32 {
+    let (mut low, mut high) = (0, nums.len() - 1);
+    while low < high {
+        let mid = (high - low) / 2 + low;
+        match nums[mid].cmp(&nums[mid + 1]) {
+            std::cmp::Ordering::Less => low = mid + 1,
+            std::cmp::Ordering::Equal => (),
+            std::cmp::Ordering::Greater => high = mid,
         }
     }
+    low as i32
 
-    fn pop(&mut self) {
-        if self.mins.last().copied() >= self.nums.pop() {
-            self.mins.pop();
-        }
-    }
-
-    fn top(&self) -> i32 {
-        self.nums.last().copied().unwrap_or(0)
-    }
-
-    fn get_min(&self) -> i32 {
-        self.mins.last().copied().unwrap_or(0)
-    }
+    // -inf, [low..mid..high], -inf
+    // [mid] < [mid+1] is akin to -inf < [low] => search [mid+1..high]
+    // [mid] > [mid+1] is akin to [high] > -inf => search [low..mid]
 }
 
 #[cfg(test)]
@@ -44,14 +26,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        let mut stack = MinStack::new();
-        stack.push(-2);
-        stack.push(0);
-        stack.push(-3);
-        debug_assert_eq!(stack.get_min(), -3); // return -3
-        stack.pop();
-        stack.top(); // return 0
-        debug_assert_eq!(stack.get_min(), -2); // return -2
+        debug_assert_eq!(find_peak_element(&[1, 2, 3, 1]), 2);
+        debug_assert_eq!(find_peak_element(&[1, 2, 1, 3, 5, 6, 4]), 5); // or 1
     }
 
     #[test]
