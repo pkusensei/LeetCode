@@ -3,20 +3,35 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_min(mut nums: Vec<i32>) -> i32 {
-    while nums.len() > 1 && nums.first() == nums.last() {
-        nums.pop();
-    }
-    let (mut low, mut high) = (0, nums.len() - 1);
-    while low < high {
-        let mid = (high - low) / 2 + low;
-        match nums[mid].cmp(&nums[high]) {
-            std::cmp::Ordering::Less => high = mid,
-            std::cmp::Ordering::Equal => high -= 1,
-            std::cmp::Ordering::Greater => low = mid + 1,
+pub fn lemonade_change(bills: &[i32]) -> bool {
+    let mut five = 0;
+    let mut ten = 0;
+
+    for &b in bills.iter() {
+        match b {
+            5 => five += 1,
+            10 => {
+                if five > 0 {
+                    five -= 1;
+                    ten += 1;
+                } else {
+                    return false;
+                }
+            }
+            20 => {
+                if ten > 0 && five > 0 {
+                    ten -= 1;
+                    five -= 1;
+                } else if five >= 3 {
+                    five -= 3;
+                } else {
+                    return false;
+                }
+            }
+            _ => unreachable!(),
         }
     }
-    nums[low]
+    true
 }
 
 #[cfg(test)]
@@ -25,13 +40,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(find_min(vec![1, 3, 5]), 1);
-        debug_assert_eq!(find_min(vec![2, 2, 2, 0, 1]), 0);
-        debug_assert_eq!(find_min(vec![1, 1]), 1);
+        debug_assert!(lemonade_change(&[5, 5, 5, 10, 20]));
+        debug_assert!(!lemonade_change(&[5, 5, 10, 10, 20]));
     }
 
     #[test]
     fn test() {
-        debug_assert_eq!(find_min(vec![1, 1, 3]), 1)
+        debug_assert!(lemonade_change(&[5, 5, 5, 20]));
     }
 }
