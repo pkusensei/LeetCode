@@ -3,21 +3,32 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_peak_element(nums: &[i32]) -> i32 {
-    let (mut low, mut high) = (0, nums.len() - 1);
-    while low < high {
-        let mid = (high - low) / 2 + low;
-        match nums[mid].cmp(&nums[mid + 1]) {
-            std::cmp::Ordering::Less => low = mid + 1,
-            std::cmp::Ordering::Equal => (),
-            std::cmp::Ordering::Greater => high = mid,
-        }
+pub fn maximum_gap(nums: &[i32]) -> i32 {
+    let size = nums.len();
+    let (low, high) = (
+        nums.iter().min().copied().unwrap_or(0),
+        nums.iter().max().copied().unwrap_or(0),
+    );
+    if size <= 2 || low == high {
+        return high - low;
     }
-    low as i32
 
-    // -inf, [low..mid..high], -inf
-    // [mid] < [mid+1] is akin to -inf < [low] => search [mid+1..high]
-    // [mid] > [mid+1] is akin to [high] > -inf => search [low..mid]
+    // let bucket_size = (high - low) / (size as i32 - 1);
+    let mut buckets = vec![vec![]; size - 1];
+    for &num in nums.iter() {
+        let idx = if num == high {
+            size - 2
+        } else {
+            ((num - low) * (size as i32 - 1) / (high - low)) as usize
+        };
+        buckets[idx].push(num);
+    }
+    let buckets: Vec<_> = buckets.into_iter().filter(|v| !v.is_empty()).collect();
+    buckets
+        .windows(2)
+        .map(|w| w[1].iter().min().unwrap() - w[0].iter().max().unwrap())
+        .max()
+        .unwrap()
 }
 
 #[cfg(test)]
@@ -26,8 +37,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(find_peak_element(&[1, 2, 3, 1]), 2);
-        debug_assert_eq!(find_peak_element(&[1, 2, 1, 3, 5, 6, 4]), 5); // or 1
+        debug_assert_eq!(maximum_gap(&[3, 6, 9, 1]), 3);
+        debug_assert_eq!(maximum_gap(&[10]), 0);
     }
 
     #[test]
