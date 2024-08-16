@@ -22,6 +22,32 @@ public abstract class TreeNodeBase<T> where T : TreeNodeBase<T>, new()
         }
     }
 
+    public IEnumerable<T> InorderFlatten()
+    {
+        void Push(Stack<T> stack, T node)
+        {
+            while (node is not null)
+            {
+                stack.Push(node);
+                node = node.left;
+            }
+        }
+
+        var stack = new Stack<T>();
+        var curr = (T)this;
+        Push(stack, curr);
+        while (stack.TryPop(out var node))
+        {
+            if (node is not null)
+            {
+                yield return node;
+                Push(stack, node.right);
+            }
+            else { yield return null; }
+        }
+    }
+
+
     public IEnumerable<T> PreorderFlatten()
     {
         var stack = new Stack<T>();
