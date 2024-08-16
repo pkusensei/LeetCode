@@ -3,10 +3,17 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn title_to_number(column_title: &str) -> i32 {
-    column_title
-        .bytes()
-        .fold(0, |acc, byte| acc * 26 + (byte - b'A' + 1) as i32)
+pub const fn trailing_zeroes(n: i32) -> i32 {
+    if n < 5 {
+        return 0;
+    }
+    let mut div = 5;
+    let mut count = 0;
+    while n / div > 0 {
+        count += n / div;
+        div *= 5;
+    }
+    count
 }
 
 #[cfg(test)]
@@ -15,11 +22,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(title_to_number("A"), 1);
-        debug_assert_eq!(title_to_number("AB"), 28);
-        debug_assert_eq!(title_to_number("ZY"), 701);
+        debug_assert_eq!(trailing_zeroes(3), 0);
+        debug_assert_eq!(trailing_zeroes(5), 1);
+        debug_assert_eq!(trailing_zeroes(0), 0);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(trailing_zeroes(30), 7);
+        debug_assert_eq!(trailing_zeroes(51), 12);
+    }
 }
