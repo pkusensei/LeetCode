@@ -6,45 +6,33 @@ Console.WriteLine("!!Test Passed!!");
 
 void Test1()
 {
-    var node = TreeNode.Make([1, 2, 3, null, 5, null, 4]);
-    var s = RightSideView(node);
-    var a = "[1,3,4]";
-    Debug.Assert(s.Print() == a, $"Output: {s.Print()}\nExpect: {a}");
+    var node = ListNode.Make([1, 2, 6, 3, 4, 5, 6]);
+    var s = RemoveElements(node, 6);
+    var a = "[1,2,3,4,5]";
+    Debug.Assert(s.ToString() == a, $"Output: {s}\nExpect: {a}");
 }
 
 void Test2()
 {
-    var node = TreeNode.Make([1, null, 3]);
-    var s = RightSideView(node);
-    var a = "[1,3]";
-    Debug.Assert(s.Print() == a, $"Output: {s.Print()}\nExpect: {a}");
+    var node = ListNode.Make([7, 7, 7, 7]);
+    var s = RemoveElements(node, 7);
+    var a = "[]";
+    Debug.Assert(s is null);
 }
 
-IList<int> RightSideView(TreeNode root)
+ListNode RemoveElements(ListNode head, int val)
 {
-    List<int> res = [];
-    if (root is null) { return res; }
+    if (head is null) { return null; }
 
-    var queue = new Queue<(TreeNode, int)>();
-    var prev = (root, 0);
-    queue.Enqueue(prev);
-    while (queue.TryDequeue(out var item))
+    ListNode dummy = new(0, head);
+    var curr = dummy;
+    while (curr.next is not null)
     {
-        (var node, var level) = item;
-        if (prev.Item2 != level)
+        if (curr.next.val == val)
         {
-            res.Add(prev.Item1.val);
+            curr.next = curr.next.next;
         }
-        if (node.left is not null)
-        {
-            queue.Enqueue((node.left, level + 1));
-        }
-        if (node.right is not null)
-        {
-            queue.Enqueue((node.right, level + 1));
-        }
-        prev = item;
+        else { curr = curr.next; }
     }
-    res.Add(prev.Item1.val);
-    return res;
+    return dummy.next;
 }
