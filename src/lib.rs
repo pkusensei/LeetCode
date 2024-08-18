@@ -1,26 +1,28 @@
 mod helper;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_primes(n: i32) -> i32 {
-    if n <= 2 {
-        return 0;
+pub fn is_isomorphic(s: &str, t: &str) -> bool {
+    if s.len() < 2 {
+        return true;
     }
-    let mut marks = vec![false; n as usize - 2];
-    let offset = 2;
-    let mut step = 2;
-    while let Some(&mark) = marks.get(step - offset) {
-        if !mark {
-            let mut idx = step - offset + step;
-            while let Some(m) = marks.get_mut(idx) {
-                *m = true;
-                idx += step;
-            }
+
+    let mut m1 = HashMap::new();
+    let mut m2 = HashMap::new();
+    for (b1, b2) in s.bytes().zip(t.bytes()) {
+        if m1.get(&b1).is_some_and(|&seen| seen != b2) {
+            return false;
         }
-        step += 1;
+        if m2.get(&b2).is_some_and(|&seen| seen != b1) {
+            return false;
+        }
+        m1.insert(b1, b2);
+        m2.insert(b2, b1);
     }
-    marks.into_iter().filter(|m| !m).count() as _
+    true
 }
 
 #[cfg(test)]
@@ -29,14 +31,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(count_primes(10), 4);
-        debug_assert_eq!(count_primes(0), 0);
-        debug_assert_eq!(count_primes(1), 0);
+        debug_assert!(is_isomorphic("egg", "add"));
+        debug_assert!(!is_isomorphic("foo", "bar"));
+        debug_assert!(is_isomorphic("paper", "title"));
     }
 
     #[test]
     fn test() {
-        debug_assert_eq!(count_primes(2), 0);
-        debug_assert_eq!(count_primes(11), 4);
+        debug_assert!(!is_isomorphic("badc", "baba"));
     }
 }
