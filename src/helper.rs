@@ -10,9 +10,9 @@ fn is_palindrome(s: &str) -> bool {
         .all(|(b1, b2)| b1 == b2)
 }
 
-type Coord = (usize, usize);
+pub type Coord = (usize, usize);
 
-fn neighbors((a, b): Coord) -> impl Iterator<Item = Coord> {
+pub fn neighbors((a, b): Coord) -> impl Iterator<Item = Coord> {
     [
         (a.saturating_sub(1), b),
         (a + 1, b),
