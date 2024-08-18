@@ -3,28 +3,49 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn rob(nums: &[i32]) -> i32 {
-    // if nums.is_empty() {
-    //     return 0;
-    // }
-    // if nums.len() == 1 {
-    //     return nums[0];
-    // }
-    // let mut profit = Vec::with_capacity(nums.len());
-    // profit.push(nums[0]);
-    // profit.push(nums[0].max(nums[1]));
-    // for (i, &num) in nums.iter().enumerate().skip(2) {
-    //     profit.push(profit[i - 1].max(profit[i - 2] + num))
-    // }
-    // profit.into_iter().max().unwrap()
-
-    let (mut res, mut prev) = (0, 0);
-    for num in nums {
-        let temp = res;
-        res = res.max(prev + num);
-        prev = temp
+pub fn nth_ugly_number(n: i32) -> i32 {
+    fn with_btreeset(n: i32) -> i32 {
+        let mut curr: i32 = 1;
+        let mut seen = std::collections::BTreeSet::from([curr]);
+        for _ in 0..n {
+            curr = seen.pop_first().unwrap();
+            for v in [2, 3, 5].into_iter().filter_map(|n| curr.checked_mul(n)) {
+                seen.insert(v);
+            }
+        }
+        curr
     }
-    res
+
+    let mut nums = Vec::with_capacity(n as usize);
+    nums.push(1);
+
+    // indexes into nums vec
+    // where next multiples of 2, 3, 5 should occur 
+    // as nums[idx] * 2(or 3 or 5)
+    let mut idx = [0; 3];
+    let mut multiples = [2, 3, 5]; // next multiple of 2, 3, 5
+
+    for _ in 1..n {
+        let curr = multiples.into_iter().min().unwrap();
+        nums.push(curr);
+
+        if curr == multiples[0] {
+            // multiple of 2
+            idx[0] += 1;
+            multiples[0] = nums[idx[0]] * 2; // generate next multiple of 2
+        }
+        if curr == multiples[1] {
+            // multiple of 3
+            idx[1] += 1;
+            multiples[1] = nums[idx[1]] * 3; // generate next multiple of 3
+        }
+        if curr == multiples[2] {
+            // multiple of 5
+            idx[2] += 1;
+            multiples[2] = nums[idx[2]] * 5; // generate next multiple of 5
+        }
+    }
+    nums.last().copied().unwrap()
 }
 
 #[cfg(test)]
@@ -33,13 +54,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(rob(&[1, 2, 3, 1]), 4);
-        debug_assert_eq!(rob(&[2, 7, 9, 3, 1]), 12);
+        debug_assert_eq!(nth_ugly_number(10), 12);
+        debug_assert_eq!(nth_ugly_number(1), 1);
     }
 
     #[test]
     fn test() {
-        debug_assert_eq!(rob(&[2, 1]), 2);
-        debug_assert_eq!(rob(&[2, 1, 1, 2]), 4);
+        debug_assert_eq!(nth_ugly_number(1407), 536870912);
     }
 }
