@@ -6,33 +6,34 @@ Console.WriteLine("!!Test Passed!!");
 
 void Test1()
 {
-    var node = ListNode.Make([1, 2, 6, 3, 4, 5, 6]);
-    var s = RemoveElements(node, 6);
+    var node = ListNode.Make([5, 4, 3, 2, 1]);
+    var s = ReverseList(node);
     var a = "[1,2,3,4,5]";
     Debug.Assert(s.ToString() == a, $"Output: {s}\nExpect: {a}");
 }
 
 void Test2()
 {
-    var node = ListNode.Make([7, 7, 7, 7]);
-    var s = RemoveElements(node, 7);
-    var a = "[]";
-    Debug.Assert(s is null);
+    var node = ListNode.Make([1, 2]);
+    var s = ReverseList(node);
+    var a = "[2,1]";
+    Debug.Assert(s.ToString() == a, $"Output: {s}\nExpect: {a}");
 }
 
-ListNode RemoveElements(ListNode head, int val)
+ListNode ReverseList(ListNode head)
 {
     if (head is null) { return null; }
 
-    ListNode dummy = new(0, head);
-    var curr = dummy;
+    ListNode dummy = new(0);
+    var curr = head;
     while (curr.next is not null)
     {
-        if (curr.next.val == val)
-        {
-            curr.next = curr.next.next;
-        }
-        else { curr = curr.next; }
+        var temp = curr;
+        curr = curr.next;
+        temp.next = dummy.next;
+        dummy.next = temp;
     }
+    curr.next = dummy.next;
+    dummy.next = curr;
     return dummy.next;
 }
