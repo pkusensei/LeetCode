@@ -3,25 +3,27 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn range_bitwise_and(left: i32, right: i32) -> i32 {
-    fn bit_shift(mut left: i32, mut right: i32) -> i32 {
-        let mut shift = 0;
-        while left < right {
-            left >>= 1;
-            right >>= 1;
-            shift += 1;
-        }
-        left << shift
+pub fn is_happy(n: i32) -> bool {
+    let mut seen = std::collections::HashSet::new();
+    let mut curr = n;
+    while seen.insert(curr) {
+        curr = next_num(curr);
     }
+    curr == 1
 
-    if left == 0 {
-        return 0;
-    }
-    let (left_p, right_p) = (left.ilog2(), right.ilog2());
-    if left_p == right_p {
-        (left..=right).fold(left, |acc, n| acc & n)
+    // let (mut slow, mut fast) = (next_num(n), next_num(next_num(n)));
+    // while fast != 1 && slow != fast {
+    //     slow = next_num(slow);
+    //     fast = next_num(next_num(fast));
+    // }
+    // fast == 1
+}
+
+fn next_num(n: i32) -> i32 {
+    if n < 10 {
+        n * n
     } else {
-        0
+        (n % 10).pow(2) + next_num(n / 10)
     }
 }
 
@@ -31,9 +33,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(range_bitwise_and(5, 7), 4);
-        debug_assert_eq!(range_bitwise_and(0, 0), 0);
-        debug_assert_eq!(range_bitwise_and(1, i32::MAX), 0);
+        debug_assert!(is_happy(19));
+        debug_assert!(!is_happy(2));
     }
 
     #[test]
