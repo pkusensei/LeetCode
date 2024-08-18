@@ -3,28 +3,24 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_happy(n: i32) -> bool {
-    let mut seen = std::collections::HashSet::new();
-    let mut curr = n;
-    while seen.insert(curr) {
-        curr = next_num(curr);
+pub fn count_primes(n: i32) -> i32 {
+    if n <= 2 {
+        return 0;
     }
-    curr == 1
-
-    // let (mut slow, mut fast) = (next_num(n), next_num(next_num(n)));
-    // while fast != 1 && slow != fast {
-    //     slow = next_num(slow);
-    //     fast = next_num(next_num(fast));
-    // }
-    // fast == 1
-}
-
-fn next_num(n: i32) -> i32 {
-    if n < 10 {
-        n * n
-    } else {
-        (n % 10).pow(2) + next_num(n / 10)
+    let mut marks = vec![false; n as usize - 2];
+    let offset = 2;
+    let mut step = 2;
+    while let Some(&mark) = marks.get(step - offset) {
+        if !mark {
+            let mut idx = step - offset + step;
+            while let Some(m) = marks.get_mut(idx) {
+                *m = true;
+                idx += step;
+            }
+        }
+        step += 1;
     }
+    marks.into_iter().filter(|m| !m).count() as _
 }
 
 #[cfg(test)]
@@ -33,10 +29,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(is_happy(19));
-        debug_assert!(!is_happy(2));
+        debug_assert_eq!(count_primes(10), 4);
+        debug_assert_eq!(count_primes(0), 0);
+        debug_assert_eq!(count_primes(1), 0);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(count_primes(2), 0);
+        debug_assert_eq!(count_primes(11), 4);
+    }
 }
