@@ -1,36 +1,76 @@
 mod helper;
 
-use std::collections::VecDeque;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_order(num_courses: i32, prerequisites: &[[i32; 2]]) -> Vec<i32> {
-    let mut graph = vec![vec![]; num_courses as usize];
-    let mut in_degree = vec![0; num_courses as usize];
-    for nums in prerequisites.iter() {
-        graph[nums[1] as usize].push(nums[0]);
-        in_degree[nums[0] as usize] += 1;
+#[derive(Debug, Clone, Default)]
+struct WordDictionary {
+    nodes: [Option<Trie>; 26],
+}
+
+impl WordDictionary {
+    fn new() -> Self {
+        Default::default()
     }
-    let mut queue: VecDeque<_> = in_degree
-        .iter()
-        .enumerate()
-        .filter_map(|(idx, &degree)| if degree == 0 { Some(idx as i32) } else { None })
-        .collect();
-    let mut res = vec![];
-    while let Some(num) = queue.pop_front() {
-        res.push(num);
-        for &n in graph[num as usize].iter() {
-            in_degree[n as usize] -= 1;
-            if in_degree[n as usize] == 0 {
-                queue.push_back(n);
-            }
+
+    fn add_word(&mut self, word: &str) {
+        let b = word.as_bytes()[0];
+        let node = self.nodes[(b - b'a') as usize].get_or_insert(Trie::new());
+        node.insert(&word[1..])
+    }
+
+    fn search(&self, word: &str) -> bool {
+        let b = word.as_bytes()[0];
+        if b == b'.' {
+            self.nodes
+                .iter()
+                .filter_map(|n| n.as_ref())
+                .find(|n| n.search(&word[1..]))
+                .is_some()
+        } else if let Some(ref node) = self.nodes[(b - b'a') as usize] {
+            node.search(&word[1..])
+        } else {
+            false
         }
     }
-    if res.len() == num_courses as usize {
-        res
-    } else {
-        vec![]
+}
+
+#[derive(Debug, Clone, Default)]
+struct Trie {
+    children: [Option<Box<Trie>>; 26],
+    is_end: bool,
+}
+
+impl Trie {
+    fn new() -> Self {
+        Default::default()
+    }
+
+    fn insert(&mut self, word: &str) {
+        let mut node = self;
+        for b in word.bytes() {
+            node = node.children[(b - b'a') as usize].get_or_insert(Box::new(Self::new()));
+        }
+        node.is_end = true;
+    }
+
+    fn search(&self, word: &str) -> bool {
+        if word.is_empty() {
+            self.is_end
+        } else {
+            let b = word.as_bytes()[0];
+            if b == b'.' {
+                self.children
+                    .iter()
+                    .filter_map(|n| n.as_ref())
+                    .find(|n| n.search(&word[1..]))
+                    .is_some()
+            } else if let Some(ref n) = self.children[(b - b'a') as usize] {
+                n.search(&word[1..])
+            } else {
+                false
+            }
+        }
     }
 }
 
@@ -40,12 +80,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(find_order(2, &[[1, 0]]), [0, 1]);
-        debug_assert_eq!(
-            find_order(4, &[[1, 0], [2, 0], [3, 1], [3, 2]]),
-            [0, 1, 2, 3]
-        );
-        debug_assert_eq!(find_order(1, &[]), [0]);
+        let mut dict = WordDictionary::new();
+        dict.add_word("bad");
+        dict.add_word("dad");
+        dict.add_word("mad");
+        debug_assert!(!dict.search("pad")); // return False
+        debug_assert!(dict.search("bad")); // return True
+        debug_assert!(dict.search(".ad")); // return True
+        debug_assert!(dict.search("b..")); // return True
     }
 
     #[test]
