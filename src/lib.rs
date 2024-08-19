@@ -1,33 +1,37 @@
 mod helper;
 
+use std::collections::VecDeque;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_steps(n: i32) -> i32 {
-    fn with_dp(n: i32) -> i32 {
-        let mut dp = vec![1000; n as usize + 1];
-        dp[1] = 0;
-        for i in 2..n as usize {
-            for j in 1..=i / 2 {
-                if i % j == 0 {
-                    dp[i] = dp[i].min(dp[j] + i / j)
-                }
+pub fn find_order(num_courses: i32, prerequisites: &[[i32; 2]]) -> Vec<i32> {
+    let mut graph = vec![vec![]; num_courses as usize];
+    let mut in_degree = vec![0; num_courses as usize];
+    for nums in prerequisites.iter() {
+        graph[nums[1] as usize].push(nums[0]);
+        in_degree[nums[0] as usize] += 1;
+    }
+    let mut queue: VecDeque<_> = in_degree
+        .iter()
+        .enumerate()
+        .filter_map(|(idx, &degree)| if degree == 0 { Some(idx as i32) } else { None })
+        .collect();
+    let mut res = vec![];
+    while let Some(num) = queue.pop_front() {
+        res.push(num);
+        for &n in graph[num as usize].iter() {
+            in_degree[n as usize] -= 1;
+            if in_degree[n as usize] == 0 {
+                queue.push_back(n);
             }
         }
-        dp[n as usize] as _
     }
-
-    let mut prime = 2;
-    let mut res = 0;
-    let mut n = n;
-    while n > 1 {
-        while n % prime == 0 {
-            res += prime;
-            n /= prime
-        }
-        prime += 1;
+    if res.len() == num_courses as usize {
+        res
+    } else {
+        vec![]
     }
-    res
 }
 
 #[cfg(test)]
@@ -36,8 +40,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(min_steps(3), 3);
-        debug_assert_eq!(min_steps(1), 0);
+        debug_assert_eq!(find_order(2, &[[1, 0]]), [0, 1]);
+        debug_assert_eq!(
+            find_order(4, &[[1, 0], [2, 0], [3, 1], [3, 2]]),
+            [0, 1, 2, 3]
+        );
+        debug_assert_eq!(find_order(1, &[]), [0]);
     }
 
     #[test]
