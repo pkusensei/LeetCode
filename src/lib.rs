@@ -3,26 +3,34 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn rob_2(nums: &[i32]) -> i32 {
-    let size = nums.len();
+pub fn stone_game_ii(piles: &[i32]) -> i32 {
+    let size = piles.len();
     if size <= 2 {
-        return nums.first().max(nums.last()).copied().unwrap_or(0);
+        return piles.iter().sum();
     }
-    rob_1(&nums[1..]).max(rob_1(&nums[..size - 1]))
+
+    let mut suffix_sum = piles.to_vec();
+    for i in (0..size - 1).rev() {
+        suffix_sum[i] += suffix_sum[i + 1];
+    }
+    let mut memo = vec![vec![0; size]; size];
+    max_stones(&suffix_sum, 1, 0, &mut memo)
 }
 
-fn rob_1(nums: &[i32]) -> i32 {
-    if nums.len() == 1 {
-        return nums[0];
+fn max_stones(suffix_sum: &[i32], curr_max: usize, curr_idx: usize, memo: &mut [Vec<i32>]) -> i32 {
+    if curr_idx + 2 * curr_max >= suffix_sum.len() {
+        return suffix_sum[curr_idx];
+    }
+    if memo[curr_idx][curr_max] > 0 {
+        return memo[curr_idx][curr_max];
     }
 
-    let mut dp = Vec::with_capacity(nums.len());
-    dp.push(nums[0]);
-    dp.push(nums[0].max(nums[1]));
-    for (i, &num) in nums.iter().enumerate().skip(2) {
-        dp.push(dp[i - 1].max(dp[i - 2] + num))
+    let mut res = i32::MAX;
+    for i in 1..=2 * curr_max {
+        res = res.min(max_stones(suffix_sum, curr_max.max(i), curr_idx + i, memo));
     }
-    *dp.last().unwrap()
+    memo[curr_idx][curr_max] = suffix_sum[curr_idx] - res;
+    memo[curr_idx][curr_max]
 }
 
 #[cfg(test)]
@@ -31,9 +39,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(rob_2(&[2, 3, 2]), 3);
-        debug_assert_eq!(rob_2(&[1, 2, 3, 1]), 4);
-        debug_assert_eq!(rob_2(&[1, 2, 3]), 3);
+        debug_assert_eq!(stone_game_ii(&[2, 7, 9, 4, 4]), 10);
+        debug_assert_eq!(stone_game_ii(&[1, 2, 3, 4, 5, 100]), 104);
     }
 
     #[test]
