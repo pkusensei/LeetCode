@@ -3,34 +3,52 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn stone_game_ii(piles: &[i32]) -> i32 {
-    let size = piles.len();
-    if size <= 2 {
-        return piles.iter().sum();
+pub fn strange_printer(s: String) -> i32 {
+    let mut s = Vec::from(s);
+    s.dedup();
+    let size = s.len();
+    // let mut memo = vec![vec![None; size]; size];
+    // min_turns(&s, &mut memo, 0, size - 1)
+    let mut dp = vec![vec![0; size]; size];
+    for (i, row) in dp.iter_mut().enumerate().take(size) {
+        row[i] = 1;
     }
-
-    let mut suffix_sum = piles.to_vec();
-    for i in (0..size - 1).rev() {
-        suffix_sum[i] += suffix_sum[i + 1];
+    for length in 2..=size {
+        for start in 0..=size - length {
+            let end = start + length - 1;
+            dp[start][end] = length;
+            for split in 0..=length - 2 {
+                let mut curr = dp[start][start + split] + dp[start + split + 1][end];
+                if s[start + split] == s[end] {
+                    curr -= 1
+                }
+                dp[start][end] = curr.min(dp[start][end]);
+            }
+        }
     }
-    let mut memo = vec![vec![0; size]; size];
-    max_stones(&suffix_sum, 1, 0, &mut memo)
+    dp[0][size - 1] as i32
 }
 
-fn max_stones(suffix_sum: &[i32], curr_max: usize, curr_idx: usize, memo: &mut [Vec<i32>]) -> i32 {
-    if curr_idx + 2 * curr_max >= suffix_sum.len() {
-        return suffix_sum[curr_idx];
+fn min_turns(s: &[u8], memo: &mut [Vec<Option<i32>>], start: usize, end: usize) -> i32 {
+    if start > end {
+        return 0;
     }
-    if memo[curr_idx][curr_max] > 0 {
-        return memo[curr_idx][curr_max];
+    if let Some(v) = memo[start][end] {
+        return v;
     }
-
-    let mut res = i32::MAX;
-    for i in 1..=2 * curr_max {
-        res = res.min(max_stones(suffix_sum, curr_max.max(i), curr_idx + i, memo));
+    // worst case: one by one
+    let mut curr = 1 + min_turns(s, memo, start + 1, end);
+    for i in start + 1..=end {
+        if s[i] == s[start] {
+            // for "abacd" it splits into "aba" and "cd"
+            // "aba" requires the same amount as "ab"
+            // "cd" is thrown into another recursion
+            let with_match = min_turns(s, memo, start, i - 1) + min_turns(s, memo, i + 1, end);
+            curr = curr.min(with_match);
+        }
     }
-    memo[curr_idx][curr_max] = suffix_sum[curr_idx] - res;
-    memo[curr_idx][curr_max]
+    memo[start][end] = Some(curr);
+    curr
 }
 
 #[cfg(test)]
@@ -39,8 +57,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(stone_game_ii(&[2, 7, 9, 4, 4]), 10);
-        debug_assert_eq!(stone_game_ii(&[1, 2, 3, 4, 5, 100]), 104);
+        debug_assert_eq!(strange_printer("aaabbb".to_string()), 2);
+        debug_assert_eq!(strange_printer("aba".to_string()), 2);
     }
 
     #[test]
