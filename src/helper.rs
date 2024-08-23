@@ -30,3 +30,14 @@ pub fn get_dimensions<T, U: AsRef<[T]>>(grid: &[U]) -> (usize, usize) {
     );
     (row, col)
 }
+
+pub fn gcd<T>(a: T, b: T) -> T
+where
+    T: Copy + std::ops::Rem<Output = T> + PartialEq + From<bool>,
+{
+    if a == false.into() {
+        b
+    } else {
+        gcd(b % a, a)
+    }
+}
