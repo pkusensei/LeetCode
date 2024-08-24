@@ -50,12 +50,11 @@ fn build(num: u64) -> u64 {
     let mut v: Vec<_> = num.to_string().chars().collect();
     let size = v.len();
     v.truncate((size + 1) / 2);
-    let half: Vec<_> = if size & 1 == 1 {
-        v[..(size - 1) / 2].iter().copied().rev().collect()
-    } else {
-        v[..size / 2].iter().copied().rev().collect()
-    };
-    v.extend(half);
+    let mut half = v.clone();
+    if size & 1 == 1 {
+        half.pop();
+    }
+    v.extend(half.into_iter().rev());
     v.into_iter().collect::<String>().parse().unwrap()
 }
 
