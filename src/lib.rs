@@ -3,42 +3,60 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn fraction_addition(expression: &str) -> String {
-    let s = expression.as_bytes();
-    let (mut num, mut denom) = (0, 1);
-    let mut idx = 0;
-    while idx < s.len() {
-        let (mut curr_num, mut curr_denom) = (0, 0);
-        let mut is_negative = false;
-        if s[idx] == b'+' {
-            idx += 1
-        }
-        if s[idx] == b'-' {
-            is_negative = true;
-            idx += 1
-        }
-        while s[idx].is_ascii_digit() {
-            let v = (s[idx] - b'0') as i32;
-            curr_num = 10 * curr_num + v;
-            idx += 1;
-        }
-        if is_negative {
-            curr_num *= -1
-        }
-        idx += 1;
-        while idx < s.len() && s[idx].is_ascii_digit() {
-            let v = (s[idx] - b'0') as i32;
-            curr_denom = 10 * curr_denom + v;
-            idx += 1
-        }
-        num = num * curr_denom + curr_num * denom;
-        denom *= curr_denom;
+pub fn nearest_palindromic(n: &str) -> String {
+    let num: u64 = n.parse().unwrap();
+    let a = search_left(num);
+    let b = search_right(num);
+    if a.abs_diff(num) <= b.abs_diff(num) {
+        a.to_string()
+    } else {
+        b.to_string()
     }
+}
 
-    let gcd = gcd(num, denom).abs();
-    num /= gcd;
-    denom /= gcd;
-    format!("{num}/{denom}")
+fn search_left(num: u64) -> u64 {
+    let (mut left, mut right) = (0, num);
+    let mut res = 0;
+    while left <= right {
+        let mid = (right - left) / 2 + left;
+        let p = build(mid);
+        if p < num {
+            res = p;
+            left = mid + 1
+        } else {
+            right = mid - 1;
+        }
+    }
+    res
+}
+
+fn search_right(num: u64) -> u64 {
+    let (mut left, mut right) = (num, u64::MAX);
+    let mut res = 0;
+    while left <= right {
+        let mid = (right - left) / 2 + left;
+        let p = build(mid);
+        if p > num {
+            res = p;
+            right = mid - 1
+        } else {
+            left = mid + 1
+        }
+    }
+    res
+}
+
+fn build(num: u64) -> u64 {
+    let mut v: Vec<_> = num.to_string().chars().collect();
+    let size = v.len();
+    v.truncate((size + 1) / 2);
+    let half: Vec<_> = if size & 1 == 1 {
+        v[..(size - 1) / 2].iter().copied().rev().collect()
+    } else {
+        v[..size / 2].iter().copied().rev().collect()
+    };
+    v.extend(half);
+    v.into_iter().collect::<String>().parse().unwrap()
 }
 
 #[cfg(test)]
@@ -47,11 +65,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(fraction_addition("-1/2+1/2"), "0/1");
-        debug_assert_eq!(fraction_addition("-1/2+1/2+1/3"), "1/3");
-        debug_assert_eq!(fraction_addition("1/3-1/2"), "-1/6");
+        debug_assert_eq!(nearest_palindromic("123"), "121");
+        debug_assert_eq!(nearest_palindromic("1"), "0");
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(nearest_palindromic("1213"), "1221");
+    }
 }
