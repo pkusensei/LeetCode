@@ -6,34 +6,68 @@ Console.WriteLine("!!Test Passed!!");
 
 void Test1()
 {
-    var node = ListNode.Make([5, 4, 3, 2, 1]);
-    var s = ReverseList(node);
-    var a = "[1,2,3,4,5]";
-    Debug.Assert(s.ToString() == a, $"Output: {s}\nExpect: {a}");
 }
 
 void Test2()
 {
-    var node = ListNode.Make([1, 2]);
-    var s = ReverseList(node);
-    var a = "[2,1]";
-    Debug.Assert(s.ToString() == a, $"Output: {s}\nExpect: {a}");
 }
 
-ListNode ReverseList(ListNode head)
+IList<int> Postorder(Node root)
 {
-    if (head is null) { return null; }
+    var res = new List<int>();
+    if (root is null) { return res; }
 
-    ListNode dummy = new(0);
-    var curr = head;
-    while (curr.next is not null)
+    var stack = new Stack<Node>();
+    stack.Push(root);
+    while (stack.TryPop(out var curr))
     {
-        var temp = curr;
-        curr = curr.next;
-        temp.next = dummy.next;
-        dummy.next = temp;
+        res.Add(curr.val);
+        foreach (var item in curr.children)
+        {
+            stack.Push(item);
+        }
     }
-    curr.next = dummy.next;
-    dummy.next = curr;
-    return dummy.next;
+    res.Reverse();
+    return res;
 }
+
+IList<int> Postorder2(Node root)
+{
+    var res = new List<int>();
+    if (root is null) { return res; }
+
+    var nodeStack = new Stack<Node>();
+    var revStack = new Stack<Node>();
+    nodeStack.Push(root);
+    while (nodeStack.TryPop(out var curr))
+    {
+        revStack.Push(curr);
+        foreach (var item in curr.children)
+        {
+            nodeStack.Push(item);
+        }
+    }
+    while (revStack.TryPop(out var curr))
+    {
+        res.Add(curr.val);
+    }
+    return res;
+}
+
+//   1
+// 2 3 4
+
+// 1
+// 2 3 4
+
+// 1 4 3 2
+// 2 3 4 1
+
+//  1
+// 2 3
+
+// 1
+// 2 3
+
+// 1 3 2
+// 2 3 1
