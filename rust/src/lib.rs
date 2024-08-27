@@ -3,16 +3,26 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_kth_largest(nums: &[i32], k: i32) -> i32 {
-    let mut heap = std::collections::BinaryHeap::new();
-    for &num in nums.iter() {
-        heap.push(std::cmp::Reverse(num));
-        if heap.len() > k as usize {
-            heap.pop();
+pub fn combination_sum3(k: i32, n: i32) -> Vec<Vec<i32>> {
+        let nums: Vec<_> = (1..=9).collect();
+        solve(&nums, k, n)
+}
+
+fn solve(nums: &[i32], k: i32, n: i32) -> Vec<Vec<i32>> {
+    match nums {
+        [] if n == 0 && k == 0 => vec![vec![]],
+        [] => vec![],
+        [head, ..] if *head == n && k == 1 => vec![vec![n]],
+        [_] => vec![],
+        [head, tail @ ..] => {
+            let mut res = solve(tail, k, n);
+            for mut v in solve(tail, k - 1, n - head) {
+                v.push(*head);
+                res.push(v);
+            }
+            res
         }
     }
-    heap.into_sorted_vec().last().unwrap().0
-    // *nums.select_nth_unstable(n - k as usize).1
 }
 
 #[cfg(test)]
@@ -21,8 +31,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(find_kth_largest(&[3, 2, 1, 5, 6, 4], 2), 5);
-        debug_assert_eq!(find_kth_largest(&[3, 2, 3, 1, 2, 4, 5, 5, 6], 4), 4);
+        // debug_assert_eq!(combination_sum3(3, 7), [[1, 2, 4]]);
+        // debug_assert_eq!(combination_sum3(3, 9), [[1, 2, 6], [1, 3, 5], [2, 3, 4]]);
+        debug_assert!(combination_sum3(4, 1).is_empty());
     }
 
     #[test]
