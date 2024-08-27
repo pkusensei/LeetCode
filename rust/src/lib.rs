@@ -3,53 +3,16 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn shortest_palindrome(s: &str) -> String {
-    fn kmp(s: &str) -> String {
-        let rev: Vec<_> = s.chars().rev().collect();
-        let new_s: Vec<_> = s
-            .chars()
-            .chain(std::iter::once('#'))
-            .chain(rev.iter().copied())
-            .collect();
-        let size = new_s.len();
-        let mut prefix = vec![0; size];
-        for i in 1..size {
-            let mut t = prefix[i - 1];
-            while t > 0 && new_s[t] != new_s[i] {
-                t = prefix[t - 1]
-            }
-            if new_s[t] == new_s[i] {
-                t += 1
-            }
-            prefix[i] = t
-        }
-        rev.into_iter()
-            .take(s.len() - prefix[size - 1])
-            .chain(s.chars())
-            .collect()
-    }
-    // kmp(s)
-    solve(&s.chars().collect::<Vec<_>>())
-}
-
-fn solve(s: &[char]) -> String {
-    let size = s.len();
-    let mut i = 0;
-    for &b in s.iter().rev() {
-        if s[i] == b {
-            i += 1;
+pub fn find_kth_largest(nums: &[i32], k: i32) -> i32 {
+    let mut heap = std::collections::BinaryHeap::new();
+    for &num in nums.iter() {
+        heap.push(std::cmp::Reverse(num));
+        if heap.len() > k as usize {
+            heap.pop();
         }
     }
-    if i == size {
-        return s.iter().collect();
-    }
-    let remain: String = s[i..].iter().rev().collect();
-    format!(
-        "{}{}{}",
-        remain,
-        solve(&s[..i]),
-        s.iter().skip(i).collect::<String>()
-    )
+    heap.into_sorted_vec().last().unwrap().0
+    // *nums.select_nth_unstable(n - k as usize).1
 }
 
 #[cfg(test)]
@@ -58,8 +21,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        // debug_assert_eq!(shortest_palindrome("aacecaaa"), "aaacecaaa");
-        debug_assert_eq!(shortest_palindrome("abcd"), "dcbabcd");
+        debug_assert_eq!(find_kth_largest(&[3, 2, 1, 5, 6, 4], 2), 5);
+        debug_assert_eq!(find_kth_largest(&[3, 2, 3, 1, 2, 4, 5, 5, 6], 4), 4);
     }
 
     #[test]
