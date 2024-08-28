@@ -1,28 +1,51 @@
 mod helper;
 
+use std::collections::{HashSet, VecDeque};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn combination_sum3(k: i32, n: i32) -> Vec<Vec<i32>> {
-        let nums: Vec<_> = (1..=9).collect();
-        solve(&nums, k, n)
-}
+pub fn count_sub_islands(grid1: &[&[i32]], grid2: &[&[i32]]) -> i32 {
+    let mut seen = HashSet::new();
+    let mut res = 0;
 
-fn solve(nums: &[i32], k: i32, n: i32) -> Vec<Vec<i32>> {
-    match nums {
-        [] if n == 0 && k == 0 => vec![vec![]],
-        [] => vec![],
-        [head, ..] if *head == n && k == 1 => vec![vec![n]],
-        [_] => vec![],
-        [head, tail @ ..] => {
-            let mut res = solve(tail, k, n);
-            for mut v in solve(tail, k - 1, n - head) {
-                v.push(*head);
-                res.push(v);
+    for (y, row) in grid2.iter().enumerate() {
+        for (x, &n) in row.iter().enumerate() {
+            if n == 1
+                && find_cluster((x, y), grid2, &mut seen)
+                    .is_some_and(|cluster| cluster.into_iter().all(|(x, y)| grid1[y][x] == 1))
+            {
+                res += 1
             }
-            res
         }
     }
+    res
+}
+
+fn find_cluster(
+    coord: Coord,
+    grid2: &[&[i32]],
+    seen: &mut HashSet<Coord>,
+) -> Option<HashSet<Coord>> {
+    if !seen.insert(coord) {
+        return None;
+    }
+
+    let mut queue = VecDeque::from([coord]);
+    let mut res = HashSet::from([coord]);
+    while let Some(c) = queue.pop_front() {
+        for (x, y) in neighbors(c) {
+            if grid2
+                .get(y)
+                .is_some_and(|r| r.get(x).is_some_and(|&n| n == 1))
+                && seen.insert((x, y))
+            {
+                queue.push_back((x, y));
+                res.insert((x, y));
+            }
+        }
+    }
+    Some(res)
 }
 
 #[cfg(test)]
@@ -31,9 +54,44 @@ mod tests {
 
     #[test]
     fn basics() {
-        // debug_assert_eq!(combination_sum3(3, 7), [[1, 2, 4]]);
-        // debug_assert_eq!(combination_sum3(3, 9), [[1, 2, 6], [1, 3, 5], [2, 3, 4]]);
-        debug_assert!(combination_sum3(4, 1).is_empty());
+        debug_assert_eq!(
+            count_sub_islands(
+                &[
+                    &[1, 1, 1, 0, 0],
+                    &[0, 1, 1, 1, 1],
+                    &[0, 0, 0, 0, 0],
+                    &[1, 0, 0, 0, 0],
+                    &[1, 1, 0, 1, 1]
+                ],
+                &[
+                    &[1, 1, 1, 0, 0],
+                    &[0, 0, 1, 1, 1],
+                    &[0, 1, 0, 0, 0],
+                    &[1, 0, 1, 1, 0],
+                    &[0, 1, 0, 1, 0]
+                ]
+            ),
+            3
+        );
+        debug_assert_eq!(
+            count_sub_islands(
+                &[
+                    &[1, 0, 1, 0, 1],
+                    &[1, 1, 1, 1, 1],
+                    &[0, 0, 0, 0, 0],
+                    &[1, 1, 1, 1, 1],
+                    &[1, 0, 1, 0, 1]
+                ],
+                &[
+                    &[0, 0, 0, 0, 0],
+                    &[1, 1, 1, 1, 1],
+                    &[0, 1, 0, 1, 0],
+                    &[0, 1, 0, 1, 0],
+                    &[1, 0, 0, 0, 1]
+                ]
+            ),
+            2
+        );
     }
 
     #[test]
