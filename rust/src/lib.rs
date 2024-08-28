@@ -1,51 +1,37 @@
 mod helper;
 
-use std::collections::{HashSet, VecDeque};
+use std::collections::BTreeMap;
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_sub_islands(grid1: &[&[i32]], grid2: &[&[i32]]) -> i32 {
-    let mut seen = HashSet::new();
-    let mut res = 0;
+pub fn get_skyline(buildings: &[[i32; 3]]) -> Vec<[i32; 2]> {
+    let mut points = buildings.iter().fold(vec![], |mut acc, &[x1, x2, y]| {
+        acc.push([x1, -y]);
+        acc.push([x2, y]);
+        acc
+    });
+    points.sort_unstable();
 
-    for (y, row) in grid2.iter().enumerate() {
-        for (x, &n) in row.iter().enumerate() {
-            if n == 1
-                && find_cluster((x, y), grid2, &mut seen)
-                    .is_some_and(|cluster| cluster.into_iter().all(|(x, y)| grid1[y][x] == 1))
-            {
-                res += 1
-            }
+    let mut res = vec![];
+    let mut heights = BTreeMap::new();
+    let mut curr_height = 0;
+
+    for [curr_x, curr_y] in points {
+        if curr_y < 0 {
+            *heights.entry(-curr_y).or_insert(0) += 1;
+        } else if let Some(v) = heights.get_mut(&curr_y) {
+            *v -= 1;
+        }
+
+        heights.retain(|_, v| *v > 0);
+        let height = heights.keys().last().copied().unwrap_or(0);
+        if curr_height != height {
+            curr_height = height;
+            res.push([curr_x, curr_height])
         }
     }
     res
-}
-
-fn find_cluster(
-    coord: Coord,
-    grid2: &[&[i32]],
-    seen: &mut HashSet<Coord>,
-) -> Option<HashSet<Coord>> {
-    if !seen.insert(coord) {
-        return None;
-    }
-
-    let mut queue = VecDeque::from([coord]);
-    let mut res = HashSet::from([coord]);
-    while let Some(c) = queue.pop_front() {
-        for (x, y) in neighbors(c) {
-            if grid2
-                .get(y)
-                .is_some_and(|r| r.get(x).is_some_and(|&n| n == 1))
-                && seen.insert((x, y))
-            {
-                queue.push_back((x, y));
-                res.insert((x, y));
-            }
-        }
-    }
-    Some(res)
 }
 
 #[cfg(test)]
@@ -55,43 +41,24 @@ mod tests {
     #[test]
     fn basics() {
         debug_assert_eq!(
-            count_sub_islands(
-                &[
-                    &[1, 1, 1, 0, 0],
-                    &[0, 1, 1, 1, 1],
-                    &[0, 0, 0, 0, 0],
-                    &[1, 0, 0, 0, 0],
-                    &[1, 1, 0, 1, 1]
-                ],
-                &[
-                    &[1, 1, 1, 0, 0],
-                    &[0, 0, 1, 1, 1],
-                    &[0, 1, 0, 0, 0],
-                    &[1, 0, 1, 1, 0],
-                    &[0, 1, 0, 1, 0]
-                ]
-            ),
-            3
+            get_skyline(&[
+                [2, 9, 10],
+                [3, 7, 15],
+                [5, 12, 12],
+                [15, 20, 10],
+                [19, 24, 8],
+            ]),
+            [
+                [2, 10],
+                [3, 15],
+                [7, 12],
+                [12, 0],
+                [15, 10],
+                [20, 8],
+                [24, 0]
+            ]
         );
-        debug_assert_eq!(
-            count_sub_islands(
-                &[
-                    &[1, 0, 1, 0, 1],
-                    &[1, 1, 1, 1, 1],
-                    &[0, 0, 0, 0, 0],
-                    &[1, 1, 1, 1, 1],
-                    &[1, 0, 1, 0, 1]
-                ],
-                &[
-                    &[0, 0, 0, 0, 0],
-                    &[1, 1, 1, 1, 1],
-                    &[0, 1, 0, 1, 0],
-                    &[0, 1, 0, 1, 0],
-                    &[1, 0, 0, 0, 1]
-                ]
-            ),
-            2
-        );
+        debug_assert_eq!(get_skyline(&[[0, 2, 3], [2, 5, 3]]), [[0, 3], [5, 0]])
     }
 
     #[test]
