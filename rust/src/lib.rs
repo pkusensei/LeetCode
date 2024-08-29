@@ -1,50 +1,56 @@
 mod helper;
 
-use std::collections::{HashMap, HashSet, VecDeque};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn remove_stones(stones: &[[i32; 2]]) -> i32 {
-    let (xs, ys): (HashMap<i32, Vec<i32>>, HashMap<i32, Vec<i32>>) = stones.iter().fold(
-        (HashMap::new(), HashMap::new()),
-        |(mut xs, mut ys), &[x, y]| {
-            xs.entry(x).or_default().push(y);
-            ys.entry(y).or_default().push(x);
-            (xs, ys)
-        },
-    );
-    let mut seen = HashSet::new();
-    stones.iter().fold(0, |acc, &stone| {
-        acc + find_cluster(stone, &xs, &ys, &mut seen)
-    })
+pub fn maximal_square(matrix: &[&[char]]) -> i32 {
+    let (row, col) = get_dimensions(matrix);
+
+    let mut dp = vec![vec![0; col]; row];
+    for (x, &ch) in matrix[0].iter().enumerate() {
+        dp[0][x] = (ch == '1').into();
+    }
+    for y in 0..row {
+        dp[y][0] = (matrix[y][0] == '1').into()
+    }
+
+    for (y, r) in matrix.iter().enumerate().skip(1) {
+        for (x, &ch) in r.iter().enumerate().skip(1) {
+            if ch == '1' {
+                let corner = dp[y - 1][x - 1];
+                for i in (0..=corner).rev() {
+                    if (x - i..=x - 1).all(|xv| matrix[y][xv] == '1')
+                        && (y - i..=y - 1).all(|yv| matrix[yv][x] == '1')
+                    {
+                        dp[y][x] = i + 1;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    let side = dp.into_iter().fold(0, |acc, row| {
+        if let Some(v) = row.into_iter().max() {
+            acc.max(v)
+        } else {
+            acc
+        }
+    });
+    side.pow(2) as _
 }
 
-fn find_cluster(
-    stone: [i32; 2],
-    xs: &HashMap<i32, Vec<i32>>,
-    ys: &HashMap<i32, Vec<i32>>,
-    seen: &mut HashSet<[i32; 2]>,
-) -> i32 {
-    if !seen.insert(stone) {
-        return 0;
-    }
-    let mut queue = VecDeque::from([stone]);
+fn solve(matrix: &[&[char]]) -> i32 {
+    let (row, col) = get_dimensions(matrix);
+    let mut dp = vec![vec![0; col + 1]; row + 1];
     let mut res = 0;
-    while let Some([curr_x, curr_y]) = queue.pop_front() {
-        res += 1;
-        for &y in xs[&curr_x].iter() {
-            if seen.insert([curr_x, y]) {
-                queue.push_back([curr_x, y]);
-            }
-        }
-        for &x in ys[&curr_y].iter() {
-            if seen.insert([x, curr_y]) {
-                queue.push_back([x, curr_y]);
-            }
+    for y in 1..row + 1 {
+        for x in 1..col + 1 {
+            let curr: i32 = (matrix[y - 1][x - 1] == '1').into();
+            dp[y][x] = curr * (dp[y - 1][x - 1].min(dp[y - 1][x]).min(dp[y][x - 1]) + curr);
+            res = res.max(dp[y][x])
         }
     }
-    res - 1
+    res * res
 }
 
 #[cfg(test)]
@@ -52,14 +58,32 @@ mod tests {
     use super::*;
 
     #[test]
+    // #[ignore]
     fn basics() {
         debug_assert_eq!(
-            remove_stones(&[[0, 0], [0, 1], [1, 0], [1, 2], [2, 1], [2, 2]]),
-            5
+            maximal_square(&[
+                &['1', '0', '1', '0', '0'],
+                &['1', '0', '1', '1', '1'],
+                &['1', '1', '1', '1', '1'],
+                &['1', '0', '0', '1', '0']
+            ],),
+            4
         );
-        debug_assert_eq!(remove_stones(&[[0, 0], [0, 2], [1, 1], [2, 0], [2, 2]]), 3);
+        debug_assert_eq!(maximal_square(&[&['0', '1'], &['1', '0']]), 1);
+        debug_assert_eq!(maximal_square(&[&['0']]), 0);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(
+            maximal_square(&[
+                &['0', '0', '0', '1'],
+                &['1', '1', '0', '1'],
+                &['1', '1', '1', '1'],
+                &['0', '1', '1', '1'],
+                &['0', '1', '1', '1']
+            ]),
+            9
+        )
+    }
 }
