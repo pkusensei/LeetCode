@@ -1,58 +1,50 @@
 mod helper;
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet, VecDeque};
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn contains_nearby_almost_duplicate(nums: &[i32], index_diff: i32, value_diff: i32) -> bool {
-    let size = nums.len();
-    if size == 0 || index_diff < 0 || value_diff < 0 {
-        return false;
-    }
-    // A combination of sliding window and bucket sort
-    // bucket size: 1+value_diff => [0..value_diff]
-    // window size: 1+index_diff => [idx..idx+index_diff]
-    let mut buckets = HashMap::new();
-    for (idx, &num) in nums.iter().enumerate() {
-        let bucket = get_bucket(num, value_diff);
-        if buckets.insert(bucket, num).is_some() {
-            // insert one number to make window size 1+index_diff
-            return true;
-        }
-        if buckets
-            .get(&(bucket - 1))
-            .is_some_and(|v| num - v <= value_diff)
-        {
-            // check left bucket
-            return true;
-        }
-        if buckets
-            .get(&(bucket + 1))
-            .is_some_and(|v| v - num <= value_diff)
-        {
-            // check right bucket
-            return true;
-        }
-        // Failing all above ifs means all buckets contain only single number
-        // And neighboring buckets don't have numbers that fit the criteria
-        if buckets.len() > index_diff as usize {
-            // buckets is a sliding window of size 1+index_diff due to insert above
-            // to prepare next loop, remove oldest inserted number
-            let value = nums[idx - index_diff as usize];
-            let key = get_bucket(value, value_diff);
-            buckets.remove(&key);
-        }
-    }
-    false
+pub fn remove_stones(stones: &[[i32; 2]]) -> i32 {
+    let (xs, ys): (HashMap<i32, Vec<i32>>, HashMap<i32, Vec<i32>>) = stones.iter().fold(
+        (HashMap::new(), HashMap::new()),
+        |(mut xs, mut ys), &[x, y]| {
+            xs.entry(x).or_default().push(y);
+            ys.entry(y).or_default().push(x);
+            (xs, ys)
+        },
+    );
+    let mut seen = HashSet::new();
+    stones.iter().fold(0, |acc, &stone| {
+        acc + find_cluster(stone, &xs, &ys, &mut seen)
+    })
 }
 
-fn get_bucket(num: i32, value_diff: i32) -> i32 {
-    let mut bucket = num / (value_diff + 1);
-    if num < 0 {
-        bucket -= 1;
+fn find_cluster(
+    stone: [i32; 2],
+    xs: &HashMap<i32, Vec<i32>>,
+    ys: &HashMap<i32, Vec<i32>>,
+    seen: &mut HashSet<[i32; 2]>,
+) -> i32 {
+    if !seen.insert(stone) {
+        return 0;
     }
-    bucket
+    let mut queue = VecDeque::from([stone]);
+    let mut res = 0;
+    while let Some([curr_x, curr_y]) = queue.pop_front() {
+        res += 1;
+        for &y in xs[&curr_x].iter() {
+            if seen.insert([curr_x, y]) {
+                queue.push_back([curr_x, y]);
+            }
+        }
+        for &x in ys[&curr_y].iter() {
+            if seen.insert([x, curr_y]) {
+                queue.push_back([x, curr_y]);
+            }
+        }
+    }
+    res - 1
 }
 
 #[cfg(test)]
@@ -61,12 +53,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(contains_nearby_almost_duplicate(&[1, 2, 3, 1], 3, 0));
-        debug_assert!(!contains_nearby_almost_duplicate(&[1, 5, 9, 1, 5, 9], 2, 3));
+        debug_assert_eq!(
+            remove_stones(&[[0, 0], [0, 1], [1, 0], [1, 2], [2, 1], [2, 2]]),
+            5
+        );
+        debug_assert_eq!(remove_stones(&[[0, 0], [0, 2], [1, 1], [2, 0], [2, 2]]), 3);
     }
 
     #[test]
-    fn test() {
-        debug_assert!(contains_nearby_almost_duplicate(&[-3, 3, -6], 2, 3))
-    }
+    fn test() {}
 }
