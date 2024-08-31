@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace NaryTree;
+namespace Tree;
 
 public abstract class TreeNodeBase<T> where T : TreeNodeBase<T>, new()
 {

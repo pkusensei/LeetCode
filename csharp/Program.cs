@@ -6,35 +6,25 @@ Console.WriteLine("!!Test Passed!!");
 
 void Test1()
 {
-    var n = NaryTree.TreeNode.Make([1, 2, 3, 4, 5, 6]);
-    var s = CountNodes(n);
-    var a = 6;
-    Debug.Assert(s == a, $"Output: {s}\n Expected: {a}");
+    var n = Tree.TreeNode.Make([4, 2, 7, 1, 3, 6, 9]);
+    var s = InvertTree(n);
+    var a = "[4,7,2,9,6,3,1]";
+    Debug.Assert(s.ToString() == a, $"Output: {s}\n Expected: {a}");
 }
 
 void Test2()
 {
-    var n = NaryTree.TreeNode.Make([1]);
-    var s = CountNodes(n);
-    var a = 1;
-    Debug.Assert(s == a, $"Output: {s}\n Expected: {a}");
+    var n = Tree.TreeNode.Make([2, 1, 3]);
+    var s = InvertTree(n);
+    var a = "[2,3,1]";
+    Debug.Assert(s.ToString() == a, $"Output: {s}\n Expected: {a}");
 }
 
-int CountNodes(NaryTree.TreeNode root)
+Tree.TreeNode InvertTree(Tree.TreeNode root)
 {
-    if (root is null) { return 0; }
-    (var left, var right) = (root, root);
-    (var lcount, var rcount) = (0, 0);
-    while (left is not null)
-    {
-        left = left.left;
-        lcount += 1;
-    }
-    while (right is not null)
-    {
-        right = right.right;
-        rcount += 1;
-    }
-    if (lcount == rcount) { return (1 << lcount) - 1; }
-    return 1 + CountNodes(root.left) + CountNodes(root.right);
+    if (root is null) { return null; }
+    (var left, var right) = (InvertTree(root.right), InvertTree(root.left));
+    root.left = left;
+    root.right = right;
+    return root;
 }
