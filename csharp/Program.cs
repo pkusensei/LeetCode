@@ -6,68 +6,35 @@ Console.WriteLine("!!Test Passed!!");
 
 void Test1()
 {
+    var n = NaryTree.TreeNode.Make([1, 2, 3, 4, 5, 6]);
+    var s = CountNodes(n);
+    var a = 6;
+    Debug.Assert(s == a, $"Output: {s}\n Expected: {a}");
 }
 
 void Test2()
 {
+    var n = NaryTree.TreeNode.Make([1]);
+    var s = CountNodes(n);
+    var a = 1;
+    Debug.Assert(s == a, $"Output: {s}\n Expected: {a}");
 }
 
-IList<int> Postorder(Node root)
+int CountNodes(NaryTree.TreeNode root)
 {
-    var res = new List<int>();
-    if (root is null) { return res; }
-
-    var stack = new Stack<Node>();
-    stack.Push(root);
-    while (stack.TryPop(out var curr))
+    if (root is null) { return 0; }
+    (var left, var right) = (root, root);
+    (var lcount, var rcount) = (0, 0);
+    while (left is not null)
     {
-        res.Add(curr.val);
-        foreach (var item in curr.children)
-        {
-            stack.Push(item);
-        }
+        left = left.left;
+        lcount += 1;
     }
-    res.Reverse();
-    return res;
+    while (right is not null)
+    {
+        right = right.right;
+        rcount += 1;
+    }
+    if (lcount == rcount) { return (1 << lcount) - 1; }
+    return 1 + CountNodes(root.left) + CountNodes(root.right);
 }
-
-IList<int> Postorder2(Node root)
-{
-    var res = new List<int>();
-    if (root is null) { return res; }
-
-    var nodeStack = new Stack<Node>();
-    var revStack = new Stack<Node>();
-    nodeStack.Push(root);
-    while (nodeStack.TryPop(out var curr))
-    {
-        revStack.Push(curr);
-        foreach (var item in curr.children)
-        {
-            nodeStack.Push(item);
-        }
-    }
-    while (revStack.TryPop(out var curr))
-    {
-        res.Add(curr.val);
-    }
-    return res;
-}
-
-//   1
-// 2 3 4
-
-// 1
-// 2 3 4
-
-// 1 4 3 2
-// 2 3 4 1
-
-//  1
-// 2 3
-
-// 1
-// 2 3
-
-// 1 3 2
-// 2 3 1
