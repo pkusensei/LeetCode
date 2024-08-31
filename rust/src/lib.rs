@@ -1,45 +1,41 @@
 mod helper;
 
+use std::collections::VecDeque;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn calculate(s: &str) -> i32 {
-    let s = s.as_bytes();
-    let mut stack = vec![];
-    let mut curr = 0;
-    let mut negative = false;
-    let mut idx = 0;
-    while idx < s.len() {
-        match s[idx] {
-            b'+' => (),
-            b'-' => negative = !negative,
-            b'(' => {
-                stack.push((curr, negative));
-                curr = 0;
-                negative = false;
-            }
-            b')' => {
-                let (prev, neg) = stack.pop().unwrap_or((0, false));
-                curr = if neg { prev - curr } else { prev + curr }
-            }
-            n if n.is_ascii_digit() => {
-                let mut temp = i32::from(n - b'0');
-                while idx + 1 < s.len() && s[idx + 1].is_ascii_digit() {
-                    idx += 1;
-                    let digit = i32::from(s[idx] - b'0');
-                    temp = temp * 10 + digit
-                }
-                if negative {
-                    temp = -temp;
-                    negative = !negative;
-                }
-                curr += temp;
-            }
-            _ => (),
+#[derive(Debug, Clone)]
+struct MyStack {
+    queue: VecDeque<i32>,
+}
+
+impl MyStack {
+    fn new() -> Self {
+        Self {
+            queue: VecDeque::with_capacity(50),
         }
-        idx += 1;
     }
-    curr
+
+    fn push(&mut self, x: i32) {
+        self.queue.push_back(x);
+        for _ in 0..self.queue.len() - 1 {
+            let t = self.queue.pop_front().unwrap();
+            self.queue.push_back(t)
+        }
+    }
+
+    fn pop(&mut self) -> i32 {
+        self.queue.pop_front().unwrap()
+    }
+
+    fn top(&self) -> i32 {
+        *self.queue.front().unwrap()
+    }
+
+    fn empty(&self) -> bool {
+        self.queue.is_empty()
+    }
 }
 
 #[cfg(test)]
@@ -48,9 +44,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(calculate("1 + 1"), 2);
-        debug_assert_eq!(calculate("2-1 + 2"), 3);
-        debug_assert_eq!(calculate("(1+(4+5+2)-3)+(6+8)"), 23)
+        let mut s = MyStack::new();
+        s.push(1);
+        s.push(2);
+        debug_assert_eq!(s.top(), 2);
+        debug_assert_eq!(s.pop(), 2);
+        debug_assert!(!s.empty());
     }
 
     #[test]
