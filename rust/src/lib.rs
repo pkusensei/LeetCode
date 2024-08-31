@@ -3,21 +3,43 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn compute_area(
-    ax1: i32,
-    ay1: i32,
-    ax2: i32,
-    ay2: i32,
-    bx1: i32,
-    by1: i32,
-    bx2: i32,
-    by2: i32,
-) -> i32 {
-    let cx1 = ax1.max(bx1);
-    let cx2 = ax2.min(bx2);
-    let cy1 = ay1.max(by1);
-    let cy2 = ay2.min(by2);
-    (ax2 - ax1) * (ay2 - ay1) + (bx2 - bx1) * (by2 - by1) - (cx2 - cx1).max(0) * (cy2 - cy1).max(0)
+pub fn calculate(s: &str) -> i32 {
+    let s = s.as_bytes();
+    let mut stack = vec![];
+    let mut curr = 0;
+    let mut negative = false;
+    let mut idx = 0;
+    while idx < s.len() {
+        match s[idx] {
+            b'+' => (),
+            b'-' => negative = !negative,
+            b'(' => {
+                stack.push((curr, negative));
+                curr = 0;
+                negative = false;
+            }
+            b')' => {
+                let (prev, neg) = stack.pop().unwrap_or((0, false));
+                curr = if neg { prev - curr } else { prev + curr }
+            }
+            n if n.is_ascii_digit() => {
+                let mut temp = i32::from(n - b'0');
+                while idx + 1 < s.len() && s[idx + 1].is_ascii_digit() {
+                    idx += 1;
+                    let digit = i32::from(s[idx] - b'0');
+                    temp = temp * 10 + digit
+                }
+                if negative {
+                    temp = -temp;
+                    negative = !negative;
+                }
+                curr += temp;
+            }
+            _ => (),
+        }
+        idx += 1;
+    }
+    curr
 }
 
 #[cfg(test)]
@@ -26,8 +48,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(compute_area(-3, 0, 3, 4, 0, -1, 9, 2), 45);
-        debug_assert_eq!(compute_area(-2, -2, 2, 2, -2, -2, 2, 2), 16);
+        debug_assert_eq!(calculate("1 + 1"), 2);
+        debug_assert_eq!(calculate("2-1 + 2"), 3);
+        debug_assert_eq!(calculate("(1+(4+5+2)-3)+(6+8)"), 23)
     }
 
     #[test]
