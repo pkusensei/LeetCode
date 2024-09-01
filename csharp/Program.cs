@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using LList;
+using Tree;
 
 Test1();
 Test2();
@@ -7,48 +8,26 @@ Console.WriteLine("!!Test Passed!!");
 
 void Test1()
 {
-    var n = LList.ListNode.Make([1, 2, 2, 1]);
-    var s = IsPalindrome(n);
-    Debug.Assert(s, $"Output: {s}\nExpect: {!s}");
+    var n = TreeNode.Make([6, 2, 8, 0, 4, 7, 9, null, null, 3, 5]);
+    var s = LowestCommonAncestor(n, new(2), new(8));
+    var a = 6;
+    Debug.Assert(s.val == a, $"Output: {s}\nExpect: {a}");
 }
 
 void Test2()
 {
-    var n = LList.ListNode.Make([1, 2]);
-    var s = IsPalindrome(n);
-    Debug.Assert(!s, $"Output: {s}\nExpect: {!s}");
+    var n = TreeNode.Make([6, 2, 8, 0, 4, 7, 9, null, null, 3, 5]);
+    var s = LowestCommonAncestor(n, new(2), new(4));
+    var a = 2;
+    Debug.Assert(s.val == a, $"Output: {s}\nExpect: {a}");
 }
 
-bool IsPalindrome(ListNode head)
+TreeNode LowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q)
 {
-    if (head is null) { return true; }
-
-    (var slow, var fast) = (head, head.next);
-    while (fast is not null && fast.next is not null)
-    {
-        slow = slow.next;
-        fast = fast.next.next;
-    }
-    var tail = Reverse(slow.next);
-    slow.next = null;
-    while (tail is not null)
-    {
-        if (head.val != tail.val) { return false; }
-        head = head.next;
-        tail = tail.next;
-    }
-    return true;
-}
-
-ListNode Reverse(ListNode curr)
-{
-    ListNode prev = null;
-    while (curr is not null)
-    {
-        var temp = curr.next;
-        curr.next = prev;
-        prev = curr;
-        curr = temp;
-    }
-    return prev;
+    var curr = root;
+    var diffp = p.val - curr.val;
+    var diffq = q.val - root.val;
+    if (diffp == 0 || diffq == 0 || (diffp < 0) != (diffq < 0)) { return curr; }
+    if (diffp < 0) { return LowestCommonAncestor(curr.left, p, q); }
+    else { return LowestCommonAncestor(curr.right, p, q); }
 }
