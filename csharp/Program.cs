@@ -22,14 +22,8 @@ void Test2()
     Debug.Assert(s.val == a, $"Output: {s}\nExpect: {a}");
 }
 
-TreeNode LowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q)
+void DeleteNode(ListNode node)
 {
-        if (root is null) { return null; }
-        if (root.val == p.val || root.val == q.val) { return root; }
-
-        var left = LowestCommonAncestor(root.left, p, q);
-        var right = LowestCommonAncestor(root.right, p, q);
-        if (left is not null && right is not null) { return root; }
-        else if (left is not null) { return left; }
-        else { return right; }
+    node.val = node.next.val;
+    node.next = node.next.next;
 }
