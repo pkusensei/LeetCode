@@ -3,38 +3,23 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-#[derive(Debug, Clone, Default)]
-struct MyQueue {
-    ins: Vec<i32>,
-    outs: Vec<i32>,
-}
+pub fn count_digit_one(n: i32) -> i32 {
+    let n = i64::from(n);
+    let mut count = 0;
+    let mut factor = 1;
 
-impl MyQueue {
-    fn new() -> Self {
-        Default::default()
-    }
-
-    fn push(&mut self, x: i32) {
-        while let Some(v) = self.outs.pop() {
-            self.ins.push(v)
+    while factor <= n {
+        let lower = n - n / factor * factor;
+        let curr = n / factor % 10;
+        let higher = n / (factor * 10);
+        match curr {
+            0 => count += higher * factor,
+            1 => count += higher * factor + lower + 1,
+            _ => count += (higher + 1) * factor,
         }
-        self.ins.push(x);
-        while let Some(v) = self.ins.pop() {
-            self.outs.push(v)
-        }
+        factor *= 10;
     }
-
-    fn pop(&mut self) -> i32 {
-        self.outs.pop().unwrap()
-    }
-
-    fn peek(&self) -> i32 {
-        *self.outs.last().unwrap()
-    }
-
-    fn empty(&self) -> bool {
-        self.outs.is_empty()
-    }
+    count as i32
 }
 
 #[cfg(test)]
@@ -43,14 +28,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        let mut queue = MyQueue::new();
-        queue.push(1); // queue is: [1]
-        queue.push(2); // queue is: [1, 2] (leftmost is front of the queue)
-        debug_assert_eq!(queue.peek(), 1); // return 1
-        debug_assert_eq!(queue.pop(), 1); // return 1, queue is [2]
-        debug_assert!(!queue.empty()); // return false
+        debug_assert_eq!(count_digit_one(13), 6);
+        debug_assert_eq!(count_digit_one(0), 0);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(count_digit_one(824883294), 767944060);
+    }
 }
