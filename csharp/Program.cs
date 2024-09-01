@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using LList;
 
 Test1();
 Test2();
@@ -6,39 +7,48 @@ Console.WriteLine("!!Test Passed!!");
 
 void Test1()
 {
-    var n = Tree.TreeNode.Make([3, 1, 4, null, 2]);
-    var s = KthSmallest(n, 1);
-    var a = 1;
-    Debug.Assert(s == a, $"Output: {s}\nExpect: {a}");
+    var n = LList.ListNode.Make([1, 2, 2, 1]);
+    var s = IsPalindrome(n);
+    Debug.Assert(s, $"Output: {s}\nExpect: {!s}");
 }
 
 void Test2()
 {
-    var n = Tree.TreeNode.Make([5, 3, 6, 2, 4, null, null, 1]);
-    var s = KthSmallest(n, 3);
-    var a = 3;
-    Debug.Assert(s == a, $"Output: {s}\nExpect: {a}");
+    var n = LList.ListNode.Make([1, 2]);
+    var s = IsPalindrome(n);
+    Debug.Assert(!s, $"Output: {s}\nExpect: {!s}");
 }
 
-int KthSmallest(Tree.TreeNode root, int k)
+bool IsPalindrome(ListNode head)
 {
-    var stack = new Stack<Tree.TreeNode>();
-    var curr = root;
-    var i = 0;
-    while (stack.Count > 0 || curr is not null)
+    if (head is null) { return true; }
+
+    (var slow, var fast) = (head, head.next);
+    while (fast is not null && fast.next is not null)
     {
-        if (curr is not null)
-        {
-            stack.Push(curr);
-            curr = curr.left;
-        }
-        else
-        {
-            var temp = stack.Pop();
-            i += 1;
-            if (i == k) { return temp.val; }
-            curr = temp.right;
-        }
+        slow = slow.next;
+        fast = fast.next.next;
     }
-    return 0;
+    var tail = Reverse(slow.next);
+    slow.next = null;
+    while (tail is not null)
+    {
+        if (head.val != tail.val) { return false; }
+        head = head.next;
+        tail = tail.next;
+    }
+    return true;
+}
+
+ListNode Reverse(ListNode curr)
+{
+    ListNode prev = null;
+    while (curr is not null)
+    {
+        var temp = curr.next;
+        curr.next = prev;
+        prev = curr;
+        curr = temp;
+    }
+    return prev;
 }
