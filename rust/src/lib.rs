@@ -3,17 +3,10 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_anagram(s: &str, t: &str) -> bool {
-    s.len() == t.len()
-        && s.bytes()
-            .zip(t.bytes())
-            .fold(vec![0; 26], |mut count, (b1, b2)| {
-                count[usize::from(b1 - b'a')] += 1;
-                count[usize::from(b2 - b'a')] -= 1;
-                count
-            })
-            .into_iter()
-            .all(|c| c == 0)
+pub const fn add_digits(num: i32) -> i32 {
+    // https://en.wikipedia.org/wiki/Digital_root#Using_the_floor_function
+    const BASE: i32 = 10;
+    num - (BASE - 1) * ((num - 1) / (BASE - 1))
 }
 
 #[cfg(test)]
@@ -22,8 +15,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(is_anagram("anagram", "nagaram"));
-        debug_assert!(!is_anagram("rat", "car"));
+        debug_assert_eq!(add_digits(38), 2);
+        debug_assert_eq!(add_digits(0), 0);
     }
 
     #[test]
