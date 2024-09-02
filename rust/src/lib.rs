@@ -12,7 +12,10 @@ pub fn max_sliding_window(nums: &[i32], k: i32) -> Vec<i32> {
         let mut queue = VecDeque::new();
         for (idx, &num) in nums.iter().enumerate() {
             // for every window, keep only the big elements in queue
-            queue.retain(|&n| n >= num);
+            // queue.retain(|&n| n >= num); is somehow much slower and casues TLE
+            while queue.back().is_some_and(|&n| n < num) {
+                queue.pop_back();
+            }
             queue.push_back(num);
             if idx >= k && nums[idx - k] == queue[0] {
                 // one big num out of window
