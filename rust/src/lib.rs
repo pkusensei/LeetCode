@@ -4,24 +4,21 @@ mod helper;
 use helper::*;
 
 pub fn h_index(nums: &[i32]) -> i32 {
-    let n = nums.len();
-    let mut count = vec![0; n + 1];
-    for &num in nums {
-        let num = num as usize;
-        if num < n {
-            count[num] += 1
+    let (mut left, mut right) = (0, nums.len() - 1);
+    let mut res = 0;
+    while left <= right {
+        let mid = (right - left) / 2 + left;
+        if nums.len() - mid <= nums[mid] as usize {
+            res = nums.len() - mid;
+            if mid == 0 {
+                break;
+            }
+            right = mid - 1
         } else {
-            count[n] += 1
+            left = mid + 1;
         }
     }
-    let mut suffix = vec![0; n + 1];
-    for idx in (0..n + 1).rev() {
-        suffix[idx] = count[idx] + *suffix.get(idx + 1).unwrap_or(&0);
-        if suffix[idx] as usize >= idx {
-            return idx as i32;
-        }
-    }
-    0
+    res as i32
 }
 
 #[cfg(test)]
@@ -30,10 +27,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(h_index(&[3, 0, 6, 1, 5]), 3);
-        debug_assert_eq!(h_index(&[1, 3, 1]), 1);
+        debug_assert_eq!(h_index(&[0, 1, 3, 5, 6]), 3);
+        debug_assert_eq!(h_index(&[1, 2, 100]), 2);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(h_index(&[1]), 1);
+    }
 }
