@@ -8,22 +8,42 @@ Console.WriteLine("!!Test Passed!!");
 
 void Test1()
 {
-    var n = TreeNode.Make([3, 5, 1, 6, 2, 0, 8, null, null, 7, 4]);
-    var s = LowestCommonAncestor(n, new(5), new(1));
-    var a = 3;
-    Debug.Assert(s.val == a, $"Output: {s}\nExpect: {a}");
+    var n = TreeNode.Make([1, 2, 3, null, 5]);
+    var s = BinaryTreePaths(n);
+    var a = "[\"1->2->5\",\"1->3\"]";
+    Debug.Assert(s.Print() == a, $"Output: {s.Print()}\nExpect: {a}");
 }
 
 void Test2()
 {
-    var n = TreeNode.Make([3, 5, 1, 6, 2, 0, 8, null, null, 7, 4]);
-    var s = LowestCommonAncestor(n, new(5), new(4));
-    var a = 5;
-    Debug.Assert(s.val == a, $"Output: {s}\nExpect: {a}");
+    var n = TreeNode.Make([1]);
+    var s = BinaryTreePaths(n);
+    var a = "[\"1\"]";
+    Debug.Assert(s.Print() == a, $"Output: {s.Print()}\nExpect: {a}");
 }
 
-void DeleteNode(ListNode node)
+IList<string> BinaryTreePaths(TreeNode root)
 {
-    node.val = node.next.val;
-    node.next = node.next.next;
+    return Dfs(root).Select(lst =>
+    {
+        lst.Reverse();
+        var sb = new System.Text.StringBuilder();
+        sb.AppendJoin("->", lst);
+        return sb.ToString();
+    }).ToList();
+}
+
+List<List<int>> Dfs(TreeNode node)
+{
+    if (node.left is null && node.right is null) { return [[node.val]]; }
+    var res = new List<List<int>>();
+    if (node.left is not null)
+    {
+        res = res.Concat(Dfs(node.left)).ToList();
+    }
+    if (node.right is not null)
+    {
+        res = res.Concat(Dfs(node.right)).ToList();
+    }
+    return res.Select(lst => { lst.Add(node.val); return lst; }).ToList();
 }
