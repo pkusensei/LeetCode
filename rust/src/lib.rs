@@ -3,22 +3,13 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn single_number(nums: &[i32]) -> Vec<i32> {
-    let mask = nums.iter().skip(1).fold(nums[0], |acc, &num| acc ^ num);
-    let mut i = 0;
-    while (mask >> i) & 1 == 0 {
-        i += 1;
+pub fn is_ugly(mut n: i32) -> bool {
+    for x in [2, 3, 5] {
+        while n > 1 && n % x == 0 {
+            n /= x
+        }
     }
-    let bit = 1 << i;
-    let a = nums
-        .iter()
-        .filter(|&num| num & bit != 0)
-        .fold(0, |acc, num| acc ^ num);
-    // let b = nums
-    //     .iter()
-    //     .filter(|&num| num & bit == 0)
-    //     .fold(0, |acc, num| acc ^ num);
-    vec![a, mask ^ a]
+    n == 1
 }
 
 #[cfg(test)]
@@ -27,13 +18,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(single_number(&[1, 2, 1, 3, 2, 5]), [3, 5]);
-        debug_assert_eq!(single_number(&[-1, 0]), [-1, 0]);
-        debug_assert_eq!(single_number(&[0, 1]), [1, 0]);
+        debug_assert!(is_ugly(6));
+        debug_assert!(is_ugly(1));
+        debug_assert!(!is_ugly(14));
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(single_number(&[1, 1, 0, -2147483648]), [-2147483648, 0])
-    }
+    fn test() {}
 }
