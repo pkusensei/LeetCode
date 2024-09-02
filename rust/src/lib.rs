@@ -1,43 +1,19 @@
 mod helper;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn diff_ways_to_compute(expression: &str) -> Vec<i32> {
-    solve(expression, &mut HashMap::new())
-}
-
-fn solve<'a>(expr: &'a str, seen: &mut HashMap<&'a str, Vec<i32>>) -> Vec<i32> {
-    if let Some(v) = seen.get(expr) {
-        return v.clone();
-    }
-    if let Ok(r) = expr.parse() {
-        seen.insert(expr, vec![r]);
-        return vec![r];
-    }
-    let mut res = vec![];
-    for (idx, b) in expr
-        .bytes()
-        .enumerate()
-        .filter(|(_, b)| b"+-*".contains(&b))
-    {
-        let left = solve(&expr[..idx], seen);
-        let right = solve(&expr[idx + 1..], seen);
-        for r1 in left {
-            for r2 in &right {
-                match b {
-                    b'+' => res.push(r1 + r2),
-                    b'-' => res.push(r1 - r2),
-                    b'*' => res.push(r1 * r2),
-                    _ => (),
-                }
-            }
-        }
-    }
-    seen.insert(expr, res.clone());
-    res
+pub fn is_anagram(s: &str, t: &str) -> bool {
+    s.len() == t.len()
+        && s.bytes()
+            .zip(t.bytes())
+            .fold(vec![0; 26], |mut count, (b1, b2)| {
+                count[usize::from(b1 - b'a')] += 1;
+                count[usize::from(b2 - b'a')] -= 1;
+                count
+            })
+            .into_iter()
+            .all(|c| c == 0)
 }
 
 #[cfg(test)]
@@ -46,8 +22,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        // debug_assert_eq!(diff_ways_to_compute(&"2-1-1"), [0, 2]);
-        debug_assert_eq!(diff_ways_to_compute(&"2*3-4*5"), [-34, -14, -10, -10, 10]);
+        debug_assert!(is_anagram("anagram", "nagaram"));
+        debug_assert!(!is_anagram("rat", "car"));
     }
 
     #[test]
