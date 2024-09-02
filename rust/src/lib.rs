@@ -3,13 +3,11 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_ugly(mut n: i32) -> bool {
-    for x in [2, 3, 5] {
-        while n > 1 && n % x == 0 {
-            n /= x
-        }
-    }
-    n == 1
+pub fn missing_number(nums: &[i32]) -> i32 {
+    let n = nums.len() as i32;
+    (1..=n)
+        .chain(nums.iter().copied())
+        .fold(0, |acc, num| acc ^ num)
 }
 
 #[cfg(test)]
@@ -18,9 +16,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(is_ugly(6));
-        debug_assert!(is_ugly(1));
-        debug_assert!(!is_ugly(14));
+        debug_assert_eq!(missing_number(&[3, 0, 1]), 2);
+        debug_assert_eq!(missing_number(&[0, 1]), 2);
+        debug_assert_eq!(missing_number(&[9, 6, 4, 2, 3, 5, 7, 0, 1]), 8);
     }
 
     #[test]
