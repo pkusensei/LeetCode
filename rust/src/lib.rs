@@ -3,16 +3,17 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn product_except_self(nums: &[i32]) -> Vec<i32> {
-    let n = nums.len();
-    let (mut prefix, mut suffix) = (vec![1; n], vec![1; n + 1]);
-    for (idx, &num) in nums.iter().enumerate().take(n - 1) {
-        prefix[idx + 1] = num * prefix[idx];
+pub fn chalk_replacer(chalk: &[i32], k: i32) -> i32 {
+    let sum: i64 = chalk.iter().map(|&n| i64::from(n)).sum();
+    let mut k = (k as i64) % sum;
+    for (i, &num) in chalk.iter().enumerate() {
+        if num as i64 > k {
+            return i as i32;
+        } else {
+            k -= num as i64
+        }
     }
-    for (idx, &num) in nums.iter().enumerate().rev().take(n - 1) {
-        suffix[idx - 1] = num * suffix[idx];
-    }
-    (0..n).map(|i| prefix[i] * suffix[i]).collect()
+    0
 }
 
 #[cfg(test)]
@@ -21,8 +22,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(product_except_self(&[1, 2, 3, 4]), [24, 12, 8, 6]);
-        debug_assert_eq!(product_except_self(&[-1, 1, 0, -3, 3]), [0, 0, 9, 0, 0]);
+        debug_assert_eq!(chalk_replacer(&[5, 1, 5], 22), 0);
+        debug_assert_eq!(chalk_replacer(&[3, 4, 1, 2], 25), 1);
     }
 
     #[test]
