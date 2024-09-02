@@ -3,23 +3,16 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_digit_one(n: i32) -> i32 {
-    let n = i64::from(n);
-    let mut count = 0;
-    let mut factor = 1;
-
-    while factor <= n {
-        let lower = n - n / factor * factor;
-        let curr = n / factor % 10;
-        let higher = n / (factor * 10);
-        match curr {
-            0 => count += higher * factor,
-            1 => count += higher * factor + lower + 1,
-            _ => count += (higher + 1) * factor,
-        }
-        factor *= 10;
+pub fn product_except_self(nums: &[i32]) -> Vec<i32> {
+    let n = nums.len();
+    let (mut prefix, mut suffix) = (vec![1; n], vec![1; n + 1]);
+    for (idx, &num) in nums.iter().enumerate().take(n - 1) {
+        prefix[idx + 1] = num * prefix[idx];
     }
-    count as i32
+    for (idx, &num) in nums.iter().enumerate().rev().take(n - 1) {
+        suffix[idx - 1] = num * suffix[idx];
+    }
+    (0..n).map(|i| prefix[i] * suffix[i]).collect()
 }
 
 #[cfg(test)]
@@ -28,12 +21,10 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(count_digit_one(13), 6);
-        debug_assert_eq!(count_digit_one(0), 0);
+        debug_assert_eq!(product_except_self(&[1, 2, 3, 4]), [24, 12, 8, 6]);
+        debug_assert_eq!(product_except_self(&[-1, 1, 0, -3, 3]), [0, 0, 9, 0, 0]);
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(count_digit_one(824883294), 767944060);
-    }
+    fn test() {}
 }
