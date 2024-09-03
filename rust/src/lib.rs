@@ -1,34 +1,27 @@
 mod helper;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn game_of_life(board: &mut [Vec<i32>]) {
-    let (rows, cols) = get_dimensions(board);
-    for y in 0..rows {
-        for x in 0..cols {
-            dbg!(around(x as i32, y as i32).count());
-            let count = around(x as i32, y as i32)
-                .filter(|&(c, r)| {
-                    board
-                        .get(r)
-                        .is_some_and(|row| row.get(c).is_some_and(|&c| c & 1 == 1))
-                })
-                .count();
-            match (board[y][x] & 1 == 1, count) {
-                (true, 0..2) => (),
-                (true, 2 | 3) => board[y][x] += 2,
-                (true, 4..) => (),
-                (false, 3) => board[y][x] += 2,
-                _ => (),
-            }
+pub fn word_pattern(pattern: &str, s: &str) -> bool {
+    let plen = pattern.len();
+    let slen = s.split_whitespace().count();
+    if plen != slen {
+        return false;
+    }
+    let mut m1 = HashMap::new();
+    let mut m2 = HashMap::new();
+    for (b, s) in pattern.bytes().zip(s.split_whitespace()) {
+        if m1.insert(b, s).is_some_and(|v| v != s) {
+            return false;
+        }
+        if m2.insert(s, b).is_some_and(|v| v != b) {
+            return false;
         }
     }
-    for row in board.iter_mut() {
-        for cell in row.iter_mut() {
-            *cell /= 2
-        }
-    }
+    true
 }
 
 #[cfg(test)]
@@ -39,16 +32,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        {
-            let mut board = vec![vec![0, 1, 0], vec![0, 0, 1], vec![1, 1, 1], vec![0, 0, 0]];
-            game_of_life(&mut board);
-            debug_assert_eq!(board, [[0, 0, 0], [1, 0, 1], [0, 1, 1], [0, 1, 0]]);
-        }
-        {
-            let mut board = vec![vec![1, 1], vec![1, 0]];
-            game_of_life(&mut board);
-            debug_assert_eq!(board, [[1, 1], [1, 1]]);
-        }
+        debug_assert!(word_pattern("abba", "dog cat cat dog"));
+        debug_assert!(!word_pattern("abba", "dog cat cat fish"));
+        debug_assert!(!word_pattern("aaaa", "dog cat cat dog"));
     }
 
     #[test]
