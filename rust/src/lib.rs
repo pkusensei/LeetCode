@@ -1,57 +1,23 @@
 mod helper;
 
-use std::{cmp::Reverse, collections::BinaryHeap};
-
 #[allow(unused_imports)]
 use helper::*;
 
-#[derive(Debug, Clone, Default)]
-struct MedianFinder {
-    small: BinaryHeap<i32>,
-    large: BinaryHeap<Reverse<i32>>,
-}
-
-impl MedianFinder {
-    fn new() -> Self {
-        Default::default()
-    }
-
-    fn add_num(&mut self, num: i32) {
-        if self.small.is_empty() {
-            // empty
-            self.small.push(num);
+pub fn get_hint(secret: &str, guess: &str) -> String {
+    let (mut a, mut b) = (0, 0);
+    let (mut m, mut g) = (vec![0; 10], vec![0; 10]);
+    for (byte1, byte2) in secret.bytes().zip(guess.bytes()) {
+        if byte1 == byte2 {
+            a += 1;
         } else {
-            let mid = self.small.peek().copied().unwrap();
-            if num < mid {
-                self.small.push(num);
-            } else {
-                self.large.push(Reverse(num));
-            }
-        }
-        // Make sure that
-        // When there's an odd number of elements
-        // small.len() == 1+large.len()
-        // While for even amount
-        // small.len() == large.len()
-        if self.small.len() > self.large.len() + 1 {
-            let v = self.small.pop().unwrap();
-            self.large.push(Reverse(v));
-        }
-        if self.small.len() < self.large.len() {
-            let v = self.large.pop().unwrap().0;
-            self.small.push(v);
+            m[usize::from(byte1 - b'0')] += 1;
+            g[usize::from(byte2 - b'0')] += 1;
         }
     }
-
-    fn find_median(&self) -> f64 {
-        let a = self.small.peek().copied();
-        if self.small.len() > self.large.len() {
-            a.unwrap_or(0).into()
-        } else {
-            let b = self.large.peek().map(|r| r.0);
-            f64::from(a.unwrap_or(0) + b.unwrap_or(0)) / 2.0
-        }
+    for (c1, c2) in m.into_iter().zip(g) {
+        b += c1.min(c2);
     }
+    format!("{a}A{b}B")
 }
 
 #[cfg(test)]
@@ -62,12 +28,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        let mut f = MedianFinder::new();
-        f.add_num(1); // arr = [1]
-        f.add_num(2); // arr = [1, 2]
-        debug_assert_eq!(f.find_median(), 1.5); // return 1.5 (i.e., (1 + 2) / 2)
-        f.add_num(3); // arr[1, 2, 3]
-        debug_assert_eq!(f.find_median(), 2.0); // return 2.0
+        debug_assert_eq!(get_hint("1807", "7810"), "1A3B");
+        debug_assert_eq!(get_hint("1123", "0111"), "1A1B");
     }
 
     #[test]
