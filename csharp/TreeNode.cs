@@ -299,3 +299,29 @@ public class Node
     //     return dict.Count == 0 ? null : dict[1];
     // }
 }
+
+public class Codec
+{
+    // Encodes a tree to a single string.
+    public static string Serialize(TreeNode root)
+    {
+        if (root is null) { return "[]"; }
+        return root.ToString();
+    }
+
+    // Decodes your encoded data to tree.
+    public static TreeNode Deserialize(string data) => TreeNode.Make(Parse(data));
+
+    static List<int?> Parse(string data) =>
+        data.Trim(['[', ']']).Split(',').Select(s =>
+        {
+            if (int.TryParse(s, out int v))
+            {
+                return v;
+            }
+            else
+            {
+                return (int?)null;
+            }
+        }).ToList();
+}
