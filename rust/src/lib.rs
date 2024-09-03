@@ -3,76 +3,42 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn add_operators(num: &str, target: i32) -> Vec<String> {
-    if num.is_empty() {
-        return vec![];
-    }
-    let digits: Vec<_> = num.bytes().collect();
-    let target = i64::from(target);
-
-    solve(
-        &digits,
-        (0, 0),
-        (0, target),
-        &mut Vec::with_capacity(2 * digits.len()),
-    )
+pub fn find_duplicate(nums: &[i32]) -> i32 {
+    // binary_search(nums)
+    detect_cycle(nums)
 }
 
-fn solve(
-    digits: &[u8],
-    (prev, curr): (i64, i64),
-    (value, target): (i64, i64),
-    path: &mut Vec<String>,
-) -> Vec<String> {
-    if digits.is_empty() {
-        if value == target && curr == 0 {
-            return vec![path[1..].join("")]; // [1..] to exclude the initial '+'
+fn binary_search(nums: &[i32]) -> i32 {
+    let (mut left, mut right) = (1, nums.len() as i32 - 1);
+    while left < right {
+        let mid = (right - left) / 2 + left;
+        // [1, 2, 2, 3, 4] mid = 2
+        // count is 3 and 3>2 => dup must be in left half
+        let count = nums.iter().filter(|&&n| n <= mid).count() as i32;
+        if count > mid {
+            right = mid
+        } else {
+            left = mid + 1
         }
-        return vec![];
     }
-    let mut res = vec![];
-    let curr = curr * 10 + i64::from(digits[0] - b'0');
+    left
+}
 
-    // no op
-    // check to avoid leading zeros
-    if curr > 0 {
-        res.extend(solve(&digits[1..], (prev, curr), (value, target), path))
+fn detect_cycle(nums: &[i32]) -> i32 {
+    let (mut slow, mut fast) = (nums[0], nums[0]);
+    loop {
+        slow = nums[slow as usize];
+        fast = nums[nums[fast as usize] as usize];
+        if slow == fast {
+            break;
+        }
     }
-
-    // add
-    path.push("+".to_string());
-    path.push(curr.to_string());
-    res.extend(solve(&digits[1..], (curr, 0), (value + curr, target), path));
-    path.pop();
-    path.pop();
-
-    if !path.is_empty() {
-        // sub
-        path.push("-".to_string());
-        path.push(curr.to_string());
-        res.extend(solve(
-            &digits[1..],
-            (-curr, 0),
-            (value - curr, target),
-            path,
-        ));
-        path.pop();
-        path.pop();
-
-        // mul
-        path.push("*".to_string());
-        path.push(curr.to_string());
-        res.extend(solve(
-            &digits[1..],
-            (prev * curr, 0),
-            (value - prev + prev * curr, target),
-            path,
-        ));
-        path.pop();
-        path.pop();
+    slow = nums[0];
+    while slow != fast {
+        slow = nums[slow as usize];
+        fast = nums[fast as usize];
     }
-
-    res
+    slow
 }
 
 #[cfg(test)]
@@ -83,14 +49,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        sort_eq(add_operators("123", 6), ["1*2*3", "1+2+3"]);
-        sort_eq(add_operators("232", 8), ["2*3+2", "2+3*2"]);
-        debug_assert!(add_operators("3456237490", 9191).is_empty());
+        debug_assert_eq!(find_duplicate(&[1, 3, 4, 2, 2]), 2);
+        debug_assert_eq!(find_duplicate(&[3, 1, 3, 4, 2]), 3);
+        debug_assert_eq!(find_duplicate(&[3, 3, 3, 3, 3]), 3);
     }
 
     #[test]
     fn test() {}
 
+    #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(i1: I1, i2: I2)
     where
         T1: Ord + Debug + PartialEq<T2>,
