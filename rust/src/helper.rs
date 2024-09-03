@@ -23,6 +23,27 @@ pub fn neighbors((a, b): Coord) -> impl Iterator<Item = Coord> {
     .filter(move |&p| p != (a, b))
 }
 
+pub fn around(x: i32, y: i32) -> impl Iterator<Item = Coord> {
+    [
+        (x - 1, y - 1),
+        (x, y - 1),
+        (x + 1, y - 1),
+        (x - 1, y),
+        (x + 1, y),
+        (x - 1, y + 1),
+        (x, y + 1),
+        (x + 1, y + 1),
+    ]
+    .into_iter()
+    .filter_map(|(x, y)| {
+        if x >= 0 && y >= 0 {
+            Some((x as usize, y as usize))
+        } else {
+            None
+        }
+    })
+}
+
 pub fn get_dimensions<T, U: AsRef<[T]>>(grid: &[U]) -> (usize, usize) {
     let (row, col) = (
         grid.len(),

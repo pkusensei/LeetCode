@@ -3,42 +3,32 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_duplicate(nums: &[i32]) -> i32 {
-    // binary_search(nums)
-    detect_cycle(nums)
-}
-
-fn binary_search(nums: &[i32]) -> i32 {
-    let (mut left, mut right) = (1, nums.len() as i32 - 1);
-    while left < right {
-        let mid = (right - left) / 2 + left;
-        // [1, 2, 2, 3, 4] mid = 2
-        // count is 3 and 3>2 => dup must be in left half
-        let count = nums.iter().filter(|&&n| n <= mid).count() as i32;
-        if count > mid {
-            right = mid
-        } else {
-            left = mid + 1
+pub fn game_of_life(board: &mut [Vec<i32>]) {
+    let (rows, cols) = get_dimensions(board);
+    for y in 0..rows {
+        for x in 0..cols {
+            dbg!(around(x as i32, y as i32).count());
+            let count = around(x as i32, y as i32)
+                .filter(|&(c, r)| {
+                    board
+                        .get(r)
+                        .is_some_and(|row| row.get(c).is_some_and(|&c| c & 1 == 1))
+                })
+                .count();
+            match (board[y][x] & 1 == 1, count) {
+                (true, 0..2) => (),
+                (true, 2 | 3) => board[y][x] += 2,
+                (true, 4..) => (),
+                (false, 3) => board[y][x] += 2,
+                _ => (),
+            }
         }
     }
-    left
-}
-
-fn detect_cycle(nums: &[i32]) -> i32 {
-    let (mut slow, mut fast) = (nums[0], nums[0]);
-    loop {
-        slow = nums[slow as usize];
-        fast = nums[nums[fast as usize] as usize];
-        if slow == fast {
-            break;
+    for row in board.iter_mut() {
+        for cell in row.iter_mut() {
+            *cell /= 2
         }
     }
-    slow = nums[0];
-    while slow != fast {
-        slow = nums[slow as usize];
-        fast = nums[fast as usize];
-    }
-    slow
 }
 
 #[cfg(test)]
@@ -49,9 +39,16 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(find_duplicate(&[1, 3, 4, 2, 2]), 2);
-        debug_assert_eq!(find_duplicate(&[3, 1, 3, 4, 2]), 3);
-        debug_assert_eq!(find_duplicate(&[3, 3, 3, 3, 3]), 3);
+        {
+            let mut board = vec![vec![0, 1, 0], vec![0, 0, 1], vec![1, 1, 1], vec![0, 0, 0]];
+            game_of_life(&mut board);
+            debug_assert_eq!(board, [[0, 0, 0], [1, 0, 1], [0, 1, 1], [0, 1, 0]]);
+        }
+        {
+            let mut board = vec![vec![1, 1], vec![1, 0]];
+            game_of_life(&mut board);
+            debug_assert_eq!(board, [[1, 1], [1, 1]]);
+        }
     }
 
     #[test]
