@@ -1,27 +1,57 @@
 mod helper;
 
-use std::collections::HashMap;
+use std::{cmp::Reverse, collections::BinaryHeap};
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn word_pattern(pattern: &str, s: &str) -> bool {
-    let plen = pattern.len();
-    let slen = s.split_whitespace().count();
-    if plen != slen {
-        return false;
+#[derive(Debug, Clone, Default)]
+struct MedianFinder {
+    small: BinaryHeap<i32>,
+    large: BinaryHeap<Reverse<i32>>,
+}
+
+impl MedianFinder {
+    fn new() -> Self {
+        Default::default()
     }
-    let mut m1 = HashMap::new();
-    let mut m2 = HashMap::new();
-    for (b, s) in pattern.bytes().zip(s.split_whitespace()) {
-        if m1.insert(b, s).is_some_and(|v| v != s) {
-            return false;
+
+    fn add_num(&mut self, num: i32) {
+        if self.small.is_empty() {
+            // empty
+            self.small.push(num);
+        } else {
+            let mid = self.small.peek().copied().unwrap();
+            if num < mid {
+                self.small.push(num);
+            } else {
+                self.large.push(Reverse(num));
+            }
         }
-        if m2.insert(s, b).is_some_and(|v| v != b) {
-            return false;
+        // Make sure that
+        // When there's an odd number of elements
+        // small.len() == 1+large.len()
+        // While for even amount
+        // small.len() == large.len()
+        if self.small.len() > self.large.len() + 1 {
+            let v = self.small.pop().unwrap();
+            self.large.push(Reverse(v));
+        }
+        if self.small.len() < self.large.len() {
+            let v = self.large.pop().unwrap().0;
+            self.small.push(v);
         }
     }
-    true
+
+    fn find_median(&self) -> f64 {
+        let a = self.small.peek().copied();
+        if self.small.len() > self.large.len() {
+            a.unwrap_or(0).into()
+        } else {
+            let b = self.large.peek().map(|r| r.0);
+            f64::from(a.unwrap_or(0) + b.unwrap_or(0)) / 2.0
+        }
+    }
 }
 
 #[cfg(test)]
@@ -32,9 +62,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(word_pattern("abba", "dog cat cat dog"));
-        debug_assert!(!word_pattern("abba", "dog cat cat fish"));
-        debug_assert!(!word_pattern("aaaa", "dog cat cat dog"));
+        let mut f = MedianFinder::new();
+        f.add_num(1); // arr = [1]
+        f.add_num(2); // arr = [1, 2]
+        debug_assert_eq!(f.find_median(), 1.5); // return 1.5 (i.e., (1 + 2) / 2)
+        f.add_num(3); // arr[1, 2, 3]
+        debug_assert_eq!(f.find_median(), 2.0); // return 2.0
     }
 
     #[test]
