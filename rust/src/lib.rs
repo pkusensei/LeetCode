@@ -1,36 +1,139 @@
 mod helper;
 
+use std::collections::{HashSet, VecDeque};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn length_of_lis(nums: &[i32]) -> i32 {
-    // dp(nums)
-    binary_search(nums)
+pub fn remove_invalid_parentheses(s: &str) -> Vec<String> {
+    bfs(s.to_string())
+    // let (left, right) = s.bytes().fold((0, 0), |(left, right), byte| match byte {
+    //     b'(' => (left + 1, right),
+    //     b')' => {
+    //         let right = if left == 0 { right + 1 } else { right };
+    //         let left = if left > 0 { left - 1 } else { left };
+    //         (left, right)
+    //     }
+    //     _ => (left, right),
+    // });
+    // let mut res = HashSet::new();
+    // dfs(s, 0, 0, left, right, &mut String::new(), &mut res);
+    // res.into_iter().collect()
 }
 
-fn dp(nums: &[i32]) -> i32 {
-    let n = nums.len();
-    let mut dp = vec![1; n];
-    for i in 0..n {
-        for j in 0..i {
-            if nums[i] > nums[j] {
-                dp[i] = dp[i].max(dp[j] + 1);
+fn dfs(
+    s: &str,
+    left_count: i32,
+    right_count: i32,
+    left_rem: i32,
+    right_rem: i32,
+    expr: &mut String,
+    res: &mut HashSet<String>,
+) {
+    if s.is_empty() {
+        if left_rem == 0 && right_rem == 0 {
+            res.insert(expr.clone());
+        }
+        return;
+    }
+    let byte = s.as_bytes()[0];
+    if byte == b'(' && left_rem > 0 || byte == b')' && right_rem > 0 {
+        dfs(
+            &s[1..],
+            left_count,
+            right_count,
+            left_rem - if byte == b'(' { 1 } else { 0 },
+            right_rem - if byte == b')' { 1 } else { 0 },
+            expr,
+            res,
+        )
+    }
+    expr.push(char::from(byte));
+    if !b"()".contains(&byte) {
+        dfs(
+            &s[1..],
+            left_count,
+            right_count,
+            left_rem,
+            right_rem,
+            expr,
+            res,
+        );
+    } else if byte == b'(' {
+        dfs(
+            &s[1..],
+            left_count + 1,
+            right_count,
+            left_rem,
+            right_rem,
+            expr,
+            res,
+        );
+    } else if right_count < left_count {
+        dfs(
+            &s[1..],
+            left_count,
+            right_count + 1,
+            left_rem,
+            right_rem,
+            expr,
+            res,
+        );
+    }
+    expr.pop();
+}
+
+fn bfs(s: String) -> Vec<String> {
+    if is_valid(&s) {
+        return vec![s];
+    }
+
+    let mut queue = VecDeque::from([s]);
+    let mut res = HashSet::new();
+    let mut found = false;
+    while !queue.is_empty() && !found {
+        let count = queue.len();
+        let mut seen = HashSet::new();
+        // All strings current in queue[..count] have the same amount of chars removed
+        // They should be considered in one batch
+        for _ in 0..count {
+            if let Some(s) = queue.pop_front() {
+                if is_valid(&s) {
+                    res.insert(s.clone());
+                    found = true;
+                }
+                if found {
+                    // Only least removals wanted
+                    continue;
+                }
+                for (idx, b) in s.bytes().enumerate() {
+                    if !b"()".contains(&b) {
+                        continue;
+                    }
+                    let curr = format!("{}{}", &s[..idx], &s[idx + 1..]);
+                    if seen.insert(curr.clone()) {
+                        queue.push_back(curr)
+                    }
+                }
             }
         }
     }
-    dp.into_iter().max().unwrap()
+    res.into_iter().collect()
 }
 
-fn binary_search(nums: &[i32]) -> i32 {
-    let mut values = vec![nums[0]];
-    for &num in nums.iter() {
-        if num > *values.last().unwrap() {
-            values.push(num)
-        } else if let Err(idx) = values.binary_search(&num) {
-            values[idx] = values[idx].min(num)
+fn is_valid(chs: &str) -> bool {
+    let mut count = 0;
+    for byte in chs.bytes() {
+        match byte {
+            b'(' => count += 1,
+            b')' if count == 0 => {
+                return false;
+            }
+            b')' => count -= 1,
+            _ => (),
         }
     }
-    values.len() as _
+    count == 0
 }
 
 #[cfg(test)]
@@ -41,14 +144,17 @@ mod tests {
 
     #[test]
     fn basics() {
-        // debug_assert_eq!(length_of_lis(&[10, 9, 2, 5, 3, 7, 101, 18]), 4);
-        debug_assert_eq!(length_of_lis(&[0, 1, 0, 3, 2, 3]), 4);
-        debug_assert_eq!(length_of_lis(&[7, 7, 7, 7, 7, 7, 7]), 1);
+        sort_eq(remove_invalid_parentheses("()())()"), ["(())()", "()()()"]);
+        sort_eq(
+            remove_invalid_parentheses("(a)())()"),
+            ["(a())()", "(a)()()"],
+        );
+        debug_assert_eq!(remove_invalid_parentheses(")("), [""]);
     }
 
     #[test]
     fn test() {
-        debug_assert_eq!(length_of_lis(&[4, 10, 4, 3, 8, 9]), 3);
+        sort_eq(remove_invalid_parentheses("(((k()(("), ["k()", "(k)"]);
     }
 
     #[allow(dead_code)]
