@@ -3,58 +3,34 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn robot_sim(commands: &[i32], obstacles: &[[i32; 2]]) -> i32 {
-    let mut rob = Robot::new();
-    commands
-        .iter()
-        .fold(0, |acc, &num| rob.walk(num, obstacles, acc))
+pub fn length_of_lis(nums: &[i32]) -> i32 {
+    // dp(nums)
+    binary_search(nums)
 }
 
-#[derive(Debug, Clone, Copy)]
-struct Robot {
-    dir: Direction,
-    x: i32,
-    y: i32,
-}
-
-impl Robot {
-    fn new() -> Self {
-        Self {
-            dir: Direction::North,
-            x: 0,
-            y: 0,
-        }
-    }
-
-    fn dist(&self) -> i32 {
-        self.x.pow(2) + self.y.pow(2)
-    }
-
-    fn walk(&mut self, mut num: i32, obstacles: &[[i32; 2]], mut dist: i32) -> i32 {
-        match num {
-            -2 => self.dir = self.dir.turn_left(),
-            -1 => self.dir = self.dir.turn_right(),
-            1..=9 => {
-                while num > 0 {
-                    num -= 1;
-                    let (x, y) = match self.dir {
-                        Direction::North => (self.x, self.y + 1),
-                        Direction::West => (self.x - 1, self.y),
-                        Direction::South => (self.x, self.y - 1),
-                        Direction::East => (self.x + 1, self.y),
-                    };
-                    if obstacles.contains(&[x, y]) {
-                        return dist;
-                    } else {
-                        (self.x, self.y) = (x, y);
-                        dist = dist.max(self.dist())
-                    }
-                }
+fn dp(nums: &[i32]) -> i32 {
+    let n = nums.len();
+    let mut dp = vec![1; n];
+    for i in 0..n {
+        for j in 0..i {
+            if nums[i] > nums[j] {
+                dp[i] = dp[i].max(dp[j] + 1);
             }
-            _ => (),
         }
-        dist
     }
+    dp.into_iter().max().unwrap()
+}
+
+fn binary_search(nums: &[i32]) -> i32 {
+    let mut values = vec![nums[0]];
+    for &num in nums.iter() {
+        if num > *values.last().unwrap() {
+            values.push(num)
+        } else if let Err(idx) = values.binary_search(&num) {
+            values[idx] = values[idx].min(num)
+        }
+    }
+    values.len() as _
 }
 
 #[cfg(test)]
@@ -65,13 +41,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(robot_sim(&[4, -1, 3], &[]), 25);
-        debug_assert_eq!(robot_sim(&[4, -1, 4, -2, 4], &[[2, 4]]), 65);
-        debug_assert_eq!(robot_sim(&[6, -1, -1, 6], &[]), 36);
+        // debug_assert_eq!(length_of_lis(&[10, 9, 2, 5, 3, 7, 101, 18]), 4);
+        debug_assert_eq!(length_of_lis(&[0, 1, 0, 3, 2, 3]), 4);
+        debug_assert_eq!(length_of_lis(&[7, 7, 7, 7, 7, 7, 7]), 1);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(length_of_lis(&[4, 10, 4, 3, 8, 9]), 3);
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(i1: I1, i2: I2)
