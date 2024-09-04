@@ -3,21 +3,58 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn get_hint(secret: &str, guess: &str) -> String {
-    let (mut a, mut b) = (0, 0);
-    let (mut m, mut g) = (vec![0; 10], vec![0; 10]);
-    for (byte1, byte2) in secret.bytes().zip(guess.bytes()) {
-        if byte1 == byte2 {
-            a += 1;
-        } else {
-            m[usize::from(byte1 - b'0')] += 1;
-            g[usize::from(byte2 - b'0')] += 1;
+pub fn robot_sim(commands: &[i32], obstacles: &[[i32; 2]]) -> i32 {
+    let mut rob = Robot::new();
+    commands
+        .iter()
+        .fold(0, |acc, &num| rob.walk(num, obstacles, acc))
+}
+
+#[derive(Debug, Clone, Copy)]
+struct Robot {
+    dir: Direction,
+    x: i32,
+    y: i32,
+}
+
+impl Robot {
+    fn new() -> Self {
+        Self {
+            dir: Direction::North,
+            x: 0,
+            y: 0,
         }
     }
-    for (c1, c2) in m.into_iter().zip(g) {
-        b += c1.min(c2);
+
+    fn dist(&self) -> i32 {
+        self.x.pow(2) + self.y.pow(2)
     }
-    format!("{a}A{b}B")
+
+    fn walk(&mut self, mut num: i32, obstacles: &[[i32; 2]], mut dist: i32) -> i32 {
+        match num {
+            -2 => self.dir = self.dir.turn_left(),
+            -1 => self.dir = self.dir.turn_right(),
+            1..=9 => {
+                while num > 0 {
+                    num -= 1;
+                    let (x, y) = match self.dir {
+                        Direction::North => (self.x, self.y + 1),
+                        Direction::West => (self.x - 1, self.y),
+                        Direction::South => (self.x, self.y - 1),
+                        Direction::East => (self.x + 1, self.y),
+                    };
+                    if obstacles.contains(&[x, y]) {
+                        return dist;
+                    } else {
+                        (self.x, self.y) = (x, y);
+                        dist = dist.max(self.dist())
+                    }
+                }
+            }
+            _ => (),
+        }
+        dist
+    }
 }
 
 #[cfg(test)]
@@ -28,8 +65,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(get_hint("1807", "7810"), "1A3B");
-        debug_assert_eq!(get_hint("1123", "0111"), "1A1B");
+        debug_assert_eq!(robot_sim(&[4, -1, 3], &[]), 25);
+        debug_assert_eq!(robot_sim(&[4, -1, 4, -2, 4], &[[2, 4]]), 65);
+        debug_assert_eq!(robot_sim(&[6, -1, -1, 6], &[]), 36);
     }
 
     #[test]

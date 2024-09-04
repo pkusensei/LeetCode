@@ -52,6 +52,34 @@ pub fn get_dimensions<T, U: AsRef<[T]>>(grid: &[U]) -> (usize, usize) {
     (row, col)
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum Direction {
+    North,
+    West,
+    South,
+    East,
+}
+
+impl Direction {
+    pub fn turn_left(self) -> Self {
+        match self {
+            Direction::North => Direction::West,
+            Direction::West => Direction::South,
+            Direction::South => Direction::East,
+            Direction::East => Direction::North,
+        }
+    }
+
+    pub fn turn_right(self) -> Self {
+        match self {
+            Direction::North => Self::East,
+            Direction::West => Self::North,
+            Direction::South => Self::West,
+            Direction::East => Self::South,
+        }
+    }
+}
+
 pub fn gcd<T>(a: T, b: T) -> T
 where
     T: Copy + std::ops::Rem<Output = T> + PartialEq + From<bool>,
