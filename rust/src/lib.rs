@@ -3,27 +3,69 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn missing_rolls(rolls: &[i32], mean: i32, n: i32) -> Vec<i32> {
-    let m = rolls.len() as i32;
-    let sum: i32 = rolls.iter().sum();
-    let missing = mean * m - sum + mean * n;
-    if missing < n {
-        return vec![];
+pub fn is_additive_number(num: &str) -> bool {
+    let n = num.len();
+    if n < 3 {
+        return false;
     }
-    let average = missing / n;
-    let remainder = missing % n;
-    match (average, remainder) {
-        (7.., _) => vec![],
-        (6, 0) => vec![6; n as usize],
-        (6, _) => vec![],
-        _ => {
-            let mut res = vec![average; n as usize];
-            for i in 0..remainder {
-                res[i as usize] += 1
+
+    let mut first = 0;
+    let mut res = false;
+    for i1 in 0..n - 2 {
+        let mut second = 0;
+        if i1 == 0 && num.as_bytes()[i1] == b'0' {
+            for i2 in 1..n - 1 {
+                if i2 == 1 && num.as_bytes()[i2] == b'0' {
+                    return solve(num, i2 + 1, n, first, second);
+                }
+                second = num[1..=i2].parse().unwrap();
+                res |= solve(num, i2 + 1, n, first, second);
+                if res {
+                    return true;
+                }
             }
-            res
+            break;
+        }
+        first = num[..=i1].parse::<i128>().unwrap();
+        for i2 in i1 + 1..n - 1 {
+            if i2 == i1 + 1 && num.as_bytes()[i2] == b'0' {
+                res |= solve(num, i2 + 1, n, first, second);
+                if !res {
+                    break;
+                }
+            }
+            second = num[i1 + 1..=i2].parse().unwrap();
+            res |= solve(num, i2 + 1, n, first, second);
+            if res {
+                return true;
+            }
         }
     }
+    res
+}
+
+fn solve(num: &str, start: usize, n: usize, n1: i128, n2: i128) -> bool {
+    if start == n {
+        return true;
+    }
+    if num.as_bytes()[start] == b'0' {
+        if n1 + n2 == 0 {
+            return solve(num, start + 1, n, n2, 0);
+        } else {
+            return false;
+        }
+    }
+    let mut res = false;
+    for i in start..n {
+        let v = num[start..=i].parse().unwrap();
+        if v == n1 + n2 {
+            res |= solve(num, i + 1, n, n2, v)
+        }
+        if res {
+            return true;
+        }
+    }
+    false
 }
 
 #[cfg(test)]
@@ -34,14 +76,17 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(missing_rolls(&[3, 2, 4, 3], 4, 2), [6, 6]);
-        debug_assert_eq!(missing_rolls(&[1, 5, 6], 3, 4), [3, 2, 2, 2]);
-        debug_assert!(missing_rolls(&[1, 2, 3, 4], 6, 4).is_empty());
+        debug_assert!(is_additive_number("112358"));
+        debug_assert!(is_additive_number("199100199"));
+        debug_assert!(is_additive_number("000"));
+        debug_assert!(!is_additive_number("0235813"));
+        debug_assert!(!is_additive_number("1023"));
     }
 
     #[test]
     fn test() {
-        debug_assert!(missing_rolls(&[6, 3, 4, 3, 5, 3], 1, 6).is_empty());
+        debug_assert!(is_additive_number("198019823962"));
+        debug_assert!(is_additive_number("11111111111011111111111"));
     }
 
     #[allow(dead_code)]
