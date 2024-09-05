@@ -3,47 +3,41 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_additive_number(num: &str) -> bool {
-        let n = num.len();
-        if n < 3 {
-            return false;
-        }
-
-        for i1 in 0..n - 2 {
-            let first = &num[..=i1];
-            if first.starts_with('0') && first.len() > 1 {
-                break;
-            }
-            let n1 = first.parse().unwrap();
-            for i2 in i1 + 1..n - 1 {
-                let second = &num[i1 + 1..=i2];
-                if second.starts_with('0') && second.len() > 1 {
-                    break;
-                }
-                let n2 = second.parse().unwrap();
-                if solve(num, i2 + 1, n, n1, n2) {
-                    return true;
-                }
-            }
-        }
-        false
+#[derive(Debug, Clone)]
+struct NumArray {
+    nums: Vec<i32>,
+    prefix: Vec<i32>,
 }
 
-fn solve(num: &str, start: usize, n: usize, n1: i128, n2: i128) -> bool {
-    if start == n {
-        return true;
-    }
-    for i in start..n {
-        let s = &num[start..=i];
-        if s.starts_with('0') && s.len() > 1 {
-            break;
+impl NumArray {
+    fn new(nums: Vec<i32>) -> Self {
+        let mut prefix = vec![0; nums.len()];
+        prefix[0] = nums[0];
+        for (idx, &num) in nums.iter().enumerate().skip(1) {
+            prefix[idx] = num + prefix[idx - 1];
         }
-        let v = s.parse().unwrap();
-        if v == n1 + n2 && solve(num, i + 1, n, n2, v) {
-            return true;
+        Self { nums, prefix }
+    }
+
+    fn update(&mut self, index: i32, val: i32) {
+        let idx = index as usize;
+        if val == self.nums[idx] {
+            return;
+        }
+        for v in self.prefix.iter_mut().skip(idx) {
+            *v += val - self.nums[idx];
+        }
+        self.nums[idx] = val;
+    }
+
+    fn sum_range(&self, left: i32, right: i32) -> i32 {
+        let (left, right) = (left as usize, right as usize);
+        if left < 1 {
+            self.prefix[right]
+        } else {
+            self.prefix[right] - self.prefix[left - 1]
         }
     }
-    false
 }
 
 #[cfg(test)]
@@ -54,18 +48,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(is_additive_number("112358"));
-        debug_assert!(is_additive_number("199100199"));
-        debug_assert!(is_additive_number("000"));
-        debug_assert!(!is_additive_number("0235813"));
-        debug_assert!(!is_additive_number("1023"));
+        let mut arr = NumArray::new(vec![1, 3, 5]);
+        arr.sum_range(0, 2); // return 1 + 3 + 5 = 9
+        arr.update(1, 2); // nums = [1, 2, 5]
+        arr.sum_range(0, 2); // return 1 + 2 + 5 = 8
     }
 
     #[test]
-    fn test() {
-        debug_assert!(is_additive_number("198019823962"));
-        debug_assert!(is_additive_number("11111111111011111111111"));
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(i1: I1, i2: I2)
