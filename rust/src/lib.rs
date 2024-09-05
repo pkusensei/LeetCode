@@ -5,38 +5,47 @@ use helper::*;
 
 #[derive(Debug, Clone)]
 struct NumArray {
-    nums: Vec<i32>,
-    prefix: Vec<i32>,
+    tree: Vec<i32>,
+    n: usize,
 }
 
 impl NumArray {
     fn new(nums: Vec<i32>) -> Self {
-        let mut prefix = vec![0; nums.len()];
-        prefix[0] = nums[0];
-        for (idx, &num) in nums.iter().enumerate().skip(1) {
-            prefix[idx] = num + prefix[idx - 1];
+        let n = nums.len();
+        let mut tree = vec![0; n * 2];
+        tree[n..].copy_from_slice(&nums);
+        for i in (1..n).rev() {
+            tree[i] = tree[i << 1] + tree[i << 1 | 1] // i*2+1
         }
-        Self { nums, prefix }
+        Self { tree, n }
     }
 
     fn update(&mut self, index: i32, val: i32) {
-        let idx = index as usize;
-        if val == self.nums[idx] {
-            return;
+        let mut idx = index as usize;
+        idx += self.n;
+        self.tree[idx] = val;
+        while idx > 1 {
+            self.tree[idx >> 1] = self.tree[idx] + self.tree[idx ^ 1];
+            idx >>= 1;
         }
-        for v in self.prefix.iter_mut().skip(idx) {
-            *v += val - self.nums[idx];
-        }
-        self.nums[idx] = val;
     }
 
     fn sum_range(&self, left: i32, right: i32) -> i32 {
-        let (left, right) = (left as usize, right as usize);
-        if left < 1 {
-            self.prefix[right]
-        } else {
-            self.prefix[right] - self.prefix[left - 1]
+        let (mut left, mut right) = (left as usize + self.n, right as usize + self.n);
+        let mut res = 0;
+        while left <= right {
+            if left & 1 == 1 {
+                res += self.tree[left];
+                left += 1;
+            }
+            if right & 1 == 0 {
+                res += self.tree[right];
+                right -= 1;
+            }
+            left >>= 1;
+            right >>= 1;
         }
+        res
     }
 }
 
@@ -49,9 +58,9 @@ mod tests {
     #[test]
     fn basics() {
         let mut arr = NumArray::new(vec![1, 3, 5]);
-        arr.sum_range(0, 2); // return 1 + 3 + 5 = 9
+        debug_assert_eq!(arr.sum_range(0, 2), 9); // return 1 + 3 + 5 = 9
         arr.update(1, 2); // nums = [1, 2, 5]
-        arr.sum_range(0, 2); // return 1 + 2 + 5 = 8
+        debug_assert_eq!(arr.sum_range(0, 2), 8); // return 1 + 2 + 5 = 8
     }
 
     #[test]
