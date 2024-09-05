@@ -3,48 +3,26 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-#[derive(Debug, Clone)]
-struct NumMatrix {
-    prefix: Vec<Vec<i32>>,
-}
-
-impl NumMatrix {
-    // https://www.researchgate.net/profile/Michael-Jones-66/publication/3940582_Rapid_Object_Detection_using_a_Boosted_Cascade_of_Simple_Features/links/0f31753b419c639337000000/Rapid-Object-Detection-using-a-Boosted-Cascade-of-Simple-Features.pdf
-    // 2.1 Integral Image
-    fn new(matrix: &[&[i32]]) -> Self {
-        let (rows, cols) = get_dimensions(&matrix);
-        let mut row_sum = vec![vec![0; cols]; rows + 1];
-        let mut prefix = vec![vec![0; cols + 1]; rows + 1];
-        for (y, row) in matrix.iter().enumerate() {
-            for (x, &num) in row.iter().enumerate() {
-                row_sum[y + 1][x] = row_sum[y][x] + num;
-                prefix[y + 1][x + 1] = prefix[y + 1][x] + row_sum[y + 1][x];
-            }
-        }
-        Self { prefix }
+pub fn missing_rolls(rolls: &[i32], mean: i32, n: i32) -> Vec<i32> {
+    let m = rolls.len() as i32;
+    let sum: i32 = rolls.iter().sum();
+    let missing = mean * m - sum + mean * n;
+    if missing < n {
+        return vec![];
     }
-
-    fn sum_region(&self, row1: i32, col1: i32, row2: i32, col2: i32) -> i32 {
-        let (row1, col1, row2, col2) = (
-            row1 as usize,
-            col1 as usize,
-            row2 as usize + 1,
-            col2 as usize + 1,
-        );
-        self.prefix[row2][col2] + self.prefix[row1][col1]
-            - (self.prefix[row1][col2] + self.prefix[row2][col1])
-        //  In prefix sum matrix
-        //                  col1
-        //                   v
-        //          0  0  0  0  0  ...
-        //          0  n  n  n  n  ...
-        // row1 ->  0  n  n [*] n  ...
-        //          0  n  n  n [c]  ...
-        //          0  n  n  n  n  ...
-        // Starred point [*] corresponds to
-        // (row1, col1) in original matrix i.e [c]
-        // Notice that prefix matrix has extra 0s
-        // (row2, col2) needs +1
+    let average = missing / n;
+    let remainder = missing % n;
+    match (average, remainder) {
+        (7.., _) => vec![],
+        (6, 0) => vec![6; n as usize],
+        (6, _) => vec![],
+        _ => {
+            let mut res = vec![average; n as usize];
+            for i in 0..remainder {
+                res[i as usize] += 1
+            }
+            res
+        }
     }
 }
 
@@ -56,20 +34,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        let arr = NumMatrix::new(&[
-            &[3, 0, 1, 4, 2],
-            &[5, 6, 3, 2, 1],
-            &[1, 2, 0, 1, 5],
-            &[4, 1, 0, 1, 7],
-            &[1, 0, 3, 0, 5],
-        ]);
-        debug_assert_eq!(arr.sum_region(2, 1, 4, 3), 8); // return (-2) + 0 + 3 = 1
-        debug_assert_eq!(arr.sum_region(1, 1, 2, 2), 11); // return 3 + (-5) + 2 + (-1) = -1
-        debug_assert_eq!(arr.sum_region(1, 2, 2, 4), 12); // return (-2) + 0 + 3 + (-5) + 2 + (-1) = -3
+        debug_assert_eq!(missing_rolls(&[3, 2, 4, 3], 4, 2), [6, 6]);
+        debug_assert_eq!(missing_rolls(&[1, 5, 6], 3, 4), [3, 2, 2, 2]);
+        debug_assert!(missing_rolls(&[1, 2, 3, 4], 6, 4).is_empty());
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert!(missing_rolls(&[6, 3, 4, 3, 5, 3], 1, 6).is_empty());
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(i1: I1, i2: I2)
