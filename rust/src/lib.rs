@@ -4,64 +4,42 @@ mod helper;
 use helper::*;
 
 pub fn is_additive_number(num: &str) -> bool {
-    let n = num.len();
-    if n < 3 {
-        return false;
-    }
+        let n = num.len();
+        if n < 3 {
+            return false;
+        }
 
-    let mut first = 0;
-    let mut res = false;
-    for i1 in 0..n - 2 {
-        let mut second = 0;
-        if i1 == 0 && num.as_bytes()[i1] == b'0' {
-            for i2 in 1..n - 1 {
-                if i2 == 1 && num.as_bytes()[i2] == b'0' {
-                    return solve(num, i2 + 1, n, first, second);
+        for i1 in 0..n - 2 {
+            let first = &num[..=i1];
+            if first.starts_with('0') && first.len() > 1 {
+                break;
+            }
+            let n1 = first.parse().unwrap();
+            for i2 in i1 + 1..n - 1 {
+                let second = &num[i1 + 1..=i2];
+                if second.starts_with('0') && second.len() > 1 {
+                    break;
                 }
-                second = num[1..=i2].parse().unwrap();
-                res |= solve(num, i2 + 1, n, first, second);
-                if res {
+                let n2 = second.parse().unwrap();
+                if solve(num, i2 + 1, n, n1, n2) {
                     return true;
                 }
             }
-            break;
         }
-        first = num[..=i1].parse::<i128>().unwrap();
-        for i2 in i1 + 1..n - 1 {
-            if i2 == i1 + 1 && num.as_bytes()[i2] == b'0' {
-                res |= solve(num, i2 + 1, n, first, second);
-                if !res {
-                    break;
-                }
-            }
-            second = num[i1 + 1..=i2].parse().unwrap();
-            res |= solve(num, i2 + 1, n, first, second);
-            if res {
-                return true;
-            }
-        }
-    }
-    res
+        false
 }
 
 fn solve(num: &str, start: usize, n: usize, n1: i128, n2: i128) -> bool {
     if start == n {
         return true;
     }
-    if num.as_bytes()[start] == b'0' {
-        if n1 + n2 == 0 {
-            return solve(num, start + 1, n, n2, 0);
-        } else {
-            return false;
-        }
-    }
-    let mut res = false;
     for i in start..n {
-        let v = num[start..=i].parse().unwrap();
-        if v == n1 + n2 {
-            res |= solve(num, i + 1, n, n2, v)
+        let s = &num[start..=i];
+        if s.starts_with('0') && s.len() > 1 {
+            break;
         }
-        if res {
+        let v = s.parse().unwrap();
+        if v == n1 + n2 && solve(num, i + 1, n, n2, v) {
             return true;
         }
     }
