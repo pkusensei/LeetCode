@@ -1,32 +1,38 @@
 mod helper;
 
+use std::{cmp::Reverse, collections::BinaryHeap};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_coins(mut nums: Vec<i32>) -> i32 {
-    nums.reserve_exact(2);
-    nums.insert(0, 1);
-    nums.push(1);
-    let n = nums.len();
-    let mut dp = vec![vec![0; n]; n];
-    solve(&nums, &mut dp, 1, n - 2)
+pub fn nth_super_ugly_number(n: i32, primes: &[i32]) -> i32 {
+    let mut res = 0;
+    let mut queue = std::collections::BTreeSet::from([1]);
+    for _ in 0..n {
+        res = queue.pop_first().unwrap();
+        queue.extend(primes.iter().filter_map(|p| p.checked_mul(res)));
+    }
+    res
 }
 
-fn solve(nums: &[i32], dp: &mut [Vec<i32>], left: usize, right: usize) -> i32 {
-    if left > right {
-        return 0;
+fn with_pq(n: i32, primes: &[i32]) -> i32 {
+    let mut queue: BinaryHeap<_> = primes.iter().map(|&p| (Reverse(p), 0, p)).collect();
+    let mut res = Vec::with_capacity(n as usize);
+    res.push(1);
+    while res.len() < n as usize {
+        // `idx` points to `res[idx]`, which is to be multiplied by `prime`
+        // for prime in primes, they start with res[0] i.e 1
+        let Some((Reverse(value), idx, prime)) = queue.pop() else {
+            break;
+        };
+        if !res.last().is_some_and(|&v| v == value) {
+            res.push(value);
+        }
+        if let Some(n) = res[idx + 1].checked_mul(prime) {
+            queue.push((Reverse(n), idx + 1, prime));
+        }
     }
-    if 0 < dp[left][right] {
-        return dp[left][right];
-    }
-    let mut res = 0;
-    for i in left..=right {
-        let curr = nums[left - 1] * nums[i] * nums[right + 1];
-        let remain = solve(nums, dp, left, i - 1) + solve(nums, dp, i + 1, right);
-        res = res.max(curr + remain);
-    }
-    dp[left][right] = res;
-    res
+    *res.last().unwrap()
 }
 
 #[cfg(test)]
@@ -37,12 +43,23 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(max_coins(vec![3, 1, 5, 8]), 167);
-        debug_assert_eq!(max_coins(vec![1, 5]), 10);
+        debug_assert_eq!(nth_super_ugly_number(12, &[2, 7, 13, 19]), 32);
+        debug_assert_eq!(nth_super_ugly_number(1, &[2, 3, 5]), 1);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(
+            nth_super_ugly_number(
+                100000,
+                &[
+                    7, 19, 29, 37, 41, 47, 53, 59, 61, 79, 83, 89, 101, 103, 109, 127, 131, 137,
+                    139, 157, 167, 179, 181, 199, 211, 229, 233, 239, 241, 251
+                ]
+            ),
+            1092889481
+        );
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(i1: I1, i2: I2)
