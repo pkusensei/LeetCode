@@ -1,39 +1,32 @@
 mod helper;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_min_height_trees(n: i32, edges: &[[i32; 2]]) -> Vec<i32> {
-    if n == 1 {
-        return vec![0];
+pub fn max_coins(mut nums: Vec<i32>) -> i32 {
+    nums.reserve_exact(2);
+    nums.insert(0, 1);
+    nums.push(1);
+    let n = nums.len();
+    let mut dp = vec![vec![0; n]; n];
+    solve(&nums, &mut dp, 1, n - 2)
+}
+
+fn solve(nums: &[i32], dp: &mut [Vec<i32>], left: usize, right: usize) -> i32 {
+    if left > right {
+        return 0;
     }
-    let mut n = n as usize;
-    let mut graph: HashMap<i32, Vec<_>> = edges.iter().fold(HashMap::new(), |mut acc, e| {
-        acc.entry(e[0]).or_default().push(e[1]);
-        acc.entry(e[1]).or_default().push(e[0]);
-        acc
-    });
-    let mut leaf: Vec<_> = graph
-        .iter()
-        .filter_map(|(&k, v)| if v.len() == 1 { Some(k) } else { None })
-        .collect();
-    while n > 2 {
-        n -= leaf.len();
-        let mut new_leaf = vec![];
-        for node in leaf {
-            let neighbor = graph[&node][0];
-            if let Some(v) = graph.get_mut(&neighbor) {
-                v.retain(|&num| num != node);
-                if v.len() == 1 {
-                    new_leaf.push(neighbor)
-                }
-            }
-        }
-        leaf = new_leaf;
+    if 0 < dp[left][right] {
+        return dp[left][right];
     }
-    leaf
+    let mut res = 0;
+    for i in left..=right {
+        let curr = nums[left - 1] * nums[i] * nums[right + 1];
+        let remain = solve(nums, dp, left, i - 1) + solve(nums, dp, i + 1, right);
+        res = res.max(curr + remain);
+    }
+    dp[left][right] = res;
+    res
 }
 
 #[cfg(test)]
@@ -44,11 +37,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(find_min_height_trees(4, &[[1, 0], [1, 2], [1, 3]]), [1]);
-        sort_eq(
-            find_min_height_trees(6, &[[3, 0], [3, 1], [3, 2], [3, 4], [5, 4]]),
-            [3, 4],
-        );
+        debug_assert_eq!(max_coins(vec![3, 1, 5, 8]), 167);
+        debug_assert_eq!(max_coins(vec![1, 5]), 10);
     }
 
     #[test]
