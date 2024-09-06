@@ -4,72 +4,50 @@ using Tree;
 
 Test1();
 Test2();
+Test3();
 Console.WriteLine("!!Test Passed!!");
 
 void Test1()
 {
-    var iter = new int[] { 1, 2, 3 }.AsEnumerable().GetEnumerator();
-    iter.MoveNext(); // WTF
-    PeekingIterator it = new(iter); // [1,2,3]
-    Debug.Assert(it.Next == 1);    // return 1, the pointer moves to the next element [1,2,3].
-    Debug.Assert(it.Peek == 2);    // return 2, the pointer does not move [1,2,3].
-    Debug.Assert(it.Next == 2);    // return 2, the pointer moves to the next element [1,2,3]
-    Debug.Assert(it.Next == 3);    // return 3, the pointer moves to the next element [1,2,3]
-    Debug.Assert(!it.HasNext); // return False
+    var n = ListNode.Make([1, 2, 3, 4, 5]);
+    var s = ModifiedList([1, 2, 3], n);
+    var a = "[4,5]";
+    Debug.Assert(s.ToString() == a, $"Output: {s}\nExpect: {a}");
 }
 
 void Test2()
 {
+    var n = ListNode.Make([1, 2, 1, 2, 1, 2]);
+    var s = ModifiedList([1], n);
+    var a = "[2,2,2]";
+    Debug.Assert(s.ToString() == a, $"Output: {s}\nExpect: {a}");
 }
 
-class PeekingIterator
+void Test3()
 {
-    private IEnumerator<int> Iterator { get; }
-    private int? _peek;
+    var n = ListNode.Make([1, 2, 3, 4]);
+    var s = ModifiedList([5], n);
+    var a = "[1,2,3,4]";
+    Debug.Assert(s.ToString() == a, $"Output: {s}\nExpect: {a}");
+}
 
-    public PeekingIterator(IEnumerator<int> iterator)
+ListNode ModifiedList(int[] nums, ListNode head)
+{
+    if (head is null) { return null; }
+    if (nums.Length == 0) { return head; }
+    ListNode dummy = new(0, head);
+    var s = nums.ToHashSet();
+    var curr = dummy;
+    while (curr.next is not null)
     {
-        Iterator = iterator;
-        _peek = Iterator.Current;
-    }
-
-    public int Peek
-    {
-        get
+        if (s.Contains(curr.next.val))
         {
-            if (_peek is int v) { return v; }
-            Iterator.MoveNext();
-            _peek = Iterator.Current;
-            return _peek.Value;
+            curr.next = curr.next.next;
+        }
+        else
+        {
+            curr = curr.next;
         }
     }
-
-    public int Next
-    {
-        get
-        {
-            if (_peek is int v)
-            {
-                _peek = null;
-                return v;
-            }
-            Iterator.MoveNext();
-            return Iterator.Current;
-        }
-    }
-
-    public bool HasNext
-    {
-        get
-        {
-            if (_peek.HasValue) { return true; }
-            var hasNext = Iterator.MoveNext();
-            if (hasNext)
-            {
-                _peek = Iterator.Current;
-                return true;
-            }
-            else { return false; }
-        }
-    }
+    return dummy.next;
 }
