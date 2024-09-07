@@ -3,64 +3,25 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn remove_duplicate_letters(s: &str) -> String {
-    let mut count = s.bytes().fold([0; 26], |mut acc, b| {
-        acc[usize::from(b - b'a')] += 1;
-        acc
-    });
-    let mut seen = [false; 26]; // track what's in stack
-    let mut stack = vec![];
-    for b in s.bytes() {
-        let idx = usize::from(b - b'a');
-        count[idx] -= 1;
-        if seen[idx] {
-            continue;
+pub fn max_product(words: &[&str]) -> i32 {
+    let bits: Vec<_> = words
+        .iter()
+        .enumerate()
+        .map(|(i, s)| (i, as_bits(s)))
+        .collect();
+    let mut res = 0;
+    for &(i, b1) in bits.iter() {
+        for &(j, b2) in bits.iter().skip(i) {
+            if b1 & b2 == 0 {
+                res = res.max(words[i].len() * words[j].len())
+            }
         }
-        while stack
-            .last()
-            .is_some_and(|&v| b < v && count[usize::from(v - b'a')] > 0)
-        {
-            // pop "bigger" chars unless this is their final occurrence
-            let Some(v) = stack.pop() else {
-                break;
-            };
-            seen[usize::from(v - b'a')] = false
-        }
-        stack.push(b);
-        seen[idx] = true;
     }
-    stack.into_iter().map(char::from).collect()
-    // solve(s.as_bytes().to_vec())
-    //     .into_iter()
-    //     .map(char::from)
-    //     .collect()
+    res as _
 }
 
-fn solve(mut s: Vec<u8>) -> Vec<u8> {
-    if s.is_empty() {
-        return s;
-    }
-    let mut count = s.iter().fold([0; 26], |mut acc, &b| {
-        acc[usize::from(b - b'a')] += 1;
-        acc
-    });
-    let (mut idx, mut byte) = (0, s[0]);
-    for (i, &b) in s.iter().enumerate() {
-        if b < byte {
-            idx = i;
-            byte = b;
-        }
-        let c = usize::from(b - b'a');
-        count[c] -= 1;
-        if count[c] == 0 {
-            break;
-        }
-    }
-    let mut rest = s.split_off(idx + 1);
-    rest.retain(|&b| b != byte);
-    let mut res = solve(rest);
-    res.insert(0, byte);
-    res
+fn as_bits(s: &str) -> i32 {
+    s.bytes().fold(0, |acc, b| acc | 1 << (b - b'a'))
 }
 
 #[cfg(test)]
@@ -71,8 +32,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(remove_duplicate_letters("bcabc"), "abc");
-        debug_assert_eq!(remove_duplicate_letters("cbacdcbc"), "acdb");
+        debug_assert_eq!(
+            max_product(&["abcw", "baz", "foo", "bar", "xtfn", "abcdef"]),
+            16
+        );
+        debug_assert_eq!(
+            max_product(&["a", "ab", "abc", "d", "cd", "bcd", "abcd"]),
+            4
+        );
+        debug_assert_eq!(max_product(&["a", "aa", "aaa", "aaaa"]), 0);
     }
 
     #[test]
