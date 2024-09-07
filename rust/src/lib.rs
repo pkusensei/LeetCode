@@ -3,25 +3,11 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_product(words: &[&str]) -> i32 {
-    let bits: Vec<_> = words
-        .iter()
-        .enumerate()
-        .map(|(i, s)| (i, as_bits(s)))
-        .collect();
-    let mut res = 0;
-    for &(i, b1) in bits.iter() {
-        for &(j, b2) in bits.iter().skip(i) {
-            if b1 & b2 == 0 {
-                res = res.max(words[i].len() * words[j].len())
-            }
-        }
-    }
-    res as _
-}
-
-fn as_bits(s: &str) -> i32 {
-    s.bytes().fold(0, |acc, b| acc | 1 << (b - b'a'))
+pub fn bulb_switch(n: i32) -> i32 {
+    // The ith bulb has to be touched TWICE to stay on
+    // First time sqrt(i) to turn it off
+    // Then i to turn it back on
+    (n as f64).sqrt().trunc() as _
 }
 
 #[cfg(test)]
@@ -32,15 +18,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            max_product(&["abcw", "baz", "foo", "bar", "xtfn", "abcdef"]),
-            16
-        );
-        debug_assert_eq!(
-            max_product(&["a", "ab", "abc", "d", "cd", "bcd", "abcd"]),
-            4
-        );
-        debug_assert_eq!(max_product(&["a", "aa", "aaa", "aaaa"]), 0);
+        debug_assert_eq!(bulb_switch(3), 1);
+        debug_assert_eq!(bulb_switch(0), 0);
+        debug_assert_eq!(bulb_switch(1), 1);
     }
 
     #[test]
