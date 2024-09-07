@@ -50,6 +50,24 @@ pub fn most_competitive(nums: &[i32], k: i32) -> Vec<i32> {
     stack
 }
 
+// 1754
+pub fn largest_merge(word1: &str, word2: &str) -> String {
+    let (mut s1, mut s2) = (word1.as_bytes(), word2.as_bytes());
+    let mut res = Vec::with_capacity(s1.len() + s2.len());
+    while !s1.is_empty() && !s2.is_empty() {
+        if s1 > s2 {
+            res.push(s1[0]);
+            s1 = &s1[1..];
+        } else {
+            res.push(s2[0]);
+            s2 = &s2[1..];
+        }
+    }
+    res.extend_from_slice(s1);
+    res.extend_from_slice(s2);
+    res.into_iter().map(char::from).collect()
+}
+
 #[cfg(test)]
 mod tests {
     use std::fmt::Debug;
@@ -61,6 +79,10 @@ mod tests {
         // 1673
         debug_assert_eq!(most_competitive(&[3, 5, 2, 6], 2), [2, 6]);
         debug_assert_eq!(most_competitive(&[2, 4, 3, 3, 5, 4, 9, 6], 4), [2, 3, 3, 4]);
+
+        // 1754
+        debug_assert_eq!(largest_merge("cabaa", "bcaaa"), "cbcabaaaaa");
+        debug_assert_eq!(largest_merge("abcabc", "abdcaba"), "abdcabcabcaba");
 
         // debug_assert_eq!(
         //     max_number(&[3, 4, 6, 5], &[9, 1, 2, 5, 8, 3], 5),
