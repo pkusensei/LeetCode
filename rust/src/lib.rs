@@ -3,11 +3,51 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn bulb_switch(n: i32) -> i32 {
-    // The ith bulb has to be touched TWICE to stay on
-    // First time sqrt(i) to turn it off
-    // Then i to turn it back on
-    (n as f64).sqrt().trunc() as _
+// pub fn max_number(nums1: &[i32], nums2: &[i32], k: i32) -> Vec<i32> {
+//     todo!()
+// }
+
+// 1673
+pub fn most_competitive(nums: &[i32], k: i32) -> Vec<i32> {
+    fn with_binary_heap(nums: &[i32], k: i32) -> Vec<i32> {
+        use std::{cmp::Reverse, collections::BinaryHeap};
+
+        let mut queue = BinaryHeap::new();
+        let mut res = vec![];
+        for (i, &num) in nums.iter().enumerate() {
+            queue.push(Reverse((num, i)));
+            if i >= nums.len() - k as usize {
+                let Some(Reverse((num, idx))) = queue.pop() else {
+                    break;
+                };
+                res.push(num);
+                while queue.peek().is_some_and(|&Reverse((_n, j))| j < idx) {
+                    // pop any number eligible but to the left of (num, idx)
+                    queue.pop();
+                }
+            }
+        }
+        res
+    }
+
+    let k = k as usize;
+    // monotonically increasing stack
+    let mut stack = Vec::with_capacity(k);
+    for (i, &num) in nums.iter().enumerate() {
+        while stack
+            .last()
+            .is_some_and(|&n| num < n && nums.len() - i > k - stack.len())
+        {
+            // nums.len() - i => amount of num left to choose from
+            // k - stack.len() => amount of num missing in res
+            stack.pop();
+        }
+        // Only keeps the smallest k numbers
+        if stack.len() < k {
+            stack.push(num);
+        }
+    }
+    stack
 }
 
 #[cfg(test)]
@@ -18,9 +58,16 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(bulb_switch(3), 1);
-        debug_assert_eq!(bulb_switch(0), 0);
-        debug_assert_eq!(bulb_switch(1), 1);
+        // 1673
+        debug_assert_eq!(most_competitive(&[3, 5, 2, 6], 2), [2, 6]);
+        debug_assert_eq!(most_competitive(&[2, 4, 3, 3, 5, 4, 9, 6], 4), [2, 3, 3, 4]);
+
+        // debug_assert_eq!(
+        //     max_number(&[3, 4, 6, 5], &[9, 1, 2, 5, 8, 3], 5),
+        //     [9, 8, 6, 5, 3]
+        // );
+        // debug_assert_eq!(max_number(&[6, 7], &[6, 0, 4], 5), [6, 7, 6, 0, 4]);
+        // debug_assert_eq!(max_number(&[3, 9], &[8, 9], 3), [9, 8, 9]);
     }
 
     #[test]
