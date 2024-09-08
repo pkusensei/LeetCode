@@ -3,25 +3,8 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn wiggle_sort(nums: &mut [i32]) {
-    let n = nums.len();
-    if n == 1 {
-        return;
-    }
-    let mid = (n + 1) / 2;
-    let mut temp = nums.to_owned();
-    temp.select_nth_unstable(mid); // or sort(_unstable)
-
-    let (mut left, mut right) = (mid - 1, n - 1);
-    for (i, v) in nums.iter_mut().enumerate() {
-        if i & 1 == 1 {
-            *v = temp[right];
-            right -= 1;
-        } else {
-            *v = temp[left];
-            left = left.saturating_sub(1);
-        }
-    }
+pub const fn is_power_of_three(n: i32) -> bool {
+    n >= 1 && 3i32.pow(19) % n == 0
 }
 
 #[cfg(test)]
@@ -32,16 +15,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        {
-            let mut nums = vec![1, 5, 1, 1, 6, 4];
-            wiggle_sort(&mut nums);
-            debug_assert_eq!(nums, [1, 6, 1, 5, 1, 4]);
-        }
-        {
-            let mut nums = vec![1, 3, 2, 2, 3, 1];
-            wiggle_sort(&mut nums);
-            debug_assert_eq!(nums, [2, 3, 1, 3, 1, 2]);
-        }
+        debug_assert!(is_power_of_three(27));
+        debug_assert!(!is_power_of_three(0));
+        debug_assert!(!is_power_of_three(-1));
     }
 
     #[test]
