@@ -1,41 +1,41 @@
 mod helper;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_range_sum(nums: &[i32], lower: i32, upper: i32) -> i32 {
-    let n = nums.len();
-    let mut prefix = Vec::with_capacity(n);
-    prefix.push(nums[0].into());
-    for (i, &v) in nums.iter().enumerate().skip(1) {
-        prefix.push(prefix[i - 1] + i64::from(v));
+pub fn longest_increasing_path(matrix: &[&[i32]]) -> i32 {
+    let (rows, cols) = get_dimensions(matrix);
+    let mut seen = HashMap::new();
+    let mut res = 0;
+    for y in 0..rows {
+        for x in 0..cols {
+            res = res.max(dfs(matrix, (x, y), &mut seen))
+        }
     }
-    count_merge_sort(&mut prefix, lower, upper)
-        + nums.iter().filter(|&n| (lower..=upper).contains(n)).count() as i32
+    res
 }
 
-fn count_merge_sort(values: &mut [i64], lower: i32, upper: i32) -> i32 {
-    let mid = values.len() / 2;
-    if mid == 0 {
-        return 0; // exclude when len <= 1
+fn dfs(matrix: &[&[i32]], coord: Coord, seen: &mut HashMap<Coord, i32>) -> i32 {
+    if let Some(&v) = seen.get(&coord) {
+        return v;
     }
-    let mut count = count_merge_sort(&mut values[..mid], lower, upper)
-        + count_merge_sort(&mut values[mid..], lower, upper);
-    let (mut low, mut high) = (mid, mid);
-    for &num in values[..mid].iter() {
-        while values.get(low).is_some_and(|&v| v - num < i64::from(lower)) {
-            low += 1 // the first index that lower <= delta
-        }
-        while values
-            .get(high)
-            .is_some_and(|&v| v - num <= i64::from(upper))
+    let mut res = 0;
+    for (x, y) in neighbors(coord) {
+        let curr = if matrix
+            .get(y)
+            .and_then(|r| r.get(x))
+            .is_some_and(|&v| v > matrix[coord.1][coord.0])
         {
-            high += 1 // the last index that delta <= upper
-        }
-        count += (high - low) as i32;
+            1 + dfs(matrix, (x, y), seen)
+        } else {
+            1
+        };
+        res = res.max(curr)
     }
-    values.sort(); // slice is partially sorted
-    count
+    seen.insert(coord, res);
+    res
 }
 
 #[cfg(test)]
@@ -46,14 +46,19 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(count_range_sum(&[-2, 5, -1], -2, 2), 3);
-        debug_assert_eq!(count_range_sum(&[0], 0, 0), 1);
+        debug_assert_eq!(
+            longest_increasing_path(&[&[9, 9, 4], &[6, 6, 8], &[2, 1, 1]]),
+            4
+        );
+        debug_assert_eq!(
+            longest_increasing_path(&[&[3, 4, 5], &[3, 2, 6], &[2, 2, 1]]),
+            4
+        );
+        debug_assert_eq!(longest_increasing_path(&[&[1]]), 1);
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(count_range_sum(&[0, -3, -3, 1, 1, 2], 3, 5), 2);
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(i1: I1, i2: I2)
