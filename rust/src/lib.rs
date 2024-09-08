@@ -1,41 +1,29 @@
 mod helper;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn longest_increasing_path(matrix: &[&[i32]]) -> i32 {
-    let (rows, cols) = get_dimensions(matrix);
-    let mut seen = HashMap::new();
-    let mut res = 0;
-    for y in 0..rows {
-        for x in 0..cols {
-            res = res.max(dfs(matrix, (x, y), &mut seen))
+pub fn min_patches(nums: &[i32], n: i32) -> i32 {
+    // array [1..a] covers ints [1..m] where m == sum([1..a])
+    // plug in m+1
+    // so that [1..a, m+1] covers [1..m+m+1]
+    let mut i = 0;
+    let mut count = 0;
+    let mut curr = 0;
+    while curr < i64::from(n) as i64 {
+        if i < nums.len() && i64::from(nums[i]) <= curr + 1 {
+            // trying to build up to n
+            curr += i64::from(nums[i]);
+            i += 1
+        } else {
+            // but there's a gap
+            count += 1;
+            // plug in curr+1
+            // so that now it covers [1..2*curr+1]
+            curr = 2 * curr + 1;
         }
     }
-    res
-}
-
-fn dfs(matrix: &[&[i32]], coord: Coord, seen: &mut HashMap<Coord, i32>) -> i32 {
-    if let Some(&v) = seen.get(&coord) {
-        return v;
-    }
-    let mut res = 0;
-    for (x, y) in neighbors(coord) {
-        let curr = if matrix
-            .get(y)
-            .and_then(|r| r.get(x))
-            .is_some_and(|&v| v > matrix[coord.1][coord.0])
-        {
-            1 + dfs(matrix, (x, y), seen)
-        } else {
-            1
-        };
-        res = res.max(curr)
-    }
-    seen.insert(coord, res);
-    res
+    count
 }
 
 #[cfg(test)]
@@ -46,15 +34,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            longest_increasing_path(&[&[9, 9, 4], &[6, 6, 8], &[2, 1, 1]]),
-            4
-        );
-        debug_assert_eq!(
-            longest_increasing_path(&[&[3, 4, 5], &[3, 2, 6], &[2, 2, 1]]),
-            4
-        );
-        debug_assert_eq!(longest_increasing_path(&[&[1]]), 1);
+        debug_assert_eq!(min_patches(&[1, 3], 6), 1);
+        debug_assert_eq!(min_patches(&[1, 5, 10], 20), 2);
+        debug_assert_eq!(min_patches(&[1, 2, 2], 5), 0);
     }
 
     #[test]
