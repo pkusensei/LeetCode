@@ -3,23 +3,25 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn coin_change(coins: &[i32], amount: i32) -> i32 {
-    let n = amount as usize;
-    let mut dp = vec![None; 1 + n];
-    dp[n] = Some(0);
-    for idx in (0..n + 1).rev() {
-        if dp[idx].is_none() {
-            continue;
-        }
-        for i in coins.iter().filter_map(|&c| idx.checked_sub(c as usize)) {
-            if dp[i].is_some() {
-                dp[i] = dp[idx].map(|prev| prev + 1).min(dp[i])
-            } else {
-                dp[i] = dp[idx].map(|v| v + 1);
-            }
+pub fn wiggle_sort(nums: &mut [i32]) {
+    let n = nums.len();
+    if n == 1 {
+        return;
+    }
+    let mid = (n + 1) / 2;
+    let mut temp = nums.to_owned();
+    temp.select_nth_unstable(mid); // or sort(_unstable)
+
+    let (mut left, mut right) = (mid - 1, n - 1);
+    for (i, v) in nums.iter_mut().enumerate() {
+        if i & 1 == 1 {
+            *v = temp[right];
+            right -= 1;
+        } else {
+            *v = temp[left];
+            left = left.saturating_sub(1);
         }
     }
-    dp[0].unwrap_or(-1)
 }
 
 #[cfg(test)]
@@ -30,9 +32,16 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(coin_change(&[1, 2, 5], 11), 3);
-        debug_assert_eq!(coin_change(&[2], 3), -1);
-        debug_assert_eq!(coin_change(&[1], 0), 0);
+        {
+            let mut nums = vec![1, 5, 1, 1, 6, 4];
+            wiggle_sort(&mut nums);
+            debug_assert_eq!(nums, [1, 6, 1, 5, 1, 4]);
+        }
+        {
+            let mut nums = vec![1, 3, 2, 2, 3, 1];
+            wiggle_sort(&mut nums);
+            debug_assert_eq!(nums, [2, 3, 1, 3, 1, 2]);
+        }
     }
 
     #[test]
