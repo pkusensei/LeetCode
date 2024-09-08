@@ -3,27 +3,50 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_patches(nums: &[i32], n: i32) -> i32 {
-    // array [1..a] covers ints [1..m] where m == sum([1..a])
-    // plug in m+1
-    // so that [1..a, m+1] covers [1..m+m+1]
-    let mut i = 0;
-    let mut count = 0;
-    let mut curr = 0;
-    while curr < i64::from(n) as i64 {
-        if i < nums.len() && i64::from(nums[i]) <= curr + 1 {
-            // trying to build up to n
-            curr += i64::from(nums[i]);
-            i += 1
+pub fn is_valid_serialization(preorder: &str) -> bool {
+    // For a full tree
+    // Number of leaves == 1+number of non-leaves
+    let mut count = 1;
+    for s in preorder.split(',') {
+        if count <= 0 {
+            return false;
+        }
+        if s == "#" {
+            count -= 1
         } else {
-            // but there's a gap
-            count += 1;
-            // plug in curr+1
-            // so that now it covers [1..2*curr+1]
-            curr = 2 * curr + 1;
+            count += 1
         }
     }
-    count
+    count == 0
+}
+
+fn with_stack(preorder: &str) -> bool {
+    let mut iter = preorder.split(',').map(|s| s != "#");
+    if iter.next().is_some_and(|v| !v) {
+        // '#' as root can only stand alone
+        return iter.next().is_none();
+    };
+    let mut stack = vec![false];
+    while let Some(b) = iter.next() {
+        if b {
+            stack.push(false)
+        } else {
+            while let Some(last) = stack.last_mut() {
+                // Every non-leaf node needs two leaves
+                // one to mark its left branch is depleted
+                // the other to pop
+                if !*last {
+                    *last = true;
+                    break;
+                }
+                stack.pop();
+            }
+            if stack.is_empty() {
+                return iter.next().is_none();
+            }
+        }
+    }
+    false
 }
 
 #[cfg(test)]
@@ -34,13 +57,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(min_patches(&[1, 3], 6), 1);
-        debug_assert_eq!(min_patches(&[1, 5, 10], 20), 2);
-        debug_assert_eq!(min_patches(&[1, 2, 2], 5), 0);
+        debug_assert!(is_valid_serialization("9,3,4,#,#,1,#,#,2,#,6,#,#"));
+        debug_assert!(!is_valid_serialization("1,#"));
+        debug_assert!(!is_valid_serialization("9,#,#,1"));
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert!(!is_valid_serialization("#,#,3,5,#"));
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(i1: I1, i2: I2)
