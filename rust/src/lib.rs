@@ -3,17 +3,45 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn increasing_triplet(nums: &[i32]) -> bool {
-    if nums.len() < 3 {
+pub fn is_self_crossing(distance: &[i32]) -> bool {
+    if distance.len() < 4 {
         return false;
     }
-    let (mut n1, mut n2) = (i32::MAX, i32::MAX);
-    for &num in nums.iter() {
-        if num <= n1 {
-            n1 = num;
-        } else if num <= n2 {
-            n2 = num
-        } else {
+    for i in 3..distance.len() {
+        //  ---
+        //  | |
+        //  ---->[i]
+        //    |
+        //    *
+        if distance[i - 3] >= distance[i - 1] && distance[i - 2] <= distance[i] {
+            return true;
+        }
+        //  ----
+        //  |  |
+        //  |  *
+        //  |  ^[i]
+        //  |  |
+        //  ----
+        if i >= 4
+            && distance[i - 3] == distance[i - 1]
+            && distance[i - 4] + distance[i] >= distance[i - 2]
+        {
+            return true;
+        }
+        //  ------
+        //  |    |
+        //  |[i]<---
+        //  |    | |
+        //  |    * |
+        //  --------
+        if i >= 5
+            && distance[i - 5] <= distance[i - 3]
+            && distance[i - 1] <= distance[i - 3]
+            && distance[i - 5] + distance[i - 1] >= distance[i - 3]
+            && distance[i - 4] <= distance[i - 2]
+            && distance[i] <= distance[i - 2]
+            && distance[i - 4] + distance[i] >= distance[i - 2]
+        {
             return true;
         }
     }
@@ -28,14 +56,17 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(increasing_triplet(&[1, 2, 3, 4, 5]));
-        debug_assert!(!increasing_triplet(&[5, 4, 3, 2, 1]));
-        debug_assert!(increasing_triplet(&[2, 1, 5, 0, 4, 6]));
+        debug_assert!(is_self_crossing(&[2, 1, 1, 2]));
+        debug_assert!(!is_self_crossing(&[1, 2, 3, 4]));
+        debug_assert!(is_self_crossing(&[1, 1, 1, 2, 1]));
     }
 
     #[test]
     fn test() {
-        debug_assert!(!increasing_triplet(&[0, 4, 2, 1, 0, -1, -3]))
+        debug_assert!(is_self_crossing(&[1, 1, 2, 1, 1]));
+        debug_assert!(!is_self_crossing(&[
+            1, 1, 2, 2, 3, 3, 4, 4, 10, 4, 4, 3, 3, 2, 2, 1, 1
+        ]));
     }
 
     #[allow(dead_code)]
