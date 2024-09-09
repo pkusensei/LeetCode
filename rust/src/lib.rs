@@ -1,52 +1,30 @@
 mod helper;
 
+use std::{cmp::Reverse, collections::HashMap};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_valid_serialization(preorder: &str) -> bool {
-    // For a full tree
-    // Number of leaves == 1+number of non-leaves
-    let mut count = 1;
-    for s in preorder.split(',') {
-        if count <= 0 {
-            return false;
-        }
-        if s == "#" {
-            count -= 1
-        } else {
-            count += 1
-        }
+pub fn find_itinerary<'a>(tickets: &[[&'a str; 2]]) -> Vec<&'a str> {
+    let mut graph: HashMap<&str, Vec<&str>> =
+        tickets.iter().fold(HashMap::new(), |mut acc, &[from, to]| {
+            acc.entry(from).or_default().push(to);
+            acc
+        });
+    for v in graph.values_mut() {
+        v.sort_unstable_by_key(|&s| Reverse(s));
     }
-    count == 0
+    let mut res = vec![];
+    dfs(&mut graph, "JFK", &mut res);
+    res.reverse();
+    res
 }
 
-fn with_stack(preorder: &str) -> bool {
-    let mut iter = preorder.split(',').map(|s| s != "#");
-    if iter.next().is_some_and(|v| !v) {
-        // '#' as root can only stand alone
-        return iter.next().is_none();
-    };
-    let mut stack = vec![false];
-    while let Some(b) = iter.next() {
-        if b {
-            stack.push(false)
-        } else {
-            while let Some(last) = stack.last_mut() {
-                // Every non-leaf node needs two leaves
-                // one to mark its left branch is depleted
-                // the other to pop
-                if !*last {
-                    *last = true;
-                    break;
-                }
-                stack.pop();
-            }
-            if stack.is_empty() {
-                return iter.next().is_none();
-            }
-        }
+fn dfs<'a>(graph: &mut HashMap<&'a str, Vec<&'a str>>, from: &'a str, path: &mut Vec<&'a str>) {
+    while let Some(to) = graph.get_mut(&from).and_then(|v| v.pop()) {
+        dfs(graph, to, path);
     }
-    false
+    path.push(from);
 }
 
 #[cfg(test)]
@@ -57,15 +35,29 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(is_valid_serialization("9,3,4,#,#,1,#,#,2,#,6,#,#"));
-        debug_assert!(!is_valid_serialization("1,#"));
-        debug_assert!(!is_valid_serialization("9,#,#,1"));
+        debug_assert_eq!(
+            find_itinerary(&[
+                ["MUC", "LHR"],
+                ["JFK", "MUC"],
+                ["SFO", "SJC"],
+                ["LHR", "SFO"]
+            ]),
+            ["JFK", "MUC", "LHR", "SFO", "SJC"]
+        );
+        debug_assert_eq!(
+            find_itinerary(&[
+                ["JFK", "SFO"],
+                ["JFK", "ATL"],
+                ["SFO", "ATL"],
+                ["ATL", "JFK"],
+                ["ATL", "SFO"]
+            ]),
+            ["JFK", "ATL", "JFK", "SFO", "ATL", "SFO"]
+        );
     }
 
     #[test]
-    fn test() {
-        debug_assert!(!is_valid_serialization("#,#,3,5,#"));
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(i1: I1, i2: I2)
