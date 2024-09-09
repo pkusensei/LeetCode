@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Text;
 
-namespace LList;
+namespace Solution.LList;
 
 public class ListNodeBase<T> where T : ListNodeBase<T>
 {

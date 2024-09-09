@@ -1,5 +1,7 @@
 using System.Text;
 
+namespace Solution;
+
 public static class Utils
 {
     public static string Print<T>(this IEnumerable<T> values)
