@@ -1,51 +1,44 @@
 mod helper;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_self_crossing(distance: &[i32]) -> bool {
-    if distance.len() < 4 {
-        return false;
-    }
-    for i in 3..distance.len() {
-        //  ---
-        //  | |
-        //  ---->[i]
-        //    |
-        //    *
-        if distance[i - 3] >= distance[i - 1] && distance[i - 2] <= distance[i] {
-            return true;
-        }
-        //  ----
-        //  |  |
-        //  |  *
-        //  |  ^[i]
-        //  |  |
-        //  ----
-        if i >= 4
-            && distance[i - 3] == distance[i - 1]
-            && distance[i - 4] + distance[i] >= distance[i - 2]
-        {
-            return true;
-        }
-        //  ------
-        //  |    |
-        //  |[i]<---
-        //  |    | |
-        //  |    * |
-        //  --------
-        if i >= 5
-            && distance[i - 5] <= distance[i - 3]
-            && distance[i - 1] <= distance[i - 3]
-            && distance[i - 5] + distance[i - 1] >= distance[i - 3]
-            && distance[i - 4] <= distance[i - 2]
-            && distance[i] <= distance[i - 2]
-            && distance[i - 4] + distance[i] >= distance[i - 2]
-        {
-            return true;
+pub fn palindrome_pairs(words: &[&str]) -> Vec<[i32; 2]> {
+    let map = words
+        .iter()
+        .enumerate()
+        .fold(HashMap::new(), |mut acc, (i, s)| {
+            acc.insert(s.as_bytes(), i);
+            acc
+        });
+    let mut res = vec![];
+    for (i, word) in words.iter().enumerate() {
+        for j in 0..=word.len() {
+            let prefix = word[..j].as_bytes();
+            let suffix = word[j..].as_bytes();
+            if is_palindrome(prefix) {
+                let mut reversed = suffix.to_vec();
+                reversed.reverse();
+                if let Some(&k) = map.get(&reversed.as_slice()) {
+                    if k != i {
+                        res.push([k as i32, i as i32]);
+                    }
+                }
+            }
+            if !suffix.is_empty() && is_palindrome(suffix) {
+                let mut reversed = prefix.to_vec();
+                reversed.reverse();
+                if let Some(&k) = map.get(&reversed.as_slice()) {
+                    if k != i {
+                        res.push([i as i32, k as i32]);
+                    }
+                }
+            }
         }
     }
-    false
+    res
 }
 
 #[cfg(test)]
@@ -56,18 +49,16 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(is_self_crossing(&[2, 1, 1, 2]));
-        debug_assert!(!is_self_crossing(&[1, 2, 3, 4]));
-        debug_assert!(is_self_crossing(&[1, 1, 1, 2, 1]));
+        sort_eq(
+            palindrome_pairs(&["abcd", "dcba", "lls", "s", "sssll"]),
+            [[0, 1], [1, 0], [3, 2], [2, 4]],
+        );
+        sort_eq(palindrome_pairs(&["bat", "tab", "cat"]), [[0, 1], [1, 0]]);
+        sort_eq(palindrome_pairs(&["a", ""]), [[0, 1], [1, 0]]);
     }
 
     #[test]
-    fn test() {
-        debug_assert!(is_self_crossing(&[1, 1, 2, 1, 1]));
-        debug_assert!(!is_self_crossing(&[
-            1, 1, 2, 2, 3, 3, 4, 4, 10, 4, 4, 3, 3, 2, 2, 1, 1
-        ]));
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(i1: I1, i2: I2)

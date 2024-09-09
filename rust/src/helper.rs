@@ -1,13 +1,15 @@
 #![allow(dead_code)]
 
-fn is_palindrome(s: &str) -> bool {
-    if s.len() < 2 {
-        return true;
-    }
-    s.bytes()
-        .rev()
-        .zip(s.bytes().take(s.len() / 2 + 1))
-        .all(|(b1, b2)| b1 == b2)
+pub fn is_palindrome<I>(it: I) -> bool
+where
+    I: Clone + IntoIterator,
+    I::Item: PartialEq,
+    I::IntoIter: DoubleEndedIterator,
+{
+    it.clone()
+        .into_iter()
+        .zip(it.into_iter().rev())
+        .all(|(a, b)| a == b)
 }
 
 pub type Coord = (usize, usize);
