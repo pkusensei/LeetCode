@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Text;
 using LList;
 using Tree;
 
@@ -8,33 +9,77 @@ Console.WriteLine("!!Test Passed!!");
 
 void Test1()
 {
-    var a = ListNode.Make([1, 2, 3, 4, 5]);
-    var b = OddEvenList(a);
-    var c = "[1,3,5,2,4]";
-    Debug.Assert(b.ToString() == c, $"Output: {b}\nExpect: {c}");
+    var a = ListNode.Make([3, 0, 2, 6, 8, 1, 7, 9, 4, 2, 5, 5, 0]);
+    var b = SpiralMatrix(3, 5, a);
+    var sb = new StringBuilder();
+    sb.Append('[');
+    sb.AppendJoin(',', b.Select(r => r.Print()));
+    sb.Append(']');
+    var c = "[[3,0,2,6,8],[5,0,-1,-1,1],[5,2,4,9,7]]";
+    Debug.Assert(sb.ToString() == c, $"Output: {sb}\nExpect: {c}");
 }
 
 void Test2()
 {
-    var a = ListNode.Make([2, 1, 3, 5, 6, 4, 7]);
-    var b = OddEvenList(a);
-    var c = "[2,3,6,7,1,5,4]";
-    Debug.Assert(b.ToString() == c, $"Output: {b}\nExpect: {c}");
+    var a = ListNode.Make([0, 1, 2]);
+    var b = SpiralMatrix(1, 4, a);
+    var sb = new StringBuilder();
+    sb.Append('[');
+    sb.AppendJoin(',', b.Select(r => r.Print()));
+    sb.Append(']');
+    var c = "[[0,1,2,-1]]";
+    Debug.Assert(sb.ToString() == c, $"Output: {sb}\nExpect: {c}");
 }
 
-ListNode OddEvenList(ListNode head)
+int[][] SpiralMatrix(int m, int n, ListNode head)
 {
-    if (head is null) { return null; }
-    var h2 = head.next;
-    (var curr1, var curr2) = (head, h2);
-    while (curr2 is not null && curr2.next is not null)
+    var res = new int[m][];
+    for (int i = 0; i < m; i++)
     {
-        curr1.next = curr2.next;
-        curr1 = curr1.next;
-
-        curr2.next = curr1.next;
-        curr2 = curr2.next;
+        res[i] = new int[n];
+        Array.Fill(res[i], -1);
     }
-    curr1.next = h2;
-    return head;
+    var (row, col) = (0, 0);
+    var (row_min, col_min) = (0, 0);
+    var done = false;
+    while (!done)
+    {
+        for (col = col_min; col < n; col += 1)
+        {
+            res[row][col] = head.val;
+            head = head.next;
+            if (head is null) { done = true; break; }
+        }
+        col = n - 1;
+        row_min += 1;
+        if (done) { break; }
+        for (row = row_min; row < m; row += 1)
+        {
+            res[row][col] = head.val;
+            head = head.next;
+            if (head is null) { done = true; break; }
+        }
+        row = m - 1;
+        n -= 1;
+        col -= 1;
+        if (done) { break; }
+        for (col = n - 1; col >= col_min; col -= 1)
+        {
+            res[row][col] = head.val;
+            head = head.next;
+            if (head is null) { done = true; break; }
+        }
+        col = col_min;
+        m -= 1;
+        if (done) { break; }
+        for (row = m - 1; row >= row_min; row -= 1)
+        {
+            res[row][col] = head.val;
+            head = head.next;
+            if (head is null) { done = true; break; }
+        }
+        row = row_min;
+        col_min += 1;
+    }
+    return res;
 }
