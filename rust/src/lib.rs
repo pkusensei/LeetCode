@@ -1,30 +1,23 @@
 mod helper;
 
-use std::{cmp::Reverse, collections::HashMap};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_itinerary<'a>(tickets: &[[&'a str; 2]]) -> Vec<&'a str> {
-    let mut graph: HashMap<&str, Vec<&str>> =
-        tickets.iter().fold(HashMap::new(), |mut acc, &[from, to]| {
-            acc.entry(from).or_default().push(to);
-            acc
-        });
-    for v in graph.values_mut() {
-        v.sort_unstable_by_key(|&s| Reverse(s));
+pub fn increasing_triplet(nums: &[i32]) -> bool {
+    if nums.len() < 3 {
+        return false;
     }
-    let mut res = vec![];
-    dfs(&mut graph, "JFK", &mut res);
-    res.reverse();
-    res
-}
-
-fn dfs<'a>(graph: &mut HashMap<&'a str, Vec<&'a str>>, from: &'a str, path: &mut Vec<&'a str>) {
-    while let Some(to) = graph.get_mut(&from).and_then(|v| v.pop()) {
-        dfs(graph, to, path);
+    let (mut n1, mut n2) = (i32::MAX, i32::MAX);
+    for &num in nums.iter() {
+        if num <= n1 {
+            n1 = num;
+        } else if num <= n2 {
+            n2 = num
+        } else {
+            return true;
+        }
     }
-    path.push(from);
+    false
 }
 
 #[cfg(test)]
@@ -35,29 +28,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            find_itinerary(&[
-                ["MUC", "LHR"],
-                ["JFK", "MUC"],
-                ["SFO", "SJC"],
-                ["LHR", "SFO"]
-            ]),
-            ["JFK", "MUC", "LHR", "SFO", "SJC"]
-        );
-        debug_assert_eq!(
-            find_itinerary(&[
-                ["JFK", "SFO"],
-                ["JFK", "ATL"],
-                ["SFO", "ATL"],
-                ["ATL", "JFK"],
-                ["ATL", "SFO"]
-            ]),
-            ["JFK", "ATL", "JFK", "SFO", "ATL", "SFO"]
-        );
+        debug_assert!(increasing_triplet(&[1, 2, 3, 4, 5]));
+        debug_assert!(!increasing_triplet(&[5, 4, 3, 2, 1]));
+        debug_assert!(increasing_triplet(&[2, 1, 5, 0, 4, 6]));
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert!(!increasing_triplet(&[0, 4, 2, 1, 0, -1, -3]))
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(i1: I1, i2: I2)
