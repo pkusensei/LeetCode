@@ -1,40 +1,20 @@
 mod helper;
 
-use std::collections::BTreeSet;
-
 #[allow(unused_imports)]
 use helper::*;
 
-#[derive(Debug, Clone)]
-struct SummaryRanges {
-    data: BTreeSet<[i32; 2]>,
-}
-
-impl SummaryRanges {
-    fn new() -> Self {
-        Self {
-            data: BTreeSet::new(),
+pub fn max_envelopes(envelopes: &mut [[i32; 2]]) -> i32 {
+    envelopes.sort_unstable_by(|a, b| a[0].cmp(&b[0]).then(b[1].cmp(&a[1])));
+    let mut values = vec![envelopes[0][1]];
+    // longest increasing sequence
+    for &[_, num] in envelopes.iter() {
+        if num > *values.last().unwrap() {
+            values.push(num)
+        } else if let Err(i) = values.binary_search(&num) {
+            values[i] = num;
         }
     }
-
-    fn add_num(&mut self, value: i32) {
-        let mut range = [value; 2];
-        let left = self.data.range(..range).last().copied().unwrap_or(range);
-        let right = self.data.range(range..).next().copied().unwrap_or(range);
-        if left[1] + 1 >= value {
-            range = [left[0], value.max(left[1])];
-            self.data.remove(&left);
-        }
-        if right[0] - 1 <= value && range[1] < right[1] {
-            range = [range[0].min(right[0]), right[1]];
-            self.data.remove(&right);
-        }
-        self.data.insert(range);
-    }
-
-    fn get_intervals(&self) -> Vec<Vec<i32>> {
-        self.data.iter().map(|d| d.to_vec()).collect()
-    }
+    values.len() as _
 }
 
 #[cfg(test)]
@@ -45,43 +25,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        let mut range = SummaryRanges::new();
-        range.add_num(1); // arr = [1]
-        debug_assert_eq!(range.get_intervals(), [[1, 1]]);
-        range.add_num(3); // arr = [1, 3]
-        debug_assert_eq!(range.get_intervals(), [[1, 1], [3, 3]]);
-        range.add_num(7); // arr = [1, 3, 7]
-        debug_assert_eq!(range.get_intervals(), [[1, 1], [3, 3], [7, 7]]);
-        range.add_num(2); // arr = [1, 2, 3, 7]
-        debug_assert_eq!(range.get_intervals(), [[1, 3], [7, 7]]);
-        range.add_num(6); // arr = [1, 2, 3, 6, 7]
-        debug_assert_eq!(range.get_intervals(), [[1, 3], [6, 7]]);
+        debug_assert_eq!(max_envelopes(&mut [[5, 4], [6, 4], [6, 7], [2, 3]]), 3);
+        debug_assert_eq!(max_envelopes(&mut [[1, 1], [1, 1], [1, 1]]), 1);
     }
 
     #[test]
-    fn test() {
-        let mut range = SummaryRanges::new();
-        range.add_num(6);
-        debug_assert_eq!(range.get_intervals(), [[6, 6]]);
-        range.add_num(6);
-        debug_assert_eq!(range.get_intervals(), [[6, 6]]);
-        range.add_num(0);
-        debug_assert_eq!(range.get_intervals(), [[0, 0], [6, 6]]);
-        range.add_num(4);
-        debug_assert_eq!(range.get_intervals(), [[0, 0], [4, 4], [6, 6]]);
-        range.add_num(8);
-        debug_assert_eq!(range.get_intervals(), [[0, 0], [4, 4], [6, 6], [8, 8]]);
-        range.add_num(7);
-        debug_assert_eq!(range.get_intervals(), [[0, 0], [4, 4], [6, 8]]);
-        range.add_num(6);
-        debug_assert_eq!(range.get_intervals(), [[0, 0], [4, 4], [6, 8]]);
-        range.add_num(4);
-        debug_assert_eq!(range.get_intervals(), [[0, 0], [4, 4], [6, 8]]);
-        range.add_num(7);
-        debug_assert_eq!(range.get_intervals(), [[0, 0], [4, 4], [6, 8]]);
-        range.add_num(5);
-        debug_assert_eq!(range.get_intervals(), [[0, 0], [4, 8]]);
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(i1: I1, i2: I2)
