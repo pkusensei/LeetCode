@@ -1,42 +1,18 @@
 mod helper;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn palindrome_pairs(words: &[&str]) -> Vec<[i32; 2]> {
-    let map = words
-        .iter()
-        .enumerate()
-        .fold(HashMap::new(), |mut acc, (i, s)| {
-            acc.insert(s.as_bytes(), i);
-            acc
-        });
-    let mut res = vec![];
-    for (i, word) in words.iter().enumerate() {
-        for j in 0..=word.len() {
-            let prefix = word[..j].as_bytes();
-            let suffix = word[j..].as_bytes();
-            if is_palindrome(prefix) {
-                let mut reversed = suffix.to_vec();
-                reversed.reverse();
-                if let Some(&k) = map.get(&reversed.as_slice()) {
-                    if k != i {
-                        res.push([k as i32, i as i32]);
-                    }
-                }
-            }
-            if !suffix.is_empty() && is_palindrome(suffix) {
-                let mut reversed = prefix.to_vec();
-                reversed.reverse();
-                if let Some(&k) = map.get(&reversed.as_slice()) {
-                    if k != i {
-                        res.push([i as i32, k as i32]);
-                    }
-                }
-            }
+pub fn count_bits(n: i32) -> Vec<i32> {
+    let n = n as usize;
+    let mut res = vec![0; 1 + n];
+    let mut pow2 = 1;
+    for num in 1..=n {
+        if num == pow2 {
+            pow2 *= 2;
         }
+        res[num] = 1 + res[num - pow2 / 2];
+        // res[num] = 1 + res[num & (num - 1)];
     }
     res
 }
@@ -49,16 +25,20 @@ mod tests {
 
     #[test]
     fn basics() {
-        sort_eq(
-            palindrome_pairs(&["abcd", "dcba", "lls", "s", "sssll"]),
-            [[0, 1], [1, 0], [3, 2], [2, 4]],
-        );
-        sort_eq(palindrome_pairs(&["bat", "tab", "cat"]), [[0, 1], [1, 0]]);
-        sort_eq(palindrome_pairs(&["a", ""]), [[0, 1], [1, 0]]);
+        for i in 1u8..=16 {
+            dbg!(i, i.count_ones());
+        }
+        debug_assert_eq!(count_bits(2), [0, 1, 1]);
+        debug_assert_eq!(count_bits(5), [0, 1, 1, 2, 1, 2]);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(
+            count_bits(16),
+            [0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4, 1]
+        );
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(i1: I1, i2: I2)
