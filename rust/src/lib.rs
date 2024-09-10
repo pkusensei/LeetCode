@@ -3,10 +3,19 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-fn is_power_of_four(n: i32) -> bool {
-        const POW4: i32 = 0b_0101_0101_0101_0101_0101_0101_0101_0101;
-        const MASK: i32 = POW4 << 1;
-        n > 0 && n & (n - 1) == 0 && n & MASK == 0
+pub fn integer_break(n: i32) -> i32 {
+    match n {
+        ..=1 => 1, // unreachable
+        2 | 3 => n - 1,
+        _ => match n % 3 {
+            // get most nimber of 3s
+            // and 0..=2 0f 2s
+            0 => 3i32.pow(n as u32 / 3),
+            1 => 3i32.pow((n - 4) as u32 / 3) * 4,
+            2 => 3i32.pow((n - 2) as u32 / 3) * 2,
+            _ => unreachable!(),
+        },
+    }
 }
 
 #[cfg(test)]
@@ -17,9 +26,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(is_power_of_four(16));
-        debug_assert!(!is_power_of_four(5));
-        debug_assert!(is_power_of_four(1));
+        debug_assert_eq!(integer_break(2), 1);
+        debug_assert_eq!(integer_break(10), 36);
     }
 
     #[test]
