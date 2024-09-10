@@ -1,22 +1,27 @@
-﻿using Solution.Tree;
+﻿using Solution.LList;
+using Solution.Tree;
 
 namespace Solution;
 
 public class Solution
 {
-    public int Rob(TreeNode root)
+    public ListNode InsertGreatestCommonDivisors(ListNode head)
     {
-        var res = Solve(root);
-        return Math.Max(res.inc, res.exc);
+        var curr = head;
+        while (curr.next is not null)
+        {
+            var temp = curr.next;
+            var gcd = GCD(curr.val, temp.val);
+            ListNode node = new(gcd, temp);
+            curr.next = node;
+            curr = temp;
+        }
+        return head;
     }
 
-    (int inc, int exc) Solve(TreeNode root)
+    static int GCD(int a, int b)
     {
-        if (root is null) { return (0, 0); }
-        var left = Solve(root.left);
-        var right = Solve(root.right);
-        var inc = left.exc + right.exc + root.val;
-        var exc = Math.Max(left.inc, left.exc) + Math.Max(right.inc, right.exc);
-        return (inc, exc);
+        if (a == 0) { return b; }
+        else { return GCD(b % a, a); }
     }
 }
