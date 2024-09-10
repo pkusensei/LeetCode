@@ -1,26 +1,24 @@
 mod helper;
 
-use std::{
-    cmp::Reverse,
-    collections::{BinaryHeap, HashMap},
-};
+use std::{collections::HashMap, iter};
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn top_k_frequent(nums: &[i32], k: i32) -> Vec<i32> {
-        let counts = nums.iter().fold(HashMap::new(), |mut acc, &num| {
+pub fn intersect(nums1: &[i32], nums2: &[i32]) -> Vec<i32> {
+    let [m1, m2] = [nums1, nums2].map(|nums| {
+        nums.iter().fold(HashMap::new(), |mut acc, &num| {
             *acc.entry(num).or_insert(0) += 1;
             acc
-        });
-        let mut heap = BinaryHeap::new();
-        for (num, count) in counts.into_iter() {
-            heap.push((Reverse(count), num));
-            if heap.len() > k as usize {
-                heap.pop();
-            }
+        })
+    });
+    let mut res = vec![];
+    for (k, v1) in m1.into_iter() {
+        if let Some(&v2) = m2.get(&k) {
+            res.extend(iter::repeat(k).take(v1.min(v2)))
         }
-        heap.into_iter().map(|(_, num)| num).collect()
+    }
+    res
 }
 
 #[cfg(test)]
@@ -31,8 +29,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        sort_eq(top_k_frequent(&[1, 1, 1, 2, 2, 3], 2), [1, 2]);
-        sort_eq(top_k_frequent(&[1], 1), [1]);
+        sort_eq(intersect(&[1, 2, 2, 1], &[2, 2]), [2, 2]);
+        sort_eq(intersect(&[4, 9, 5], &[9, 4, 9, 8, 4]), [4, 9]);
     }
 
     #[test]
