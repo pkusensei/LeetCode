@@ -3,18 +3,12 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn integer_break(n: i32) -> i32 {
-    match n {
-        ..=1 => 1, // unreachable
-        2 | 3 => n - 1,
-        _ => match n % 3 {
-            // get most nimber of 3s
-            // and 0..=2 0f 2s
-            0 => 3i32.pow(n as u32 / 3),
-            1 => 3i32.pow((n - 4) as u32 / 3) * 4,
-            2 => 3i32.pow((n - 2) as u32 / 3) * 2,
-            _ => unreachable!(),
-        },
+pub fn reverse_string(s: &mut [char]) {
+    let (mut left, mut right) = (0, s.len() - 1);
+    while left < right {
+        s.swap(left, right);
+        left += 1;
+        right -= 1;
     }
 }
 
@@ -25,10 +19,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {
-        debug_assert_eq!(integer_break(2), 1);
-        debug_assert_eq!(integer_break(10), 36);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
