@@ -14,7 +14,21 @@ pub fn max_envelopes(envelopes: &mut [[i32; 2]]) -> i32 {
             values[i] = num;
         }
     }
-    values.len() as _
+    values.len() as i32
+}
+
+fn with_dp(envelopes: &mut [[i32; 2]]) -> i32 {
+    envelopes.sort_unstable();
+    let n = envelopes.len();
+    let mut dp = vec![1; n];
+    for i in 0..n {
+        for j in 0..i {
+            if envelopes[i][0] > envelopes[j][0] && envelopes[i][1] > envelopes[j][1] {
+                dp[i] = dp[i].max(dp[j] + 1)
+            }
+        }
+    }
+    dp.into_iter().max().unwrap()
 }
 
 #[cfg(test)]
