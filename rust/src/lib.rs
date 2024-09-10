@@ -3,18 +3,45 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_bits(n: i32) -> Vec<i32> {
-    let n = n as usize;
-    let mut res = vec![0; 1 + n];
-    let mut pow2 = 1;
-    for num in 1..=n {
-        if num == pow2 {
-            pow2 *= 2;
+#[derive(Debug, PartialEq, Eq)]
+pub enum NestedInteger {
+    Int(i32),
+    List(Vec<NestedInteger>),
+}
+
+fn expand(n: NestedInteger) -> Vec<i32> {
+    let mut res = vec![];
+    match n {
+        NestedInteger::Int(n) => res.push(n),
+        NestedInteger::List(n) => {
+            for v in n.into_iter().map(expand) {
+                res.extend(v)
+            }
         }
-        res[num] = 1 + res[num - pow2 / 2];
-        // res[num] = 1 + res[num & (num - 1)];
     }
     res
+}
+
+struct NestedIterator {
+    nums: Vec<i32>,
+    idx: usize,
+}
+
+impl NestedIterator {
+    fn new(nested_list: Vec<NestedInteger>) -> Self {
+        let nums = nested_list.into_iter().map(expand).flatten().collect();
+        Self { nums, idx: 0 }
+    }
+
+    fn next(&mut self) -> i32 {
+        let res = self.nums[self.idx];
+        self.idx += 1;
+        res
+    }
+
+    fn has_next(&self) -> bool {
+        self.idx < self.nums.len()
+    }
 }
 
 #[cfg(test)]
@@ -24,21 +51,10 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {
-        for i in 1u8..=16 {
-            dbg!(i, i.count_ones());
-        }
-        debug_assert_eq!(count_bits(2), [0, 1, 1]);
-        debug_assert_eq!(count_bits(5), [0, 1, 1, 2, 1, 2]);
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        debug_assert_eq!(
-            count_bits(16),
-            [0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4, 1]
-        );
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(i1: I1, i2: I2)
