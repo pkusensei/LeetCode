@@ -3,45 +3,10 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-#[derive(Debug, PartialEq, Eq)]
-pub enum NestedInteger {
-    Int(i32),
-    List(Vec<NestedInteger>),
-}
-
-fn expand(n: NestedInteger) -> Vec<i32> {
-    let mut res = vec![];
-    match n {
-        NestedInteger::Int(n) => res.push(n),
-        NestedInteger::List(n) => {
-            for v in n.into_iter().map(expand) {
-                res.extend(v)
-            }
-        }
-    }
-    res
-}
-
-struct NestedIterator {
-    nums: Vec<i32>,
-    idx: usize,
-}
-
-impl NestedIterator {
-    fn new(nested_list: Vec<NestedInteger>) -> Self {
-        let nums = nested_list.into_iter().map(expand).flatten().collect();
-        Self { nums, idx: 0 }
-    }
-
-    fn next(&mut self) -> i32 {
-        let res = self.nums[self.idx];
-        self.idx += 1;
-        res
-    }
-
-    fn has_next(&self) -> bool {
-        self.idx < self.nums.len()
-    }
+fn is_power_of_four(n: i32) -> bool {
+        const POW4: i32 = 0b_0101_0101_0101_0101_0101_0101_0101_0101;
+        const MASK: i32 = POW4 << 1;
+        n > 0 && n & (n - 1) == 0 && n & MASK == 0
 }
 
 #[cfg(test)]
@@ -51,7 +16,11 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        debug_assert!(is_power_of_four(16));
+        debug_assert!(!is_power_of_four(5));
+        debug_assert!(is_power_of_four(1));
+    }
 
     #[test]
     fn test() {}
