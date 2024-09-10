@@ -1,27 +1,26 @@
 mod helper;
 
+use std::{
+    cmp::Reverse,
+    collections::{BinaryHeap, HashMap},
+};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn reverse_vowels(s: &str) -> String {
-    const VOWELS: &[u8; 10] = b"AEIOUaeiou";
-    let mut s: Vec<_> = s.bytes().collect();
-    let (mut left, mut right) = (0, s.len() - 1);
-    while left < right {
-        while left < s.len() && !VOWELS.contains(&s[left]) {
-            left += 1;
+pub fn top_k_frequent(nums: &[i32], k: i32) -> Vec<i32> {
+        let counts = nums.iter().fold(HashMap::new(), |mut acc, &num| {
+            *acc.entry(num).or_insert(0) += 1;
+            acc
+        });
+        let mut heap = BinaryHeap::new();
+        for (num, count) in counts.into_iter() {
+            heap.push((Reverse(count), num));
+            if heap.len() > k as usize {
+                heap.pop();
+            }
         }
-        while 0 < right && !VOWELS.contains(&s[right]) {
-            right -= 1;
-        }
-        if left < s.len() && left < right {
-            // usize guarantees 0<=right
-            s.swap(left, right);
-            left += 1;
-            right -= 1;
-        }
-    }
-    s.into_iter().map(char::from).collect()
+        heap.into_iter().map(|(_, num)| num).collect()
 }
 
 #[cfg(test)]
@@ -32,14 +31,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(reverse_vowels("hello"), "holle");
-        debug_assert_eq!(reverse_vowels("leetcode"), "leotcede");
+        sort_eq(top_k_frequent(&[1, 1, 1, 2, 2, 3], 2), [1, 2]);
+        sort_eq(top_k_frequent(&[1], 1), [1]);
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(reverse_vowels(".,"), ".,");
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(i1: I1, i2: I2)
