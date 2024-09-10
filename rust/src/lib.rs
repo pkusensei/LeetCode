@@ -8,10 +8,12 @@ pub fn max_envelopes(envelopes: &mut [[i32; 2]]) -> i32 {
     let mut values = vec![envelopes[0][1]];
     // longest increasing sequence
     for &[_, num] in envelopes.iter() {
-        if num > *values.last().unwrap() {
-            values.push(num)
-        } else if let Err(i) = values.binary_search(&num) {
-            values[i] = num;
+        if let Err(i) = values.binary_search(&num) {
+            if i == values.len() {
+                values.push(num)
+            } else {
+                values[i] = num;
+            }
         }
     }
     values.len() as i32
