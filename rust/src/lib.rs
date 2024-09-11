@@ -3,19 +3,26 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn get_sum(mut a: i32, mut b: i32) -> i32 {
-    while b != 0 {
-        let carry = a & b;
-        a ^= b; // sum without carry
-        b = carry << 1;
+pub fn super_pow(mut a: i32, b: &[i32]) -> i32 {
+    if a == 1 {
+        return 1;
     }
-    a
+    let mut res = 1;
+    for &n in b.iter().rev() {
+        res = (res * pow_mod(a, n)) % MOD;
+        a = pow_mod(a, 10);
+    }
+    res
 }
 
-// 2&3
-// carry = a & b  10&11=10     1&100=0
-// a = a ^ b      10^11=1      1^100=101
-// b = carry << 1 100
+// a**(b1*10+b2) = a**(b1*10) * a**b2 = a**10 * a**b1 * a**b2
+// ab % m = (a%m)(b%m)%m
+const MOD: i32 = 1337;
+
+fn pow_mod(mut a: i32, b: i32) -> i32 {
+    a %= MOD;
+    (0..b).fold(1, |acc, _| (acc * a) % MOD)
+}
 
 #[cfg(test)]
 mod tests {
@@ -25,8 +32,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(get_sum(2, 3), 5);
-        debug_assert_eq!(get_sum(1, 2), 3);
+        debug_assert_eq!(super_pow(2, &[3]), 8);
+        debug_assert_eq!(super_pow(2, &[1, 0]), 1024);
+        debug_assert_eq!(super_pow(1, &[4, 3, 3, 8, 5, 2]), 1);
     }
 
     #[test]
