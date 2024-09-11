@@ -1,49 +1,21 @@
 mod helper;
 
-use std::collections::{HashSet, VecDeque};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn can_measure_water(x: i32, y: i32, target: i32) -> bool {
-    // bfs(x, y, target, 0, 0)
-
-    // if x and y are nonzero integers and g = gcd(x,y),
-    // then there exist integers a and b such that ax+by=g
-    x + y == target || (x + y > target && target % gcd(x, y) == 0)
-}
-
-fn bfs(x: i32, y: i32, target: i32, jx: i32, jy: i32) -> bool {
-    let mut queue = VecDeque::from([(jx, jy)]);
-    let mut seen = HashSet::new();
-    while let Some((cx, cy)) = queue.pop_front() {
-        if !seen.insert((cx, cy)) {
-            continue;
+pub fn is_perfect_square(num: i32) -> bool {
+    let num = i64::from(num);
+    let (mut left, mut right) = (0, num);
+    while left <= right {
+        // 2^30 * 2^30 overflows ==> TLE
+        let mid = left + (right - left) / 2;
+        match (mid * mid).cmp(&num) {
+            std::cmp::Ordering::Less => left = mid + 1,
+            std::cmp::Ordering::Equal => return true,
+            std::cmp::Ordering::Greater => right = mid - 1,
         }
-        if cx.abs_diff(cy) == target as u32 || cx + cy == target {
-            return true;
-        }
-        queue.extend(next(x, y, cx, cy))
     }
     false
-}
-
-fn next(x: i32, y: i32, jx: i32, jy: i32) -> Vec<(i32, i32)> {
-    let mut res = vec![(x, jy), (jx, y), (0, jy), (jx, 0)];
-    let (dx, dy) = (x - jx, y - jy);
-    // x -> y
-    if jx > dy {
-        res.push((jx - dy, y));
-    } else {
-        res.push((0, jy + jx));
-    }
-    // y -> x
-    if jy > dx {
-        res.push((x, jy - dx));
-    } else {
-        res.push((jx + jy, 0));
-    }
-    res
 }
 
 #[cfg(test)]
@@ -54,9 +26,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(can_measure_water(3, 5, 4));
-        debug_assert!(!can_measure_water(2, 6, 5));
-        debug_assert!(can_measure_water(1, 2, 3));
+        debug_assert!(is_perfect_square(16));
+        debug_assert!(!is_perfect_square(14));
     }
 
     #[test]
