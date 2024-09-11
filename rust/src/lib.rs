@@ -3,34 +3,19 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn largest_divisible_subset(mut nums: Vec<i32>) -> Vec<i32> {
-    let n = nums.len();
-    nums.sort_unstable();
-    // (index to prev element, count)
-    let mut dp: Vec<_> = (0..n).map(|i| (i, 1)).collect();
-    for (i, &num) in nums.iter().enumerate() {
-        for j in 0..i {
-            if num % nums[j] == 0 && dp[j].1 >= dp[i].1 {
-                dp[i] = (j, dp[j].1 + 1);
-            }
-        }
+pub fn get_sum(mut a: i32, mut b: i32) -> i32 {
+    while b != 0 {
+        let carry = a & b;
+        a ^= b; // sum without carry
+        b = carry << 1;
     }
-    let (mut idx, mut pair) = dp
-        .iter()
-        .copied()
-        .enumerate()
-        .max_by_key(|(_i, pair)| pair.1)
-        .unwrap_or((0, dp[0]));
-    let mut res = vec![];
-    while pair.1 > 1 {
-        res.push(nums[idx]);
-        idx = pair.0;
-        pair = dp[pair.0];
-    }
-    res.push(nums[idx]);
-    res.reverse();
-    res
+    a
 }
+
+// 2&3
+// carry = a & b  10&11=10     1&100=0
+// a = a ^ b      10^11=1      1^100=101
+// b = carry << 1 100
 
 #[cfg(test)]
 mod tests {
@@ -40,8 +25,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(largest_divisible_subset(vec![1, 2, 3]), [1, 3]);
-        debug_assert_eq!(largest_divisible_subset(vec![1, 2, 4, 8]), [1, 2, 4, 8]);
+        debug_assert_eq!(get_sum(2, 3), 5);
+        debug_assert_eq!(get_sum(1, 2), 3);
     }
 
     #[test]
