@@ -3,8 +3,19 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_bit_flips(start: i32, goal: i32) -> i32 {
-    (start ^ goal).count_ones() as _
+pub fn count_numbers_with_unique_digits(n: i32) -> i32 {
+    // [1, 10, 91, 739, 5275, 32491, 168571, 712891, 2345851]
+    if n < 1 {
+        1
+    } else {
+        let mut res = 9;
+        let mut curr = 9;
+        for _ in 1..n {
+            res *= curr;
+            curr -= 1;
+        }
+        res + count_numbers_with_unique_digits(n - 1)
+    }
 }
 
 #[cfg(test)]
@@ -15,8 +26,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(min_bit_flips(10, 7), 3);
-        debug_assert_eq!(min_bit_flips(3, 4), 3);
+        debug_assert_eq!(count_numbers_with_unique_digits(2), 91);
+        debug_assert_eq!(count_numbers_with_unique_digits(0), 1);
+        debug_assert_eq!(count_numbers_with_unique_digits(4), 5275);
     }
 
     #[test]
