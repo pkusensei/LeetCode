@@ -3,19 +3,33 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_perfect_square(num: i32) -> bool {
-    let num = i64::from(num);
-    let (mut left, mut right) = (0, num);
-    while left <= right {
-        // 2^30 * 2^30 overflows ==> TLE
-        let mid = left + (right - left) / 2;
-        match (mid * mid).cmp(&num) {
-            std::cmp::Ordering::Less => left = mid + 1,
-            std::cmp::Ordering::Equal => return true,
-            std::cmp::Ordering::Greater => right = mid - 1,
+pub fn largest_divisible_subset(mut nums: Vec<i32>) -> Vec<i32> {
+    let n = nums.len();
+    nums.sort_unstable();
+    // (index to prev element, count)
+    let mut dp: Vec<_> = (0..n).map(|i| (i, 1)).collect();
+    for (i, &num) in nums.iter().enumerate() {
+        for j in 0..i {
+            if num % nums[j] == 0 && dp[j].1 >= dp[i].1 {
+                dp[i] = (j, dp[j].1 + 1);
+            }
         }
     }
-    false
+    let (mut idx, mut pair) = dp
+        .iter()
+        .copied()
+        .enumerate()
+        .max_by_key(|(_i, pair)| pair.1)
+        .unwrap_or((0, dp[0]));
+    let mut res = vec![];
+    while pair.1 > 1 {
+        res.push(nums[idx]);
+        idx = pair.0;
+        pair = dp[pair.0];
+    }
+    res.push(nums[idx]);
+    res.reverse();
+    res
 }
 
 #[cfg(test)]
@@ -26,8 +40,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(is_perfect_square(16));
-        debug_assert!(!is_perfect_square(14));
+        debug_assert_eq!(largest_divisible_subset(vec![1, 2, 3]), [1, 3]);
+        debug_assert_eq!(largest_divisible_subset(vec![1, 2, 4, 8]), [1, 2, 4, 8]);
     }
 
     #[test]
