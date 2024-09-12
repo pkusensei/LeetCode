@@ -1,36 +1,47 @@
 mod helper;
 
-use std::{
-    cmp::Reverse,
-    collections::{BinaryHeap, HashSet},
-};
+use std::collections::HashMap;
 
 #[allow(unused_imports)]
 use helper::*;
+use rand::{seq::SliceRandom, thread_rng};
 
-pub fn kth_smallest(matrix: &[&[i32]], mut k: i32) -> i32 {
-    let n = matrix.len();
-    if n == 1 {
-        return matrix[0][0];
+#[derive(Debug, Clone, Default)]
+struct RandomizedSet {
+    map: HashMap<i32, usize>,
+    nums: Vec<i32>,
+}
+
+impl RandomizedSet {
+    fn new() -> Self {
+        Default::default()
     }
-    let mut heap = BinaryHeap::from([Reverse((matrix[0][0], 0, 0))]);
-    let mut seen = HashSet::new();
-    let mut res = 0;
-    while k > 0 && !heap.is_empty() {
-        let Reverse(curr @ (num, row, col)) = heap.pop().unwrap();
-        if !seen.insert(curr) {
-            continue;
+
+    fn insert(&mut self, val: i32) -> bool {
+        if self.map.contains_key(&val) {
+            return false;
         }
-        k -= 1;
-        res = num;
-        if let Some(r) = matrix.get(row + 1) {
-            heap.push(Reverse((r[col], row + 1, col)));
-        }
-        if let Some(&n) = matrix[row].get(col + 1) {
-            heap.push(Reverse((n, row, col + 1)));
+        self.nums.push(val);
+        let idx = self.nums.len() - 1;
+        self.map.insert(val, idx);
+        true
+    }
+
+    fn remove(&mut self, val: i32) -> bool {
+        if let Some(i) = self.map.remove(&val) {
+            self.nums.swap_remove(i);
+            if i < self.nums.len() {
+                self.map.insert(self.nums[i], i);
+            }
+            true
+        } else {
+            false
         }
     }
-    res
+
+    fn get_random(&self) -> i32 {
+        *self.nums.choose(&mut thread_rng()).unwrap()
+    }
 }
 
 #[cfg(test)]
@@ -41,17 +52,18 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            kth_smallest(&[&[1, 5, 9], &[10, 11, 13], &[12, 13, 15]], 8),
-            13
-        );
-        debug_assert_eq!(kth_smallest(&[&[-5]], 1), -5);
+        let mut set = RandomizedSet::new();
+        debug_assert!(set.insert(1)); // Inserts 1 to the set. Returns true as 1 was inserted successfully.
+        debug_assert!(!set.remove(2)); // Returns false as 2 does not exist in the set.
+        debug_assert!(set.insert(2)); // Inserts 2 to the set, returns true. Set now contains [1,2].
+        set.get_random(); // getRandom() should return either 1 or 2 randomly.
+        debug_assert!(set.remove(1)); // Removes 1 from the set, returns true. Set now contains [2].
+        debug_assert!(!set.insert(2)); // 2 was already in the set, so return false.
+        set.get_random(); // Since 2 is the only number in the set, getRandom() will always return 2.
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(kth_smallest(&[&[1, 2], &[1, 3]], 2), 1)
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(i1: I1, i2: I2)
