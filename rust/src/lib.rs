@@ -3,16 +3,17 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn wiggle_max_length(nums: &[i32]) -> i32 {
-    let (mut incr, mut decr) = (1, 1);
-    for w in nums.windows(2) {
-        match w[0].cmp(&w[1]) {
-            std::cmp::Ordering::Less => incr = decr + 1,
-            std::cmp::Ordering::Equal => (),
-            std::cmp::Ordering::Greater => decr = incr + 1,
+pub fn combination_sum4(nums: &[i32], target: i32) -> i32 {
+    let mut dp = vec![0; 1 + target as usize];
+    dp[0] = 1;
+    for n in 1..=target {
+        for &num in nums.iter() {
+            if num <= n {
+                dp[n as usize] += dp[(n - num) as usize]
+            }
         }
     }
-    incr.max(decr)
+    *dp.last().unwrap()
 }
 
 #[cfg(test)]
@@ -23,15 +24,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(wiggle_max_length(&[1, 7, 4, 9, 2, 5]), 6);
-        debug_assert_eq!(wiggle_max_length(&[1, 17, 5, 10, 13, 15, 10, 5, 16, 8]), 7);
-        debug_assert_eq!(wiggle_max_length(&[1, 2, 3, 4, 5, 6, 7, 8, 9]), 2);
+        debug_assert_eq!(combination_sum4(&[1, 2, 3], 4), 7);
+        debug_assert_eq!(combination_sum4(&[9], 3), 0);
     }
 
     #[test]
     fn test() {
-        debug_assert_eq!(wiggle_max_length(&[0, 0]), 1);
-        debug_assert_eq!(wiggle_max_length(&[0, 0, 0]), 1);
+        debug_assert_eq!(combination_sum4(&[2, 1, 3], 35), 1132436852);
     }
 
     #[allow(dead_code)]
