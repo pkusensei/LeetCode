@@ -1,48 +1,26 @@
 mod helper;
 
-use std::collections::{HashMap, HashSet};
-
 #[allow(unused_imports)]
 use helper::*;
-use rand::{seq::SliceRandom, thread_rng};
+use rand::{self, seq::SliceRandom};
 
-#[derive(Debug, Clone, Default)]
-struct RandomizedCollection {
-    map: HashMap<i32, HashSet<usize>>,
+struct Solution {
     nums: Vec<i32>,
 }
 
-impl RandomizedCollection {
-    fn new() -> Self {
-        Default::default()
+impl Solution {
+    fn new(nums: Vec<i32>) -> Self {
+        Self { nums }
     }
 
-    fn insert(&mut self, val: i32) -> bool {
-        self.nums.push(val);
-        let idx = self.nums.len() - 1;
-        let e = self.map.entry(val).or_default();
-        e.insert(idx);
-        e.len() == 1
+    fn reset(&self) -> Vec<i32> {
+        self.nums.clone()
     }
 
-    fn remove(&mut self, val: i32) -> bool {
-        if let Some(ids) = self.map.get_mut(&val) {
-            if let Some(&i) = ids.iter().next() {
-                ids.remove(&i);
-                self.nums.swap_remove(i);
-                if i < self.nums.len() {
-                    let s = self.map.get_mut(&self.nums[i]).unwrap();
-                    s.remove(&self.nums.len());
-                    s.insert(i);
-                }
-                return true;
-            }
-        }
-        false
-    }
-
-    fn get_random(&self) -> i32 {
-        *self.nums.choose(&mut thread_rng()).unwrap()
+    fn shuffle(&self) -> Vec<i32> {
+        let mut res = self.nums.clone();
+        res.shuffle(&mut rand::thread_rng());
+        res
     }
 }
 
@@ -53,21 +31,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {
-        let mut set = RandomizedCollection::new();
-        debug_assert!(set.insert(1)); // return true since the collection does not contain 1.
-                                      // Inserts 1 into the collection.
-        debug_assert!(!set.insert(1)); // return false since the collection contains 1.
-                                       // Inserts another 1 into the collection. Collection now contains [1,1].
-        debug_assert!(set.insert(2)); // return true since the collection does not contain 2.
-                                      // Inserts 2 into the collection. Collection now contains [1,1,2].
-        set.get_random(); // getRandom should:
-                          // - return 1 with probability 2/3, or
-                          // - return 2 with probability 1/3.
-        debug_assert!(set.remove(1)); // return true since the collection contains 1.
-                                      // Removes 1 from the collection. Collection now contains [1,2].
-        set.get_random(); // getRandom should return 1 or 2, both equally likely.
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
