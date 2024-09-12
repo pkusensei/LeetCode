@@ -5,23 +5,24 @@ namespace Solution;
 
 public class Solution
 {
-    public ListNode InsertGreatestCommonDivisors(ListNode head)
+    readonly Random rnd;
+    readonly List<int> nums;
+
+    public Solution(ListNode head)
     {
+        rnd = new();
+        nums = [];
         var curr = head;
-        while (curr.next is not null)
+        while (curr is not null)
         {
-            var temp = curr.next;
-            var gcd = GCD(curr.val, temp.val);
-            ListNode node = new(gcd, temp);
-            curr.next = node;
-            curr = temp;
+            nums.Add(curr.val);
+            curr = curr.next;
         }
-        return head;
     }
 
-    static int GCD(int a, int b)
+    public int GetRandom()
     {
-        if (a == 0) { return b; }
-        else { return GCD(b % a, a); }
+        var n = rnd.Next(0, nums.Count);
+        return nums[n];
     }
 }
