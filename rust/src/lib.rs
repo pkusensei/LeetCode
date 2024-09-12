@@ -1,42 +1,44 @@
 mod helper;
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 #[allow(unused_imports)]
 use helper::*;
 use rand::{seq::SliceRandom, thread_rng};
 
 #[derive(Debug, Clone, Default)]
-struct RandomizedSet {
-    map: HashMap<i32, usize>,
+struct RandomizedCollection {
+    map: HashMap<i32, HashSet<usize>>,
     nums: Vec<i32>,
 }
 
-impl RandomizedSet {
+impl RandomizedCollection {
     fn new() -> Self {
         Default::default()
     }
 
     fn insert(&mut self, val: i32) -> bool {
-        if self.map.contains_key(&val) {
-            return false;
-        }
         self.nums.push(val);
         let idx = self.nums.len() - 1;
-        self.map.insert(val, idx);
-        true
+        let e = self.map.entry(val).or_default();
+        e.insert(idx);
+        e.len() == 1
     }
 
     fn remove(&mut self, val: i32) -> bool {
-        if let Some(i) = self.map.remove(&val) {
-            self.nums.swap_remove(i);
-            if i < self.nums.len() {
-                self.map.insert(self.nums[i], i);
+        if let Some(ids) = self.map.get_mut(&val) {
+            if let Some(&i) = ids.iter().next() {
+                ids.remove(&i);
+                self.nums.swap_remove(i);
+                if i < self.nums.len() {
+                    let s = self.map.get_mut(&self.nums[i]).unwrap();
+                    s.remove(&self.nums.len());
+                    s.insert(i);
+                }
+                return true;
             }
-            true
-        } else {
-            false
         }
+        false
     }
 
     fn get_random(&self) -> i32 {
@@ -52,14 +54,19 @@ mod tests {
 
     #[test]
     fn basics() {
-        let mut set = RandomizedSet::new();
-        debug_assert!(set.insert(1)); // Inserts 1 to the set. Returns true as 1 was inserted successfully.
-        debug_assert!(!set.remove(2)); // Returns false as 2 does not exist in the set.
-        debug_assert!(set.insert(2)); // Inserts 2 to the set, returns true. Set now contains [1,2].
-        set.get_random(); // getRandom() should return either 1 or 2 randomly.
-        debug_assert!(set.remove(1)); // Removes 1 from the set, returns true. Set now contains [2].
-        debug_assert!(!set.insert(2)); // 2 was already in the set, so return false.
-        set.get_random(); // Since 2 is the only number in the set, getRandom() will always return 2.
+        let mut set = RandomizedCollection::new();
+        debug_assert!(set.insert(1)); // return true since the collection does not contain 1.
+                                      // Inserts 1 into the collection.
+        debug_assert!(!set.insert(1)); // return false since the collection contains 1.
+                                       // Inserts another 1 into the collection. Collection now contains [1,1].
+        debug_assert!(set.insert(2)); // return true since the collection does not contain 2.
+                                      // Inserts 2 into the collection. Collection now contains [1,1,2].
+        set.get_random(); // getRandom should:
+                          // - return 1 with probability 2/3, or
+                          // - return 2 with probability 1/3.
+        debug_assert!(set.remove(1)); // return true since the collection contains 1.
+                                      // Removes 1 from the collection. Collection now contains [1,2].
+        set.get_random(); // getRandom should return 1 or 2, both equally likely.
     }
 
     #[test]
