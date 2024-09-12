@@ -3,27 +3,16 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn get_money_amount(n: i32) -> i32 {
-    let n = n as usize;
-    let mut dp = vec![vec![0; n + 1]; n + 1];
-    solve(&mut dp, 1, n)
-}
-
-fn solve(dp: &mut [Vec<i32>], start: usize, end: usize) -> i32 {
-    if start >= end {
-        return 0;
+pub fn wiggle_max_length(nums: &[i32]) -> i32 {
+    let (mut incr, mut decr) = (1, 1);
+    for w in nums.windows(2) {
+        match w[0].cmp(&w[1]) {
+            std::cmp::Ordering::Less => incr = decr + 1,
+            std::cmp::Ordering::Equal => (),
+            std::cmp::Ordering::Greater => decr = incr + 1,
+        }
     }
-    if dp[start][end] != 0 {
-        return dp[start][end];
-    }
-    let mut res = i32::MAX;
-    for i in start..=end {
-        // for each choice i, find worst outcome => i + max(..i-1, i+1..)
-        // but with strategy, find best of worst outcomes => min(all i)
-        res = res.min(i as i32 + solve(dp, start, i - 1).max(solve(dp, i + 1, end)));
-    }
-    dp[start][end] = res;
-    res
+    incr.max(decr)
 }
 
 #[cfg(test)]
@@ -34,13 +23,16 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(get_money_amount(10), 16);
-        debug_assert_eq!(get_money_amount(1), 0);
-        debug_assert_eq!(get_money_amount(2), 1);
+        debug_assert_eq!(wiggle_max_length(&[1, 7, 4, 9, 2, 5]), 6);
+        debug_assert_eq!(wiggle_max_length(&[1, 17, 5, 10, 13, 15, 10, 5, 16, 8]), 7);
+        debug_assert_eq!(wiggle_max_length(&[1, 2, 3, 4, 5, 6, 7, 8, 9]), 2);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(wiggle_max_length(&[0, 0]), 1);
+        debug_assert_eq!(wiggle_max_length(&[0, 0, 0]), 1);
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(i1: I1, i2: I2)
