@@ -3,22 +3,47 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn xor_queries(arr: &[i32], queries: &[[i32; 2]]) -> Vec<i32> {
-    let mut prefix = Vec::with_capacity(arr.len());
-    prefix.push(arr[0]);
-    for (i, &num) in arr.iter().enumerate().skip(1) {
-        prefix.push(prefix[i - 1] ^ num);
+pub fn lexical_order(n: i32) -> Vec<i32> {
+    let mut res = Vec::with_capacity(n as usize);
+    // for curr in 1..=9 {
+    //     dfs(curr, n, &mut res)
+    // }
+    let mut num = 1;
+    res.push(num);
+    loop {
+        if 10 * num <= n {
+            // 1, 10, 100 ...
+            num *= 10;
+            res.push(num);
+            continue;
+        }
+        if num < n && num % 10 < 9 {
+            // 10, 11, 12, ...19
+            num += 1;
+            res.push(num);
+            continue;
+        }
+        while {
+            num /= 10;
+            num % 10 == 9
+        } {}
+        if num == 0 {
+            break;
+        }
+        num += 1;
+        res.push(num)
     }
-    queries
-        .iter()
-        .map(|&[left, right]| {
-            if left > 0 {
-                prefix[right as usize] ^ prefix[left as usize - 1]
-            } else {
-                prefix[right as usize]
-            }
-        })
-        .collect()
+    res
+}
+
+fn dfs(curr: i32, n: i32, res: &mut Vec<i32>) {
+    if curr > n {
+        return;
+    }
+    res.push(curr);
+    for i in 0..=9 {
+        dfs(10 * curr + i, n, res)
+    }
 }
 
 #[cfg(test)]
@@ -30,13 +55,10 @@ mod tests {
     #[test]
     fn basics() {
         debug_assert_eq!(
-            xor_queries(&[1, 3, 4, 8], &[[0, 1], [1, 2], [0, 3], [3, 3]]),
-            [2, 7, 14, 8]
+            lexical_order(13),
+            [1, 10, 11, 12, 13, 2, 3, 4, 5, 6, 7, 8, 9]
         );
-        debug_assert_eq!(
-            xor_queries(&[4, 8, 2, 10], &[[2, 3], [1, 3], [0, 0], [0, 3]]),
-            [8, 0, 4, 4]
-        );
+        debug_assert_eq!(lexical_order(2), [1, 2]);
     }
 
     #[test]
