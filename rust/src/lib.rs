@@ -3,58 +3,22 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-#[derive(Debug, PartialEq, Eq)]
-pub enum NestedInteger {
-    Int(i32),
-    List(Vec<NestedInteger>),
-}
-
-pub fn deserialize(s: &str) -> NestedInteger {
-    parse(s.as_bytes(), 0).0
-}
-
-fn parse(s: &[u8], mut idx: usize) -> (NestedInteger, usize) {
-    let mut num = None;
-    let mut list = vec![];
-    let mut sign = 1;
-    while idx < s.len() {
-        match s[idx] {
-            b'-' => sign = -1,
-            b @ b'0'..=b'9' => {
-                let n = 10 * num.unwrap_or(0) + (b - b'0') as i32;
-                num = Some(n);
-            }
-            b',' => {
-                if let Some(n) = num {
-                    let v = NestedInteger::Int(n * sign);
-                    list.push(v);
-                    num = None;
-                    sign = 1;
-                }
-            }
-            b'[' => {
-                let (v, i) = parse(s, idx + 1);
-                list.push(v);
-                idx = i;
-            }
-            b']' => {
-                if let Some(n) = num {
-                    let v = NestedInteger::Int(n * sign);
-                    list.push(v);
-                }
-                return (NestedInteger::List(list), idx);
-            }
-            _ => todo!(),
-        }
-        idx += 1
+pub fn xor_queries(arr: &[i32], queries: &[[i32; 2]]) -> Vec<i32> {
+    let mut prefix = Vec::with_capacity(arr.len());
+    prefix.push(arr[0]);
+    for (i, &num) in arr.iter().enumerate().skip(1) {
+        prefix.push(prefix[i - 1] ^ num);
     }
-    if let Some(n) = num {
-        (NestedInteger::Int(n * sign), idx)
-    } else if let Some(v) = list.pop() {
-        (v, idx) // top level list
-    } else {
-        unreachable!()
-    }
+    queries
+        .iter()
+        .map(|&[left, right]| {
+            if left > 0 {
+                prefix[right as usize] ^ prefix[left as usize - 1]
+            } else {
+                prefix[right as usize]
+            }
+        })
+        .collect()
 }
 
 #[cfg(test)]
@@ -65,12 +29,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        use NestedInteger::*;
-        // debug_assert_eq!(deserialize("324"), Int(324));
         debug_assert_eq!(
-            deserialize("[123,[456,[789]]]"),
-            List(vec![Int(123), List(vec![Int(456), List(vec![Int(789)])])])
-        )
+            xor_queries(&[1, 3, 4, 8], &[[0, 1], [1, 2], [0, 3], [3, 3]]),
+            [2, 7, 14, 8]
+        );
+        debug_assert_eq!(
+            xor_queries(&[4, 8, 2, 10], &[[2, 3], [1, 3], [0, 0], [0, 3]]),
+            [8, 0, 4, 4]
+        );
     }
 
     #[test]
