@@ -3,47 +3,18 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn lexical_order(n: i32) -> Vec<i32> {
-    let mut res = Vec::with_capacity(n as usize);
-    // for curr in 1..=9 {
-    //     dfs(curr, n, &mut res)
-    // }
-    let mut num = 1;
-    res.push(num);
-    loop {
-        if 10 * num <= n {
-            // 1, 10, 100 ...
-            num *= 10;
-            res.push(num);
-            continue;
-        }
-        if num < n && num % 10 < 9 {
-            // 10, 11, 12, ...19
-            num += 1;
-            res.push(num);
-            continue;
-        }
-        while {
-            num /= 10;
-            num % 10 == 9
-        } {}
-        if num == 0 {
-            break;
-        }
-        num += 1;
-        res.push(num)
-    }
-    res
-}
-
-fn dfs(curr: i32, n: i32, res: &mut Vec<i32>) {
-    if curr > n {
-        return;
-    }
-    res.push(curr);
-    for i in 0..=9 {
-        dfs(10 * curr + i, n, res)
-    }
+pub fn first_uniq_char(s: &str) -> i32 {
+    let counts = s.bytes().enumerate().fold([(0, 0); 26], |mut acc, (i, b)| {
+        let pos = usize::from(b - b'a');
+        acc[pos].0 = i;
+        acc[pos].1 += 1;
+        acc
+    });
+    counts
+        .into_iter()
+        .filter_map(|(idx, count)| if count == 1 { Some(idx as i32) } else { None })
+        .min()
+        .unwrap_or(-1)
 }
 
 #[cfg(test)]
@@ -54,11 +25,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            lexical_order(13),
-            [1, 10, 11, 12, 13, 2, 3, 4, 5, 6, 7, 8, 9]
-        );
-        debug_assert_eq!(lexical_order(2), [1, 2]);
+        debug_assert_eq!(first_uniq_char("leetcode"), 0);
+        debug_assert_eq!(first_uniq_char("loveleetcode"), 2);
+        debug_assert_eq!(first_uniq_char("aabb"), -1);
     }
 
     #[test]
