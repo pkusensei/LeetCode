@@ -3,18 +3,25 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn first_uniq_char(s: &str) -> i32 {
-    let counts = s.bytes().enumerate().fold([(0, 0); 26], |mut acc, (i, b)| {
-        let pos = usize::from(b - b'a');
-        acc[pos].0 = i;
-        acc[pos].1 += 1;
-        acc
-    });
-    counts
-        .into_iter()
-        .filter_map(|(idx, count)| if count == 1 { Some(idx as i32) } else { None })
-        .min()
-        .unwrap_or(-1)
+pub fn length_longest_path(input: &str) -> i32 {
+    let mut stack = vec![];
+    let mut res = 0;
+    for line in input.split('\n') {
+        let tab_count = line.bytes().take_while(|&b| b == b'\t').count();
+        if stack.is_empty() {
+            stack.push((tab_count, &line[tab_count..]));
+        } else {
+            while stack.last().is_some_and(|&(c, _)| c >= tab_count) {
+                stack.pop();
+            }
+            stack.push((tab_count, &line[tab_count..]));
+        }
+        if line.contains('.') {
+            let len = stack.len();
+            res = res.max(stack.iter().map(|(_, s)| s.len()).sum::<usize>() + len - 1);
+        }
+    }
+    res as _
 }
 
 #[cfg(test)]
@@ -25,9 +32,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(first_uniq_char("leetcode"), 0);
-        debug_assert_eq!(first_uniq_char("loveleetcode"), 2);
-        debug_assert_eq!(first_uniq_char("aabb"), -1);
+        debug_assert_eq!(
+            length_longest_path("dir\n\tsubdir1\n\tsubdir2\n\t\tfile.ext"),
+            20
+        );
+        debug_assert_eq!(length_longest_path("dir\n\tsubdir1\n\t\tfile1.ext\n\t\tsubsubdir1\n\tsubdir2\n\t\tsubsubdir2\n\t\t\tfile2.ext"), 32);
+        debug_assert_eq!(length_longest_path("a"), 0);
     }
 
     #[test]
