@@ -3,11 +3,19 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_the_difference(s: &str, t: &str) -> char {
-    // let bs = s.bytes().fold(0, |acc, b| acc + u32::from(b - b'a'));
-    // let bt = t.bytes().fold(0, |acc, b| acc + u32::from(b - b'a'));
-    // char::from((bt - bs) as u8 + b'a')
-    s.bytes().chain(t.bytes()).fold(0, |acc, b| acc ^ b).into()
+pub fn last_remaining(n: i32) -> i32 {
+    let mut forward = true;
+    let mut n = n as usize;
+    let (mut head, mut step) = (1, 1);
+    while n > 1 {
+        if forward || n & 1 == 1 {
+            head += step;
+        }
+        n /= 2;
+        step *= 2;
+        forward = !forward
+    }
+    head
 }
 
 #[cfg(test)]
@@ -18,8 +26,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(find_the_difference("abcd", "abcde"), 'e');
-        debug_assert_eq!(find_the_difference("", "y"), 'y');
+        debug_assert_eq!(last_remaining(9), 6);
+        debug_assert_eq!(last_remaining(1), 1);
     }
 
     #[test]
