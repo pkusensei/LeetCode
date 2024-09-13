@@ -2,25 +2,58 @@ mod helper;
 
 #[allow(unused_imports)]
 use helper::*;
-use rand::{self, seq::SliceRandom};
 
-struct Solution {
-    nums: Vec<i32>,
+#[derive(Debug, PartialEq, Eq)]
+pub enum NestedInteger {
+    Int(i32),
+    List(Vec<NestedInteger>),
 }
 
-impl Solution {
-    fn new(nums: Vec<i32>) -> Self {
-        Self { nums }
-    }
+pub fn deserialize(s: &str) -> NestedInteger {
+    parse(s.as_bytes(), 0).0
+}
 
-    fn reset(&self) -> Vec<i32> {
-        self.nums.clone()
+fn parse(s: &[u8], mut idx: usize) -> (NestedInteger, usize) {
+    let mut num = None;
+    let mut list = vec![];
+    let mut sign = 1;
+    while idx < s.len() {
+        match s[idx] {
+            b'-' => sign = -1,
+            b @ b'0'..=b'9' => {
+                let n = 10 * num.unwrap_or(0) + (b - b'0') as i32;
+                num = Some(n);
+            }
+            b',' => {
+                if let Some(n) = num {
+                    let v = NestedInteger::Int(n * sign);
+                    list.push(v);
+                    num = None;
+                    sign = 1;
+                }
+            }
+            b'[' => {
+                let (v, i) = parse(s, idx + 1);
+                list.push(v);
+                idx = i;
+            }
+            b']' => {
+                if let Some(n) = num {
+                    let v = NestedInteger::Int(n * sign);
+                    list.push(v);
+                }
+                return (NestedInteger::List(list), idx);
+            }
+            _ => todo!(),
+        }
+        idx += 1
     }
-
-    fn shuffle(&self) -> Vec<i32> {
-        let mut res = self.nums.clone();
-        res.shuffle(&mut rand::thread_rng());
-        res
+    if let Some(n) = num {
+        (NestedInteger::Int(n * sign), idx)
+    } else if let Some(v) = list.pop() {
+        (v, idx) // top level list
+    } else {
+        unreachable!()
     }
 }
 
@@ -31,7 +64,14 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        use NestedInteger::*;
+        // debug_assert_eq!(deserialize("324"), Int(324));
+        debug_assert_eq!(
+            deserialize("[123,[456,[789]]]"),
+            List(vec![Int(123), List(vec![Int(456), List(vec![Int(789)])])])
+        )
+    }
 
     #[test]
     fn test() {}
