@@ -3,25 +3,11 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn length_longest_path(input: &str) -> i32 {
-    let mut stack = vec![];
-    let mut res = 0;
-    for line in input.split('\n') {
-        let tab_count = line.bytes().take_while(|&b| b == b'\t').count();
-        if stack.is_empty() {
-            stack.push((tab_count, &line[tab_count..]));
-        } else {
-            while stack.last().is_some_and(|&(c, _)| c >= tab_count) {
-                stack.pop();
-            }
-            stack.push((tab_count, &line[tab_count..]));
-        }
-        if line.contains('.') {
-            let len = stack.len();
-            res = res.max(stack.iter().map(|(_, s)| s.len()).sum::<usize>() + len - 1);
-        }
-    }
-    res as _
+pub fn find_the_difference(s: &str, t: &str) -> char {
+    // let bs = s.bytes().fold(0, |acc, b| acc + u32::from(b - b'a'));
+    // let bt = t.bytes().fold(0, |acc, b| acc + u32::from(b - b'a'));
+    // char::from((bt - bs) as u8 + b'a')
+    s.bytes().chain(t.bytes()).fold(0, |acc, b| acc ^ b).into()
 }
 
 #[cfg(test)]
@@ -32,12 +18,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            length_longest_path("dir\n\tsubdir1\n\tsubdir2\n\t\tfile.ext"),
-            20
-        );
-        debug_assert_eq!(length_longest_path("dir\n\tsubdir1\n\t\tfile1.ext\n\t\tsubsubdir1\n\tsubdir2\n\t\tsubsubdir2\n\t\t\tfile2.ext"), 32);
-        debug_assert_eq!(length_longest_path("a"), 0);
+        debug_assert_eq!(find_the_difference("abcd", "abcde"), 'e');
+        debug_assert_eq!(find_the_difference("", "y"), 'y');
     }
 
     #[test]
