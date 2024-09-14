@@ -1,31 +1,54 @@
 mod helper;
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet, VecDeque};
 
 #[allow(unused_imports)]
 use helper::*;
-use rand::seq::SliceRandom;
 
-#[derive(Debug, Clone)]
-struct Solution {
-    nums: HashMap<i32, Vec<i32>>,
+pub fn calc_equation(equations: &[[&str; 2]], values: &[f64], queries: &[[&str; 2]]) -> Vec<f64> {
+    let mut graph: HashMap<&str, HashMap<&str, f64>> =
+        equations
+            .iter()
+            .zip(values)
+            .fold(HashMap::new(), |mut acc, (eq, &v)| {
+                acc.entry(eq[0]).or_default().insert(eq[1], v);
+                acc.entry(eq[1]).or_default().insert(eq[0], 1.0 / v);
+                acc
+            });
+    queries
+        .iter()
+        .map(|[start, goal]| bfs(&mut graph, start, goal))
+        .collect()
 }
 
-impl Solution {
-    fn new(nums: Vec<i32>) -> Self {
-        let nums: HashMap<i32, Vec<i32>> =
-            nums.into_iter()
-                .enumerate()
-                .fold(HashMap::new(), |mut acc, (i, num)| {
-                    acc.entry(num).or_default().push(i as i32);
-                    acc
-                });
-        Self { nums }
+fn bfs<'a>(
+    graph: &mut HashMap<&'a str, HashMap<&'a str, f64>>,
+    start: &'a str,
+    goal: &'a str,
+) -> f64 {
+    if let Some(v) = graph.get(start).and_then(|m| m.get(goal)) {
+        return *v;
     }
-
-    fn pick(&self, target: i32) -> i32 {
-        *self.nums[&target].choose(&mut rand::thread_rng()).unwrap()
+    if !graph.contains_key(start) || !graph.contains_key(goal) {
+        return -1.0;
     }
+    let mut queue = VecDeque::from([(start, 1.0)]);
+    let mut seen = HashSet::new();
+    while let Some((curr, dist)) = queue.pop_front() {
+        if !seen.insert(curr) {
+            continue;
+        }
+        if curr == goal {
+            graph.entry(start).or_default().insert(goal, dist);
+            graph.entry(goal).or_default().insert(start, 1.0 / dist);
+            return dist;
+        }
+        for (next_node, delta) in graph[curr].iter() {
+            let next_dist = delta * dist;
+            queue.push_back((next_node, next_dist));
+        }
+    }
+    -1.0
 }
 
 #[cfg(test)]
@@ -36,10 +59,30 @@ mod tests {
 
     #[test]
     fn basics() {
-        let solution = Solution::new(vec![1, 2, 3, 3, 3]);
-        solution.pick(3); // It should return either index 2, 3, or 4 randomly. Each index should have equal probability of returning.
-        debug_assert_eq!(solution.pick(1), 0); // It should return 0. Since in the array only nums[0] is equal to 1.
-        solution.pick(3); // It should return either index 2, 3, or 4 randomly. Each index should have equal probability of returning.
+        debug_assert_eq!(
+            calc_equation(
+                &[["a", "b"], ["b", "c"]],
+                &[2.0, 3.0],
+                &[["a", "c"], ["b", "a"], ["a", "e"], ["a", "a"], ["x", "x"]]
+            ),
+            [6.00000, 0.50000, -1.00000, 1.00000, -1.00000]
+        );
+        debug_assert_eq!(
+            calc_equation(
+                &[["a", "b"], ["b", "c"], ["bc", "cd"]],
+                &[1.5, 2.5, 5.0],
+                &[["a", "c"], ["c", "b"], ["bc", "cd"], ["cd", "bc"]]
+            ),
+            [3.75000, 0.40000, 5.00000, 0.20000]
+        );
+        debug_assert_eq!(
+            calc_equation(
+                &[["a", "b"]],
+                &[0.5],
+                &[["a", "b"], ["b", "a"], ["a", "c"], ["x", "y"]]
+            ),
+            [0.50000, 2.00000, -1.00000, -1.00000]
+        );
     }
 
     #[test]
