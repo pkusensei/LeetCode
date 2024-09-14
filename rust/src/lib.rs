@@ -3,34 +3,16 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn longest_substring(s: &str, k: i32) -> i32 {
-    if s.len() < k as usize {
-        return 0;
+pub fn max_rotate_function(nums: &[i32]) -> i32 {
+    let n = nums.len();
+    let sum: i32 = nums.iter().sum();
+    let mut curr: i32 = nums.iter().enumerate().map(|(i, &n)| (i as i32) * n).sum();
+    let mut res = curr;
+    for k in 1..nums.len() {
+        let i = n - k;
+        curr = curr + sum - nums[i] * (n as i32);
+        res = res.max(curr);
     }
-    if k == 1 {
-        return s.len() as _;
-    }
-    let counts = s.bytes().fold([0; 26], |mut acc, b| {
-        acc[usize::from(b - b'a')] += 1;
-        acc
-    });
-    if counts.iter().all(|&c| c >= k || c == 0) {
-        return s.len() as _;
-    }
-    let mut res = 0;
-    let mut left = 0;
-    for right in s.bytes().enumerate().filter_map(|(idx, b)| {
-        let i = usize::from(b - b'a');
-        if (1..k).contains(&counts[i]) {
-            Some(idx)
-        } else {
-            None
-        }
-    }) {
-        res = res.max(longest_substring(&s[left..right], k));
-        left = right + 1;
-    }
-    res = res.max(longest_substring(&s[left..], k));
     res
 }
 
@@ -42,8 +24,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(longest_substring("aaabb", 3), 3);
-        debug_assert_eq!(longest_substring("ababbc", 2), 5);
+        debug_assert_eq!(max_rotate_function(&[4, 3, 2, 6]), 26);
+        debug_assert_eq!(max_rotate_function(&[100]), 0);
     }
 
     #[test]
