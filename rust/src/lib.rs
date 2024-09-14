@@ -3,36 +3,37 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn valid_utf8(data: &[i32]) -> bool {
-    let n = data.len();
-    let mut idx = 0;
-    while idx < n {
-        if data[idx] <= 0b0111_1111 {
-            idx += 1
-        } else if (data[idx] >> 3) == 0b1_1110 {
-            if !is_valid(&data[idx + 1..], 3) {
-                return false;
+pub fn decode_string(s: &str) -> String {
+    let mut nums = vec![];
+    let mut num = None;
+    let mut stack = vec![];
+    for &b in s.as_bytes() {
+        match b {
+            b'0'..=b'9' => {
+                let n = 10 * num.unwrap_or(0) + i32::from(b - b'0');
+                num = Some(n)
             }
-            idx += 4
-        } else if (data[idx] >> 4) == 0b1110 {
-            if !is_valid(&data[idx + 1..], 2) {
-                return false;
+            b'[' => {
+                stack.push(b);
+                nums.push(num.unwrap_or(1));
+                num = None
             }
-            idx += 3;
-        } else if (data[idx] >> 5) == 0b0110 {
-            if !is_valid(&data[idx + 1..], 1) {
-                return false;
+            b']' => {
+                let mut temp = vec![];
+                while stack.last().is_some_and(|&v| v != b'[') {
+                    temp.push(stack.pop().unwrap());
+                }
+                stack.pop(); // '['
+                let count = nums.pop().unwrap_or(1);
+                temp.reverse();
+                for _ in 0..count {
+                    stack.extend_from_slice(&temp);
+                }
             }
-            idx += 2;
-        } else {
-            return false;
+            _ => stack.push(b),
         }
     }
-    true
-}
-
-fn is_valid(nums: &[i32], count: usize) -> bool {
-    nums.len() >= count && nums.iter().take(count).all(|n| (n >> 6) == 0b0010)
+    stack.into_iter().map(char::from).collect()
 }
 
 #[cfg(test)]
@@ -43,15 +44,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(valid_utf8(&[197, 130, 1]));
-        debug_assert!(!valid_utf8(&[235, 140, 4]));
+        debug_assert_eq!(decode_string("3[a]2[bc]"), "aaabcbc");
+        debug_assert_eq!(decode_string("3[a2[c]]"), "accaccacc");
+        debug_assert_eq!(decode_string("2[abc]3[cd]ef"), "abcabccdcdcdef");
     }
 
     #[test]
-    fn test() {
-        debug_assert!(!valid_utf8(&[248, 130, 130, 130]));
-        debug_assert!(!valid_utf8(&[197, 194, 1]));
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(i1: I1, i2: I2)
