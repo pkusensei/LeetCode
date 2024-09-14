@@ -1,21 +1,39 @@
 mod helper;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn last_remaining(n: i32) -> i32 {
-    let mut forward = true;
-    let mut n = n as usize;
-    let (mut head, mut step) = (1, 1);
-    while n > 1 {
-        if forward || n & 1 == 1 {
-            head += step;
-        }
-        n /= 2;
-        step *= 2;
-        forward = !forward
+pub fn is_rectangle_cover(rectangles: &[[i32; 4]]) -> bool {
+    let area = rectangles
+        .iter()
+        .map(|&[x1, y1, x2, y2]| (x2 - x1) * (y2 - y1))
+        .sum::<i32>();
+    let xmin = rectangles.iter().map(|a| a[0]).min().unwrap();
+    let xmax = rectangles.iter().map(|a| a[2]).max().unwrap();
+    let ymin = rectangles.iter().map(|a| a[1]).min().unwrap();
+    let ymax = rectangles.iter().map(|a| a[3]).max().unwrap();
+    if (ymax - ymin) * (xmax - xmin) != area {
+        return false;
     }
-    head
+    rectangles
+        .iter()
+        .fold(HashMap::new(), |mut acc, &[x1, y1, x2, y2]| {
+            *acc.entry([x1, y1]).or_insert(0) += 1;
+            *acc.entry([x1, y2]).or_insert(0) += 1;
+            *acc.entry([x2, y1]).or_insert(0) += 1;
+            *acc.entry([x2, y2]).or_insert(0) += 1;
+            acc
+        })
+        .into_iter()
+        .all(|(point, count)| {
+            if [[xmin, ymin], [xmin, ymax], [xmax, ymin], [xmax, ymax]].contains(&point) {
+                count == 1
+            } else {
+                count & 1 == 0
+            }
+        })
 }
 
 #[cfg(test)]
@@ -26,8 +44,25 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(last_remaining(9), 6);
-        debug_assert_eq!(last_remaining(1), 1);
+        debug_assert!(is_rectangle_cover(&[
+            [1, 1, 3, 3],
+            [3, 1, 4, 2],
+            [3, 2, 4, 4],
+            [1, 3, 2, 4],
+            [2, 3, 3, 4]
+        ]));
+        debug_assert!(!is_rectangle_cover(&[
+            [1, 1, 2, 3],
+            [1, 3, 2, 4],
+            [3, 1, 4, 2],
+            [3, 2, 4, 4]
+        ]));
+        debug_assert!(!is_rectangle_cover(&[
+            [1, 1, 3, 3],
+            [3, 1, 4, 2],
+            [1, 3, 2, 4],
+            [2, 2, 4, 4]
+        ]));
     }
 
     #[test]
