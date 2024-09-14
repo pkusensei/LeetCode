@@ -4,28 +4,28 @@ use std::collections::HashMap;
 
 #[allow(unused_imports)]
 use helper::*;
+use rand::seq::SliceRandom;
 
-pub fn integer_replacement(n: i32) -> i32 {
-    let mut map = HashMap::new();
-    solve(&mut map, i64::from(n))
+#[derive(Debug, Clone)]
+struct Solution {
+    nums: HashMap<i32, Vec<i32>>,
 }
 
-fn solve(map: &mut HashMap<i64, i32>, n: i64) -> i32 {
-    if n == 1 {
-        return 0;
+impl Solution {
+    fn new(nums: Vec<i32>) -> Self {
+        let nums: HashMap<i32, Vec<i32>> =
+            nums.into_iter()
+                .enumerate()
+                .fold(HashMap::new(), |mut acc, (i, num)| {
+                    acc.entry(num).or_default().push(i as i32);
+                    acc
+                });
+        Self { nums }
     }
-    if let Some(&v) = map.get(&n) {
-        return v;
+
+    fn pick(&self, target: i32) -> i32 {
+        *self.nums[&target].choose(&mut rand::thread_rng()).unwrap()
     }
-    let res;
-    if n & 1 == 0 {
-        res = 1 + solve(map, n / 2);
-        map.insert(n, res);
-    } else {
-        res = 1 + solve(map, n + 1).min(solve(map, n - 1));
-        map.insert(n, res);
-    }
-    res
 }
 
 #[cfg(test)]
@@ -36,15 +36,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(integer_replacement(8), 3);
-        debug_assert_eq!(integer_replacement(7), 4);
-        debug_assert_eq!(integer_replacement(4), 2);
+        let solution = Solution::new(vec![1, 2, 3, 3, 3]);
+        solution.pick(3); // It should return either index 2, 3, or 4 randomly. Each index should have equal probability of returning.
+        debug_assert_eq!(solution.pick(1), 0); // It should return 0. Since in the array only nums[0] is equal to 1.
+        solution.pick(3); // It should return either index 2, 3, or 4 randomly. Each index should have equal probability of returning.
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(integer_replacement(2147483647), 32);
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(i1: I1, i2: I2)
