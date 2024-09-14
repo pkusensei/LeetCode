@@ -3,37 +3,35 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn decode_string(s: &str) -> String {
-    let mut nums = vec![];
-    let mut num = None;
-    let mut stack = vec![];
-    for &b in s.as_bytes() {
-        match b {
-            b'0'..=b'9' => {
-                let n = 10 * num.unwrap_or(0) + i32::from(b - b'0');
-                num = Some(n)
-            }
-            b'[' => {
-                stack.push(b);
-                nums.push(num.unwrap_or(1));
-                num = None
-            }
-            b']' => {
-                let mut temp = vec![];
-                while stack.last().is_some_and(|&v| v != b'[') {
-                    temp.push(stack.pop().unwrap());
-                }
-                stack.pop(); // '['
-                let count = nums.pop().unwrap_or(1);
-                temp.reverse();
-                for _ in 0..count {
-                    stack.extend_from_slice(&temp);
-                }
-            }
-            _ => stack.push(b),
-        }
+pub fn longest_substring(s: &str, k: i32) -> i32 {
+    if s.len() < k as usize {
+        return 0;
     }
-    stack.into_iter().map(char::from).collect()
+    if k == 1 {
+        return s.len() as _;
+    }
+    let counts = s.bytes().fold([0; 26], |mut acc, b| {
+        acc[usize::from(b - b'a')] += 1;
+        acc
+    });
+    if counts.iter().all(|&c| c >= k || c == 0) {
+        return s.len() as _;
+    }
+    let mut res = 0;
+    let mut left = 0;
+    for right in s.bytes().enumerate().filter_map(|(idx, b)| {
+        let i = usize::from(b - b'a');
+        if (1..k).contains(&counts[i]) {
+            Some(idx)
+        } else {
+            None
+        }
+    }) {
+        res = res.max(longest_substring(&s[left..right], k));
+        left = right + 1;
+    }
+    res = res.max(longest_substring(&s[left..], k));
+    res
 }
 
 #[cfg(test)]
@@ -44,9 +42,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(decode_string("3[a]2[bc]"), "aaabcbc");
-        debug_assert_eq!(decode_string("3[a2[c]]"), "accaccacc");
-        debug_assert_eq!(decode_string("2[abc]3[cd]ef"), "abcabccdcdcdef");
+        debug_assert_eq!(longest_substring("aaabb", 3), 3);
+        debug_assert_eq!(longest_substring("ababbc", 2), 5);
     }
 
     #[test]
