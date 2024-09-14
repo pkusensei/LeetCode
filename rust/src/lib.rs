@@ -3,18 +3,36 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_subsequence(s: &str, t: &str) -> bool {
-    let (s, t) = (s.as_bytes(), t.as_bytes());
-    let (mut si, mut ti) = (0, 0);
-    while si < s.len() && ti < t.len() {
-        if s[si] == t[ti] {
-            si += 1;
-            ti += 1
+pub fn valid_utf8(data: &[i32]) -> bool {
+    let n = data.len();
+    let mut idx = 0;
+    while idx < n {
+        if data[idx] <= 0b0111_1111 {
+            idx += 1
+        } else if (data[idx] >> 3) == 0b1_1110 {
+            if !is_valid(&data[idx + 1..], 3) {
+                return false;
+            }
+            idx += 4
+        } else if (data[idx] >> 4) == 0b1110 {
+            if !is_valid(&data[idx + 1..], 2) {
+                return false;
+            }
+            idx += 3;
+        } else if (data[idx] >> 5) == 0b0110 {
+            if !is_valid(&data[idx + 1..], 1) {
+                return false;
+            }
+            idx += 2;
         } else {
-            ti += 1
+            return false;
         }
     }
-    si == s.len()
+    true
+}
+
+fn is_valid(nums: &[i32], count: usize) -> bool {
+    nums.len() >= count && nums.iter().take(count).all(|n| (n >> 6) == 0b0010)
 }
 
 #[cfg(test)]
@@ -25,12 +43,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(is_subsequence("abc", "ahbgdc"));
-        debug_assert!(!is_subsequence("axc", "ahbgdc"));
+        debug_assert!(valid_utf8(&[197, 130, 1]));
+        debug_assert!(!valid_utf8(&[235, 140, 4]));
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert!(!valid_utf8(&[248, 130, 130, 130]));
+        debug_assert!(!valid_utf8(&[197, 194, 1]));
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(i1: I1, i2: I2)
