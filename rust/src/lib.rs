@@ -1,17 +1,29 @@
 mod helper;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_rotate_function(nums: &[i32]) -> i32 {
-    let n = nums.len();
-    let sum: i32 = nums.iter().sum();
-    let mut curr: i32 = nums.iter().enumerate().map(|(i, &n)| (i as i32) * n).sum();
-    let mut res = curr;
-    for k in 1..nums.len() {
-        let i = n - k;
-        curr = curr + sum - nums[i] * (n as i32);
-        res = res.max(curr);
+pub fn integer_replacement(n: i32) -> i32 {
+    let mut map = HashMap::new();
+    solve(&mut map, i64::from(n))
+}
+
+fn solve(map: &mut HashMap<i64, i32>, n: i64) -> i32 {
+    if n == 1 {
+        return 0;
+    }
+    if let Some(&v) = map.get(&n) {
+        return v;
+    }
+    let res;
+    if n & 1 == 0 {
+        res = 1 + solve(map, n / 2);
+        map.insert(n, res);
+    } else {
+        res = 1 + solve(map, n + 1).min(solve(map, n - 1));
+        map.insert(n, res);
     }
     res
 }
@@ -24,12 +36,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(max_rotate_function(&[4, 3, 2, 6]), 26);
-        debug_assert_eq!(max_rotate_function(&[100]), 0);
+        debug_assert_eq!(integer_replacement(8), 3);
+        debug_assert_eq!(integer_replacement(7), 4);
+        debug_assert_eq!(integer_replacement(4), 2);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(integer_replacement(2147483647), 32);
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(i1: I1, i2: I2)
