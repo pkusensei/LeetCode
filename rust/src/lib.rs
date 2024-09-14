@@ -1,39 +1,35 @@
 mod helper;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_rectangle_cover(rectangles: &[[i32; 4]]) -> bool {
-    let area = rectangles
-        .iter()
-        .map(|&[x1, y1, x2, y2]| (x2 - x1) * (y2 - y1))
-        .sum::<i32>();
-    let xmin = rectangles.iter().map(|a| a[0]).min().unwrap();
-    let xmax = rectangles.iter().map(|a| a[2]).max().unwrap();
-    let ymin = rectangles.iter().map(|a| a[1]).min().unwrap();
-    let ymax = rectangles.iter().map(|a| a[3]).max().unwrap();
-    if (ymax - ymin) * (xmax - xmin) != area {
-        return false;
-    }
-    rectangles
-        .iter()
-        .fold(HashMap::new(), |mut acc, &[x1, y1, x2, y2]| {
-            *acc.entry([x1, y1]).or_insert(0) += 1;
-            *acc.entry([x1, y2]).or_insert(0) += 1;
-            *acc.entry([x2, y1]).or_insert(0) += 1;
-            *acc.entry([x2, y2]).or_insert(0) += 1;
-            acc
-        })
-        .into_iter()
-        .all(|(point, count)| {
-            if [[xmin, ymin], [xmin, ymax], [xmax, ymin], [xmax, ymax]].contains(&point) {
-                count == 1
-            } else {
-                count & 1 == 0
+pub fn longest_subarray(nums: &[i32]) -> i32 {
+    let (mut curr, mut curr_c) = (0, 0);
+    let (mut prev, mut prev_c) = (0, 0);
+    for &num in nums.iter() {
+        match curr.cmp(&num) {
+            std::cmp::Ordering::Less => {
+                curr = num;
+                curr_c = 1
             }
-        })
+            std::cmp::Ordering::Equal => curr_c += 1,
+            std::cmp::Ordering::Greater => {
+                if curr > prev {
+                    prev = curr;
+                    prev_c = curr_c;
+                } else if curr == prev {
+                    prev_c = prev_c.max(curr_c);
+                }
+                curr = 0;
+                curr_c = 0;
+            }
+        }
+    }
+    match curr.cmp(&prev) {
+        std::cmp::Ordering::Less => prev_c,
+        std::cmp::Ordering::Equal => curr_c.max(prev_c),
+        std::cmp::Ordering::Greater => curr_c,
+    }
 }
 
 #[cfg(test)]
@@ -44,29 +40,19 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(is_rectangle_cover(&[
-            [1, 1, 3, 3],
-            [3, 1, 4, 2],
-            [3, 2, 4, 4],
-            [1, 3, 2, 4],
-            [2, 3, 3, 4]
-        ]));
-        debug_assert!(!is_rectangle_cover(&[
-            [1, 1, 2, 3],
-            [1, 3, 2, 4],
-            [3, 1, 4, 2],
-            [3, 2, 4, 4]
-        ]));
-        debug_assert!(!is_rectangle_cover(&[
-            [1, 1, 3, 3],
-            [3, 1, 4, 2],
-            [1, 3, 2, 4],
-            [2, 2, 4, 4]
-        ]));
+        debug_assert_eq!(longest_subarray(&[1, 2, 3, 3, 2, 2]), 2);
+        debug_assert_eq!(longest_subarray(&[1, 2, 3, 4]), 1);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(
+            longest_subarray(&[
+                311155, 311155, 311155, 311155, 311155, 311155, 311155, 311155, 201191, 311155
+            ]),
+            8
+        );
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(i1: I1, i2: I2)
