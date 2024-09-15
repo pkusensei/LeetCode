@@ -3,59 +3,23 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn remove_kdigits(num: &str, k: i32) -> String {
-    // with_stack(k, num)
-    let mut count = k;
-    let mut res = num.as_bytes().to_vec();
-    let mut i = 0;
-    while i < res.len() {
-        if i == res.len() - 1 {
-            break;
+pub fn can_cross(stones: &[i32]) -> bool {
+    if stones[1] != 1 {
+        return false;
+    }
+    let n = stones.len();
+    // a vec of possible jumps
+    let mut dp = vec![vec![]; n];
+    dp[1].push(1);
+    for i in 1..n - 1 {
+        for j in i + 1..n {
+            let dist = stones[j] - stones[i];
+            if dp[i].iter().any(|k| (k - 1..=k + 1).contains(&dist)) {
+                dp[j].push(dist)
+            }
         }
-        if res[i] > res[i + 1] {
-            res.remove(i);
-            count -= 1;
-            continue;
-        }
-        if count == 0 {
-            break;
-        }
-        i += 1
     }
-    for _ in 0..count {
-        res.pop();
-    }
-    while res.first().is_some_and(|&v| v == b'0') {
-        res.remove(0);
-    }
-    if res.is_empty() {
-        "0".to_string()
-    } else {
-        res.into_iter().map(char::from).collect()
-    }
-}
-
-fn with_stack(k: i32, num: &str) -> String {
-    let mut k = k as usize;
-    let mut stack = Vec::with_capacity(num.len());
-    for b in num.bytes() {
-        while k > 0 && stack.last().is_some_and(|&v| v > b) {
-            stack.pop();
-            k -= 1
-        }
-        stack.push(b)
-    }
-    for _ in 0..k {
-        stack.pop();
-    }
-    while stack.first().is_some_and(|&v| v == b'0') {
-        stack.remove(0);
-    }
-    if stack.is_empty() {
-        "0".to_string()
-    } else {
-        stack.into_iter().map(char::from).collect()
-    }
+    !dp[n - 1].is_empty()
 }
 
 #[cfg(test)]
@@ -66,9 +30,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(remove_kdigits("1432219", 3), "1219");
-        debug_assert_eq!(remove_kdigits("10200", 1), "200");
-        debug_assert_eq!(remove_kdigits("10", 2), "0");
+        debug_assert!(can_cross(&[0, 1, 3, 5, 6, 8, 12, 17]));
+        debug_assert!(!can_cross(&[0, 1, 2, 3, 4, 8, 9, 11]));
     }
 
     #[test]
