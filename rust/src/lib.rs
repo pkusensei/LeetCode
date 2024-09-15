@@ -1,54 +1,27 @@
 mod helper;
 
-use std::collections::{HashMap, HashSet, VecDeque};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn calc_equation(equations: &[[&str; 2]], values: &[f64], queries: &[[&str; 2]]) -> Vec<f64> {
-    let mut graph: HashMap<&str, HashMap<&str, f64>> =
-        equations
-            .iter()
-            .zip(values)
-            .fold(HashMap::new(), |mut acc, (eq, &v)| {
-                acc.entry(eq[0]).or_default().insert(eq[1], v);
-                acc.entry(eq[1]).or_default().insert(eq[0], 1.0 / v);
-                acc
-            });
-    queries
-        .iter()
-        .map(|[start, goal]| bfs(&mut graph, start, goal))
-        .collect()
-}
+pub fn find_nth_digit(n: i32) -> i32 {
+    let mut step = 1;
+    let mut start = 1;
+    let mut count = 9;
+    let mut curr = i64::from(n);
 
-fn bfs<'a>(
-    graph: &mut HashMap<&'a str, HashMap<&'a str, f64>>,
-    start: &'a str,
-    goal: &'a str,
-) -> f64 {
-    if let Some(v) = graph.get(start).and_then(|m| m.get(goal)) {
-        return *v;
+    while curr > step * count {
+        curr -= step * count;
+        step += 1;
+        count *= 10;
+        start *= 10;
     }
-    if !graph.contains_key(start) || !graph.contains_key(goal) {
-        return -1.0;
+    let mut num = start + (curr - 1) / step;
+    let mut idx = num.ilog10() as i64 - (curr - 1) % step; // 1-based index
+    while idx > 0 {
+        num /= 10;
+        idx -= 1
     }
-    let mut queue = VecDeque::from([(start, 1.0)]);
-    let mut seen = HashSet::new();
-    while let Some((curr, dist)) = queue.pop_front() {
-        if !seen.insert(curr) {
-            continue;
-        }
-        if curr == goal {
-            graph.entry(start).or_default().insert(goal, dist);
-            graph.entry(goal).or_default().insert(start, 1.0 / dist);
-            return dist;
-        }
-        for (next_node, delta) in graph[curr].iter() {
-            let next_dist = delta * dist;
-            queue.push_back((next_node, next_dist));
-        }
-    }
-    -1.0
+    (num % 10) as _
 }
 
 #[cfg(test)]
@@ -59,34 +32,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            calc_equation(
-                &[["a", "b"], ["b", "c"]],
-                &[2.0, 3.0],
-                &[["a", "c"], ["b", "a"], ["a", "e"], ["a", "a"], ["x", "x"]]
-            ),
-            [6.00000, 0.50000, -1.00000, 1.00000, -1.00000]
-        );
-        debug_assert_eq!(
-            calc_equation(
-                &[["a", "b"], ["b", "c"], ["bc", "cd"]],
-                &[1.5, 2.5, 5.0],
-                &[["a", "c"], ["c", "b"], ["bc", "cd"], ["cd", "bc"]]
-            ),
-            [3.75000, 0.40000, 5.00000, 0.20000]
-        );
-        debug_assert_eq!(
-            calc_equation(
-                &[["a", "b"]],
-                &[0.5],
-                &[["a", "b"], ["b", "a"], ["a", "c"], ["x", "y"]]
-            ),
-            [0.50000, 2.00000, -1.00000, -1.00000]
-        );
+        debug_assert_eq!(find_nth_digit(3), 3);
+        debug_assert_eq!(find_nth_digit(11), 0);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(find_nth_digit(10), 1);
+        debug_assert_eq!(find_nth_digit(1000000000), 1);
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(i1: I1, i2: I2)
