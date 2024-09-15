@@ -1,27 +1,51 @@
 mod helper;
 
+use std::{
+    cmp::Reverse,
+    collections::{BinaryHeap, HashSet},
+};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn reconstruct_queue(mut people: Vec<[i32; 2]>) -> Vec<[i32; 2]> {
-    // sort order: h increasing
-    // with the same h, pop the one with smaller k first
-    // so that [h, 0] gets inserted before [h, n]
-    people.sort_unstable_by(|a, b| a[0].cmp(&b[0]).then(b[1].cmp(&a[1])));
-    let n = people.len();
-    let mut res = Vec::with_capacity(n);
-    while let Some([h, k]) = people.pop() {
-        if res.is_empty() || k == 0 {
-            res.insert(0, [h, k]);
-            continue;
+pub fn trap_rain_water(height_map: &[&[i32]]) -> i32 {
+        let (rows, cols) = get_dimensions(height_map);
+        if rows < 3 || cols < 3 {
+            return 0;
         }
-        if (k as usize) >= res.len() {
-            res.push([h, k]);
-        } else {
-            res.insert(k as usize, [h, k]);
+        let mut heap = BinaryHeap::new();
+        let mut seen = HashSet::new();
+        for (y, r) in height_map.iter().enumerate() {
+            for (x, &height) in r.iter().enumerate() {
+                if x == 0 || y == 0 || x == cols - 1 || y == rows - 1 {
+                    heap.push((Reverse(height), x, y));
+                    seen.insert((x, y));
+                }
+            }
         }
-    }
-    res
+
+        let mut height = 0;
+        let mut res = 0;
+        // min-heap
+        // so that it always the __lowest__ blocking cell
+        // once a blocking cell finds a neighbor with a smaller height
+        // that neighbor can store water of (blocking-neighbor)
+        while let Some((Reverse(h), x, y)) = heap.pop() {
+            height = height.max(h);
+            for (nx, ny) in neighbors((x, y)) {
+                let Some(&nh) = height_map.get(ny).and_then(|r| r.get(nx)) else {
+                    continue;
+                };
+                if !seen.insert((nx, ny)) {
+                    continue;
+                }
+                heap.push((Reverse(nh), nx, ny));
+                if nh < height {
+                    res += height - nh;
+                }
+            }
+        }
+        res
 }
 
 #[cfg(test)]
@@ -33,12 +57,22 @@ mod tests {
     #[test]
     fn basics() {
         debug_assert_eq!(
-            reconstruct_queue(vec![[7, 0], [4, 4], [7, 1], [5, 0], [6, 1], [5, 2]]),
-            [[5, 0], [7, 0], [5, 2], [6, 1], [4, 4], [7, 1]]
+            trap_rain_water(&[
+                &[1, 4, 3, 1, 3, 2],
+                &[3, 2, 1, 3, 2, 4],
+                &[2, 3, 3, 2, 3, 1]
+            ]),
+            4
         );
         debug_assert_eq!(
-            reconstruct_queue(vec![[6, 0], [5, 0], [4, 0], [3, 2], [2, 2], [1, 4]]),
-            [[4, 0], [5, 0], [2, 2], [3, 2], [1, 4], [6, 0]]
+            trap_rain_water(&[
+                &[3, 3, 3, 3, 3],
+                &[3, 2, 2, 2, 3],
+                &[3, 2, 1, 2, 3],
+                &[3, 2, 2, 2, 3],
+                &[3, 3, 3, 3, 3]
+            ]),
+            10
         );
     }
 
