@@ -3,50 +3,48 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn can_cross(stones: &[i32]) -> bool {
-    if stones[1] != 1 {
-        return false;
+pub fn to_hex(num: i32) -> String {
+    if num == 0 {
+        return "0".to_string();
     }
-    let n = stones.len();
-    // a vec of possible jumps
-    let mut dp = vec![vec![]; n];
-    dp[1].push(1);
-    for i in 1..n - 1 {
-        for j in i + 1..n {
-            let dist = stones[j] - stones[i];
-            if dp[i].iter().any(|k| (k - 1..=k + 1).contains(&dist)) {
-                dp[j].push(dist)
-            }
-        }
+    const B: &[u8] = b"0123456789abcdef";
+    let mut num = num as u32;
+    let mut res = vec![];
+    while num > 0 {
+        let i = (num % 16) as usize;
+        res.push(B[i]);
+        num /= 16;
     }
-    !dp[n - 1].is_empty()
+    res.into_iter().rev().map(char::from).collect()
 }
 
 #[cfg(test)]
 mod tests {
-    use std::fmt::Debug;
+    use std::{fmt::Debug, ops::DerefMut};
 
     use super::*;
 
     #[test]
     fn basics() {
-        debug_assert!(can_cross(&[0, 1, 3, 5, 6, 8, 12, 17]));
-        debug_assert!(!can_cross(&[0, 1, 2, 3, 4, 8, 9, 11]));
+        debug_assert_eq!(to_hex(26), "1a");
+        debug_assert_eq!(to_hex(-1), "ffffffff");
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(to_hex(13), "d");
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
     where
         T1: Ord + Debug + PartialEq<T2>,
         T2: Ord + Debug + PartialEq<T1>,
-        I1: AsMut<[T1]>,
-        I2: AsMut<[T2]>,
+        I1: DerefMut<Target = [T1]>,
+        I2: DerefMut<Target = [T2]>,
     {
-        i1.as_mut().sort_unstable();
-        i2.as_mut().sort_unstable();
-        debug_assert_eq!(i1.as_mut(), i2.as_mut());
+        i1.sort_unstable();
+        i2.sort_unstable();
+        debug_assert_eq!(*i1, *i2);
     }
 }
