@@ -5,24 +5,15 @@ namespace Solution;
 
 public class Solution
 {
-    readonly Random rnd;
-    readonly List<int> nums;
-
-    public Solution(ListNode head)
+    public int SumOfLeftLeaves(TreeNode root)
     {
-        rnd = new();
-        nums = [];
-        var curr = head;
-        while (curr is not null)
-        {
-            nums.Add(curr.val);
-            curr = curr.next;
-        }
+        return Solve(root, false);
     }
 
-    public int GetRandom()
+    static int Solve(TreeNode node, bool isLeft)
     {
-        var n = rnd.Next(0, nums.Count);
-        return nums[n];
+        if (node is null) { return 0; }
+        if (node.left is null && node.right is null && isLeft) { return node.val; }
+        return Solve(node.left, true) + Solve(node.right, false);
     }
 }
