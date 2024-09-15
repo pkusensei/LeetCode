@@ -1,27 +1,31 @@
 mod helper;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_nth_digit(n: i32) -> i32 {
-    let mut step = 1;
-    let mut start = 1;
-    let mut count = 9;
-    let mut curr = i64::from(n);
-
-    while curr > step * count {
-        curr -= step * count;
-        step += 1;
-        count *= 10;
-        start *= 10;
+pub fn find_the_longest_substring(s: &str) -> i32 {
+    let mut mask = 0;
+    let mut prefix = HashMap::from([(mask, 0)]);
+    let mut res = 0;
+    for (i, b) in s.bytes().enumerate() {
+        match b {
+            b'a' => mask ^= 1 << 0,
+            b'e' => mask ^= 1 << 1,
+            b'i' => mask ^= 1 << 2,
+            b'o' => mask ^= 1 << 3,
+            b'u' => mask ^= 1 << 4,
+            _ => (),
+        }
+        if let Some(v) = prefix.get(&mask) {
+            // takes 2(even number) to xor to the same number
+            res = res.max(i as i32 + 1 - v);
+        } else {
+            prefix.insert(mask, 1 + i as i32);
+        }
     }
-    let mut num = start + (curr - 1) / step;
-    let mut idx = num.ilog10() as i64 - (curr - 1) % step; // 1-based index
-    while idx > 0 {
-        num /= 10;
-        idx -= 1
-    }
-    (num % 10) as _
+    res
 }
 
 #[cfg(test)]
@@ -32,15 +36,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(find_nth_digit(3), 3);
-        debug_assert_eq!(find_nth_digit(11), 0);
+        debug_assert_eq!(find_the_longest_substring("eleetminicoworoep"), 13);
+        debug_assert_eq!(find_the_longest_substring("leetcodeisgreat"), 5);
+        debug_assert_eq!(find_the_longest_substring("bcbcbc"), 6);
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(find_nth_digit(10), 1);
-        debug_assert_eq!(find_nth_digit(1000000000), 1);
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(i1: I1, i2: I2)
