@@ -1,51 +1,24 @@
 mod helper;
 
-use std::{
-    cmp::Reverse,
-    collections::{BinaryHeap, HashSet},
-};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn trap_rain_water(height_map: &[&[i32]]) -> i32 {
-        let (rows, cols) = get_dimensions(height_map);
-        if rows < 3 || cols < 3 {
-            return 0;
+pub fn longest_palindrome(s: &str) -> i32 {
+    let counts = s.bytes().fold([0; 52], |mut acc, b| {
+        if b >= b'a' {
+            acc[usize::from(b - b'a') + 26] += 1
+        } else {
+            acc[usize::from(b - b'A')] += 1
         }
-        let mut heap = BinaryHeap::new();
-        let mut seen = HashSet::new();
-        for (y, r) in height_map.iter().enumerate() {
-            for (x, &height) in r.iter().enumerate() {
-                if x == 0 || y == 0 || x == cols - 1 || y == rows - 1 {
-                    heap.push((Reverse(height), x, y));
-                    seen.insert((x, y));
-                }
-            }
-        }
-
-        let mut height = 0;
-        let mut res = 0;
-        // min-heap
-        // so that it always the __lowest__ blocking cell
-        // once a blocking cell finds a neighbor with a smaller height
-        // that neighbor can store water of (blocking-neighbor)
-        while let Some((Reverse(h), x, y)) = heap.pop() {
-            height = height.max(h);
-            for (nx, ny) in neighbors((x, y)) {
-                let Some(&nh) = height_map.get(ny).and_then(|r| r.get(nx)) else {
-                    continue;
-                };
-                if !seen.insert((nx, ny)) {
-                    continue;
-                }
-                heap.push((Reverse(nh), nx, ny));
-                if nh < height {
-                    res += height - nh;
-                }
-            }
-        }
-        res
+        acc
+    });
+    let odd: i32 = counts.iter().map(|&n| n & 1).sum();
+    let sum: i32 = counts.into_iter().sum();
+    if odd > 0 {
+        sum + 1 - odd
+    } else {
+        sum
+    }
 }
 
 #[cfg(test)]
@@ -56,24 +29,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            trap_rain_water(&[
-                &[1, 4, 3, 1, 3, 2],
-                &[3, 2, 1, 3, 2, 4],
-                &[2, 3, 3, 2, 3, 1]
-            ]),
-            4
-        );
-        debug_assert_eq!(
-            trap_rain_water(&[
-                &[3, 3, 3, 3, 3],
-                &[3, 2, 2, 2, 3],
-                &[3, 2, 1, 2, 3],
-                &[3, 2, 2, 2, 3],
-                &[3, 3, 3, 3, 3]
-            ]),
-            10
-        );
+        debug_assert_eq!(longest_palindrome("abccccdd"), 7);
+        debug_assert_eq!(longest_palindrome("a"), 1);
     }
 
     #[test]
