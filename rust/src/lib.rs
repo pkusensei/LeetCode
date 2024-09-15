@@ -1,31 +1,19 @@
 mod helper;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_the_longest_substring(s: &str) -> i32 {
-    let mut mask = 0;
-    let mut prefix = HashMap::from([(mask, 0)]);
-    let mut res = 0;
-    for (i, b) in s.bytes().enumerate() {
-        match b {
-            b'a' => mask ^= 1 << 0,
-            b'e' => mask ^= 1 << 1,
-            b'i' => mask ^= 1 << 2,
-            b'o' => mask ^= 1 << 3,
-            b'u' => mask ^= 1 << 4,
-            _ => (),
-        }
-        if let Some(v) = prefix.get(&mask) {
-            // takes 2(even number) to xor to the same number
-            res = res.max(i as i32 + 1 - v);
-        } else {
-            prefix.insert(mask, 1 + i as i32);
-        }
-    }
-    res
+pub fn read_binary_watch(turned_on: i32) -> Vec<String> {
+    (0..12)
+        .flat_map(|a| (0..60).map(move |b| (a, b)))
+        .filter_map(|(a, b): (i32, i32)| {
+            if a.count_ones() + b.count_ones() == turned_on as u32 {
+                Some(format!("{}:{:02}", a, b))
+            } else {
+                None
+            }
+        })
+        .collect()
 }
 
 #[cfg(test)]
@@ -36,26 +24,47 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(find_the_longest_substring("eleetminicoworoep"), 13);
-        debug_assert_eq!(find_the_longest_substring("leetcodeisgreat"), 5);
-        debug_assert_eq!(find_the_longest_substring("bcbcbc"), 6);
+        sort_eq(
+            read_binary_watch(1),
+            [
+                "0:01", "0:02", "0:04", "0:08", "0:16", "0:32", "1:00", "2:00", "4:00", "8:00",
+            ],
+        );
+        debug_assert!(read_binary_watch(9).is_empty())
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        sort_eq(
+            read_binary_watch(6),
+            [
+                "1:31", "1:47", "1:55", "1:59", "2:31", "2:47", "2:55", "2:59", "3:15", "3:23",
+                "3:27", "3:29", "3:30", "3:39", "3:43", "3:45", "3:46", "3:51", "3:53", "3:54",
+                "3:57", "3:58", "4:31", "4:47", "4:55", "4:59", "5:15", "5:23", "5:27", "5:29",
+                "5:30", "5:39", "5:43", "5:45", "5:46", "5:51", "5:53", "5:54", "5:57", "5:58",
+                "6:15", "6:23", "6:27", "6:29", "6:30", "6:39", "6:43", "6:45", "6:46", "6:51",
+                "6:53", "6:54", "6:57", "6:58", "7:07", "7:11", "7:13", "7:14", "7:19", "7:21",
+                "7:22", "7:25", "7:26", "7:28", "7:35", "7:37", "7:38", "7:41", "7:42", "7:44",
+                "7:49", "7:50", "7:52", "7:56", "8:31", "8:47", "8:55", "8:59", "9:15", "9:23",
+                "9:27", "9:29", "9:30", "9:39", "9:43", "9:45", "9:46", "9:51", "9:53", "9:54",
+                "9:57", "9:58", "10:15", "10:23", "10:27", "10:29", "10:30", "10:39", "10:43",
+                "10:45", "10:46", "10:51", "10:53", "10:54", "10:57", "10:58", "11:07", "11:11",
+                "11:13", "11:14", "11:19", "11:21", "11:22", "11:25", "11:26", "11:28", "11:35",
+                "11:37", "11:38", "11:41", "11:42", "11:44", "11:49", "11:50", "11:52", "11:56",
+            ],
+        );
+    }
 
     #[allow(dead_code)]
-    fn sort_eq<T1, T2, I1, I2>(i1: I1, i2: I2)
+    fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
     where
         T1: Ord + Debug + PartialEq<T2>,
         T2: Ord + Debug + PartialEq<T1>,
-        I1: IntoIterator<Item = T1>,
-        I2: IntoIterator<Item = T2>,
+        I1: AsMut<[T1]>,
+        I2: AsMut<[T2]>,
     {
-        let mut v1: Vec<_> = i1.into_iter().collect();
-        let mut v2: Vec<_> = i2.into_iter().collect();
-        v1.sort_unstable();
-        v2.sort_unstable();
-        debug_assert_eq!(v1, v2);
+        i1.as_mut().sort_unstable();
+        i2.as_mut().sort_unstable();
+        debug_assert_eq!(i1.as_mut(), i2.as_mut());
     }
 }
