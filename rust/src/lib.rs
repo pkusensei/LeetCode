@@ -3,37 +3,19 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn split_array(nums: &[i32], k: i32) -> i32 {
-    let mut low = *nums.iter().max().unwrap();
-    let mut high = nums.iter().sum();
-    // 1) the largest sum of any subarray lies in max..=sum
-    // 2) the seq max..=sum is sorted
-    while low <= high {
-        // Attempt mid
-        let mid = low + (high - low) / 2;
-        // it produces count number of subarrays
-        let count = count_splits(nums, mid);
-        if count > k {
-            low = mid + 1
-        } else {
-            high = mid - 1
+pub fn number_of_arithmetic_slices(nums: &[i32]) -> i32 {
+    if nums.len() < 3 {
+        return 0;
+    }
+    let deltas: Vec<_> = nums.windows(2).map(|w| w[0] - w[1]).collect();
+    let n = deltas.len();
+    let mut dp = vec![0; n];
+    for i in 1..n {
+        if deltas[i] == deltas[i - 1] {
+            dp[i] = dp[i - 1] + 1
         }
     }
-    low
-}
-
-fn count_splits(nums: &[i32], upper: i32) -> i32 {
-    let mut res = 1;
-    let mut sum = 0;
-    for &num in nums.iter() {
-        if sum + num <= upper {
-            sum += num
-        } else {
-            res += 1;
-            sum = num;
-        }
-    }
-    res
+    dp.into_iter().sum()
 }
 
 #[cfg(test)]
@@ -44,15 +26,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(split_array(&[7, 2, 5, 10, 8], 2), 18);
-        debug_assert_eq!(split_array(&[1, 2, 3, 4, 5], 2), 9);
+        debug_assert_eq!(number_of_arithmetic_slices(&[1, 2, 3, 4]), 3);
+        debug_assert_eq!(number_of_arithmetic_slices(&[1, 2, 3, 4, 5]), 6);
+        debug_assert_eq!(number_of_arithmetic_slices(&[1]), 0);
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(split_array(&[1, 4, 4], 3), 4);
-        debug_assert_eq!(split_array(&[2, 3, 1, 2, 4, 3], 5), 4);
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
