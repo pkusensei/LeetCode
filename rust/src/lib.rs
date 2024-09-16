@@ -1,37 +1,39 @@
 mod helper;
 
-use std::{cmp::Reverse, collections::BinaryHeap};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_min_difference(time_points: &[&str]) -> i32 {
-    let mut nums: Vec<_> = time_points
-        .iter()
-        .map(|s| {
-            if let Some((h, m)) = s.split_once(':') {
-                let h = h.parse().unwrap_or(0);
-                let m = m.parse().unwrap_or(0);
-                h * 60 + m
-            } else {
-                0
-            }
-        })
-        .collect();
-    nums.sort_unstable();
-    nums.push(nums[0]);
-    let mut deltas: BinaryHeap<_> = nums
-        .windows(2)
-        .map(|w: &[i32]| {
-            let temp = w[0].abs_diff(w[1]);
-            if temp > 12 * 60 {
-                Reverse(24 * 60 - temp)
-            } else {
-                Reverse(temp)
-            }
-        })
-        .collect();
-    deltas.pop().unwrap().0 as _
+pub fn split_array(nums: &[i32], k: i32) -> i32 {
+    let mut low = *nums.iter().max().unwrap();
+    let mut high = nums.iter().sum();
+    // 1) the largest sum of any subarray lies in max..=sum
+    // 2) the seq max..=sum is sorted
+    while low <= high {
+        // Attempt mid
+        let mid = low + (high - low) / 2;
+        // it produces count number of subarrays
+        let count = count_splits(nums, mid);
+        if count > k {
+            low = mid + 1
+        } else {
+            high = mid - 1
+        }
+    }
+    low
+}
+
+fn count_splits(nums: &[i32], upper: i32) -> i32 {
+    let mut res = 1;
+    let mut sum = 0;
+    for &num in nums.iter() {
+        if sum + num <= upper {
+            sum += num
+        } else {
+            res += 1;
+            sum = num;
+        }
+    }
+    res
 }
 
 #[cfg(test)]
@@ -42,12 +44,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(find_min_difference(&["23:59", "00:00"]), 1);
-        debug_assert_eq!(find_min_difference(&["00:00", "23:59", "00:00"]), 0);
+        debug_assert_eq!(split_array(&[7, 2, 5, 10, 8], 2), 18);
+        debug_assert_eq!(split_array(&[1, 2, 3, 4, 5], 2), 9);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(split_array(&[1, 4, 4], 3), 4);
+        debug_assert_eq!(split_array(&[2, 3, 1, 2, 4, 3], 5), 4);
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
