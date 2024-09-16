@@ -1,44 +1,65 @@
 mod helper;
 
+use std::collections::{HashSet, VecDeque};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn can_partition(nums: &[i32]) -> bool {
-    let sum: i32 = nums.iter().sum();
-    if sum & 1 == 1 {
-        return false;
+pub fn pacific_atlantic(heights: &[&[i32]]) -> Vec<[i32; 2]> {
+    let (rows, cols) = get_dimensions(heights);
+    let (mut p_set, mut a_set) = (HashSet::new(), HashSet::new());
+    for x in 0..cols {
+        bfs(heights, (x, 0), &mut p_set);
+        bfs(heights, (x, rows - 1), &mut a_set);
     }
-    let n = nums.len();
-    let half = (sum / 2) as usize;
-    let mut dp = vec![vec![false; half + 1]; n + 1];
-    for i in 0..=n {
-        dp[i][0] = true // empty subset sums to zero
+    for y in 0..rows {
+        bfs(heights, (0, y), &mut p_set);
+        bfs(heights, (cols - 1, y), &mut a_set);
     }
-    for i in 1..=n {
-        for j in 1..=half {
-            if nums[i - 1] as usize <= j {
-                dp[i][j] = dp[i - 1][j] || dp[i - 1][j - nums[i - 1] as usize];
-            } else {
-                dp[i][j] = dp[i - 1][j]
+    p_set
+        .intersection(&a_set)
+        .map(|c| [c.1 as i32, c.0 as i32])
+        .collect()
+}
+
+fn bfs(heights: &[&[i32]], curr: Coord, seen: &mut HashSet<Coord>) {
+    if seen.contains(&curr) {
+        return;
+    }
+    let mut queue = VecDeque::from([curr]);
+    while let Some(c) = queue.pop_front() {
+        if !seen.insert(c) {
+            continue;
+        }
+        for (nx, ny) in
+            neighbors(c).filter(|&(x, y)| heights.get(y).is_some_and(|r| r.get(x).is_some()))
+        {
+            if heights[ny][nx] >= heights[c.1][c.0] {
+                queue.push_back((nx, ny));
             }
         }
-        if dp[i][half] {
-            return true;
-        }
     }
-    dp[n][half]
 }
 
 #[cfg(test)]
 mod tests {
-    use std::{fmt::Debug, ops::DerefMut};
+    use std::fmt::Debug;
 
     use super::*;
 
     #[test]
     fn basics() {
-        debug_assert!(can_partition(&[1, 5, 11, 5]));
-        debug_assert!(!can_partition(&[1, 2, 3, 5]))
+        sort_eq(
+            pacific_atlantic(&[
+                &[1, 2, 2, 3, 5],
+                &[3, 2, 3, 4, 4],
+                &[2, 4, 5, 3, 1],
+                &[6, 7, 1, 4, 5],
+                &[5, 1, 1, 2, 4],
+            ]),
+            [[0, 4], [1, 3], [1, 4], [2, 2], [3, 0], [3, 1], [4, 0]],
+        );
+        debug_assert_eq!(pacific_atlantic(&[&[1]]), [[0, 0]]);
     }
 
     #[test]
@@ -49,11 +70,11 @@ mod tests {
     where
         T1: Ord + Debug + PartialEq<T2>,
         T2: Ord + Debug + PartialEq<T1>,
-        I1: DerefMut<Target = [T1]>,
-        I2: DerefMut<Target = [T2]>,
+        I1: AsMut<[T1]>,
+        I2: AsMut<[T2]>,
     {
-        i1.sort_unstable();
-        i2.sort_unstable();
-        debug_assert_eq!(*i1, *i2);
+        i1.as_mut().sort_unstable();
+        i2.as_mut().sort_unstable();
+        debug_assert_eq!(i1.as_mut(), i2.as_mut());
     }
 }
