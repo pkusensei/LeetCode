@@ -1,24 +1,37 @@
 mod helper;
 
+use std::{cmp::Reverse, collections::BinaryHeap};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn longest_palindrome(s: &str) -> i32 {
-    let counts = s.bytes().fold([0; 52], |mut acc, b| {
-        if b >= b'a' {
-            acc[usize::from(b - b'a') + 26] += 1
-        } else {
-            acc[usize::from(b - b'A')] += 1
-        }
-        acc
-    });
-    let odd: i32 = counts.iter().map(|&n| n & 1).sum();
-    let sum: i32 = counts.into_iter().sum();
-    if odd > 0 {
-        sum + 1 - odd
-    } else {
-        sum
-    }
+pub fn find_min_difference(time_points: &[&str]) -> i32 {
+    let mut nums: Vec<_> = time_points
+        .iter()
+        .map(|s| {
+            if let Some((h, m)) = s.split_once(':') {
+                let h = h.parse().unwrap_or(0);
+                let m = m.parse().unwrap_or(0);
+                h * 60 + m
+            } else {
+                0
+            }
+        })
+        .collect();
+    nums.sort_unstable();
+    nums.push(nums[0]);
+    let mut deltas: BinaryHeap<_> = nums
+        .windows(2)
+        .map(|w: &[i32]| {
+            let temp = w[0].abs_diff(w[1]);
+            if temp > 12 * 60 {
+                Reverse(24 * 60 - temp)
+            } else {
+                Reverse(temp)
+            }
+        })
+        .collect();
+    deltas.pop().unwrap().0 as _
 }
 
 #[cfg(test)]
@@ -29,8 +42,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(longest_palindrome("abccccdd"), 7);
-        debug_assert_eq!(longest_palindrome("a"), 1);
+        debug_assert_eq!(find_min_difference(&["23:59", "00:00"]), 1);
+        debug_assert_eq!(find_min_difference(&["00:00", "23:59", "00:00"]), 0);
     }
 
     #[test]
