@@ -3,29 +3,30 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn add_strings(num1: &str, num2: &str) -> String {
-    let [mut num1, mut num2] =
-        [num1, num2].map(|s| s.bytes().rev().map(|b| b - b'0').collect::<Vec<_>>());
-    while num1.len() < num2.len() {
-        num1.push(0);
+pub fn can_partition(nums: &[i32]) -> bool {
+    let sum: i32 = nums.iter().sum();
+    if sum & 1 == 1 {
+        return false;
     }
-    while num2.len() < num1.len() {
-        num2.push(0);
+    let n = nums.len();
+    let half = (sum / 2) as usize;
+    let mut dp = vec![vec![false; half + 1]; n + 1];
+    for i in 0..=n {
+        dp[i][0] = true // empty subset sums to zero
     }
-    let mut res = vec![];
-    let mut carry = 0;
-    for (a, b) in num1.into_iter().zip(num2) {
-        let c = (a + b + carry) % 10;
-        carry = (a + b + carry) / 10;
-        res.push(c);
+    for i in 1..=n {
+        for j in 1..=half {
+            if nums[i - 1] as usize <= j {
+                dp[i][j] = dp[i - 1][j] || dp[i - 1][j - nums[i - 1] as usize];
+            } else {
+                dp[i][j] = dp[i - 1][j]
+            }
+        }
+        if dp[i][half] {
+            return true;
+        }
     }
-    if carry > 0 {
-        res.push(carry);
-    }
-    res.into_iter()
-        .rev()
-        .map(|b| char::from(b + b'0'))
-        .collect()
+    dp[n][half]
 }
 
 #[cfg(test)]
@@ -36,9 +37,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(add_strings("11", "123"), "134");
-        debug_assert_eq!(add_strings("456", "77"), "533");
-        debug_assert_eq!(add_strings("0", "0"), "0");
+        debug_assert!(can_partition(&[1, 5, 11, 5]));
+        debug_assert!(!can_partition(&[1, 2, 3, 5]))
     }
 
     #[test]
