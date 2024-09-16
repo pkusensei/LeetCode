@@ -3,19 +3,29 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn number_of_arithmetic_slices(nums: &[i32]) -> i32 {
-    if nums.len() < 3 {
-        return 0;
+pub fn add_strings(num1: &str, num2: &str) -> String {
+    let [mut num1, mut num2] =
+        [num1, num2].map(|s| s.bytes().rev().map(|b| b - b'0').collect::<Vec<_>>());
+    while num1.len() < num2.len() {
+        num1.push(0);
     }
-    let deltas: Vec<_> = nums.windows(2).map(|w| w[0] - w[1]).collect();
-    let n = deltas.len();
-    let mut dp = vec![0; n];
-    for i in 1..n {
-        if deltas[i] == deltas[i - 1] {
-            dp[i] = dp[i - 1] + 1
-        }
+    while num2.len() < num1.len() {
+        num2.push(0);
     }
-    dp.into_iter().sum()
+    let mut res = vec![];
+    let mut carry = 0;
+    for (a, b) in num1.into_iter().zip(num2) {
+        let c = (a + b + carry) % 10;
+        carry = (a + b + carry) / 10;
+        res.push(c);
+    }
+    if carry > 0 {
+        res.push(carry);
+    }
+    res.into_iter()
+        .rev()
+        .map(|b| char::from(b + b'0'))
+        .collect()
 }
 
 #[cfg(test)]
@@ -26,9 +36,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(number_of_arithmetic_slices(&[1, 2, 3, 4]), 3);
-        debug_assert_eq!(number_of_arithmetic_slices(&[1, 2, 3, 4, 5]), 6);
-        debug_assert_eq!(number_of_arithmetic_slices(&[1]), 0);
+        debug_assert_eq!(add_strings("11", "123"), "134");
+        debug_assert_eq!(add_strings("456", "77"), "533");
+        debug_assert_eq!(add_strings("0", "0"), "0");
     }
 
     #[test]
