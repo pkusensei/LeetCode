@@ -5,67 +5,74 @@ namespace Solution;
 
 public class Solution
 {
-    public int FindMaximumXOR(int[] nums)
+    public Node Construct(int[][] grid)
     {
-        var trie = new Trie(nums);
-        return trie.FindMaxXOR();
+        return Construct(grid, 0, 0, grid.Length);
+    }
+
+    static Node Construct(int[][] grid, int xmin, int ymin, int n)
+    {
+        var origin = grid[ymin][xmin];
+        if (n == 1) { return new(origin == 1, true); }
+
+        var isLeaf = true;
+        for (int y = ymin; y < ymin + n; y += 1)
+        {
+            for (int x = xmin; x < xmin + n; x += 1)
+            {
+                if (grid[y][x] != origin)
+                {
+                    isLeaf = false;
+                    break;
+                }
+            }
+            if (!isLeaf) { break; }
+        }
+        if (isLeaf) { return new(origin == 1, true); }
+        var topLeft = Construct(grid, xmin, ymin, n / 2);
+        var topright = Construct(grid, xmin + n / 2, ymin, n / 2);
+        var bottomLeft = Construct(grid, xmin, ymin + n / 2, n / 2);
+        var bottomRight = Construct(grid, xmin + n / 2, ymin + n / 2, n / 2);
+        return new(origin == 1, false, topLeft, topright, bottomLeft, bottomRight);
     }
 }
 
-internal class Node
+public class Node
 {
-    internal Node[] Children { get; set; }
+    public bool val;
+    public bool isLeaf;
+    public Node topLeft;
+    public Node topRight;
+    public Node bottomLeft;
+    public Node bottomRight;
 
-    internal Node()
+    public Node()
     {
-        Children = new Node[2];
-    }
-}
-
-internal class Trie
-{
-    internal Node Root { get; private set; }
-    internal IList<int> Nums { get; private set; }
-    internal Trie(IList<int> nums)
-    {
-        Root = new();
-        Nums = nums;
-
-        foreach (var num in Nums)
-        {
-            var node = Root;
-            for (int bit = 31; bit >= 0; bit -= 1)
-            {
-                var currBit = (num >> bit) & 1;
-                node.Children[currBit] ??= new();
-                node = node.Children[currBit];
-            }
-        }
+        val = false;
+        isLeaf = false;
+        topLeft = null;
+        topRight = null;
+        bottomLeft = null;
+        bottomRight = null;
     }
 
-    internal int FindMaxXOR()
+    public Node(bool _val, bool _isLeaf)
     {
-        var res = 0;
-        foreach (var num in Nums)
-        {
-            var node = Root;
-            var curr = 0;
-            for (int bit = 31; bit >= 0; bit -= 1)
-            {
-                if (node is null) { break; }
-                var seek = 1 - (num >> bit) & 1;
-                if (node.Children[seek] is not null)
-                {
-                    curr |= (1 << bit);
-                    node = node.Children[seek];
-                }
-                else
-                {
-                    node = node.Children[1 - seek];
-                }
-            }
-            res = Math.Max(res, curr);
-        }
-        return res;
+        val = _val;
+        isLeaf = _isLeaf;
+        topLeft = null;
+        topRight = null;
+        bottomLeft = null;
+        bottomRight = null;
+    }
+
+    public Node(bool _val, bool _isLeaf, Node _topLeft, Node _topRight, Node _bottomLeft, Node _bottomRight)
+    {
+        val = _val;
+        isLeaf = _isLeaf;
+        topLeft = _topLeft;
+        topRight = _topRight;
+        bottomLeft = _bottomLeft;
+        bottomRight = _bottomRight;
     }
 }
