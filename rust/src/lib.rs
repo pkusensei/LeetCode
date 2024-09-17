@@ -1,39 +1,20 @@
 mod helper;
 
-use std::collections::{HashSet, VecDeque};
+use std::collections::HashMap;
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_battleships(board: &[&[char]]) -> i32 {
-    let mut seen = HashSet::new();
-    let mut res = 0;
-    for (y, r) in board.iter().enumerate() {
-        for (x, &ch) in r.iter().enumerate() {
-            if ch == 'X' && bfs(board, (x, y), &mut seen) {
-                res += 1
-            }
-        }
-    }
-    res
-}
-
-fn bfs(board: &[&[char]], curr: Coord, seen: &mut HashSet<Coord>) -> bool {
-    if seen.contains(&curr) {
-        return false;
-    }
-    let mut queue = VecDeque::from([curr]);
-    while let Some(c) = queue.pop_front() {
-        if !seen.insert(c) {
-            continue;
-        }
-        queue.extend(neighbors(c).filter(|&(x, y)| {
-            board
-                .get(y)
-                .is_some_and(|r| r.get(x).is_some_and(|&ch| ch == 'X'))
-        }));
-    }
-    true
+pub fn uncommon_from_sentences(s1: &str, s2: &str) -> Vec<String> {
+        s1.split_whitespace()
+            .chain(s2.split_whitespace())
+            .fold(HashMap::new(), |mut acc, s| {
+                *acc.entry(s).or_insert(0) += 1;
+                acc
+            })
+            .into_iter()
+            .filter_map(|(k, v)| if v == 1 { Some(k.to_string()) } else { None })
+            .collect()
 }
 
 #[cfg(test)]
@@ -44,15 +25,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            count_battleships(&[
-                &['X', '.', '.', 'X'],
-                &['.', '.', '.', 'X'],
-                &['.', '.', '.', 'X']
-            ]),
-            2
+        sort_eq(
+            uncommon_from_sentences("this apple is sweet", "this apple is sour"),
+            ["sweet", "sour"],
         );
-        debug_assert_eq!(count_battleships(&[&['.']]), 0);
+        sort_eq(uncommon_from_sentences("apple apple", "banana"), ["banana"]);
     }
 
     #[test]
