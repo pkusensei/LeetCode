@@ -5,31 +5,44 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<IList<int>> LevelOrder(Node root)
+    public Node Flatten(Node head)
     {
-        List<IList<int>> res = [];
-        if (root is null) { return res; }
-        var queue = new Queue<(Node node, int level)>();
-        queue.Enqueue((root, 0));
-        var curr = new List<int>();
-        var currLevel = 0;
-        while (queue.TryDequeue(out var item))
-        {
-            var (node, level) = item;
-            if (level == currLevel) { curr.Add(node.val); }
-            else
-            {
-                res.Add(curr[..]);
-                curr.Clear();
-                currLevel = level;
-                curr.Add(node.val);
-            }
-            foreach (var c in node.children)
-            {
-                queue.Enqueue((c, level + 1));
-            }
-        }
-        if (curr.Count > 0) { res.Add(curr); }
-        return res;
+        if (head is null) { return null; }
+        Node dummy = new() { val = 0, next = head };
+        Solve(dummy.next);
+        return dummy.next;
     }
+
+    static Node Solve(Node node)
+    {
+        var curr = node;
+        var prev = curr.prev;
+        while (curr is not null)
+        {
+            if (curr.child is not null)
+            {
+                var temp = curr.next;
+                curr.child.prev = curr;
+                curr.next = curr.child;
+                curr.child = null;
+                var tail = Solve(curr.next);
+                if (temp is not null)
+                {
+                    tail.next = temp;
+                    temp.prev = tail;
+                }
+            }
+            prev = curr;
+            curr = curr.next;
+        }
+        return prev;
+    }
+}
+
+public class Node
+{
+    public int val;
+    public Node prev;
+    public Node next;
+    public Node child;
 }
