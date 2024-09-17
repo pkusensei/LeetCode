@@ -11,18 +11,16 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
-        var a = TreeNode.Make([3, 9, 20, null, null, 15, 7]);
-        var b = sol.SumOfLeftLeaves(a);
-        var c = 24;
+        var b = sol.FindMaximumXOR([3, 10, 5, 25, 2, 8]);
+        var c = 28;
         Assert.AreEqual(c, b);
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        var a = TreeNode.Make([1]);
-        var b = sol.SumOfLeftLeaves(a);
-        var c = 0;
+        var b = sol.FindMaximumXOR([14, 70, 53, 83, 49, 91, 36, 80, 92, 51, 66, 70]);
+        var c = 127;
         Assert.AreEqual(c, b);
     }
 }

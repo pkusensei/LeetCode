@@ -1,61 +1,32 @@
 mod helper;
 
-use std::{cmp::Reverse, collections::BinaryHeap};
+use std::collections::HashSet;
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn strong_password_checker(password: &str) -> i32 {
-    let n = password.len();
-    let s = password.as_bytes();
-    let required = check_categories(s);
-    if n < 6 {
-        return required.max(6 - n as i32);
-    }
-
-    let mut repeats = find_repeats(password.as_bytes());
-    if n <= 20 {
-        let change_count: i32 = repeats.iter().map(|&n| n / 3).sum();
-        return required.max(change_count);
-    }
-
-    // Any repeat requires len/3 edits, deletions or replacements
-    // `3s` and `3s+2` require the same amount of edits
-    let mut heap: BinaryHeap<_> = repeats.into_iter().map(|n| (Reverse(n % 3), n)).collect();
-    for _ in 0..n - 20 {
-        let Some((Reverse(_), n)) = heap.pop() else {
-            break;
-        };
-        if n > 3 {
-            heap.push((Reverse((n - 1) % 3), n - 1));
-        }
-    }
-    repeats = heap.into_iter().map(|(_, n)| n).collect();
-    let change_count: i32 = repeats.iter().map(|&n| n / 3).sum();
-    required.max(change_count) + n as i32 - 20
-}
-
-fn check_categories(s: &[u8]) -> i32 {
-    let has_lower: i32 = s.iter().any(u8::is_ascii_lowercase).into();
-    let has_upper: i32 = s.iter().any(u8::is_ascii_uppercase).into();
-    let has_digit: i32 = s.iter().any(u8::is_ascii_digit).into();
-    3 - has_lower - has_upper - has_digit
-}
-
-fn find_repeats(s: &[u8]) -> Vec<i32> {
-    let mut res = vec![];
-    let mut idx = 2;
-    while idx < s.len() {
-        if s[idx] == s[idx - 1] && s[idx] == s[idx - 2] {
-            // not 3 b.c while loop advances idx and add 1 to count
-            let mut count = 2;
-            while idx < s.len() && s[idx] == s[idx - 1] {
-                count += 1;
-                idx += 1;
+pub fn find_maximum_xor(nums: &[i32]) -> i32 {
+    let (mut res, mut mask) = (0, 0);
+    // working bit by bit, start from most significant
+    for bit in (0..32).rev() {
+        mask |= 1 << bit;
+        // keep a record of numbers that's 1 on current bit
+        let set: HashSet<_> = nums.iter().map(|n| n & mask).collect();
+        // attempt to set current bit to 1
+        let trial = res | (1 << bit);
+        for left_bits in set.iter() {
+            // a^b=c => a^c=b
+            // to find n1 and n2 so that n1^n2=max
+            // n1 is in set, try find max^n2
+            let seek = trial ^ left_bits;
+            if set.contains(&seek) {
+                // current bit could be set
+                // record it in res
+                res = trial;
+                // proceed to next bit
+                break;
             }
-            res.push(count);
         }
-        idx += 1
     }
     res
 }
@@ -68,9 +39,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(strong_password_checker("a"), 5);
-        debug_assert_eq!(strong_password_checker("aA1"), 3);
-        debug_assert_eq!(strong_password_checker("1337C0d3"), 0);
+        debug_assert_eq!(find_maximum_xor(&[3, 10, 5, 25, 2, 8]), 28);
+        debug_assert_eq!(
+            find_maximum_xor(&[14, 70, 53, 83, 49, 91, 36, 80, 92, 51, 66, 70]),
+            127
+        );
     }
 
     #[test]
