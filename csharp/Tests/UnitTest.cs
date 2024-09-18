@@ -11,20 +11,28 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
-        var n1 = new Solution.Node() { val = 1 };
-        var n2 = new Solution.Node() { val = 2 };
-        var n3 = new Solution.Node() { val = 3 };
-        n1.next = n2; n2.prev = n1;
-        n1.child = n3;
-        sol.Flatten(n1);
-
+        var a = TreeNode.Make([10, 5, -3, 3, 2, null, 11, 3, -2, null, 1]);
+        var b = sol.PathSum(a, 8);
+        var c = 3;
+        Assert.AreEqual(c, b);
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        // var b = sol.Construct([[1, 1, 1, 1, 0, 0, 0, 0], [1, 1, 1, 1, 0, 0, 0, 0], [1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 0, 0, 0, 0], [1, 1, 1, 1, 0, 0, 0, 0], [1, 1, 1, 1, 0, 0, 0, 0], [1, 1, 1, 1, 0, 0, 0, 0]]);
-        // var c = 127;
-        // Assert.AreEqual(c, b);
+        var a = TreeNode.Make([5, 4, 8, 11, null, 13, 4, 7, 2, null, null, 5, 1]);
+        var b = sol.PathSum(a, 22);
+        var c = 3;
+        Assert.AreEqual(c, b);
     }
+
+    [TestMethod]
+    public void TestMethod3()
+    {
+        var a = TreeNode.Make([1, -2, -3, 1, 3, -2, null, -1]);
+        var b = sol.PathSum(a, -1);
+        var c = 4;
+        Assert.AreEqual(c, b);
+    }
+
 }
