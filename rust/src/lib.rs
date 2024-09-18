@@ -1,59 +1,35 @@
 mod helper;
 
-use std::collections::{BTreeSet, HashMap};
+use std::collections::{HashSet, VecDeque};
 
 #[allow(unused_imports)]
 use helper::*;
 
-#[derive(Debug, Clone, Default)]
-struct AllOne {
-    strs: HashMap<String, usize>,
-    counts: BTreeSet<(usize, String)>,
+pub fn min_mutation(start_gene: &str, end_gene: &str, bank: &[&str]) -> i32 {
+    if !bank.contains(&end_gene) {
+        return -1;
+    }
+    if start_gene == end_gene {
+        return 0;
+    }
+    let mut queue = VecDeque::from([(start_gene, 0)]);
+    let mut seen = HashSet::new();
+    while let Some((curr, dist)) = queue.pop_front() {
+        if !seen.insert(curr) {
+            continue;
+        }
+        if curr == end_gene {
+            return dist;
+        }
+        for n in bank.iter().filter(|s| is_neighbor(curr, s)) {
+            queue.push_back((n, dist + 1));
+        }
+    }
+    -1
 }
 
-impl AllOne {
-    fn new() -> Self {
-        Default::default()
-    }
-
-    fn inc(&mut self, key: String) {
-        if let Some(count) = self.strs.get_mut(&key) {
-            *count += 1;
-            self.counts.remove(&(*count - 1, key.clone()));
-            self.counts.insert((*count, key));
-        } else {
-            self.strs.insert(key.clone(), 1);
-            self.counts.insert((1, key));
-        }
-    }
-
-    fn dec(&mut self, key: String) {
-        if let Some(count) = self.strs.get_mut(&key) {
-            *count -= 1;
-            let count = *count;
-            if count == 0 {
-                self.strs.remove(&key);
-                self.counts.remove(&(1, key));
-            } else {
-                self.counts.remove(&(count + 1, key.clone()));
-                self.counts.insert((count, key));
-            }
-        }
-    }
-
-    fn get_max_key(&self) -> String {
-        self.counts
-            .last()
-            .map(|(_, s)| s.to_string())
-            .unwrap_or_default()
-    }
-
-    fn get_min_key(&self) -> String {
-        self.counts
-            .first()
-            .map(|(_, s)| s.to_string())
-            .unwrap_or_default()
-    }
+fn is_neighbor(a: &str, b: &str) -> bool {
+    a.len() == b.len() && a.bytes().zip(b.bytes()).filter(|(x, y)| x != y).count() == 1
 }
 
 #[cfg(test)]
@@ -64,14 +40,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        let mut tmp = AllOne::new();
-        tmp.inc("hello".to_string());
-        tmp.inc("hello".to_string());
-        debug_assert_eq!(tmp.get_max_key(), "hello"); // return "hello"
-        debug_assert_eq!(tmp.get_min_key(), "hello"); // return "hello"
-        tmp.inc("leet".to_string());
-        debug_assert_eq!(tmp.get_max_key(), "hello"); // return "hello"
-        debug_assert_eq!(tmp.get_min_key(), "leet"); // return "leet"
+        debug_assert_eq!(min_mutation("AACCGGTT", "AACCGGTA", &["AACCGGTA"]), 1);
+        debug_assert_eq!(
+            min_mutation(
+                "AACCGGTT",
+                "AAACGGTA",
+                &["AACCGGTA", "AACCGCTA", "AAACGGTA"]
+            ),
+            2
+        );
     }
 
     #[test]
