@@ -3,27 +3,21 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn erase_overlap_intervals(mut intervals: Vec<[i32; 2]>) -> i32 {
-    if intervals.len() < 2 {
-        return 0;
-    }
-    intervals.sort_unstable();
-    let (mut i1, mut i2) = (0, 1);
-    let mut res = 0;
-    while i2 < intervals.len() {
-        if intervals[i1][1] <= intervals[i2][0] {
-            // [1, 2] [2, 4]
-            i1 = i2;
-            i2 += 1;
-        } else if intervals[i2][0] < intervals[i1][1] && intervals[i1][1] < intervals[i2][1] {
-            // [1, 3] [2, 4]
-            i2 += 1;
-            res += 1
+pub fn find_right_interval(intervals: &[[i32; 2]]) -> Vec<i32> {
+    let n = intervals.len();
+    let mut starts: Vec<_> = intervals
+        .iter()
+        .enumerate()
+        .map(|(i, v)| (v[0], i))
+        .collect();
+    starts.sort_unstable_by_key(|(v, _)| *v);
+    let mut res = Vec::with_capacity(n);
+    for end in intervals.iter().map(|v| v[1]) {
+        let i = starts.partition_point(|(v, _)| *v < end);
+        if i < n {
+            res.push(starts[i].1 as i32);
         } else {
-            // [1, 4] [2, 3]
-            i1 = i2;
-            i2 += 1;
-            res += 1
+            res.push(-1);
         }
     }
     res
@@ -37,16 +31,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            erase_overlap_intervals(vec![[1, 2], [2, 3], [3, 4], [1, 3]]),
-            1
-        );
-        debug_assert_eq!(erase_overlap_intervals(vec![[1, 2], [1, 2], [1, 2]]), 2);
-        debug_assert_eq!(erase_overlap_intervals(vec![[1, 2], [2, 3]]), 0);
+        debug_assert_eq!(find_right_interval(&[[1, 2]]), [-1]);
+        debug_assert_eq!(find_right_interval(&[[3, 4], [2, 3], [1, 2]]), [-1, 0, 1]);
+        debug_assert_eq!(find_right_interval(&[[1, 4], [2, 3], [3, 4]]), [-1, 2, -1]);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(find_right_interval(&[[4, 4]]), [0]);
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
