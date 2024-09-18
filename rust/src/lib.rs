@@ -1,33 +1,59 @@
 mod helper;
 
+use std::collections::{BTreeSet, HashMap};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn character_replacement(s: &str, k: i32) -> i32 {
-    let (s, n) = (s.as_bytes(), s.len());
-    let (mut left, mut right) = (0, 0);
-    let mut letters = [0; 26];
-    let mut max_count = 1;
-    while right < n && right - left < (max_count + k) as usize {
-        let i = usize::from(s[right] - b'A');
-        letters[i] += 1;
-        max_count = max_count.max(letters[i]);
-        right += 1
+#[derive(Debug, Clone, Default)]
+struct AllOne {
+    strs: HashMap<String, usize>,
+    counts: BTreeSet<(usize, String)>,
+}
+
+impl AllOne {
+    fn new() -> Self {
+        Default::default()
     }
-    while right < n {
-        let i = usize::from(s[right] - b'A');
-        right += 1;
-        letters[i] += 1;
-        let temp = letters[i];
-        if temp > max_count {
-            max_count = temp;
-            // expand window size
-            continue;
+
+    fn inc(&mut self, key: String) {
+        if let Some(count) = self.strs.get_mut(&key) {
+            *count += 1;
+            self.counts.remove(&(*count - 1, key.clone()));
+            self.counts.insert((*count, key));
+        } else {
+            self.strs.insert(key.clone(), 1);
+            self.counts.insert((1, key));
         }
-        letters[usize::from(s[left] - b'A')] -= 1;
-        left += 1
     }
-    letters.into_iter().sum()
+
+    fn dec(&mut self, key: String) {
+        if let Some(count) = self.strs.get_mut(&key) {
+            *count -= 1;
+            let count = *count;
+            if count == 0 {
+                self.strs.remove(&key);
+                self.counts.remove(&(1, key));
+            } else {
+                self.counts.remove(&(count + 1, key.clone()));
+                self.counts.insert((count, key));
+            }
+        }
+    }
+
+    fn get_max_key(&self) -> String {
+        self.counts
+            .last()
+            .map(|(_, s)| s.to_string())
+            .unwrap_or_default()
+    }
+
+    fn get_min_key(&self) -> String {
+        self.counts
+            .first()
+            .map(|(_, s)| s.to_string())
+            .unwrap_or_default()
+    }
 }
 
 #[cfg(test)]
@@ -38,14 +64,18 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(character_replacement("ABAB", 2), 4);
-        debug_assert_eq!(character_replacement("AABABBA", 1), 4);
+        let mut tmp = AllOne::new();
+        tmp.inc("hello".to_string());
+        tmp.inc("hello".to_string());
+        debug_assert_eq!(tmp.get_max_key(), "hello"); // return "hello"
+        debug_assert_eq!(tmp.get_min_key(), "hello"); // return "hello"
+        tmp.inc("leet".to_string());
+        debug_assert_eq!(tmp.get_max_key(), "hello"); // return "hello"
+        debug_assert_eq!(tmp.get_min_key(), "leet"); // return "leet"
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(character_replacement("AAAA", 0), 4);
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
