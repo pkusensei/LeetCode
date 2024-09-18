@@ -1,35 +1,32 @@
 mod helper;
 
-use std::collections::{HashSet, VecDeque};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_mutation(start_gene: &str, end_gene: &str, bank: &[&str]) -> i32 {
-    if !bank.contains(&end_gene) {
-        return -1;
-    }
-    if start_gene == end_gene {
+pub fn erase_overlap_intervals(mut intervals: Vec<[i32; 2]>) -> i32 {
+    if intervals.len() < 2 {
         return 0;
     }
-    let mut queue = VecDeque::from([(start_gene, 0)]);
-    let mut seen = HashSet::new();
-    while let Some((curr, dist)) = queue.pop_front() {
-        if !seen.insert(curr) {
-            continue;
-        }
-        if curr == end_gene {
-            return dist;
-        }
-        for n in bank.iter().filter(|s| is_neighbor(curr, s)) {
-            queue.push_back((n, dist + 1));
+    intervals.sort_unstable();
+    let (mut i1, mut i2) = (0, 1);
+    let mut res = 0;
+    while i2 < intervals.len() {
+        if intervals[i1][1] <= intervals[i2][0] {
+            // [1, 2] [2, 4]
+            i1 = i2;
+            i2 += 1;
+        } else if intervals[i2][0] < intervals[i1][1] && intervals[i1][1] < intervals[i2][1] {
+            // [1, 3] [2, 4]
+            i2 += 1;
+            res += 1
+        } else {
+            // [1, 4] [2, 3]
+            i1 = i2;
+            i2 += 1;
+            res += 1
         }
     }
-    -1
-}
-
-fn is_neighbor(a: &str, b: &str) -> bool {
-    a.len() == b.len() && a.bytes().zip(b.bytes()).filter(|(x, y)| x != y).count() == 1
+    res
 }
 
 #[cfg(test)]
@@ -40,15 +37,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(min_mutation("AACCGGTT", "AACCGGTA", &["AACCGGTA"]), 1);
         debug_assert_eq!(
-            min_mutation(
-                "AACCGGTT",
-                "AAACGGTA",
-                &["AACCGGTA", "AACCGCTA", "AAACGGTA"]
-            ),
-            2
+            erase_overlap_intervals(vec![[1, 2], [2, 3], [3, 4], [1, 3]]),
+            1
         );
+        debug_assert_eq!(erase_overlap_intervals(vec![[1, 2], [1, 2], [1, 2]]), 2);
+        debug_assert_eq!(erase_overlap_intervals(vec![[1, 2], [2, 3]]), 0);
     }
 
     #[test]
