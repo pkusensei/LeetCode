@@ -4,49 +4,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_kth_number(n: i32, k: i32) -> i32 {
-    let (mut res, mut k) = (1, i64::from(k - 1));
-    let n = i64::from(n);
-    while k > 0 {
-        let steps = calc_steps(n, res, res + 1);
-        if steps <= k {
-            // skip the whole tree rooted by res
-            // and jump to (res+1)
-            k -= steps;
-            res += 1;
+pub fn arrange_coins(n: i32) -> i32 {
+    let (mut left, mut right) = (0, i64::from(n));
+    while left <= right {
+        let mid = left + (right - left) / 2;
+        if (mid + 1) * mid / 2 <= i64::from(n) {
+            left = mid + 1;
         } else {
-            k -= 1;
-            res *= 10;
+            right = mid - 1
         }
     }
-    res as _
-}
-
-fn calc_steps(n: i64, mut n1: i64, mut n2: i64) -> i64 {
-    let mut steps = 0;
-    while n1 <= n {
-        // n2>n  ==> n2 is out side of path n1->n
-        // n2<=n ==> we want to reach n2 first
-        steps += (n + 1).min(n2) - n1;
-        n1 *= 10;
-        n2 *= 10;
-    }
-    steps
-}
-
-fn dfs(curr: i64, n: i64, res: &mut i32, count: &mut i32, k: i32) {
-    if curr > n {
-        return;
-    }
-    *count += 1;
-    if *count == k {
-        *res = curr as i32;
-        return;
-    }
-    let next = curr * 10;
-    for i in 0..=9 {
-        dfs(next + i, n, res, count, k);
-    }
+    left as i32 - 1
 }
 
 #[cfg(test)]
@@ -57,14 +25,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(find_kth_number(13, 2), 10);
-        debug_assert_eq!(find_kth_number(1, 1), 1);
+        debug_assert_eq!(arrange_coins(5), 2);
+        debug_assert_eq!(arrange_coins(8), 3);
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(find_kth_number(13, 9), 5);
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
