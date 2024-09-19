@@ -3,33 +3,27 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_anagrams(s: &str, p: &str) -> Vec<i32> {
-    let (sn, pn) = (s.len(), p.len());
-    if sn < pn {
-        return vec![];
-    }
-    let target = count(p);
-    let mut curr = count(&s[..pn]);
-    let s = s.as_bytes();
-    let mut res = vec![];
-    if target == curr {
-        res.push(0);
-    }
-    for idx in 1..=sn - pn {
-        curr[usize::from(s[idx + pn - 1] - b'a')] += 1;
-        curr[usize::from(s[idx - 1] - b'a')] -= 1;
-        if target == curr {
-            res.push(idx as i32);
-        }
+pub fn find_kth_number(n: i32, k: i32) -> i32 {
+    let (mut res, mut count) = (0, 0);
+    for i in 1..=9 {
+        dfs(i, n as _, &mut res, &mut count, k);
     }
     res
 }
 
-fn count(s: &str) -> [u16; 26] {
-    s.bytes().fold([0; 26], |mut acc, b| {
-        acc[usize::from(b - b'a')] += 1;
-        acc
-    })
+fn dfs(curr: i64, n: i64, res: &mut i32, count: &mut i32, k: i32) {
+    if curr > n {
+        return;
+    }
+    *count += 1;
+    if *count == k {
+        *res = curr as i32;
+        return;
+    }
+    let next = curr * 10;
+    for i in 0..=9 {
+        dfs(next + i, n, res, count, k);
+    }
 }
 
 #[cfg(test)]
@@ -40,8 +34,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        sort_eq(find_anagrams("cbaebabacd", "abc"), [0, 6]);
-        sort_eq(find_anagrams("abab", "ab"), [0, 1, 2]);
+        debug_assert_eq!(find_kth_number(13, 2), 10);
+        debug_assert_eq!(find_kth_number(1, 1), 1);
     }
 
     #[test]
