@@ -4,17 +4,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn arrange_coins(n: i32) -> i32 {
-    let (mut left, mut right) = (0, i64::from(n));
-    while left <= right {
-        let mid = left + (right - left) / 2;
-        if (mid + 1) * mid / 2 <= i64::from(n) {
-            left = mid + 1;
+pub fn find_duplicates(mut nums: Vec<i32>) -> Vec<i32> {
+    let mut res = vec![];
+    let n = nums.len();
+    if nums.len() < 2 {
+        return res;
+    }
+    for idx in 0..n {
+        let num = nums[idx];
+        let i = num.unsigned_abs() as usize - 1;
+        if nums[i] > 0 {
+            nums[i] *= -1;
         } else {
-            right = mid - 1
+            res.push(if num < 0 { -num } else { num });
         }
     }
-    left as i32 - 1
+    res
 }
 
 #[cfg(test)]
@@ -25,8 +30,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(arrange_coins(5), 2);
-        debug_assert_eq!(arrange_coins(8), 3);
+        debug_assert_eq!(find_duplicates(vec![4, 3, 2, 7, 8, 2, 3, 1]), [2, 3]);
+        debug_assert_eq!(find_duplicates(vec![1, 1, 2]), [1]);
     }
 
     #[test]
