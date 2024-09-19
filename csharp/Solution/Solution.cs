@@ -1,40 +1,57 @@
-﻿// using Solution.LList;
+﻿using Solution.LList;
 using Solution.Tree;
 
 namespace Solution;
 
 public class Solution
 {
-    public int PathSum(TreeNode root, int targetSum)
+    public ListNode AddTwoNumbers(ListNode l1, ListNode l2)
     {
-        // return WithPrefixSum(root, targetSum, 0, new Dictionary<long, int> { { 0, 1 } });
-        if (root is null) { return 0; }
-        return Dfs(root, targetSum) +
-            PathSum(root.left, targetSum) + PathSum(root.right, targetSum);
+        var (s1, s2) = (AsStack(l1), AsStack(l2));
+        var s = new Stack<int>();
+        var carry = 0;
+        while (s1.Count > 0 && s2.Count > 0)
+        {
+            var n1 = s1.Pop();
+            var n2 = s2.Pop();
+            var sum = n1 + n2 + carry;
+            s.Push(sum % 10);
+            carry = sum / 10;
+        }
+        while (s1.TryPop(out int n1))
+        {
+            var sum = n1 + carry;
+            s.Push(sum % 10);
+            carry = sum / 10;
+        }
+        while (s2.TryPop(out int n2))
+        {
+            var sum = n2 + carry;
+            s.Push(sum % 10);
+            carry = sum / 10;
+        }
+        if (carry > 0) { s.Push(carry); }
+
+        ListNode dummy = new(0);
+        var curr = dummy;
+        while (s.TryPop(out int n))
+        {
+            ListNode node = new(n);
+            curr.next = node;
+            curr = curr.next;
+        }
+        return dummy.next;
     }
 
-    static int Dfs(TreeNode node, long curr)
+    static Stack<int> AsStack(ListNode node)
     {
-        if (node is null) { return 0; }
-        var left = Dfs(node.left, curr - node.val);
-        var right = Dfs(node.right, curr - node.val);
-        if (node.val == curr) { return 1 + left + right; }
-        else { return left + right; }
-    }
-
-    static int WithPrefixSum(TreeNode node, int target, long curr, IDictionary<long, int> prefix)
-    {
-        if (node is null) { return 0; }
-        curr += node.val;
-        int count = prefix.TryGetValue(curr - target, out int value) ? value : 0;
-
-        if (prefix.ContainsKey(curr)) { prefix[curr] += 1; }
-        else { prefix[curr] = 1; }
-
-        count += WithPrefixSum(node.right, target, curr, prefix);
-        count += WithPrefixSum(node.left, target, curr, prefix);
-
-        prefix[curr] -= 1;
-        return count;
+        Stack<int> res = [];
+        var curr = node;
+        while (curr is not null)
+        {
+            res.Push(curr.val);
+            curr = curr.next;
+        }
+        return res;
     }
 }
