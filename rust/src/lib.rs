@@ -4,31 +4,45 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn compress(chars: &mut Vec<char>) -> i32 {
-    let (mut left, mut right) = (0, 0);
-    while right < chars.len() {
-        if chars[right] == chars[left] {
-            right += 1;
-        } else if right - left > 1 {
-            alter(&mut right, &mut left, chars);
-        } else {
-            left += 1;
-        }
-    }
-    if (right - left) > 1 {
-        alter(&mut right, &mut left, chars);
-    }
-    chars.len() as i32
-}
+pub fn number_of_arithmetic_slices(nums: &[i32]) -> i32 {
+    let n = nums.len();
+    let mut res = 0;
+    // raw dp
+    // let mut dp = vec![vec![0; n]; n];
+    // for i3 in 2..n {
+    //     for i2 in 1..i3 {
+    //         for i1 in 0..i2 {
+    //             if i64::from(nums[i3]) - i64::from(nums[i2])
+    //                 == i64::from(nums[i2]) - i64::from(nums[i1])
+    //             {
+    //                 dp[i3][i2] += 1 + dp[i2][i1];
+    //                 res += 1 + dp[i2][i1]
+    //             }
+    //         }
+    //     }
+    // }
 
-fn alter(right: &mut usize, left: &mut usize, chars: &mut Vec<char>) {
-    let s = (*right - *left).to_string();
-    for digit in s.chars().rev() {
-        chars.insert(*right, digit);
+    use std::collections::HashMap;
+    // for each number, produce a diff-count pair
+    let mut seqs: Vec<HashMap<i32, i32>> = Vec::with_capacity(n);
+    for (i, &x) in nums.iter().enumerate() {
+        let mut curr = HashMap::new();
+        for (j, &y) in nums.iter().take(i).enumerate() {
+            let Some(diff) = x.checked_sub(y) else {
+                continue;
+            };
+            let count = seqs[j].get(&diff).copied().unwrap_or(0);
+            res += count;
+            if x.checked_add(diff).is_some() {
+                // presume a number exists as in y - diff - x - diff - num???
+                // When a promising value visits this diff-count pair
+                // the count is directly added to result ( res+=count )
+                *curr.entry(diff).or_insert(0) += count + 1
+            }
+        }
+        seqs.push(curr);
     }
-    chars.drain(*left + 1..*right);
-    *left += s.len() + 1;
-    *right = *left;
+    res
 }
 
 #[cfg(test)]
@@ -39,23 +53,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        {
-            let mut chs = vec!['a', 'a', 'b', 'b', 'c', 'c', 'c'];
-            debug_assert_eq!(compress(&mut chs), 6);
-            debug_assert_eq!(chs, ['a', '2', 'b', '2', 'c', '3']);
-        }
-        {
-            let mut chs = vec!['a'];
-            debug_assert_eq!(compress(&mut chs), 1);
-            debug_assert_eq!(chs, ['a']);
-        }
-        {
-            let mut chs = vec![
-                'a', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b',
-            ];
-            debug_assert_eq!(compress(&mut chs), 4);
-            debug_assert_eq!(chs, ['a', 'b', '1', '2']);
-        }
+        debug_assert_eq!(number_of_arithmetic_slices(&[2, 4, 6, 8, 10]), 7);
+        debug_assert_eq!(number_of_arithmetic_slices(&[7, 7, 7, 7, 7]), 16);
     }
 
     #[test]
