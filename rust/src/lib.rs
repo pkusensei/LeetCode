@@ -3,24 +3,33 @@ mod helper;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_right_interval(intervals: &[[i32; 2]]) -> Vec<i32> {
-    let n = intervals.len();
-    let mut starts: Vec<_> = intervals
-        .iter()
-        .enumerate()
-        .map(|(i, v)| (v[0], i))
-        .collect();
-    starts.sort_unstable_by_key(|(v, _)| *v);
-    let mut res = Vec::with_capacity(n);
-    for end in intervals.iter().map(|v| v[1]) {
-        let i = starts.partition_point(|(v, _)| *v < end);
-        if i < n {
-            res.push(starts[i].1 as i32);
-        } else {
-            res.push(-1);
+pub fn find_anagrams(s: &str, p: &str) -> Vec<i32> {
+    let (sn, pn) = (s.len(), p.len());
+    if sn < pn {
+        return vec![];
+    }
+    let target = count(p);
+    let mut curr = count(&s[..pn]);
+    let s = s.as_bytes();
+    let mut res = vec![];
+    if target == curr {
+        res.push(0);
+    }
+    for idx in 1..=sn - pn {
+        curr[usize::from(s[idx + pn - 1] - b'a')] += 1;
+        curr[usize::from(s[idx - 1] - b'a')] -= 1;
+        if target == curr {
+            res.push(idx as i32);
         }
     }
     res
+}
+
+fn count(s: &str) -> [u16; 26] {
+    s.bytes().fold([0; 26], |mut acc, b| {
+        acc[usize::from(b - b'a')] += 1;
+        acc
+    })
 }
 
 #[cfg(test)]
@@ -31,15 +40,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(find_right_interval(&[[1, 2]]), [-1]);
-        debug_assert_eq!(find_right_interval(&[[3, 4], [2, 3], [1, 2]]), [-1, 0, 1]);
-        debug_assert_eq!(find_right_interval(&[[1, 4], [2, 3], [3, 4]]), [-1, 2, -1]);
+        sort_eq(find_anagrams("cbaebabacd", "abc"), [0, 6]);
+        sort_eq(find_anagrams("abab", "ab"), [0, 1, 2]);
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(find_right_interval(&[[4, 4]]), [0]);
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
