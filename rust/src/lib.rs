@@ -4,22 +4,31 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_duplicates(mut nums: Vec<i32>) -> Vec<i32> {
-    let mut res = vec![];
-    let n = nums.len();
-    if nums.len() < 2 {
-        return res;
-    }
-    for idx in 0..n {
-        let num = nums[idx];
-        let i = num.unsigned_abs() as usize - 1;
-        if nums[i] > 0 {
-            nums[i] *= -1;
+pub fn compress(chars: &mut Vec<char>) -> i32 {
+    let (mut left, mut right) = (0, 0);
+    while right < chars.len() {
+        if chars[right] == chars[left] {
+            right += 1;
+        } else if right - left > 1 {
+            alter(&mut right, &mut left, chars);
         } else {
-            res.push(if num < 0 { -num } else { num });
+            left += 1;
         }
     }
-    res
+    if (right - left) > 1 {
+        alter(&mut right, &mut left, chars);
+    }
+    chars.len() as i32
+}
+
+fn alter(right: &mut usize, left: &mut usize, chars: &mut Vec<char>) {
+    let s = (*right - *left).to_string();
+    for digit in s.chars().rev() {
+        chars.insert(*right, digit);
+    }
+    chars.drain(*left + 1..*right);
+    *left += s.len() + 1;
+    *right = *left;
 }
 
 #[cfg(test)]
@@ -30,8 +39,23 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(find_duplicates(vec![4, 3, 2, 7, 8, 2, 3, 1]), [2, 3]);
-        debug_assert_eq!(find_duplicates(vec![1, 1, 2]), [1]);
+        {
+            let mut chs = vec!['a', 'a', 'b', 'b', 'c', 'c', 'c'];
+            debug_assert_eq!(compress(&mut chs), 6);
+            debug_assert_eq!(chs, ['a', '2', 'b', '2', 'c', '3']);
+        }
+        {
+            let mut chs = vec!['a'];
+            debug_assert_eq!(compress(&mut chs), 1);
+            debug_assert_eq!(chs, ['a']);
+        }
+        {
+            let mut chs = vec![
+                'a', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b',
+            ];
+            debug_assert_eq!(compress(&mut chs), 4);
+            debug_assert_eq!(chs, ['a', 'b', '1', '2']);
+        }
     }
 
     #[test]

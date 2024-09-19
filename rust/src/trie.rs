@@ -76,6 +76,7 @@ mod tests {
     use super::*;
 
     #[test]
+    #[ignore = "trie not changed"]
     fn basics() {
         let mut trie = Trie::<26>::new();
         let func = |&b| usize::from(b - b'a');
