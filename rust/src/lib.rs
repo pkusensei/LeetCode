@@ -1,38 +1,24 @@
 mod helper;
 mod trie;
 
-use std::{cmp::Reverse, iter};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn frequency_sort(s: &str) -> String {
-    let mut counts: Vec<_> = s
-        .bytes()
-        .fold([0; 62], |mut acc, b| {
-            let i = match b {
-                b'A'..=b'Z' => usize::from(b - b'A'),
-                b'a'..=b'z' => usize::from(b - b'a' + 26),
-                b'0'..=b'9' => usize::from(b - b'0' + 52),
-                _ => unreachable!(),
-            };
-            acc[i] += 1;
-            acc
-        })
-        .into_iter()
-        .enumerate()
-        .map(|(i, count)| match i {
-            0..=25 => (b'A' + i as u8, count),
-            26..=51 => (b'a' + i as u8 - 26, count),
-            52..=61 => (b'0' + i as u8 - 52, count),
-            _ => unreachable!(),
-        })
-        .collect();
-    counts.sort_unstable_by_key(|(_b, c)| Reverse(*c));
-    counts
-        .into_iter()
-        .flat_map(|(b, count)| iter::repeat(char::from(b)).take(count))
-        .collect()
+pub fn find_min_arrow_shots(mut points: Vec<[i32; 2]>) -> i32 {
+    points.sort_unstable_by_key(|v| v[1]);
+    let n = points.len();
+    if n < 2 {
+        return 1;
+    }
+    let mut curr = points[0][1];
+    let mut res = 1;
+    for p in points.iter().skip(1) {
+        if p[0] > curr {
+            res += 1;
+            curr = p[1]
+        }
+    }
+    res
 }
 
 #[cfg(test)]
@@ -43,13 +29,35 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(frequency_sort("tree"), "eetr");
-        debug_assert_eq!(frequency_sort("cccaaa"), "cccaaa");
-        debug_assert_eq!(frequency_sort("Aabb"), "bbAa");
+        debug_assert_eq!(
+            find_min_arrow_shots(vec![[10, 16], [2, 8], [1, 6], [7, 12]]),
+            2
+        );
+        debug_assert_eq!(
+            find_min_arrow_shots(vec![[1, 2], [3, 4], [5, 6], [7, 8]]),
+            4
+        );
+        debug_assert_eq!(
+            find_min_arrow_shots(vec![[1, 2], [2, 3], [3, 4], [4, 5]]),
+            2
+        );
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(
+            find_min_arrow_shots(vec![
+                [9, 12],
+                [1, 10],
+                [4, 11],
+                [8, 12],
+                [3, 9],
+                [6, 9],
+                [6, 7]
+            ]),
+            2
+        );
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
