@@ -1,17 +1,37 @@
 mod helper;
 mod trie;
 
+use std::{cmp::Reverse, iter};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_disappeared_numbers(mut nums: Vec<i32>) -> Vec<i32> {
-    for i in 0..nums.len() {
-        let idx = nums[i].unsigned_abs() as usize - 1;
-        nums[idx] = -nums[idx].abs();
-    }
-    nums.iter()
+pub fn frequency_sort(s: &str) -> String {
+    let mut counts: Vec<_> = s
+        .bytes()
+        .fold([0; 62], |mut acc, b| {
+            let i = match b {
+                b'A'..=b'Z' => usize::from(b - b'A'),
+                b'a'..=b'z' => usize::from(b - b'a' + 26),
+                b'0'..=b'9' => usize::from(b - b'0' + 52),
+                _ => unreachable!(),
+            };
+            acc[i] += 1;
+            acc
+        })
+        .into_iter()
         .enumerate()
-        .filter_map(|(i, &n)| if n > 0 { Some(1 + i as i32) } else { None })
+        .map(|(i, count)| match i {
+            0..=25 => (b'A' + i as u8, count),
+            26..=51 => (b'a' + i as u8 - 26, count),
+            52..=61 => (b'0' + i as u8 - 52, count),
+            _ => unreachable!(),
+        })
+        .collect();
+    counts.sort_unstable_by_key(|(_b, c)| Reverse(*c));
+    counts
+        .into_iter()
+        .flat_map(|(b, count)| iter::repeat(char::from(b)).take(count))
         .collect()
 }
 
@@ -23,11 +43,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            find_disappeared_numbers(vec![4, 3, 2, 7, 8, 2, 3, 1]),
-            [5, 6]
-        );
-        debug_assert_eq!(find_disappeared_numbers(vec![1, 1]), [2]);
+        debug_assert_eq!(frequency_sort("tree"), "eetr");
+        debug_assert_eq!(frequency_sort("cccaaa"), "cccaaa");
+        debug_assert_eq!(frequency_sort("Aabb"), "bbAa");
     }
 
     #[test]
