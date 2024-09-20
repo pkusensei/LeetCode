@@ -4,9 +4,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_moves(nums: &[i32]) -> i32 {
-    let min = nums.iter().copied().min().unwrap_or(0);
-    nums.iter().fold(0, |acc, &n| acc + n - min)
+pub fn four_sum_count(nums1: &[i32], nums2: &[i32], nums3: &[i32], nums4: &[i32]) -> i32 {
+    let mut map = std::collections::HashMap::<i32, [i32; 2]>::new();
+    for n1 in nums1.iter() {
+        for n2 in nums2.iter() {
+            map.entry(n1 + n2).or_default()[0] += 1;
+        }
+    }
+    for n3 in nums3.iter() {
+        for n4 in nums4.iter() {
+            if let Some(v) = map.get_mut(&-(n3 + n4)) {
+                v[1] += 1
+            }
+        }
+    }
+    map.into_values().map(|[x, y]| x * y).sum()
 }
 
 #[cfg(test)]
@@ -17,8 +29,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(min_moves(&[1, 2, 3]), 3);
-        debug_assert_eq!(min_moves(&[1, 1, 1]), 0);
+        debug_assert_eq!(four_sum_count(&[1, 2], &[-2, -1], &[-1, 2], &[0, 2]), 2);
+        debug_assert_eq!(four_sum_count(&[0], &[0], &[0], &[0]), 1);
     }
 
     #[test]
