@@ -4,45 +4,34 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn number_of_arithmetic_slices(nums: &[i32]) -> i32 {
-    let n = nums.len();
-    let mut res = 0;
-    // raw dp
-    // let mut dp = vec![vec![0; n]; n];
-    // for i3 in 2..n {
-    //     for i2 in 1..i3 {
-    //         for i1 in 0..i2 {
-    //             if i64::from(nums[i3]) - i64::from(nums[i2])
-    //                 == i64::from(nums[i2]) - i64::from(nums[i1])
-    //             {
-    //                 dp[i3][i2] += 1 + dp[i2][i1];
-    //                 res += 1 + dp[i2][i1]
-    //             }
-    //         }
-    //     }
-    // }
-
-    use std::collections::HashMap;
-    // for each number, produce a diff-count pair
-    let mut seqs: Vec<HashMap<i32, i32>> = Vec::with_capacity(n);
-    for (i, &x) in nums.iter().enumerate() {
-        let mut curr = HashMap::new();
-        for (j, &y) in nums.iter().take(i).enumerate() {
-            let Some(diff) = x.checked_sub(y) else {
-                continue;
-            };
-            let count = seqs[j].get(&diff).copied().unwrap_or(0);
-            res += count;
-            if x.checked_add(diff).is_some() {
-                // presume a number exists as in y - diff - x - diff - num???
-                // When a promising value visits this diff-count pair
-                // the count is directly added to result ( res+=count )
-                *curr.entry(diff).or_insert(0) += count + 1
-            }
-        }
-        seqs.push(curr);
+pub fn shortest_palindrome(s: &str) -> String {
+    if s.is_empty() {
+        return "".to_uppercase();
     }
-    res
+    let p_len = kmp(s);
+    s.chars()
+        .rev()
+        .take(s.len() - p_len)
+        .chain(s.chars())
+        .collect()
+}
+
+fn kmp(s: &str) -> usize {
+    let temp: Vec<_> = s
+        .bytes()
+        .chain(std::iter::once(b'#'))
+        .chain(s.bytes().rev())
+        .collect();
+    let n = temp.len();
+    let mut failure = vec![0; n];
+    for (i, &curr) in temp.iter().enumerate().skip(1) {
+        let mut j = failure[i - 1];
+        while j > 0 && curr != temp[j] {
+            j = failure[j - 1];
+        }
+        failure[i] = j + usize::from(curr == temp[j])
+    }
+    failure.into_iter().last().unwrap()
 }
 
 #[cfg(test)]
@@ -53,8 +42,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(number_of_arithmetic_slices(&[2, 4, 6, 8, 10]), 7);
-        debug_assert_eq!(number_of_arithmetic_slices(&[7, 7, 7, 7, 7]), 16);
+        debug_assert_eq!(shortest_palindrome("aacecaaa"), "aaacecaaa");
+        debug_assert_eq!(shortest_palindrome("abcd"), "dcbabcd");
     }
 
     #[test]
