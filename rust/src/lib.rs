@@ -1,31 +1,18 @@
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn number_of_boomerangs(points: &[[i32; 2]]) -> i32 {
-    if points.len() < 3 {
-        return 0;
+pub fn find_disappeared_numbers(mut nums: Vec<i32>) -> Vec<i32> {
+    for i in 0..nums.len() {
+        let idx = nums[i].unsigned_abs() as usize - 1;
+        nums[idx] = -nums[idx].abs();
     }
-    let mut res = 0;
-    for p1 in points.iter() {
-        let curr: i32 = points
-            .iter()
-            .filter(|&p| p != p1)
-            .fold(HashMap::new(), |mut acc, p2| {
-                let d = (p1[0] - p2[0]).pow(2) + (p1[1] - p2[1]).pow(2);
-                *acc.entry(d).or_insert(0) += 1;
-                acc
-            })
-            .into_values()
-            .map(|v| v * (v - 1))
-            .sum();
-        res += curr;
-    }
-    res
+    nums.iter()
+        .enumerate()
+        .filter_map(|(i, &n)| if n > 0 { Some(1 + i as i32) } else { None })
+        .collect()
 }
 
 #[cfg(test)]
@@ -36,9 +23,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(number_of_boomerangs(&[[0, 0], [1, 0], [2, 0]]), 2);
-        debug_assert_eq!(number_of_boomerangs(&[[1, 1], [2, 2], [3, 3]]), 2);
-        debug_assert_eq!(number_of_boomerangs(&[[1, 1]]), 0)
+        debug_assert_eq!(
+            find_disappeared_numbers(vec![4, 3, 2, 7, 8, 2, 3, 1]),
+            [5, 6]
+        );
+        debug_assert_eq!(find_disappeared_numbers(vec![1, 1]), [2]);
     }
 
     #[test]
