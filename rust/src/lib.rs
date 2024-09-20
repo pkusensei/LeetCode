@@ -1,37 +1,31 @@
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn shortest_palindrome(s: &str) -> String {
-    if s.is_empty() {
-        return "".to_uppercase();
+pub fn number_of_boomerangs(points: &[[i32; 2]]) -> i32 {
+    if points.len() < 3 {
+        return 0;
     }
-    let p_len = kmp(s);
-    s.chars()
-        .rev()
-        .take(s.len() - p_len)
-        .chain(s.chars())
-        .collect()
-}
-
-fn kmp(s: &str) -> usize {
-    let temp: Vec<_> = s
-        .bytes()
-        .chain(std::iter::once(b'#'))
-        .chain(s.bytes().rev())
-        .collect();
-    let n = temp.len();
-    let mut failure = vec![0; n];
-    for (i, &curr) in temp.iter().enumerate().skip(1) {
-        let mut j = failure[i - 1];
-        while j > 0 && curr != temp[j] {
-            j = failure[j - 1];
-        }
-        failure[i] = j + usize::from(curr == temp[j])
+    let mut res = 0;
+    for p1 in points.iter() {
+        let curr: i32 = points
+            .iter()
+            .filter(|&p| p != p1)
+            .fold(HashMap::new(), |mut acc, p2| {
+                let d = (p1[0] - p2[0]).pow(2) + (p1[1] - p2[1]).pow(2);
+                *acc.entry(d).or_insert(0) += 1;
+                acc
+            })
+            .into_values()
+            .map(|v| v * (v - 1))
+            .sum();
+        res += curr;
     }
-    failure.into_iter().last().unwrap()
+    res
 }
 
 #[cfg(test)]
@@ -42,8 +36,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(shortest_palindrome("aacecaaa"), "aaacecaaa");
-        debug_assert_eq!(shortest_palindrome("abcd"), "dcbabcd");
+        debug_assert_eq!(number_of_boomerangs(&[[0, 0], [1, 0], [2, 0]]), 2);
+        debug_assert_eq!(number_of_boomerangs(&[[1, 1], [2, 2], [3, 3]]), 2);
+        debug_assert_eq!(number_of_boomerangs(&[[1, 1]]), 0)
     }
 
     #[test]
