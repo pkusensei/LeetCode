@@ -11,30 +11,36 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
-        var a1 = ListNode.Make([7, 2, 4, 3]);
-        var a2 = ListNode.Make([5, 6, 4]);
-        var b = sol.AddTwoNumbers(a1, a2);
-        var c = "[7,8,0,7]";
+        var a = TreeNode.Make([5, 3, 6, 2, 4, null, 7]);
+        var b = sol.DeleteNode(a, 3);
+        var c = "[5,4,6,2,null,null,7]";
         Assert.AreEqual(c, b.ToString());
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        var a1 = ListNode.Make([2, 4, 3]);
-        var a2 = ListNode.Make([5, 6, 4]);
-        var b = sol.AddTwoNumbers(a1, a2);
-        var c = "[8,0,7]";
+        var a = TreeNode.Make([5, 3, 6, 2, 4, null, 7]);
+        var b = sol.DeleteNode(a, 0);
+        var c = "[5,3,6,2,4,null,7]";
         Assert.AreEqual(c, b.ToString());
     }
 
     [TestMethod]
     public void TestMethod3()
     {
-        var a1 = ListNode.Make([0]);
-        var a2 = ListNode.Make([0]);
-        var b = sol.AddTwoNumbers(a1, a2);
-        var c = "[0]";
+        var a = TreeNode.Make([5, 3, 6, 2, 4, null, 7]);
+        var b = sol.DeleteNode(a, 5);
+        var c = "[6,3,7,2,4]";
+        Assert.AreEqual(c, b.ToString());
+    }
+
+    [TestMethod]
+    public void TestMethod4()
+    {
+        var a = TreeNode.Make([1,null,2]);
+        var b = sol.DeleteNode(a, 1);
+        var c = "[2]";
         Assert.AreEqual(c, b.ToString());
     }
 
