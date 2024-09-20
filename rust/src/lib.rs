@@ -4,21 +4,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn four_sum_count(nums1: &[i32], nums2: &[i32], nums3: &[i32], nums4: &[i32]) -> i32 {
-    let mut map = std::collections::HashMap::<i32, [i32; 2]>::new();
-    for n1 in nums1.iter() {
-        for n2 in nums2.iter() {
-            map.entry(n1 + n2).or_default()[0] += 1;
-        }
-    }
-    for n3 in nums3.iter() {
-        for n4 in nums4.iter() {
-            if let Some(v) = map.get_mut(&-(n3 + n4)) {
-                v[1] += 1
+pub fn find_content_children(mut g: Vec<i32>, mut s: Vec<i32>) -> i32 {
+        g.sort_unstable_by_key(|&n| std::cmp::Reverse(n));
+        s.sort_unstable_by_key(|&n| std::cmp::Reverse(n));
+        let (mut i1, mut i2) = (0, 0);
+        while i1 < g.len() && i2 < s.len() {
+            if g[i1] <= s[i2] {
+                i1 += 1;
+                i2 += 1
+            } else {
+                i1 += 1
             }
         }
-    }
-    map.into_values().map(|[x, y]| x * y).sum()
+        i2 as i32
 }
 
 #[cfg(test)]
@@ -29,8 +27,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(four_sum_count(&[1, 2], &[-2, -1], &[-1, 2], &[0, 2]), 2);
-        debug_assert_eq!(four_sum_count(&[0], &[0], &[0], &[0]), 1);
+        debug_assert_eq!(find_content_children(vec![1, 2, 3], vec![1, 1]), 1);
+        debug_assert_eq!(find_content_children(vec![1, 2], vec![1, 2, 3]), 2);
     }
 
     #[test]
