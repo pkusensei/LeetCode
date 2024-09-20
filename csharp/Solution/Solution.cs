@@ -3,55 +3,76 @@ using Solution.Tree;
 
 namespace Solution;
 
-public class Solution
+public class Codec
 {
-    public ListNode AddTwoNumbers(ListNode l1, ListNode l2)
+    // Encodes a tree to a single string.
+    public string Serialize(TreeNode root)
     {
-        var (s1, s2) = (AsStack(l1), AsStack(l2));
-        var s = new Stack<int>();
-        var carry = 0;
-        while (s1.Count > 0 && s2.Count > 0)
+        if (root is null) { return "[]"; }
+        var sb = new System.Text.StringBuilder();
+        sb.Append('[');
+        var nodes = LevelOrderFlatten(root).ToList();
+        while (nodes.Last() is null)
         {
-            var n1 = s1.Pop();
-            var n2 = s2.Pop();
-            var sum = n1 + n2 + carry;
-            s.Push(sum % 10);
-            carry = sum / 10;
+            nodes.RemoveAt(nodes.Count - 1);
         }
-        while (s1.TryPop(out int n1))
+        foreach (var item in nodes)
         {
-            var sum = n1 + carry;
-            s.Push(sum % 10);
-            carry = sum / 10;
+            if (item is not null) { sb.AppendFormat($"{item.val},"); }
+            else { sb.Append("null,"); }
         }
-        while (s2.TryPop(out int n2))
-        {
-            var sum = n2 + carry;
-            s.Push(sum % 10);
-            carry = sum / 10;
-        }
-        if (carry > 0) { s.Push(carry); }
-
-        ListNode dummy = new(0);
-        var curr = dummy;
-        while (s.TryPop(out int n))
-        {
-            ListNode node = new(n);
-            curr.next = node;
-            curr = curr.next;
-        }
-        return dummy.next;
+        sb.Replace(',', ']', sb.Length - 1, 1);
+        return sb.ToString();
     }
 
-    static Stack<int> AsStack(ListNode node)
+    public IEnumerable<TreeNode> LevelOrderFlatten(TreeNode root)
     {
-        Stack<int> res = [];
-        var curr = node;
-        while (curr is not null)
+        var queue = new Queue<TreeNode>();
+        queue.Enqueue(root);
+        while (queue.TryDequeue(out var node))
         {
-            res.Push(curr.val);
-            curr = curr.next;
+            if (node is not null)
+            {
+                yield return node;
+                queue.Enqueue(node.left);
+                queue.Enqueue(node.right);
+            }
+            else { yield return null; }
         }
-        return res;
     }
+
+    // Decodes your encoded data to tree.
+    public TreeNode Deserialize(string data)
+    {
+        var values = Parse(data);
+        if (values.Count == 0 || !values[0].HasValue) { return null; }
+
+        TreeNode root = new(values[0].Value);
+        var queue = new Queue<TreeNode>();
+        queue.Enqueue(root);
+        var i = 1;
+        while (queue.TryDequeue(out var curr) && i < values.Count)
+        {
+            if (i < values.Count && values[i].HasValue)
+            {
+                curr.left = new() { val = values[i].Value };
+                queue.Enqueue(curr.left);
+            }
+            i += 1;
+            if (i < values.Count && values[i].HasValue)
+            {
+                curr.right = new() { val = values[i].Value };
+                queue.Enqueue(curr.right);
+            }
+            i += 1;
+        }
+        return root;
+    }
+
+    static List<int?> Parse(string data) =>
+        data.Trim(['[', ']']).Split(',').Select(s =>
+        {
+            if (int.TryParse(s, out int v)) { return v; }
+            else { return (int?)null; }
+        }).ToList();
 }

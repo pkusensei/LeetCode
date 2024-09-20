@@ -141,8 +141,7 @@ public abstract class TreeNodeBase<T> where T : TreeNodeBase<T>, new()
                 sb.Append("null,");
             }
         }
-        sb.Remove(sb.Length - 1, 1);
-        sb.Append(']');
+        sb.Replace(',', ']', sb.Length - 1, 1);
 
         return sb.ToString();
     }
