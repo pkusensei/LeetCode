@@ -4,21 +4,9 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_min_arrow_shots(mut points: Vec<[i32; 2]>) -> i32 {
-    points.sort_unstable_by_key(|v| v[1]);
-    let n = points.len();
-    if n < 2 {
-        return 1;
-    }
-    let mut curr = points[0][1];
-    let mut res = 1;
-    for p in points.iter().skip(1) {
-        if p[0] > curr {
-            res += 1;
-            curr = p[1]
-        }
-    }
-    res
+pub fn min_moves(nums: &[i32]) -> i32 {
+    let min = nums.iter().copied().min().unwrap_or(0);
+    nums.iter().fold(0, |acc, &n| acc + n - min)
 }
 
 #[cfg(test)]
@@ -29,35 +17,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            find_min_arrow_shots(vec![[10, 16], [2, 8], [1, 6], [7, 12]]),
-            2
-        );
-        debug_assert_eq!(
-            find_min_arrow_shots(vec![[1, 2], [3, 4], [5, 6], [7, 8]]),
-            4
-        );
-        debug_assert_eq!(
-            find_min_arrow_shots(vec![[1, 2], [2, 3], [3, 4], [4, 5]]),
-            2
-        );
+        debug_assert_eq!(min_moves(&[1, 2, 3]), 3);
+        debug_assert_eq!(min_moves(&[1, 1, 1]), 0);
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(
-            find_min_arrow_shots(vec![
-                [9, 12],
-                [1, 10],
-                [4, 11],
-                [8, 12],
-                [3, 9],
-                [6, 9],
-                [6, 7]
-            ]),
-            2
-        );
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
