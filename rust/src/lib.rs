@@ -4,38 +4,42 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find132pattern(nums: &[i32]) -> bool {
+pub fn circular_array_loop(nums: &mut [i32]) -> bool {
     let n = nums.len();
-    if n < 3 {
+    if n < 2 {
         return false;
     }
-    // stores [i] => min until current index
-    let mut mins = Vec::with_capacity(n);
-    mins.push(nums[0]);
-    for (i, &num) in nums.iter().enumerate().skip(1) {
-        mins.push(num.min(mins[i - 1]));
-    }
-    // stores [k] => numbers bigger than [i] and to the right of [j]
-    let mut stack = vec![];
-    for (&num, &min) in nums.iter().zip(mins.iter()).skip(1).rev() {
-        // [j] [i] pair in reverse order
-        if num <= min {
+    for i in 0..nums.len() {
+        if nums[i] == 0 {
             continue;
         }
-        // As loop approaches left end of array
-        // [i] might increase
-        // So here it pops [k]s potentially smaller than [i]
-        while stack.last().is_some_and(|&n| n <= min) {
-            stack.pop();
+        let (mut slow, mut fast) = (i, next(nums, i));
+        while nums[i] * nums[fast] > 0 && nums[i] * nums[next(nums, fast)] > 0 {
+            if slow == fast {
+                if slow == next(nums, slow) {
+                    break;
+                }
+                return true;
+            }
+            slow = next(nums, slow);
+            fast = next(nums, next(nums, fast));
         }
-        // Now [i] < [k]
-        // check if [k] < [j]
-        if stack.last().is_some_and(|&n| n < num) {
-            return true;
+
+        let dir = i32::from(nums[i] > 0); // direction
+        let mut curr = i;
+        while dir * nums[curr] > 0 {
+            let temp = next(nums, curr);
+            nums[curr] = 0;
+            curr = temp
         }
-        stack.push(num);
     }
     false
+}
+
+const fn next(nums: &[i32], start: usize) -> usize {
+    let n = nums.len() as i32;
+    let res = ((start as i32 + nums[start] % n) + n) % n;
+    res as _
 }
 
 #[cfg(test)]
@@ -46,9 +50,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(!find132pattern(&[1, 2, 3, 4]));
-        debug_assert!(find132pattern(&[3, 1, 4, 2]));
-        debug_assert!(find132pattern(&[-1, 3, 2, 0]));
+        debug_assert!(circular_array_loop(&mut [2, -1, 1, 2, 2]));
+        debug_assert!(!circular_array_loop(&mut [-1, -2, -3, -4, -5, 6]));
+        debug_assert!(circular_array_loop(&mut [1, -1, 5, 1, 4]));
     }
 
     #[test]
