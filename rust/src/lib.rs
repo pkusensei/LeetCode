@@ -1,16 +1,40 @@
 mod helper;
 mod trie;
 
+use std::collections::{HashSet, VecDeque};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_moves2(nums: &mut [i32]) -> i32 {
-    let n = nums.len();
-    if n < 2 {
-        return 0;
+pub fn island_perimeter(grid: &[&[i32]]) -> i32 {
+    let mut res = 0;
+    let mut queue = VecDeque::new();
+    let mut seen = HashSet::new();
+    for (y, row) in grid.iter().enumerate() {
+        for (x, &n) in row.iter().enumerate() {
+            if n == 1 {
+                queue.push_back((x, y));
+                while let Some((x, y)) = queue.pop_front() {
+                    if !seen.insert((x, y)) {
+                        continue;
+                    }
+                    res += 4;
+                    for neighbor in neighbors((x, y)).filter(|&(nx, ny)| {
+                        grid.get(ny)
+                            .is_some_and(|r| r.get(nx).is_some_and(|&c| c == 1))
+                    }) {
+                        queue.push_back(neighbor);
+                        res -= 1;
+                    }
+                }
+                break;
+            }
+        }
+        if res > 0 {
+            break;
+        }
     }
-    let mid = *nums.select_nth_unstable(n / 2).1;
-    nums.iter().map(|&n| n.abs_diff(mid)).sum::<u32>() as _
+    res
 }
 
 #[cfg(test)]
@@ -21,8 +45,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(min_moves2(&mut [1, 2, 3]), 2);
-        debug_assert_eq!(min_moves2(&mut [1, 10, 2, 9]), 16);
+        debug_assert_eq!(
+            island_perimeter(&[&[0, 1, 0, 0], &[1, 1, 1, 0], &[0, 1, 0, 0], &[1, 1, 0, 0]]),
+            16
+        );
+        debug_assert_eq!(island_perimeter(&[&[1]]), 4);
+        debug_assert_eq!(island_perimeter(&[&[1, 0]]), 4);
     }
 
     #[test]
