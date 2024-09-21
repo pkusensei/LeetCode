@@ -4,19 +4,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_content_children(mut g: Vec<i32>, mut s: Vec<i32>) -> i32 {
-        g.sort_unstable_by_key(|&n| std::cmp::Reverse(n));
-        s.sort_unstable_by_key(|&n| std::cmp::Reverse(n));
-        let (mut i1, mut i2) = (0, 0);
-        while i1 < g.len() && i2 < s.len() {
-            if g[i1] <= s[i2] {
-                i1 += 1;
-                i2 += 1
-            } else {
-                i1 += 1
+pub fn lexical_order(n: i32) -> Vec<i32> {
+    let mut res = Vec::with_capacity(n as usize);
+    let mut curr = 1;
+    for _ in 0..n {
+        res.push(curr);
+        if 10 * curr <= n {
+            curr *= 10;
+        } else {
+            while curr % 10 == 9 || curr >= n {
+                curr /= 10
             }
+            curr += 1;
         }
-        i2 as i32
+    }
+    res
 }
 
 #[cfg(test)]
@@ -27,8 +29,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(find_content_children(vec![1, 2, 3], vec![1, 1]), 1);
-        debug_assert_eq!(find_content_children(vec![1, 2], vec![1, 2, 3]), 2);
+        debug_assert_eq!(
+            lexical_order(13),
+            [1, 10, 11, 12, 13, 2, 3, 4, 5, 6, 7, 8, 9]
+        );
+        debug_assert_eq!(lexical_order(2), [1, 2])
     }
 
     #[test]
