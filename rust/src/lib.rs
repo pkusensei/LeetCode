@@ -4,21 +4,38 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn lexical_order(n: i32) -> Vec<i32> {
-    let mut res = Vec::with_capacity(n as usize);
-    let mut curr = 1;
-    for _ in 0..n {
-        res.push(curr);
-        if 10 * curr <= n {
-            curr *= 10;
-        } else {
-            while curr % 10 == 9 || curr >= n {
-                curr /= 10
-            }
-            curr += 1;
-        }
+pub fn find132pattern(nums: &[i32]) -> bool {
+    let n = nums.len();
+    if n < 3 {
+        return false;
     }
-    res
+    // stores [i] => min until current index
+    let mut mins = Vec::with_capacity(n);
+    mins.push(nums[0]);
+    for (i, &num) in nums.iter().enumerate().skip(1) {
+        mins.push(num.min(mins[i - 1]));
+    }
+    // stores [k] => numbers bigger than [i] and to the right of [j]
+    let mut stack = vec![];
+    for (&num, &min) in nums.iter().zip(mins.iter()).skip(1).rev() {
+        // [j] [i] pair in reverse order
+        if num <= min {
+            continue;
+        }
+        // As loop approaches left end of array
+        // [i] might increase
+        // So here it pops [k]s potentially smaller than [i]
+        while stack.last().is_some_and(|&n| n <= min) {
+            stack.pop();
+        }
+        // Now [i] < [k]
+        // check if [k] < [j]
+        if stack.last().is_some_and(|&n| n < num) {
+            return true;
+        }
+        stack.push(num);
+    }
+    false
 }
 
 #[cfg(test)]
@@ -29,11 +46,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            lexical_order(13),
-            [1, 10, 11, 12, 13, 2, 3, 4, 5, 6, 7, 8, 9]
-        );
-        debug_assert_eq!(lexical_order(2), [1, 2])
+        debug_assert!(!find132pattern(&[1, 2, 3, 4]));
+        debug_assert!(find132pattern(&[3, 1, 4, 2]));
+        debug_assert!(find132pattern(&[-1, 3, 2, 0]));
     }
 
     #[test]
