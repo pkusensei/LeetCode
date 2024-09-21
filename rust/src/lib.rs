@@ -4,14 +4,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn poor_pigs(buckets: i32, minutes_to_die: i32, minutes_to_test: i32) -> i32 {
-    let attempt = minutes_to_test / minutes_to_die;
-    // (1 + attempt).pow(x) >= buckets
-    let mut res = 0;
-    while (1 + attempt).pow(res) < buckets {
-        res += 1;
+pub fn repeated_substring_pattern(s: &str) -> bool {
+    let (s, n) = (s.as_bytes(), s.len());
+    let mut failure = vec![0; n];
+    for i in 1..n {
+        let mut j = failure[i - 1];
+        while j > 0 && s[i] != s[j] {
+            j = failure[j - 1]
+        }
+        failure[i] = j + usize::from(s[i] == s[j]);
     }
-    res as _
+    let repeated = failure[n - 1];
+    repeated > 0 && n % (n - repeated) == 0
 }
 
 #[cfg(test)]
@@ -22,8 +26,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(poor_pigs(4, 15, 15), 2);
-        debug_assert_eq!(poor_pigs(4, 15, 30), 2);
+        debug_assert!(repeated_substring_pattern("abab"));
+        debug_assert!(!repeated_substring_pattern("aba"));
+        debug_assert!(repeated_substring_pattern("abcabcabcabc"));
     }
 
     #[test]
