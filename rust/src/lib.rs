@@ -4,20 +4,34 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_substring_in_wrapround_string(s: &str) -> i32 {
-    let s = s.as_bytes();
-    let mut dp = [0; 26];
-    let mut curr_max_length = 1;
-    for (i, &b) in s.iter().enumerate() {
-        let idx = usize::from(b - b'a');
-        if i > 0 && (s[i - 1] + 1 == b || s[i - 1] - 25 == b) {
-            curr_max_length += 1;
-        } else {
-            curr_max_length = 1;
-        }
-        dp[idx] = dp[idx].max(curr_max_length);
+pub fn valid_ip_address(query_ip: &str) -> &str {
+    let mut it = query_ip.split('.');
+    if it.clone().count() == 4
+        && it.all(|s| !(s.len() > 1 && s.starts_with('0')) && s.parse::<u8>().is_ok())
+    {
+        return "IPv4";
     }
-    dp.into_iter().sum()
+    it = query_ip.split(':');
+    if it.clone().count() == 8 && it.all(|s| s.len() < 5 && u16::from_str_radix(s, 16).is_ok()) {
+        return "IPv6";
+    }
+    "Neither"
+    // with_std_net(query_ip)
+}
+
+fn with_std_net(s: &str) -> &str {
+    use std::net::{Ipv4Addr, Ipv6Addr};
+
+    if s.contains("::") {
+        return "Neither";
+    }
+    let v4 = s.parse::<Ipv4Addr>();
+    let v6 = s.parse::<Ipv6Addr>();
+    match (v4, v6) {
+        (Ok(_), _) => "IPv4",
+        (_, Ok(_)) => "IPv6",
+        _ => "Neither",
+    }
 }
 
 #[cfg(test)]
@@ -28,13 +42,18 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(find_substring_in_wrapround_string("a"), 1);
-        debug_assert_eq!(find_substring_in_wrapround_string("cac"), 2);
-        debug_assert_eq!(find_substring_in_wrapround_string("zab"), 6);
+        debug_assert_eq!(valid_ip_address("172.16.254.1"), "IPv4");
+        debug_assert_eq!(
+            valid_ip_address("2001:0db8:85a3:0:0:8A2E:0370:7334"),
+            "IPv6"
+        );
+        debug_assert_eq!(valid_ip_address("256.256.256.256"), "Neither");
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(valid_ip_address("192.0.0.1"), "IPv4");
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
