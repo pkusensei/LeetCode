@@ -6,49 +6,30 @@ use std::collections::HashMap;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn can_i_win(max_choosable_integer: i32, desired_total: i32) -> bool {
-    if desired_total < 1 {
-        return true;
-    }
-    if max_choosable_integer * (1 + max_choosable_integer) / 2 < desired_total {
-        return false;
-    }
-    dfs(0, max_choosable_integer, desired_total, &mut HashMap::new())
-}
-
-fn dfs(
-    used: i32,
-    max_choosable_integer: i32,
-    desired_total: i32,
-    seen: &mut HashMap<i32, bool>,
-) -> bool {
-    if desired_total <= 0 {
-        return false;
-    }
-    if let Some(v) = seen.get(&used) {
-        return *v;
-    }
-    for trial in 1..=max_choosable_integer {
-        if used & (1 << trial) > 0 {
-            // each bit in used is a record of which number is 'used'
-            // it can have at most 21 bit set
-            continue;
+pub fn get_max_repetitions(s1: &str, n1: i32, s2: &str, n2: i32) -> i32 {
+    let (len1, len2) = (s1.len(), s2.len());
+    let (s1, s2) = (s1.as_bytes(), s2.as_bytes());
+    let (mut i1, mut i2) = (0, 0);
+    let mut dict = HashMap::new();
+    let total = (n1 as usize) * len1;
+    while i1 < total {
+        if s1[i1 % len1] == s2[i2 % len2] {
+            if let Some(&(p1, p2)) = dict.get(&(i1 % len1, i2 % len2)) {
+                let (period1, period2) = (i1 - p1, i2 - p2);
+                let count = (total - i1) / period1;
+                i1 += count * period1;
+                i2 += count * period2;
+                if i1 >= total {
+                    break; // skips i2+=1
+                }
+            } else {
+                dict.insert((i1 % len1, i2 % len2), (i1, i2));
+            }
+            i2 += 1;
         }
-        let record = used | (1 << trial);
-        // trial is the current player-chosen
-        let v = if trial == desired_total {
-            true
-        } else {
-            // let opponent choose => flip result
-            !dfs(record, max_choosable_integer, desired_total - trial, seen)
-        };
-        if v {
-            seen.insert(used, v);
-            return true;
-        }
+        i1 += 1;
     }
-    seen.insert(used, false);
-    false
+    (i2 / len2 / n2 as usize) as _
 }
 
 #[cfg(test)]
@@ -59,14 +40,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(can_i_win(10, 0));
-        debug_assert!(!can_i_win(10, 11));
-        debug_assert!(can_i_win(10, 1));
+        debug_assert_eq!(get_max_repetitions("acb", 4, "ab", 2), 2);
+        debug_assert_eq!(get_max_repetitions("acb", 1, "acb", 1,), 1);
     }
 
     #[test]
     fn test() {
-        debug_assert!(!can_i_win(10, 40));
+        debug_assert_eq!(get_max_repetitions("baba", 11, "baab", 1), 7);
+        debug_assert_eq!(get_max_repetitions("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 1000000, "a", 1),100000000);
     }
 
     #[allow(dead_code)]
