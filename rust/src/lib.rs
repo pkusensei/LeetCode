@@ -1,40 +1,54 @@
 mod helper;
 mod trie;
 
-use std::collections::{HashSet, VecDeque};
+use std::collections::HashMap;
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn island_perimeter(grid: &[&[i32]]) -> i32 {
-    let mut res = 0;
-    let mut queue = VecDeque::new();
-    let mut seen = HashSet::new();
-    for (y, row) in grid.iter().enumerate() {
-        for (x, &n) in row.iter().enumerate() {
-            if n == 1 {
-                queue.push_back((x, y));
-                while let Some((x, y)) = queue.pop_front() {
-                    if !seen.insert((x, y)) {
-                        continue;
-                    }
-                    res += 4;
-                    for neighbor in neighbors((x, y)).filter(|&(nx, ny)| {
-                        grid.get(ny)
-                            .is_some_and(|r| r.get(nx).is_some_and(|&c| c == 1))
-                    }) {
-                        queue.push_back(neighbor);
-                        res -= 1;
-                    }
-                }
-                break;
-            }
+pub fn can_i_win(max_choosable_integer: i32, desired_total: i32) -> bool {
+    if desired_total < 1 {
+        return true;
+    }
+    if max_choosable_integer * (1 + max_choosable_integer) / 2 < desired_total {
+        return false;
+    }
+    dfs(0, max_choosable_integer, desired_total, &mut HashMap::new())
+}
+
+fn dfs(
+    used: i32,
+    max_choosable_integer: i32,
+    desired_total: i32,
+    seen: &mut HashMap<i32, bool>,
+) -> bool {
+    if desired_total <= 0 {
+        return false;
+    }
+    if let Some(v) = seen.get(&used) {
+        return *v;
+    }
+    for trial in 1..=max_choosable_integer {
+        if used & (1 << trial) > 0 {
+            // each bit in used is a record of which number is 'used'
+            // it can have at most 21 bit set
+            continue;
         }
-        if res > 0 {
-            break;
+        let record = used | (1 << trial);
+        // trial is the current player-chosen
+        let v = if trial == desired_total {
+            true
+        } else {
+            // let opponent choose => flip result
+            !dfs(record, max_choosable_integer, desired_total - trial, seen)
+        };
+        if v {
+            seen.insert(used, v);
+            return true;
         }
     }
-    res
+    seen.insert(used, false);
+    false
 }
 
 #[cfg(test)]
@@ -45,16 +59,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            island_perimeter(&[&[0, 1, 0, 0], &[1, 1, 1, 0], &[0, 1, 0, 0], &[1, 1, 0, 0]]),
-            16
-        );
-        debug_assert_eq!(island_perimeter(&[&[1]]), 4);
-        debug_assert_eq!(island_perimeter(&[&[1, 0]]), 4);
+        debug_assert!(can_i_win(10, 0));
+        debug_assert!(!can_i_win(10, 11));
+        debug_assert!(can_i_win(10, 1));
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert!(!can_i_win(10, 40));
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
