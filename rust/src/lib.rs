@@ -1,40 +1,57 @@
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn makesquare(matchsticks: &mut [i32]) -> bool {
-    let n = matchsticks.len();
-    if n < 4 {
-        return false;
-    }
-    let sum: i32 = matchsticks.iter().sum();
-    if sum == 0 || sum % 4 > 0 {
-        return false;
-    }
-    matchsticks.sort_unstable_by_key(|&n| std::cmp::Reverse(n));
-    let side = sum / 4;
-    let mut sides = [0; 4];
-    dfs(&mut sides, side, matchsticks)
-}
-
-fn dfs(sides: &mut [i32; 4], side: i32, nums: &[i32]) -> bool {
-    match nums {
-        [] => true,
-        [head, tail @ ..] => {
-            for i in 0..4 {
-                if sides[i] + head <= side {
-                    sides[i] += head;
-                    if dfs(sides, side, tail) {
-                        return true;
-                    }
-                    sides[i] -= head;
-                }
+pub fn find_max_form(strs: &[&str], m: i32, n: i32) -> i32 {
+    // let strs: Vec<_> = strs.iter().map(|s| count_zero_one(s)).collect();
+    // dfs(&strs, m, n, &mut HashMap::new())
+    let (m, n) = (m as usize, n as usize);
+    let mut dp = vec![vec![0; 1 + m]; 1 + n];
+    for [zero, one] in strs.iter().map(|s| count_zero_one(s).map(|n| n as usize)) {
+        for ones in (one..=n).rev() {
+            for zeros in (zero..=m).rev() {
+                dp[ones][zeros] = dp[ones][zeros].max(1 + dp[ones - one][zeros - zero]);
             }
-            false
         }
     }
+    dp[n][m]
+}
+
+fn dfs(
+    strs: &[[i32; 2]],
+    zeros: i32,
+    ones: i32,
+    seen: &mut HashMap<(usize, i32, i32), i32>,
+) -> i32 {
+    if let Some(&v) = seen.get(&(strs.len(), zeros, ones)) {
+        return v;
+    }
+    match strs {
+        [] => 0,
+        [head, tail @ ..] => {
+            let mut res = dfs(tail, zeros, ones, seen);
+            if zeros - head[0] >= 0 && ones - head[1] >= 0 {
+                res = res.max(1 + dfs(tail, zeros - head[0], ones - head[1], seen))
+            }
+            seen.insert((strs.len(), zeros, ones), res);
+            res
+        }
+    }
+}
+
+fn count_zero_one(s: &str) -> [i32; 2] {
+    s.bytes().fold([0, 0], |mut acc, b| {
+        if b == b'0' {
+            acc[0] += 1
+        } else {
+            acc[1] += 1
+        }
+        acc
+    })
 }
 
 #[cfg(test)]
@@ -45,8 +62,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(makesquare(&mut [1, 1, 2, 2, 2]));
-        debug_assert!(!makesquare(&mut [3, 3, 3, 3, 4]));
+        debug_assert_eq!(find_max_form(&["10", "0001", "111001", "1", "0"], 5, 3), 4);
+        debug_assert_eq!(find_max_form(&["10", "0", "1"], 1, 1), 2);
     }
 
     #[test]
