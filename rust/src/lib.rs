@@ -1,42 +1,40 @@
 mod helper;
 mod trie;
 
-use std::collections::HashSet;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_all_concatenated_words_in_a_dict(words: &[&str]) -> Vec<String> {
-    let mut dict = words.iter().copied().collect();
-    words
-        .iter()
-        .filter_map(|s| {
-            if word_break(s, &mut dict) {
-                Some(s.to_string())
-            } else {
-                None
-            }
-        })
-        .collect()
-}
-
-fn word_break<'a>(s: &'a str, words: &mut HashSet<&'a str>) -> bool {
-    if words.is_empty() {
+pub fn makesquare(matchsticks: &mut [i32]) -> bool {
+    let n = matchsticks.len();
+    if n < 4 {
         return false;
     }
-    words.remove(s);
-    let n = s.len();
-    let mut dp = vec![false; n + 1];
-    dp[0] = true;
-    for i in 1..=n {
-        for j in 0..i {
-            if dp[j] && words.contains(&s[j..i]) {
-                dp[i] = true
+    let sum: i32 = matchsticks.iter().sum();
+    if sum == 0 || sum % 4 > 0 {
+        return false;
+    }
+    matchsticks.sort_unstable_by_key(|&n| std::cmp::Reverse(n));
+    let side = sum / 4;
+    let mut sides = [0; 4];
+    dfs(&mut sides, side, matchsticks)
+}
+
+fn dfs(sides: &mut [i32; 4], side: i32, nums: &[i32]) -> bool {
+    match nums {
+        [] => true,
+        [head, tail @ ..] => {
+            for i in 0..4 {
+                if sides[i] + head <= side {
+                    sides[i] += head;
+                    if dfs(sides, side, tail) {
+                        return true;
+                    }
+                    sides[i] -= head;
+                }
             }
+            false
         }
     }
-    words.insert(s);
-    dp[n]
 }
 
 #[cfg(test)]
@@ -47,23 +45,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            find_all_concatenated_words_in_a_dict(&[
-                "cat",
-                "cats",
-                "catsdogcats",
-                "dog",
-                "dogcatsdog",
-                "hippopotamuses",
-                "rat",
-                "ratcatdogcat"
-            ]),
-            ["catsdogcats", "dogcatsdog", "ratcatdogcat"]
-        );
-        debug_assert_eq!(
-            find_all_concatenated_words_in_a_dict(&["cat", "dog", "catdog"]),
-            ["catdog"]
-        );
+        debug_assert!(makesquare(&mut [1, 1, 2, 2, 2]));
+        debug_assert!(!makesquare(&mut [3, 3, 3, 3, 4]));
     }
 
     #[test]
