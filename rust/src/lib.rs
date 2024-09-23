@@ -1,22 +1,41 @@
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn rand10() -> i32 {
-    fn rand7() -> i32 {
-        // stub
-        0
-    }
-
-    loop {
-        let (a, b) = (rand7(), rand7());
-        let num = (a - 1) * 7 + b;
-        if num <= 40 {
-            return (num - 1) % 10 + 1;
+pub fn min_extra_char(s: &str, dictionary: &[&str]) -> i32 {
+    // solve(s, dictionary, &mut HashMap::new()) as _
+    let n = s.len();
+    let mut dp = vec![0; n + 1];
+    for i in 1..=n {
+        dp[i] = dp[i - 1] + 1;
+        for w in dictionary.iter() {
+            if s[..i].ends_with(w) {
+                dp[i] = dp[i].min(dp[i - w.len()]);
+            }
         }
     }
+    dp[n]
+}
+
+fn solve<'a>(s: &'a str, dictionary: &[&str], seen: &mut HashMap<&'a str, usize>) -> usize {
+    if s.is_empty() {
+        return 0;
+    }
+    if let Some(&v) = seen.get(s) {
+        return v;
+    }
+    let mut res = 1 + solve(&s[1..], dictionary, seen);
+    for w in dictionary {
+        if let Some(r) = s.strip_prefix(w) {
+            res = res.min(solve(r, dictionary, seen));
+        }
+    }
+    seen.insert(s, res);
+    res
 }
 
 #[cfg(test)]
@@ -26,7 +45,13 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        debug_assert_eq!(
+            min_extra_char("leetscode", &["leet", "code", "leetcode"]),
+            1
+        );
+        debug_assert_eq!(min_extra_char("sayhelloworld", &["hello", "world"]), 3);
+    }
 
     #[test]
     fn test() {}
