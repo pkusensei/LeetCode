@@ -1,41 +1,42 @@
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
+use std::collections::HashSet;
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_extra_char(s: &str, dictionary: &[&str]) -> i32 {
-    // solve(s, dictionary, &mut HashMap::new()) as _
+pub fn find_all_concatenated_words_in_a_dict(words: &[&str]) -> Vec<String> {
+    let mut dict = words.iter().copied().collect();
+    words
+        .iter()
+        .filter_map(|s| {
+            if word_break(s, &mut dict) {
+                Some(s.to_string())
+            } else {
+                None
+            }
+        })
+        .collect()
+}
+
+fn word_break<'a>(s: &'a str, words: &mut HashSet<&'a str>) -> bool {
+    if words.is_empty() {
+        return false;
+    }
+    words.remove(s);
     let n = s.len();
-    let mut dp = vec![0; n + 1];
+    let mut dp = vec![false; n + 1];
+    dp[0] = true;
     for i in 1..=n {
-        dp[i] = dp[i - 1] + 1;
-        for w in dictionary.iter() {
-            if s[..i].ends_with(w) {
-                dp[i] = dp[i].min(dp[i - w.len()]);
+        for j in 0..i {
+            if dp[j] && words.contains(&s[j..i]) {
+                dp[i] = true
             }
         }
     }
+    words.insert(s);
     dp[n]
-}
-
-fn solve<'a>(s: &'a str, dictionary: &[&str], seen: &mut HashMap<&'a str, usize>) -> usize {
-    if s.is_empty() {
-        return 0;
-    }
-    if let Some(&v) = seen.get(s) {
-        return v;
-    }
-    let mut res = 1 + solve(&s[1..], dictionary, seen);
-    for w in dictionary {
-        if let Some(r) = s.strip_prefix(w) {
-            res = res.min(solve(r, dictionary, seen));
-        }
-    }
-    seen.insert(s, res);
-    res
 }
 
 #[cfg(test)]
@@ -47,10 +48,22 @@ mod tests {
     #[test]
     fn basics() {
         debug_assert_eq!(
-            min_extra_char("leetscode", &["leet", "code", "leetcode"]),
-            1
+            find_all_concatenated_words_in_a_dict(&[
+                "cat",
+                "cats",
+                "catsdogcats",
+                "dog",
+                "dogcatsdog",
+                "hippopotamuses",
+                "rat",
+                "ratcatdogcat"
+            ]),
+            ["catsdogcats", "dogcatsdog", "ratcatdogcat"]
         );
-        debug_assert_eq!(min_extra_char("sayhelloworld", &["hello", "world"]), 3);
+        debug_assert_eq!(
+            find_all_concatenated_words_in_a_dict(&["cat", "dog", "catdog"]),
+            ["catdog"]
+        );
     }
 
     #[test]
