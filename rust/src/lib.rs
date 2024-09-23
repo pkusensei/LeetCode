@@ -4,20 +4,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_radius(houses: &[i32], heaters: &mut [i32]) -> i32 {
-    heaters.sort_unstable();
-    let n = heaters.len();
+pub fn total_hamming_distance(nums: &[i32]) -> i32 {
+    let n = nums.len();
     let mut res = 0;
-    for h in houses.iter() {
-        if let Err(i) = heaters.binary_search(h) {
-            if i == n {
-                res = res.max(h - heaters[n - 1]);
-            } else if i == 0 {
-                res = res.max(heaters[0] - h);
-            } else {
-                res = res.max((h - heaters[i - 1]).min(heaters[i] - h));
+    // ham_dist is the number of ones after a^b
+    // Consider a single bit position
+    // Each 1 with a 0 would produce a 1 after xor
+    // Thus on this bit count(1)*count(0) is its contribution
+    // Not do that for all 32 bits
+    for bit in 0..32 {
+        let mut count = 0;
+        for &num in nums.iter() {
+            if num & (1 << bit) > 0 {
+                count += 1
             }
         }
+        res += count * (n as i32 - count);
     }
     res
 }
@@ -30,9 +32,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(find_radius(&[1, 2, 3], &mut [2]), 1);
-        debug_assert_eq!(find_radius(&[1, 2, 3, 4], &mut [1, 4]), 1);
-        debug_assert_eq!(find_radius(&[1, 5], &mut [2]), 3);
+        debug_assert_eq!(total_hamming_distance(&[4, 14, 2]), 6);
+        debug_assert_eq!(total_hamming_distance(&[4, 14, 4]), 4);
     }
 
     #[test]
