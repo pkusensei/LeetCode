@@ -3,25 +3,26 @@ mod trie;
 
 #[allow(unused_imports)]
 use helper::*;
+use rand::Rng;
 
-pub fn total_hamming_distance(nums: &[i32]) -> i32 {
-    let n = nums.len();
-    let mut res = 0;
-    // ham_dist is the number of ones after a^b
-    // Consider a single bit position
-    // Each 1 with a 0 would produce a 1 after xor
-    // Thus on this bit count(1)*count(0) is its contribution
-    // Not do that for all 32 bits
-    for bit in 0..32 {
-        let mut count = 0;
-        for &num in nums.iter() {
-            if num & (1 << bit) > 0 {
-                count += 1
-            }
-        }
-        res += count * (n as i32 - count);
+#[derive(Debug, Clone, Copy)]
+struct Solution {
+    x: f64,
+    y: f64,
+    radius: f64,
+}
+
+impl Solution {
+    fn new(radius: f64, x: f64, y: f64) -> Self {
+        Self { x, y, radius }
     }
-    res
+
+    fn rand_point(&self) -> Vec<f64> {
+        let mut rng = rand::thread_rng();
+        let angle = rng.gen::<f64>() * 2f64 * std::f64::consts::PI;
+        let radius = self.radius * rng.gen::<f64>().sqrt();
+        vec![self.x + radius * angle.cos(), self.y + radius * angle.sin()]
+    }
 }
 
 #[cfg(test)]
@@ -31,10 +32,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {
-        debug_assert_eq!(total_hamming_distance(&[4, 14, 2]), 6);
-        debug_assert_eq!(total_hamming_distance(&[4, 14, 4]), 4);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
