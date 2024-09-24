@@ -1,61 +1,24 @@
 mod helper;
 mod trie;
 
-use std::collections::BinaryHeap;
+use std::collections::HashSet;
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn largest_palindrome(n: i32) -> i32 {
-    // [0, 9, 987, 123, 597, 677, 1218, 877, 475]
-    const MOD: i64 = 1337;
-    if n == 1 {
-        return 9;
-    }
-    let mut pq = BinaryHeap::new();
-    let upper = 10i64.pow(n as _) - 1;
-    let lower = 10i64.pow(n as u32 - 1);
-    pq.push(Pair(upper, upper - 8)); // 9*1
-    pq.push(Pair(upper - 2, upper - 2)); // 7*7
-    pq.push(Pair(upper - 6, upper - 6)); // 3*3
-    pq.push(Pair(upper - 8, upper - 11)); // 1*9
-    while let Some(Pair(a, b)) = pq.pop() {
-        if is_palindrome(a * b) {
-            return ((a * b) % MOD) as _;
-        }
-        if a >= b + 10 {
-            pq.push(Pair(a - 10, b));
-        }
-        if a == upper || a == upper - 2 || a == upper - 6 || a == upper - 8 {
-            pq.push(Pair(a, b - 10));
+pub fn longest_common_prefix(arr1: &[i32], arr2: &[i32]) -> i32 {
+    let prefix: HashSet<_> = arr1.iter().flat_map(|&num| to_prefix(num)).collect();
+    let mut res = 0;
+    for n in arr2.iter().flat_map(|&num| to_prefix(num)) {
+        if prefix.contains(&n) {
+            res = res.max(1 + n.ilog10())
         }
     }
-    0
+    res as _
 }
 
-const fn is_palindrome(num: i64) -> bool {
-    let (mut temp, mut rev) = (num, 0);
-    while temp > 0 {
-        rev *= 10;
-        rev += temp % 10;
-        temp /= 10;
-    }
-    rev == num
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-struct Pair(i64, i64);
-
-impl PartialOrd for Pair {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl Ord for Pair {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        (self.0 * self.1).cmp(&(other.0 * other.1))
-    }
+fn to_prefix(num: i32) -> impl Iterator<Item = i32> {
+    std::iter::successors(Some(num), |n| if n / 10 > 0 { Some(n / 10) } else { None })
 }
 
 #[cfg(test)]
@@ -66,8 +29,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(largest_palindrome(2), 987);
-        debug_assert_eq!(largest_palindrome(1), 9);
+        debug_assert_eq!(longest_common_prefix(&[1, 10, 100], &[1000]), 3);
+        debug_assert_eq!(longest_common_prefix(&[1, 2, 3], &[4, 4, 4]), 0);
     }
 
     #[test]
