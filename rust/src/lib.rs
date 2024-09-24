@@ -4,24 +4,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn smallest_good_base(n: &str) -> String {
-    let n: i64 = n.parse().unwrap();
-    // n = k^0 + k^1 + k^2 + .. + k^(m-1)
-    // n = (1 - k^m)/(1-k)
-    // n ~= k^(m-1)
-    // k ~= n^(1/(m-1))
-    let len = n.ilog2() + 1; // max(m)
-    for m in (2..=len).rev() {
-        let k = (n as f64).powf(1.0 / (m as f64 - 1.0)) as i64;
-        // n-1 = k(1 + k^0 + k^1 + .. + k^(m-2))
-        // n-1 = k* (1-k^(m-1))/(1-k)
-        // (n-1)*(1-k)/k = (1 - k^(m-1))
-        if (n - 1) % k == 0 && (n - 1) / k * (1 - k) == 1 - k.pow(m - 1) {
-            return k.to_string();
+pub fn find_max_consecutive_ones(nums: &[i32]) -> i32 {
+    let (mut curr, mut res) = (0, 0);
+    for &num in nums.iter() {
+        if num == 1 {
+            curr += 1;
+            res = res.max(curr)
+        } else {
+            curr = 0
         }
     }
-    // deals with `1-** / 1-**` in (1 - k^m)/(1-k)
-    (n - 1).to_string()
+    res
 }
 
 #[cfg(test)]
@@ -32,12 +25,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(smallest_good_base("13"), "3");
-        debug_assert_eq!(smallest_good_base("4681"), "8");
-        debug_assert_eq!(
-            smallest_good_base("1000000000000000000"),
-            "999999999999999999"
-        );
+        debug_assert_eq!(find_max_consecutive_ones(&[1, 1, 0, 1, 1, 1]), 3);
+        debug_assert_eq!(find_max_consecutive_ones(&[1, 0, 1, 1, 0, 1]), 2);
     }
 
     #[test]
