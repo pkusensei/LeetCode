@@ -4,19 +4,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn magical_string(n: i32) -> i32 {
-    let mut s = vec![1, 2, 2];
-    for i in 2..n as usize {
-        if s.last().is_some_and(|&v| v == 2) {
-            s.extend(std::iter::repeat(1).take(s[i]));
-        } else {
-            s.extend(std::iter::repeat(2).take(s[i]));
-        }
-        if s.len() > n as usize {
-            break;
-        }
-    }
-    s.into_iter().take(n as usize).filter(|&v| v == 1).count() as _
+pub fn license_key_formatting(s: &str, k: i32) -> String {
+    s.bytes()
+        .filter_map(|b| {
+            if b.is_ascii_alphanumeric() {
+                Some(b.to_ascii_uppercase())
+            } else {
+                None
+            }
+        })
+        .collect::<Vec<_>>()
+        .rchunks(k as _)
+        .map(|ch| std::str::from_utf8(ch).unwrap())
+        .rev()
+        .collect::<Vec<_>>()
+        .join("-")
 }
 
 #[cfg(test)]
@@ -27,8 +29,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(magical_string(6), 3);
-        debug_assert_eq!(magical_string(1), 1);
+        debug_assert_eq!(license_key_formatting("5F3Z-2e-9-w", 4), "5F3Z-2E9W");
+        debug_assert_eq!(license_key_formatting("2-5g-3-J", 2), "2-5G-3J");
     }
 
     #[test]
