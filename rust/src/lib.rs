@@ -4,43 +4,30 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn reverse_pairs(nums: &mut [i32]) -> i32 {
-    merge_sort(nums)
+pub fn find_target_sum_ways(nums: &[i32], target: i32) -> i32 {
+    // match nums {
+    //     [] => (0 == target).into(),
+    //     [n, tail @ ..] => {
+    //         find_target_sum_ways(tail, target + *n) + find_target_sum_ways(tail, target - *n)
+    //     }
+    // }
+    with_dp(nums, target)
 }
 
-fn merge_sort(nums: &mut [i32]) -> i32 {
-    let n = nums.len();
-    let mut res = 0;
-    if n < 2 {
-        return res;
+fn with_dp(nums: &[i32], target: i32) -> i32 {
+    let sum: i32 = nums.iter().sum();
+    if target.abs() > sum || (target + sum) & 1 > 0 {
+        return 0;
     }
-
-    let mid = n / 2;
-    res += merge_sort(&mut nums[..mid]);
-    res += merge_sort(&mut nums[mid..]);
-
-    let mut right = mid;
-    for left in 0..mid {
-        while right < n && i64::from(nums[left]) > 2 * i64::from(nums[right]) {
-            right += 1;
-        }
-        res += (right - mid) as i32;
-    }
-    let (mut left, mut right) = (0, mid);
-    let mut sorted = Vec::with_capacity(n);
-    while left < mid && right < n {
-        if nums[left] <= nums[right] {
-            sorted.push(nums[left]);
-            left += 1
-        } else {
-            sorted.push(nums[right]);
-            right += 1
+    let p = (sum + target) / 2;
+    let mut dp = vec![0; 1 + p as usize];
+    dp[0] = 1;
+    for &num in nums.iter() {
+        for i in (num..=p).rev() {
+            dp[i as usize] += dp[(i - num) as usize];
         }
     }
-    sorted.extend_from_slice(&nums[left..mid]);
-    sorted.extend_from_slice(&nums[right..]);
-    nums.copy_from_slice(&sorted);
-    res
+    dp[p as usize]
 }
 
 #[cfg(test)]
@@ -51,8 +38,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(reverse_pairs(&mut [1, 3, 2, 3, 1]), 2);
-        debug_assert_eq!(reverse_pairs(&mut [2, 4, 3, 5, 1]), 3);
+        debug_assert_eq!(find_target_sum_ways(&[1, 1, 1, 1, 1], 3), 5);
+        debug_assert_eq!(find_target_sum_ways(&[1], 1), 1);
     }
 
     #[test]
