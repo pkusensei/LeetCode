@@ -1,105 +1,64 @@
 mod helper;
 mod trie;
 
+use std::collections::{HashSet, VecDeque};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn sum_prefix_scores(words: &[&str]) -> Vec<i32> {
-    let mut indices: Vec<_> = (0..words.len()).collect();
-    indices.sort_unstable_by(|&a, &b| words[a].cmp(words[b]));
-    let lengths = common_prefix_lengths(words, &indices);
-    calc_scores(words, &indices, &lengths)
-    // with_trie(words)
-}
-
-// map words to indices
-// sort indices by the words they point to
-// get common prefix between "adjacent" words
-// for (i, j) in indices => ([i], [j]) in words
-// the further removed, the less common [i] and [j] are
-// accumulate common([i], [j]) before it becomes 0 eventually
-fn common_prefix_lengths(words: &[&str], indices: &[usize]) -> Vec<i32> {
-    let n = words.len();
-    let mut res = Vec::with_capacity(n);
-    res.push(0);
-    for w in indices.windows(2) {
-        let (a, b) = (words[w[0]], words[w[1]]);
-        res.push(a.bytes().zip(b.bytes()).take_while(|(x, y)| x == y).count() as i32);
-    }
-    res
-}
-
-fn calc_scores(words: &[&str], indices: &[usize], lengths: &[i32]) -> Vec<i32> {
-    let n = words.len();
-    let mut res = vec![0; n];
-    for (idx, &word_idx) in indices.iter().enumerate() {
-        let word_length = words[word_idx].len() as i32;
-        res[word_idx] += word_length;
-        let mut j = idx + 1;
-        let mut common_length = word_length;
-        while j < n {
-            common_length = common_length.min(lengths[j]);
-            if common_length == 0 {
-                break;
-            }
-            res[word_idx] += common_length;
-            res[indices[j]] += common_length;
-            j += 1
+pub fn find_min_step(board: &str, hand: &str) -> i32 {
+    let board: Vec<_> = board.bytes().collect();
+    let mut hand: Vec<_> = hand.bytes().collect();
+    hand.sort_unstable();
+    let mut queue = VecDeque::from([(board, hand, 0)]);
+    let mut seen = HashSet::new();
+    while let Some((board, hand, dist)) = queue.pop_front() {
+        if board.is_empty() {
+            return dist;
         }
-    }
-    res
-}
-
-fn with_trie(words: &[&str]) -> Vec<i32> {
-    let mut trie = Trie::new();
-    for s in words.iter() {
-        trie.add(s.as_bytes());
-    }
-    words.iter().map(|s| trie.count(s.as_bytes())).collect()
-}
-
-#[derive(Debug, Clone)]
-struct Trie {
-    data: [Option<Box<Trie>>; 26],
-    count: i32,
-}
-
-impl Trie {
-    const fn new() -> Self {
-        Self {
-            data: [const { None }; 26],
-            count: 0,
+        if !seen.insert((board.clone(), hand.clone())) {
+            continue;
         }
-    }
-
-    fn add(&mut self, s: &[u8]) {
-        let [b, tail @ ..] = s else {
-            return;
-        };
-        let idx = usize::from(b - b'a');
-        if let Some(node) = self.data.get_mut(idx).and_then(|n| n.as_mut()) {
-            node.count += 1;
-            node.add(tail);
-        } else {
-            let mut node = Self::new();
-            node.count += 1;
-            node.add(tail);
-            self.data[idx] = Some(Box::new(node));
-        }
-    }
-
-    fn count(&self, s: &[u8]) -> i32 {
-        match s {
-            [] => self.count,
-            [b, tail @ ..] => {
-                let idx = usize::from(b - b'a');
-                if let Some(node) = self.data.get(idx).and_then(|n| n.as_ref()) {
-                    self.count + node.count(tail)
-                } else {
-                    self.count
+        for i1 in 0..board.len() {
+            for i2 in 0..hand.len() {
+                if i2 > 0 && hand[i2 - 1] == hand[i2] {
+                    continue;
+                }
+                if i1 > 0 && board[i1 - 1] == hand[i2] {
+                    continue;
+                }
+                let pick = board[i1] == hand[i2] || (i1 > 0 && board[i1 - 1] == board[i1]); // && board[i1] != hand[i2]
+                if pick {
+                    let mut new_board = board.clone();
+                    new_board.insert(i1, hand[i2]);
+                    let mut new_hand = hand.clone();
+                    new_hand.remove(i2);
+                    new_board = process(new_board, i1);
+                    queue.push_back((new_board, new_hand, dist + 1));
                 }
             }
         }
+    }
+    -1
+}
+
+fn process(mut board: Vec<u8>, idx: usize) -> Vec<u8> {
+    let n = board.len();
+    if idx >= n {
+        return board;
+    }
+    let (mut left, mut right) = (idx, idx);
+    while left > 0 && board[left - 1] == board[idx] {
+        left -= 1;
+    }
+    while right + 1 < n && board[right + 1] == board[idx] {
+        right += 1;
+    }
+    if right - left + 1 >= 3 {
+        board.drain(left..=right);
+        process(board, left)
+    } else {
+        board
     }
 }
 
@@ -111,12 +70,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(sum_prefix_scores(&["abc", "ab", "bc", "b"]), [5, 4, 3, 2]);
-        debug_assert_eq!(sum_prefix_scores(&["abcd"]), [4]);
+        debug_assert_eq!(find_min_step("WRRBBW", "RB"), -1);
+        debug_assert_eq!(find_min_step("WWRRBBWW", "WRBRW"), 2);
+        debug_assert_eq!(find_min_step("G", "GGGGG"), 2);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(find_min_step("RRWWRRBBRR", "WB"), 2);
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
