@@ -4,30 +4,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_target_sum_ways(nums: &[i32], target: i32) -> i32 {
-    // match nums {
-    //     [] => (0 == target).into(),
-    //     [n, tail @ ..] => {
-    //         find_target_sum_ways(tail, target + *n) + find_target_sum_ways(tail, target - *n)
-    //     }
-    // }
-    with_dp(nums, target)
-}
-
-fn with_dp(nums: &[i32], target: i32) -> i32 {
-    let sum: i32 = nums.iter().sum();
-    if target.abs() > sum || (target + sum) & 1 > 0 {
+pub fn find_poisoned_duration(time_series: &[i32], duration: i32) -> i32 {
+    if duration == 0 {
         return 0;
     }
-    let p = (sum + target) / 2;
-    let mut dp = vec![0; 1 + p as usize];
-    dp[0] = 1;
-    for &num in nums.iter() {
-        for i in (num..=p).rev() {
-            dp[i as usize] += dp[(i - num) as usize];
-        }
+    let (mut start, mut end) = (time_series[0], time_series[0] + duration);
+    let mut res = 0;
+    // or zip(skip(1))
+    for &num in time_series.iter().skip(1) {
+        res += end.min(num) - start;
+        start = num;
+        end = start + duration;
     }
-    dp[p as usize]
+    res += duration;
+    res
 }
 
 #[cfg(test)]
@@ -38,8 +28,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(find_target_sum_ways(&[1, 1, 1, 1, 1], 3), 5);
-        debug_assert_eq!(find_target_sum_ways(&[1], 1), 1);
+        debug_assert_eq!(find_poisoned_duration(&[1, 4], 2), 4);
+        debug_assert_eq!(find_poisoned_duration(&[1, 2], 2), 3);
     }
 
     #[test]
