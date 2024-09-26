@@ -1,27 +1,31 @@
 mod helper;
 mod trie;
 
+use std::collections::BinaryHeap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_words(words: &[&str]) -> Vec<String> {
-    let rows = ["qwertyuiop", "asdfghjkl", "zxcvbnm"].map(to_bits);
-    words
+pub fn find_maximized_capital(k: i32, mut w: i32, profits: &[i32], capital: &[i32]) -> i32 {
+    let mut cp: Vec<_> = capital
         .iter()
-        .filter_map(|s| {
-            let bits = to_bits(s);
-            if rows.iter().any(|&n| n | bits == n) {
-                Some(s.to_string())
-            } else {
-                None
-            }
-        })
-        .collect()
-}
-
-fn to_bits(s: &str) -> i32 {
-    s.bytes()
-        .fold(0, |acc, b| acc | 1 << (b.to_ascii_lowercase() - b'a'))
+        .copied()
+        .zip(profits.iter().copied())
+        .collect();
+    cp.sort_unstable();
+    let mut idx = 0;
+    let mut pq = BinaryHeap::new();
+    for _ in 0..k {
+        while cp.get(idx).is_some_and(|v| v.0 <= w) {
+            pq.push(cp[idx].1);
+            idx += 1
+        }
+        let Some(v) = pq.pop() else {
+            break;
+        };
+        w += v;
+    }
+    w
 }
 
 #[cfg(test)]
@@ -32,16 +36,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            find_words(&["Hello", "Alaska", "Dad", "Peace"]),
-            ["Alaska", "Dad"]
-        );
-        debug_assert!(find_words(&["omk"]).is_empty());
-        debug_assert_eq!(find_words(&["adsdf", "sfd"]), ["adsdf", "sfd"]);
+        debug_assert_eq!(find_maximized_capital(2, 0, &[1, 2, 3], &[0, 1, 1]), 4);
+        debug_assert_eq!(find_maximized_capital(3, 0, &[1, 2, 3], &[0, 1, 2]), 6);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(find_maximized_capital(10, 0, &[1, 2, 3], &[0, 1, 2]), 6);
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
