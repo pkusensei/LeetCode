@@ -4,33 +4,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_diagonal_order(mat: &[&[i32]]) -> Vec<i32> {
-    let (rows, cols) = get_dimensions(mat);
-    let mut res = vec![];
-    for i in 0..cols {
-        let (mut row, mut col) = (0, i);
-        let mut curr = vec![mat[row][col]];
-        while col > 0 && row < rows - 1 {
-            col -= 1;
-            row += 1;
-            curr.push(mat[row][col]);
-        }
-        res.push(curr);
-    }
-    for i in 1..rows {
-        let (mut row, mut col) = (i, cols - 1);
-        let mut curr = vec![mat[row][col]];
-        while col > 0 && row < rows - 1 {
-            col -= 1;
-            row += 1;
-            curr.push(mat[row][col]);
-        }
-        res.push(curr);
-    }
-    for v in res.iter_mut().step_by(2) {
-        v.reverse();
-    }
-    res.into_iter().flatten().collect()
+pub fn find_words(words: &[&str]) -> Vec<String> {
+    let rows = ["qwertyuiop", "asdfghjkl", "zxcvbnm"].map(to_bits);
+    words
+        .iter()
+        .filter_map(|s| {
+            let bits = to_bits(s);
+            if rows.iter().any(|&n| n | bits == n) {
+                Some(s.to_string())
+            } else {
+                None
+            }
+        })
+        .collect()
+}
+
+fn to_bits(s: &str) -> i32 {
+    s.bytes()
+        .fold(0, |acc, b| acc | 1 << (b.to_ascii_lowercase() - b'a'))
 }
 
 #[cfg(test)]
@@ -42,10 +33,11 @@ mod tests {
     #[test]
     fn basics() {
         debug_assert_eq!(
-            find_diagonal_order(&[&[1, 2, 3], &[4, 5, 6], &[7, 8, 9]]),
-            [1, 2, 4, 7, 5, 3, 6, 8, 9]
+            find_words(&["Hello", "Alaska", "Dad", "Peace"]),
+            ["Alaska", "Dad"]
         );
-        debug_assert_eq!(find_diagonal_order(&[&[1, 2], &[3, 4]]), [1, 2, 3, 4]);
+        debug_assert!(find_words(&["omk"]).is_empty());
+        debug_assert_eq!(find_words(&["adsdf", "sfd"]), ["adsdf", "sfd"]);
     }
 
     #[test]
