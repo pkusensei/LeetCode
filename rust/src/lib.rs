@@ -4,26 +4,39 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn next_greater_element(nums1: &[i32], nums2: &[i32]) -> Vec<i32> {
-    let mut stack = vec![];
-    let mut map = std::collections::HashMap::new();
-    for &num in nums2.iter().rev() {
-        if stack.is_empty() {
-            stack.push(num);
-            continue;
-        }
-        while stack.last().is_some_and(|&v| v < num) {
-            stack.pop();
-        }
-        if let Some(last) = stack.last().copied() {
-            map.entry(num).or_insert(last);
-        }
-        stack.push(num);
+#[derive(Debug, Clone)]
+struct MyCalendar {
+    data: Vec<[i32; 2]>,
+}
+
+impl MyCalendar {
+    fn new() -> Self {
+        Self { data: vec![] }
     }
-    nums1
-        .iter()
-        .map(|n| map.get(n).copied().unwrap_or(-1))
-        .collect()
+
+    fn book(&mut self, start: i32, end: i32) -> bool {
+        if self.data.is_empty() {
+            self.data.push([start, end]);
+            return true;
+        }
+        let Err(i) = self.data.binary_search_by(|v| v[0].cmp(&start)) else {
+            return false;
+        };
+        if i == 0 && self.data.first().is_some_and(|v| end <= v[0]) {
+            self.data.insert(0, [start, end]);
+            true
+        } else if i == self.data.len() && self.data.last().is_some_and(|v| v[1] <= start) {
+            self.data.push([start, end]);
+            true
+        } else if self.data.get(i - 1).is_some_and(|v| v[1] <= start)
+            && self.data.get(i).is_some_and(|v| end <= v[0])
+        {
+            self.data.insert(i, [start, end]);
+            true
+        } else {
+            false
+        }
+    }
 }
 
 #[cfg(test)]
@@ -34,17 +47,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(next_greater_element(&[4, 1, 2], &[1, 3, 4, 2]), [-1, 3, -1]);
-        debug_assert_eq!(next_greater_element(&[2, 4], &[1, 2, 3, 4]), [3, -1]);
+        let mut cal = MyCalendar::new();
+        debug_assert!(cal.book(10, 20)); // return True
+        debug_assert!(!cal.book(15, 25)); // return False, It can not be booked because time 15 is already booked by another event.
+        debug_assert!(cal.book(20, 30)); // return True, The event can be booked, as the first event takes every time less than 20, but not including 20.
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(
-            next_greater_element(&[1, 3, 5, 2, 4], &[6, 5, 4, 3, 2, 1, 7]),
-            &[7, 7, 7, 7, 7]
-        );
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
