@@ -3,40 +3,34 @@ mod trie;
 
 #[allow(unused_imports)]
 use helper::*;
-use rand::Rng;
 
-#[derive(Debug, Clone)]
-struct Solution {
-    rects: Vec<[i32; 4]>,
-    prefix: Vec<i32>,
-}
-
-impl Solution {
-    fn new(rects: Vec<Vec<i32>>) -> Self {
-        let rects: Vec<_> = rects.iter().map(|v| [v[0], v[1], v[2], v[3]]).collect();
-        let mut prefix = Vec::with_capacity(rects.len());
-        prefix.push(Self::area_of(rects[0]));
-        for (i, &rect) in rects.iter().enumerate().skip(1) {
-            prefix.push(prefix[i - 1] + Self::area_of(rect));
+pub fn find_diagonal_order(mat: &[&[i32]]) -> Vec<i32> {
+    let (rows, cols) = get_dimensions(mat);
+    let mut res = vec![];
+    for i in 0..cols {
+        let (mut row, mut col) = (0, i);
+        let mut curr = vec![mat[row][col]];
+        while col > 0 && row < rows - 1 {
+            col -= 1;
+            row += 1;
+            curr.push(mat[row][col]);
         }
-        Self { rects, prefix }
+        res.push(curr);
     }
-
-    fn pick(&self) -> Vec<i32> {
-        let upper = *self.prefix.last().unwrap();
-        let mut rng = rand::thread_rng();
-        let area = rng.gen_range(1..=upper);
-        let i = self.prefix.partition_point(|&n| n < area);
-        let rect = self.rects[i];
-        vec![
-            rng.gen_range(rect[0]..=rect[2]),
-            rng.gen_range(rect[1]..=rect[3]),
-        ]
+    for i in 1..rows {
+        let (mut row, mut col) = (i, cols - 1);
+        let mut curr = vec![mat[row][col]];
+        while col > 0 && row < rows - 1 {
+            col -= 1;
+            row += 1;
+            curr.push(mat[row][col]);
+        }
+        res.push(curr);
     }
-
-    fn area_of(rect: [i32; 4]) -> i32 {
-        (rect[2] - rect[0] + 1) * (rect[3] - rect[1] + 1)
+    for v in res.iter_mut().step_by(2) {
+        v.reverse();
     }
+    res.into_iter().flatten().collect()
 }
 
 #[cfg(test)]
@@ -47,12 +41,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        let solution = Solution::new(vec![vec![-2, -2, 1, 1], vec![2, 2, 4, 6]]);
-        solution.pick(); // return [1, -2]
-        solution.pick(); // return [1, -1]
-        solution.pick(); // return [-1, -2]
-        solution.pick(); // return [-2, -2]
-        solution.pick(); // return [0, 0]// return True, The event can be booked, as the first event takes every time less than 20, but not including 20.
+        debug_assert_eq!(
+            find_diagonal_order(&[&[1, 2, 3], &[4, 5, 6], &[7, 8, 9]]),
+            [1, 2, 4, 7, 5, 3, 6, 8, 9]
+        );
+        debug_assert_eq!(find_diagonal_order(&[&[1, 2], &[3, 4]]), [1, 2, 3, 4]);
     }
 
     #[test]
