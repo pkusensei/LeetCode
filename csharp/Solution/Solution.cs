@@ -5,26 +5,25 @@ namespace Solution;
 
 public class Solution
 {
-    public int[] FindFrequentTreeSum(TreeNode root)
+    public int FindBottomLeftValue(TreeNode root)
     {
-        var count = new Dictionary<int, int>();
-        Dfs(root, count);
-        var maxCount = count.Values.Max();
-        List<int> res = [];
-        foreach (var (k, v) in count)
+        var queue = new Queue<(TreeNode, int)>();
+        queue.Enqueue((root, 0));
+        var (level, res) = (0, root.val);
+        while (queue.TryDequeue(out var item))
         {
-            if (v == maxCount) { res.Add(k); }
+            var (node, curr_level) = item;
+            if (node is not null)
+            {
+                if (curr_level > level)
+                {
+                    level = curr_level;
+                    res = node.val;
+                }
+                queue.Enqueue((node.left, curr_level + 1));
+                queue.Enqueue((node.right, curr_level + 1));
+            }
         }
-        return [.. res];
-    }
-
-    static int Dfs(TreeNode node, IDictionary<int, int> count)
-    {
-        var sum = node.val;
-        if (node.left is not null) { sum += Dfs(node.left, count); }
-        if (node.right is not null) { sum += Dfs(node.right, count); }
-        if (count.TryGetValue(sum, out var v)) { count[sum] = v + 1; }
-        else { count.Add(sum, 1); }
-        return sum;
+        return res;
     }
 }
