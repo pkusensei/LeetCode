@@ -12,18 +12,18 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
-        var a = TreeNode.Make([1, null, 2, 2]);
-        var b = sol.FindMode(a);
-        var c = "[2]";
+        var a = TreeNode.Make([5, 2, -3]);
+        var b = sol.FindFrequentTreeSum(a);
+        var c = "[2,-3,4]";
         Assert.AreEqual(c, b.Print());
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        var a = TreeNode.Make([0]);
-        var b = sol.FindMode(a);
-        var c = "[0]";
+        var a = TreeNode.Make([5, 2, -5]);
+        var b = sol.FindFrequentTreeSum(a);
+        var c = "[2]";
         Assert.AreEqual(c, b.Print());
     }
 

@@ -5,36 +5,26 @@ namespace Solution;
 
 public class Solution
 {
-    List<int> res = [];
-    int currNum = 0;
-    int currStreak = 0;
-    int maxStreak = 0;
-
-    public int[] FindMode(TreeNode root)
+    public int[] FindFrequentTreeSum(TreeNode root)
     {
-        Dfs(root);
+        var count = new Dictionary<int, int>();
+        Dfs(root, count);
+        var maxCount = count.Values.Max();
+        List<int> res = [];
+        foreach (var (k, v) in count)
+        {
+            if (v == maxCount) { res.Add(k); }
+        }
         return [.. res];
     }
 
-    void Dfs(TreeNode node)
+    static int Dfs(TreeNode node, IDictionary<int, int> count)
     {
-        if (node is null) { return; }
-        Dfs(node.left);
-        if (currNum == node.val)
-        {
-            currStreak += 1;
-        }
-        else
-        {
-            currStreak = 1;
-            currNum = node.val;
-        }
-        if (currStreak > maxStreak)
-        {
-            res.Clear();
-            maxStreak = currStreak;
-        }
-        if (currStreak == maxStreak) { res.Add(node.val); }
-        Dfs(node.right);
+        var sum = node.val;
+        if (node.left is not null) { sum += Dfs(node.left, count); }
+        if (node.right is not null) { sum += Dfs(node.right, count); }
+        if (count.TryGetValue(sum, out var v)) { count[sum] = v + 1; }
+        else { count.Add(sum, 1); }
+        return sum;
     }
 }
