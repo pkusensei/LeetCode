@@ -4,26 +4,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn next_greater_elements(nums: &[i32]) -> Vec<i32> {
-    let n = nums.len();
-    let mut nums = nums.to_vec();
-    nums.extend_from_within(..);
-    let mut stack = vec![];
-    let mut res = vec![None; n];
-    for (idx, &num) in nums.iter().enumerate().rev() {
-        if stack.is_empty() {
-            stack.push(num);
-            continue;
-        }
-        while stack.last().is_some_and(|&v| v <= num) {
-            stack.pop();
-        }
-        if let (Some(last), Some(opt)) = (stack.last().copied(), res.get_mut(idx)) {
-            opt.get_or_insert(last);
-        }
-        stack.push(num);
+pub fn convert_to_base7(num: i32) -> String {
+    if num == 0 {
+        return "0".to_string();
     }
-    res.into_iter().map(|opt| opt.unwrap_or(-1)).collect()
+    let is_negative = num.is_negative();
+    let mut num = num.abs();
+    let mut res = vec![];
+    while num > 0 {
+        res.push((num % 7) as u8 + b'0');
+        num /= 7;
+    }
+    if is_negative {
+        res.push(b'-');
+    }
+    res.into_iter().rev().map(char::from).collect()
 }
 
 #[cfg(test)]
@@ -34,8 +29,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(next_greater_elements(&[1, 2, 1]), [2, -1, 2]);
-        debug_assert_eq!(next_greater_elements(&[1, 2, 3, 4, 3]), [2, 3, 4, -1, 4]);
+        debug_assert_eq!(convert_to_base7(100), "202");
+        debug_assert_eq!(convert_to_base7(-7), "-10");
     }
 
     #[test]
