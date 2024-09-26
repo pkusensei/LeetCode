@@ -3,39 +3,39 @@ mod trie;
 
 #[allow(unused_imports)]
 use helper::*;
+use rand::Rng;
 
 #[derive(Debug, Clone)]
-struct MyCalendar {
-    data: Vec<[i32; 2]>,
+struct Solution {
+    rects: Vec<[i32; 4]>,
+    prefix: Vec<i32>,
 }
 
-impl MyCalendar {
-    fn new() -> Self {
-        Self { data: vec![] }
+impl Solution {
+    fn new(rects: Vec<Vec<i32>>) -> Self {
+        let rects: Vec<_> = rects.iter().map(|v| [v[0], v[1], v[2], v[3]]).collect();
+        let mut prefix = Vec::with_capacity(rects.len());
+        prefix.push(Self::area_of(rects[0]));
+        for (i, &rect) in rects.iter().enumerate().skip(1) {
+            prefix.push(prefix[i - 1] + Self::area_of(rect));
+        }
+        Self { rects, prefix }
     }
 
-    fn book(&mut self, start: i32, end: i32) -> bool {
-        if self.data.is_empty() {
-            self.data.push([start, end]);
-            return true;
-        }
-        let Err(i) = self.data.binary_search_by(|v| v[0].cmp(&start)) else {
-            return false;
-        };
-        if i == 0 && self.data.first().is_some_and(|v| end <= v[0]) {
-            self.data.insert(0, [start, end]);
-            true
-        } else if i == self.data.len() && self.data.last().is_some_and(|v| v[1] <= start) {
-            self.data.push([start, end]);
-            true
-        } else if self.data.get(i - 1).is_some_and(|v| v[1] <= start)
-            && self.data.get(i).is_some_and(|v| end <= v[0])
-        {
-            self.data.insert(i, [start, end]);
-            true
-        } else {
-            false
-        }
+    fn pick(&self) -> Vec<i32> {
+        let upper = *self.prefix.last().unwrap();
+        let mut rng = rand::thread_rng();
+        let area = rng.gen_range(1..=upper);
+        let i = self.prefix.partition_point(|&n| n < area);
+        let rect = self.rects[i];
+        vec![
+            rng.gen_range(rect[0]..=rect[2]),
+            rng.gen_range(rect[1]..=rect[3]),
+        ]
+    }
+
+    fn area_of(rect: [i32; 4]) -> i32 {
+        (rect[2] - rect[0] + 1) * (rect[3] - rect[1] + 1)
     }
 }
 
@@ -47,10 +47,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        let mut cal = MyCalendar::new();
-        debug_assert!(cal.book(10, 20)); // return True
-        debug_assert!(!cal.book(15, 25)); // return False, It can not be booked because time 15 is already booked by another event.
-        debug_assert!(cal.book(20, 30)); // return True, The event can be booked, as the first event takes every time less than 20, but not including 20.
+        let solution = Solution::new(vec![vec![-2, -2, 1, 1], vec![2, 2, 4, 6]]);
+        solution.pick(); // return [1, -2]
+        solution.pick(); // return [1, -1]
+        solution.pick(); // return [-1, -2]
+        solution.pick(); // return [-2, -2]
+        solution.pick(); // return [0, 0]// return True, The event can be booked, as the first event takes every time less than 20, but not including 20.
     }
 
     #[test]
