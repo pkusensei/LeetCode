@@ -4,24 +4,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_min_moves(machines: &[i32]) -> i32 {
-    let n = machines.len();
-    let sum: i32 = machines.iter().sum();
-    if sum % (n as i32) > 0 {
-        return -1;
+pub fn change(amount: i32, coins: &[i32]) -> i32 {
+    let n = amount as usize;
+    let mut dp = vec![0; 1 + n];
+    dp[0] = 1; // empty
+
+    // Think backwards
+    // To reach n, for each number < n, e.g a
+    // a + delta == n
+    // Thus find all a's that are delta away from any n
+    // Now do the same for all deltas.
+    // This also prevents duplicates.
+    // For example with amount == 3 and coins == [1, 2]
+    // {1, 2} and {2, 1} are the same
+    for &delta in coins {
+        for i in 0..n {
+            if delta as usize + i <= n {
+                dp[delta as usize + i] += dp[i]
+            }
+        }
     }
-    let average = sum / (n as i32);
-    let (mut curr, mut res) = (0, 0);
-    // Find max throughput/flow on every spot
-    for &num in machines.iter() {
-        // Accumulates flow until current spot
-        curr += num - average;
-        // num - average => givers works one by one
-        // while receivers can receive multiple
-        // hence no abs() here
-        res = res.max(curr.abs()).max(num - average)
-    }
-    res
+    dp[n]
 }
 
 #[cfg(test)]
@@ -32,9 +35,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(find_min_moves(&[1, 0, 5]), 3);
-        debug_assert_eq!(find_min_moves(&[0, 3, 0]), 2);
-        debug_assert_eq!(find_min_moves(&[0, 2, 0]), -1);
+        debug_assert_eq!(change(5, &[1, 2, 5]), 4);
+        debug_assert_eq!(change(3, &[2]), 0);
+        debug_assert_eq!(change(10, &[10]), 1);
     }
 
     #[test]
