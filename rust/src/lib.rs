@@ -1,49 +1,48 @@
 mod helper;
 mod trie;
 
+use std::collections::BTreeMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_rotate_steps(ring: &str, key: &str) -> i32 {
-    dfs(
-        ring.as_bytes(),
-        key.as_bytes(),
-        0,
-        0,
-        &mut vec![vec![0; key.len()]; ring.len()],
-    )
+#[derive(Debug, Clone)]
+struct MyCalendarTwo {
+    counts: BTreeMap<i32, i32>,
+    max_overlap: i32,
 }
 
-fn dfs(ring: &[u8], key: &[u8], r_idx: usize, k_idx: usize, dp: &mut [Vec<i32>]) -> i32 {
-    if k_idx == key.len() {
-        return 0;
-    }
-    if dp[r_idx][k_idx] > 0 {
-        return dp[r_idx][k_idx];
-    }
-    if ring[r_idx] == key[k_idx] {
-        // dp is faster when more results cached
-        // when more smaller subproblems?
-        let res = 1 + dfs(ring, key, r_idx, k_idx + 1, dp);
-        dp[r_idx][k_idx] = res;
-        return res;
+impl MyCalendarTwo {
+    fn new() -> Self {
+        Self {
+            counts: BTreeMap::new(),
+            max_overlap: 2,
+        }
     }
 
-    let (mut right, mut r_count) = (r_idx, 0);
-    while right < ring.len() && ring[right] != key[k_idx] {
-        r_count += 1;
-        right = (right + 1) % ring.len();
+    fn book(&mut self, start: i32, end: i32) -> bool {
+        *self.counts.entry(start).or_insert(0) += 1;
+        *self.counts.entry(end).or_insert(0) -= 1;
+        let mut overlap = 0;
+        for v in self.counts.values() {
+            overlap += v;
+            if overlap > self.max_overlap {
+                break;
+            }
+        }
+        if overlap > self.max_overlap {
+            self.counts.entry(start).and_modify(|v| *v -= 1);
+            self.counts.entry(end).and_modify(|v| *v += 1);
+            if self.counts.get(&start).is_some_and(|&v| v == 0) {
+                self.counts.remove(&start);
+            };
+            if self.counts.get(&end).is_some_and(|&v| v == 0) {
+                self.counts.remove(&end);
+            };
+            return false;
+        }
+        true
     }
-    let (mut left, mut l_count) = (r_idx, 0);
-    while ring[left] != key[k_idx] {
-        l_count += 1;
-        left = left.checked_sub(1).unwrap_or(ring.len() - 1);
-    }
-
-    let res =
-        (r_count + dfs(ring, key, right, k_idx, dp)).min(l_count + dfs(ring, key, left, k_idx, dp));
-    dp[r_idx][k_idx] = res;
-    res
 }
 
 #[cfg(test)]
@@ -54,8 +53,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(find_rotate_steps("godding", "gd"), 4);
-        debug_assert_eq!(find_rotate_steps("godding", "godding"), 13);
+        let mut cal = MyCalendarTwo::new();
+        debug_assert!(cal.book(10, 20)); // return True, The event can be booked.
+        debug_assert!(cal.book(50, 60)); // return True, The event can be booked.
+        debug_assert!(cal.book(10, 40)); // return True, The event can be double booked.
+        debug_assert!(!cal.book(5, 15)); // return False, The event cannot be booked, because it would result in a triple booking.
+        debug_assert!(cal.book(5, 10)); // return True, The event can be booked, as it does not use time 10 which is already double booked.
+        debug_assert!(cal.book(25, 55)); // return True, The event can be booked, as the time in [25, 40) will be double booked with the third event, the time [40, 50) will be single booked, and the time [50, 55) will be double booked with the second event.
     }
 
     #[test]
