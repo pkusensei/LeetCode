@@ -1,30 +1,45 @@
 mod helper;
 mod trie;
 
+use std::collections::BTreeSet;
+
 #[allow(unused_imports)]
 use helper::*;
+use rand::{rngs::ThreadRng, Rng};
 
-pub fn change(amount: i32, coins: &[i32]) -> i32 {
-    let n = amount as usize;
-    let mut dp = vec![0; 1 + n];
-    dp[0] = 1; // empty
+#[derive(Debug, Clone)]
+struct Solution {
+    m: i32,
+    n: i32,
+    record: BTreeSet<i32>,
+    rng: ThreadRng,
+}
 
-    // Think backwards
-    // To reach n, for each number < n, e.g a
-    // a + delta == n
-    // Thus find all a's that are delta away from any n
-    // Now do the same for all deltas.
-    // This also prevents duplicates.
-    // For example with amount == 3 and coins == [1, 2]
-    // {1, 2} and {2, 1} are the same
-    for &delta in coins {
-        for i in 0..n {
-            if delta as usize + i <= n {
-                dp[delta as usize + i] += dp[i]
-            }
+impl Solution {
+    fn new(m: i32, n: i32) -> Self {
+        Self {
+            m,
+            n,
+            record: BTreeSet::new(),
+            rng: rand::thread_rng(),
         }
     }
-    dp[n]
+
+    fn flip(&mut self) -> Vec<i32> {
+        let mut area = self
+            .rng
+            .gen_range(0..self.m * self.n - self.record.len() as i32);
+        area += self.record.iter().filter(|&&n| n < area).count() as i32;
+        while self.record.contains(&area) {
+            area += 1
+        }
+        self.record.insert(area);
+        vec![area % self.m, area / self.m]
+    }
+
+    fn reset(&mut self) {
+        self.record.clear();
+    }
 }
 
 #[cfg(test)]
@@ -35,9 +50,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(change(5, &[1, 2, 5]), 4);
-        debug_assert_eq!(change(3, &[2]), 0);
-        debug_assert_eq!(change(10, &[10]), 1);
+        let mut solution = Solution::new(3, 1);
+        solution.flip(); // return [1, 0], [0,0], [1,0], and [2,0] should be equally likely to be returned.
+        solution.flip(); // return [2, 0], Since [1,0] was returned, [2,0] and [0,0]
+        solution.flip(); // return [0, 0], Based on the previously returned indices, only [0,0] can be returned.
+        solution.reset(); // All the values are reset to 0 and can be returned.
+        solution.flip(); // return [2, 0], [0,0], [1,0], and [2,0] should be equally likely to be returned.
     }
 
     #[test]
