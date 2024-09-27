@@ -1,48 +1,49 @@
 mod helper;
 mod trie;
 
-use std::collections::BTreeMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-#[derive(Debug, Clone)]
-struct MyCalendarTwo {
-    counts: BTreeMap<i32, i32>,
-    max_overlap: i32,
-}
+pub fn longest_palindrome_subseq(s: &str) -> i32 {
+    let (s, n) = (s.as_bytes(), s.len());
+    // let mut dp = vec![vec![-1; n]; n];
+    // top_down(s, &mut dp, 0, n - 1)
 
-impl MyCalendarTwo {
-    fn new() -> Self {
-        Self {
-            counts: BTreeMap::new(),
-            max_overlap: 2,
-        }
+    let mut dp = vec![vec![0; n]; n];
+    for i in 0..n {
+        dp[i][i] = 1;
     }
-
-    fn book(&mut self, start: i32, end: i32) -> bool {
-        *self.counts.entry(start).or_insert(0) += 1;
-        *self.counts.entry(end).or_insert(0) -= 1;
-        let mut overlap = 0;
-        for v in self.counts.values() {
-            overlap += v;
-            if overlap > self.max_overlap {
-                break;
+    for len in 2..=n {
+        for i in 0..(n - len + 1) {
+            let j = len + i - 1;
+            if s[i] == s[j] {
+                dp[i][j] = 2 + dp[i + 1][j - 1]
+            } else {
+                dp[i][j] = dp[i + 1][j].max(dp[i][j - 1])
             }
         }
-        if overlap > self.max_overlap {
-            self.counts.entry(start).and_modify(|v| *v -= 1);
-            self.counts.entry(end).and_modify(|v| *v += 1);
-            if self.counts.get(&start).is_some_and(|&v| v == 0) {
-                self.counts.remove(&start);
-            };
-            if self.counts.get(&end).is_some_and(|&v| v == 0) {
-                self.counts.remove(&end);
-            };
-            return false;
-        }
-        true
     }
+    dp[0][n - 1]
+}
+
+fn top_down(s: &[u8], dp: &mut [Vec<i32>], i: usize, j: usize) -> i32 {
+    if i > j {
+        return 0; // empty string
+    }
+    if i == j {
+        return 1; // single byte
+    }
+    if dp[i][j] > -1 {
+        return dp[i][j];
+    }
+    let res = if s[i] == s[j] {
+        2 + top_down(s, dp, i + 1, j - 1)
+    } else {
+        // skip one byte, either [i] or [j]
+        top_down(s, dp, i + 1, j).max(top_down(s, dp, i, j - 1))
+    };
+    dp[i][j] = res;
+    res
 }
 
 #[cfg(test)]
@@ -53,13 +54,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        let mut cal = MyCalendarTwo::new();
-        debug_assert!(cal.book(10, 20)); // return True, The event can be booked.
-        debug_assert!(cal.book(50, 60)); // return True, The event can be booked.
-        debug_assert!(cal.book(10, 40)); // return True, The event can be double booked.
-        debug_assert!(!cal.book(5, 15)); // return False, The event cannot be booked, because it would result in a triple booking.
-        debug_assert!(cal.book(5, 10)); // return True, The event can be booked, as it does not use time 10 which is already double booked.
-        debug_assert!(cal.book(25, 55)); // return True, The event can be booked, as the time in [25, 40) will be double booked with the third event, the time [40, 50) will be single booked, and the time [50, 55) will be double booked with the second event.
+        debug_assert_eq!(longest_palindrome_subseq("bbbab"), 4);
+        debug_assert_eq!(longest_palindrome_subseq("cbbd"), 2);
     }
 
     #[test]
