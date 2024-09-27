@@ -1,15 +1,39 @@
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_lu_slength(a: &str, b: &str) -> i32 {
-    if a == b {
-        -1
-    } else {
-        a.len().max(b.len()) as _
+pub fn find_lu_slength(strs: &[&str]) -> i32 {
+    let mut subseqs = HashMap::new();
+    let mut curr = vec![];
+    for s in strs.iter() {
+        all_subseqs(s.as_bytes(), &mut curr, &mut subseqs);
     }
+    subseqs
+        .into_iter()
+        .filter_map(|(k, v)| {
+            if v == 1 && !k.is_empty() {
+                Some(k.len() as i32)
+            } else {
+                None
+            }
+        })
+        .max()
+        .unwrap_or(-1)
+}
+
+fn all_subseqs(s: &[u8], curr: &mut Vec<u8>, subseqs: &mut HashMap<Vec<u8>, i32>) {
+    if s.is_empty() {
+        *subseqs.entry(curr.clone()).or_insert(0) += 1;
+        return;
+    }
+    all_subseqs(&s[1..], curr, subseqs);
+    curr.push(s[0]);
+    all_subseqs(&s[1..], curr, subseqs);
+    curr.pop();
 }
 
 #[cfg(test)]
@@ -20,13 +44,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(find_lu_slength("aba", "cdc"), 3);
-        debug_assert_eq!(find_lu_slength("aaa", "bbb"), 3);
-        debug_assert_eq!(find_lu_slength("aaa", "aaa"), -1);
+        debug_assert_eq!(find_lu_slength(&["aba", "cdc", "eae"]), 3);
+        debug_assert_eq!(find_lu_slength(&["aaa", "aaa", "aa"]), -1);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(find_lu_slength(&["aabbcc", "aabbcc", "e"]), 1);
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
