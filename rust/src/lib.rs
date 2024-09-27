@@ -6,36 +6,24 @@ use std::collections::HashMap;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_lu_slength(strs: &[&str]) -> i32 {
-    let mut subseqs = HashMap::new();
-    let mut curr = vec![];
-    for s in strs.iter() {
-        all_subseqs(s.as_bytes(), &mut curr, &mut subseqs);
-    }
-    subseqs
-        .into_iter()
-        .filter_map(|(k, v)| {
-            if v == 1 && !k.is_empty() {
-                Some(k.len() as i32)
-            } else {
-                None
+pub fn check_subarray_sum(nums: &[i32], k: i32) -> bool {
+    let mut seen = HashMap::from([(0, -1)]);
+    let mut prev = 0;
+    // prefix sum, but with sum%k
+    // so that ...a,b..a...
+    //             [^..^] is the subarray wanted
+    for (i, &num) in nums.iter().enumerate() {
+        prev = (prev + num) % k;
+        if let Some(&v) = seen.get(&prev) {
+            if i as i32 - v > 1 {
+                return true;
             }
-        })
-        .max()
-        .unwrap_or(-1)
-}
-
-fn all_subseqs(s: &[u8], curr: &mut Vec<u8>, subseqs: &mut HashMap<Vec<u8>, i32>) {
-    if s.is_empty() {
-        *subseqs.entry(curr.clone()).or_insert(0) += 1;
-        return;
+        } else {
+            seen.insert(prev, i as i32);
+        }
     }
-    all_subseqs(&s[1..], curr, subseqs);
-    curr.push(s[0]);
-    all_subseqs(&s[1..], curr, subseqs);
-    curr.pop();
+    false
 }
-
 #[cfg(test)]
 mod tests {
     use std::fmt::Debug;
@@ -44,13 +32,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(find_lu_slength(&["aba", "cdc", "eae"]), 3);
-        debug_assert_eq!(find_lu_slength(&["aaa", "aaa", "aa"]), -1);
+        debug_assert!(check_subarray_sum(&[23, 2, 4, 6, 7], 6));
+        debug_assert!(check_subarray_sum(&[23, 2, 6, 4, 7], 6));
+        debug_assert!(!check_subarray_sum(&[23, 2, 6, 4, 7], 13));
     }
 
     #[test]
     fn test() {
-        debug_assert_eq!(find_lu_slength(&["aabbcc", "aabbcc", "e"]), 1);
+        debug_assert!(check_subarray_sum(&[5, 0, 0, 0], 3));
     }
 
     #[allow(dead_code)]
