@@ -7,24 +7,24 @@ namespace Tests;
 [TestClass]
 public class UnitTest
 {
-    Solution.Solution sol = new();
+    readonly Solution.Solution sol = new();
 
     [TestMethod]
     public void TestMethod1()
     {
-        var a = TreeNode.Make([2, 1, 3]);
-        var b = sol.FindBottomLeftValue(a);
-        var c = 1;
-        Assert.AreEqual(c, b);
+        var a = TreeNode.Make([1, 3, 2, 5, 3, null, 9]);
+        var b = sol.LargestValues(a);
+        var c = "[1,3,9]";
+        Assert.AreEqual(c, b.Print());
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        var a = TreeNode.Make([1, 2, 3, 4, null, 5, 6, null, null, 7]);
-        var b = sol.FindBottomLeftValue(a);
-        var c = 7;
-        Assert.AreEqual(c, b);
+        var a = TreeNode.Make([1, 2, 3]);
+        var b = sol.LargestValues(a);
+        var c = "[1,3]";
+        Assert.AreEqual(c, b.Print());
     }
 
     [TestMethod]
