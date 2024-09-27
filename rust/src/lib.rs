@@ -4,17 +4,46 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn check_perfect_number(num: i32) -> bool {
-    if num == 1 {
-        return false;
+pub fn find_rotate_steps(ring: &str, key: &str) -> i32 {
+    dfs(
+        ring.as_bytes(),
+        key.as_bytes(),
+        0,
+        0,
+        &mut vec![vec![0; key.len()]; ring.len()],
+    )
+}
+
+fn dfs(ring: &[u8], key: &[u8], r_idx: usize, k_idx: usize, dp: &mut [Vec<i32>]) -> i32 {
+    if k_idx == key.len() {
+        return 0;
     }
-    let mut sum = 1;
-    for n in 2..=f64::from(num).sqrt() as i32 {
-        if num % n == 0 {
-            sum += n + num / n;
-        }
+    if dp[r_idx][k_idx] > 0 {
+        return dp[r_idx][k_idx];
     }
-    sum == num
+    if ring[r_idx] == key[k_idx] {
+        // dp is faster when more results cached
+        // when more smaller subproblems?
+        let res = 1 + dfs(ring, key, r_idx, k_idx + 1, dp);
+        dp[r_idx][k_idx] = res;
+        return res;
+    }
+
+    let (mut right, mut r_count) = (r_idx, 0);
+    while right < ring.len() && ring[right] != key[k_idx] {
+        r_count += 1;
+        right = (right + 1) % ring.len();
+    }
+    let (mut left, mut l_count) = (r_idx, 0);
+    while ring[left] != key[k_idx] {
+        l_count += 1;
+        left = left.checked_sub(1).unwrap_or(ring.len() - 1);
+    }
+
+    let res =
+        (r_count + dfs(ring, key, right, k_idx, dp)).min(l_count + dfs(ring, key, left, k_idx, dp));
+    dp[r_idx][k_idx] = res;
+    res
 }
 
 #[cfg(test)]
@@ -25,8 +54,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(check_perfect_number(28));
-        debug_assert!(!check_perfect_number(7));
+        debug_assert_eq!(find_rotate_steps("godding", "gd"), 4);
+        debug_assert_eq!(find_rotate_steps("godding", "godding"), 13);
     }
 
     #[test]
