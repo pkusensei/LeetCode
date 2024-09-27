@@ -1,45 +1,14 @@
 mod helper;
 mod trie;
 
-use std::collections::BTreeSet;
-
 #[allow(unused_imports)]
 use helper::*;
-use rand::{rngs::ThreadRng, Rng};
 
-#[derive(Debug, Clone)]
-struct Solution {
-    m: i32,
-    n: i32,
-    record: BTreeSet<i32>,
-    rng: ThreadRng,
-}
-
-impl Solution {
-    fn new(m: i32, n: i32) -> Self {
-        Self {
-            m,
-            n,
-            record: BTreeSet::new(),
-            rng: rand::thread_rng(),
-        }
-    }
-
-    fn flip(&mut self) -> Vec<i32> {
-        let mut area = self
-            .rng
-            .gen_range(0..self.m * self.n - self.record.len() as i32);
-        area += self.record.iter().filter(|&&n| n < area).count() as i32;
-        while self.record.contains(&area) {
-            area += 1
-        }
-        self.record.insert(area);
-        vec![area % self.m, area / self.m]
-    }
-
-    fn reset(&mut self) {
-        self.record.clear();
-    }
+pub fn detect_capital_use(word: &str) -> bool {
+    let s = word.as_bytes();
+    s.iter().all(|b| b.is_ascii_uppercase())
+        || s.iter().all(|b| b.is_ascii_lowercase())
+        || (s[0].is_ascii_uppercase() && s[1..].iter().all(|b| b.is_ascii_lowercase()))
 }
 
 #[cfg(test)]
@@ -50,12 +19,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        let mut solution = Solution::new(3, 1);
-        solution.flip(); // return [1, 0], [0,0], [1,0], and [2,0] should be equally likely to be returned.
-        solution.flip(); // return [2, 0], Since [1,0] was returned, [2,0] and [0,0]
-        solution.flip(); // return [0, 0], Based on the previously returned indices, only [0,0] can be returned.
-        solution.reset(); // All the values are reset to 0 and can be returned.
-        solution.flip(); // return [2, 0], [0,0], [1,0], and [2,0] should be equally likely to be returned.
+        debug_assert!(detect_capital_use("USA"));
+        debug_assert!(!detect_capital_use("FlaG"));
     }
 
     #[test]
