@@ -4,11 +4,12 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn detect_capital_use(word: &str) -> bool {
-    let s = word.as_bytes();
-    s.iter().all(|b| b.is_ascii_uppercase())
-        || s.iter().all(|b| b.is_ascii_lowercase())
-        || (s[0].is_ascii_uppercase() && s[1..].iter().all(|b| b.is_ascii_lowercase()))
+pub fn find_lu_slength(a: &str, b: &str) -> i32 {
+    if a == b {
+        -1
+    } else {
+        a.len().max(b.len()) as _
+    }
 }
 
 #[cfg(test)]
@@ -19,8 +20,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(detect_capital_use("USA"));
-        debug_assert!(!detect_capital_use("FlaG"));
+        debug_assert_eq!(find_lu_slength("aba", "cdc"), 3);
+        debug_assert_eq!(find_lu_slength("aaa", "bbb"), 3);
+        debug_assert_eq!(find_lu_slength("aaa", "aaa"), -1);
     }
 
     #[test]
