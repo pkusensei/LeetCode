@@ -4,45 +4,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn longest_palindrome_subseq(s: &str) -> i32 {
-    let (s, n) = (s.as_bytes(), s.len());
-    // let mut dp = vec![vec![-1; n]; n];
-    // top_down(s, &mut dp, 0, n - 1)
-
-    let mut dp = vec![vec![0; n]; n];
-    for i in 0..n {
-        dp[i][i] = 1;
+pub fn find_min_moves(machines: &[i32]) -> i32 {
+    let n = machines.len();
+    let sum: i32 = machines.iter().sum();
+    if sum % (n as i32) > 0 {
+        return -1;
     }
-    for len in 2..=n {
-        for i in 0..(n - len + 1) {
-            let j = len + i - 1;
-            if s[i] == s[j] {
-                dp[i][j] = 2 + dp[i + 1][j - 1]
-            } else {
-                dp[i][j] = dp[i + 1][j].max(dp[i][j - 1])
-            }
-        }
+    let average = sum / (n as i32);
+    let (mut curr, mut res) = (0, 0);
+    // Find max throughput/flow on every spot
+    for &num in machines.iter() {
+        // Accumulates flow until current spot
+        curr += num - average;
+        // num - average => givers works one by one
+        // while receivers can receive multiple
+        // hence no abs() here
+        res = res.max(curr.abs()).max(num - average)
     }
-    dp[0][n - 1]
-}
-
-fn top_down(s: &[u8], dp: &mut [Vec<i32>], i: usize, j: usize) -> i32 {
-    if i > j {
-        return 0; // empty string
-    }
-    if i == j {
-        return 1; // single byte
-    }
-    if dp[i][j] > -1 {
-        return dp[i][j];
-    }
-    let res = if s[i] == s[j] {
-        2 + top_down(s, dp, i + 1, j - 1)
-    } else {
-        // skip one byte, either [i] or [j]
-        top_down(s, dp, i + 1, j).max(top_down(s, dp, i, j - 1))
-    };
-    dp[i][j] = res;
     res
 }
 
@@ -54,8 +32,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(longest_palindrome_subseq("bbbab"), 4);
-        debug_assert_eq!(longest_palindrome_subseq("cbbd"), 2);
+        debug_assert_eq!(find_min_moves(&[1, 0, 5]), 3);
+        debug_assert_eq!(find_min_moves(&[0, 3, 0]), 2);
+        debug_assert_eq!(find_min_moves(&[0, 2, 0]), -1);
     }
 
     #[test]
