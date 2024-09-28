@@ -5,33 +5,18 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<int> LargestValues(TreeNode root)
+    public int GetMinimumDifference(TreeNode root)
     {
-        if (root is null) { return null; }
-        var queue = new Queue<(TreeNode, int)>();
-        queue.Enqueue((root, 0));
-        var (level, val) = (0, root.val);
-        var res = new List<int>();
-        while (queue.TryDequeue(out var item))
-        {
-            var (node, curr_level) = item;
-            if (node is not null)
-            {
-                if (curr_level > level)
-                {
-                    level = curr_level;
-                    res.Add(val);
-                    val = node.val;
-                }
-                else
-                {
-                    val = Math.Max(val, node.val);
-                }
-                queue.Enqueue((node.left, curr_level + 1));
-                queue.Enqueue((node.right, curr_level + 1));
-            }
-        }
-        res.Add(val);
-        return res;
+        var nums = new List<int>();
+        Inorder(root, nums);
+        return nums.Skip(1).Zip(nums).Select(p => p.First - p.Second).Min();
+    }
+
+    static void Inorder(TreeNode node, List<int> nums)
+    {
+        if (node is null) { return; }
+        Inorder(node.left, nums);
+        nums.Add(node.val);
+        Inorder(node.right, nums);
     }
 }

@@ -49,7 +49,6 @@ public abstract class TreeNodeBase<T> where T : TreeNodeBase<T>, new()
         }
     }
 
-
     public IEnumerable<T> PreorderFlatten()
     {
         var stack = new Stack<T>();
