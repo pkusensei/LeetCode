@@ -1,34 +1,34 @@
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
+use rand::Rng;
 
-pub fn count_arrangement(n: i32) -> i32 {
-    dfs(n, 1, 0, &mut HashMap::new())
+#[derive(Debug, Clone)]
+struct Solution {
+    prefix: Vec<i32>,
 }
 
-fn dfs(n: i32, num: i32, bits: i32, seen: &mut HashMap<(i32, i32), i32>) -> i32 {
-    if num > n {
-        return 1;
-    }
-    if let Some(&v) = seen.get(&(num, bits)) {
-        return v;
-    }
-    let mut res = 0;
-    // try all 1..=n on current bit idx
-    // which is tracked using bits
-    for idx in 1..=n {
-        let curr = bits & (1 << idx);
-        // current bit is empty and num fits on idx
-        if curr == 0 && (num % idx == 0 || idx % num == 0) {
-            res += dfs(n, num + 1, bits | (1 << idx), seen);
+impl Solution {
+    fn new(w: Vec<i32>) -> Self {
+        let mut prefix = Vec::with_capacity(w.len());
+        prefix.push(w[0]);
+        for (i, &num) in w.iter().enumerate().skip(1) {
+            prefix.push(prefix[i - 1] + num);
         }
+        Self { prefix }
     }
-    seen.insert((num, bits), res);
-    res
+
+    fn pick_index(&self) -> i32 {
+        let mut rng = rand::thread_rng();
+        // 0 is unreachable while last value is
+        // using 0..last tilted the distribution left
+        let num = rng.gen_range(1..=*self.prefix.last().unwrap());
+        self.prefix
+            .binary_search(&num)
+            .unwrap_or_else(std::convert::identity) as _
+    }
 }
 
 #[cfg(test)]
@@ -38,15 +38,10 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {
-        debug_assert_eq!(count_arrangement(2), 2);
-        debug_assert_eq!(count_arrangement(1), 1);
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        debug_assert_eq!(count_arrangement(3), 3);
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
