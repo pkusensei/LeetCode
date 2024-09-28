@@ -6,18 +6,28 @@ use std::collections::HashMap;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_max_length(nums: &[i32]) -> i32 {
-    let mut seen = HashMap::from([(0, -1)]);
-    let mut prev = 0;
+pub fn count_arrangement(n: i32) -> i32 {
+    dfs(n, 1, 0, &mut HashMap::new())
+}
+
+fn dfs(n: i32, num: i32, bits: i32, seen: &mut HashMap<(i32, i32), i32>) -> i32 {
+    if num > n {
+        return 1;
+    }
+    if let Some(&v) = seen.get(&(num, bits)) {
+        return v;
+    }
     let mut res = 0;
-    for (i, &num) in nums.iter().enumerate() {
-        prev += if num == 1 { 1 } else { -1 };
-        if let Some(&v) = seen.get(&prev) {
-            res = res.max(i as i32 - v)
-        } else {
-            seen.insert(prev, i as i32);
+    // try all 1..=n on current bit idx
+    // which is tracked using bits
+    for idx in 1..=n {
+        let curr = bits & (1 << idx);
+        // current bit is empty and num fits on idx
+        if curr == 0 && (num % idx == 0 || idx % num == 0) {
+            res += dfs(n, num + 1, bits | (1 << idx), seen);
         }
     }
+    seen.insert((num, bits), res);
     res
 }
 
@@ -29,12 +39,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(find_max_length(&[0, 1]), 2);
-        debug_assert_eq!(find_max_length(&[0, 1, 0]), 2);
+        debug_assert_eq!(count_arrangement(2), 2);
+        debug_assert_eq!(count_arrangement(1), 1);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(count_arrangement(3), 3);
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
