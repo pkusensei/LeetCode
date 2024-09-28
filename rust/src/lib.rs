@@ -1,31 +1,24 @@
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_longest_word(s: &str, dictionary: &mut [&str]) -> String {
-    dictionary.sort_unstable_by(|a, b| b.len().cmp(&a.len()).then(a.cmp(b)));
-    for word in dictionary.iter() {
-        if is_subseq(s.as_bytes(), word.as_bytes()) {
-            return word.to_string();
+pub fn find_max_length(nums: &[i32]) -> i32 {
+    let mut seen = HashMap::from([(0, -1)]);
+    let mut prev = 0;
+    let mut res = 0;
+    for (i, &num) in nums.iter().enumerate() {
+        prev += if num == 1 { 1 } else { -1 };
+        if let Some(&v) = seen.get(&prev) {
+            res = res.max(i as i32 - v)
+        } else {
+            seen.insert(prev, i as i32);
         }
     }
-    String::new()
-}
-
-fn is_subseq(hay: &[u8], needle: &[u8]) -> bool {
-    if hay.len() < needle.len() {
-        return false;
-    }
-    let (mut i1, mut i2) = (0, 0);
-    while i1 < hay.len() && i2 < needle.len() {
-        if hay[i1] == needle[i2] {
-            i2 += 1
-        }
-        i1 += 1;
-    }
-    i2 == needle.len()
+    res
 }
 
 #[cfg(test)]
@@ -36,17 +29,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            find_longest_word("abpcplea", &mut ["ale", "apple", "monkey", "plea"]),
-            "apple"
-        );
-        debug_assert_eq!(find_longest_word("abpcplea", &mut ["a", "b", "c"]), "a");
+        debug_assert_eq!(find_max_length(&[0, 1]), 2);
+        debug_assert_eq!(find_max_length(&[0, 1, 0]), 2);
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(find_longest_word("aaa", &mut ["aaa", "aa", "a"]), "aaa");
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
