@@ -4,27 +4,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-#[derive(Debug, Clone)]
-struct Codec {
-    data: Vec<String>,
+pub fn complex_number_multiply(num1: &str, num2: &str) -> String {
+    let [a1, b1] = parse(num1);
+    let [a2, b2] = parse(num2);
+    let real = a1 * a2 - b1 * b2;
+    let imag = a1 * b2 + b1 * a2;
+    format!("{real}+{imag}i")
 }
 
-impl Codec {
-    fn new() -> Self {
-        Self { data: vec![] }
-    }
-
-    // Encodes a URL to a shortened URL.
-    fn encode(&mut self, s: String) -> String {
-        self.data.push(s);
-        (self.data.len() - 1).to_string()
-    }
-
-    // Decodes a shortened URL to its original URL.
-    fn decode(&self, s: String) -> String {
-        let i = s.parse::<usize>().unwrap();
-        self.data[i].clone()
-    }
+fn parse(s: &str) -> [i16; 2] {
+    let (a, b) = s.split_once("+").unwrap();
+    [a.parse().unwrap(), b.trim_end_matches('i').parse().unwrap()]
 }
 
 #[cfg(test)]
@@ -34,7 +24,10 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        debug_assert_eq!(complex_number_multiply("1+1i", "1+1i"), "0+2i");
+        debug_assert_eq!(complex_number_multiply("1+-1i", "1+-1i"), "0+-2i");
+    }
 
     #[test]
     fn test() {}
