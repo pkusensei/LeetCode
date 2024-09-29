@@ -12,28 +12,24 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
-        var a = TreeNode.Make([4, 2, 6, 1, 3]);
-        var b = sol.GetMinimumDifference(a);
-        var c = 1;
-        Assert.AreEqual(c, b);
+        var a = TreeNode.Make([4, 1, 6, 0, 2, 5, 7, null, null, null, 3, null, null, null, 8]);
+        var b = sol.ConvertBST(a);
+        var c = "[30,36,21,36,35,26,15,null,null,null,33,null,null,null,8]";
+        Assert.AreEqual(c, b.ToString());
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        var a = TreeNode.Make([1, 0, 48, null, null, 12, 49]);
-        var b = sol.GetMinimumDifference(a);
-        var c = 1;
-        Assert.AreEqual(c, b);
+        var a = TreeNode.Make([0, null, 1]);
+        var b = sol.ConvertBST(a);
+        var c = "[1,null,1]";
+        Assert.AreEqual(c, b.ToString());
     }
 
     [TestMethod]
     public void TestMethod3()
     {
-        var a = TreeNode.Make([236, 104, 701, null, 227, null, 911]);
-        var b = sol.GetMinimumDifference(a);
-        var c = 9;
-        Assert.AreEqual(c, b);
     }
 
     [TestMethod]

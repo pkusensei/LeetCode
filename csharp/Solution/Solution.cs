@@ -5,18 +5,18 @@ namespace Solution;
 
 public class Solution
 {
-    public int GetMinimumDifference(TreeNode root)
+    public TreeNode ConvertBST(TreeNode root)
     {
-        var nums = new List<int>();
-        Inorder(root, nums);
-        return nums.Skip(1).Zip(nums).Select(p => p.First - p.Second).Min();
+        Dfs(root, 0);
+        return root;
     }
 
-    static void Inorder(TreeNode node, List<int> nums)
+    static int Dfs(TreeNode node, int num)
     {
-        if (node is null) { return; }
-        Inorder(node.left, nums);
-        nums.Add(node.val);
-        Inorder(node.right, nums);
+        if (node is null) { return num; }
+        num = Dfs(node.right, num);
+        node.val += num;
+        num = Dfs(node.left, node.val);
+        return num;
     }
 }
