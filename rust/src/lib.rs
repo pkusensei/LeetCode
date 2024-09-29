@@ -4,26 +4,30 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn reverse_str(s: String, k: i32) -> String {
-    if k < 2 {
-        return s;
+pub fn update_matrix(mut mat: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
+    let (rows, cols) = get_dimensions(&mat);
+    let mut queue = std::collections::VecDeque::new();
+    for y in 0..rows {
+        for x in 0..cols {
+            if mat[y][x] > 0 {
+                mat[y][x] = -1
+            } else {
+                queue.push_back((y, x, 0));
+            }
+        }
     }
-    let mut s = s.into_bytes();
-    let k = k as usize;
-    if k > s.len() {
-        s.reverse();
-        return String::from_utf8(s).unwrap();
+    while let Some((row, col, dist)) = queue.pop_front() {
+        if mat[row][col] > 0 {
+            continue;
+        }
+        mat[row][col] = dist;
+        for (nr, nc) in
+            neighbors((row, col)).filter(|&(r, c)| r < rows && c < cols && mat[r][c] < 0)
+        {
+            queue.push_back((nr, nc, dist + 1));
+        }
     }
-    let (mut left, mut right) = (0, k);
-    while right < s.len() {
-        s[left..right].reverse();
-        left += 2 * k;
-        right = (right + 2 * k).min(s.len());
-    }
-    if left < s.len() {
-        s[left..].reverse();
-    }
-    String::from_utf8(s).unwrap()
+    mat
 }
 
 #[cfg(test)]
@@ -34,8 +38,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(reverse_str("abcdefg".into(), 2), "bacdfeg");
-        debug_assert_eq!(reverse_str("abcd".into(), 2), "bacd");
+        debug_assert_eq!(
+            update_matrix(vec![vec![0, 0, 0], vec![0, 1, 0], vec![0, 0, 0]]),
+            [[0, 0, 0], [0, 1, 0], [0, 0, 0]]
+        );
+        debug_assert_eq!(
+            update_matrix(vec![vec![0, 0, 0], vec![0, 1, 0], vec![1, 1, 1]]),
+            [[0, 0, 0], [0, 1, 0], [1, 2, 1]]
+        );
     }
 
     #[test]
