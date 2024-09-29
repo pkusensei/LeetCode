@@ -4,35 +4,26 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn single_non_duplicate(nums: &[i32]) -> i32 {
-    let n = nums.len();
-    if n < 2 {
-        return nums[0];
+pub fn reverse_str(s: String, k: i32) -> String {
+    if k < 2 {
+        return s;
     }
-    let (mut left, mut right) = (0, n - 1);
-    while left < right {
-        let mid = left + (right - left) / 2;
-        // mid^1  odd  => mid-1
-        //        even => mid+1
-        if nums.get(mid) == nums.get(mid ^ 1) {
-            left = mid + 1;
-        } else {
-            right = mid;
-        }
-
-        // if mid & 1 == 1 {
-        //     if nums.get(mid) == nums.get(mid - 1) {
-        //         left = mid + 1;
-        //     } else {
-        //         right = mid - 1;
-        //     }
-        // } else if nums.get(mid) == nums.get(mid + 1) {
-        //     left = mid
-        // } else {
-        //     right = mid
-        // }
+    let mut s = s.into_bytes();
+    let k = k as usize;
+    if k > s.len() {
+        s.reverse();
+        return String::from_utf8(s).unwrap();
     }
-    nums[left]
+    let (mut left, mut right) = (0, k);
+    while right < s.len() {
+        s[left..right].reverse();
+        left += 2 * k;
+        right = (right + 2 * k).min(s.len());
+    }
+    if left < s.len() {
+        s[left..].reverse();
+    }
+    String::from_utf8(s).unwrap()
 }
 
 #[cfg(test)]
@@ -43,8 +34,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(single_non_duplicate(&[1, 1, 2, 3, 3, 4, 4, 8, 8]), 2);
-        debug_assert_eq!(single_non_duplicate(&[3, 3, 7, 7, 10, 11, 11]), 10);
+        debug_assert_eq!(reverse_str("abcdefg".into(), 2), "bacdfeg");
+        debug_assert_eq!(reverse_str("abcd".into(), 2), "bacd");
     }
 
     #[test]
