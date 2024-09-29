@@ -5,18 +5,17 @@ namespace Solution;
 
 public class Solution
 {
-    public TreeNode ConvertBST(TreeNode root)
+    public int DiameterOfBinaryTree(TreeNode root)
     {
-        Dfs(root, 0);
-        return root;
+        return Dfs(root, 0).res;
     }
 
-    static int Dfs(TreeNode node, int num)
+    (int res, int depth) Dfs(TreeNode node, int res)
     {
-        if (node is null) { return num; }
-        num = Dfs(node.right, num);
-        node.val += num;
-        num = Dfs(node.left, node.val);
-        return num;
+        if (node is null) { return (res, 0); }
+        var (l_res, l_depth) = Dfs(node.left, res);
+        var (r_res, r_depth) = Dfs(node.right, res);
+        res = Math.Max(Math.Max(l_res, r_res), l_depth + r_depth);
+        return (res, 1 + Math.Max(l_depth, r_depth));
     }
 }

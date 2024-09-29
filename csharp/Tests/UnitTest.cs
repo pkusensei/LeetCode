@@ -12,19 +12,19 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
-        var a = TreeNode.Make([4, 1, 6, 0, 2, 5, 7, null, null, null, 3, null, null, null, 8]);
-        var b = sol.ConvertBST(a);
-        var c = "[30,36,21,36,35,26,15,null,null,null,33,null,null,null,8]";
-        Assert.AreEqual(c, b.ToString());
+        var a = TreeNode.Make([1, 2, 3, 4, 5]);
+        var b = sol.DiameterOfBinaryTree(a);
+        var c = 3;
+        Assert.AreEqual(c, b);
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        var a = TreeNode.Make([0, null, 1]);
-        var b = sol.ConvertBST(a);
-        var c = "[1,null,1]";
-        Assert.AreEqual(c, b.ToString());
+        var a = TreeNode.Make([1, 2]);
+        var b = sol.DiameterOfBinaryTree(a);
+        var c = 1;
+        Assert.AreEqual(c, b);
     }
 
     [TestMethod]
