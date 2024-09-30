@@ -4,20 +4,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn optimal_division(nums: &[i32]) -> String {
-    match nums.len() {
-        0 => String::new(),
-        1 => nums[0].to_string(),
-        2 => format!("{}/{}", nums[0], nums[1]),
-        _ => {
-            let right = nums[1..]
-                .iter()
-                .map(|n| n.to_string())
-                .collect::<Vec<_>>()
-                .join("/");
-            format!("{}/({})", nums[0], right)
+pub fn least_bricks(wall: &[&[i32]]) -> i32 {
+    let mut counts = std::collections::HashMap::new();
+    for nums in wall.iter() {
+        for num in prefix(nums) {
+            *counts.entry(num).or_insert(0) += 1
         }
     }
+    let mut counts: Vec<_> = counts.into_values().collect();
+    counts.sort_unstable_by(|a, b| b.cmp(a));
+    counts[0] - counts.get(1).unwrap_or(&0)
+}
+
+fn prefix(nums: &[i32]) -> Vec<i32> {
+    let mut prefix = Vec::with_capacity(nums.len());
+    for &num in nums.iter() {
+        prefix.push(prefix.last().copied().unwrap_or(0) + num);
+    }
+    prefix
 }
 
 #[cfg(test)]
@@ -28,8 +32,18 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(optimal_division(&[1000, 100, 10, 2]), "1000/(100/10/2)");
-        debug_assert_eq!(optimal_division(&[2, 3, 4]), "2/(3/4)");
+        debug_assert_eq!(
+            least_bricks(&[
+                &[1, 2, 2, 1],
+                &[3, 1, 2],
+                &[1, 3, 2],
+                &[2, 4],
+                &[3, 1, 2],
+                &[1, 3, 1, 1]
+            ]),
+            2
+        );
+        debug_assert_eq!(least_bricks(&[&[1], &[1], &[1]]), 3);
     }
 
     #[test]
