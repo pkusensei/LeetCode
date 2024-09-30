@@ -4,50 +4,11 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn next_greater_element(mut n: i32) -> i32 {
-    let mut digits = vec![];
-    while n > 0 {
-        digits.push(n % 10);
-        n /= 10;
-    }
-    digits.reverse();
-    let Some(digits) = next_permutation(digits) else {
-        return -1;
-    };
-    let mut res: i32 = 0;
-    for digit in digits.into_iter() {
-        if let Some(v) = res.checked_mul(10).and_then(|n| n.checked_add(digit)) {
-            res = v
-        } else {
-            return -1;
-        }
-    }
-    res
-}
-
-fn next_permutation(mut nums: Vec<i32>) -> Option<Vec<i32>> {
-    // find largest i such that a[i]<a[i+1]
-    let i =
-        nums.windows(2)
-            .enumerate()
-            .rev()
-            .find_map(|(idx, w)| if w[0] < w[1] { Some(idx) } else { None })?;
-    // find largest j such that ..i..j.. and a[i]<a[j]
-    if let Some(j) =
-        nums.iter().enumerate().rev().find_map(
-            |(j, &n)| {
-                if i < j && nums[i] < n {
-                    Some(j)
-                } else {
-                    None
-                }
-            },
-        )
-    {
-        nums.swap(i, j);
-    }
-    nums[i + 1..].reverse();
-    Some(nums)
+pub fn reverse_words(s: &str) -> String {
+    s.split_whitespace()
+        .map(|s| s.chars().rev().collect::<String>())
+        .collect::<Vec<_>>()
+        .join(" ")
 }
 
 #[cfg(test)]
@@ -58,8 +19,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(next_greater_element(12), 21);
-        debug_assert_eq!(next_greater_element(21), -1);
+        debug_assert_eq!(
+            reverse_words("Let's take LeetCode contest"),
+            "s'teL ekat edoCteeL tsetnoc"
+        );
+        debug_assert_eq!(reverse_words("Mr Ding"), "rM gniD");
     }
 
     #[test]
