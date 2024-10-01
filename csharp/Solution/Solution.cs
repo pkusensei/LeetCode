@@ -5,25 +5,26 @@ namespace Solution;
 
 public class Solution
 {
-    public int FindTilt(TreeNode root)
+    public bool IsSubtree(TreeNode root, TreeNode subRoot)
     {
-        Tilt(root);
-        return Sum(root);
+        return (root is null, subRoot is null)
+        switch
+        {
+            (true, true) => true,
+            (false, true) or (true, false) => false,
+            _ => Dfs(root, subRoot) || IsSubtree(root.left, subRoot) || IsSubtree(root.right, subRoot),
+        };
+
     }
 
-    static int Tilt(TreeNode node)
+    static bool Dfs(TreeNode a, TreeNode b)
     {
-        if (node is null) { return 0; }
-        var left = Tilt(node.left);
-        var right = Tilt(node.right);
-        var temp = node.val + left + right;
-        node.val = Math.Abs(left - right);
-        return temp;
-    }
-
-    static int Sum(TreeNode node)
-    {
-        if (node is null) { return 0; }
-        return node.val + Sum(node.left) + Sum(node.right);
+        return (a is null, b is null)
+        switch
+        {
+            (true, true) => true,
+            (false, true) or (true, false) => false,
+            _ => a.val == b.val && Dfs(a.left, b.left) && Dfs(a.right, b.right),
+        };
     }
 }
