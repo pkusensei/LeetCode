@@ -4,38 +4,35 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_unsorted_subarray(nums: &[i32]) -> i32 {
-    let mut stack = vec![];
-    let (mut left_i, mut max_popped): (Option<usize>, _) = (None, None);
-    for (idx, &num) in nums.iter().enumerate() {
-        if stack.is_empty() {
-            stack.push((idx, num));
-        }
-        while stack.last().is_some_and(|&(_, v)| v > num) {
-            let (i, n) = stack.pop().unwrap();
-            if let Some(v) = left_i.as_mut() {
-                *v = (*v).min(i);
-            } else {
-                left_i = Some(i)
-            }
-            max_popped = max_popped.max(Some(n));
-        }
-        stack.push((idx, num));
+pub fn min_distance(word1: &str, word2: &str) -> i32 {
+    if word1.is_empty() {
+        return word2.len() as _;
     }
-    if left_i.is_none() {
+    if word2.is_empty() {
+        return word1.len() as _;
+    }
+    if word1 == word2 {
         return 0;
     }
-    let right_i = stack
-        .iter()
-        .find_map(|&(i, v)| {
-            if v >= max_popped.unwrap() {
-                Some(i)
+    let (row, col) = (word1.len(), word2.len());
+    let (s1, s2) = (word1.as_bytes(), word2.as_bytes());
+    let mut dp = vec![vec![0; 1 + col]; 1 + row];
+    for (i, v) in dp[0].iter_mut().enumerate() {
+        *v = i as i32;
+    }
+    for (i, v) in dp.iter_mut().enumerate() {
+        v[0] = i as i32;
+    }
+    for i1 in 1..=row {
+        for i2 in 1..=col {
+            if s1[i1 - 1] == s2[i2 - 1] {
+                dp[i1][i2] = dp[i1 - 1][i2 - 1];
             } else {
-                None
+                dp[i1][i2] = 1 + dp[i1 - 1][i2].min(dp[i1][i2 - 1])
             }
-        })
-        .unwrap_or(nums.len());
-    (right_i - left_i.unwrap()) as _
+        }
+    }
+    dp[row][col]
 }
 
 #[cfg(test)]
@@ -46,15 +43,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(find_unsorted_subarray(&[2, 6, 4, 8, 10, 9, 15]), 5);
-        debug_assert_eq!(find_unsorted_subarray(&[1, 2, 3, 4]), 0);
+        debug_assert_eq!(min_distance("sea", "eat"), 2);
+        debug_assert_eq!(min_distance("leetcode", "etco"), 4);
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(find_unsorted_subarray(&[1, 3, 2, 2, 2]), 4);
-        debug_assert_eq!(find_unsorted_subarray(&[1, 5, 3, 2, 4]), 4);
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
