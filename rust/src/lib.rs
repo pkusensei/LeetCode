@@ -1,67 +1,35 @@
 mod helper;
 mod trie;
 
+use std::collections::HashSet;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn nearest_palindromic(n: &str) -> String {
-    let num = n.parse().unwrap();
-    let (a, b) = (search_left(num), search_right(num));
-    if a.abs_diff(num) > b.abs_diff(num) {
-        b.to_string()
-    } else {
-        a.to_string()
-    }
-}
-
-fn search_left(num: i64) -> i64 {
-    let (mut left, mut right) = (1, num);
+pub fn array_nesting(nums: &[i32]) -> i32 {
+    let n = nums.len();
     let mut res = 0;
-    while left <= right {
-        let mid = left + (right - left) / 2;
-        let temp = build(mid);
-        if temp < num {
-            res = temp;
-            left = mid + 1;
-        } else {
-            right = mid - 1;
+    let mut seen = HashSet::new();
+    for &num in nums.iter() {
+        res = res.max(dfs(nums, num, &mut seen));
+        if res > n as i32 / 2 {
+            return res;
         }
     }
     res
 }
 
-fn search_right(num: i64) -> i64 {
-    let (mut left, mut right) = (num, i64::MAX);
-    let mut res = 0;
-    while left <= right {
-        let mid = left + (right - left) / 2;
-        let temp = build(mid);
-        if num < temp {
-            res = temp;
-            right = mid - 1;
-        } else {
-            left = mid + 1;
-        }
+fn dfs(nums: &[i32], start: i32, seen: &mut HashSet<i32>) -> i32 {
+    if !seen.insert(start) {
+        return 0;
+    }
+    let mut num = nums[start as usize];
+    let mut res = 1;
+    while seen.insert(num) {
+        num = nums[num as usize];
+        res += 1
     }
     res
-}
-
-fn build(num: i64) -> i64 {
-    let mut n = num;
-    let mut digits = vec![];
-    while n > 0 {
-        digits.push(n % 10);
-        n /= 10;
-    }
-    let n = digits.len();
-    digits.reverse();
-    let half: Vec<_> = if n & 1 == 1 {
-        digits.iter().take(n / 2 + 1).rev().copied().collect()
-    } else {
-        digits.iter().take(n / 2).rev().copied().collect()
-    };
-    digits[n / 2..].copy_from_slice(&half);
-    digits.into_iter().fold(0, |acc, d| acc * 10 + d)
 }
 
 #[cfg(test)]
@@ -72,8 +40,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(nearest_palindromic("123"), "121");
-        debug_assert_eq!(nearest_palindromic("1"), "0");
+        debug_assert_eq!(array_nesting(&[5, 4, 0, 3, 1, 6, 2]), 4);
+        debug_assert_eq!(array_nesting(&[0, 1, 2]), 1);
     }
 
     #[test]
