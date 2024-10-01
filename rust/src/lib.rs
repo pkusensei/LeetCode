@@ -4,37 +4,38 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-const MOD: i32 = 1_000_000_007;
-
-pub fn find_paths(m: i32, n: i32, max_move: i32, start_row: i32, start_column: i32) -> i32 {
-    // dp[move][row][col]
-    // 1) ^^^^  ^^^  ^^^  the three variables that might change during each turn of recursion
-    // 2) exit conditions
-    // 3) actually still (1), how to break up into smaller (sub)problems
-    let mut dp = vec![vec![vec![-1; n as usize]; m as usize]; 1 + max_move as usize];
-    dfs(&mut dp, m, n, max_move, start_row, start_column)
-}
-
-fn dfs(dp: &mut [Vec<Vec<i32>>], m: i32, n: i32, moves: i32, row: i32, col: i32) -> i32 {
-    if moves < 0 {
+pub fn find_unsorted_subarray(nums: &[i32]) -> i32 {
+    let mut stack = vec![];
+    let (mut left_i, mut max_popped): (Option<usize>, _) = (None, None);
+    for (idx, &num) in nums.iter().enumerate() {
+        if stack.is_empty() {
+            stack.push((idx, num));
+        }
+        while stack.last().is_some_and(|&(_, v)| v > num) {
+            let (i, n) = stack.pop().unwrap();
+            if let Some(v) = left_i.as_mut() {
+                *v = (*v).min(i);
+            } else {
+                left_i = Some(i)
+            }
+            max_popped = max_popped.max(Some(n));
+        }
+        stack.push((idx, num));
+    }
+    if left_i.is_none() {
         return 0;
     }
-    if !(0..m).contains(&row) || !(0..n).contains(&col) {
-        return 1;
-    }
-    if dp[moves as usize][row as usize][col as usize] > -1 {
-        return dp[moves as usize][row as usize][col as usize];
-    }
-    let res = [
-        dfs(dp, m, n, moves - 1, row - 1, col),
-        dfs(dp, m, n, moves - 1, row + 1, col),
-        dfs(dp, m, n, moves - 1, row, col - 1),
-        dfs(dp, m, n, moves - 1, row, col + 1),
-    ]
-    .into_iter()
-    .fold(0, |acc, n| (acc + n) % MOD);
-    dp[moves as usize][row as usize][col as usize] = res;
-    res
+    let right_i = stack
+        .iter()
+        .find_map(|&(i, v)| {
+            if v >= max_popped.unwrap() {
+                Some(i)
+            } else {
+                None
+            }
+        })
+        .unwrap_or(nums.len());
+    (right_i - left_i.unwrap()) as _
 }
 
 #[cfg(test)]
@@ -45,12 +46,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(find_paths(2, 2, 2, 0, 0), 6);
-        debug_assert_eq!(find_paths(1, 3, 3, 0, 1), 12);
+        debug_assert_eq!(find_unsorted_subarray(&[2, 6, 4, 8, 10, 9, 15]), 5);
+        debug_assert_eq!(find_unsorted_subarray(&[1, 2, 3, 4]), 0);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(find_unsorted_subarray(&[1, 3, 2, 2, 2]), 4);
+        debug_assert_eq!(find_unsorted_subarray(&[1, 5, 3, 2, 4]), 4);
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
