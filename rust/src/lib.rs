@@ -1,35 +1,21 @@
 mod helper;
 mod trie;
 
-use std::collections::HashSet;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn array_nesting(nums: &[i32]) -> i32 {
-    let n = nums.len();
-    let mut res = 0;
-    let mut seen = HashSet::new();
-    for &num in nums.iter() {
-        res = res.max(dfs(nums, num, &mut seen));
-        if res > n as i32 / 2 {
-            return res;
-        }
+pub fn matrix_reshape(mat: Vec<Vec<i32>>, r: i32, c: i32) -> Vec<Vec<i32>> {
+    let (rows, cols) = get_dimensions(&mat);
+    let (r, c) = (r as usize, c as usize);
+    if rows * cols != r * c {
+        return mat;
     }
-    res
-}
-
-fn dfs(nums: &[i32], start: i32, seen: &mut HashSet<i32>) -> i32 {
-    if !seen.insert(start) {
-        return 0;
-    }
-    let mut num = nums[start as usize];
-    let mut res = 1;
-    while seen.insert(num) {
-        num = nums[num as usize];
-        res += 1
-    }
-    res
+    mat.into_iter()
+        .flat_map(|v| v.into_iter())
+        .collect::<Vec<_>>()
+        .chunks_exact(c)
+        .map(|v| v.to_vec())
+        .collect()
 }
 
 #[cfg(test)]
@@ -40,8 +26,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(array_nesting(&[5, 4, 0, 3, 1, 6, 2]), 4);
-        debug_assert_eq!(array_nesting(&[0, 1, 2]), 1);
+        debug_assert_eq!(
+            matrix_reshape(vec![vec![1, 2], vec![3, 4]], 1, 4),
+            [[1, 2, 3, 4]]
+        );
+        debug_assert_eq!(
+            matrix_reshape(vec![vec![1, 2], vec![3, 4]], 2, 4),
+            [[1, 2], [3, 4]]
+        )
     }
 
     #[test]
