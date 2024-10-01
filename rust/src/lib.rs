@@ -4,36 +4,64 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn can_arrange(arr: &[i32], k: i32) -> bool {
-    // let counts = arr
-    //     .iter()
-    //     .fold(std::collections::HashMap::new(), |mut acc, &num| {
-    //         *acc.entry((num % k + k) % k).or_insert(0) += 1;
-    //         acc
-    //     });
-    // for &num in arr.iter() {
-    //     let remainder = (num % k + k) % k;
-    //     if remainder == 0 {
-    //         if counts.get(&0).is_some_and(|v| v & 1 == 1) {
-    //             return false;
-    //         }
-    //     } else if counts.get(&remainder) != counts.get(&(k - remainder)) {
-    //         return false;
-    //     }
-    // }
-    let counts = arr.iter().fold(vec![0; k as usize], |mut acc, &num| {
-        acc[((num % k + k) % k) as usize] += 1;
-        acc
-    });
-    if counts[0] & 1 > 0 {
-        return false;
+pub fn nearest_palindromic(n: &str) -> String {
+    let num = n.parse().unwrap();
+    let (a, b) = (search_left(num), search_right(num));
+    if a.abs_diff(num) > b.abs_diff(num) {
+        b.to_string()
+    } else {
+        a.to_string()
     }
-    for i in 1..=k / 2 {
-        if counts[i as usize] != counts[(k - i) as usize] {
-            return false;
+}
+
+fn search_left(num: i64) -> i64 {
+    let (mut left, mut right) = (1, num);
+    let mut res = 0;
+    while left <= right {
+        let mid = left + (right - left) / 2;
+        let temp = build(mid);
+        if temp < num {
+            res = temp;
+            left = mid + 1;
+        } else {
+            right = mid - 1;
         }
     }
-    true
+    res
+}
+
+fn search_right(num: i64) -> i64 {
+    let (mut left, mut right) = (num, i64::MAX);
+    let mut res = 0;
+    while left <= right {
+        let mid = left + (right - left) / 2;
+        let temp = build(mid);
+        if num < temp {
+            res = temp;
+            right = mid - 1;
+        } else {
+            left = mid + 1;
+        }
+    }
+    res
+}
+
+fn build(num: i64) -> i64 {
+    let mut n = num;
+    let mut digits = vec![];
+    while n > 0 {
+        digits.push(n % 10);
+        n /= 10;
+    }
+    let n = digits.len();
+    digits.reverse();
+    let half: Vec<_> = if n & 1 == 1 {
+        digits.iter().take(n / 2 + 1).rev().copied().collect()
+    } else {
+        digits.iter().take(n / 2).rev().copied().collect()
+    };
+    digits[n / 2..].copy_from_slice(&half);
+    digits.into_iter().fold(0, |acc, d| acc * 10 + d)
 }
 
 #[cfg(test)]
@@ -44,15 +72,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(can_arrange(&[1, 2, 3, 4, 5, 10, 6, 7, 8, 9], 5));
-        debug_assert!(can_arrange(&[1, 2, 3, 4, 5, 6], 7));
-        debug_assert!(!can_arrange(&[1, 2, 3, 4, 5, 6], 10));
+        debug_assert_eq!(nearest_palindromic("123"), "121");
+        debug_assert_eq!(nearest_palindromic("1"), "0");
     }
 
     #[test]
-    fn test() {
-        debug_assert!(!can_arrange(&[5, 5, 1, 2, 3, 4], 10));
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
