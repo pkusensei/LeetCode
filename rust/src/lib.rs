@@ -4,35 +4,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_distance(word1: &str, word2: &str) -> i32 {
-    if word1.is_empty() {
-        return word2.len() as _;
+pub fn array_rank_transform(mut arr: Vec<i32>) -> Vec<i32> {
+    let map = std::collections::BTreeSet::from_iter(arr.clone())
+        .into_iter()
+        .enumerate()
+        .map(|(i, n)| (n, 1 + i as i32))
+        .collect::<std::collections::HashMap<_, _>>();
+    for v in arr.iter_mut() {
+        *v = map[&*v];
     }
-    if word2.is_empty() {
-        return word1.len() as _;
-    }
-    if word1 == word2 {
-        return 0;
-    }
-    let (row, col) = (word1.len(), word2.len());
-    let (s1, s2) = (word1.as_bytes(), word2.as_bytes());
-    let mut dp = vec![vec![0; 1 + col]; 1 + row];
-    for (i, v) in dp[0].iter_mut().enumerate() {
-        *v = i as i32;
-    }
-    for (i, v) in dp.iter_mut().enumerate() {
-        v[0] = i as i32;
-    }
-    for i1 in 1..=row {
-        for i2 in 1..=col {
-            if s1[i1 - 1] == s2[i2 - 1] {
-                dp[i1][i2] = dp[i1 - 1][i2 - 1];
-            } else {
-                dp[i1][i2] = 1 + dp[i1 - 1][i2].min(dp[i1][i2 - 1])
-            }
-        }
-    }
-    dp[row][col]
+    arr
 }
 
 #[cfg(test)]
@@ -43,8 +24,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(min_distance("sea", "eat"), 2);
-        debug_assert_eq!(min_distance("leetcode", "etco"), 4);
+        debug_assert_eq!(array_rank_transform([40, 10, 20, 30].into()), [4, 1, 2, 3]);
+        debug_assert_eq!(array_rank_transform([100, 100, 100].into()), [1, 1, 1]);
+        debug_assert_eq!(
+            array_rank_transform([37, 12, 28, 9, 100, 56, 80, 5, 12].into()),
+            [5, 3, 4, 2, 8, 6, 7, 1, 3]
+        );
     }
 
     #[test]
