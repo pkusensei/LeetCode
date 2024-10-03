@@ -1,62 +1,43 @@
 ﻿// using Solution.LList;
+using System.Text;
 using Solution.Tree;
 
 namespace Solution;
 
 public class Solution
 {
-    Stack<string> Stack { get; } = [];
-    bool HasTag { get; set; } = false;
-    readonly string pattern = @"<([A-Z]{1,9})>([^<]*((<\/?[A-Z]{1,9}>)|(<!\[CDATA\[(.*?)]]>))?[^<]*)*<\/\1>";
-
-    public bool IsValid(string code)
+    public string Tree2str(TreeNode root)
     {
-        if (!System.Text.RegularExpressions.Regex.IsMatch(code, pattern))
-        {
-            return false;
-        }
-        for (int i = 0; i < code.Length; i++)
-        {
-            var is_end = false;
-            if (Stack.Count == 0 && HasTag)
-            {
-                return false;
-            }
-            if (code[i] == '<')
-            {
-                if (code[i + 1] == '!')
-                {
-                    i = code.IndexOf("]]>", i + 1);
-                    continue;
-                }
-                if (code[i + 1] == '/')
-                {
-                    i += 1;
-                    is_end = true;
-                }
-                var close = code.IndexOf('>', i + 1);
-                if (close < 0 || !IsValidTagName(code.Substring(i + 1, close - i - 1), is_end))
-                {
-                    return false;
-                }
-                i = close;
-            }
-        }
-        return Stack.Count == 0;
+        var sb = new StringBuilder();
+        if (root is null) { return sb.ToString(); }
+        Dfs(root, sb);
+        return sb.ToString();
     }
 
-    bool IsValidTagName(string s, bool is_end)
+    static void Dfs(TreeNode node, StringBuilder sb)
     {
-        if (is_end)
+        sb.Append(node.val);
+        switch (node.left is null, node.right is null)
         {
-            if (Stack.Count > 0 && Stack.Peek() == s) { Stack.Pop(); }
-            else { return false; }
+            case (true, true): return;
+            case (true, false):
+                sb.Append("()(");
+                Dfs(node.right, sb);
+                sb.Append(')');
+                return;
+            case (false, true):
+                sb.Append('(');
+                Dfs(node.left, sb);
+                sb.Append(')');
+                return;
+            default:
+                sb.Append('(');
+                Dfs(node.left, sb);
+                sb.Append(')');
+                sb.Append('(');
+                Dfs(node.right, sb);
+                sb.Append(')');
+                return;
         }
-        else
-        {
-            HasTag = true;
-            Stack.Push(s);
-        }
-        return true;
     }
 }

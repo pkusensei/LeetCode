@@ -12,22 +12,24 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
-        var a = @"<DIV>This is the first line <![CDATA[<div>]]></DIV>";
-        Assert.IsTrue(sol.IsValid(a));
+        var a = TreeNode.Make([1, 2, 3, 4]);
+        var b = sol.Tree2str(a);
+        var c = "1(2(4))(3)";
+        Assert.AreEqual(c, b);
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        var a = @"<DIV>>>  ![cdata[]] <![CDATA[<div>]>]]>]]>>]</DIV>";
-        Assert.IsTrue(sol.IsValid(a));
+        var a = TreeNode.Make([1, 2, 3, null, 4]);
+        var b = sol.Tree2str(a);
+        var c = "1(2()(4))(3)";
+        Assert.AreEqual(c, b);
     }
 
     [TestMethod]
     public void TestMethod3()
     {
-        var a = @"<A>  <B> </A>   </B>";
-        Assert.IsFalse(sol.IsValid(a));
     }
 
     [TestMethod]
