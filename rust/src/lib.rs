@@ -4,24 +4,10 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_lhs(nums: &[i32]) -> i32 {
-    nums.iter()
-        .fold(std::collections::BTreeMap::new(), |mut acc, &num| {
-            *acc.entry(num).or_insert(0) += 1;
-            acc
-        })
-        .into_iter()
-        .collect::<Vec<_>>()
-        .windows(2)
-        .filter_map(|w| {
-            if w[1].0 - w[0].0 == 1 {
-                Some(w[1].1 + w[0].1)
-            } else {
-                None
-            }
-        })
-        .max()
-        .unwrap_or(0)
+pub fn max_count(m: i32, n: i32, ops: &[[i32; 2]]) -> i32 {
+    let x = ops.iter().map(|v| v[0]).min().unwrap_or(n);
+    let y = ops.iter().map(|v| v[1]).min().unwrap_or(m);
+    x * y
 }
 
 #[cfg(test)]
@@ -32,9 +18,16 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(find_lhs(&[1, 3, 2, 2, 5, 2, 3, 7]), 5);
-        debug_assert_eq!(find_lhs(&[1, 2, 3, 4]), 2);
-        debug_assert_eq!(find_lhs(&[1, 1, 1, 1]), 0);
+        debug_assert_eq!(max_count(3, 3, &[[2, 2], [3, 3]]), 4);
+        debug_assert_eq!(
+            max_count(
+                3,
+                3,
+                &[[2, 2], [3, 3], [3, 3], [2, 2], [3, 3], [2, 2], [3, 3],]
+            ),
+            4
+        );
+        debug_assert_eq!(max_count(3, 3, &[]), 9);
     }
 
     #[test]
