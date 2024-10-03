@@ -1,30 +1,39 @@
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_duplicate(paths: &[&str]) -> Vec<Vec<String>> {
-    let mut map: HashMap<&str, Vec<_>> = HashMap::new();
-    for path in paths.iter() {
-        for (content, file) in process(path) {
-            map.entry(content).or_default().push(file);
+pub fn triangle_number(nums: &mut [i32]) -> i32 {
+    let n = nums.len();
+    if n < 3 {
+        return 0;
+    }
+    nums.sort_unstable();
+    let mut res = 0;
+    for i in 0..n - 2 {
+        let mut left = i + 2;
+        if nums[i] == 0 {
+            continue;
+        }
+        for j in i + 1..n - 1 {
+            left = binary_searct(nums, left, nums.len() - 1, nums[i] + nums[j]);
+            res += (left - j - 1) as i32;
         }
     }
-    map.into_values().filter(|v| v.len() > 1).collect()
+    res
 }
 
-fn process(s: &str) -> impl Iterator<Item = (&str, String)> {
-    let mut it = s.split_whitespace();
-    let dir = it.next().unwrap_or_default();
-    it.map(move |f| {
-        let i = f.find('(').unwrap();
-        let content = &f[i + 1..f.len() - 1]; // ( ... )
-        let fullpath = format!("{}/{}", dir, &f[..i]);
-        (content, fullpath)
-    })
+fn binary_searct(nums: &[i32], mut left: usize, mut right: usize, target: i32) -> usize {
+    while left <= right && right < nums.len() {
+        let mid = left + (right - left) / 2;
+        if nums[mid] >= target {
+            right = mid - 1;
+        } else {
+            left = mid + 1;
+        }
+    }
+    left
 }
 
 #[cfg(test)]
@@ -35,29 +44,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        sort_eq(
-            find_duplicate(&[
-                "root/a 1.txt(abcd) 2.txt(efgh)",
-                "root/c 3.txt(abcd)",
-                "root/c/d 4.txt(efgh)",
-                "root 4.txt(efgh)",
-            ]),
-            [
-                vec!["root/a/2.txt", "root/c/d/4.txt", "root/4.txt"],
-                vec!["root/a/1.txt", "root/c/3.txt"],
-            ],
-        );
-        sort_eq(
-            find_duplicate(&[
-                "root/a 1.txt(abcd) 2.txt(efgh)",
-                "root/c 3.txt(abcd)",
-                "root/c/d 4.txt(efgh)",
-            ]),
-            [
-                vec!["root/a/2.txt", "root/c/d/4.txt"],
-                vec!["root/a/1.txt", "root/c/3.txt"],
-            ],
-        );
+        debug_assert_eq!(triangle_number(&mut [2, 2, 3, 4]), 3);
+        debug_assert_eq!(triangle_number(&mut [4, 2, 3, 4]), 4);
     }
 
     #[test]
