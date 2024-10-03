@@ -4,52 +4,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_integers(n: i32) -> i32 {
-    // 1 + solve(1, n)
-    let mut f = [0; 32];
-    f[0] = 1;
-    f[1] = 2;
-    for i in 2..32 {
-        // For f[i-1], append 0 and all are valid
-        // For f[i-2], append 01
-        f[i] = f[i - 1] + f[i - 2];
-    }
-    let mut bit = 30;
-    let mut res = 1;
-    let mut prev = 0;
-    loop {
-        // Scan from most significant bit
-        if n & (1 << bit) > 0 {
-            // add in counts to reach this bit
-            res += f[bit];
-            // prev==1 => ..11..
-            if prev == 1 {
-                res -= 1;
-                break;
-            }
-            prev = 1;
-        } else {
-            prev = 0;
-        }
-        if bit == 0 {
-            break;
-        }
-        bit -= 1;
-    }
-    res
-}
-
-fn solve(curr: i32, n: i32) -> i32 {
-    if curr > n {
-        return 0;
-    }
-    if curr & 1 == 1 {
-        // odd; can only append 0
-        1 + solve(curr << 1, n)
-    } else {
-        // even; can append 1 and 0
-        1 + solve(curr << 1, n) + solve((curr << 1) | 1, n)
-    }
+pub fn can_place_flowers(mut nums: Vec<i32>, n: i32) -> bool {
+    nums.reserve(4);
+    nums.insert(0, 0);
+    nums.insert(0, 1); // add [1,0] to the front
+    nums.push(0);
+    nums.push(1); // add [0,1] to the end
+    let is: Vec<_> = nums
+        .into_iter()
+        .enumerate()
+        .filter_map(|(i, n)| if n == 1 { Some(i) } else { None })
+        .collect();
+    let count: usize = is
+        .windows(2)
+        .map(|w| w[1] - w[0] - 1)
+        .filter_map(|n| if n > 2 { Some((n - 1) / 2) } else { None })
+        .sum();
+    count >= n as usize
 }
 
 #[cfg(test)]
@@ -60,15 +31,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(find_integers(5), 5);
-        debug_assert_eq!(find_integers(1), 2);
-        debug_assert_eq!(find_integers(2), 3);
+        debug_assert!(can_place_flowers(vec![1, 0, 0, 0, 1], 1));
+        debug_assert!(!can_place_flowers(vec![1, 0, 0, 0, 1], 2));
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(find_integers(4), 4);
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
