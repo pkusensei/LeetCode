@@ -4,71 +4,15 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_valid(code: &str) -> bool {
-    let (s, n) = (code.as_bytes(), code.len());
-    if s[0] != b'<' || !s.iter().last().is_some_and(|&b| b == b'>') {
-        return false;
-    }
-    let mut idx = 0;
-    let mut stack = vec![];
-    let mut has_tag = false;
-    while idx < n {
-        let mut is_end = false;
-        if stack.is_empty() && has_tag {
-            return false;
+pub fn valid_square(p1: [i32; 2], p2: [i32; 2], p3: [i32; 2], p4: [i32; 2]) -> bool {
+    let ps = [p1, p2, p3, p4];
+    let mut dist = std::collections::HashSet::new();
+    for i in 0..4 {
+        for j in i + 1..4 {
+            dist.insert((ps[i][0] - ps[j][0]).pow(2) + (ps[i][1] - ps[j][1]).pow(2));
         }
-        if s[idx] == b'<' {
-            idx = if !stack.is_empty() && s[idx + 1] == b'!' {
-                let Some(close) = code[idx + 1..].find("]]>").map(|v| v + idx + 1) else {
-                    return false;
-                };
-                if !is_valid_cdata(&code[idx + 2..close]) {
-                    return false;
-                }
-                close
-            } else {
-                if s[idx + 1] == b'/' {
-                    idx += 1;
-                    is_end = true;
-                }
-                let Some(close) = code[idx + 1..].find('>').map(|v| v + idx + 1) else {
-                    return false;
-                };
-                if !is_valid_tagname(&code[idx + 1..close], is_end, &mut stack, &mut has_tag) {
-                    return false;
-                }
-                close
-            };
-        }
-        idx += 1
     }
-    stack.is_empty()
-}
-
-fn is_valid_tagname<'a>(
-    s: &'a str,
-    is_end: bool,
-    stack: &mut Vec<&'a str>,
-    has_tag: &mut bool,
-) -> bool {
-    if !(1..=9).contains(&s.len()) || !s.bytes().all(|b| b.is_ascii_uppercase()) {
-        return false;
-    }
-    if is_end {
-        if stack.last().is_some_and(|v| *v == s) {
-            stack.pop();
-        } else {
-            return false;
-        }
-    } else {
-        stack.push(s);
-        *has_tag = true;
-    }
-    true
-}
-
-fn is_valid_cdata(s: &str) -> bool {
-    s.find("[CDATA[").is_some_and(|v| v == 0)
+    dist.len() == 2 && dist.into_iter().all(|v| v > 0)
 }
 
 #[cfg(test)]
@@ -79,21 +23,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(is_valid(
-            "<DIV>This is the first line <![CDATA[<div>]]></DIV>"
-        ));
-        debug_assert!(is_valid(
-            "<DIV>>>  ![cdata[]] <![CDATA[<div>]>]]>]]>>]</DIV>"
-        ));
-        debug_assert!(!is_valid("<A>  <B> </A>   </B>"));
+        debug_assert!(valid_square([0, 0], [1, 1], [1, 0], [0, 1]));
+        debug_assert!(!valid_square([0, 0], [1, 1], [1, 0], [0, 12]));
+        debug_assert!(valid_square([1, 0], [-1, 0], [0, 1], [0, -1]));
     }
 
     #[test]
-    fn test() {
-        debug_assert!(!is_valid(
-            "<TRUe><![CDATA[123123]]]]><![CDATA[>123123]]></TRUe>"
-        ));
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
