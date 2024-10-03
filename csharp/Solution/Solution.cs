@@ -5,24 +5,58 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<int> Postorder(Node root)
+    Stack<string> Stack { get; } = [];
+    bool HasTag { get; set; } = false;
+    readonly string pattern = @"<([A-Z]{1,9})>([^<]*((<\/?[A-Z]{1,9}>)|(<!\[CDATA\[(.*?)]]>))?[^<]*)*<\/\1>";
+
+    public bool IsValid(string code)
     {
-        List<int> res = [];
-        if (root is null) { return res; }
-        var st = new Stack<Node>();
-        st.Push(root);
-        while (st.TryPop(out var node))
+        if (!System.Text.RegularExpressions.Regex.IsMatch(code, pattern))
         {
-            if (node is not null)
+            return false;
+        }
+        for (int i = 0; i < code.Length; i++)
+        {
+            var is_end = false;
+            if (Stack.Count == 0 && HasTag)
             {
-                res.Add(node.val);
-                foreach (var item in node.children)
+                return false;
+            }
+            if (code[i] == '<')
+            {
+                if (code[i + 1] == '!')
                 {
-                    st.Push(item);
+                    i = code.IndexOf("]]>", i + 1);
+                    continue;
                 }
+                if (code[i + 1] == '/')
+                {
+                    i += 1;
+                    is_end = true;
+                }
+                var close = code.IndexOf('>', i + 1);
+                if (close < 0 || !IsValidTagName(code.Substring(i + 1, close - i - 1), is_end))
+                {
+                    return false;
+                }
+                i = close;
             }
         }
-        res.Reverse();
-        return res;
+        return Stack.Count == 0;
+    }
+
+    bool IsValidTagName(string s, bool is_end)
+    {
+        if (is_end)
+        {
+            if (Stack.Count > 0 && Stack.Peek() == s) { Stack.Pop(); }
+            else { return false; }
+        }
+        else
+        {
+            HasTag = true;
+            Stack.Push(s);
+        }
+        return true;
     }
 }
