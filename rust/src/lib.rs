@@ -1,32 +1,55 @@
 mod helper;
 mod trie;
 
-use std::collections::{BTreeMap, HashMap, HashSet};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_restaurant(list1: &[&str], list2: &[&str]) -> Vec<String> {
-    let mut map: HashMap<&str, _> = HashSet::<&str>::intersection(
-        &list1.iter().copied().collect(),
-        &list2.iter().copied().collect(),
-    )
-    .map(|s| (*s, 0))
-    .collect();
-    for (i, s) in list1.iter().enumerate().chain(list2.iter().enumerate()) {
-        if let Some(v) = map.get_mut(s) {
-            *v += i;
-        }
+pub fn find_integers(n: i32) -> i32 {
+    // 1 + solve(1, n)
+    let mut f = [0; 32];
+    f[0] = 1;
+    f[1] = 2;
+    for i in 2..32 {
+        // For f[i-1], append 0 and all are valid
+        // For f[i-2], append 01
+        f[i] = f[i - 1] + f[i - 2];
     }
-    map.into_iter()
-        .map(|(k, v)| (v, k))
-        .fold(BTreeMap::<usize, Vec<_>>::new(), |mut acc, (c, s)| {
-            acc.entry(c).or_default().push(s);
-            acc
-        })
-        .pop_first()
-        .map(|(_, v)| v.into_iter().map(|s| s.to_string()).collect())
-        .unwrap()
+    let mut bit = 30;
+    let mut res = 1;
+    let mut prev = 0;
+    loop {
+        // Scan from most significant bit
+        if n & (1 << bit) > 0 {
+            // add in counts to reach this bit
+            res += f[bit];
+            // prev==1 => ..11..
+            if prev == 1 {
+                res -= 1;
+                break;
+            }
+            prev = 1;
+        } else {
+            prev = 0;
+        }
+        if bit == 0 {
+            break;
+        }
+        bit -= 1;
+    }
+    res
+}
+
+fn solve(curr: i32, n: i32) -> i32 {
+    if curr > n {
+        return 0;
+    }
+    if curr & 1 == 1 {
+        // odd; can only append 0
+        1 + solve(curr << 1, n)
+    } else {
+        // even; can append 1 and 0
+        1 + solve(curr << 1, n) + solve((curr << 1) | 1, n)
+    }
 }
 
 #[cfg(test)]
@@ -37,33 +60,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            find_restaurant(
-                &["Shogun", "Tapioca Express", "Burger King", "KFC"],
-                &[
-                    "Piatti",
-                    "The Grill at Torrey Pines",
-                    "Hungry Hunter Steakhouse",
-                    "Shogun"
-                ]
-            ),
-            ["Shogun"]
-        );
-        debug_assert_eq!(
-            find_restaurant(
-                &["Shogun", "Tapioca Express", "Burger King", "KFC"],
-                &["KFC", "Shogun", "Burger King"]
-            ),
-            ["Shogun"]
-        );
-        sort_eq(
-            find_restaurant(&["happy", "sad", "good"], &["sad", "happy", "good"]),
-            ["sad", "happy"],
-        );
+        debug_assert_eq!(find_integers(5), 5);
+        debug_assert_eq!(find_integers(1), 2);
+        debug_assert_eq!(find_integers(2), 3);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(find_integers(4), 4);
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
