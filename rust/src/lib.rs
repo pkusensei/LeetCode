@@ -4,15 +4,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn valid_square(p1: [i32; 2], p2: [i32; 2], p3: [i32; 2], p4: [i32; 2]) -> bool {
-    let ps = [p1, p2, p3, p4];
-    let mut dist = std::collections::HashSet::new();
-    for i in 0..4 {
-        for j in i + 1..4 {
-            dist.insert((ps[i][0] - ps[j][0]).pow(2) + (ps[i][1] - ps[j][1]).pow(2));
-        }
-    }
-    dist.len() == 2 && dist.into_iter().all(|v| v > 0)
+pub fn find_lhs(nums: &[i32]) -> i32 {
+    nums.iter()
+        .fold(std::collections::BTreeMap::new(), |mut acc, &num| {
+            *acc.entry(num).or_insert(0) += 1;
+            acc
+        })
+        .into_iter()
+        .collect::<Vec<_>>()
+        .windows(2)
+        .filter_map(|w| {
+            if w[1].0 - w[0].0 == 1 {
+                Some(w[1].1 + w[0].1)
+            } else {
+                None
+            }
+        })
+        .max()
+        .unwrap_or(0)
 }
 
 #[cfg(test)]
@@ -23,9 +32,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(valid_square([0, 0], [1, 1], [1, 0], [0, 1]));
-        debug_assert!(!valid_square([0, 0], [1, 1], [1, 0], [0, 12]));
-        debug_assert!(valid_square([1, 0], [-1, 0], [0, 1], [0, -1]));
+        debug_assert_eq!(find_lhs(&[1, 3, 2, 2, 5, 2, 3, 7]), 5);
+        debug_assert_eq!(find_lhs(&[1, 2, 3, 4]), 2);
+        debug_assert_eq!(find_lhs(&[1, 1, 1, 1]), 0);
     }
 
     #[test]
