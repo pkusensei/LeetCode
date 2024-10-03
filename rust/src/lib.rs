@@ -1,26 +1,30 @@
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn can_place_flowers(mut nums: Vec<i32>, n: i32) -> bool {
-    nums.reserve(4);
-    nums.insert(0, 0);
-    nums.insert(0, 1); // add [1,0] to the front
-    nums.push(0);
-    nums.push(1); // add [0,1] to the end
-    let is: Vec<_> = nums
-        .into_iter()
-        .enumerate()
-        .filter_map(|(i, n)| if n == 1 { Some(i) } else { None })
-        .collect();
-    let count: usize = is
-        .windows(2)
-        .map(|w| w[1] - w[0] - 1)
-        .filter_map(|n| if n > 2 { Some((n - 1) / 2) } else { None })
-        .sum();
-    count >= n as usize
+pub fn find_duplicate(paths: &[&str]) -> Vec<Vec<String>> {
+    let mut map: HashMap<&str, Vec<_>> = HashMap::new();
+    for path in paths.iter() {
+        for (content, file) in process(path) {
+            map.entry(content).or_default().push(file);
+        }
+    }
+    map.into_values().filter(|v| v.len() > 1).collect()
+}
+
+fn process(s: &str) -> impl Iterator<Item = (&str, String)> {
+    let mut it = s.split_whitespace();
+    let dir = it.next().unwrap_or_default();
+    it.map(move |f| {
+        let i = f.find('(').unwrap();
+        let content = &f[i + 1..f.len() - 1]; // ( ... )
+        let fullpath = format!("{}/{}", dir, &f[..i]);
+        (content, fullpath)
+    })
 }
 
 #[cfg(test)]
@@ -31,8 +35,29 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(can_place_flowers(vec![1, 0, 0, 0, 1], 1));
-        debug_assert!(!can_place_flowers(vec![1, 0, 0, 0, 1], 2));
+        sort_eq(
+            find_duplicate(&[
+                "root/a 1.txt(abcd) 2.txt(efgh)",
+                "root/c 3.txt(abcd)",
+                "root/c/d 4.txt(efgh)",
+                "root 4.txt(efgh)",
+            ]),
+            [
+                vec!["root/a/2.txt", "root/c/d/4.txt", "root/4.txt"],
+                vec!["root/a/1.txt", "root/c/3.txt"],
+            ],
+        );
+        sort_eq(
+            find_duplicate(&[
+                "root/a 1.txt(abcd) 2.txt(efgh)",
+                "root/c 3.txt(abcd)",
+                "root/c/d 4.txt(efgh)",
+            ]),
+            [
+                vec!["root/a/2.txt", "root/c/d/4.txt"],
+                vec!["root/a/1.txt", "root/c/3.txt"],
+            ],
+        );
     }
 
     #[test]
