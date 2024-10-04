@@ -12,19 +12,21 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
-        var a = TreeNode.Make([1, 2, 3, 4]);
-        var b = sol.Tree2str(a);
-        var c = "1(2(4))(3)";
-        Assert.AreEqual(c, b);
+        var a1 = TreeNode.Make([1, 3, 2, 5]);
+        var a2 = TreeNode.Make([2, 1, 3, null, 4, null, 7]);
+        var b = sol.MergeTrees(a1, a2);
+        var c = "[3,4,5,5,4,null,7]";
+        Assert.AreEqual(c, b.ToString());
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        var a = TreeNode.Make([1, 2, 3, null, 4]);
-        var b = sol.Tree2str(a);
-        var c = "1(2()(4))(3)";
-        Assert.AreEqual(c, b);
+        var a1 = TreeNode.Make([1]);
+        var a2 = TreeNode.Make([1, 2]);
+        var b = sol.MergeTrees(a1, a2);
+        var c = "[2,2]";
+        Assert.AreEqual(c, b.ToString());
     }
 
     [TestMethod]

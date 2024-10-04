@@ -6,38 +6,17 @@ namespace Solution;
 
 public class Solution
 {
-    public string Tree2str(TreeNode root)
+    public TreeNode MergeTrees(TreeNode root1, TreeNode root2)
     {
-        var sb = new StringBuilder();
-        if (root is null) { return sb.ToString(); }
-        Dfs(root, sb);
-        return sb.ToString();
-    }
-
-    static void Dfs(TreeNode node, StringBuilder sb)
-    {
-        sb.Append(node.val);
-        switch (node.left is null, node.right is null)
+        switch (root1 is null, root2 is null)
         {
-            case (true, true): return;
-            case (true, false):
-                sb.Append("()(");
-                Dfs(node.right, sb);
-                sb.Append(')');
-                return;
-            case (false, true):
-                sb.Append('(');
-                Dfs(node.left, sb);
-                sb.Append(')');
-                return;
+            case (true, true): return null;
+            case (true, false): return root2;
+            case (false, true): return root1;
             default:
-                sb.Append('(');
-                Dfs(node.left, sb);
-                sb.Append(')');
-                sb.Append('(');
-                Dfs(node.right, sb);
-                sb.Append(')');
-                return;
+                var left = MergeTrees(root1.left, root2.left);
+                var right = MergeTrees(root1.right, root2.right);
+                return new(root1.val + root2.val, left, right);
         }
     }
 }
