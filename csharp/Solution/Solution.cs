@@ -6,17 +6,23 @@ namespace Solution;
 
 public class Solution
 {
-    public TreeNode MergeTrees(TreeNode root1, TreeNode root2)
+    public TreeNode AddOneRow(TreeNode root, int val, int depth)
     {
-        switch (root1 is null, root2 is null)
+        return Dfs(root, val, depth, true);
+    }
+
+    static TreeNode Dfs(TreeNode root, int val, int depth, bool is_left)
+    {
+        if (root is null && depth > 1) { return null; }
+        if (depth < 2)
         {
-            case (true, true): return null;
-            case (true, false): return root2;
-            case (false, true): return root1;
-            default:
-                var left = MergeTrees(root1.left, root2.left);
-                var right = MergeTrees(root1.right, root2.right);
-                return new(root1.val + root2.val, left, right);
+            var node = new TreeNode(val);
+            if (is_left) { node.left = root; }
+            else { node.right = root; }
+            return node;
         }
+        root.left = Dfs(root.left, val, depth - 1, true);
+        root.right = Dfs(root.right, val, depth - 1, false);
+        return root;
     }
 }
