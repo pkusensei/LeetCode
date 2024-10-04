@@ -4,19 +4,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn divide_players(skill: &mut [i32]) -> i64 {
-    let n = skill.len();
-    let sum: i32 = skill.iter().sum();
-    if (sum * 2) % n as i32 > 0 {
-        return -1;
+pub fn triangle_number(nums: &mut [i32]) -> i32 {
+    let n = nums.len();
+    if n < 3 {
+        return 0;
     }
-    let ave = sum * 2 / n as i32;
-    skill.sort_unstable();
-    let it = skill.iter().take(n / 2).zip(skill.iter().rev().take(n / 2));
-    if !it.clone().all(|(a, b)| a + b == ave) {
-        return -1;
+    nums.sort_unstable();
+    let mut res = 0;
+    for i in 0..n - 2 {
+        if nums[i] == 0 {
+            continue;
+        }
+        for j in i + 1..n - 1 {
+            let side = nums[i] + nums[j];
+            let k = nums[j + 1..].partition_point(|&v| v < side);
+            res += k as i32;
+        }
     }
-    it.map(|(&a, &b)| i64::from(a) * i64::from(b)).sum()
+    res
 }
 
 #[cfg(test)]
@@ -27,9 +32,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(divide_players(&mut [3, 2, 5, 1, 3, 4]), 22);
-        debug_assert_eq!(divide_players(&mut [3, 4]), 12);
-        debug_assert_eq!(divide_players(&mut [1, 1, 2, 3]), -1);
+        debug_assert_eq!(triangle_number(&mut [2, 2, 3, 4]), 3);
+        debug_assert_eq!(triangle_number(&mut [4, 2, 3, 4]), 4);
     }
 
     #[test]
