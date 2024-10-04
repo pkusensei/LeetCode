@@ -4,20 +4,13 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_distance(arrays: &[&[i32]]) -> i32 {
-    let mut min = arrays[0][0];
-    let mut max = arrays[0].last().copied().unwrap_or(min);
-    let mut res = 0;
-    for a in arrays.iter().skip(1) {
-        let temp_min = a[0];
-        let temp_max = a.last().copied().unwrap_or(temp_min);
-        res = res.max(temp_max.abs_diff(min)).max(max.abs_diff(temp_min));
-        // min and max can be from different arrays
-        // because res is only calculated when seeing a new one
-        min = min.min(temp_min);
-        max = max.max(temp_max);
-    }
-    res as _
+pub fn maximum_product(nums: &mut [i32]) -> i32 {
+    nums.sort_unstable();
+    nums.iter()
+        .rev()
+        .take(3)
+        .product::<i32>()
+        .max(nums[0] * nums[1] * nums.last().unwrap())
 }
 
 #[cfg(test)]
@@ -28,8 +21,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(max_distance(&[&[1, 2, 3], &[4, 5], &[1, 2, 3]]), 4);
-        debug_assert_eq!(max_distance(&[&[1], &[1]]), 0);
+        debug_assert_eq!(maximum_product(&mut [1, 2, 3]), 6);
+        debug_assert_eq!(maximum_product(&mut [1, 2, 3, 4]), 24);
+        debug_assert_eq!(maximum_product(&mut [-1, -2, -3]), -6);
     }
 
     #[test]
