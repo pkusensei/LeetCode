@@ -1,55 +1,63 @@
 mod helper;
 mod trie;
 
-use std::collections::{BinaryHeap, HashMap};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn least_interval(tasks: &[char], n: i32) -> i32 {
-    // with_pq(tasks, n)
-    let counts = tasks.iter().fold([0; 26], |mut acc, &ch| {
-        acc[(u32::from(ch) - u32::from('A')) as usize] += 1;
-        acc
-    });
-    let max = *counts.iter().max().unwrap();
-    let max_count = counts.iter().filter(|&&n| n == max).count() as i32;
-    ((max - 1) * (n + 1) + max_count).max(tasks.len() as i32)
-    // ^^^^^^^ with gap/idle ^^^^^^^  vs  ^^^^^ no gap ^^^^^
-    // Reagrding the gap situation
-    // A cycle is (1+n) steps, with (max-1) cycles
-    // And amount of max_count that's lingering
+#[derive(Debug, Clone)]
+struct MyCircularQueue {
+    data: Box<[Option<i32>]>,
+    cap: usize,
+    r_p: usize,
+    w_p: usize,
 }
 
-fn with_pq(tasks: &[char], n: i32) -> i32 {
-    let mut chs: BinaryHeap<_> = tasks
-        .iter()
-        .fold(HashMap::with_capacity(26), |mut acc, &ch| {
-            *acc.entry(ch).or_insert(0) += 1;
-            acc
-        })
-        .into_values()
-        .collect();
-
-    let mut res = 0;
-    let mut temp = Vec::with_capacity(1 + n as usize);
-    while !chs.is_empty() {
-        let mut cycle = n + 1;
-        let mut count = 0;
-        while cycle > 0 {
-            cycle -= 1;
-            let Some(v) = chs.pop() else {
-                break;
-            };
-            if v > 1 {
-                temp.push(v - 1);
-            }
-            count += 1;
+impl MyCircularQueue {
+    fn new(k: i32) -> Self {
+        Self {
+            data: vec![None; k as usize].into_boxed_slice(),
+            cap: k as usize,
+            r_p: 0,
+            w_p: 0,
         }
-        chs.extend(temp.drain(..));
-        res += if chs.is_empty() { count } else { n + 1 };
     }
-    res
+
+    fn en_queue(&mut self, value: i32) -> bool {
+        if self.data[self.w_p].is_some() {
+            false
+        } else {
+            self.data[self.w_p] = Some(value);
+            self.w_p = (1 + self.w_p) % self.cap;
+            true
+        }
+    }
+
+    fn de_queue(&mut self) -> bool {
+        if self.data[self.r_p].is_none() {
+            false
+        } else {
+            self.data[self.r_p] = None;
+            self.r_p = (1 + self.r_p) % self.cap;
+            true
+        }
+    }
+
+    fn front(&self) -> i32 {
+        self.data[self.r_p].unwrap_or(-1)
+    }
+
+    fn rear(&self) -> i32 {
+        let i = self.w_p.checked_sub(1).unwrap_or(self.cap - 1);
+        self.data[i].unwrap_or(-1)
+    }
+
+    fn is_empty(&self) -> bool {
+        self.w_p == self.r_p && self.data[self.r_p].is_none()
+    }
+
+    fn is_full(&self) -> bool {
+        self.w_p == self.r_p && self.data[self.r_p].is_some()
+    }
 }
 
 #[cfg(test)]
@@ -60,9 +68,16 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(least_interval(&['A', 'A', 'A', 'B', 'B', 'B'], 2), 8);
-        debug_assert_eq!(least_interval(&['A', 'C', 'A', 'B', 'D', 'B'], 1), 6);
-        debug_assert_eq!(least_interval(&['A', 'A', 'A', 'B', 'B', 'B'], 3), 10);
+        let mut myCircularQueue = MyCircularQueue::new(3);
+        debug_assert!(myCircularQueue.en_queue(1)); // return True
+        debug_assert!(myCircularQueue.en_queue(2)); // return True
+        debug_assert!(myCircularQueue.en_queue(3)); // return True
+        debug_assert!(!myCircularQueue.en_queue(4)); // return False
+        myCircularQueue.rear(); // return 3
+        debug_assert!(myCircularQueue.is_full()); // return True
+        debug_assert!(myCircularQueue.de_queue()); // return True
+        debug_assert!(myCircularQueue.en_queue(4)); // return True
+        debug_assert_eq!(myCircularQueue.rear(), 4); // return 4
     }
 
     #[test]
