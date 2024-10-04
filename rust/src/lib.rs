@@ -4,60 +4,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-#[derive(Debug, Clone)]
-struct MyCircularQueue {
-    data: Box<[Option<i32>]>,
-    cap: usize,
-    r_p: usize,
-    w_p: usize,
-}
-
-impl MyCircularQueue {
-    fn new(k: i32) -> Self {
-        Self {
-            data: vec![None; k as usize].into_boxed_slice(),
-            cap: k as usize,
-            r_p: 0,
-            w_p: 0,
-        }
+pub fn max_distance(arrays: &[&[i32]]) -> i32 {
+    let mut min = arrays[0][0];
+    let mut max = arrays[0].last().copied().unwrap_or(min);
+    let mut res = 0;
+    for a in arrays.iter().skip(1) {
+        let temp_min = a[0];
+        let temp_max = a.last().copied().unwrap_or(temp_min);
+        res = res.max(temp_max.abs_diff(min)).max(max.abs_diff(temp_min));
+        // min and max can be from different arrays
+        // because res is only calculated when seeing a new one
+        min = min.min(temp_min);
+        max = max.max(temp_max);
     }
-
-    fn en_queue(&mut self, value: i32) -> bool {
-        if self.data[self.w_p].is_some() {
-            false
-        } else {
-            self.data[self.w_p] = Some(value);
-            self.w_p = (1 + self.w_p) % self.cap;
-            true
-        }
-    }
-
-    fn de_queue(&mut self) -> bool {
-        if self.data[self.r_p].is_none() {
-            false
-        } else {
-            self.data[self.r_p] = None;
-            self.r_p = (1 + self.r_p) % self.cap;
-            true
-        }
-    }
-
-    fn front(&self) -> i32 {
-        self.data[self.r_p].unwrap_or(-1)
-    }
-
-    fn rear(&self) -> i32 {
-        let i = self.w_p.checked_sub(1).unwrap_or(self.cap - 1);
-        self.data[i].unwrap_or(-1)
-    }
-
-    fn is_empty(&self) -> bool {
-        self.w_p == self.r_p && self.data[self.r_p].is_none()
-    }
-
-    fn is_full(&self) -> bool {
-        self.w_p == self.r_p && self.data[self.r_p].is_some()
-    }
+    res as _
 }
 
 #[cfg(test)]
@@ -68,16 +28,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        let mut myCircularQueue = MyCircularQueue::new(3);
-        debug_assert!(myCircularQueue.en_queue(1)); // return True
-        debug_assert!(myCircularQueue.en_queue(2)); // return True
-        debug_assert!(myCircularQueue.en_queue(3)); // return True
-        debug_assert!(!myCircularQueue.en_queue(4)); // return False
-        myCircularQueue.rear(); // return 3
-        debug_assert!(myCircularQueue.is_full()); // return True
-        debug_assert!(myCircularQueue.de_queue()); // return True
-        debug_assert!(myCircularQueue.en_queue(4)); // return True
-        debug_assert_eq!(myCircularQueue.rear(), 4); // return 4
+        debug_assert_eq!(max_distance(&[&[1, 2, 3], &[4, 5], &[1, 2, 3]]), 4);
+        debug_assert_eq!(max_distance(&[&[1], &[1]]), 0);
     }
 
     #[test]
