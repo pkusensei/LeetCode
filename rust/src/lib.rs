@@ -4,33 +4,30 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn k_inverse_pairs(n: i32, k: i32) -> i32 {
-    const MOD: i32 = 1_000_000_007;
-    let (n, k) = (n as usize, k as usize);
-    // let (mut prev, mut curr) = (vec![0; 1 + k], vec![0; 1 + k]);
-    // prev[0] = 1;
-    // for i1 in 1..=n {
-    //     for i2 in 0..=k {
-    //         for i3 in 0..=i2.min(i1 - 1) {
-    //             curr[i2] = (curr[i2] + prev[i2 - i3]) % MOD;
-    //         }
-    //     }
-    //     prev = curr;
-    //     curr = vec![0; 1 + k];
-    // }
-    // prev[k]
-    let mut dp = vec![0; 1 + k];
-    dp[0] = 1;
-
-    for i in 2..=n {
-        for j in 1..=k {
-            dp[j] = (dp[j] + dp[j - 1]) % MOD;
-        }
-        for j in (i..=k).rev() {
-            dp[j] = (dp[j] - dp[j - i]).rem_euclid(MOD);
+pub fn check_inclusion(s1: &str, s2: &str) -> bool {
+    let n = s1.len();
+    if n > s2.len() {
+        return false;
+    }
+    let mut counts = s1.bytes().fold([0; 26], |mut acc, b| {
+        acc[usize::from(b - b'a')] += 1;
+        acc
+    });
+    for b in s2[..n].bytes() {
+        counts[usize::from(b - b'a')] -= 1;
+    }
+    if counts.iter().all(|&n| n == 0) {
+        return true;
+    }
+    let s2 = s2.as_bytes();
+    for i in 1..=s2.len() - n {
+        counts[usize::from(s2[i - 1] - b'a')] += 1;
+        counts[usize::from(s2[i + n - 1] - b'a')] -= 1;
+        if counts.iter().all(|&n| n == 0) {
+            return true;
         }
     }
-    dp[k]
+    false
 }
 
 #[cfg(test)]
@@ -41,15 +38,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(k_inverse_pairs(3, 0), 1);
-        debug_assert_eq!(k_inverse_pairs(3, 1), 2);
+        debug_assert!(check_inclusion("ab", "eidbaooo"));
+        debug_assert!(!check_inclusion("ab", "eidboaoo"));
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(k_inverse_pairs(3, 2), 2);
-        debug_assert_eq!(k_inverse_pairs(1000, 1000), 663677020);
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
