@@ -6,23 +6,22 @@ namespace Solution;
 
 public class Solution
 {
-    public TreeNode AddOneRow(TreeNode root, int val, int depth)
+    public IList<double> AverageOfLevels(TreeNode root)
     {
-        return Dfs(root, val, depth, true);
-    }
-
-    static TreeNode Dfs(TreeNode root, int val, int depth, bool is_left)
-    {
-        if (root is null && depth > 1) { return null; }
-        if (depth < 2)
+        var queue = new Queue<TreeNode>();
+        queue.Enqueue(root);
+        List<double> res = [];
+        while (queue.Count > 0)
         {
-            var node = new TreeNode(val);
-            if (is_left) { node.left = root; }
-            else { node.right = root; }
-            return node;
+            var nodes = queue.ToList();
+            res.Add(nodes.Select(n => (long)n.val).Sum() / (double)nodes.Count);
+            queue.Clear();
+            foreach (var n in nodes)
+            {
+                if (n.left is not null) { queue.Enqueue(n.left); }
+                if (n.right is not null) { queue.Enqueue(n.right); }
+            }
         }
-        root.left = Dfs(root.left, val, depth - 1, true);
-        root.right = Dfs(root.right, val, depth - 1, false);
-        return root;
+        return res;
     }
 }

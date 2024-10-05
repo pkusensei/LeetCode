@@ -12,29 +12,24 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
-        var a = TreeNode.Make([4, 2, 6, 3, 1, 5]);
-        var b = sol.AddOneRow(a, 1, 2);
-        var c = "[4,1,1,2,null,null,6,3,1,5]";
-        Assert.AreEqual(c, b.ToString());
+        var a = TreeNode.Make([3, 9, 20, null, null, 15, 7]);
+        var b = sol.AverageOfLevels(a);
+        var c = "[3.00000,14.50000,11.00000]";
+        Assert.AreEqual(c, b.Print());
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        var a = TreeNode.Make([4, 2, null, 3, 1]);
-        var b = sol.AddOneRow(a, 1, 3);
-        var c = "[4,2,null,1,1,3,null,null,1]";
-        Assert.AreEqual(c, b.ToString());
+        var a = TreeNode.Make([3, 9, 20, 15, 7]);
+        var b = sol.AverageOfLevels(a);
+        var c = "[3.00000,14.50000,11.00000]";
+        Assert.AreEqual(c, b.Print());
     }
 
     [TestMethod]
     public void TestMethod3()
     {
-        var a = TreeNode.Make([1, 2, 3, 4]);
-        var b = sol.AddOneRow(a, 5, 4);
-        var c = "[1,2,3,4,null,null,null,5,5]";
-        Assert.AreEqual(c, b.ToString());
-
     }
 
     [TestMethod]
