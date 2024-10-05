@@ -1,36 +1,63 @@
 mod helper;
 mod trie;
 
-use std::collections::BinaryHeap;
+use std::{
+    cmp::Reverse,
+    collections::{BinaryHeap, HashMap},
+};
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn schedule_course(courses: &mut [[i32; 2]]) -> i32 {
-    courses.sort_unstable_by_key(|v| v[1]);
-    let mut total = 0;
-    let mut heap = BinaryHeap::new();
-    for v in courses.iter() {
-        // Expand v as [dur, ddl]
-        // Every dur that's pushed onto the heap has passed the check
-        // total + dur <= ddl
-        // Since array is sorted, every upcoming ddl must be bigger
-        // Whenever a false check shows up
-        // Try find a bigger __used__ dur on heap and swap it out
-        // Thus reducing total
-        if total + v[0] <= v[1] {
-            total += v[0];
-            heap.push(v[0]);
-        } else if heap.peek().is_some_and(|&n| n > v[0]) {
-            let Some(prev) = heap.pop() else {
-                continue;
+pub fn smallest_range(nums: &[&[i32]]) -> [i32; 2] {
+    let n = nums.len();
+    let mut pairs: Vec<_> = nums
+        .iter()
+        .enumerate()
+        .flat_map(|(i, v)| v.iter().map(move |&n| (n, i)))
+        .collect();
+    pairs.sort_unstable();
+    let mut counts = HashMap::new();
+    let mut left_i = 0;
+    let mut res = [pairs[0].0, pairs.last().unwrap().0];
+
+    for &(right, nums_i) in pairs.iter() {
+        *counts.entry(nums_i).or_insert(0) += 1;
+        while counts.len() == n && counts.get(&pairs[left_i].1).is_some_and(|&c| c > 1) {
+            let Some(c) = counts.get_mut(&pairs[left_i].1) else {
+                break;
             };
-            total -= prev;
-            total += v[0];
-            heap.push(v[0]);
+            *c -= 1;
+            left_i += 1
+        }
+        let left = pairs[left_i].0;
+        if counts.len() == n && right - left < res[1] - res[0] {
+            res = [left, right];
         }
     }
-    heap.len() as _
+    res
+}
+
+// Potentially fatser than sorting the whole merged vec
+fn with_pq(nums: &[&[i32]]) -> [i32; 2] {
+    let mut res = [-10_001, 10_001];
+    let mut heap: BinaryHeap<(Reverse<i32>, usize, usize)> = nums
+        .iter()
+        .enumerate()
+        .map(|(nums_i, v)| (Reverse(v[0]), nums_i, 0))
+        .collect();
+    let mut right = nums.iter().map(|v| v[0]).max().unwrap();
+    while let Some((Reverse(left), nums_i, idx)) = heap.pop() {
+        if right - left < res[1] - res[0] {
+            res = [left, right];
+        }
+        let Some(&next) = nums[nums_i].get(idx + 1) else {
+            break;
+        };
+        heap.push((Reverse(next), nums_i, idx + 1));
+        right = right.max(next);
+    }
+    res
 }
 
 #[cfg(test)]
@@ -42,18 +69,14 @@ mod tests {
     #[test]
     fn basics() {
         debug_assert_eq!(
-            schedule_course(&mut [[100, 200], [200, 1300], [1000, 1250], [2000, 3200]]),
-            3
+            with_pq(&[&[4, 10, 15, 24, 26], &[0, 9, 12, 20], &[5, 18, 22, 30]]),
+            [20, 24]
         );
-        debug_assert_eq!(schedule_course(&mut [[1, 2]]), 1);
-        debug_assert_eq!(schedule_course(&mut [[3, 2], [4, 3]]), 0);
+        debug_assert_eq!(with_pq(&[&[1, 2, 3], &[1, 2, 3], &[1, 2, 3]]), [1, 1]);
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(schedule_course(&mut [[1, 2], [2, 3]]), 2);
-        debug_assert_eq!(schedule_course(&mut [[5, 5], [4, 6], [2, 6]]), 2);
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
