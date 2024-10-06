@@ -4,20 +4,31 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_error_nums(nums: &mut [i32]) -> Vec<i32> {
-    let n = nums.len();
-    let sum: i32 = nums.iter().sum();
-    let expected_sum = n * (n + 1) / 2;
-    let mut dup = -1;
-    for i in 0..n {
-        let idx = (nums[i].abs() - 1) as usize;
-        if nums[idx] < 0 {
-            dup = nums[i].abs();
-            break;
+pub fn find_longest_chain(pairs: &mut [[i32; 2]]) -> i32 {
+    pairs.sort_unstable_by_key(|v| v[1]);
+    let mut res = 1;
+    let mut end = pairs[0][1];
+    for p in pairs.iter().skip(1) {
+        if p[0] > end {
+            res += 1;
+            end = p[1];
         }
-        nums[idx] *= -1;
     }
-    vec![dup, expected_sum as i32 - sum + dup]
+    res
+    // with_dp(pairs)
+}
+
+fn with_dp(pairs: &[[i32; 2]]) -> i32 {
+    let n = pairs.len();
+    let mut dp = vec![1; n];
+    for i in 1..n {
+        for j in 0..n {
+            if pairs[i][0] > pairs[j][1] {
+                dp[i] = dp[i].max(1 + dp[j]);
+            }
+        }
+    }
+    *dp.last().unwrap()
 }
 
 #[cfg(test)]
@@ -28,8 +39,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(find_error_nums(&mut [1, 2, 2, 4]), [2, 3]);
-        debug_assert_eq!(find_error_nums(&mut [1, 1]), [1, 2]);
+        debug_assert_eq!(find_longest_chain(&mut [[1, 2], [2, 3], [3, 4]]), 2);
+        debug_assert_eq!(find_longest_chain(&mut [[1, 2], [7, 8], [4, 5]]), 3);
     }
 
     #[test]
