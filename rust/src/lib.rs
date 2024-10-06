@@ -4,24 +4,53 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn are_sentences_similar(s1: &str, s2: &str) -> bool {
-    if s1 == s2 {
-        return true;
+pub fn solve_equation(equation: &str) -> String {
+    let Some(((ax, an), (bx, bn))) = equation.split_once('=').map(|(a, b)| (parse(a), parse(b)))
+    else {
+        return "No solution".to_string();
+    };
+    match (ax - bx, bn - an) {
+        (0, 0) => "Infinite solutions".to_string(),
+        (0, _) => "No solution".to_string(),
+        _ => format!("x={}", (bn - an) / (ax - bx)),
     }
-    let [it1, it2] = [s1, s2].map(|s| s.split_ascii_whitespace());
-    let prefix = it1
-        .clone()
-        .zip(it2.clone())
-        .take_while(|(a, b)| a == b)
-        .count();
-    let suffix = it1
-        .clone()
-        .rev()
-        .zip(it2.clone().rev())
-        .take_while(|(a, b)| a == b)
-        .count();
-    let n = it1.count().min(it2.count());
-    (prefix > 0 || suffix > 0) && prefix + suffix >= n
+}
+
+fn parse(s: &str) -> (i32, i32) {
+    let (s, n) = (s.as_bytes(), s.len());
+    let mut idx = 0;
+    let mut sign = 1;
+    let mut factor = 0;
+    let mut num = 0;
+    while idx < n {
+        match s[idx] {
+            b'+' => idx += 1,
+            b'-' => {
+                sign = -1;
+                idx += 1
+            }
+            b'x' => {
+                factor += sign;
+                sign = 1;
+                idx += 1;
+            }
+            _ => {
+                let mut temp = 0;
+                while idx < n && s[idx].is_ascii_digit() {
+                    temp = temp * 10 + i32::from(s[idx] - b'0');
+                    idx += 1;
+                }
+                if s.get(idx).is_some_and(|&b| b == b'x') {
+                    factor += sign * temp;
+                    idx += 1;
+                } else {
+                    num += sign * temp;
+                }
+                sign = 1;
+            }
+        }
+    }
+    (factor, num)
 }
 
 #[cfg(test)]
@@ -32,19 +61,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(are_sentences_similar("My name is Haley", "My Haley"));
-        debug_assert!(!are_sentences_similar("of", "A lot of words"));
-        debug_assert!(are_sentences_similar("Eating right now", "Eating"));
+        debug_assert_eq!(solve_equation("x+5-3+x=6+x-2"), "x=2");
+        debug_assert_eq!(solve_equation("x=x"), "Infinite solutions");
+        debug_assert_eq!(solve_equation("2x=x"), "x=0");
     }
 
     #[test]
-    fn test() {
-        debug_assert!(!are_sentences_similar(
-            "eTUny i b R UFKQJ EZx JBJ Q xXz",
-            "eTUny i R EZx JBJ xXz"
-        ));
-        debug_assert!(are_sentences_similar("a", "a aa a"))
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
