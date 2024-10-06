@@ -4,11 +4,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_max_average(nums: Vec<i32>, k: i32) -> f64 {
-    nums.windows(k as usize)
-        .map(|w| f64::from(w.iter().sum::<i32>()) / f64::from(k))
-        .max_by(|a, b| a.total_cmp(b))
-        .unwrap()
+pub fn find_error_nums(nums: &mut [i32]) -> Vec<i32> {
+    let n = nums.len();
+    let sum: i32 = nums.iter().sum();
+    let expected_sum = n * (n + 1) / 2;
+    let mut dup = -1;
+    for i in 0..n {
+        let idx = (nums[i].abs() - 1) as usize;
+        if nums[idx] < 0 {
+            dup = nums[i].abs();
+            break;
+        }
+        nums[idx] *= -1;
+    }
+    vec![dup, expected_sum as i32 - sum + dup]
 }
 
 #[cfg(test)]
@@ -18,7 +27,10 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        debug_assert_eq!(find_error_nums(&mut [1, 2, 2, 4]), [2, 3]);
+        debug_assert_eq!(find_error_nums(&mut [1, 1]), [1, 2]);
+    }
 
     #[test]
     fn test() {}
