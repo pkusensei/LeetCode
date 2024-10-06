@@ -4,39 +4,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_decodings(s: &str) -> i32 {
-    const MOD: i64 = 1_000_000_007;
-    let s = s.as_bytes();
-    let mut first: i64 = 1;
-    let mut second: i64 = match s[0] {
-        b'*' => 9,
-        b'0' => 0,
-        _ => 1,
-    };
-    for w in s.windows(2) {
-        let (b1, b2) = (w[0], w[1]);
-        let temp = second;
-        if b2 == b'*' {
-            second = (9 * second) % MOD;
-            second = match b1 {
-                b'1' => (second + 9 * first) % MOD,
-                b'2' => (second + 6 * first) % MOD,
-                b'*' => (second + 15 * first) % MOD,
-                _ => second,
-            };
-        } else {
-            second = if b2 != b'0' { second } else { 0 };
-            second = match b1 {
-                b'1' => (second + first) % MOD,
-                b'2' if b2 <= b'6' => (second + first) % MOD,
-                b'*' if b2 <= b'6' => (second + 2 * first) % MOD,
-                b'*' => (second + first) % MOD,
-                _ => second,
-            };
-        }
-        first = temp;
+pub fn are_sentences_similar(s1: &str, s2: &str) -> bool {
+    if s1 == s2 {
+        return true;
     }
-    second as _
+    let [it1, it2] = [s1, s2].map(|s| s.split_ascii_whitespace());
+    let prefix = it1
+        .clone()
+        .zip(it2.clone())
+        .take_while(|(a, b)| a == b)
+        .count();
+    let suffix = it1
+        .clone()
+        .rev()
+        .zip(it2.clone().rev())
+        .take_while(|(a, b)| a == b)
+        .count();
+    let n = it1.count().min(it2.count());
+    (prefix > 0 || suffix > 0) && prefix + suffix >= n
 }
 
 #[cfg(test)]
@@ -47,13 +32,19 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(num_decodings("*"), 9);
-        debug_assert_eq!(num_decodings("1*"), 18);
-        debug_assert_eq!(num_decodings("2*"), 15);
+        debug_assert!(are_sentences_similar("My name is Haley", "My Haley"));
+        debug_assert!(!are_sentences_similar("of", "A lot of words"));
+        debug_assert!(are_sentences_similar("Eating right now", "Eating"));
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert!(!are_sentences_similar(
+            "eTUny i b R UFKQJ EZx JBJ Q xXz",
+            "eTUny i R EZx JBJ xXz"
+        ));
+        debug_assert!(are_sentences_similar("a", "a aa a"))
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
