@@ -4,20 +4,40 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_length(s: &str) -> i32 {
-    let mut stack = vec![];
-    for b in s.bytes() {
-        match b {
-            b'B' if stack.last().is_some_and(|&v| v == b'A') => {
-                stack.pop();
-            }
-            b'D' if stack.last().is_some_and(|&v| v == b'C') => {
-                stack.pop();
-            }
-            _ => stack.push(b),
+pub fn count_substrings(s: &str) -> i32 {
+    (0..s.len()).map(|i| count(s.as_bytes(), i)).sum()
+}
+
+fn count(s: &[u8], i: usize) -> i32 {
+    let n = s.len();
+    let mut res = 1;
+    let (mut left, mut right) = (i.checked_sub(1), i + 1);
+    while let Some(a) = left {
+        if right >= n {
+            break;
+        }
+        if s[a] == s[right] {
+            res += 1;
+            left = a.checked_sub(1);
+            right += 1;
+        } else {
+            break;
         }
     }
-    stack.len() as _
+    let (mut left, mut right) = (i, i + 1);
+    while right < n {
+        if s[left] == s[right] {
+            res += 1;
+            let Some(a) = left.checked_sub(1) else {
+                break;
+            };
+            left = a;
+            right += 1;
+        } else {
+            break;
+        }
+    }
+    res
 }
 
 #[cfg(test)]
@@ -28,8 +48,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(min_length("ABFCACDB"), 2);
-        debug_assert_eq!(min_length("ACBBD"), 5);
+        debug_assert_eq!(count_substrings("abc"), 3);
+        debug_assert_eq!(count_substrings("aaa"), 6);
     }
 
     #[test]
