@@ -12,24 +12,28 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
-        var a = TreeNode.Make([3, 9, 20, null, null, 15, 7]);
-        var b = sol.AverageOfLevels(a);
-        var c = "[3.00000,14.50000,11.00000]";
+        var a = TreeNode.Make([1, 2, 3, 4, null, 2, 4, null, null, 4]);
+        var b = sol.FindDuplicateSubtrees(a);
+        var c = "[[2,4],[4]]";
         Assert.AreEqual(c, b.Print());
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        var a = TreeNode.Make([3, 9, 20, 15, 7]);
-        var b = sol.AverageOfLevels(a);
-        var c = "[3.00000,14.50000,11.00000]";
+        var a = TreeNode.Make([2, 1, 1]);
+        var b = sol.FindDuplicateSubtrees(a);
+        var c = "[[1]]";
         Assert.AreEqual(c, b.Print());
     }
 
     [TestMethod]
     public void TestMethod3()
     {
+        var a = TreeNode.Make([2, 2, 2, 3, null, 3, null]);
+        var b = sol.FindDuplicateSubtrees(a);
+        var c = "[[2,3],[3]]";
+        Assert.AreEqual(c, b.Print());
     }
 
     [TestMethod]
