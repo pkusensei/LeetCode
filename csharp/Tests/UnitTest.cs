@@ -12,28 +12,24 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
-        var a = TreeNode.Make([5, 3, 6, 2, 4, null, 7]);
-        Assert.IsTrue(sol.FindTarget(a, 9));
-        // var b = sol.FindDuplicateSubtrees(a);
-        // var c = "[[2,4],[4]]";
-        // Assert.AreEqual(c, b.Print());
+        // var a = TreeNode.Make([3, 2, 1, 6, 0, 5]);
+        var b = sol.WithStack([3, 2, 1, 6, 0, 5]);
+        var c = "[6,3,5,null,2,0,null,null,1]";
+        Assert.AreEqual(c, b.ToString());
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        var a = TreeNode.Make([5, 3, 6, 2, 4, null, 7]);
-        Assert.IsFalse(sol.FindTarget(a, 28));
-        // var b = sol.FindDuplicateSubtrees(a);
-        // var c = "[[1]]";
-        // Assert.AreEqual(c, b.Print());
+        // var a = TreeNode.Make([3, 2, 1]);
+        var b = sol.WithStack([3, 2, 1]);
+        var c = "[3,null,2,null,1]";
+        Assert.AreEqual(c, b.ToString());
     }
 
     [TestMethod]
     public void TestMethod3()
     {
-        var a = TreeNode.Make([2, 1, 3]);
-        Assert.IsTrue(sol.FindTarget(a, 4));
     }
 
     [TestMethod]
