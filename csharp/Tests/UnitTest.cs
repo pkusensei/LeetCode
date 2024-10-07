@@ -12,18 +12,18 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
-        // var a = TreeNode.Make([3, 2, 1, 6, 0, 5]);
-        var b = sol.WithStack([3, 2, 1, 6, 0, 5]);
-        var c = "[6,3,5,null,2,0,null,null,1]";
-        Assert.AreEqual(c, b.ToString());
+        var a = TreeNode.Make([1, 2]);
+        var b = sol.PrintTree(a);
+        var c = """[["","1",""],["2","",""]]""";
+        Assert.AreEqual(c, b.Print());
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        // var a = TreeNode.Make([3, 2, 1]);
-        var b = sol.WithStack([3, 2, 1]);
-        var c = "[3,null,2,null,1]";
+        var a = TreeNode.Make([1, 2, 3, null, 4]);
+        var b = sol.PrintTree(a);
+        var c = """[["","","","1","","",""],["","2","","","","3",""],["","","4","","","",""]]""";
         Assert.AreEqual(c, b.ToString());
     }
 

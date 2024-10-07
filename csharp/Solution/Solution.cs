@@ -5,32 +5,31 @@ namespace Solution;
 
 public class Solution
 {
-    public TreeNode ConstructMaximumBinaryTree(int[] nums)
+    public IList<IList<string>> PrintTree(TreeNode root)
     {
-        if (nums.Length == 0) { return null; }
-        var curr = nums.Max();
-        var idx = nums.ToList().IndexOf(curr);
-        var left = ConstructMaximumBinaryTree(nums[..idx]);
-        var right = ConstructMaximumBinaryTree(nums[(idx + 1)..]);
-        return new(curr, left, right);
+        var m = Rows(root);
+        int n = (int)Math.Pow(2, m) - 1;
+
+        var res = new string[m][];
+        for (int i = 0; i < m; i += 1)
+        {
+            res[i] = Enumerable.Range(0, n).Select(_ => "").ToArray();
+        }
+        Fill(res, root, m - 1, 0, (n - 1) / 2);
+        return res;
     }
 
-    public TreeNode WithStack(int[] nums)
+    static void Fill(string[][] res, TreeNode node, int height, int r, int c)
     {
-        var stack = new Stack<TreeNode>();
-        foreach (var num in nums)
-        {
-            TreeNode node = new(num);
-            while (stack.TryPeek(out var n1) && n1.val < num)
-            {
-                node.left = stack.Pop();
-            }
-            if (stack.TryPeek(out var n))
-            {
-                n.right = node;
-            }
-            stack.Push(node);
-        }
-        return stack.Last();
+        if (node is null) { return; }
+        res[r][c] = node.val.ToString();
+        Fill(res, node.left, height, r + 1, c - (int)Math.Pow(2, height - r - 1));
+        Fill(res, node.right, height, r + 1, c + (int)Math.Pow(2, height - r - 1));
+    }
+
+    static int Rows(TreeNode node)
+    {
+        if (node is null) { return 0; }
+        return 1 + Math.Max(Rows(node.left), Rows(node.right));
     }
 }
