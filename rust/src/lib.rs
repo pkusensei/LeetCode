@@ -1,79 +1,27 @@
 mod helper;
 mod trie;
 
-use std::{
-    cmp::Reverse,
-    collections::{BinaryHeap, HashMap},
-};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_possible(nums: &[i32]) -> bool {
-    let mut counts = nums.iter().fold(HashMap::new(), |mut acc, &num| {
-        *acc.entry(num).or_insert(0) += 1;
-        acc
-    });
-
-    for &n in nums.iter() {
-        let mut curr = counts.get(&n).copied().unwrap_or(0);
-        if curr == 0 {
-            continue;
-        };
-        let mut count = 0;
-        let mut num = n;
-        while let Some(&c) = counts.get(&num) {
-            // For each start, there must be an end that satisfies
-            // count(end) >= count(start)
-            // Otherwise it is in valid
-            if c < curr {
-                break;
-            }
-            curr = c;
-            counts.entry(num).and_modify(|v| *v -= 1);
-            count += 1;
-            num += 1
-        }
-        if count < 3 {
-            return false;
+pub fn image_smoother(img: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
+    let (rows, cols) = get_dimensions(&img);
+    let mut res = img.clone();
+    for y in 0..rows {
+        for x in 0..cols {
+            let sum: f64 = around(x as i32, y as i32)
+                .chain(std::iter::once((x, y)))
+                .filter_map(|(x, y)| img.get(y).map(|r| r.get(x)))
+                .map(|opt| opt.map(|&n| f64::from(n)).unwrap_or(0.0))
+                .sum();
+            let count = around(x as i32, y as i32)
+                .filter(|&(x, y)| x < cols && y < rows)
+                .count() as f64
+                + 1.0;
+            res[y][x] = (sum / count).trunc() as i32;
         }
     }
-    true
-}
-
-fn with_pq(nums: &[i32]) -> bool {
-    let mut heap = BinaryHeap::new();
-    for &num in nums.iter() {
-        loop {
-            match heap.peek().copied() {
-                // queue is empty; start a new seq
-                None => {
-                    heap.push(Reverse((num, 1)));
-                    break;
-                }
-                // num added to existed seq
-                Some(Reverse((n, c))) if n == num - 1 => {
-                    heap.pop();
-                    heap.push(Reverse((num, c + 1)));
-                    break;
-                }
-                // start a new seq
-                Some(Reverse((n, _))) if n == num => {
-                    heap.push(Reverse((num, 1)));
-                    break;
-                }
-                // a seq concluded
-                Some(Reverse((_, c))) => {
-                    if c < 3 {
-                        return false;
-                    } else {
-                        heap.pop();
-                    }
-                }
-            }
-        }
-    }
-    heap.into_iter().all(|Reverse((_, c))| c >= 3)
+    res
 }
 
 #[cfg(test)]
@@ -84,16 +32,22 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(with_pq(&[1, 2, 3, 3, 4, 5]));
-        debug_assert!(with_pq(&[1, 2, 3, 3, 4, 4, 5, 5]));
-        debug_assert!(!with_pq(&[1, 2, 3, 4, 4, 5]));
+        debug_assert_eq!(
+            image_smoother(vec![vec![1, 1, 1], vec![1, 0, 1], vec![1, 1, 1]]),
+            [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
+        );
+        debug_assert_eq!(
+            image_smoother(vec![
+                vec![100, 200, 100],
+                vec![200, 50, 200],
+                vec![100, 200, 100]
+            ]),
+            [[137, 141, 137], [141, 138, 141], [137, 141, 137]]
+        );
     }
 
     #[test]
-    fn test() {
-        debug_assert!(with_pq(&[1, 2, 3, 4, 6, 7, 8, 9, 10, 11]));
-        debug_assert!(with_pq(&[1, 2, 3, 4, 5, 5, 6, 7]));
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
