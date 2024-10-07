@@ -4,40 +4,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_substrings(s: &str) -> i32 {
-    (0..s.len()).map(|i| count(s.as_bytes(), i)).sum()
+pub fn replace_words(dictionary: &[&str], sentence: &str) -> String {
+    sentence
+        .split_ascii_whitespace()
+        .map(|word| replace(dictionary, word).unwrap_or(word))
+        .collect::<Vec<_>>()
+        .join(" ")
 }
 
-fn count(s: &[u8], i: usize) -> i32 {
-    let n = s.len();
-    let mut res = 1;
-    let (mut left, mut right) = (i.checked_sub(1), i + 1);
-    while let Some(a) = left {
-        if right >= n {
-            break;
-        }
-        if s[a] == s[right] {
-            res += 1;
-            left = a.checked_sub(1);
-            right += 1;
-        } else {
-            break;
-        }
-    }
-    let (mut left, mut right) = (i, i + 1);
-    while right < n {
-        if s[left] == s[right] {
-            res += 1;
-            let Some(a) = left.checked_sub(1) else {
-                break;
-            };
-            left = a;
-            right += 1;
-        } else {
-            break;
-        }
-    }
-    res
+fn replace<'a>(dict: &[&'a str], word: &str) -> Option<&'a str> {
+    dict.iter()
+        .filter(|w| word.starts_with(*w))
+        .min_by_key(|w| w.len())
+        .copied()
 }
 
 #[cfg(test)]
@@ -48,8 +27,17 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(count_substrings("abc"), 3);
-        debug_assert_eq!(count_substrings("aaa"), 6);
+        debug_assert_eq!(
+            replace_words(
+                &["cat", "bat", "rat"],
+                "the cattle was rattled by the battery"
+            ),
+            "the cat was rat by the bat"
+        );
+        debug_assert_eq!(
+            replace_words(&["a", "b", "c"], "aadsfasf absbs bbab cadsfafs"),
+            "a a b c"
+        );
     }
 
     #[test]
