@@ -1,58 +1,79 @@
 mod helper;
 mod trie;
 
-use std::{cmp::Reverse, collections::BinaryHeap};
+use std::{
+    cmp::Reverse,
+    collections::{BinaryHeap, HashMap},
+};
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_closest_elements(arr: &[i32], k: i32, x: i32) -> Vec<i32> {
-    let n = arr.len();
-    let k = k as usize;
-    let pivot = arr.partition_point(|&n| n < x);
-    if pivot == 0 {
-        arr.iter().copied().take(k).collect()
-    } else if pivot == n {
-        arr.iter().rev().copied().take(k).rev().collect()
-    } else {
-        let (mut left, mut right) = (pivot - 1, pivot);
-        let mut heap = BinaryHeap::new();
-        heap.push((Reverse((arr[left].abs_diff(x), arr[left])), left));
-        heap.push((Reverse((arr[right].abs_diff(x), arr[right])), right));
-        let mut res = Vec::with_capacity(k);
-        while res.len() < k {
-            let Some((Reverse((_, num)), idx)) = heap.pop() else {
+pub fn is_possible(nums: &[i32]) -> bool {
+    let mut counts = nums.iter().fold(HashMap::new(), |mut acc, &num| {
+        *acc.entry(num).or_insert(0) += 1;
+        acc
+    });
+
+    for &n in nums.iter() {
+        let mut curr = counts.get(&n).copied().unwrap_or(0);
+        if curr == 0 {
+            continue;
+        };
+        let mut count = 0;
+        let mut num = n;
+        while let Some(&c) = counts.get(&num) {
+            // For each start, there must be an end that satisfies
+            // count(end) >= count(start)
+            // Otherwise it is in valid
+            if c < curr {
                 break;
-            };
-            if idx < pivot {
-                res.insert(0, num);
-                if idx > 0 {
-                    left = idx - 1;
-                    heap.push((Reverse((arr[left].abs_diff(x), arr[left])), left));
+            }
+            curr = c;
+            counts.entry(num).and_modify(|v| *v -= 1);
+            count += 1;
+            num += 1
+        }
+        if count < 3 {
+            return false;
+        }
+    }
+    true
+}
+
+fn with_pq(nums: &[i32]) -> bool {
+    let mut heap = BinaryHeap::new();
+    for &num in nums.iter() {
+        loop {
+            match heap.peek().copied() {
+                // queue is empty; start a new seq
+                None => {
+                    heap.push(Reverse((num, 1)));
+                    break;
                 }
-            } else {
-                res.push(num);
-                if idx < n - 1 {
-                    right = idx + 1;
-                    heap.push((Reverse((arr[right].abs_diff(x), arr[right])), right));
+                // num added to existed seq
+                Some(Reverse((n, c))) if n == num - 1 => {
+                    heap.pop();
+                    heap.push(Reverse((num, c + 1)));
+                    break;
+                }
+                // start a new seq
+                Some(Reverse((n, _))) if n == num => {
+                    heap.push(Reverse((num, 1)));
+                    break;
+                }
+                // a seq concluded
+                Some(Reverse((_, c))) => {
+                    if c < 3 {
+                        return false;
+                    } else {
+                        heap.pop();
+                    }
                 }
             }
         }
-        res
     }
-}
-
-fn with_binary_search(arr: &[i32], k: usize, x: i32) -> &[i32] {
-    let (mut left, mut right) = (0, arr.len() - k);
-    while left < right {
-        let mid = left + (right - left) / 2;
-        if x.abs_diff(arr[mid]) <= x.abs_diff(arr[mid + k]) {
-            right = mid;
-        } else {
-            left = mid + 1;
-        }
-    }
-    &arr[left..(left + k)]
+    heap.into_iter().all(|Reverse((_, c))| c >= 3)
 }
 
 #[cfg(test)]
@@ -63,12 +84,16 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(with_binary_search(&[1, 2, 3, 4, 5], 4, 3), [1, 2, 3, 4]);
-        debug_assert_eq!(with_binary_search(&[1, 1, 2, 3, 4, 5], 4, -1), [1, 1, 2, 3]);
+        debug_assert!(with_pq(&[1, 2, 3, 3, 4, 5]));
+        debug_assert!(with_pq(&[1, 2, 3, 3, 4, 4, 5, 5]));
+        debug_assert!(!with_pq(&[1, 2, 3, 4, 4, 5]));
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert!(with_pq(&[1, 2, 3, 4, 6, 7, 8, 9, 10, 11]));
+        debug_assert!(with_pq(&[1, 2, 3, 4, 5, 5, 6, 7]));
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
