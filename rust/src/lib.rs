@@ -1,39 +1,21 @@
 mod helper;
 mod trie;
 
-use std::collections::VecDeque;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn predict_party_victory(s: &str) -> String {
-    let n = s.len();
-    let (mut ds, mut rs) = (VecDeque::new(), VecDeque::new());
-    for (i, b) in s.bytes().enumerate() {
-        if b == b'D' {
-            ds.push_back(i);
-        } else {
-            rs.push_back(i);
-        }
-    }
-    while !ds.is_empty() || !rs.is_empty() {
-        let Some(d) = ds.pop_front() else {
-            return "Radiant".into();
-        };
-        let Some(r) = rs.pop_front() else {
-            return "Dire".into();
-        };
-        if d < r {
-            ds.push_back(d + n);
-        } else {
-            rs.push_back(r + n);
-        }
-    }
-    if ds.is_empty() {
-        "Radiant".into()
-    } else {
-        "Dire".into()
-    }
+pub fn judge_circle(moves: &str) -> bool {
+    moves.len() & 1 == 0
+        && moves.bytes().fold([0, 0], |mut acc, b| {
+            match b {
+                b'U' => acc[0] += 1,
+                b'D' => acc[0] -= 1,
+                b'R' => acc[1] += 1,
+                b'L' => acc[1] -= 1,
+                _ => (),
+            };
+            acc
+        }) == [0, 0]
 }
 
 #[cfg(test)]
@@ -44,15 +26,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(predict_party_victory("RD".into()), "Radiant");
-        debug_assert_eq!(predict_party_victory("RDD".into()), "Dire");
-        debug_assert_eq!(predict_party_victory("DDRRR".into()), "Dire");
+        debug_assert!(judge_circle("UD"));
+        debug_assert!(!judge_circle("LL"));
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(predict_party_victory("DRRDRDRDRDDRDRDR".into()), "Radiant");
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
