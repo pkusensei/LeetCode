@@ -4,31 +4,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_longest_chain(pairs: &mut [[i32; 2]]) -> i32 {
-    pairs.sort_unstable_by_key(|v| v[1]);
-    let mut res = 1;
-    let mut end = pairs[0][1];
-    for p in pairs.iter().skip(1) {
-        if p[0] > end {
-            res += 1;
-            end = p[1];
-        }
-    }
-    res
-    // with_dp(pairs)
-}
-
-fn with_dp(pairs: &[[i32; 2]]) -> i32 {
-    let n = pairs.len();
-    let mut dp = vec![1; n];
-    for i in 1..n {
-        for j in 0..n {
-            if pairs[i][0] > pairs[j][1] {
-                dp[i] = dp[i].max(1 + dp[j]);
+pub fn min_length(s: &str) -> i32 {
+    let mut stack = vec![];
+    for b in s.bytes() {
+        match b {
+            b'B' if stack.last().is_some_and(|&v| v == b'A') => {
+                stack.pop();
             }
+            b'D' if stack.last().is_some_and(|&v| v == b'C') => {
+                stack.pop();
+            }
+            _ => stack.push(b),
         }
     }
-    *dp.last().unwrap()
+    stack.len() as _
 }
 
 #[cfg(test)]
@@ -39,8 +28,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(find_longest_chain(&mut [[1, 2], [2, 3], [3, 4]]), 2);
-        debug_assert_eq!(find_longest_chain(&mut [[1, 2], [7, 8], [4, 5]]), 3);
+        debug_assert_eq!(min_length("ABFCACDB"), 2);
+        debug_assert_eq!(min_length("ACBBD"), 5);
     }
 
     #[test]
