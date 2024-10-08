@@ -4,28 +4,51 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_swaps(s: &str) -> i32 {
-    let (s, n) = (s.as_bytes(), s.len());
-    let (mut left, mut right) = (0, n - 1);
-    let (mut open, mut close) = (0, 0);
-    let mut res = 0;
-    while left < right {
-        if s[left] == b'[' {
-            open += 1;
-        } else {
-            close += 1
-        }
-        if close > open {
-            while s[right] != b'[' {
-                right -= 1;
-            }
-            close -= 1;
-            open += 1;
-            res += 1;
-            right -= 1;
-        }
-        left += 1;
+pub fn strange_printer(s: String) -> i32 {
+    let mut s = s.into_bytes();
+    s.dedup();
+    let n = s.len();
+    let mut dp = vec![vec![0; n]; n];
+    for i in 0..n {
+        dp[i][i] = 1;
     }
+    for length in 2..=n {
+        for left in 0..n - length + 1 {
+            let right = left + length - 1;
+            dp[left][right] = length;
+            for split in 0..length - 1 {
+                let mut turns = dp[left][left + split] + dp[left + split + 1][right];
+                if s[left + split] == s[right] {
+                    turns -= 1;
+                }
+                dp[left][right] = dp[left][right].min(turns);
+            }
+        }
+    }
+    dp[0][n - 1] as _
+    // solve(&s, &mut dp, 0, n - 1)
+}
+
+fn solve(s: &[u8], dp: &mut [Vec<i32>], left: usize, right: usize) -> i32 {
+    if left > right {
+        return 0;
+    }
+    if dp[left][right] > 0 {
+        return dp[left][right];
+    }
+    // [a,b,a,..]
+    // remove [a]; recurse on [b,a,..]
+    let mut res = 1 + solve(s, dp, left + 1, right);
+    for i in left + 1..=right {
+        if s[left] == s[i] {
+            // split into [b] and [a]+[a,..]
+            // the latter is the same as [a,..], thus [b] and [a,..]
+            // another split is [a,b] and [,..]
+            // since 2 a's together can be viewed as one
+            res = res.min(solve(s, dp, left + 1, i - 1) + solve(s, dp, i, right))
+        }
+    }
+    dp[left][right] = res;
     res
 }
 
@@ -37,9 +60,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        // debug_assert_eq!(min_swaps("][]["), 1);
-        debug_assert_eq!(min_swaps("]]][[["), 2);
-        debug_assert_eq!(min_swaps("[]"), 0);
+        debug_assert_eq!(strange_printer("aaabbb".into()), 2);
+        debug_assert_eq!(strange_printer("aba".into()), 2);
     }
 
     #[test]
