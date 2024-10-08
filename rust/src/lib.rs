@@ -4,28 +4,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_kth_number(m: i32, n: i32, k: i32) -> i32 {
-    let (mut left, mut right) = (1, m * n);
-    while left < right {
-        let mid = left + (right - left) / 2;
-        if count(mid, m, n) >= k {
-            right = mid;
-        } else {
-            left = mid + 1;
+pub fn maximum_swap(num: i32) -> i32 {
+    let mut digits = num.to_string().into_bytes();
+    // find last occurence of every digit
+    let indices = digits.iter().enumerate().fold([0; 10], |mut acc, (i, &d)| {
+        acc[usize::from(d - b'0')] = i;
+        acc
+    });
+    let n = digits.len();
+    for left in 0..n {
+        // scan every digit from the left
+        let digit = usize::from(digits[left] - b'0');
+        // attempt to find a bigger digit
+        for right in (1 + digit..=9).rev() {
+            // if there is a bigger digit to the right
+            if indices[right] > left {
+                digits.swap(left, indices[right]);
+                return String::from_utf8(digits).unwrap().parse().unwrap_or(num);
+            }
         }
     }
-    left
-}
-
-fn count(mid: i32, m: i32, n: i32) -> i32 {
-    let mut res = 0;
-    for row in 1..=m {
-        // mid/row > n => mid is bigger than the whole row
-        // take n as count
-        // other wise, mid falls on mid/row on current row
-        res += (mid / row).min(n);
-    }
-    res
+    num
 }
 
 #[cfg(test)]
@@ -36,8 +35,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        // debug_assert_eq!(find_kth_number(3, 3, 5), 3);
-        debug_assert_eq!(find_kth_number(2, 3, 6), 6);
+        debug_assert_eq!(maximum_swap(2736), 7236);
+        debug_assert_eq!(maximum_swap(9973), 9973);
     }
 
     #[test]
