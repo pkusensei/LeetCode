@@ -4,22 +4,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn image_smoother(img: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
-    let (rows, cols) = get_dimensions(&img);
-    let mut res = img.clone();
-    for y in 0..rows {
-        for x in 0..cols {
-            let sum: f64 = around(x as i32, y as i32)
-                .chain(std::iter::once((x, y)))
-                .filter_map(|(x, y)| img.get(y).map(|r| r.get(x)))
-                .map(|opt| opt.map(|&n| f64::from(n)).unwrap_or(0.0))
-                .sum();
-            let count = around(x as i32, y as i32)
-                .filter(|&(x, y)| x < cols && y < rows)
-                .count() as f64
-                + 1.0;
-            res[y][x] = (sum / count).trunc() as i32;
+pub fn min_swaps(s: &str) -> i32 {
+    let (s, n) = (s.as_bytes(), s.len());
+    let (mut left, mut right) = (0, n - 1);
+    let (mut open, mut close) = (0, 0);
+    let mut res = 0;
+    while left < right {
+        if s[left] == b'[' {
+            open += 1;
+        } else {
+            close += 1
         }
+        if close > open {
+            while s[right] != b'[' {
+                right -= 1;
+            }
+            close -= 1;
+            open += 1;
+            res += 1;
+            right -= 1;
+        }
+        left += 1;
     }
     res
 }
@@ -32,18 +37,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            image_smoother(vec![vec![1, 1, 1], vec![1, 0, 1], vec![1, 1, 1]]),
-            [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
-        );
-        debug_assert_eq!(
-            image_smoother(vec![
-                vec![100, 200, 100],
-                vec![200, 50, 200],
-                vec![100, 200, 100]
-            ]),
-            [[137, 141, 137], [141, 138, 141], [137, 141, 137]]
-        );
+        // debug_assert_eq!(min_swaps("][]["), 1);
+        debug_assert_eq!(min_swaps("]]][[["), 2);
+        debug_assert_eq!(min_swaps("[]"), 0);
     }
 
     #[test]
