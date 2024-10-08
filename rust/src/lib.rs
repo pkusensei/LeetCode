@@ -4,13 +4,26 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn construct_array(n: i32, k: i32) -> Vec<i32> {
-    let mut res: Vec<i32> = (1..=n).collect();
-    // k=1 [1,2,3,4]
-    // k=2 [1,4,3,2]
-    // k=3 [1,4,2,3]
-    for i in 1..k as usize {
-        res[i..].reverse();
+pub fn find_kth_number(m: i32, n: i32, k: i32) -> i32 {
+    let (mut left, mut right) = (1, m * n);
+    while left < right {
+        let mid = left + (right - left) / 2;
+        if count(mid, m, n) >= k {
+            right = mid;
+        } else {
+            left = mid + 1;
+        }
+    }
+    left
+}
+
+fn count(mid: i32, m: i32, n: i32) -> i32 {
+    let mut res = 0;
+    for row in 1..=m {
+        // mid/row > n => mid is bigger than the whole row
+        // take n as count
+        // other wise, mid falls on mid/row on current row
+        res += (mid / row).min(n);
     }
     res
 }
@@ -23,8 +36,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(construct_array(3, 1), [1, 2, 3]);
-        debug_assert_eq!(construct_array(3, 2), [1, 3, 2]);
+        // debug_assert_eq!(find_kth_number(3, 3, 5), 3);
+        debug_assert_eq!(find_kth_number(2, 3, 6), 6);
     }
 
     #[test]
