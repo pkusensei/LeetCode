@@ -12,28 +12,24 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
-        var a = TreeNode.Make([1, 3, 2, 5, null, null, 9, 6, null, 7]);
-        var b = sol.WidthOfBinaryTree(a);
-        var c = 7;
-        Assert.AreEqual(c, b);
+        var a = TreeNode.Make([1, 0, 2]);
+        var b = sol.TrimBST(a, 1, 2);
+        var c = "[1,null,2]";
+        Assert.AreEqual(c, b.ToString());
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        var a = TreeNode.Make([1, 3, 2, 5, 3, null, 9]);
-        var b = sol.WidthOfBinaryTree(a);
-        var c = 4;
-        Assert.AreEqual(c, b);
+        var a = TreeNode.Make([3, 0, 4, null, 2, null, null, 1]);
+        var b = sol.TrimBST(a, 1, 3);
+        var c = "[3,2,null,1]";
+        Assert.AreEqual(c, b.ToString());
     }
 
     [TestMethod]
     public void TestMethod3()
     {
-        var a = TreeNode.Make([1, 3, 2, 5]);
-        var b = sol.WidthOfBinaryTree(a);
-        var c = 2;
-        Assert.AreEqual(c, b);
     }
 
     [TestMethod]
