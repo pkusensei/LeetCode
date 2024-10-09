@@ -4,88 +4,65 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-#[derive(Debug, Clone)]
-struct MapSum {
-    trie: Trie<26>,
-}
-
-impl MapSum {
-    fn new() -> Self {
-        Self { trie: Trie::new() }
-    }
-
-    fn insert(&mut self, key: String, val: i32) {
-        self.trie.insert(key.bytes(), Self::index_of(), val);
-    }
-
-    fn sum(&self, prefix: String) -> i32 {
-        self.trie.search(prefix.bytes(), Self::index_of())
-    }
-
-    fn index_of() -> impl FnMut(u8) -> usize + Copy {
-        |b| usize::from(b - b'a')
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct Trie<const N: usize> {
-    data: [Option<Box<Trie<N>>>; N],
-    val: i32,
-}
-
-impl<const N: usize> Trie<N> {
-    pub const fn new() -> Self {
-        Self {
-            data: [const { None }; N],
-            val: 0,
-        }
-    }
-
-    pub fn insert<T, I, F>(&mut self, input: I, index_of: F, val: i32)
-    where
-        I: IntoIterator<Item = T>,
-        F: FnMut(T) -> usize,
-    {
-        self.insert_impl(input.into_iter(), index_of, val)
-    }
-
-    fn insert_impl<T, I, F>(&mut self, mut it: I, mut index_of: F, val: i32)
-    where
-        I: Iterator<Item = T>,
-        F: FnMut(T) -> usize,
-    {
-        if let Some(v) = it.next() {
-            let idx = index_of(v);
-            if let Some(n) = self.data.get_mut(idx).and_then(|opt| opt.as_mut()) {
-                n.insert(it, index_of, val);
-            } else {
-                let mut node = Box::new(Self::new());
-                node.insert(it, index_of, val);
-                self.data[idx] = Some(node);
+pub fn check_valid_string(s: &str) -> bool {
+    let (mut stopen, mut ststar) = (vec![], vec![]);
+    for (i, b) in s.bytes().enumerate() {
+        match b {
+            b'(' => stopen.push(i),
+            b'*' => ststar.push(i),
+            _ => {
+                if !stopen.is_empty() {
+                    stopen.pop();
+                } else if !ststar.is_empty() {
+                    ststar.pop();
+                } else {
+                    return false;
+                }
             }
-        } else {
-            self.val = val;
         }
     }
+    if stopen.is_empty() {
+        true
+    } else {
+        stopen.len() <= ststar.len()
+            && ststar
+                .into_iter()
+                .rev()
+                .zip(stopen.into_iter().rev())
+                .all(|(a, b)| a > b)
+    }
+}
 
-    pub fn search<T, I, F>(&self, mut it: I, mut index_of: F) -> i32
-    where
-        I: Iterator<Item = T> + Clone,
-        F: FnMut(T) -> usize + Copy,
-    {
-        if let Some(v) = it.next() {
-            let idx = index_of(v);
-            if let Some(node) = self.data.get(idx).and_then(|n| n.as_ref()) {
-                return node.search(it, index_of);
-            }
-            return 0;
-        }
-        let mut res = self.val;
-        for n in self.data.iter().filter_map(|opt| opt.as_ref()) {
-            res += n.search(std::iter::empty(), index_of);
-        }
-        res
+// O(n^2) => TLE
+fn with_dp(s: &str) -> bool {
+    let (s, n) = (s.as_bytes(), s.len());
+    let mut dp = vec![vec![0; n]; n];
+    dfs(s, &mut dp, 0, 0) == 2
+}
+
+fn dfs(s: &[u8], dp: &mut [Vec<i32>], idx: usize, open: usize) -> i32 {
+    if idx == s.len() {
+        return if open == 0 { 2 } else { 1 };
     }
+    if dp[idx][open] > 0 {
+        return dp[idx][open];
+    }
+    let mut res = 0;
+    if s[idx] == b'*' {
+        res = res.max(dfs(s, dp, 1 + idx, 1 + open)); // '*' as '('
+        if open > 0 {
+            res = res.max(dfs(s, dp, 1 + idx, open - 1)); // '*' as ')'
+        }
+        res = res.max(dfs(s, dp, 1 + idx, open)); // '*' as empty
+    } else {
+        if s[idx] == b'(' {
+            res = dfs(s, dp, 1 + idx, 1 + open);
+        } else if open > 0 {
+            res = dfs(s, dp, 1 + idx, open - 1);
+        }
+    }
+    dp[idx][open] = res;
+    res
 }
 
 #[cfg(test)]
@@ -96,12 +73,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        let mut ms = MapSum::new();
-        ms.insert("apple".into(), 3);
-        debug_assert_eq!(ms.sum("ap".into()), 3); // return 3 (apple = 3)
-        debug_assert_eq!(ms.sum("apples".into()), 0);
-        ms.insert("app".into(), 2);
-        debug_assert_eq!(ms.sum("ap".into()), 5); // return 5 (apple + app = 3 + 2 = 5)
+        debug_assert!(with_dp("()"));
+        debug_assert!(with_dp("(*)"));
+        debug_assert!(with_dp("(*))"));
     }
 
     #[test]
