@@ -1,20 +1,53 @@
 mod helper;
 mod trie;
 
+use std::{
+    cmp::Reverse,
+    collections::{BinaryHeap, HashSet, VecDeque},
+};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_length_of_lcis(nums: &[i32]) -> i32 {
-    let (mut res, mut curr) = (1, 1);
-    for w in nums.windows(2) {
-        if w[0] < w[1] {
-            curr += 1;
-            res = res.max(curr);
-        } else {
-            curr = 1;
+pub fn cut_off_tree(forest: &[&[i32]]) -> i32 {
+    let mut trees = BinaryHeap::new();
+    for (y, row) in forest.iter().enumerate() {
+        for (x, &tr) in row.iter().enumerate() {
+            if tr > 1 {
+                trees.push((Reverse(tr), x, y));
+            }
         }
     }
+    let mut res = 0;
+    let mut start = (0, 0);
+    while let Some((Reverse(_), x, y)) = trees.pop() {
+        let Some(steps) = bfs(forest, start, (x, y)) else {
+            return -1;
+        };
+        res += steps;
+        start = (x, y);
+    }
     res
+}
+
+fn bfs(forest: &[&[i32]], start: Coord, goal: Coord) -> Option<i32> {
+    let mut queue = VecDeque::from([(start, 0)]);
+    let mut seen = HashSet::new();
+    while let Some((curr, dist)) = queue.pop_front() {
+        if curr == goal {
+            return Some(dist);
+        }
+        for (x, y) in neighbors(curr) {
+            if forest
+                .get(y)
+                .is_some_and(|r| r.get(x).is_some_and(|&tr| tr > 0))
+                && seen.insert((x, y))
+            {
+                queue.push_back(((x, y), dist + 1));
+            }
+        }
+    }
+    None
 }
 
 #[cfg(test)]
@@ -25,8 +58,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(find_length_of_lcis(&[1, 3, 5, 4, 7]), 3);
-        debug_assert_eq!(find_length_of_lcis(&[2, 2, 2, 2, 2]), 1);
+        debug_assert_eq!(cut_off_tree(&[&[1, 2, 3], &[0, 0, 4], &[7, 6, 5]]), 6);
+        debug_assert_eq!(cut_off_tree(&[&[1, 2, 3], &[0, 0, 0], &[7, 6, 5]]), -1);
+        debug_assert_eq!(cut_off_tree(&[&[2, 3, 4], &[0, 0, 5], &[8, 7, 6]]), 6);
     }
 
     #[test]
