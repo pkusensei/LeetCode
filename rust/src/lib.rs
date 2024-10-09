@@ -4,50 +4,35 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn flip_lights(n: i32, m: i32) -> i32 {
-    // let n = n.min(6);
-    // let shift = 6 - n;
-    // let mut seen = std::collections::HashSet::new();
-    // for cand in 0..16i32 {
-    //     let count = cand.count_ones() as i32;
-    //     if count & 1 == m & 1 && count <= m {
-    //         let mut config = 0;
-    //         if (cand >> 0) & 1 > 0 {
-    //             config ^= 0b_111111 >> shift;
-    //         }
-    //         if (cand >> 1) & 1 > 0 {
-    //             config ^= 0b_010101 >> shift;
-    //         }
-    //         if (cand >> 2) & 1 > 0 {
-    //             config ^= 0b_101010 >> shift;
-    //         }
-    //         if (cand >> 3) & 1 > 0 {
-    //             config ^= 0b_100100 >> shift;
-    //         }
-    //         seen.insert(config);
-    //     }
-    // }
-    // seen.len() as _
-    match n {
-        1 => {
-            if m == 0 {
-                1
-            } else {
-                2
+pub fn find_number_of_lis(nums: &[i32]) -> i32 {
+    let n = nums.len();
+    let mut dp = vec![1; n];
+    let mut counts = vec![1; n];
+    // for a pentential LIS ending at i
+    for i in 1..n {
+        // scan all nums [0..i]
+        for j in 0..i {
+            if nums[i] > nums[j] {
+                let curr = 1 + dp[j];
+                if curr > dp[i] {
+                    // longer! update as 1+dp[j]
+                    dp[i] = curr;
+                    // number of LIS ending at i is the same as at j
+                    counts[i] = counts[j];
+                } else if curr == dp[i] {
+                    // hits the same length again!
+                    // += counts at j
+                    counts[i] += counts[j];
+                }
             }
         }
-        2 => match m {
-            0 => 1,
-            1 => 3,
-            _ => 4,
-        },
-        _ => match m {
-            0 => 1,
-            1 => 4,
-            2 => 7,
-            _ => 8,
-        },
     }
+    let lis = dp.iter().copied().max().unwrap_or(1);
+    // if a LIS ends at i, include its count
+    dp.into_iter()
+        .zip(counts)
+        .filter_map(|(len, count)| if len == lis { Some(count) } else { None })
+        .sum()
 }
 
 #[cfg(test)]
@@ -58,9 +43,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(flip_lights(1, 1), 2);
-        debug_assert_eq!(flip_lights(2, 1), 3);
-        debug_assert_eq!(flip_lights(3, 1), 4);
+        debug_assert_eq!(find_number_of_lis(&[1, 3, 5, 4, 7]), 2);
+        debug_assert_eq!(find_number_of_lis(&[2, 2, 2, 2, 2]), 5);
     }
 
     #[test]
