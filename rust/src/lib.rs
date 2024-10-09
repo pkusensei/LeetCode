@@ -1,53 +1,98 @@
 mod helper;
 mod trie;
 
-use std::{
-    cmp::Reverse,
-    collections::{BinaryHeap, HashSet, VecDeque},
-};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn cut_off_tree(forest: &[&[i32]]) -> i32 {
-    let mut trees = BinaryHeap::new();
-    for (y, row) in forest.iter().enumerate() {
-        for (x, &tr) in row.iter().enumerate() {
-            if tr > 1 {
-                trees.push((Reverse(tr), x, y));
-            }
-        }
-    }
-    let mut res = 0;
-    let mut start = (0, 0);
-    while let Some((Reverse(_), x, y)) = trees.pop() {
-        let Some(steps) = bfs(forest, start, (x, y)) else {
-            return -1;
-        };
-        res += steps;
-        start = (x, y);
-    }
-    res
+#[derive(Debug, Clone)]
+struct MagicDictionary {
+    trie: Trie<26>,
 }
 
-fn bfs(forest: &[&[i32]], start: Coord, goal: Coord) -> Option<i32> {
-    let mut queue = VecDeque::from([(start, 0)]);
-    let mut seen = HashSet::new();
-    while let Some((curr, dist)) = queue.pop_front() {
-        if curr == goal {
-            return Some(dist);
-        }
-        for (x, y) in neighbors(curr) {
-            if forest
-                .get(y)
-                .is_some_and(|r| r.get(x).is_some_and(|&tr| tr > 0))
-                && seen.insert((x, y))
-            {
-                queue.push_back(((x, y), dist + 1));
-            }
+impl MagicDictionary {
+    const fn new() -> Self {
+        Self { trie: Trie::new() }
+    }
+
+    fn build_dict(&mut self, dictionary: &[&str]) {
+        for s in dictionary.iter() {
+            self.trie.insert(s.bytes(), |b| usize::from(b - b'a'));
         }
     }
-    None
+
+    fn search(&self, s: &str) -> bool {
+        self.trie.search(s.bytes(), |b| usize::from(b - b'a'), 0)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Trie<const N: usize> {
+    data: [Option<Box<Trie<N>>>; N],
+    is_end: bool,
+}
+
+impl<const N: usize> Trie<N> {
+    pub const fn new() -> Self {
+        Self {
+            data: [const { None }; N],
+            is_end: false,
+        }
+    }
+
+    pub fn insert<T, I, F>(&mut self, input: I, index_of: F)
+    where
+        I: IntoIterator<Item = T>,
+        F: FnMut(T) -> usize,
+    {
+        self.insert_impl(input.into_iter(), index_of)
+    }
+
+    fn insert_impl<T, I, F>(&mut self, mut it: I, mut index_of: F)
+    where
+        I: Iterator<Item = T>,
+        F: FnMut(T) -> usize,
+    {
+        if let Some(v) = it.next() {
+            let idx = index_of(v);
+            if let Some(n) = self.data.get_mut(idx).and_then(|opt| opt.as_mut()) {
+                n.insert(it, index_of);
+            } else {
+                let mut node = Box::new(Self::new());
+                node.insert(it, index_of);
+                self.data[idx] = Some(node);
+            }
+        } else {
+            self.is_end = true;
+        }
+    }
+
+    pub fn search<T, I, F>(&self, mut it: I, mut index_of: F, missed: i32) -> bool
+    where
+        I: Iterator<Item = T> + Clone,
+        F: FnMut(T) -> usize + Copy,
+    {
+        if missed > 1 {
+            return false;
+        }
+        if let Some(v) = it.next() {
+            let idx = index_of(v);
+            let mut res = false;
+            for (i, node) in self
+                .data
+                .iter()
+                .enumerate()
+                .filter_map(|(i, opt)| opt.as_ref().map(|v| (i, v)))
+            {
+                if i == idx {
+                    res |= node.search(it.clone(), index_of, missed);
+                } else {
+                    res |= node.search(it.clone(), index_of, 1 + missed)
+                }
+            }
+            return res;
+        }
+        missed == 1 && self.is_end
+    }
 }
 
 #[cfg(test)]
@@ -58,9 +103,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(cut_off_tree(&[&[1, 2, 3], &[0, 0, 4], &[7, 6, 5]]), 6);
-        debug_assert_eq!(cut_off_tree(&[&[1, 2, 3], &[0, 0, 0], &[7, 6, 5]]), -1);
-        debug_assert_eq!(cut_off_tree(&[&[2, 3, 4], &[0, 0, 5], &[8, 7, 6]]), 6);
+        let mut md = MagicDictionary::new();
+        md.build_dict(&["hello", "leetcode"]);
+        debug_assert!(!md.search("hello")); // return False
+        debug_assert!(md.search("hhllo")); // We can change the second 'h' to 'e' to match "hello" so we return True
+        debug_assert!(!md.search("hell")); // return False
+        debug_assert!(!md.search("leetcoded")); // return False
+
+        md.trie.insert("hallo".bytes(), |b| usize::from(b - b'a'));
+        debug_assert!(md.search("hello"));
     }
 
     #[test]
