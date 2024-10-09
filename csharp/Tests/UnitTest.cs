@@ -12,19 +12,19 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
-        var a = TreeNode.Make([1, 0, 2]);
-        var b = sol.TrimBST(a, 1, 2);
-        var c = "[1,null,2]";
-        Assert.AreEqual(c, b.ToString());
+        var a = TreeNode.Make([2, 2, 5, null, null, 5, 7]);
+        var b = sol.FindSecondMinimumValue(a);
+        var c = 5;
+        Assert.AreEqual(c, b);
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        var a = TreeNode.Make([3, 0, 4, null, 2, null, null, 1]);
-        var b = sol.TrimBST(a, 1, 3);
-        var c = "[3,2,null,1]";
-        Assert.AreEqual(c, b.ToString());
+        var a = TreeNode.Make([2, 2, 2]);
+        var b = sol.FindSecondMinimumValue(a);
+        var c = -1;
+        Assert.AreEqual(c, b);
     }
 
     [TestMethod]
