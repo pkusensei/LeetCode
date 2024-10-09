@@ -4,27 +4,29 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_swap(num: i32) -> i32 {
-    let mut digits = num.to_string().into_bytes();
-    // find last occurence of every digit
-    let indices = digits.iter().enumerate().fold([0; 10], |mut acc, (i, &d)| {
-        acc[usize::from(d - b'0')] = i;
-        acc
-    });
-    let n = digits.len();
-    for left in 0..n {
-        // scan every digit from the left
-        let digit = usize::from(digits[left] - b'0');
-        // attempt to find a bigger digit
-        for right in (1 + digit..=9).rev() {
-            // if there is a bigger digit to the right
-            if indices[right] > left {
-                digits.swap(left, indices[right]);
-                return String::from_utf8(digits).unwrap().parse().unwrap_or(num);
-            }
+pub fn min_add_to_make_valid(s: &str) -> i32 {
+    // let mut stack = vec![];
+    // for b in s.bytes() {
+    //     if b == b'(' {
+    //         stack.push(b);
+    //     } else if b == b')' && stack.last().is_some_and(|&v| v == b'(') {
+    //         stack.pop();
+    //     } else {
+    //         stack.push(b')');
+    //     }
+    // }
+    // stack.len() as _
+    let (mut open, mut close) = (0, 0);
+    for b in s.bytes() {
+        if b == b'(' {
+            open += 1
+        } else if open > 0 {
+            open -= 1 // ')'
+        } else {
+            close += 1
         }
     }
-    num
+    open + close
 }
 
 #[cfg(test)]
@@ -35,8 +37,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(maximum_swap(2736), 7236);
-        debug_assert_eq!(maximum_swap(9973), 9973);
+        debug_assert_eq!(min_add_to_make_valid(&"())"), 1);
+        debug_assert_eq!(min_add_to_make_valid(&"((("), 3);
     }
 
     #[test]
