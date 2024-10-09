@@ -4,35 +4,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_number_of_lis(nums: &[i32]) -> i32 {
-    let n = nums.len();
-    let mut dp = vec![1; n];
-    let mut counts = vec![1; n];
-    // for a pentential LIS ending at i
-    for i in 1..n {
-        // scan all nums [0..i]
-        for j in 0..i {
-            if nums[i] > nums[j] {
-                let curr = 1 + dp[j];
-                if curr > dp[i] {
-                    // longer! update as 1+dp[j]
-                    dp[i] = curr;
-                    // number of LIS ending at i is the same as at j
-                    counts[i] = counts[j];
-                } else if curr == dp[i] {
-                    // hits the same length again!
-                    // += counts at j
-                    counts[i] += counts[j];
-                }
-            }
+pub fn find_length_of_lcis(nums: &[i32]) -> i32 {
+    let (mut res, mut curr) = (1, 1);
+    for w in nums.windows(2) {
+        if w[0] < w[1] {
+            curr += 1;
+            res = res.max(curr);
+        } else {
+            curr = 1;
         }
     }
-    let lis = dp.iter().copied().max().unwrap_or(1);
-    // if a LIS ends at i, include its count
-    dp.into_iter()
-        .zip(counts)
-        .filter_map(|(len, count)| if len == lis { Some(count) } else { None })
-        .sum()
+    res
 }
 
 #[cfg(test)]
@@ -43,8 +25,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(find_number_of_lis(&[1, 3, 5, 4, 7]), 2);
-        debug_assert_eq!(find_number_of_lis(&[2, 2, 2, 2, 2]), 5);
+        debug_assert_eq!(find_length_of_lcis(&[1, 3, 5, 4, 7]), 3);
+        debug_assert_eq!(find_length_of_lcis(&[2, 2, 2, 2, 2]), 1);
     }
 
     #[test]
