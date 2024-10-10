@@ -4,64 +4,70 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn check_valid_string(s: &str) -> bool {
-    let (mut stopen, mut ststar) = (vec![], vec![]);
-    for (i, b) in s.bytes().enumerate() {
-        match b {
-            b'(' => stopen.push(i),
-            b'*' => ststar.push(i),
-            _ => {
-                if !stopen.is_empty() {
-                    stopen.pop();
-                } else if !ststar.is_empty() {
-                    ststar.pop();
-                } else {
-                    return false;
-                }
+pub fn judge_point24(mut cards: [i32; 4]) -> bool {
+    cards.sort_unstable();
+    loop {
+        let nums: [f64; 4] = cards.map(f64::from);
+        if dfs(&nums) {
+            return true;
+        }
+        let Some(v) = next_permutation(cards) else {
+            break;
+        };
+        cards = v;
+    }
+    false
+}
+
+fn dfs(nums: &[f64]) -> bool {
+    if nums.len() == 1 {
+        return (nums[0] - 24.0).abs() < 0.000_001;
+    }
+    for (idx, w) in nums.windows(2).enumerate() {
+        let mut temp = nums.to_vec();
+        temp.remove(1 + idx);
+        for value in calc(w[0], w[1]) {
+            temp[idx] = value;
+            if dfs(&temp) {
+                return true;
             }
         }
     }
-    if stopen.is_empty() {
-        true
-    } else {
-        stopen.len() <= ststar.len()
-            && ststar
-                .into_iter()
-                .rev()
-                .zip(stopen.into_iter().rev())
-                .all(|(a, b)| a > b)
-    }
+    false
 }
 
-// O(n^2) => TLE
-fn with_dp(s: &str) -> bool {
-    let (s, n) = (s.as_bytes(), s.len());
-    let mut dp = vec![vec![0; n]; n];
-    dfs(s, &mut dp, 0, 0) == 2
+fn next_permutation(mut nums: [i32; 4]) -> Option<[i32; 4]> {
+    // Find the largest index i such that a[i] < a[i + 1].
+    // If no such index exists, the permutation is the last permutation.
+    let Some(i) =
+        nums.windows(2)
+            .enumerate()
+            .rev()
+            .find_map(|(idx, w)| if w[0] < w[1] { Some(idx) } else { None })
+    else {
+        // nums.sort_unstable(); // [4,3,2,1] => [1,2,3,4] back to increasing
+        return None;
+    };
+
+    // Find the largest index j, such that i < j && a[i] < a[j].
+    if let Some(j) = nums.iter().enumerate().rev().find_map(|(idx, &v)| {
+        if i < idx && nums[i] < v {
+            Some(idx)
+        } else {
+            None
+        }
+    }) {
+        nums.swap(i, j);
+    }
+    nums[i + 1..].reverse();
+    Some(nums)
 }
 
-fn dfs(s: &[u8], dp: &mut [Vec<i32>], idx: usize, open: usize) -> i32 {
-    if idx == s.len() {
-        return if open == 0 { 2 } else { 1 };
+fn calc(a: f64, b: f64) -> Vec<f64> {
+    let mut res = vec![a + b, a - b, a * b];
+    if b != 0.0 {
+        res.push(a / b);
     }
-    if dp[idx][open] > 0 {
-        return dp[idx][open];
-    }
-    let mut res = 0;
-    if s[idx] == b'*' {
-        res = res.max(dfs(s, dp, 1 + idx, 1 + open)); // '*' as '('
-        if open > 0 {
-            res = res.max(dfs(s, dp, 1 + idx, open - 1)); // '*' as ')'
-        }
-        res = res.max(dfs(s, dp, 1 + idx, open)); // '*' as empty
-    } else {
-        if s[idx] == b'(' {
-            res = dfs(s, dp, 1 + idx, 1 + open);
-        } else if open > 0 {
-            res = dfs(s, dp, 1 + idx, open - 1);
-        }
-    }
-    dp[idx][open] = res;
     res
 }
 
@@ -73,9 +79,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(with_dp("()"));
-        debug_assert!(with_dp("(*)"));
-        debug_assert!(with_dp("(*))"));
+        debug_assert!(judge_point24([4, 1, 8, 7]));
+        debug_assert!(!judge_point24([1, 2, 1, 2]));
     }
 
     #[test]
