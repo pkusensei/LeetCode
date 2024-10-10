@@ -4,35 +4,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn valid_palindrome(s: &str) -> bool {
-    let (s, n) = (s.as_bytes(), s.len());
-    if check(s) {
-        return true;
-    }
-    let (mut left, mut right) = (0, n - 1);
-    while left < right {
-        if s[left] == s[right] {
-            left += 1;
-            right -= 1;
-        } else {
-            return check(&s[left..=right - 1]) || check(&s[left + 1..=right]);
+pub fn cal_points(operations: &[&str]) -> i32 {
+    let mut stack = vec![];
+    for s in operations.iter() {
+        match *s {
+            "D" => stack.push(2 * stack.last().unwrap()),
+            "C" => {
+                stack.pop();
+            }
+            "+" => {
+                let n = stack.len();
+                let v = stack[n - 2] + stack[n - 1];
+                stack.push(v);
+            }
+            _ => stack.push(s.parse().unwrap()),
         }
     }
-    true
-}
-
-fn check(s: &[u8]) -> bool {
-    let n = s.len();
-    if n < 2 {
-        return true;
-    }
-    if n == 2 {
-        return s[0] == s[1];
-    }
-    s.iter()
-        .take(n / 2)
-        .zip(s.iter().rev())
-        .all(|(a, b)| a == b)
+    stack.into_iter().sum()
 }
 
 #[cfg(test)]
@@ -43,9 +31,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        // debug_assert!(valid_palindrome("aba"));
-        // debug_assert!(valid_palindrome("abca"));
-        debug_assert!(!valid_palindrome("abc"));
+        debug_assert_eq!(cal_points(&["5", "2", "C", "D", "+"]), 30);
+        debug_assert_eq!(cal_points(&["5", "-2", "4", "C", "D", "9", "+", "+"]), 27);
+        debug_assert_eq!(cal_points(&["1", "C"]), 0);
     }
 
     #[test]
