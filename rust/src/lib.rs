@@ -4,44 +4,35 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_width_ramp(nums: &[i32]) -> i32 {
-    // let mut stack = vec![];
-    // for (i, &num) in nums.iter().enumerate() {
-    //     if stack.is_empty() || stack.last().is_some_and(|&(_, v)| v > num) {
-    //         stack.push((i, num));
-    //     }
-    // }
-    // let mut res = 0;
-    // for (right, &num) in nums.iter().enumerate().rev() {
-    //     while stack.last().is_some_and(|&(_, v)| v <= num) {
-    //         let Some((left, _)) = stack.pop() else {
-    //             break;
-    //         };
-    //         res = res.max(right - left);
-    //     }
-    // }
-    // res as _
-    let n = nums.len();
-    let (mut mins, mut maxs) = (vec![0; n], vec![0; n]);
-    mins[0] = nums[0];
-    for (i, &n) in nums.iter().enumerate().skip(1) {
-        mins[i] = mins[i - 1].min(n);
+pub fn valid_palindrome(s: &str) -> bool {
+    let (s, n) = (s.as_bytes(), s.len());
+    if check(s) {
+        return true;
     }
-    maxs[n - 1] = nums[n - 1];
-    for (i, &n) in nums.iter().enumerate().rev().skip(1) {
-        maxs[i] = maxs[1 + i].max(n);
-    }
-    let (mut left, mut right) = (0, 0);
-    let mut res = 0;
-    while right < n {
-        if mins[left] <= maxs[right] {
-            res = res.max(right - left);
-            right += 1
+    let (mut left, mut right) = (0, n - 1);
+    while left < right {
+        if s[left] == s[right] {
+            left += 1;
+            right -= 1;
         } else {
-            left += 1
+            return check(&s[left..=right - 1]) || check(&s[left + 1..=right]);
         }
     }
-    res as _
+    true
+}
+
+fn check(s: &[u8]) -> bool {
+    let n = s.len();
+    if n < 2 {
+        return true;
+    }
+    if n == 2 {
+        return s[0] == s[1];
+    }
+    s.iter()
+        .take(n / 2)
+        .zip(s.iter().rev())
+        .all(|(a, b)| a == b)
 }
 
 #[cfg(test)]
@@ -52,8 +43,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(max_width_ramp(&[6, 0, 8, 2, 1, 5]), 4);
-        debug_assert_eq!(max_width_ramp(&[9, 8, 1, 0, 1, 9, 4, 0, 4, 1]), 7);
+        // debug_assert!(valid_palindrome("aba"));
+        // debug_assert!(valid_palindrome("abca"));
+        debug_assert!(!valid_palindrome("abc"));
     }
 
     #[test]
