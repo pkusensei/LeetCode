@@ -1,51 +1,26 @@
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_redundant_directed_connection(edges: &[[i32; 2]]) -> Vec<i32> {
-    let mut parents: HashMap<i32, i32> = HashMap::new();
-    let mut cycle = None;
-    let mut two_parents = vec![];
-    for edge in edges.iter() {
-        if let Some(&p1) = parents.get(&edge[1]) {
-            // two parents
-            two_parents.push([p1, edge[1]]);
-            two_parents.push([edge[0], edge[1]]);
-            if cycle.is_some() {
-                return two_parents[0].to_vec();
-            }
-        } else {
-            parents.insert(edge[1], edge[0]);
-        }
-        if cycle.is_none() && find_root(&parents, edge[0]).is_none() {
-            cycle = Some(edge);
-            if !two_parents.is_empty() {
-                return two_parents[0].to_vec();
-            }
+pub fn repeated_string_match(a: &str, b: &str) -> i32 {
+    let n = b.len();
+    let mut s = String::with_capacity(2 * n);
+    while s.len() < n {
+        s.push_str(a);
+    }
+    let count = s.len() / a.len();
+    if s.contains(b) {
+        return count as _;
+    }
+    for i in 0..count {
+        s.push_str(a);
+        if s.contains(b) {
+            return (i + count + 1) as _;
         }
     }
-    cycle
-        .map(|v| v.to_vec())
-        .or(two_parents.get(1).map(|v| v.to_vec()))
-        .unwrap_or_default()
-}
-
-fn find_root(parents: &HashMap<i32, i32>, node: i32) -> Option<i32> {
-    if !parents.contains_key(&node) {
-        return Some(node); // root has no parent
-    };
-    let mut curr = node;
-    while let Some(&p) = parents.get(&curr) {
-        curr = p;
-        if curr == node {
-            return None; // a cycle
-        }
-    }
-    Some(curr)
+    -1
 }
 
 #[cfg(test)]
@@ -56,14 +31,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            find_redundant_directed_connection(&[[1, 2], [1, 3], [2, 3]]),
-            [2, 3]
-        );
-        debug_assert_eq!(
-            find_redundant_directed_connection(&[[1, 2], [2, 3], [3, 4], [4, 1], [1, 5]]),
-            [4, 1]
-        );
+        debug_assert_eq!(repeated_string_match("abcd", "cdabcdab"), 3);
+        debug_assert_eq!(repeated_string_match("a", "aa"), 2);
     }
 
     #[test]
