@@ -12,18 +12,18 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
-        var a = TreeNode.Make([2, 2, 5, null, null, 5, 7]);
-        var b = sol.FindSecondMinimumValue(a);
-        var c = 5;
+        var a = TreeNode.Make([5, 4, 5, 1, 1, null, 5]);
+        var b = sol.LongestUnivaluePath(a);
+        var c = 2;
         Assert.AreEqual(c, b);
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        var a = TreeNode.Make([2, 2, 2]);
-        var b = sol.FindSecondMinimumValue(a);
-        var c = -1;
+        var a = TreeNode.Make([1, 4, 5, 4, 4, null, 5]);
+        var b = sol.LongestUnivaluePath(a);
+        var c = 2;
         Assert.AreEqual(c, b);
     }
 

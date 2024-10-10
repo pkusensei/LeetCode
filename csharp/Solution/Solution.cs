@@ -5,23 +5,22 @@ namespace Solution;
 
 public class Solution
 {
-    public int FindSecondMinimumValue(TreeNode root)
+    public int LongestUnivaluePath(TreeNode root)
     {
-        return Dfs(root, root.val);
+        if (root is null) { return 0; }
+        var a = Dfs(root.left, root.val) + Dfs(root.right, root.val);
+        var b = LongestUnivaluePath(root.left);
+        var c = LongestUnivaluePath(root.right);
+        return Math.Max(a, Math.Max(b, c));
     }
 
-    static int Dfs(TreeNode node, int val)
+    static int Dfs(TreeNode node, int num)
     {
-        if (node is null) { return -1; }
-        if (node.val > val) { return node.val; }
-        var left = Dfs(node.left, val);
-        var right = Dfs(node.right, val);
-        return (left == -1, right == -1) switch
+        if (node is null) { return 0; }
+        if (num == node.val)
         {
-            (true, true) => -1,
-            (true, _) => right,
-            (_, true) => left,
-            _ => Math.Min(left, right)
-        };
+            return 1 + Math.Max(Dfs(node.left, num), Dfs(node.right, num));
+        }
+        return 0;
     }
 }
