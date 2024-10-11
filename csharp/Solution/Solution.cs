@@ -5,22 +5,20 @@ namespace Solution;
 
 public class Solution
 {
-    public int LongestUnivaluePath(TreeNode root)
+    public int GetImportance(IList<Employee> employees, int id)
     {
-        if (root is null) { return 0; }
-        var a = Dfs(root.left, root.val) + Dfs(root.right, root.val);
-        var b = LongestUnivaluePath(root.left);
-        var c = LongestUnivaluePath(root.right);
-        return Math.Max(a, Math.Max(b, c));
-    }
-
-    static int Dfs(TreeNode node, int num)
-    {
-        if (node is null) { return 0; }
-        if (num == node.val)
+        var a = employees.Where(e => e.id == id).FirstOrDefault();
+        if (a is null) { return 0; }
+        else
         {
-            return 1 + Math.Max(Dfs(node.left, num), Dfs(node.right, num));
+            return a.importance + a.subordinates.Select(i => GetImportance(employees, i)).Sum();
         }
-        return 0;
     }
+}
+
+public record class Employee
+{
+    public int id;
+    public int importance;
+    public IList<int> subordinates;
 }
