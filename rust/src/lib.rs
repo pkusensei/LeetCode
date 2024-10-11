@@ -1,32 +1,20 @@
 mod helper;
 mod trie;
 
-use std::{
-    cmp::Reverse,
-    collections::{BinaryHeap, HashMap},
-};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn top_k_frequent(words: &[&str], k: i32) -> Vec<String> {
-    let mut heap: BinaryHeap<_> = words
-        .iter()
-        .fold(HashMap::new(), |mut acc, s| {
-            *acc.entry(*s).or_insert(0) += 1;
-            acc
-        })
-        .into_iter()
-        .map(|(s, count)| (count, Reverse(s)))
-        .collect();
-    let mut res = Vec::with_capacity(k as usize);
-    while res.len() < k as usize {
-        let Some((_, Reverse(s))) = heap.pop() else {
-            break;
-        };
-        res.push(s.to_string());
+pub fn has_alternating_bits(mut n: i32) -> bool {
+    let mut prev = -1;
+    while n > 0 {
+        let curr = n & 1;
+        if curr == prev {
+            return false;
+        }
+        prev = curr;
+        n >>= 1;
     }
-    res
+    true
 }
 
 #[cfg(test)]
@@ -37,21 +25,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            top_k_frequent(&["i", "love", "leetcode", "i", "love", "coding"], 2),
-            ["i", "love"]
-        );
-        debug_assert_eq!(
-            top_k_frequent(
-                &["the", "day", "is", "sunny", "the", "the", "the", "sunny", "is", "is"],
-                4
-            ),
-            ["the", "is", "sunny", "day"]
-        );
+        debug_assert!(has_alternating_bits(5));
+        debug_assert!(!has_alternating_bits(7));
+        debug_assert!(!has_alternating_bits(11));
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert!(!has_alternating_bits(4));
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
