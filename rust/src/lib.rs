@@ -1,31 +1,33 @@
 mod helper;
 mod trie;
 
-use std::{cmp::Reverse, collections::BinaryHeap};
+use std::collections::HashMap;
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn smallest_chair(times: &mut [[i32; 2]], target: i32) -> i32 {
-    let target_arr = times[target as usize][0];
-    times.sort_unstable_by_key(|t| t[0]);
-    let (mut free, mut used) = (BinaryHeap::new(), BinaryHeap::new());
-
-    for t in times.iter() {
-        let (arr, dep) = (t[0], t[1]);
-        while used.peek().is_some_and(|&(Reverse(t), _)| t <= arr) {
-            let Some((_, ch)) = used.pop() else {
-                break;
-            };
-            free.push(Reverse(ch));
+pub fn knight_probability(n: i32, k: i32, row: i32, col: i32) -> f64 {
+    #[rustfmt::skip]
+    const DELTAS: [[i32; 2]; 8] = [[2, 1],[1, 2],[2, -1],[-1, 2],
+                                   [-2, 1],[1, -2],[-2, -1],[-1, -2],];
+    let mut queue = HashMap::from([([row, col], 1.0)]);
+    let mut res = 1.0;
+    for _ in 0..k {
+        res = 0.0;
+        let mut next = HashMap::new();
+        for (&[r, c], &p) in queue.iter() {
+            for (nr, nc) in DELTAS
+                .map(|d| (r + d[0], c + d[1]))
+                .into_iter()
+                .filter(|(nr, nc)| (0..n).contains(nr) && (0..n).contains(nc))
+            {
+                *next.entry([nr, nc]).or_insert(0.0) += p / 8.0;
+                res += p / 8.0;
+            }
         }
-        let ch = free.pop().map(|ch| ch.0).unwrap_or(used.len() as i32);
-        if target_arr == arr {
-            return ch;
-        }
-        used.push((Reverse(dep), ch));
+        queue = next
     }
-    0
+    res
 }
 
 #[cfg(test)]
@@ -36,37 +38,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(smallest_chair(&mut [[1, 4], [2, 3], [4, 6]], 1), 1);
-        debug_assert_eq!(smallest_chair(&mut [[3, 10], [1, 5], [2, 6]], 0), 2);
+        debug_assert_eq!(knight_probability(3, 2, 0, 0), 0.06250);
+        debug_assert_eq!(knight_probability(1, 0, 0, 0), 1.00000);
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(
-            smallest_chair(
-                &mut [
-                    [33889, 98676],
-                    [80071, 89737],
-                    [44118, 52565],
-                    [52992, 84310],
-                    [78492, 88209],
-                    [21695, 67063],
-                    [84622, 95452],
-                    [98048, 98856],
-                    [98411, 99433],
-                    [55333, 56548],
-                    [65375, 88566],
-                    [55011, 62821],
-                    [48548, 48656],
-                    [87396, 94825],
-                    [55273, 81868],
-                    [75629, 91467]
-                ],
-                6
-            ),
-            2
-        )
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
