@@ -1,64 +1,31 @@
 mod helper;
 mod trie;
 
-use std::cmp::Reverse;
+use std::collections::BTreeMap;
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn can_partition_k_subsets(nums: &mut [i32], k: i32) -> bool {
-    let sum: i32 = nums.iter().sum();
-    if sum % k > 0 {
-        return false;
-    }
-    nums.sort_unstable_by_key(|&n| Reverse(n));
-    // let target = sum / k;
-    // let k = k as usize;
-    // let mut subs = vec![0; k];
-    // backtrack(nums, &mut subs, k, target)
-
-    let n = nums.len();
-    let mut dp = vec![-1; 1 << n];
-    dp[0] = 0;
-    // each num in nums has two states: 1<<n
-    for mask in 0..1 << n {
-        if dp[mask] == -1 {
-            // not reachable
-            continue;
-        }
-        let rem = sum - (dp[mask] % sum); // ???
-        for (idx, &num) in nums.iter().enumerate() {
-            let temp = mask | 1 << idx;
-            if temp != mask && dp[temp] < 0 && nums[idx] <= rem {
-                dp[temp] = dp[mask] + num;
+pub fn falling_squares(positions: &[[i32; 2]]) -> Vec<i32> {
+    let mut map: BTreeMap<[i32; 2], i32> = BTreeMap::new();
+    let mut res = vec![];
+    let mut height = 0;
+    for item in positions.iter() {
+        let (start, end) = (item[0], item[0] + item[1]);
+        let mut curr_height = item[1];
+        let mut temp = 0;
+        for (&[left, right], &h) in map.iter() {
+            if end <= left || right <= start {
+                continue;
             }
+            temp = temp.max(h);
         }
+        curr_height += temp;
+        height = height.max(curr_height);
+        map.insert([start, end], curr_height);
+        res.push(height);
     }
-    *dp.last().unwrap() == sum
-}
-
-fn backtrack(nums: &[i32], subs: &mut [i32], k: usize, target: i32) -> bool {
-    match nums {
-        [] => true,
-        [head, tail @ ..] => {
-            for i in 0..k {
-                if subs[i] + head <= target {
-                    subs[i] += head;
-                    if backtrack(tail, subs, k, target) {
-                        return true;
-                    }
-                    subs[i] -= head;
-                    if subs[i] == 0 {
-                        // After backtracking this subset is empty
-                        // i.e there's no further combinations to yield a true
-                        // All empty subsets are the same/symmetric
-                        break;
-                    }
-                }
-            }
-            false
-        }
-    }
+    res
 }
 
 #[cfg(test)]
@@ -69,19 +36,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(can_partition_k_subsets(&mut [4, 3, 2, 3, 5, 2, 1], 4));
-        debug_assert!(!can_partition_k_subsets(&mut [1, 2, 3, 4], 3));
+        debug_assert_eq!(falling_squares(&[[1, 2], [2, 3], [6, 1]]), [2, 5, 5]);
+        debug_assert_eq!(falling_squares(&[[100, 100], [200, 100]]), [100, 100]);
     }
 
     #[test]
     fn test() {
-        assert!(can_partition_k_subsets(
-            &mut [
-                3522, 181, 521, 515, 304, 123, 2512, 312, 922, 407, 146, 1932, 4037, 2646, 3871,
-                269
-            ],
-            5
-        ));
+        debug_assert_eq!(falling_squares(&[[7, 1], [3, 3], [7, 5]]), [1, 3, 6]);
     }
 
     #[allow(dead_code)]
