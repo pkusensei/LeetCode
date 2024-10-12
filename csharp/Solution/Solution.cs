@@ -5,20 +5,11 @@ namespace Solution;
 
 public class Solution
 {
-    public int GetImportance(IList<Employee> employees, int id)
+    public TreeNode InsertIntoBST(TreeNode root, int val)
     {
-        var a = employees.Where(e => e.id == id).FirstOrDefault();
-        if (a is null) { return 0; }
-        else
-        {
-            return a.importance + a.subordinates.Select(i => GetImportance(employees, i)).Sum();
-        }
+        if (root is null) { return new(val); }
+        if (root.val < val) { root.right = InsertIntoBST(root.right, val); }
+        if (root.val > val) { root.left = InsertIntoBST(root.left, val); }
+        return root;
     }
-}
-
-public record class Employee
-{
-    public int id;
-    public int importance;
-    public IList<int> subordinates;
 }

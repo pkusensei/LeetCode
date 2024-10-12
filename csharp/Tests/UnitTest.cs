@@ -12,19 +12,19 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
-        var a = TreeNode.Make([5, 4, 5, 1, 1, null, 5]);
-        var b = sol.LongestUnivaluePath(a);
-        var c = 2;
-        Assert.AreEqual(c, b);
+        var a = TreeNode.Make([4, 2, 7, 1, 3]);
+        var b = sol.InsertIntoBST(a, 5);
+        var c = "[4,2,7,1,3,5]";
+        Assert.AreEqual(c, b.ToString());
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        var a = TreeNode.Make([1, 4, 5, 4, 4, null, 5]);
-        var b = sol.LongestUnivaluePath(a);
-        var c = 2;
-        Assert.AreEqual(c, b);
+        var a = TreeNode.Make([40, 20, 60, 10, 30, 50, 70]);
+        var b = sol.InsertIntoBST(a, 25);
+        var c = "[40,20,60,10,30,50,70,null,null,25]";
+        Assert.AreEqual(c, b.ToString());
     }
 
     [TestMethod]
