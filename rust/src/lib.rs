@@ -1,17 +1,30 @@
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_binary_substrings(s: &str) -> i32 {
-    s.as_bytes()
-        .chunk_by(|a, b| a == b)
-        .map(|ch| ch.len())
-        .collect::<Vec<_>>()
-        .windows(2)
-        .map(|w| w[0].min(w[1]) as i32)
-        .sum()
+pub fn find_shortest_sub_array(nums: &[i32]) -> i32 {
+    let map = nums.iter().enumerate().fold(
+        HashMap::new(),
+        |mut acc: HashMap<i32, Vec<_>>, (i, &num)| {
+            acc.entry(num).or_default().push(i);
+            acc
+        },
+    );
+    let count = map.values().map(|v| v.len()).max().unwrap_or(0);
+    map.into_values()
+        .filter_map(|v| {
+            if v.len() == count {
+                Some(1 + v.last().unwrap() - v.first().unwrap())
+            } else {
+                None
+            }
+        })
+        .min()
+        .unwrap() as _
 }
 
 #[cfg(test)]
@@ -22,8 +35,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(count_binary_substrings("00110011"), 6);
-        debug_assert_eq!(count_binary_substrings("10101"), 4);
+        debug_assert_eq!(find_shortest_sub_array(&[1, 2, 2, 3, 1]), 2);
+        debug_assert_eq!(find_shortest_sub_array(&[1, 2, 2, 3, 1, 4, 2]), 6);
     }
 
     #[test]
