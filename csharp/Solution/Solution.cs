@@ -5,11 +5,16 @@ namespace Solution;
 
 public class Solution
 {
-    public TreeNode InsertIntoBST(TreeNode root, int val)
+    public int Search(int[] nums, int target)
     {
-        if (root is null) { return new(val); }
-        if (root.val < val) { root.right = InsertIntoBST(root.right, val); }
-        if (root.val > val) { root.left = InsertIntoBST(root.left, val); }
-        return root;
+        var (left, right) = (0, nums.Length - 1);
+        while (left <= right)
+        {
+            var mid = left + (right - left) / 2;
+            if (nums[mid] == target) { return mid; }
+            else if (nums[mid] < target) { left = mid + 1; }
+            else { right = mid - 1; }
+        }
+        return -1;
     }
 }
