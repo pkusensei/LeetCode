@@ -1,40 +1,17 @@
 mod helper;
 mod trie;
 
-use std::{
-    cmp::Reverse,
-    collections::{BTreeMap, BinaryHeap},
-};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_groups(intervals: &[[i32; 2]]) -> i32 {
-    let mut map = BTreeMap::new();
-    for v in intervals.iter() {
-        *map.entry(v[0]).or_insert(0) += 1;
-        *map.entry(v[1] + 1).or_insert(0) -= 1;
-    }
-    let (mut res, mut curr) = (0, 0);
-    for v in map.into_values() {
-        curr += v;
-        res = res.max(curr);
-    }
-    res
-}
-
-fn with_pq(intervals: &mut [[i32; 2]]) -> usize {
-    intervals.sort_unstable();
-    let mut heap = BinaryHeap::new();
-    for &[start, end] in intervals.iter() {
-        // Ideally (without overlapping) an end should pop before next start
-        // If it misses this chance, it has an overlap and stays in heap
-        if heap.peek().is_some_and(|&Reverse(soon)| soon < start) {
-            heap.pop();
-        }
-        heap.push(Reverse(end));
-    }
-    heap.len()
+pub fn count_binary_substrings(s: &str) -> i32 {
+    s.as_bytes()
+        .chunk_by(|a, b| a == b)
+        .map(|ch| ch.len())
+        .collect::<Vec<_>>()
+        .windows(2)
+        .map(|w| w[0].min(w[1]) as i32)
+        .sum()
 }
 
 #[cfg(test)]
@@ -45,8 +22,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(with_pq(&mut [[5, 10], [6, 8], [1, 5], [2, 3], [1, 10]]), 3);
-        debug_assert_eq!(with_pq(&mut [[1, 3], [5, 6], [8, 10], [11, 13]]), 1);
+        debug_assert_eq!(count_binary_substrings("00110011"), 6);
+        debug_assert_eq!(count_binary_substrings("10101"), 4);
     }
 
     #[test]
