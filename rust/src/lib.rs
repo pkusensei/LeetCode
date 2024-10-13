@@ -1,34 +1,32 @@
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn smallest_range(nums: &[&[i32]]) -> Vec<i32> {
-    let n = nums.len();
-    let mut nis: Vec<_> = nums
-        .iter()
-        .enumerate()
-        .flat_map(|(idx, v)| v.iter().map(move |&num| (num, idx)))
-        .collect();
-    nis.sort_unstable_by_key(|p| p.0);
-    let mut nis_i = 0;
-    let mut res = [0, nis.last().unwrap().0];
-    let mut map = HashMap::new();
-    for &(right, nums_i) in nis.iter() {
-        *map.entry(nums_i).or_insert(0) += 1;
-        while map.len() == n && map[&nis[nis_i].1] > 1 {
-            map.entry(nis[nis_i].1).and_modify(|c| *c -= 1);
-            nis_i += 1;
-        }
-        let left = nis[nis_i].0;
-        if map.len() == n && right - left < res[1] - res[0] {
-            res = [left, right];
+#[derive(Debug, Clone)]
+struct MyHashSet {
+    data: Vec<bool>,
+}
+
+impl MyHashSet {
+    fn new() -> Self {
+        Self {
+            data: vec![false; 100_001],
         }
     }
-    res.to_vec()
+
+    fn add(&mut self, key: i32) {
+        self.data[key as usize] = true;
+    }
+
+    fn remove(&mut self, key: i32) {
+        self.data[key as usize] = false;
+    }
+
+    fn contains(&self, key: i32) -> bool {
+        self.data[key as usize]
+    }
 }
 
 #[cfg(test)]
@@ -39,14 +37,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            smallest_range(&[&[4, 10, 15, 24, 26], &[0, 9, 12, 20], &[5, 18, 22, 30]]),
-            [20, 24]
-        );
-        debug_assert_eq!(
-            smallest_range(&[&[1, 2, 3], &[1, 2, 3], &[1, 2, 3]]),
-            [1, 1]
-        );
+        let mut s = MyHashSet::new();
+        s.add(1); // set = [1]
+        s.add(2); // set = [1, 2]
+        debug_assert!(s.contains(1)); // return True
+        debug_assert!(!s.contains(3)); // return False, (not found)
+        s.add(2); // set = [1, 2]
+        debug_assert!(s.contains(2)); // return True
+        s.remove(2); // set = [1]
+        debug_assert!(!s.contains(2)); // return False, (already removed)
     }
 
     #[test]
