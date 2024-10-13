@@ -1,31 +1,34 @@
 mod helper;
 mod trie;
 
-use std::collections::BTreeMap;
+use std::collections::HashMap;
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn falling_squares(positions: &[[i32; 2]]) -> Vec<i32> {
-    let mut map: BTreeMap<[i32; 2], i32> = BTreeMap::new();
-    let mut res = vec![];
-    let mut height = 0;
-    for item in positions.iter() {
-        let (start, end) = (item[0], item[0] + item[1]);
-        let mut curr_height = item[1];
-        let mut temp = 0;
-        for (&[left, right], &h) in map.iter() {
-            if end <= left || right <= start {
-                continue;
-            }
-            temp = temp.max(h);
+pub fn smallest_range(nums: &[&[i32]]) -> Vec<i32> {
+    let n = nums.len();
+    let mut nis: Vec<_> = nums
+        .iter()
+        .enumerate()
+        .flat_map(|(idx, v)| v.iter().map(move |&num| (num, idx)))
+        .collect();
+    nis.sort_unstable_by_key(|p| p.0);
+    let mut nis_i = 0;
+    let mut res = [0, nis.last().unwrap().0];
+    let mut map = HashMap::new();
+    for &(right, nums_i) in nis.iter() {
+        *map.entry(nums_i).or_insert(0) += 1;
+        while map.len() == n && map[&nis[nis_i].1] > 1 {
+            map.entry(nis[nis_i].1).and_modify(|c| *c -= 1);
+            nis_i += 1;
         }
-        curr_height += temp;
-        height = height.max(curr_height);
-        map.insert([start, end], curr_height);
-        res.push(height);
+        let left = nis[nis_i].0;
+        if map.len() == n && right - left < res[1] - res[0] {
+            res = [left, right];
+        }
     }
-    res
+    res.to_vec()
 }
 
 #[cfg(test)]
@@ -36,14 +39,18 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(falling_squares(&[[1, 2], [2, 3], [6, 1]]), [2, 5, 5]);
-        debug_assert_eq!(falling_squares(&[[100, 100], [200, 100]]), [100, 100]);
+        debug_assert_eq!(
+            smallest_range(&[&[4, 10, 15, 24, 26], &[0, 9, 12, 20], &[5, 18, 22, 30]]),
+            [20, 24]
+        );
+        debug_assert_eq!(
+            smallest_range(&[&[1, 2, 3], &[1, 2, 3], &[1, 2, 3]]),
+            [1, 1]
+        );
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(falling_squares(&[[7, 1], [3, 3], [7, 5]]), [1, 3, 6]);
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
