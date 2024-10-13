@@ -5,26 +5,26 @@ mod trie;
 use helper::*;
 
 #[derive(Debug, Clone)]
-struct MyHashSet {
-    data: Vec<bool>,
+struct MyHashMap {
+    data: Vec<i32>,
 }
 
-impl MyHashSet {
+impl MyHashMap {
     fn new() -> Self {
         Self {
-            data: vec![false; 100_001],
+            data: vec![-1; 1_000_001],
         }
     }
 
-    fn add(&mut self, key: i32) {
-        self.data[key as usize] = true;
+    fn put(&mut self, key: i32, value: i32) {
+        self.data[key as usize] = value;
     }
 
     fn remove(&mut self, key: i32) {
-        self.data[key as usize] = false;
+        self.data[key as usize] = -1;
     }
 
-    fn contains(&self, key: i32) -> bool {
+    fn get(&self, key: i32) -> i32 {
         self.data[key as usize]
     }
 }
@@ -37,15 +37,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        let mut s = MyHashSet::new();
-        s.add(1); // set = [1]
-        s.add(2); // set = [1, 2]
-        debug_assert!(s.contains(1)); // return True
-        debug_assert!(!s.contains(3)); // return False, (not found)
-        s.add(2); // set = [1, 2]
-        debug_assert!(s.contains(2)); // return True
-        s.remove(2); // set = [1]
-        debug_assert!(!s.contains(2)); // return False, (already removed)
+        let mut m = MyHashMap::new();
+        m.put(1, 1); // The map is now [[1,1]]
+        m.put(2, 2); // The map is now [[1,1], [2,2]]
+        debug_assert_eq!(m.get(1), 1); // return 1, The map is now [[1,1], [2,2]]
+        debug_assert_eq!(m.get(3), -1); // return -1 (i.e., not found), The map is now [[1,1], [2,2]]
+        m.put(2, 1); // The map is now [[1,1], [2,1]] (i.e., update the existing value)
+        debug_assert_eq!(m.get(2), 1); // return 1, The map is now [[1,1], [2,1]]
+        m.remove(2); // remove the mapping for 2, The map is now [[1,1]]
+        debug_assert_eq!(m.get(2), -1); // return -1 (i.e., not found), The map is now [[1,1]] // return False, (already removed)
     }
 
     #[test]
