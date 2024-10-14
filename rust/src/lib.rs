@@ -4,20 +4,31 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_length(nums1: &[i32], nums2: &[i32]) -> i32 {
-    let (n1, n2) = (nums1.len(), nums2.len());
-    let mut dp = vec![vec![0; 1 + n2]; 1 + n1];
-    for i1 in 1..1 + n1 {
-        for i2 in 1..1 + n2 {
-            if nums1[i1 - 1] == nums2[i2 - 1] {
-                dp[i1][i2] = 1 + dp[i1 - 1][i2 - 1]
-            }
+pub fn smallest_distance_pair(nums: &mut [i32], k: i32) -> i32 {
+    nums.sort_unstable();
+    let (mut low, mut high) = (0, nums.last().unwrap() - nums[0]);
+    while low < high {
+        let mid = low + (high - low) / 2;
+        let count = count_pairs_with_dist(nums, mid);
+        if count < k {
+            low = 1 + mid;
+        } else {
+            high = mid
         }
     }
-    dp.into_iter()
-        .flat_map(|v| v.into_iter())
-        .max()
-        .unwrap_or(0)
+    low
+}
+
+fn count_pairs_with_dist(nums: &[i32], dist: i32) -> i32 {
+    let mut res = 0;
+    let mut left = 0;
+    for (right, &num) in nums.iter().enumerate() {
+        while num - nums[left] > dist {
+            left += 1;
+        }
+        res += right - left;
+    }
+    res as _
 }
 
 #[cfg(test)]
@@ -28,8 +39,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(find_length(&[1, 2, 3, 2, 1], &[3, 2, 1, 4, 7]), 3);
-        debug_assert_eq!(find_length(&[0, 0, 0, 0, 0], &[0, 0, 0, 0, 0]), 5);
+        debug_assert_eq!(smallest_distance_pair(&mut [1, 3, 1], 1), 0);
+        debug_assert_eq!(smallest_distance_pair(&mut [1, 1, 1], 2), 0);
+        debug_assert_eq!(smallest_distance_pair(&mut [1, 6, 1], 3), 5);
     }
 
     #[test]
