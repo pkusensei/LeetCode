@@ -1,47 +1,21 @@
 mod helper;
 mod trie;
 
-use std::collections::{HashMap, HashSet};
-
 #[allow(unused_imports)]
 use helper::*;
-use rand::{rngs::ThreadRng, Rng};
 
-#[derive(Debug, Clone)]
-struct Solution {
-    rng: ThreadRng,
-    range: i32,
-    bmap: HashMap<i32, i32>,
-}
-
-impl Solution {
-    fn new(n: i32, mut black: Vec<i32>) -> Self {
-        let set: HashSet<_> = black.iter().copied().collect();
-        let mut map = HashMap::new();
-        let range = n - set.len() as i32;
-        let mut idx = 0;
-        black.sort_unstable();
-        for num in range..n {
-            if !set.contains(&num) {
-                map.insert(black[idx], num);
-                idx += 1;
-            }
-        }
-        Self {
-            rng: rand::thread_rng(),
-            range,
-            bmap: map,
-        }
+pub fn max_kelements(nums: Vec<i32>, k: i32) -> i64 {
+    let mut heap = std::collections::BinaryHeap::from(nums);
+    let mut res = 0;
+    for _ in 0..k {
+        let Some(num) = heap.pop() else {
+            break;
+        };
+        res += i64::from(num);
+        let n = if num % 3 == 0 { num / 3 } else { 1 + num / 3 };
+        heap.push(n);
     }
-
-    fn pick(&mut self) -> i32 {
-        let i = self.rng.gen_range(0..self.range);
-        if let Some(&n) = self.bmap.get(&i) {
-            return n;
-        } else {
-            i
-        }
-    }
+    res
 }
 
 #[cfg(test)]
@@ -51,7 +25,10 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        debug_assert_eq!(max_kelements([10, 10, 10, 10, 10].into(), 5), 50);
+        debug_assert_eq!(max_kelements([1, 10, 3, 3, 3].into(), 3), 17);
+    }
 
     #[test]
     fn test() {}
