@@ -1,97 +1,47 @@
 mod helper;
 mod trie;
 
+use std::collections::{HashMap, HashSet};
+
 #[allow(unused_imports)]
 use helper::*;
+use rand::{rngs::ThreadRng, Rng};
 
 #[derive(Debug, Clone)]
-struct MyLinkedList {
-    head: Option<Box<Node>>,
+struct Solution {
+    rng: ThreadRng,
+    range: i32,
+    bmap: HashMap<i32, i32>,
 }
 
-impl MyLinkedList {
-    fn new() -> Self {
-        Self { head: None }
-    }
-
-    fn get(&self, index: i32) -> i32 {
-        let mut count = 0;
-        let mut curr = self.head.as_ref();
-        while curr.is_some() && count < index {
-            count += 1;
-            curr = curr.and_then(|n| n.next.as_ref());
-        }
-        curr.map(|n| n.val).unwrap_or(-1)
-    }
-
-    fn add_at_head(&mut self, val: i32) {
-        let mut node = Node { val, next: None };
-        node.next = self.head.take();
-        self.head = Some(Box::new(node))
-    }
-
-    fn add_at_tail(&mut self, val: i32) {
-        let node = Node { val, next: None };
-        match self.head.as_mut() {
-            None => self.head = Some(Box::new(node)),
-            Some(mut curr) => {
-                while let Some(ref mut next) = curr.next {
-                    curr = next
-                }
-                curr.next = Some(Box::new(node));
+impl Solution {
+    fn new(n: i32, mut black: Vec<i32>) -> Self {
+        let set: HashSet<_> = black.iter().copied().collect();
+        let mut map = HashMap::new();
+        let range = n - set.len() as i32;
+        let mut idx = 0;
+        black.sort_unstable();
+        for num in range..n {
+            if !set.contains(&num) {
+                map.insert(black[idx], num);
+                idx += 1;
             }
         }
-    }
-
-    fn add_at_index(&mut self, mut index: i32, val: i32) {
-        if index <= 0 {
-            self.add_at_head(val);
-        }
-
-        let mut curr = &mut self.head;
-        let mut count = 0;
-        while let Some(ref mut n) = curr {
-            if count + 1 == index {
-                let node = Node {
-                    val,
-                    next: n.next.take(),
-                };
-                n.next = Some(Box::new(node));
-                return;
-            }
-            curr = &mut n.next;
-            count += 1;
+        Self {
+            rng: rand::thread_rng(),
+            range,
+            bmap: map,
         }
     }
 
-    fn delete_at_index(&mut self, mut index: i32) {
-        let Some(ref mut head) = self.head else {
-            return;
-        };
-        if index == 0 {
-            let n = head.next.take();
-            self.head = n;
-            return;
-        }
-        let mut curr = &mut self.head;
-        let mut count = 0;
-        while let Some(ref mut n) = curr {
-            if count + 1 == index {
-                let Some(mut del) = n.next.take() else {
-                    return;
-                };
-                n.next = del.next.take();
-            }
-            curr = &mut n.next;
-            count += 1;
+    fn pick(&mut self) -> i32 {
+        let i = self.rng.gen_range(0..self.range);
+        if let Some(&n) = self.bmap.get(&i) {
+            return n;
+        } else {
+            i
         }
     }
-}
-
-#[derive(Debug, Clone)]
-struct Node {
-    val: i32,
-    next: Option<Box<Node>>,
 }
 
 #[cfg(test)]
@@ -101,15 +51,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {
-        let mut myLinkedList = MyLinkedList::new();
-        myLinkedList.add_at_head(1);
-        myLinkedList.add_at_tail(3);
-        myLinkedList.add_at_index(1, 2); // linked list becomes 1->2->3
-        debug_assert_eq!(myLinkedList.get(1), 2); // return 2
-        myLinkedList.delete_at_index(1); // now the linked list is 1->3
-        debug_assert_eq!(myLinkedList.get(1), 3); // return 3
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
