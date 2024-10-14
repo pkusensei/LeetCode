@@ -4,18 +4,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_kelements(nums: Vec<i32>, k: i32) -> i64 {
-    let mut heap = std::collections::BinaryHeap::from(nums);
-    let mut res = 0;
-    for _ in 0..k {
-        let Some(num) = heap.pop() else {
-            break;
-        };
-        res += i64::from(num);
-        let n = if num % 3 == 0 { num / 3 } else { 1 + num / 3 };
-        heap.push(n);
+pub fn minimum_delete_sum(s1: &str, s2: &str) -> i32 {
+    let (s1, s2, n1, n2) = (s1.as_bytes(), s2.as_bytes(), s1.len(), s2.len());
+    let mut dp = vec![vec![0; 1 + n2]; 1 + n1];
+    for i1 in 1..1 + n1 {
+        for i2 in 1..1 + n2 {
+            if s1[i1 - 1] == s2[i2 - 1] {
+                dp[i1][i2] = i32::from(s1[i1 - 1]) + dp[i1 - 1][i2 - 1];
+            } else {
+                dp[i1][i2] = dp[i1][i2 - 1].max(dp[i1 - 1][i2]);
+            }
+        }
     }
-    res
+    s1.iter().chain(s2).map(|&b| i32::from(b)).sum::<i32>() - 2 * dp[n1][n2]
 }
 
 #[cfg(test)]
@@ -26,8 +27,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(max_kelements([10, 10, 10, 10, 10].into(), 5), 50);
-        debug_assert_eq!(max_kelements([1, 10, 3, 3, 3].into(), 3), 17);
+        debug_assert_eq!(minimum_delete_sum("sea", "eat"), 231);
+        debug_assert_eq!(minimum_delete_sum("delete", "leet"), 403);
     }
 
     #[test]
