@@ -4,19 +4,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_one_bit_character(bits: &[i32]) -> bool {
-    let mut nums = bits;
-    while nums.len() > 2 {
-        let Some(n) = nums
-            .strip_prefix(&[1, 0])
-            .or_else(|| nums.strip_prefix(&[1, 1]))
-            .or_else(|| nums.strip_prefix(&[0]))
-        else {
-            return false;
-        };
-        nums = n;
+pub fn find_length(nums1: &[i32], nums2: &[i32]) -> i32 {
+    let (n1, n2) = (nums1.len(), nums2.len());
+    let mut dp = vec![vec![0; 1 + n2]; 1 + n1];
+    for i1 in 1..1 + n1 {
+        for i2 in 1..1 + n2 {
+            if nums1[i1 - 1] == nums2[i2 - 1] {
+                dp[i1][i2] = 1 + dp[i1 - 1][i2 - 1]
+            }
+        }
     }
-    matches!(nums, [0] | [0, 0])
+    dp.into_iter()
+        .flat_map(|v| v.into_iter())
+        .max()
+        .unwrap_or(0)
 }
 
 #[cfg(test)]
@@ -27,8 +28,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(is_one_bit_character(&[1, 0, 0]));
-        debug_assert!(!is_one_bit_character(&[1, 1, 1, 0]));
+        debug_assert_eq!(find_length(&[1, 2, 3, 2, 1], &[3, 2, 1, 4, 7]), 3);
+        debug_assert_eq!(find_length(&[0, 0, 0, 0, 0], &[0, 0, 0, 0, 0]), 5);
     }
 
     #[test]
