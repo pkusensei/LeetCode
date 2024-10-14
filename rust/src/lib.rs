@@ -1,34 +1,33 @@
 mod helper;
 mod trie;
 
+use std::collections::HashSet;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn smallest_distance_pair(nums: &mut [i32], k: i32) -> i32 {
-    nums.sort_unstable();
-    let (mut low, mut high) = (0, nums.last().unwrap() - nums[0]);
-    while low < high {
-        let mid = low + (high - low) / 2;
-        let count = count_pairs_with_dist(nums, mid);
-        if count < k {
-            low = 1 + mid;
-        } else {
-            high = mid
+pub fn longest_word(words: &[&str]) -> String {
+        let prefix: HashSet<&str> = words.iter().map(|s| s.as_ref()).collect();
+        let mut s = "";
+        for &word in words.iter() {
+            if check(&prefix, word) {
+                if word.len() > s.len() || word.len() == s.len() && word < s {
+                    s = word
+                }
+            }
         }
-    }
-    low
+        s.to_string()
 }
 
-fn count_pairs_with_dist(nums: &[i32], dist: i32) -> i32 {
-    let mut res = 0;
-    let mut left = 0;
-    for (right, &num) in nums.iter().enumerate() {
-        while num - nums[left] > dist {
-            left += 1;
+fn check(prefix: &HashSet<&str>, word: &str) -> bool {
+    let mut s = word.to_string();
+    while s.len() > 1 {
+        s.pop();
+        if !prefix.contains(&s.as_str()) {
+            return false;
         }
-        res += right - left;
     }
-    res as _
+    true
 }
 
 #[cfg(test)]
@@ -39,9 +38,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(smallest_distance_pair(&mut [1, 3, 1], 1), 0);
-        debug_assert_eq!(smallest_distance_pair(&mut [1, 1, 1], 2), 0);
-        debug_assert_eq!(smallest_distance_pair(&mut [1, 6, 1], 3), 5);
+        debug_assert_eq!(longest_word(&["w", "wo", "wor", "worl", "world"]), "world");
+        debug_assert_eq!(
+            longest_word(&["a", "banana", "app", "appl", "ap", "apply", "apple"]),
+            "apple"
+        );
     }
 
     #[test]
