@@ -1,23 +1,31 @@
 mod helper;
 mod trie;
 
+use std::collections::BTreeMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn self_dividing_numbers(left: i32, right: i32) -> Vec<i32> {
-    (left..=right).filter(|&num| check(num)).collect()
+#[derive(Debug, Clone)]
+struct MyCalendar {
+    data: BTreeMap<i32, i32>,
 }
 
-fn check(num: i32) -> bool {
-    let mut n = num;
-    while n > 0 {
-        let d = n % 10;
-        if d == 0 || num % d > 0 {
-            return false;
+impl MyCalendar {
+    fn new() -> Self {
+        Self {
+            data: BTreeMap::new(),
         }
-        n /= 10
     }
-    true
+
+    fn book(&mut self, start: i32, end: i32) -> bool {
+        if let Some((&_left, &right)) = self.data.range(..end).next_back() {
+            if start < right {
+                return false;
+            }
+        }
+        self.data.insert(start, end).is_none()
+    }
 }
 
 #[cfg(test)]
@@ -28,11 +36,10 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            self_dividing_numbers(1, 22),
-            [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 15, 22]
-        );
-        debug_assert_eq!(self_dividing_numbers(47, 85), [48, 55, 66, 77]);
+        let mut cal = MyCalendar::new();
+        debug_assert!(cal.book(10, 20)); // return True
+        debug_assert!(!cal.book(15, 25)); // return False, It can not be booked because time 15 is already booked by another event.
+        debug_assert!(cal.book(20, 30)); // return True
     }
 
     #[test]
