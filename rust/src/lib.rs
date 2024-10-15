@@ -4,18 +4,66 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_steps(s: &str) -> i64 {
-    let mut res = 0;
-    let mut ones = 0;
-    for b in s.bytes() {
-        if b == b'0' {
-            // A '0' has to pass all '1' on its left
-            res += ones;
-        } else {
-            ones += 1
+pub fn remove_comments(source: &[&str]) -> Vec<String> {
+    let mut res = vec![];
+    let mut in_block: Option<String> = None;
+    for line in source.iter() {
+        let mut s = *line;
+        while !s.is_empty() {
+            if let Some(ref mut r) = in_block {
+                let Some(end) = s.find(r#"*/"#) else {
+                    break;
+                };
+                s = &s[2 + end..];
+                let line = s.find(r#"//"#);
+                let block = s.find(r#"/*"#);
+                match (line, block) {
+                    (Some(a), None) => {
+                        r.push_str(&s[..a]);
+                        res.push(in_block.take().unwrap_or_default());
+                        break;
+                    }
+                    (Some(a), Some(b)) if a < b => {
+                        r.push_str(&s[..a]);
+                        res.push(in_block.take().unwrap_or_default());
+                        break;
+                    }
+                    (None, None) => {
+                        r.push_str(s);
+                        res.push(in_block.take().unwrap_or_default());
+                        break;
+                    }
+                    (_, Some(a)) => {
+                        r.push_str(&s[..a]);
+                        s = &s[2 + a..];
+                    }
+                }
+            } else {
+                let line = s.find(r#"//"#);
+                let block = s.find(r#"/*"#);
+                match (line, block) {
+                    (Some(a), None) => {
+                        res.push(s[..a].to_string());
+                        break;
+                    }
+                    (Some(a), Some(b)) if a < b => {
+                        res.push(s[..a].to_string());
+                        break;
+                    }
+                    (None, None) => {
+                        res.push(s.to_string());
+                        break;
+                    }
+                    (_, Some(a)) => {
+                        let r = s[..a].to_string();
+                        in_block = Some(r);
+                        s = &s[2 + a..];
+                    }
+                }
+            }
         }
     }
-    res
+    res.into_iter().filter(|s| !s.is_empty()).collect()
 }
 
 #[cfg(test)]
@@ -26,9 +74,26 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(minimum_steps("101"), 1);
-        debug_assert_eq!(minimum_steps("100"), 2);
-        debug_assert_eq!(minimum_steps("0111"), 0);
+        debug_assert_eq!(
+            remove_comments(&[
+                "/*Test program */",
+                "int main()",
+                "{ ",
+                "  // variable declaration ",
+                "int a, b, c;",
+                "/* This is a test",
+                "   multiline  ",
+                "   comment for ",
+                "   testing */",
+                "a = b + c;",
+                "}"
+            ]),
+            ["int main()", "{ ", "  ", "int a, b, c;", "a = b + c;", "}"]
+        );
+        debug_assert_eq!(
+            remove_comments(&["a/*comment", "line", "more_comment*/b"]),
+            ["ab"]
+        );
     }
 
     #[test]
