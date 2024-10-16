@@ -1,27 +1,66 @@
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn asteroid_collision(nums: &[i32]) -> Vec<i32> {
-    let mut stack: Vec<i32> = vec![];
-    for &(mut num) in nums.iter() {
-        while num < 0 && stack.last().is_some_and(|&v| v > 0) {
-            let Some(v) = stack.pop() else {
-                break;
-            };
-            match v.cmp(&num.abs()) {
-                std::cmp::Ordering::Less => continue,
-                std::cmp::Ordering::Equal => num = 0,
-                std::cmp::Ordering::Greater => num = v,
+pub fn evaluate(expression: &str) -> i32 {
+    eval(expression, &HashMap::new())
+}
+
+fn eval(expr: &str, enclosing: &HashMap<&str, i32>) -> i32 {
+    if let Ok(num) = expr.parse() {
+        return num;
+    }
+    if !expr.starts_with('(') {
+        return enclosing[&expr];
+    }
+    let mut scope = enclosing.clone();
+    let Some((left, right)) = expr.split_once(' ') else {
+        return 0;
+    };
+    let tokens = parse(&right[..right.len() - 1]);
+    match left {
+        "(add" => eval(tokens[0], &scope) + eval(tokens[1], &scope),
+        "(mult" => eval(tokens[0], &scope) * eval(tokens[1], &scope),
+        "(let" => {
+            for chunk in tokens.chunks_exact(2) {
+                let val = eval(chunk[1], &scope);
+                scope.insert(chunk[0], val);
             }
+            eval(tokens.last().unwrap(), &scope)
         }
-        if num != 0 {
-            stack.push(num);
+        _ => unreachable!(),
+    }
+}
+
+// Into stream of tokens, but keep (...) together
+// e.g (let x 2 (mult x (let x 3 y 4 (add x y))))
+// has been stripped to x 2 (mult x (let x 3 y 4 (add x y)))
+// Then parse into ["x", "2", "(mult x (let x 3 y 4 (add x y)))"]
+// This is done by tracking () pairs
+fn parse(expr: &str) -> Vec<&str> {
+    let mut res = vec![];
+    let mut open = 0;
+    let mut start = 0;
+    for (idx, b) in expr.bytes().enumerate() {
+        if b == b'(' {
+            open += 1;
+        }
+        if b == b')' {
+            open -= 1;
+        }
+        if open == 0 && b.is_ascii_whitespace() {
+            res.push(&expr[start..idx]);
+            start = idx + 1;
         }
     }
-    stack
+    if !expr[start..].is_empty() {
+        res.push(&expr[start..]);
+    }
+    res
 }
 
 #[cfg(test)]
@@ -32,9 +71,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(asteroid_collision(&[5, 10, -5]), [5, 10]);
-        debug_assert!(asteroid_collision(&[8, -8]).is_empty());
-        debug_assert_eq!(asteroid_collision(&[10, 2, -5]), [10]);
+        debug_assert_eq!(evaluate("(let x 2 (mult x (let x 3 y 4 (add x y))))"), 14);
+        debug_assert_eq!(evaluate("(let x 3 x 2 x)"), 2);
+        debug_assert_eq!(evaluate("(let x 1 y 2 x (add x y) (add x y))"), 5);
     }
 
     #[test]
