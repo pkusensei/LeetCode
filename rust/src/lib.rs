@@ -1,65 +1,35 @@
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn evaluate(expression: &str) -> i32 {
-    eval(expression, &HashMap::new())
+pub fn monotone_increasing_digits(n: i32) -> i32 {
+    let mut num = to_digits(n);
+    // 332 => 329 => 299
+    while let Some(idx) =
+        num.windows(2)
+            .enumerate()
+            .rev()
+            .find_map(|(i, w)| if w[0] > w[1] { Some(i) } else { None })
+    {
+        num[idx] -= 1;
+        num[idx + 1..].fill(9);
+    }
+    from_digits(num)
 }
 
-fn eval(expr: &str, enclosing: &HashMap<&str, i32>) -> i32 {
-    if let Ok(num) = expr.parse() {
-        return num;
-    }
-    if !expr.starts_with('(') {
-        return enclosing[&expr];
-    }
-    let mut scope = enclosing.clone();
-    let Some((left, right)) = expr.split_once(' ') else {
-        return 0;
-    };
-    let tokens = parse(&right[..right.len() - 1]);
-    match left {
-        "(add" => eval(tokens[0], &scope) + eval(tokens[1], &scope),
-        "(mult" => eval(tokens[0], &scope) * eval(tokens[1], &scope),
-        "(let" => {
-            for chunk in tokens.chunks_exact(2) {
-                let val = eval(chunk[1], &scope);
-                scope.insert(chunk[0], val);
-            }
-            eval(tokens.last().unwrap(), &scope)
-        }
-        _ => unreachable!(),
-    }
+fn from_digits(num: Vec<i32>) -> i32 {
+    num.into_iter().fold(0, |acc, d| acc * 10 + d)
 }
 
-// Into stream of tokens, but keep (...) together
-// e.g (let x 2 (mult x (let x 3 y 4 (add x y))))
-// has been stripped to x 2 (mult x (let x 3 y 4 (add x y)))
-// Then parse into ["x", "2", "(mult x (let x 3 y 4 (add x y)))"]
-// This is done by tracking () pairs
-fn parse(expr: &str) -> Vec<&str> {
+fn to_digits(mut n: i32) -> Vec<i32> {
     let mut res = vec![];
-    let mut open = 0;
-    let mut start = 0;
-    for (idx, b) in expr.bytes().enumerate() {
-        if b == b'(' {
-            open += 1;
-        }
-        if b == b')' {
-            open -= 1;
-        }
-        if open == 0 && b.is_ascii_whitespace() {
-            res.push(&expr[start..idx]);
-            start = idx + 1;
-        }
+    while n > 0 {
+        res.push(n % 10);
+        n /= 10;
     }
-    if !expr[start..].is_empty() {
-        res.push(&expr[start..]);
-    }
+    res.reverse();
     res
 }
 
@@ -71,9 +41,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(evaluate("(let x 2 (mult x (let x 3 y 4 (add x y))))"), 14);
-        debug_assert_eq!(evaluate("(let x 3 x 2 x)"), 2);
-        debug_assert_eq!(evaluate("(let x 1 y 2 x (add x y) (add x y))"), 5);
+        debug_assert_eq!(monotone_increasing_digits(10), 9);
+        debug_assert_eq!(monotone_increasing_digits(1234), 1234);
+        debug_assert_eq!(monotone_increasing_digits(332), 299);
     }
 
     #[test]
