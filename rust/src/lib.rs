@@ -4,32 +4,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn monotone_increasing_digits(n: i32) -> i32 {
-    let mut num = to_digits(n);
-    // 332 => 329 => 299
-    while let Some(idx) =
-        num.windows(2)
-            .enumerate()
-            .rev()
-            .find_map(|(i, w)| if w[0] > w[1] { Some(i) } else { None })
-    {
-        num[idx] -= 1;
-        num[idx + 1..].fill(9);
+pub fn daily_temperatures(temperatures: &[i32]) -> Vec<i32> {
+    let mut stack: Vec<(usize, i32)> = vec![];
+    let mut res = vec![0; temperatures.len()];
+    for (idx, &num) in temperatures.iter().enumerate() {
+        while stack.last().is_some_and(|&(_, n)| n < num) {
+            let Some((i, _)) = stack.pop() else {
+                break;
+            };
+            res[i] = (idx - i) as i32;
+        }
+        stack.push((idx, num));
     }
-    from_digits(num)
-}
-
-fn from_digits(num: Vec<i32>) -> i32 {
-    num.into_iter().fold(0, |acc, d| acc * 10 + d)
-}
-
-fn to_digits(mut n: i32) -> Vec<i32> {
-    let mut res = vec![];
-    while n > 0 {
-        res.push(n % 10);
-        n /= 10;
-    }
-    res.reverse();
     res
 }
 
@@ -41,9 +27,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(monotone_increasing_digits(10), 9);
-        debug_assert_eq!(monotone_increasing_digits(1234), 1234);
-        debug_assert_eq!(monotone_increasing_digits(332), 299);
+        debug_assert_eq!(
+            daily_temperatures(&[73, 74, 75, 71, 69, 72, 76, 73]),
+            [1, 1, 4, 2, 1, 1, 0, 0]
+        );
+        debug_assert_eq!(daily_temperatures(&[30, 40, 50, 60]), [1, 1, 1, 0]);
+        debug_assert_eq!(daily_temperatures(&[30, 60, 90]), [1, 1, 0]);
     }
 
     #[test]
