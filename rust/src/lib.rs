@@ -1,42 +1,47 @@
+use std::collections::BTreeMap;
+
 mod helper;
 mod trie;
 
-use std::collections::BinaryHeap;
+#[derive(Debug, Clone, Default)]
+struct MyCalendarThree {
+    data: BTreeMap<i32, i32>,
+    k: i32,
+}
 
-#[allow(unused_imports)]
-use helper::*;
-
-pub fn longest_diverse_string(a: i32, b: i32, c: i32) -> String {
-    let mut heap: BinaryHeap<_> = [a, b, c]
-        .into_iter()
-        .enumerate()
-        .filter_map(|(i, num)| {
-            if num > 0 {
-                Some((num, char::from(i as u8 + b'a')))
-            } else {
-                None
-            }
-        })
-        .collect();
-    let mut res = vec![];
-    while let Some((mut num, ch)) = heap.pop() {
-        if res.ends_with(&[ch; 2]) {
-            let Some((n, c)) = heap.pop() else {
-                break;
-            };
-            res.push(c);
-            if n > 1 {
-                heap.push((n - 1, c));
-            }
-        } else {
-            res.push(ch);
-            num -= 1;
-        }
-        if num > 0 {
-            heap.push((num, ch));
+impl MyCalendarThree {
+    fn new() -> Self {
+        // Default::default()
+        Self {
+            data: BTreeMap::from([(0, 0)]),
+            k: 0,
         }
     }
-    res.into_iter().collect()
+
+    fn book(&mut self, start: i32, end: i32) -> i32 {
+        // *self.data.entry(start).or_insert(0) += 1;
+        // *self.data.entry(end).or_insert(0) -= 1;
+        // let mut res = 0;
+        // let mut curr = 0;
+        // for v in self.data.values() {
+        //     curr += v;
+        //     res = res.max(curr);
+        // }
+        // res
+        // From naive approach there's a hidden prefix sum
+        // To collapse that onto the BTreeMap itself...
+        let Some((_, &(mut curr))) = self.data.range(..=start).next_back() else {
+            return 0; // unreachable
+        };
+        self.data.entry(start).or_insert(curr);
+        for (_, v) in self.data.range_mut(start..end) {
+            curr = *v;
+            *v += 1;
+            self.k = self.k.max(*v);
+        }
+        self.data.entry(end).or_insert(curr);
+        self.k
+    }
 }
 
 #[cfg(test)]
@@ -47,8 +52,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(longest_diverse_string(1, 1, 7), "ccbccacc");
-        debug_assert_eq!(longest_diverse_string(7, 1, 0), "aabaa");
+        let mut cal = MyCalendarThree::new();
+        debug_assert_eq!(cal.book(10, 20), 1); // return 1
+        debug_assert_eq!(cal.book(50, 60), 1); // return 1
+        debug_assert_eq!(cal.book(10, 40), 2); // return 2
+        debug_assert_eq!(cal.book(5, 15), 3); // return 3
+        debug_assert_eq!(cal.book(5, 10), 3); // return 3
+        debug_assert_eq!(cal.book(25, 55), 3); // return 3
     }
 
     #[test]
