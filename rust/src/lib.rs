@@ -4,27 +4,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn flood_fill(mut image: Vec<Vec<i32>>, sr: i32, sc: i32, color: i32) -> Vec<Vec<i32>> {
-    let [sr, sc] = [sr, sc].map(|n| n as usize);
-    let start = image[sr][sc];
-    if start == color {
-        return image;
-    }
-    let mut queue = std::collections::VecDeque::from([(sr, sc)]);
-    while let Some((row, col)) = queue.pop_front() {
-        if image[row][col] == color {
-            continue;
+pub fn asteroid_collision(nums: &[i32]) -> Vec<i32> {
+    let mut stack: Vec<i32> = vec![];
+    for &(mut num) in nums.iter() {
+        while num < 0 && stack.last().is_some_and(|&v| v > 0) {
+            let Some(v) = stack.pop() else {
+                break;
+            };
+            match v.cmp(&num.abs()) {
+                std::cmp::Ordering::Less => continue,
+                std::cmp::Ordering::Equal => num = 0,
+                std::cmp::Ordering::Greater => num = v,
+            }
         }
-        image[row][col] = color;
-        for (nr, nc) in neighbors((row, col)).filter(|&(nr, nc)| {
-            image
-                .get(nr)
-                .is_some_and(|v| v.get(nc).is_some_and(|&num| num == start))
-        }) {
-            queue.push_back((nr, nc));
+        if num != 0 {
+            stack.push(num);
         }
     }
-    image
+    stack
 }
 
 #[cfg(test)]
@@ -35,14 +32,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            flood_fill(vec![vec![1, 1, 1], vec![1, 1, 0], vec![1, 0, 1]], 1, 1, 2),
-            [[2, 2, 2], [2, 2, 0], [2, 0, 1]]
-        );
-        debug_assert_eq!(
-            flood_fill(vec![vec![0, 0, 0], vec![0, 0, 0]], 0, 0, 0),
-            [[0, 0, 0], [0, 0, 0]]
-        );
+        debug_assert_eq!(asteroid_collision(&[5, 10, -5]), [5, 10]);
+        debug_assert!(asteroid_collision(&[8, -8]).is_empty());
+        debug_assert_eq!(asteroid_collision(&[10, 2, -5]), [10]);
     }
 
     #[test]
