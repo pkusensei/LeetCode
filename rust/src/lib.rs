@@ -1,54 +1,42 @@
 mod helper;
 mod trie;
 
+use std::collections::BinaryHeap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_palindromic_subsequences(s: &str) -> i32 {
-    const MOD: i32 = 1_000_000_007;
-    let (s, n) = (s.as_bytes(), s.len());
-    let mut dp = vec![vec![0i32; n]; n];
-    for (i, v) in dp.iter_mut().enumerate() {
-        v[i] = 1;
-    }
-    for i1 in (0..n).rev() {
-        for i2 in 1 + i1..n {
-            if s[i1] != s[i2] {
-                dp[i1][i2] = (dp[i1 + 1][i2] + dp[i1][i2 - 1] - dp[i1 + 1][i2 - 1]).rem_euclid(MOD);
+pub fn longest_diverse_string(a: i32, b: i32, c: i32) -> String {
+    let mut heap: BinaryHeap<_> = [a, b, c]
+        .into_iter()
+        .enumerate()
+        .filter_map(|(i, num)| {
+            if num > 0 {
+                Some((num, char::from(i as u8 + b'a')))
             } else {
-                let (mut left, mut right) = (i1 + 1, i2 - 1);
-                while left <= right && s[left] != s[i1] {
-                    left += 1;
-                }
-                while left <= right && s[right] != s[i2] {
-                    right -= 1
-                }
-                match left.cmp(&right) {
-                    std::cmp::Ordering::Less => {
-                        // For "aabaa", or "a..a..a..a"
-                        // dp[i1 + 1][i2 - 1] => "a", "b", "aba", "aa"
-                        // 2* => Expand to be "aaa", "aba", "aabaa", "aaaa"
-                        // remove dup => "aba"
-                        dp[i1][i2] =
-                            (2 * dp[i1 + 1][i2 - 1] - dp[left + 1][right - 1]).rem_euclid(MOD)
-                    }
-                    std::cmp::Ordering::Equal => {
-                        // For "aaa", or more generally "a..a..a"
-                        // 2* => "a" and "aaa"
-                        // 1+ => "aa"
-                        dp[i1][i2] = (1 + 2 * dp[i1 + 1][i2 - 1]).rem_euclid(MOD);
-                    }
-                    std::cmp::Ordering::Greater => {
-                        // For "aba"
-                        // 2*dp[i1+1][i2-1] => center "b" as 1, "aba" as 1
-                        // 2+ to add in "a" "aa"
-                        dp[i1][i2] = (2 + 2 * dp[i1 + 1][i2 - 1]).rem_euclid(MOD);
-                    }
-                }
+                None
             }
+        })
+        .collect();
+    let mut res = vec![];
+    while let Some((mut num, ch)) = heap.pop() {
+        if res.ends_with(&[ch; 2]) {
+            let Some((n, c)) = heap.pop() else {
+                break;
+            };
+            res.push(c);
+            if n > 1 {
+                heap.push((n - 1, c));
+            }
+        } else {
+            res.push(ch);
+            num -= 1;
+        }
+        if num > 0 {
+            heap.push((num, ch));
         }
     }
-    dp[0][n - 1]
+    res.into_iter().collect()
 }
 
 #[cfg(test)]
@@ -59,13 +47,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(count_palindromic_subsequences("bccb"), 6);
-        debug_assert_eq!(
-            count_palindromic_subsequences(
-                "abcdabcdabcdabcdabcdabcdabcdabcddcbadcbadcbadcbadcbadcbadcbadcba"
-            ),
-            104860361
-        );
+        debug_assert_eq!(longest_diverse_string(1, 1, 7), "ccbccacc");
+        debug_assert_eq!(longest_diverse_string(7, 1, 0), "aabaa");
     }
 
     #[test]
