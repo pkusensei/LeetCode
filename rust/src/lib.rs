@@ -1,47 +1,30 @@
-use std::collections::BTreeMap;
-
 mod helper;
 mod trie;
 
-#[derive(Debug, Clone, Default)]
-struct MyCalendarThree {
-    data: BTreeMap<i32, i32>,
-    k: i32,
-}
+#[allow(unused_imports)]
+use helper::*;
 
-impl MyCalendarThree {
-    fn new() -> Self {
-        // Default::default()
-        Self {
-            data: BTreeMap::from([(0, 0)]),
-            k: 0,
+pub fn flood_fill(mut image: Vec<Vec<i32>>, sr: i32, sc: i32, color: i32) -> Vec<Vec<i32>> {
+    let [sr, sc] = [sr, sc].map(|n| n as usize);
+    let start = image[sr][sc];
+    if start == color {
+        return image;
+    }
+    let mut queue = std::collections::VecDeque::from([(sr, sc)]);
+    while let Some((row, col)) = queue.pop_front() {
+        if image[row][col] == color {
+            continue;
+        }
+        image[row][col] = color;
+        for (nr, nc) in neighbors((row, col)).filter(|&(nr, nc)| {
+            image
+                .get(nr)
+                .is_some_and(|v| v.get(nc).is_some_and(|&num| num == start))
+        }) {
+            queue.push_back((nr, nc));
         }
     }
-
-    fn book(&mut self, start: i32, end: i32) -> i32 {
-        // *self.data.entry(start).or_insert(0) += 1;
-        // *self.data.entry(end).or_insert(0) -= 1;
-        // let mut res = 0;
-        // let mut curr = 0;
-        // for v in self.data.values() {
-        //     curr += v;
-        //     res = res.max(curr);
-        // }
-        // res
-        // From naive approach there's a hidden prefix sum
-        // To collapse that onto the BTreeMap itself...
-        let Some((_, &(mut curr))) = self.data.range(..=start).next_back() else {
-            return 0; // unreachable
-        };
-        self.data.entry(start).or_insert(curr);
-        for (_, v) in self.data.range_mut(start..end) {
-            curr = *v;
-            *v += 1;
-            self.k = self.k.max(*v);
-        }
-        self.data.entry(end).or_insert(curr);
-        self.k
-    }
+    image
 }
 
 #[cfg(test)]
@@ -52,13 +35,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        let mut cal = MyCalendarThree::new();
-        debug_assert_eq!(cal.book(10, 20), 1); // return 1
-        debug_assert_eq!(cal.book(50, 60), 1); // return 1
-        debug_assert_eq!(cal.book(10, 40), 2); // return 2
-        debug_assert_eq!(cal.book(5, 15), 3); // return 3
-        debug_assert_eq!(cal.book(5, 10), 3); // return 3
-        debug_assert_eq!(cal.book(25, 55), 3); // return 3
+        debug_assert_eq!(
+            flood_fill(vec![vec![1, 1, 1], vec![1, 1, 0], vec![1, 0, 1]], 1, 1, 2),
+            [[2, 2, 2], [2, 2, 0], [2, 0, 1]]
+        );
+        debug_assert_eq!(
+            flood_fill(vec![vec![0, 0, 0], vec![0, 0, 0]], 0, 0, 0),
+            [[0, 0, 0], [0, 0, 0]]
+        );
     }
 
     #[test]
