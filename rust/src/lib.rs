@@ -1,31 +1,54 @@
 mod helper;
 mod trie;
 
-use std::collections::BTreeMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-#[derive(Debug, Clone)]
-struct MyCalendar {
-    data: BTreeMap<i32, i32>,
-}
-
-impl MyCalendar {
-    fn new() -> Self {
-        Self {
-            data: BTreeMap::new(),
-        }
+pub fn count_palindromic_subsequences(s: &str) -> i32 {
+    const MOD: i32 = 1_000_000_007;
+    let (s, n) = (s.as_bytes(), s.len());
+    let mut dp = vec![vec![0i32; n]; n];
+    for (i, v) in dp.iter_mut().enumerate() {
+        v[i] = 1;
     }
-
-    fn book(&mut self, start: i32, end: i32) -> bool {
-        if let Some((&_left, &right)) = self.data.range(..end).next_back() {
-            if start < right {
-                return false;
+    for i1 in (0..n).rev() {
+        for i2 in 1 + i1..n {
+            if s[i1] != s[i2] {
+                dp[i1][i2] = (dp[i1 + 1][i2] + dp[i1][i2 - 1] - dp[i1 + 1][i2 - 1]).rem_euclid(MOD);
+            } else {
+                let (mut left, mut right) = (i1 + 1, i2 - 1);
+                while left <= right && s[left] != s[i1] {
+                    left += 1;
+                }
+                while left <= right && s[right] != s[i2] {
+                    right -= 1
+                }
+                match left.cmp(&right) {
+                    std::cmp::Ordering::Less => {
+                        // For "aabaa", or "a..a..a..a"
+                        // dp[i1 + 1][i2 - 1] => "a", "b", "aba", "aa"
+                        // 2* => Expand to be "aaa", "aba", "aabaa", "aaaa"
+                        // remove dup => "aba"
+                        dp[i1][i2] =
+                            (2 * dp[i1 + 1][i2 - 1] - dp[left + 1][right - 1]).rem_euclid(MOD)
+                    }
+                    std::cmp::Ordering::Equal => {
+                        // For "aaa", or more generally "a..a..a"
+                        // 2* => "a" and "aaa"
+                        // 1+ => "aa"
+                        dp[i1][i2] = (1 + 2 * dp[i1 + 1][i2 - 1]).rem_euclid(MOD);
+                    }
+                    std::cmp::Ordering::Greater => {
+                        // For "aba"
+                        // 2*dp[i1+1][i2-1] => center "b" as 1, "aba" as 1
+                        // 2+ to add in "a" "aa"
+                        dp[i1][i2] = (2 + 2 * dp[i1 + 1][i2 - 1]).rem_euclid(MOD);
+                    }
+                }
             }
         }
-        self.data.insert(start, end).is_none()
     }
+    dp[0][n - 1]
 }
 
 #[cfg(test)]
@@ -36,10 +59,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        let mut cal = MyCalendar::new();
-        debug_assert!(cal.book(10, 20)); // return True
-        debug_assert!(!cal.book(15, 25)); // return False, It can not be booked because time 15 is already booked by another event.
-        debug_assert!(cal.book(20, 30)); // return True
+        debug_assert_eq!(count_palindromic_subsequences("bccb"), 6);
+        debug_assert_eq!(
+            count_palindromic_subsequences(
+                "abcdabcdabcdabcdabcdabcdabcdabcddcbadcbadcbadcbadcbadcbadcbadcba"
+            ),
+            104860361
+        );
     }
 
     #[test]
