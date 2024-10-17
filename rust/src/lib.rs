@@ -4,99 +4,14 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-#[derive(Debug, Clone)]
-struct WordFilter {
-    trie: Trie,
-}
-
-impl WordFilter {
-    fn new(words: Vec<String>) -> Self {
-        let mut trie = Trie::new();
-        for (idx, w) in words.iter().enumerate() {
-            let s = w.bytes().chain(std::iter::once(b'{')).chain(w.bytes());
-            for len in 0..w.len() {
-                trie.insert(s.clone().skip(len), idx as i32, index_of);
-            }
-        }
-        Self { trie }
+pub fn min_cost_climbing_stairs(cost: &[i32]) -> i32 {
+    let (mut c1, mut c2) = (cost[0], cost[1]);
+    for &num in cost.iter().skip(2) {
+        let curr = num + c1.min(c2);
+        c1 = c2;
+        c2 = curr
     }
-
-    fn f(&self, pref: String, suff: String) -> i32 {
-        let s = suff
-            .bytes()
-            .chain(std::iter::once(b'{'))
-            .chain(pref.bytes());
-        self.trie.find(s, index_of).unwrap_or(-1)
-    }
-}
-
-#[derive(Debug, Clone)]
-struct Trie {
-    data: [Option<Box<Trie>>; 27],
-    num: Option<i32>,
-}
-
-impl Trie {
-    pub const fn new() -> Self {
-        Self {
-            data: [const { None }; 27],
-            num: None,
-        }
-    }
-
-    pub fn insert<T, I, F>(&mut self, input: I, num: i32, index_of: F)
-    where
-        I: IntoIterator<Item = T>,
-        F: FnMut(T) -> usize,
-    {
-        self.insert_impl(input.into_iter(), num, index_of);
-    }
-
-    fn insert_impl<T, I, F>(&mut self, mut it: I, num: i32, mut index_of: F)
-    where
-        I: Iterator<Item = T>,
-        F: FnMut(T) -> usize,
-    {
-        self.num = Some(num);
-        if let Some(v) = it.next() {
-            let idx = index_of(v);
-            if let Some(n) = self.data.get_mut(idx).and_then(|opt| opt.as_mut()) {
-                n.insert(it, num, index_of);
-            } else {
-                let mut node = Box::new(Self::new());
-                node.insert(it, num, index_of);
-                self.data[idx] = Some(node);
-            }
-        }
-    }
-
-    pub fn find<T, I, F>(&self, input: I, index_of: F) -> Option<i32>
-    where
-        I: IntoIterator<Item = T>,
-        F: FnMut(T) -> usize,
-    {
-        self.find_impl(input.into_iter(), index_of)
-    }
-
-    fn find_impl<T, I, F>(&self, mut it: I, mut index_of: F) -> Option<i32>
-    where
-        I: Iterator<Item = T>,
-        F: FnMut(T) -> usize,
-    {
-        if let Some(v) = it.next() {
-            let idx = index_of(v);
-            if let Some(node) = self.data.get(idx).and_then(|n| n.as_ref()) {
-                return node.find(it, index_of);
-            } else {
-                return None;
-            }
-        }
-        self.num
-    }
-}
-
-fn index_of(b: u8) -> usize {
-    usize::from(b - b'a')
+    c1.min(c2)
 }
 
 #[cfg(test)]
@@ -107,8 +22,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        let wf = WordFilter::new(vec!["apple".into()]);
-        debug_assert_eq!(wf.f("a".into(), "e".into()), 0); // return 0
+        debug_assert_eq!(min_cost_climbing_stairs(&[10, 15, 20]), 15);
+        debug_assert_eq!(
+            min_cost_climbing_stairs(&[1, 100, 1, 1, 1, 100, 1, 1, 100, 1]),
+            6
+        );
     }
 
     #[test]
