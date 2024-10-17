@@ -12,19 +12,19 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
-        var a = ListNode.Make([1, 2, 3]);
-        var b = sol.SplitListToParts(a, 5);
-        var c = "[[1],[2],[3],[],[]]";
-        Assert.AreEqual(c, b.Print());
+        // var a = ListNode.Make([1, 2, 3]);
+        var b = sol.MaximumSwap(2736);
+        var c = 7236;
+        Assert.AreEqual(c, b);
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        var a = ListNode.Make([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
-        var b = sol.SplitListToParts(a, 3);
-        var c = "[[1,2,3,4],[5,6,7],[8,9,10]]";
-        Assert.AreEqual(c, b.Print());
+        // var a = ListNode.Make([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+        var b = sol.MaximumSwap(9973);
+        var c = 9973;
+        Assert.AreEqual(c, b);
     }
 
     [TestMethod]

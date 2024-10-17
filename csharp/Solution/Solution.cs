@@ -5,41 +5,34 @@ namespace Solution;
 
 public class Solution
 {
-    public ListNode[] SplitListToParts(ListNode head, int k)
+    public int MaximumSwap(int num)
     {
-        var count = 0;
-        var curr = head;
-        while (curr is not null)
+        var temp = num;
+        var seq = new List<int>();
+        while (temp > 0)
         {
-            count += 1;
-            curr = curr.next;
+            seq.Add(temp % 10);
+            temp /= 10;
         }
-        var (ave, rem) = (count / k, count % k);
-        var res = new ListNode[k];
+        seq.Reverse();
 
-        for (int i = 0; i < k; i++)
+        var digits = new int[10];
+        foreach (var (d, i) in seq.Select((d, i) => (d, i)))
         {
-            var n = rem > 0 ? ave + 1 : ave;
-            rem -= 1;
-            var (node, tail) = Split(head, n);
-            res[i] = node;
-            head = tail;
+            digits[d] = i; // last occurence of each digit
         }
-        return res;
-    }
-
-    static (ListNode node, ListNode tail)
-    Split(ListNode head, int n)
-    {
-        if (head is null) { return (null, null); }
-        var curr = head;
-        while (n > 1)
+        foreach (var (digit, left) in seq.Select((d, i) => (d, i)))
         {
-            curr = curr.next;
-            n -= 1;
+            for (int larger = 9; larger > digit; larger -= 1)
+            {
+                int right = digits[larger];
+                if (right > left) // Find a bigger digit to the right
+                {
+                    (seq[left], seq[right]) = (seq[right], seq[left]);
+                    return seq.Aggregate(0, (acc, num) => acc * 10 + num);
+                }
+            }
         }
-        var next = curr.next;
-        curr.next = null;
-        return (head, next);
+        return num;
     }
 }
