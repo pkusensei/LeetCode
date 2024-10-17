@@ -4,14 +4,15 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_cost_climbing_stairs(cost: &[i32]) -> i32 {
-    let (mut c1, mut c2) = (cost[0], cost[1]);
-    for &num in cost.iter().skip(2) {
-        let curr = num + c1.min(c2);
-        c1 = c2;
-        c2 = curr
+pub fn dominant_index(nums: &[i32]) -> i32 {
+    let Some((idx, &num)) = nums.iter().enumerate().max_by_key(|(_, &n)| n) else {
+        return -1;
+    };
+    if nums.iter().all(|&n| n == num || 2 * n <= num) {
+        idx as _
+    } else {
+        -1
     }
-    c1.min(c2)
 }
 
 #[cfg(test)]
@@ -22,11 +23,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(min_cost_climbing_stairs(&[10, 15, 20]), 15);
-        debug_assert_eq!(
-            min_cost_climbing_stairs(&[1, 100, 1, 1, 1, 100, 1, 1, 100, 1]),
-            6
-        );
+        debug_assert_eq!(dominant_index(&[3, 6, 1, 0]), 1);
+        debug_assert_eq!(dominant_index(&[1, 2, 3, 4]), -1);
     }
 
     #[test]
