@@ -4,15 +4,36 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn dominant_index(nums: &[i32]) -> i32 {
-    let Some((idx, &num)) = nums.iter().enumerate().max_by_key(|(_, &n)| n) else {
-        return -1;
-    };
-    if nums.iter().all(|&n| n == num || 2 * n <= num) {
-        idx as _
-    } else {
-        -1
+pub fn shortest_completing_word(s: &str, words: &[&str]) -> String {
+    let table = s
+        .bytes()
+        .filter_map(|b| {
+            if b.is_ascii_alphabetic() {
+                Some(usize::from(b.to_ascii_lowercase() - b'a'))
+            } else {
+                None
+            }
+        })
+        .fold([0; 26], |mut acc, i| {
+            acc[i] += 1;
+            acc
+        });
+    words
+        .iter()
+        .filter(|s| check(table, s))
+        .min_by_key(|s| s.len())
+        .map(|s| s.to_string())
+        .unwrap_or_default()
+}
+
+fn check(mut table: [i32; 26], s: &str) -> bool {
+    for i in s
+        .bytes()
+        .map(|b| usize::from(b.to_ascii_lowercase() - b'a'))
+    {
+        table[i] -= 1
     }
+    table.into_iter().all(|v| v <= 0)
 }
 
 #[cfg(test)]
@@ -23,8 +44,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(dominant_index(&[3, 6, 1, 0]), 1);
-        debug_assert_eq!(dominant_index(&[1, 2, 3, 4]), -1);
+        debug_assert_eq!(
+            shortest_completing_word("1s3 PSt", &["step", "steps", "stripe", "stepple"]),
+            "steps"
+        );
+        debug_assert_eq!(
+            shortest_completing_word("1s3 456", &["looks", "pest", "stew", "show"]),
+            "pest"
+        );
     }
 
     #[test]
