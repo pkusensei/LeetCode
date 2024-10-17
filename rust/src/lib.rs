@@ -1,32 +1,84 @@
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn delete_and_earn(nums: &mut [i32]) -> i32 {
-    if nums.len() == 1 {
-        return nums[0];
-    }
-    nums.sort_unstable();
-    let (min, max) = (nums[0], *nums.last().unwrap());
-    let map: HashMap<_, _> = nums
-        .chunk_by(|a, b| a == b)
-        .map(|ch| (ch[0], ch.iter().sum()))
-        .collect();
+pub fn cherry_pickup(grid: &[&[i32]]) -> i32 {
+    let n = grid.len();
+    // let mut dp = vec![vec![vec![None; n]; n]; n];
+    // solve(&mut dp, grid, 0, 0, 0).unwrap_or(0)
+    let mut dp = vec![vec![i32::MIN; n]; n];
+    dp[0][0] = grid[0][0];
 
-    // and house robber
-    let mut prev = 0;
-    let mut res = 0;
-    for num in min..=max {
-        let val = map.get(&num).copied().unwrap_or(0);
-        let temp = res;
-        res = res.max(prev + val);
-        prev = temp;
+    for step in 1..=2 * (n - 1) {
+        let mut dp2 = vec![vec![i32::MIN; n]; n];
+        for r1 in step.saturating_sub(n - 1)..=step.min(n - 1) {
+            for r2 in step.saturating_sub(n - 1)..=step.min(n - 1) {
+                let (c1, c2) = (step - r1, step - r2);
+                if grid[r1][c1] == -1 || grid[r2][c2] == -1 {
+                    continue;
+                }
+                let mut val = grid[r1][c1];
+                if r1 != r2 {
+                    val += grid[r2][c2];
+                }
+                for pr1 in r1.saturating_sub(1)..=r1 {
+                    for pr2 in r2.saturating_sub(1)..=r2 {
+                        dp2[r1][r2] = dp2[r1][r2].max(val + dp[pr1][pr2]);
+                    }
+                }
+            }
+        }
+        dp = dp2;
     }
-    res
+    dp[n - 1][n - 1].max(0)
+}
+
+// TLEs
+fn solve(
+    dp: &mut [Vec<Vec<Option<i32>>>],
+    grid: &[&[i32]],
+    r1: usize,
+    c1: usize,
+    c2: usize,
+) -> Option<i32> {
+    let n = grid.len();
+    let r2 = r1 + c1 - c2; // r1+c1 == r2+c2
+    if [r1, c1, r2, c2].iter().any(|&v| v == n) || grid[r1][c1] == -1 || grid[r2][c2] == -1 {
+        None
+    } else if n - 1 == r1 && n - 1 == c1 {
+        Some(grid[r1][c1])
+    } else if let Some(v) = dp[r1][c1][c2] {
+        Some(v)
+        // Instead of i32::MIN and -999999 trickery
+        // an Option<i32> conveys much more precise semantics
+        // But it reduces memo space and leads to TLE
+    } else {
+        let mut res = grid[r1][c1];
+        if c1 != c2 {
+            res += grid[r2][c2];
+        }
+        let next = [
+            solve(dp, grid, 1 + r1, c1, c2),     // both down
+            solve(dp, grid, r1, 1 + c1, 1 + c2), // both right
+            solve(dp, grid, 1 + r1, c1, 1 + c2), // one down, one right
+            solve(dp, grid, r1, 1 + c1, c2),     // one right, one down
+        ]
+        .into_iter()
+        .flatten()
+        .max();
+        if let Some(v) = next {
+            res += v;
+            dp[r1][c1][c2] = Some(res);
+            Some(res)
+        } else {
+            // All next paths are None => into -1 or out of bounds
+            // this path is blocked/exhausted
+            // It's impossible to advance further => return None
+            None
+        }
+    }
 }
 
 #[cfg(test)]
@@ -37,12 +89,38 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(delete_and_earn(&mut [3, 4, 2]), 6);
-        debug_assert_eq!(delete_and_earn(&mut [2, 2, 3, 3, 3, 4]), 9);
+        debug_assert_eq!(cherry_pickup(&[&[0, 1, -1], &[1, 0, -1], &[1, 1, 1]]), 5);
+        debug_assert_eq!(cherry_pickup(&[&[1, 1, -1], &[1, -1, 1], &[-1, 1, 1]]), 0);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(
+            cherry_pickup(&[
+                &[1, 1, -1, 1, 1, 1, 0, 1, 1, -1, -1, 1, 1, -1, 1, 1, 1, 1, 0, 1],
+                &[1, 1, 1, 0, 1, 1, 0, 1, 0, 1, -1, 1, 1, 1, 1, 1, 1, 0, 1, 1],
+                &[1, 1, 1, 1, 1, 1, 1, 0, 1, 1, -1, -1, -1, 1, 1, 1, -1, 1, -1, 1],
+                &[1, 1, 1, -1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, -1, -1, 1, 1, 1],
+                &[1, -1, -1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                &[1, 1, 1, 0, 1, 1, 1, 1, 1, -1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1],
+                &[0, 1, 1, -1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1],
+                &[1, 1, -1, 1, 1, 1, -1, 1, 0, 1, 1, 1, 1, 1, 1, -1, 1, 1, 1, 1],
+                &[0, -1, 1, 1, 1, -1, 1, 1, 1, -1, 1, 1, 1, 1, 1, 1, -1, 1, 1, 1],
+                &[1, 1, -1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, -1, 0, 1, 0, -1, 1],
+                &[0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, -1, 0],
+                &[1, 1, 1, 1, 1, 1, -1, 1, 0, 1, 1, 1, 1, -1, 1, 1, 1, 0, 1, 1],
+                &[1, 1, 1, 1, -1, -1, 1, -1, 1, 1, 1, 1, 1, 1, 1, 1, 1, -1, 1, 1],
+                &[-1, 1, 1, 1, 1, -1, 1, 1, 1, 1, 1, 1, -1, 1, 0, 0, 1, 0, 1, 1],
+                &[0, 1, -1, 1, 1, -1, 1, 1, 1, -1, 1, 1, 1, 1, 1, 1, 0, -1, 1, 1],
+                &[1, 1, 1, -1, 1, 1, 1, -1, 1, -1, 1, 1, 1, 1, 1, 1, 1, 1, 1, -1],
+                &[1, -1, 1, 1, 1, 1, 1, 1, 1, 1, 0, -1, 1, 1, 1, 1, 1, 1, 1, -1],
+                &[1, 1, 1, -1, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, -1, 0, 1, 1],
+                &[1, 1, -1, 0, -1, 1, 1, -1, -1, 1, 1, -1, 1, 1, 1, 1, -1, -1, 0, 1],
+                &[-1, 0, 0, 1, 1, 1, 1, 1, -1, -1, 1, 1, 1, 0, 1, 0, 0, 1, -1, 1]
+            ]),
+            71
+        );
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
