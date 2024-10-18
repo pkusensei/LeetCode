@@ -4,34 +4,30 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-// https://en.wikipedia.org/wiki/De_Bruijn_sequence#Algorithm
-pub fn crack_safe(n: i32, k: i32) -> String {
-    let alphabet: Vec<u8> = (0..k).map(|v| v as u8).collect();
-    let (n, k) = (n as usize, k as usize);
-    if k == 1 {
-        return std::iter::repeat('0').take(n * k).collect();
+pub fn reach_number(target: i32) -> i32 {
+    let target = target.abs();
+    let mut curr = 0;
+    let mut num = 0;
+    while curr < target {
+        num += 1;
+        curr += num;
     }
-    let mut a = vec![0; k * n];
-    let mut seq = vec![];
-    db(1, 1, n, k, &mut a, &mut seq);
-    seq.extend_from_within(..n - 1);
-    seq.into_iter()
-        .map(|i| char::from(b'0' + alphabet[i]))
-        .collect()
-}
-
-fn db(t: usize, p: usize, n: usize, k: usize, a: &mut [usize], seq: &mut Vec<usize>) {
-    if t > n {
-        if n % p == 0 {
-            seq.extend_from_slice(&a[1..1 + p]);
-        }
+    let delta = curr - target;
+    if delta & 1 == 0 {
+        // delta == 0 => num
+        // delta is even => find number in [1..=num] and flip its sign
+        num
+    } else if num & 1 == 0 {
+        // num is even, but delta is odd
+        // (num+1) is odd
+        // Find an odd number in [1..=1+num] to offset delta
+        num + 1
     } else {
-        a[t] = a[t - p];
-        db(1 + t, p, n, k, a, seq);
-        for i in 1 + a[t - p]..k {
-            a[t] = i;
-            db(1 + t, t, n, k, a, seq);
-        }
+        // delta is odd, num is odd
+        // curr and target are both odd
+        // Flipping any odd number instead makes curr even
+        // Has to flip _two_ numbers
+        num + 2
     }
 }
 
@@ -43,8 +39,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(crack_safe(1, 2), "01");
-        debug_assert_eq!(crack_safe(2, 2), "00110");
+        debug_assert_eq!(reach_number(2), 3);
+        debug_assert_eq!(reach_number(3), 2);
     }
 
     #[test]
