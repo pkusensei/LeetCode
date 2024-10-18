@@ -4,34 +4,48 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn intersection_size_two(intervals: &mut [[i32; 2]]) -> i32 {
-    // sort by increading end value
-    // then by decreasing start value
-    intervals.sort_unstable_by(|a, b| a[1].cmp(&b[1]).then(b[0].cmp(&a[0])));
-    let mut right_most = intervals[0][1];
-    let mut second_right = right_most - 1;
-    let mut res = 2;
-    for v in intervals.iter().skip(1) {
-        let (start, end) = (v[0], v[1]);
-        if start <= second_right && start <= right_most {
-            // [1,4] and [2,5] with [3,4] as [second_right,right_most]
-            // take both second_right and right_most, i.e 3,4
-            continue;
-        }
-        if start <= right_most {
-            // [1,4] and [4,6] with [3,4] as [second_right,right_most]
-            // take right_most, i.e 4
-            second_right = right_most;
-            right_most = end;
-            res += 1;
-        } else {
-            // no overlapping, reset
-            res += 2;
-            right_most = end;
-            second_right = right_most - 1;
+pub fn make_largest_special(s: &str) -> String {
+    let bytes = s.as_bytes();
+    String::from_utf8(build(&bytes)).unwrap()
+}
+
+fn build(bytes: &[u8]) -> Vec<u8> {
+    if bytes.len() <= 2 {
+        return bytes.to_vec(); // at worst "()" <= "10"
+    }
+    let mut open = 0;
+    let mut start = 0;
+    let mut pairs = vec![];
+    for (idx, &b) in bytes.iter().enumerate() {
+        match b {
+            b'1' => open += 1,
+            b'0' => {
+                open -= 1;
+                if open == 0 {
+                    pairs.push((start, idx));
+                    start = idx + 1;
+                }
+            }
+            _ => unreachable!(),
         }
     }
-    res
+    if pairs.len() == 1 {
+        // "(()())" strip outer bytes => "()()"
+        let mut v = build(&bytes[1..bytes.len() - 1]);
+        v.reserve(2);
+        v.insert(0, b'1');
+        v.push(b'0');
+        v
+    } else {
+        // "(())()" split => "(())" and "()"
+        // sort to put bigger bits front
+        let mut res: Vec<_> = pairs
+            .into_iter()
+            .map(|(start, end)| build(&bytes[start..=end]))
+            .collect();
+        res.sort_unstable_by(|a, b| b.cmp(&a));
+        res.into_iter().flatten().collect()
+    }
 }
 
 #[cfg(test)]
@@ -42,39 +56,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(intersection_size_two(&mut [[1, 3], [3, 7], [8, 9]]), 5);
-        debug_assert_eq!(
-            intersection_size_two(&mut [[1, 3], [1, 4], [2, 5], [3, 5]]),
-            3
-        );
-        debug_assert_eq!(
-            intersection_size_two(&mut [[1, 2], [2, 3], [2, 4], [4, 5]]),
-            5
-        );
+        debug_assert_eq!(make_largest_special("11011000"), "11100100");
+        debug_assert_eq!(make_largest_special("10"), "10");
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(
-            intersection_size_two(&mut [
-                [2, 10],
-                [3, 7],
-                [3, 15],
-                [4, 11],
-                [6, 12],
-                [6, 16],
-                [7, 8],
-                [7, 11],
-                [7, 15],
-                [11, 12]
-            ]),
-            5
-        );
-        debug_assert_eq!(
-            intersection_size_two(&mut [[1, 3], [3, 7], [5, 7], [7, 8]]),
-            5
-        );
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
