@@ -1,75 +1,37 @@
 mod helper;
 mod trie;
 
-use std::collections::{HashSet, VecDeque};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn contain_virus(grid: &mut [&mut [i32]]) -> i32 {
+pub fn count_max_or_subsets(nums: &[i32]) -> i32 {
+    let val = nums.iter().fold(0, |acc, n| acc | n);
+    let space = 1 << nums.len(); // predetermined choise space 2**n
     let mut res = 0;
-    loop {
-        let mut seen = HashSet::new();
-        let mut blocks = vec![];
-        for (y, row) in grid.iter().enumerate() {
-            for (x, &v) in row.iter().enumerate() {
-                if v == 1 && seen.insert((x, y)) {
-                    let block = bfs(grid, x, y);
-                    seen.extend(block.inside.iter());
-                    blocks.push(block);
+    for mask in 0..space {
+        // Each mask is a preset selection of numbers
+        let mut temp = 0;
+        for (i, num) in nums.iter().enumerate() {
+            if (mask >> i) & 1 == 1 {
+                // current num is picked
+                temp |= num;
+                if temp == val {
+                    res += 1;
+                    break; // val is already the max temp could reach
                 }
-            }
-        }
-        let Some(b) = blocks.iter().max_by_key(|b| b.front.len()) else {
-            break;
-        };
-        if b.front.is_empty() {
-            break;
-        }
-        res += b.side;
-        for &(x, y) in b.inside.iter() {
-            grid[y][x] = -1;
-        }
-        for block in blocks
-            .iter()
-            .filter(|block| block.front.len() < b.front.len())
-        {
-            for &(x, y) in block.front.iter() {
-                grid[y][x] = 1;
             }
         }
     }
     res
+    // backtrack(nums, val, 0)
 }
 
-fn bfs<T: AsRef<[i32]>>(grid: &[T], x: usize, y: usize) -> Block {
-    let mut queue = VecDeque::from([(x, y)]);
-    let (mut inside, mut front) = (HashSet::from([(x, y)]), HashSet::new());
-    let mut side = 0;
-    while let Some((x, y)) = queue.pop_front() {
-        for (nx, ny) in neighbors((x, y)) {
-            if let Some(&v) = grid.get(ny).and_then(|r| r.as_ref().get(nx)) {
-                if v == 1 && inside.insert((nx, ny)) {
-                    queue.push_back((nx, ny));
-                } else if v == 0 {
-                    side += 1;
-                    front.insert((nx, ny));
-                }
-            }
-        }
+// smh this is faster
+fn backtrack(nums: &[i32], val: i32, curr: i32) -> i32 {
+    match nums {
+        [] => (curr == val).into(),
+        [head, tail @ ..] => backtrack(tail, val, curr) + backtrack(tail, val, curr | head),
     }
-    Block {
-        inside,
-        front,
-        side,
-    }
-}
-
-#[derive(Debug, Clone)]
-struct Block {
-    inside: HashSet<Coord>,
-    front: HashSet<Coord>,
-    side: i32,
 }
 
 #[cfg(test)]
@@ -80,47 +42,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            contain_virus(&mut [
-                &mut [0, 1, 0, 0, 0, 0, 0, 1],
-                &mut [0, 1, 0, 0, 0, 0, 0, 1],
-                &mut [0, 0, 0, 0, 0, 0, 0, 1],
-                &mut [0, 0, 0, 0, 0, 0, 0, 0]
-            ]),
-            10
-        );
-        debug_assert_eq!(
-            contain_virus(&mut [&mut [1, 1, 1], &mut [1, 0, 1], &mut [1, 1, 1]]),
-            4
-        );
-        debug_assert_eq!(
-            contain_virus(&mut [
-                &mut [1, 1, 1, 0, 0, 0, 0, 0, 0],
-                &mut [1, 0, 1, 0, 1, 1, 1, 1, 1],
-                &mut [1, 1, 1, 0, 0, 0, 0, 0, 0]
-            ]),
-            13
-        );
+        debug_assert_eq!(count_max_or_subsets(&[3, 1]), 2);
+        debug_assert_eq!(count_max_or_subsets(&[2, 2, 2]), 7);
+        debug_assert_eq!(count_max_or_subsets(&[3, 2, 1, 5]), 6);
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(
-            contain_virus(&mut [
-                &mut [0, 1, 0, 1, 1, 1, 1, 1, 1, 0],
-                &mut [0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
-                &mut [0, 0, 1, 1, 1, 0, 0, 0, 1, 0],
-                &mut [0, 0, 0, 1, 1, 0, 0, 1, 1, 0],
-                &mut [0, 1, 0, 0, 1, 0, 1, 1, 0, 1],
-                &mut [0, 0, 0, 1, 0, 1, 0, 1, 1, 1],
-                &mut [0, 1, 0, 0, 1, 0, 0, 1, 1, 0],
-                &mut [0, 1, 0, 1, 0, 0, 0, 1, 1, 0],
-                &mut [0, 1, 1, 0, 0, 1, 1, 0, 0, 1],
-                &mut [1, 0, 1, 1, 0, 1, 0, 1, 0, 1]
-            ]),
-            38
-        );
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
