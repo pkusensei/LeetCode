@@ -1,45 +1,38 @@
 mod helper;
 mod trie;
 
-use std::collections::{HashSet, VecDeque};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn open_lock(deadends: &[&str], target: &str) -> i32 {
-    let ends: HashSet<_> = deadends.iter().map(|s| s.as_bytes()).collect();
-    let target = target.as_bytes();
-    let start = [b'0'; 4];
-    let mut queue = VecDeque::from([(start, 0)]);
-    let mut seen = HashSet::from([start]);
-    while let Some((curr, dist)) = queue.pop_front() {
-        if ends.contains(curr.as_ref()) {
-            continue;
-        }
-        if curr == target {
-            return dist;
-        }
-        for next in step(curr) {
-            if seen.insert(next) {
-                queue.push_back((next, 1 + dist));
-            }
-        }
+// https://en.wikipedia.org/wiki/De_Bruijn_sequence#Algorithm
+pub fn crack_safe(n: i32, k: i32) -> String {
+    let alphabet: Vec<u8> = (0..k).map(|v| v as u8).collect();
+    let (n, k) = (n as usize, k as usize);
+    if k == 1 {
+        return std::iter::repeat('0').take(n * k).collect();
     }
-    -1
+    let mut a = vec![0; k * n];
+    let mut seq = vec![];
+    db(1, 1, n, k, &mut a, &mut seq);
+    seq.extend_from_within(..n - 1);
+    seq.into_iter()
+        .map(|i| char::from(b'0' + alphabet[i]))
+        .collect()
 }
 
-fn step(start: [u8; 4]) -> impl Iterator<Item = [u8; 4]> {
-    (0..8).map(move |n| {
-        let mut curr = start;
-        let idx = n / 2;
-        let b = curr[idx] - b'0';
-        if n & 1 == 0 {
-            curr[idx] = b'0' + b.checked_sub(1).unwrap_or(9);
-        } else {
-            curr[idx] = b'0' + (b + 1) % 10;
+fn db(t: usize, p: usize, n: usize, k: usize, a: &mut [usize], seq: &mut Vec<usize>) {
+    if t > n {
+        if n % p == 0 {
+            seq.extend_from_slice(&a[1..1 + p]);
         }
-        curr
-    })
+    } else {
+        a[t] = a[t - p];
+        db(1 + t, p, n, k, a, seq);
+        for i in 1 + a[t - p]..k {
+            a[t] = i;
+            db(1 + t, t, n, k, a, seq);
+        }
+    }
 }
 
 #[cfg(test)]
@@ -50,18 +43,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        // debug_assert_eq!(
-        //     open_lock(&["0201", "0101", "0102", "1212", "2002"], "0202"),
-        //     6
-        // );
-        debug_assert_eq!(open_lock(&["8888"], "0009"), 1);
-        debug_assert_eq!(
-            open_lock(
-                &["8887", "8889", "8878", "8898", "8788", "8988", "7888", "9888"],
-                "8888"
-            ),
-            -1
-        );
+        debug_assert_eq!(crack_safe(1, 2), "01");
+        debug_assert_eq!(crack_safe(2, 2), "00110");
     }
 
     #[test]
