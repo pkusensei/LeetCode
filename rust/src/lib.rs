@@ -1,39 +1,75 @@
 mod helper;
 mod trie;
 
+use std::collections::{HashSet, VecDeque};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn shortest_completing_word(s: &str, words: &[&str]) -> String {
-    let table = s
-        .bytes()
-        .filter_map(|b| {
-            if b.is_ascii_alphabetic() {
-                Some(usize::from(b.to_ascii_lowercase() - b'a'))
-            } else {
-                None
+pub fn contain_virus(grid: &mut [&mut [i32]]) -> i32 {
+    let mut res = 0;
+    loop {
+        let mut seen = HashSet::new();
+        let mut blocks = vec![];
+        for (y, row) in grid.iter().enumerate() {
+            for (x, &v) in row.iter().enumerate() {
+                if v == 1 && seen.insert((x, y)) {
+                    let block = bfs(grid, x, y);
+                    seen.extend(block.inside.iter());
+                    blocks.push(block);
+                }
             }
-        })
-        .fold([0; 26], |mut acc, i| {
-            acc[i] += 1;
-            acc
-        });
-    words
-        .iter()
-        .filter(|s| check(table, s))
-        .min_by_key(|s| s.len())
-        .map(|s| s.to_string())
-        .unwrap_or_default()
+        }
+        let Some(b) = blocks.iter().max_by_key(|b| b.front.len()) else {
+            break;
+        };
+        if b.front.is_empty() {
+            break;
+        }
+        res += b.side;
+        for &(x, y) in b.inside.iter() {
+            grid[y][x] = -1;
+        }
+        for block in blocks
+            .iter()
+            .filter(|block| block.front.len() < b.front.len())
+        {
+            for &(x, y) in block.front.iter() {
+                grid[y][x] = 1;
+            }
+        }
+    }
+    res
 }
 
-fn check(mut table: [i32; 26], s: &str) -> bool {
-    for i in s
-        .bytes()
-        .map(|b| usize::from(b.to_ascii_lowercase() - b'a'))
-    {
-        table[i] -= 1
+fn bfs<T: AsRef<[i32]>>(grid: &[T], x: usize, y: usize) -> Block {
+    let mut queue = VecDeque::from([(x, y)]);
+    let (mut inside, mut front) = (HashSet::from([(x, y)]), HashSet::new());
+    let mut side = 0;
+    while let Some((x, y)) = queue.pop_front() {
+        for (nx, ny) in neighbors((x, y)) {
+            if let Some(&v) = grid.get(ny).and_then(|r| r.as_ref().get(nx)) {
+                if v == 1 && inside.insert((nx, ny)) {
+                    queue.push_back((nx, ny));
+                } else if v == 0 {
+                    side += 1;
+                    front.insert((nx, ny));
+                }
+            }
+        }
     }
-    table.into_iter().all(|v| v <= 0)
+    Block {
+        inside,
+        front,
+        side,
+    }
+}
+
+#[derive(Debug, Clone)]
+struct Block {
+    inside: HashSet<Coord>,
+    front: HashSet<Coord>,
+    side: i32,
 }
 
 #[cfg(test)]
@@ -45,17 +81,46 @@ mod tests {
     #[test]
     fn basics() {
         debug_assert_eq!(
-            shortest_completing_word("1s3 PSt", &["step", "steps", "stripe", "stepple"]),
-            "steps"
+            contain_virus(&mut [
+                &mut [0, 1, 0, 0, 0, 0, 0, 1],
+                &mut [0, 1, 0, 0, 0, 0, 0, 1],
+                &mut [0, 0, 0, 0, 0, 0, 0, 1],
+                &mut [0, 0, 0, 0, 0, 0, 0, 0]
+            ]),
+            10
         );
         debug_assert_eq!(
-            shortest_completing_word("1s3 456", &["looks", "pest", "stew", "show"]),
-            "pest"
+            contain_virus(&mut [&mut [1, 1, 1], &mut [1, 0, 1], &mut [1, 1, 1]]),
+            4
+        );
+        debug_assert_eq!(
+            contain_virus(&mut [
+                &mut [1, 1, 1, 0, 0, 0, 0, 0, 0],
+                &mut [1, 0, 1, 0, 1, 1, 1, 1, 1],
+                &mut [1, 1, 1, 0, 0, 0, 0, 0, 0]
+            ]),
+            13
         );
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(
+            contain_virus(&mut [
+                &mut [0, 1, 0, 1, 1, 1, 1, 1, 1, 0],
+                &mut [0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+                &mut [0, 0, 1, 1, 1, 0, 0, 0, 1, 0],
+                &mut [0, 0, 0, 1, 1, 0, 0, 1, 1, 0],
+                &mut [0, 1, 0, 0, 1, 0, 1, 1, 0, 1],
+                &mut [0, 0, 0, 1, 0, 1, 0, 1, 1, 1],
+                &mut [0, 1, 0, 0, 1, 0, 0, 1, 1, 0],
+                &mut [0, 1, 0, 1, 0, 0, 0, 1, 1, 0],
+                &mut [0, 1, 1, 0, 0, 1, 1, 0, 0, 1],
+                &mut [1, 0, 1, 1, 0, 1, 0, 1, 0, 1]
+            ]),
+            38
+        );
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
