@@ -4,48 +4,11 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn make_largest_special(s: &str) -> String {
-    let bytes = s.as_bytes();
-    String::from_utf8(build(&bytes)).unwrap()
-}
-
-fn build(bytes: &[u8]) -> Vec<u8> {
-    if bytes.len() <= 2 {
-        return bytes.to_vec(); // at worst "()" <= "10"
-    }
-    let mut open = 0;
-    let mut start = 0;
-    let mut pairs = vec![];
-    for (idx, &b) in bytes.iter().enumerate() {
-        match b {
-            b'1' => open += 1,
-            b'0' => {
-                open -= 1;
-                if open == 0 {
-                    pairs.push((start, idx));
-                    start = idx + 1;
-                }
-            }
-            _ => unreachable!(),
-        }
-    }
-    if pairs.len() == 1 {
-        // "(()())" strip outer bytes => "()()"
-        let mut v = build(&bytes[1..bytes.len() - 1]);
-        v.reserve(2);
-        v.insert(0, b'1');
-        v.push(b'0');
-        v
-    } else {
-        // "(())()" split => "(())" and "()"
-        // sort to put bigger bits front
-        let mut res: Vec<_> = pairs
-            .into_iter()
-            .map(|(start, end)| build(&bytes[start..=end]))
-            .collect();
-        res.sort_unstable_by(|a, b| b.cmp(&a));
-        res.into_iter().flatten().collect()
-    }
+pub fn count_prime_set_bits(left: i32, right: i32) -> i32 {
+    const PRIMES: [u32; 8] = [2, 3, 5, 7, 11, 13, 17, 19];
+    (left..=right)
+        .filter(|&n| PRIMES.contains(&n.count_ones()))
+        .count() as _
 }
 
 #[cfg(test)]
@@ -56,8 +19,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(make_largest_special("11011000"), "11100100");
-        debug_assert_eq!(make_largest_special("10"), "10");
+        debug_assert_eq!(count_prime_set_bits(6, 10), 4);
+        debug_assert_eq!(count_prime_set_bits(10, 15), 5);
     }
 
     #[test]
