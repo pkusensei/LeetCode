@@ -1,64 +1,37 @@
 mod helper;
 mod trie;
 
-use std::collections::{BinaryHeap, HashMap};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn pyramid_transition(bottom: String, allowed: &[&str]) -> bool {
-    let dict: HashMap<[u8; 2], Vec<u8>> = allowed.iter().fold(HashMap::new(), |mut acc, s| {
-        let s = s.as_bytes();
-        acc.entry([s[0], s[1]]).or_default().push(s[2]);
-        acc
-    });
-    let start = bottom.into_bytes();
-    let mut heap = BinaryHeap::from([Line(start)]);
-    while let Some(Line(prev)) = heap.pop() {
-        if prev.len() == 1 {
-            return true;
+pub fn intersection_size_two(intervals: &mut [[i32; 2]]) -> i32 {
+    // sort by increading end value
+    // then by decreasing start value
+    intervals.sort_unstable_by(|a, b| a[1].cmp(&b[1]).then(b[0].cmp(&a[0])));
+    let mut right_most = intervals[0][1];
+    let mut second_right = right_most - 1;
+    let mut res = 2;
+    for v in intervals.iter().skip(1) {
+        let (start, end) = (v[0], v[1]);
+        if start <= second_right && start <= right_most {
+            // [1,4] and [2,5] with [3,4] as [second_right,right_most]
+            // take both second_right and right_most, i.e 3,4
+            continue;
         }
-        let mut res = vec![];
-        build(&prev, &dict, &mut vec![], &mut res);
-        heap.extend(res.into_iter().map(Line));
+        if start <= right_most {
+            // [1,4] and [4,6] with [3,4] as [second_right,right_most]
+            // take right_most, i.e 4
+            second_right = right_most;
+            right_most = end;
+            res += 1;
+        } else {
+            // no overlapping, reset
+            res += 2;
+            right_most = end;
+            second_right = right_most - 1;
+        }
     }
-    false
-}
-
-fn build(
-    prev: &[u8],
-    dict: &HashMap<[u8; 2], Vec<u8>>,
-    curr: &mut Vec<u8>,
-    res: &mut Vec<Vec<u8>>,
-) {
-    let Some((window, _)) = prev.split_at_checked(2) else {
-        res.push(curr.clone());
-        return;
-    };
-    let Some(bytes) = dict.get(window) else {
-        return;
-    };
-    for &b in bytes.iter() {
-        curr.push(b);
-        build(&prev[1..], dict, curr, res);
-        curr.pop();
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-struct Line(Vec<u8>);
-
-impl PartialOrd for Line {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-// Pop shorter first
-impl Ord for Line {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        other.0.len().cmp(&self.0.len())
-    }
+    res
 }
 
 #[cfg(test)]
@@ -69,18 +42,39 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(pyramid_transition(
-            "BCD".into(),
-            &["BCC", "CDE", "CEA", "FFF"]
-        ));
-        debug_assert!(!pyramid_transition(
-            "AAAA".into(),
-            &["AAB", "AAC", "BCD", "BBE", "DEF"]
-        ));
+        debug_assert_eq!(intersection_size_two(&mut [[1, 3], [3, 7], [8, 9]]), 5);
+        debug_assert_eq!(
+            intersection_size_two(&mut [[1, 3], [1, 4], [2, 5], [3, 5]]),
+            3
+        );
+        debug_assert_eq!(
+            intersection_size_two(&mut [[1, 2], [2, 3], [2, 4], [4, 5]]),
+            5
+        );
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(
+            intersection_size_two(&mut [
+                [2, 10],
+                [3, 7],
+                [3, 15],
+                [4, 11],
+                [6, 12],
+                [6, 16],
+                [7, 8],
+                [7, 11],
+                [7, 15],
+                [11, 12]
+            ]),
+            5
+        );
+        debug_assert_eq!(
+            intersection_size_two(&mut [[1, 3], [3, 7], [5, 7], [7, 8]]),
+            5
+        );
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
