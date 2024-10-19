@@ -1,73 +1,70 @@
 mod helper;
 mod trie;
 
+use std::collections::HashSet;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_kth_bit(n: i32, k: i32) -> char {
-    let mut curr = vec![0u8];
-    for _ in 0..n {
-        let mut inv = curr.clone();
-        for v in inv.iter_mut() {
-            *v = 1 - *v;
-        }
-        curr = curr
-            .into_iter()
-            .chain(std::iter::once(1))
-            .chain(inv.into_iter().rev())
-            .collect();
-    }
-    (b'0' + curr[k as usize - 1]).into()
-}
-
-fn recurse(n: i32, k: i32) -> char {
-    if n == 1 {
-        return '0';
-    }
-    let len = 1 << n;
-    match k.cmp(&(len / 2)) {
-        std::cmp::Ordering::Less => recurse(n - 1, k),
-        std::cmp::Ordering::Equal => '1',
-        std::cmp::Ordering::Greater => {
-            if '0' == find_kth_bit(n - 1, len - k) {
-                '1'
+pub fn order_of_largest_plus_sign(n: i32, mines: &[[i32; 2]]) -> i32 {
+    let mines: HashSet<[usize; 2]> = mines
+        .iter()
+        .map(|v| [v[0] as usize, v[1] as usize])
+        .collect();
+    let n = n as usize;
+    let mut dp = vec![vec![0; n]; n];
+    // left
+    let mut count = 0;
+    for y in 0..n {
+        count = 0;
+        for x in (0..n).rev() {
+            if mines.contains(&[x, y]) {
+                count = 0
             } else {
-                '0'
+                count += 1;
             }
+            dp[y][x] = count;
         }
     }
-}
-
-fn divide_and_conquer(n: i32, mut k: i32) -> char {
-    let mut invert = 0;
-    let mut len = 1 << n - 1;
-    while k > 1 {
-        if k == len / 2 + 1 {
-            return if invert & 1 == 0 { '0' } else { '1' };
+    // right
+    for y in 0..n {
+        count = 0;
+        for x in 0..n {
+            if mines.contains(&[x, y]) {
+                count = 0
+            } else {
+                count += 1;
+            }
+            dp[y][x] = dp[y][x].min(count);
         }
-        if k > len / 2 + 1 {
-            k = len + 1 - k;
-            invert += 1;
+    }
+    // up
+    for x in 0..n {
+        count = 0;
+        for y in (0..n).rev() {
+            if mines.contains(&[x, y]) {
+                count = 0
+            } else {
+                count += 1;
+            }
+            dp[y][x] = dp[y][x].min(count);
         }
-        len /= 2;
     }
-    if invert & 1 == 0 {
-        '0'
-    } else {
-        '1'
+    // down
+    let mut res = 0;
+    for x in 0..n {
+        count = 0;
+        for y in 0..n {
+            if mines.contains(&[x, y]) {
+                count = 0
+            } else {
+                count += 1;
+            }
+            dp[y][x] = dp[y][x].min(count);
+            res = res.max(dp[y][x])
+        }
     }
-}
-
-fn bit_magic(_n: i32, k: i32) -> char {
-    let pos_in_section = k & -k;
-    let in_inverted_sec = (((k / pos_in_section) >> 1) & 1) == 1;
-    let original_bit_is_one = (k & 1) == 0;
-    match (in_inverted_sec, original_bit_is_one) {
-        (true, true) => '0',
-        (true, false) => '1',
-        (false, true) => '1',
-        (false, false) => '0',
-    }
+    res
 }
 
 #[cfg(test)]
@@ -78,8 +75,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(bit_magic(3, 1), '0');
-        debug_assert_eq!(bit_magic(4, 11), '1');
+        debug_assert_eq!(order_of_largest_plus_sign(5, &[[4, 2]]), 2);
+        debug_assert_eq!(order_of_largest_plus_sign(1, &[[0, 0]]), 0);
     }
 
     #[test]
