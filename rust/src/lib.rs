@@ -1,40 +1,26 @@
 mod helper;
 mod trie;
 
-use std::collections::{BinaryHeap, HashMap};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn reorganize_string(s: &str) -> String {
-    let mut heap: BinaryHeap<_> = s
-        .bytes()
-        .fold(HashMap::new(), |mut acc, b| {
-            *acc.entry(b).or_insert(0) += 1;
-            acc
-        })
-        .into_iter()
-        .map(|(b, count)| (count, b))
-        .collect();
-    let mut res = vec![];
-    while let Some((count, b)) = heap.pop() {
-        if res.last().is_some_and(|&v| v == b) {
-            let Some((c, b2)) = heap.pop() else {
-                return String::new(); // not able to deplete all bytes
-            };
-            res.push(b2);
-            if c > 1 {
-                heap.push((c - 1, b2));
-            }
-            heap.push((count, b));
-        } else {
-            res.push(b);
-            if count > 1 {
-                heap.push((count - 1, b));
-            }
-        }
+pub fn max_chunks_to_sorted(arr: &[i32]) -> i32 {
+    // Each chunk must satisfy
+    // max(chunk[n]) <= min(chunk[1+n])
+    let n = arr.len();
+    let (mut left_max, mut right_min) = (Vec::with_capacity(n), Vec::with_capacity(n));
+    for &num in arr.iter() {
+        left_max.push(num.max(*left_max.last().unwrap_or(&0)));
     }
-    String::from_utf8(res).unwrap()
+    for &num in arr.iter().rev() {
+        right_min.push(num.min(*right_min.last().unwrap_or(&i32::MAX)));
+    }
+    right_min.reverse();
+    1 + left_max
+        .into_iter()
+        .zip(right_min.into_iter().skip(1))
+        .filter(|(a, b)| a <= b)
+        .count() as i32
 }
 
 #[cfg(test)]
@@ -45,8 +31,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(reorganize_string("aab"), "aba");
-        debug_assert_eq!(reorganize_string("aaab"), "");
+        debug_assert_eq!(max_chunks_to_sorted(&[5, 4, 3, 2, 1]), 1);
+        debug_assert_eq!(max_chunks_to_sorted(&[2, 1, 3, 4, 4]), 4);
     }
 
     #[test]
