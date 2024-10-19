@@ -1,68 +1,47 @@
 mod helper;
 mod trie;
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet, VecDeque};
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn order_of_largest_plus_sign(n: i32, mines: &[[i32; 2]]) -> i32 {
-    let mines: HashSet<[usize; 2]> = mines
-        .iter()
-        .map(|v| [v[0] as usize, v[1] as usize])
-        .collect();
-    let n = n as usize;
-    let mut dp = vec![vec![0; n]; n];
-    // left
-    let mut count = 0;
-    for y in 0..n {
-        count = 0;
-        for x in (0..n).rev() {
-            if mines.contains(&[x, y]) {
-                count = 0
+pub fn min_swaps_couples(row: &[i32]) -> i32 {
+    let pairs: HashMap<i32, Vec<i32>> = row
+        .chunks_exact(2)
+        .filter_map(|ch| {
+            if ch[0] / 2 != ch[1] / 2 {
+                Some([ch[0] / 2, ch[1] / 2])
             } else {
-                count += 1;
+                None
             }
-            dp[y][x] = count;
-        }
-    }
-    // right
-    for y in 0..n {
-        count = 0;
-        for x in 0..n {
-            if mines.contains(&[x, y]) {
-                count = 0
-            } else {
-                count += 1;
-            }
-            dp[y][x] = dp[y][x].min(count);
-        }
-    }
-    // up
-    for x in 0..n {
-        count = 0;
-        for y in (0..n).rev() {
-            if mines.contains(&[x, y]) {
-                count = 0
-            } else {
-                count += 1;
-            }
-            dp[y][x] = dp[y][x].min(count);
-        }
-    }
-    // down
+        })
+        .fold(HashMap::new(), |mut acc, ch| {
+            acc.entry(ch[0]).or_default().push(ch[1]);
+            acc.entry(ch[1]).or_default().push(ch[0]);
+            acc
+        });
+    let mut seen = HashSet::new();
     let mut res = 0;
-    for x in 0..n {
-        count = 0;
-        for y in 0..n {
-            if mines.contains(&[x, y]) {
-                count = 0
-            } else {
-                count += 1;
-            }
-            dp[y][x] = dp[y][x].min(count);
-            res = res.max(dp[y][x])
+    for &k in pairs.keys() {
+        let mut count = 0;
+        if seen.contains(&k) {
+            continue;
         }
+        let mut queue = VecDeque::from([k]);
+        while let Some(curr) = queue.pop_front() {
+            if !seen.insert(curr) {
+                continue;
+            }
+            count += 1;
+            for &n in pairs[&curr].iter() {
+                queue.push_back(n);
+            }
+        }
+        // 12 23 31
+        // 13 22 31
+        // 11 22 33
+        res += count - 1
     }
     res
 }
@@ -75,8 +54,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(order_of_largest_plus_sign(5, &[[4, 2]]), 2);
-        debug_assert_eq!(order_of_largest_plus_sign(1, &[[0, 0]]), 0);
+        debug_assert_eq!(min_swaps_couples(&[0, 2, 1, 3]), 1);
+        debug_assert_eq!(min_swaps_couples(&[3, 2, 0, 1]), 0);
     }
 
     #[test]
