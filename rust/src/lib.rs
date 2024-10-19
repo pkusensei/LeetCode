@@ -1,14 +1,39 @@
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_prime_set_bits(left: i32, right: i32) -> i32 {
-    const PRIMES: [u32; 8] = [2, 3, 5, 7, 11, 13, 17, 19];
-    (left..=right)
-        .filter(|&n| PRIMES.contains(&n.count_ones()))
-        .count() as _
+pub fn partition_labels(s: &str) -> Vec<i32> {
+    let (s, n) = (s.as_bytes(), s.len());
+    let lasts = s
+        .iter()
+        .enumerate()
+        .rev()
+        .fold(HashMap::new(), |mut acc, (i, &b)| {
+            acc.entry(b).or_insert(i);
+            acc
+        });
+    let mut res = vec![];
+    let mut left = 0;
+    while left < n {
+        let mut last = lasts[&s[left]];
+        for (right, b) in s.iter().enumerate().skip(left) {
+            if right >= last {
+                res.push((right - left + 1) as i32);
+                left = 1 + right;
+                break;
+            } else {
+                let temp = lasts[b];
+                if temp > last {
+                    last = temp
+                }
+            }
+        }
+    }
+    res
 }
 
 #[cfg(test)]
@@ -19,8 +44,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(count_prime_set_bits(6, 10), 4);
-        debug_assert_eq!(count_prime_set_bits(10, 15), 5);
+        debug_assert_eq!(partition_labels("ababcbacadefegdehijhklij"), [9, 7, 8]);
+        debug_assert_eq!(partition_labels("eccbbbbdec"), [10]);
     }
 
     #[test]
