@@ -1,41 +1,50 @@
 mod helper;
 mod trie;
 
+use std::collections::{HashSet, VecDeque};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn parse_bool_expr(expression: &str) -> bool {
-    let mut stack = vec![];
-    for b in expression.bytes() {
-        match b {
-            b'&' | b'|' | b'!' | b't' | b'f' => stack.push(b),
-            b')' => {
-                let mut vals = vec![];
-                while stack.last().is_some_and(|v| v.is_ascii_lowercase()) {
-                    vals.push(stack.pop().unwrap());
-                }
-                let Some(op) = stack.pop() else {
-                    break;
-                };
-                match op {
-                    b'!' => {
-                        debug_assert_eq!(vals.len(), 1);
-                        stack.push(if vals[0] == b't' { b'f' } else { b't' });
-                    }
-                    b'&' => {
-                        stack.push(if vals.contains(&b'f') { b'f' } else { b't' });
-                    }
-                    b'|' => {
-                        stack.push(if vals.contains(&b't') { b't' } else { b'f' });
-                    }
-                    _ => (),
-                }
+pub fn sliding_puzzle(board: [[i32; 3]; 2]) -> i32 {
+    const TARGET: [[u8; 3]; 2] = [[1, 2, 3], [4, 5, 0]];
+    let mut b = [[0u8; 3]; 2];
+    let (mut x, mut y) = (0, 0);
+    for (by, row) in b.iter_mut().enumerate() {
+        for (bx, n) in row.iter_mut().enumerate() {
+            *n = board[by][bx] as u8;
+            if 0 == *n {
+                (x, y) = (bx, by);
             }
-            _ => (),
         }
     }
-    debug_assert_eq!(stack.len(), 1);
-    stack[0] == b't'
+    let mut queue = VecDeque::from([(b, x, y, 0)]);
+    let mut seen = HashSet::from([b]);
+    while let Some((curr, x, y, dist)) = queue.pop_front() {
+        if TARGET == curr {
+            return dist;
+        }
+        for (nb, (nx, ny)) in next(curr, x, y) {
+            if seen.insert(nb) {
+                queue.push_back((nb, nx, ny, 1 + dist));
+            }
+        }
+    }
+    -1
+}
+
+fn next(board: [[u8; 3]; 2], x: usize, y: usize) -> impl Iterator<Item = ([[u8; 3]; 2], Coord)> {
+    neighbors((x, y)).filter_map(move |(nx, ny)| {
+        let mut b = board;
+        if let Some(v) = b.get_mut(ny).and_then(|r| r.get_mut(nx)) {
+            let temp = *v;
+            *v = 0;
+            b[y][x] = temp;
+            Some((b, (nx, ny)))
+        } else {
+            None
+        }
+    })
 }
 
 #[cfg(test)]
@@ -46,9 +55,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(!parse_bool_expr("&(|(f))"));
-        debug_assert!(parse_bool_expr("|(f,f,f,t)"));
-        debug_assert!(parse_bool_expr("!(&(f,t))"));
+        debug_assert_eq!(sliding_puzzle([[1, 2, 3], [4, 0, 5]]), 1);
+        debug_assert_eq!(sliding_puzzle([[1, 2, 3], [5, 4, 0]]), -1);
+        debug_assert_eq!(sliding_puzzle([[4, 1, 2], [5, 0, 3]]), 5);
     }
 
     #[test]
