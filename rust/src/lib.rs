@@ -4,10 +4,28 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_ideal_permutation(nums: &[i32]) -> bool {
-    nums.iter()
-        .enumerate()
-        .all(|(i, &n)| i.abs_diff(n as _) <= 1)
+pub fn can_transform(start: &str, end: &str) -> bool {
+    let start = start.bytes().enumerate().filter(|(_, b)| *b != b'X');
+    let end = end.bytes().enumerate().filter(|(_, b)| *b != b'X');
+    if start.clone().count() != end.clone().count() {
+        return false;
+    }
+    for (s, e) in start.zip(end) {
+        match (s.1, e.1) {
+            (b'L', b'L') => {
+                if s.0 < e.0 {
+                    return false;
+                }
+            }
+            (b'R', b'R') => {
+                if s.0 > e.0 {
+                    return false;
+                }
+            }
+            _ => return false,
+        }
+    }
+    true
 }
 
 #[cfg(test)]
@@ -18,8 +36,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(is_ideal_permutation(&[1, 0, 2]));
-        debug_assert!(!is_ideal_permutation(&[1, 2, 0]));
+        debug_assert!(can_transform("RXXLRXRXL", "XRLXXRRLX"));
+        debug_assert!(!can_transform("X", "L"));
     }
 
     #[test]
