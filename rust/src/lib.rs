@@ -1,33 +1,21 @@
 mod helper;
 mod trie;
 
-use std::{
-    cmp::Reverse,
-    collections::{BinaryHeap, HashSet},
-};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn swim_in_water(grid: &[&[i32]]) -> i32 {
-    let n = grid.len();
-    let mut heap = BinaryHeap::from([(Reverse(grid[0][0]), 0, 0)]);
-    let mut seen = HashSet::from([(0, 0)]);
-    let mut res = 0;
-    while let Some((Reverse(num), x, y)) = heap.pop() {
-        res = res.max(num);
-        if (n - 1, n - 1) == (x, y) {
-            break;
-        }
-        for (nx, ny) in neighbors((x, y)) {
-            if let Some(&h) = grid.get(ny).and_then(|r| r.get(nx)) {
-                if seen.insert((nx, ny)) {
-                    heap.push((Reverse(h), nx, ny));
-                }
-            }
-        }
+pub fn kth_grammar(n: i32, k: i32) -> i32 {
+    if k == 1 {
+        return 0;
     }
-    res
+    let len = 2i32.pow(n as u32 - 1);
+    if k > len / 2 {
+        1 - kth_grammar(n, k - len / 2) // flip
+    } else {
+        kth_grammar(n - 1, k)
+    }
+    // bit magic
+    // (k - 1).count_ones() as i32 & 1
 }
 
 #[cfg(test)]
@@ -38,17 +26,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(swim_in_water(&[&[0, 2], &[1, 3]]), 3);
-        debug_assert_eq!(
-            swim_in_water(&[
-                &[0, 1, 2, 3, 4],
-                &[24, 23, 22, 21, 5],
-                &[12, 13, 14, 15, 16],
-                &[11, 17, 18, 19, 20],
-                &[10, 9, 8, 7, 6]
-            ]),
-            16
-        );
+        debug_assert_eq!(kth_grammar(1, 1), 0);
+        debug_assert_eq!(kth_grammar(2, 1), 0);
+        debug_assert_eq!(kth_grammar(2, 2), 1);
     }
 
     #[test]
