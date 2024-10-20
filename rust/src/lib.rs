@@ -4,18 +4,46 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn kth_grammar(n: i32, k: i32) -> i32 {
-    if k == 1 {
-        return 0;
+pub fn reaching_points(sx: i32, sy: i32, mut tx: i32, mut ty: i32) -> bool {
+    // if sx == tx && sy == ty {
+    //     return true;
+    // }
+    // if tx < sx || ty < sy {
+    //     return false;
+    // }
+    // if sx == tx {
+    //     return (ty - sy) % sx == 0;
+    // }
+    // if sy == ty {
+    //     return (tx - sx) % sy == 0;
+    // }
+    // match tx.cmp(&ty) {
+    //     std::cmp::Ordering::Less => reaching_points(sx, sy, tx, ty % tx),
+    //     std::cmp::Ordering::Greater => reaching_points(sx, sy, tx % ty, ty),
+    //     std::cmp::Ordering::Equal => false,
+    // }
+    while tx >= sx && ty >= sy {
+        match tx.cmp(&ty) {
+            std::cmp::Ordering::Equal => {
+                break;
+            }
+            std::cmp::Ordering::Less => {
+                if tx == sx {
+                    return (ty - sy) % sx == 0;
+                } else {
+                    ty %= tx
+                }
+            }
+            std::cmp::Ordering::Greater => {
+                if ty == sy {
+                    return (tx - sx) % sy == 0;
+                } else {
+                    tx %= ty
+                }
+            }
+        }
     }
-    let len = 2i32.pow(n as u32 - 1);
-    if k > len / 2 {
-        1 - kth_grammar(n, k - len / 2) // flip
-    } else {
-        kth_grammar(n - 1, k)
-    }
-    // bit magic
-    // (k - 1).count_ones() as i32 & 1
+    tx == sx && ty == sy
 }
 
 #[cfg(test)]
@@ -26,13 +54,16 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(kth_grammar(1, 1), 0);
-        debug_assert_eq!(kth_grammar(2, 1), 0);
-        debug_assert_eq!(kth_grammar(2, 2), 1);
+        debug_assert!(reaching_points(1, 1, 3, 5));
+        debug_assert!(!reaching_points(1, 1, 2, 2));
+        debug_assert!(reaching_points(1, 1, 1, 1));
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        // debug_assert!(reaching_points(1, 1, 1_000_000_000, 1));
+        debug_assert!(!reaching_points(1, 8, 4, 15));
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
