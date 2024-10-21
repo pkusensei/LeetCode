@@ -4,25 +4,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_tilings(n: i32) -> i32 {
-    let n = n as usize;
-    let mut dp = vec![0; 1 + n];
-    solve(n, &mut dp)
-}
-
-fn solve(n: usize, dp: &mut [i32]) -> i32 {
-    const MOD: i32 = 1_000_000_007;
-    if dp[n] > 0 {
-        return dp[n];
+pub fn custom_sort_string(order: &str, s: &str) -> String {
+    let mut counts = s.bytes().fold([0; 26], |mut acc, b| {
+        acc[usize::from(b - b'a')] += 1;
+        acc
+    });
+    let mut res = Vec::with_capacity(s.len());
+    for b in order.bytes() {
+        let idx = usize::from(b - b'a');
+        res.extend(std::iter::repeat(b).take(counts[idx]));
+        counts[idx] = 0;
     }
-    let res = match n {
-        1 => 1,
-        2 => 2,
-        3 => 5,
-        _ => (2 * solve(n - 1, dp) % MOD + solve(n - 3, dp) % MOD) % MOD,
-    };
-    dp[n] = res;
-    res
+    for (i, c) in counts.into_iter().enumerate() {
+        res.extend(std::iter::repeat(i as u8 + b'a').take(c));
+    }
+    String::from_utf8(res).unwrap()
 }
 
 #[cfg(test)]
@@ -33,14 +29,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(num_tilings(3), 5);
-        debug_assert_eq!(num_tilings(1), 1);
+        debug_assert_eq!(custom_sort_string("cba", "abcd"), "cbad");
+        debug_assert_eq!(custom_sort_string("bcafg", "abcd"), "bcad");
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(num_tilings(30), 312342182);
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
