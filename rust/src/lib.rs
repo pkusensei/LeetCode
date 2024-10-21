@@ -4,15 +4,25 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn escape_ghosts(ghosts: &[[i32; 2]], target: [i32; 2]) -> bool {
-    let dist = manhattan_dist(0, 0, target[0], target[1]);
-    ghosts
-        .iter()
-        .all(|n| manhattan_dist(n[0], n[1], target[0], target[1]) > dist)
+pub fn num_tilings(n: i32) -> i32 {
+    let n = n as usize;
+    let mut dp = vec![0; 1 + n];
+    solve(n, &mut dp)
 }
 
-const fn manhattan_dist(x1: i32, y1: i32, x2: i32, y2: i32) -> u32 {
-    x1.abs_diff(x2) + y1.abs_diff(y2)
+fn solve(n: usize, dp: &mut [i32]) -> i32 {
+    const MOD: i32 = 1_000_000_007;
+    if dp[n] > 0 {
+        return dp[n];
+    }
+    let res = match n {
+        1 => 1,
+        2 => 2,
+        3 => 5,
+        _ => (2 * solve(n - 1, dp) % MOD + solve(n - 3, dp) % MOD) % MOD,
+    };
+    dp[n] = res;
+    res
 }
 
 #[cfg(test)]
@@ -23,13 +33,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(escape_ghosts(&[[1, 0], [0, 3]], [0, 1]));
-        debug_assert!(!escape_ghosts(&[[1, 0]], [2, 0]));
-        debug_assert!(!escape_ghosts(&[[2, 0]], [1, 0]));
+        debug_assert_eq!(num_tilings(3), 5);
+        debug_assert_eq!(num_tilings(1), 1);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(num_tilings(30), 312342182);
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
