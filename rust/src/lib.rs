@@ -6,26 +6,22 @@ use std::collections::HashSet;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_unique_split(s: &str) -> i32 {
-    let mut res = 0;
-    backtrack(s.as_bytes(), &mut HashSet::new(), &mut res);
-    res
-}
-
-fn backtrack<'a>(s: &'a [u8], seen: &mut HashSet<&'a [u8]>, max: &mut i32) {
-    if seen.len() + s.len() <= *max as usize {
-        return;
-    }
-    if s.is_empty() {
-        *max = (*max).max(seen.len() as i32);
-        return;
-    }
-    for idx in 1..=s.len() {
-        if seen.insert(&s[..idx]) {
-            backtrack(&s[idx..], seen, max);
-            seen.remove(&s[..idx]);
+pub fn letter_case_permutation(s: &str) -> Vec<String> {
+    let n = s.len();
+    let total = 1 << n;
+    let mut res = HashSet::new();
+    for mask in 0..total {
+        let mut curr = vec![];
+        for (i, b) in s.bytes().enumerate() {
+            if (mask >> i) & 1 == 1 {
+                curr.push(b.to_ascii_uppercase());
+            } else {
+                curr.push(b.to_ascii_lowercase());
+            }
         }
+        res.insert(String::from_utf8(curr).unwrap());
     }
+    res.into_iter().collect()
 }
 
 #[cfg(test)]
@@ -36,9 +32,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(max_unique_split("ababccc"), 5);
-        debug_assert_eq!(max_unique_split("aba"), 2);
-        debug_assert_eq!(max_unique_split("aa"), 1);
+        sort_eq(
+            letter_case_permutation("a1b2"),
+            ["a1b2", "a1B2", "A1b2", "A1B2"],
+        );
+        sort_eq(letter_case_permutation("3z4"), ["3z4", "3Z4"]);
     }
 
     #[test]
