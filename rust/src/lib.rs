@@ -4,32 +4,15 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn rotated_digits(n: i32) -> i32 {
-    (1..=n).filter(|&v| check(v)).count() as _
+pub fn escape_ghosts(ghosts: &[[i32; 2]], target: [i32; 2]) -> bool {
+    let dist = manhattan_dist(0, 0, target[0], target[1]);
+    ghosts
+        .iter()
+        .all(|n| manhattan_dist(n[0], n[1], target[0], target[1]) > dist)
 }
 
-const fn check(n: i32) -> bool {
-    if n == 0 {
-        return false;
-    }
-    let mut rotated = 0;
-    let mut factor = 1;
-    let mut temp = n;
-    while temp > 0 {
-        let d = temp % 10;
-        let x = match d {
-            0 | 1 | 8 => d,
-            2 => 5,
-            5 => 2,
-            6 => 9,
-            9 => 6,
-            _ => return false,
-        };
-        rotated += factor * x;
-        factor *= 10;
-        temp /= 10;
-    }
-    rotated != n
+const fn manhattan_dist(x1: i32, y1: i32, x2: i32, y2: i32) -> u32 {
+    x1.abs_diff(x2) + y1.abs_diff(y2)
 }
 
 #[cfg(test)]
@@ -40,9 +23,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(rotated_digits(10), 4);
-        debug_assert_eq!(rotated_digits(1), 0);
-        debug_assert_eq!(rotated_digits(2), 1);
+        debug_assert!(escape_ghosts(&[[1, 0], [0, 3]], [0, 1]));
+        debug_assert!(!escape_ghosts(&[[1, 0]], [2, 0]));
+        debug_assert!(!escape_ghosts(&[[2, 0]], [1, 0]));
     }
 
     #[test]
