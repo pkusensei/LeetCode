@@ -1,71 +1,93 @@
 mod helper;
 mod trie;
 
-use std::collections::HashSet;
+use core::f64;
+use std::{cmp::Reverse, collections::BinaryHeap};
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_bipartite(graph: &[&[i32]]) -> bool {
-    let n = graph.len();
-    let (mut set1, mut set2) = (HashSet::new(), HashSet::new());
-    let mut seen = vec![false; n];
-    for n in 0..n {
-        if !seen[n] && !dfs(graph, n as i32, &mut set1, &mut set2, &mut seen) {
-            return false;
-        }
-    }
-    true
-}
-
-fn dfs(
-    graph: &[&[i32]],
-    curr: i32,
-    set1: &mut HashSet<i32>,
-    set2: &mut HashSet<i32>,
-    seen: &mut [bool],
-) -> bool {
-    if set2.contains(&curr) {
-        return false;
-    }
-    set1.insert(curr);
-    seen[curr as usize] = true;
-    for &n in graph[curr as usize].iter() {
-        if seen[n as usize] && set1.contains(&n) {
-            return false;
-        }
-        // switch affliation
-        if !seen[n as usize] && !dfs(graph, n, set2, set1, seen) {
-            return false;
-        }
-    }
-    true
-}
-
-fn bfs(graph: &[&[i32]]) -> bool {
-    let n = graph.len();
-    let mut colors = vec![-1; n];
-    for root in 0..n {
-        if colors[root] > -1 {
+pub fn kth_smallest_prime_fraction(arr: &[i32], k: i32) -> Vec<i32> {
+    let mut heap: BinaryHeap<_> = arr
+        .iter()
+        .skip(1)
+        .map(|&n| (Reverse(Fraction { num: 1, den: n }), 0usize))
+        .collect();
+    let mut res = [0; 2];
+    for _ in 0..k {
+        let Some((Reverse(curr), idx)) = heap.pop() else {
+            break;
+        };
+        res = [curr.num, curr.den];
+        let Some(&next_num) = arr.get(1 + idx) else {
+            continue;
+        };
+        if next_num >= curr.den {
             continue;
         }
-        let mut queue = std::collections::VecDeque::from([root]);
-        colors[root] = 1;
-        while let Some(node) = queue.pop_front() {
-            let curr = colors[node];
-            for &next in graph[node].iter() {
-                let v = &mut colors[next as usize];
-                if *v == curr {
-                    return false;
-                }
-                if *v == -1 {
-                    *v = 1 - curr;
-                    queue.push_back(next as usize);
-                }
+        heap.push((
+            Reverse(Fraction {
+                num: next_num,
+                ..curr
+            }),
+            1 + idx,
+        ));
+    }
+    res.to_vec()
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct Fraction {
+    num: i32,
+    den: i32,
+}
+
+impl PartialOrd for Fraction {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+// a/b - c/d == (ad - bc)/bd
+impl Ord for Fraction {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        (self.num * other.den).cmp(&(self.den * other.num))
+    }
+}
+
+fn with_binary_search(arr: &[i32], k: i32) -> [i32; 2] {
+    let n = arr.len();
+    let (mut left, mut right) = (0.0, 1.0);
+    while left < right {
+        let mid = left + (right - left) / 2.0;
+        let mut max_fraction = 0.0;
+        let mut total_smaller_frac = 0;
+        let (mut num_idx, mut den_idx) = (0, 0);
+        let mut i2 = 1; // denominator
+        for i1 in 0..n - 1 {
+            while i2 < n && f64::from(arr[i1]) >= mid * f64::from(arr[i2]) {
+                i2 += 1; // this is the counter of bigger fractions
+            }
+            total_smaller_frac += n - i2; // hence this n-i2
+            if i2 == n {
+                // with current numerator, every fraction is bigger
+                // no need to do another bigger numerator
+                break;
+            }
+            let fraction = f64::from(arr[i1]) / f64::from(arr[i2]);
+            if fraction > max_fraction {
+                num_idx = i1;
+                den_idx = i2;
+                max_fraction = fraction;
             }
         }
+        match total_smaller_frac.cmp(&(k as usize)) {
+            std::cmp::Ordering::Less => right = mid,
+            std::cmp::Ordering::Equal => return [arr[num_idx], arr[den_idx]],
+            std::cmp::Ordering::Greater => left = mid,
+        }
     }
-    true
+    [0; 2]
 }
 
 #[cfg(test)]
@@ -76,26 +98,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(!bfs(&[&[1, 2, 3], &[0, 2], &[0, 1, 3], &[0, 2]]));
-        debug_assert!(bfs(&[&[1, 3], &[0, 2], &[1, 3], &[0, 2]]));
+        debug_assert_eq!(with_binary_search(&[1, 2, 3, 5], 3), [2, 5]);
+        debug_assert_eq!(with_binary_search(&[1, 7], 1), [1, 7]);
     }
 
     #[test]
-    fn test() {
-        debug_assert!(bfs(&[&[1], &[0, 3], &[3], &[1, 2]]));
-        debug_assert!(!bfs(&[
-            &[],
-            &[2, 4, 6],
-            &[1, 4, 8, 9],
-            &[7, 8],
-            &[1, 2, 8, 9],
-            &[6, 9],
-            &[1, 5, 7, 8, 9],
-            &[3, 6, 9],
-            &[2, 3, 4, 6, 9],
-            &[2, 4, 5, 6, 7, 8]
-        ]))
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
