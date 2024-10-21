@@ -1,50 +1,31 @@
 mod helper;
 mod trie;
 
+use std::collections::HashSet;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn moves_to_chessboard(board: &[&[i32]]) -> i32 {
-    let n = board.len();
-    for row in board.iter().skip(1) {
-        for (x, &num) in row.iter().enumerate().skip(1) {
-            // For any row, it must satisfy
-            // row0[x] == row[x] or row[0][x] != row[x] for all x's
-            // 1100 == 1100 || 1100 != 0011
-            if (board[0][0] ^ row[0]) ^ (board[0][x] ^ num) == 1 {
-                return -1;
-            }
+pub fn max_unique_split(s: &str) -> i32 {
+    let mut res = 0;
+    backtrack(s.as_bytes(), &mut HashSet::new(), &mut res);
+    res
+}
+
+fn backtrack<'a>(s: &'a [u8], seen: &mut HashSet<&'a [u8]>, max: &mut i32) {
+    if seen.len() + s.len() <= *max as usize {
+        return;
+    }
+    if s.is_empty() {
+        *max = (*max).max(seen.len() as i32);
+        return;
+    }
+    for idx in 1..=s.len() {
+        if seen.insert(&s[..idx]) {
+            backtrack(&s[idx..], seen, max);
+            seen.remove(&s[..idx]);
         }
     }
-    let (mut row_ones, mut col_ones) = (0, 0);
-    let (mut row_moves, mut col_moves) = (0, 0);
-    for idx in 0..n {
-        row_ones += board[0][idx]; // first row
-        col_ones += board[idx][0]; // first col
-        if board[idx][0] == idx as i32 & 1 {
-            row_moves += 1;
-        }
-        if board[0][idx] == idx as i32 & 1 {
-            col_moves += 1;
-        }
-    }
-    let n = n as i32;
-    if row_ones < n / 2 || col_ones < n / 2 || row_ones > (1 + n) / 2 || col_ones > (1 + n) / 2 {
-        return -1;
-    }
-    if n & 1 == 1 {
-        // number of moves has to be even
-        if row_moves & 1 == 1 {
-            row_moves = n - row_moves
-        }
-        if col_moves & 1 == 1 {
-            col_moves = n - col_moves
-        }
-    } else {
-        row_moves = row_moves.min(n - row_moves);
-        col_moves = col_moves.min(n - col_moves);
-    }
-    (row_moves + col_moves) / 2
 }
 
 #[cfg(test)]
@@ -55,12 +36,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            moves_to_chessboard(&[&[0, 1, 1, 0], &[0, 1, 1, 0], &[1, 0, 0, 1], &[1, 0, 0, 1]]),
-            2
-        );
-        debug_assert_eq!(moves_to_chessboard(&[&[0, 1], &[1, 0]]), 0);
-        debug_assert_eq!(moves_to_chessboard(&[&[1, 0], &[1, 0]]), -1);
+        debug_assert_eq!(max_unique_split("ababccc"), 5);
+        debug_assert_eq!(max_unique_split("aba"), 2);
+        debug_assert_eq!(max_unique_split("aa"), 1);
     }
 
     #[test]
