@@ -4,26 +4,47 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_rabbits(answers: &[i32]) -> i32 {
-    let nums = answers
-        .iter()
-        .fold(std::collections::HashMap::new(), |mut acc, &n| {
-            *acc.entry(n).or_insert(0) += 1;
-            acc
-        });
-    let mut res = 0;
-    for (k, v) in nums.into_iter() {
-        if k + 1 >= v {
-            res += k + 1;
-        } else {
-            let mut groups = v / (1 + k);
-            if v % (1 + k) > 0 {
-                groups += 1
+pub fn moves_to_chessboard(board: &[&[i32]]) -> i32 {
+    let n = board.len();
+    for row in board.iter().skip(1) {
+        for (x, &num) in row.iter().enumerate().skip(1) {
+            // For any row, it must satisfy
+            // row0[x] == row[x] or row[0][x] != row[x] for all x's
+            // 1100 == 1100 || 1100 != 0011
+            if (board[0][0] ^ row[0]) ^ (board[0][x] ^ num) == 1 {
+                return -1;
             }
-            res += groups * (1 + k);
         }
     }
-    res
+    let (mut row_ones, mut col_ones) = (0, 0);
+    let (mut row_moves, mut col_moves) = (0, 0);
+    for idx in 0..n {
+        row_ones += board[0][idx]; // first row
+        col_ones += board[idx][0]; // first col
+        if board[idx][0] == idx as i32 & 1 {
+            row_moves += 1;
+        }
+        if board[0][idx] == idx as i32 & 1 {
+            col_moves += 1;
+        }
+    }
+    let n = n as i32;
+    if row_ones < n / 2 || col_ones < n / 2 || row_ones > (1 + n) / 2 || col_ones > (1 + n) / 2 {
+        return -1;
+    }
+    if n & 1 == 1 {
+        // number of moves has to be even
+        if row_moves & 1 == 1 {
+            row_moves = n - row_moves
+        }
+        if col_moves & 1 == 1 {
+            col_moves = n - col_moves
+        }
+    } else {
+        row_moves = row_moves.min(n - row_moves);
+        col_moves = col_moves.min(n - col_moves);
+    }
+    (row_moves + col_moves) / 2
 }
 
 #[cfg(test)]
@@ -34,15 +55,16 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(num_rabbits(&[1, 1, 2]), 5);
-        debug_assert_eq!(num_rabbits(&[10, 10, 10]), 11);
+        debug_assert_eq!(
+            moves_to_chessboard(&[&[0, 1, 1, 0], &[0, 1, 1, 0], &[1, 0, 0, 1], &[1, 0, 0, 1]]),
+            2
+        );
+        debug_assert_eq!(moves_to_chessboard(&[&[0, 1], &[1, 0]]), 0);
+        debug_assert_eq!(moves_to_chessboard(&[&[1, 0], &[1, 0]]), -1);
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(num_rabbits(&[1, 0, 1, 0, 0]), 5);
-        debug_assert_eq!(num_rabbits(&[2, 1, 2, 2, 2, 2, 2, 2, 1, 1]), 13);
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
