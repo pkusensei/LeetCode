@@ -5,34 +5,18 @@ namespace Solution;
 
 public class Solution
 {
-    public int MaximumSwap(int num)
+    public int MinDiffInBST(TreeNode root)
     {
-        var temp = num;
-        var seq = new List<int>();
-        while (temp > 0)
-        {
-            seq.Add(temp % 10);
-            temp /= 10;
-        }
-        seq.Reverse();
+        List<int> list = [];
+        Inorder(root, list);
+        return list.Skip(1).Zip(list).Select(p => p.First - p.Second).Min();
+    }
 
-        var digits = new int[10];
-        foreach (var (d, i) in seq.Select((d, i) => (d, i)))
-        {
-            digits[d] = i; // last occurence of each digit
-        }
-        foreach (var (digit, left) in seq.Select((d, i) => (d, i)))
-        {
-            for (int larger = 9; larger > digit; larger -= 1)
-            {
-                int right = digits[larger];
-                if (right > left) // Find a bigger digit to the right
-                {
-                    (seq[left], seq[right]) = (seq[right], seq[left]);
-                    return seq.Aggregate(0, (acc, num) => acc * 10 + num);
-                }
-            }
-        }
-        return num;
+    static void Inorder(TreeNode node, List<int> list)
+    {
+        if (node is null) { return; }
+        Inorder(node.left, list);
+        list.Add(node.val);
+        Inorder(node.right, list);
     }
 }
