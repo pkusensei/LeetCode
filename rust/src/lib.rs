@@ -4,27 +4,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn all_paths_source_target(graph: &[&[i32]]) -> Vec<Vec<i32>> {
-    let n = graph.len() as i32;
-    let mut queue = std::collections::VecDeque::from([vec![0]]);
-    let mut res = vec![];
-    while let Some(path) = queue.pop_front() {
-        let Some(&last) = path.last() else {
-            break;
-        };
-        if last == n - 1 {
-            res.push(path);
-            continue;
-        }
-        for &next in graph[last as usize].iter() {
-            if !path.contains(&next) {
-                let mut p = path.clone();
-                p.push(next);
-                queue.push_back(p);
-            }
+pub fn best_rotation(nums: &[i32]) -> i32 {
+    let n = nums.len();
+    let mut change = vec![1; n];
+    for idx in 0..n {
+        // i+n-nums[i] is the moves k to make i==nums[i]
+        change[(1 + n + idx - nums[idx] as usize) % n] -= 1
+    }
+    let mut max_i = 0;
+    let mut prefix = 0;
+    let mut max = i32::MIN;
+    for (idx, num) in change.into_iter().enumerate() {
+        prefix += num;
+        if prefix > max {
+            max = prefix;
+            max_i = idx;
         }
     }
-    res
+    max_i as _
 }
 
 #[cfg(test)]
@@ -35,20 +32,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        sort_eq(
-            all_paths_source_target(&[&[1, 2], &[3], &[3], &[]]),
-            [vec![0, 1, 3], vec![0, 2, 3]],
-        );
-        sort_eq(
-            all_paths_source_target(&[&[4, 3, 1], &[3, 2, 4], &[3], &[4], &[]]),
-            [
-                vec![0, 4],
-                vec![0, 3, 4],
-                vec![0, 1, 3, 4],
-                vec![0, 1, 2, 3, 4],
-                vec![0, 1, 4],
-            ],
-        );
+        debug_assert_eq!(best_rotation(&[2, 3, 1, 4, 0]), 3);
+        debug_assert_eq!(best_rotation(&[1, 3, 0, 2, 4]), 0);
     }
 
     #[test]
