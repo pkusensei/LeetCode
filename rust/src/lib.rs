@@ -4,24 +4,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn best_rotation(nums: &[i32]) -> i32 {
-    let n = nums.len();
-    let mut change = vec![1; n];
-    for idx in 0..n {
-        // i+n-nums[i] is the moves k to make i==nums[i]
-        change[(1 + n + idx - nums[idx] as usize) % n] -= 1
-    }
-    let mut max_i = 0;
-    let mut prefix = 0;
-    let mut max = i32::MIN;
-    for (idx, num) in change.into_iter().enumerate() {
-        prefix += num;
-        if prefix > max {
-            max = prefix;
-            max_i = idx;
+pub fn champagne_tower(poured: i32, query_row: i32, query_glass: i32) -> f64 {
+    let r = query_row as usize;
+    let mut dp = vec![vec![0.0; 102]; 2 + r];
+    dp[0][0] = f64::from(poured);
+    for row in 0..=r {
+        for col in 0..=row {
+            let v = (dp[row][col] - 1.0) * 0.5;
+            if v > 0.0 {
+                dp[1 + row][col] += v;
+                dp[1 + row][1 + col] += v;
+            }
         }
     }
-    max_i as _
+    dp[r][query_glass as usize].min(1.0)
 }
 
 #[cfg(test)]
@@ -32,8 +28,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(best_rotation(&[2, 3, 1, 4, 0]), 3);
-        debug_assert_eq!(best_rotation(&[1, 3, 0, 2, 4]), 0);
+        debug_assert_eq!(champagne_tower(1, 1, 1), 0.00000);
+        debug_assert_eq!(champagne_tower(2, 1, 1), 0.50000);
+        debug_assert_eq!(champagne_tower(100_000_009, 33, 17), 1.00000);
     }
 
     #[test]
