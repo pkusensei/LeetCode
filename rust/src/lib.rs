@@ -1,115 +1,41 @@
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_matching_subseq(s: &str, words: &[&str]) -> i32 {
-    let mut map = HashMap::new();
-    // with_trie(words, s)
-    let mut res = 0;
-    for &word in words.iter() {
-        if map.get(word).is_some_and(|&v| v) {
-            res += 1;
-        } else {
-            let t = is_subseq(s.as_bytes(), word.as_bytes());
-            map.insert(word, t);
-            res += i32::from(t);
+pub fn preimage_size_fzf(k: i32) -> i32 {
+    const MAX: i64 = trailing_zeros(i64::MAX);
+    let k = k as i64;
+    match k.cmp(&MAX) {
+        std::cmp::Ordering::Equal => return 3,
+        std::cmp::Ordering::Greater => return 0,
+        std::cmp::Ordering::Less => (),
+    }
+
+    let (mut left, mut right) = (0, i64::MAX);
+    while left < right {
+        let mid = left + (right - left) / 2;
+        match trailing_zeros(mid).cmp(&k) {
+            std::cmp::Ordering::Less => left = 1 + mid,
+            std::cmp::Ordering::Equal => return 5,
+            std::cmp::Ordering::Greater => right = mid - 1,
         }
+    }
+    0
+}
+
+const fn trailing_zeros(n: i64) -> i64 {
+    let mut res = 0;
+    let mut factor = 5;
+    while factor <= n {
+        res += n / factor;
+        let Some(v) = factor.checked_mul(5) else {
+            break;
+        };
+        factor = v;
     }
     res
-}
-
-fn is_subseq(hay: &[u8], needle: &[u8]) -> bool {
-    if needle.is_empty() {
-        return true;
-    }
-    let mut idx = 0;
-    for &b in hay.iter() {
-        if needle[idx] == b {
-            idx += 1;
-            if idx == needle.len() {
-                return true;
-            }
-        }
-    }
-    false
-}
-
-fn with_trie(words: &[&str], s: &str) -> i32 {
-    let words = words.iter().fold(HashMap::new(), |mut acc, w| {
-        *acc.entry(*w).or_insert(0) += 1;
-        acc
-    });
-    let mut trie = Trie::default();
-    trie.insert(s.bytes());
-    words
-        .into_iter()
-        .filter_map(|(k, v)| if trie.check(k.bytes()) { Some(v) } else { None })
-        .sum()
-}
-
-#[derive(Debug, Clone, Default)]
-struct Trie {
-    data: [Option<Box<Trie>>; 26],
-}
-
-impl Trie {
-    pub const fn new() -> Self {
-        Self {
-            data: [const { None }; 26],
-        }
-    }
-
-    pub fn insert<I>(&mut self, input: I)
-    where
-        I: IntoIterator<Item = u8>,
-    {
-        self.insert_impl(input.into_iter())
-    }
-
-    fn insert_impl<I>(&mut self, mut it: I)
-    where
-        I: Iterator<Item = u8>,
-    {
-        if let Some(v) = it.next() {
-            let idx = Self::index_of(v);
-            if let Some(n) = self.data.get_mut(idx).and_then(|opt| opt.as_mut()) {
-                n.insert(it);
-            } else {
-                let mut node = Box::new(Self::new());
-                node.insert(it);
-                self.data[idx] = Some(node);
-            }
-        }
-    }
-
-    fn check<I>(&self, mut it: I) -> bool
-    where
-        I: Iterator<Item = u8> + Clone,
-    {
-        let temp = it.clone();
-        if let Some(v) = it.next() {
-            let idx = Self::index_of(v);
-            if let Some(n) = self.data.get(idx).and_then(|opt| opt.as_ref()) {
-                return n.check(it);
-            } else {
-                return self
-                    .data
-                    .iter()
-                    .filter_map(|n| n.as_ref())
-                    .next()
-                    .is_some_and(|n| n.check(temp));
-            }
-        }
-        true
-    }
-
-    fn index_of(b: u8) -> usize {
-        usize::from(b - b'a')
-    }
 }
 
 #[cfg(test)]
@@ -120,15 +46,21 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(num_matching_subseq("abcde", &["a", "bb", "acd", "ace"]), 3);
-        debug_assert_eq!(
-            num_matching_subseq("dsahjpjauf", &["ahjpjau", "ja", "ahbwzgqnuk", "tnmlanowax"]),
-            2
-        );
+        debug_assert_eq!(trailing_zeros(5), 1);
+        debug_assert_eq!(trailing_zeros(16), 3);
+        debug_assert_eq!(trailing_zeros(29), 6);
+        debug_assert_eq!(trailing_zeros(53), 12);
+        debug_assert_eq!(trailing_zeros(127), 31);
+
+        debug_assert_eq!(preimage_size_fzf(0), 5);
+        debug_assert_eq!(preimage_size_fzf(5), 0);
+        debug_assert_eq!(preimage_size_fzf(3), 5);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(preimage_size_fzf(1_000_000_000), 5);
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
