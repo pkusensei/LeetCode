@@ -4,38 +4,50 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn preimage_size_fzf(k: i32) -> i32 {
-    const MAX: i64 = trailing_zeros(i64::MAX);
-    let k = k as i64;
-    match k.cmp(&MAX) {
-        std::cmp::Ordering::Equal => return 3,
-        std::cmp::Ordering::Greater => return 0,
-        std::cmp::Ordering::Less => (),
-    }
-
-    let (mut left, mut right) = (0, i64::MAX);
-    while left < right {
-        let mid = left + (right - left) / 2;
-        match trailing_zeros(mid).cmp(&k) {
-            std::cmp::Ordering::Less => left = 1 + mid,
-            std::cmp::Ordering::Equal => return 5,
-            std::cmp::Ordering::Greater => right = mid - 1,
+pub fn valid_tic_tac_toe(board: &[&str]) -> bool {
+        let board: Vec<&[u8]> = board.iter().map(|s| s.as_bytes()).collect();
+        let (xcount, ocount) =
+            board
+                .iter()
+                .flat_map(|row| row.iter())
+                .fold((0, 0), |(xcount, ocount), &b| {
+                    if b == b'X' {
+                        (1 + xcount, ocount)
+                    } else if b == b'O' {
+                        (xcount, 1 + ocount)
+                    } else {
+                        (xcount, ocount)
+                    }
+                });
+        if !(0..=1).contains(&(xcount - ocount)) {
+            return false;
         }
-    }
-    0
+        if check(&board, b'X') && xcount != 1 + ocount {
+            return false;
+        }
+        if check(&board, b'O') && xcount != ocount {
+            return false;
+        }
+        true
 }
 
-const fn trailing_zeros(n: i64) -> i64 {
-    let mut res = 0;
-    let mut factor = 5;
-    while factor <= n {
-        res += n / factor;
-        let Some(v) = factor.checked_mul(5) else {
-            break;
-        };
-        factor = v;
+fn check(board: &[&[u8]], byte: u8) -> bool {
+    if board.iter().any(|s| s.iter().all(|&b| b == byte)) {
+        return true;
     }
-    res
+    if (0..3)
+        .map(|i| [board[0][i], board[1][i], board[2][i]])
+        .any(|col| col.into_iter().all(|b| byte == b))
+    {
+        return true;
+    }
+    if (0..3).map(|i| board[i][i]).all(|b| byte == b) {
+        return true;
+    }
+    if (0..3).map(|i| board[i][2 - i]).all(|b| byte == b) {
+        return true;
+    }
+    false
 }
 
 #[cfg(test)]
@@ -46,21 +58,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(trailing_zeros(5), 1);
-        debug_assert_eq!(trailing_zeros(16), 3);
-        debug_assert_eq!(trailing_zeros(29), 6);
-        debug_assert_eq!(trailing_zeros(53), 12);
-        debug_assert_eq!(trailing_zeros(127), 31);
-
-        debug_assert_eq!(preimage_size_fzf(0), 5);
-        debug_assert_eq!(preimage_size_fzf(5), 0);
-        debug_assert_eq!(preimage_size_fzf(3), 5);
+        debug_assert!(!valid_tic_tac_toe(&["O  ", "   ", "   "]));
+        debug_assert!(!valid_tic_tac_toe(&["XOX", " X ", "   "]));
+        debug_assert!(valid_tic_tac_toe(&["XOX", "O O", "XOX"]));
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(preimage_size_fzf(1_000_000_000), 5);
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
