@@ -5,18 +5,18 @@ namespace Solution;
 
 public class Solution
 {
-    public int MinDiffInBST(TreeNode root)
+    public long KthLargestLevelSum(TreeNode root, int k)
     {
-        List<int> list = [];
-        Inorder(root, list);
-        return list.Skip(1).Zip(list).Select(p => p.First - p.Second).Min();
-    }
-
-    static void Inorder(TreeNode node, List<int> list)
-    {
-        if (node is null) { return; }
-        Inorder(node.left, list);
-        list.Add(node.val);
-        Inorder(node.right, list);
+        List<long> sums = [];
+        List<TreeNode> nodes = [root];
+        while (nodes.Count > 0)
+        {
+            sums.Add(nodes.Select(n => (long)n.val).Sum());
+            var next = nodes.SelectMany(n => new[] { n.left, n.right }).Where(n => n is not null).ToList();
+            nodes = next;
+        }
+        sums.Sort((a, b) => b.CompareTo(a));
+        if (sums.Count >= k) { return sums[k - 1]; }
+        else { return -1; }
     }
 }
