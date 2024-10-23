@@ -12,19 +12,19 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
-        var a = TreeNode.Make([5, 8, 9, 2, 1, 3, 7, 4, 6]);
-        var b = sol.KthLargestLevelSum(a, 2);
-        var c = 13;
-        Assert.AreEqual(c, b);
+        var a = TreeNode.Make([5, 4, 9, 1, 10, null, 7]);
+        var b = sol.ReplaceValueInTree(a);
+        var c = "[0,0,0,7,7,null,11]";
+        Assert.AreEqual(c, b.ToString());
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        var a = TreeNode.Make([1, 2, null, 3]);
-        var b = sol.KthLargestLevelSum(a, 1);
-        var c = 3;
-        Assert.AreEqual(c, b);
+        var a = TreeNode.Make([3, 1, 2]);
+        var b = sol.ReplaceValueInTree(a);
+        var c = "[0,0,0]";
+        Assert.AreEqual(c, b.ToString());
     }
 
     [TestMethod]
