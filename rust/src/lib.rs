@@ -1,60 +1,67 @@
 mod helper;
 mod trie;
 
+use std::collections::VecDeque;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_swap(nums1: &[i32], nums2: &[i32]) -> i32 {
-    // dfs(&nums1[1..], &nums2[1..], 0, nums1[0], nums2[0]).unwrap_or(-1)
-
-    let (mut swap, mut skip) = (1, 0); // [skip, swap]
-    for (w1, w2) in nums1.windows(2).zip(nums2.windows(2)) {
-        if w1[0] >= w2[1] || w2[0] >= w1[1] {
-            // For window
-            // ...[3, 5]...
-            // ...[2, 3]...
-            // If [2]<->[3] is swapped, [5]<->[3] has to as well
-            // keep skip the same
-            swap += 1 // mark this [5]<->[3] swap
-        } else if w1[0] >= w1[1] || w2[0] >= w2[1] {
-            // Have to swap
-            // skip = swap to count possible previous swap
-            std::mem::swap(&mut swap, &mut skip);
-            swap += 1;
-        } else {
-            skip = skip.min(swap);
-            swap = 1 + skip;
-        }
-    }
-    swap.min(skip)
-}
-
-fn dfs(nums1: &[i32], nums2: &[i32], count: i32, prev1: i32, prev2: i32) -> Option<i32> {
-    match (nums1, nums2) {
-        ([], []) => Some(count),
-        ([h1, t1 @ ..], [h2, t2 @ ..]) => {
-            let (h1, h2) = (*h1, *h2);
-            if prev1 >= h1 || prev2 >= h2 {
-                // must switch
-                if prev1 < h2 && prev2 < h1 {
-                    dfs(t1, t2, 1 + count, h2, h1)
-                } else {
-                    None // not possible; terminate this path
-                }
-            } else if prev1 < h2 && prev2 < h1 {
-                let switch = dfs(t1, t2, 1 + count, h2, h1);
-                let skip = dfs(t1, t2, count, h1, h2);
-                match (switch, skip) {
-                    (Some(a), Some(b)) => Some(a.min(b)),
-                    (None, None) => None,
-                    _ => switch.or(skip),
-                }
-            } else {
-                dfs(t1, t2, count, h1, h2)
+pub fn eventual_safe_nodes(graph: &[&[i32]]) -> Vec<i32> {
+    let n = graph.len();
+    // ins: reversed graph
+    // outs: out degrees
+    // queue: current "terminal"/safe nodes
+    let (ins, mut outs, mut queue) = graph.iter().enumerate().fold(
+        (vec![vec![]; n], vec![0; n], VecDeque::new()),
+        |(mut ins, mut outs, mut queue), (i, v)| {
+            if v.is_empty() {
+                queue.push_back(i);
+            }
+            outs[i] = v.len();
+            for &item in v.iter() {
+                ins[item as usize].push(i);
+            }
+            (ins, outs, queue)
+        },
+    );
+    let mut res = vec![];
+    while let Some(node) = queue.pop_front() {
+        res.push(node);
+        for &v in ins[node].iter() {
+            let neighbor = v as usize;
+            outs[neighbor] -= 1;
+            if outs[neighbor] == 0 {
+                queue.push_back(neighbor);
             }
         }
-        _ => unreachable!(),
     }
+    res.sort_unstable();
+    res.into_iter().map(|n| n as i32).collect()
+}
+
+fn with_dfs(graph: &[&[i32]]) -> Vec<i32> {
+    let n = graph.len();
+    let (mut states, mut res) = (vec![None; n], vec![]);
+    for i in 0..n {
+        if dfs(graph, i, &mut states) {
+            res.push(i as i32);
+        }
+    }
+    res
+}
+
+fn dfs(graph: &[&[i32]], node: usize, states: &mut [Option<bool>]) -> bool {
+    if let Some(v) = states[node] {
+        return v;
+    }
+    states[node] = Some(false); // use false to detect cycles
+    for &n in graph[node].iter() {
+        if !dfs(graph, n as usize, states) {
+            return false;
+        }
+    }
+    states[node] = Some(true);
+    true
 }
 
 #[cfg(test)]
@@ -65,14 +72,18 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(min_swap(&[1, 3, 5, 4], &[1, 2, 3, 7]), 1);
-        debug_assert_eq!(min_swap(&[0, 3, 5, 8, 9], &[2, 1, 4, 6, 9]), 1);
+        debug_assert_eq!(
+            with_dfs(&[&[1, 2], &[2, 3], &[5], &[0], &[5], &[], &[]]),
+            [2, 4, 5, 6]
+        );
+        debug_assert_eq!(
+            with_dfs(&[&[1, 2, 3, 4], &[1, 2], &[3, 4], &[0, 4], &[]]),
+            [4]
+        );
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(min_swap(&[0, 4, 4, 5, 9], &[0, 1, 6, 8, 10]), 1);
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
