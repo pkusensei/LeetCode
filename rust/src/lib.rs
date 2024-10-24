@@ -4,21 +4,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn expressive_words(s: &str, words: &[&str]) -> i32 {
-    let cs: Vec<_> = s.as_bytes().chunk_by(|a, b| a == b).collect();
-    let mut res = 0;
-    for w in words.iter() {
-        let cw: Vec<_> = w.as_bytes().chunk_by(|a, b| a == b).collect();
-        if cs.len() != cw.len() {
-            continue;
-        }
-        if cs.iter().zip(cw.iter()).all(|(a, b)| {
-            a[0] == b[0] && (a.len() == b.len() || (a.len() > b.len() && a.len() >= 3))
-        }) {
-            res += 1;
-        }
+pub fn xor_game(nums: &[i32]) -> bool {
+    let x = nums.iter().fold(0, |acc, n| acc ^ n);
+    if x == 0 {
+        return true;
     }
-    res
+    // When nums.len() is even and x!=0
+    // (n1^n2^...) != 0
+    // (x^n1) ^ (x^n2) ^.. != 0
+    // x^..^x != 0 => an even number of x xoring itself is zero is impossible
+    // There must be a number ni where x^ni != 0
+    // Thus whoever faces this even length turn wins
+    nums.len() & 1 == 0
 }
 
 #[cfg(test)]
@@ -29,30 +26,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(expressive_words("heeellooo", &["hello", "hi", "helo"]), 1);
-        debug_assert_eq!(expressive_words("zzzzzyyyyy", &["zzyy", "zy", "zyy"]), 3);
+        debug_assert!(!xor_game(&[1, 1, 2]));
+        debug_assert!(xor_game(&[0, 1]));
+        debug_assert!(xor_game(&[1, 2, 3]))
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(
-            expressive_words(
-                "dddiiiinnssssssoooo",
-                &[
-                    "dinnssoo",
-                    "ddinso",
-                    "ddiinnso",
-                    "ddiinnssoo",
-                    "ddiinso",
-                    "dinsoo",
-                    "ddiinsso",
-                    "dinssoo",
-                    "dinso"
-                ]
-            ),
-            3
-        );
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
