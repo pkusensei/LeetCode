@@ -1,36 +1,24 @@
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn soup_servings(n: i32) -> f64 {
-    if n > 4800 {
-        return 1.0;
-    }
-    dfs(n, n, &mut HashMap::new())
-}
-
-fn dfs(a: i32, b: i32, seen: &mut HashMap<[i32; 2], f64>) -> f64 {
-    match (a <= 0, b <= 0) {
-        (true, true) => 0.5,
-        (true, false) => 1.0,
-        (false, true) => 0.0,
-        _ => {
-            if let Some(&v) = seen.get(&[a, b]) {
-                return v;
-            }
-            let res = 0.25
-                * (dfs(a - 100, b, seen)
-                    + dfs(a - 75, b - 25, seen)
-                    + dfs(a - 50, b - 50, seen)
-                    + dfs(a - 25, b - 75, seen));
-            seen.insert([a, b], res);
-            res
+pub fn expressive_words(s: &str, words: &[&str]) -> i32 {
+    let cs: Vec<_> = s.as_bytes().chunk_by(|a, b| a == b).collect();
+    let mut res = 0;
+    for w in words.iter() {
+        let cw: Vec<_> = w.as_bytes().chunk_by(|a, b| a == b).collect();
+        if cs.len() != cw.len() {
+            continue;
+        }
+        if cs.iter().zip(cw.iter()).all(|(a, b)| {
+            a[0] == b[0] && (a.len() == b.len() || (a.len() > b.len() && a.len() >= 3))
+        }) {
+            res += 1;
         }
     }
+    res
 }
 
 #[cfg(test)]
@@ -41,12 +29,30 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(soup_servings(50), 0.625);
-        debug_assert_eq!(soup_servings(100), 0.71875);
+        debug_assert_eq!(expressive_words("heeellooo", &["hello", "hi", "helo"]), 1);
+        debug_assert_eq!(expressive_words("zzzzzyyyyy", &["zzyy", "zy", "zyy"]), 3);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(
+            expressive_words(
+                "dddiiiinnssssssoooo",
+                &[
+                    "dinnssoo",
+                    "ddinso",
+                    "ddiinnso",
+                    "ddiinnssoo",
+                    "ddiinso",
+                    "dinsoo",
+                    "ddiinsso",
+                    "dinssoo",
+                    "dinso"
+                ]
+            ),
+            3
+        );
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
