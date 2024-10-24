@@ -1,25 +1,34 @@
 mod helper;
 mod trie;
 
+use std::collections::HashSet;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn unique_morse_representations(words: &[&str]) -> i32 {
-    const DICT: [&str; 26] = [
-        ".-", "-...", "-.-.", "-..", ".", "..-.", "--.", "....", "..", ".---", "-.-", ".-..", "--",
-        "-.", "---", ".--.", "--.-", ".-.", "...", "-", "..-", "...-", ".--", "-..-", "-.--",
-        "--..",
-    ];
-    words
-        .iter()
-        .map(|s| {
-            s.bytes()
-                .map(|b| DICT[usize::from(b - b'a')])
-                .collect::<Vec<_>>()
-                .join("")
-        })
-        .collect::<std::collections::HashSet<_>>()
-        .len() as _
+pub fn split_array_same_average(nums: &[i32]) -> bool {
+    let n = nums.len();
+    if n == 1 {
+        return false;
+    }
+    let sum: i32 = nums.iter().sum();
+    if !(1..=n / 2).any(|i| sum as usize * i % n == 0) {
+        return false;
+    }
+    let mut subsets = vec![HashSet::new(); 1 + n / 2];
+    subsets[0].insert(0);
+    for num in nums.iter() {
+        for idx in (1..=n / 2).rev() {
+            let a: Vec<_> = subsets[idx - 1].iter().map(|&v| num + v).collect();
+            subsets[idx].extend(a);
+        }
+    }
+    for (idx, subset) in subsets.iter().enumerate().skip(1) {
+        if sum as usize * idx % n == 0 && subset.contains(&(sum * idx as i32 / n as i32)) {
+            return true;
+        }
+    }
+    false
 }
 
 #[cfg(test)]
@@ -30,15 +39,18 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            unique_morse_representations(&["gin", "zen", "gig", "msg"]),
-            2
-        );
-        debug_assert_eq!(unique_morse_representations(&["a"]), 1);
+        debug_assert!(split_array_same_average(&[1, 2, 3, 4, 5, 6, 7, 8]));
+        debug_assert!(!split_array_same_average(&[3, 1]));
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert!(!split_array_same_average(&[6, 8, 18, 3, 1]));
+        debug_assert!(!split_array_same_average(&[
+            60, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30,
+            30, 30, 30, 30, 30, 30, 30, 30
+        ]));
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
