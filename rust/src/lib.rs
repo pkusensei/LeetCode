@@ -1,21 +1,32 @@
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn xor_game(nums: &[i32]) -> bool {
-    let x = nums.iter().fold(0, |acc, n| acc ^ n);
-    if x == 0 {
-        return true;
+pub fn subdomain_visits(cpdomains: &[&str]) -> Vec<String> {
+    let mut counts = HashMap::new();
+    for s in cpdomains.iter() {
+        let Some((n, mut domain)) = s.split_once(' ') else {
+            continue;
+        };
+        let Ok(n) = n.parse::<i32>() else {
+            continue;
+        };
+        while !domain.is_empty() {
+            *counts.entry(domain).or_insert(0) += n;
+            let Some((_, d)) = domain.split_once('.') else {
+                break;
+            };
+            domain = d;
+        }
     }
-    // When nums.len() is even and x!=0
-    // (n1^n2^...) != 0
-    // (x^n1) ^ (x^n2) ^.. != 0
-    // x^..^x != 0 => an even number of x xoring itself is zero is impossible
-    // There must be a number ni where x^ni != 0
-    // Thus whoever faces this even length turn wins
-    nums.len() & 1 == 0
+    counts
+        .into_iter()
+        .map(|(k, v)| format!("{v} {k}"))
+        .collect()
 }
 
 #[cfg(test)]
@@ -26,9 +37,27 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(!xor_game(&[1, 1, 2]));
-        debug_assert!(xor_game(&[0, 1]));
-        debug_assert!(xor_game(&[1, 2, 3]))
+        sort_eq(
+            subdomain_visits(&["9001 discuss.leetcode.com"]),
+            ["9001 leetcode.com", "9001 discuss.leetcode.com", "9001 com"],
+        );
+        sort_eq(
+            subdomain_visits(&[
+                "900 google.mail.com",
+                "50 yahoo.com",
+                "1 intel.mail.com",
+                "5 wiki.org",
+            ]),
+            [
+                "901 mail.com",
+                "50 yahoo.com",
+                "900 google.mail.com",
+                "5 wiki.org",
+                "5 org",
+                "1 intel.mail.com",
+                "951 com",
+            ],
+        );
     }
 
     #[test]
