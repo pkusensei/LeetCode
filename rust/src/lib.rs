@@ -4,18 +4,25 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn number_of_lines(widths: &[i32], s: &str) -> [i32; 2] {
-    const MAX: i32 = 100;
-    let (mut line, mut count) = (0, 0);
-    for num in s.bytes().map(|b| widths[usize::from(b - b'a')]) {
-        if count + num <= MAX {
-            count += num;
-        } else {
-            line += 1;
-            count = num
+pub fn max_increase_keeping_skyline(grid: &[&[i32]]) -> i32 {
+    let n = grid.len();
+    if n < 2 {
+        return 0;
+    }
+    let rows: Vec<i32> = grid
+        .iter()
+        .map(|v| v.iter().copied().max().unwrap_or(0))
+        .collect();
+    let cols: Vec<i32> = (0..n)
+        .map(|i| grid.iter().map(|v| v[i]).max().unwrap_or(0))
+        .collect();
+    let mut res = 0;
+    for (y, row) in grid.iter().enumerate() {
+        for (x, &n) in row.iter().enumerate() {
+            res += rows[y].min(cols[x]) - n;
         }
     }
-    [1 + line, count]
+    res
 }
 
 #[cfg(test)]
@@ -27,24 +34,17 @@ mod tests {
     #[test]
     fn basics() {
         debug_assert_eq!(
-            number_of_lines(
-                &[
-                    10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
-                    10, 10, 10, 10, 10, 10
-                ],
-                "abcdefghijklmnopqrstuvwxyz"
-            ),
-            [3, 60]
+            max_increase_keeping_skyline(&[
+                &[3, 0, 8, 4],
+                &[2, 4, 5, 7],
+                &[9, 2, 6, 3],
+                &[0, 3, 1, 0]
+            ]),
+            35
         );
         debug_assert_eq!(
-            number_of_lines(
-                &[
-                    4, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
-                    10, 10, 10, 10, 10, 10
-                ],
-                "bbbcccdddaaa"
-            ),
-            [2, 4]
+            max_increase_keeping_skyline(&[&[0, 0, 0], &[0, 0, 0], &[0, 0, 0]]),
+            0
         );
     }
 
