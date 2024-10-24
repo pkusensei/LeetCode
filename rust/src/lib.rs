@@ -1,40 +1,21 @@
 mod helper;
 mod trie;
 
-use std::collections::HashSet;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn split_array_same_average(nums: &[i32]) -> bool {
-    let n = nums.len();
-    if n == 1 {
-        return false;
-    }
-    let sum: i32 = nums.iter().sum();
-    let (mut pos, mut neg) = (vec![], vec![]);
-    for num in nums.iter().map(|v| v * n as i32 - sum) {
-        match num.signum() {
-            0 => return true,
-            1 => pos.push(num),
-            -1 => neg.push(-num),
-            _ => unreachable!(),
+pub fn number_of_lines(widths: &[i32], s: &str) -> [i32; 2] {
+    const MAX: i32 = 100;
+    let (mut line, mut count) = (0, 0);
+    for num in s.bytes().map(|b| widths[usize::from(b - b'a')]) {
+        if count + num <= MAX {
+            count += num;
+        } else {
+            line += 1;
+            count = num
         }
     }
-    mask(&pos).intersection(&mask(&neg)).next().is_some()
-}
-
-fn mask(nums: &[i32]) -> HashSet<i32> {
-    let mut res = HashSet::new();
-    let sum = nums.iter().sum();
-    for &num in nums.iter() {
-        let mut temp = res.clone();
-        temp.insert(num);
-        temp.extend(res.iter().map(|&v| v + sum));
-        res = temp
-    }
-    res.remove(&sum);
-    res
+    [1 + line, count]
 }
 
 #[cfg(test)]
@@ -45,18 +26,30 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(split_array_same_average(&[1, 2, 3, 4, 5, 6, 7, 8]));
-        debug_assert!(!split_array_same_average(&[3, 1]));
+        debug_assert_eq!(
+            number_of_lines(
+                &[
+                    10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
+                    10, 10, 10, 10, 10, 10
+                ],
+                "abcdefghijklmnopqrstuvwxyz"
+            ),
+            [3, 60]
+        );
+        debug_assert_eq!(
+            number_of_lines(
+                &[
+                    4, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
+                    10, 10, 10, 10, 10, 10
+                ],
+                "bbbcccdddaaa"
+            ),
+            [2, 4]
+        );
     }
 
     #[test]
-    fn test() {
-        debug_assert!(!split_array_same_average(&[6, 8, 18, 3, 1]));
-        debug_assert!(!split_array_same_average(&[
-            60, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30,
-            30, 30, 30, 30, 30, 30, 30, 30
-        ]));
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
