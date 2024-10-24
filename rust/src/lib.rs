@@ -1,32 +1,22 @@
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn subdomain_visits(cpdomains: &[&str]) -> Vec<String> {
-    let mut counts = HashMap::new();
-    for s in cpdomains.iter() {
-        let Some((n, mut domain)) = s.split_once(' ') else {
-            continue;
-        };
-        let Ok(n) = n.parse::<i32>() else {
-            continue;
-        };
-        while !domain.is_empty() {
-            *counts.entry(domain).or_insert(0) += n;
-            let Some((_, d)) = domain.split_once('.') else {
-                break;
-            };
-            domain = d;
+pub fn largest_triangle_area(points: &[[i32; 2]]) -> f64 {
+    let n = points.len();
+    let mut res = 0f64;
+    for i1 in 0..n {
+        for i2 in i1..n {
+            for i3 in i2..n {
+                let (a, b, c) = (points[i1], points[i2], points[i3]);
+                let r = a[0] * (b[1] - c[1]) + b[0] * (c[1] - a[1]) + c[0] * (a[1] - b[1]);
+                res = res.max(0.5 * f64::from(r.abs()));
+            }
         }
     }
-    counts
-        .into_iter()
-        .map(|(k, v)| format!("{v} {k}"))
-        .collect()
+    res
 }
 
 #[cfg(test)]
@@ -37,27 +27,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        sort_eq(
-            subdomain_visits(&["9001 discuss.leetcode.com"]),
-            ["9001 leetcode.com", "9001 discuss.leetcode.com", "9001 com"],
+        debug_assert_eq!(
+            largest_triangle_area(&[[0, 0], [0, 1], [1, 0], [0, 2], [2, 0]]),
+            2.0
         );
-        sort_eq(
-            subdomain_visits(&[
-                "900 google.mail.com",
-                "50 yahoo.com",
-                "1 intel.mail.com",
-                "5 wiki.org",
-            ]),
-            [
-                "901 mail.com",
-                "50 yahoo.com",
-                "900 google.mail.com",
-                "5 wiki.org",
-                "5 org",
-                "1 intel.mail.com",
-                "951 com",
-            ],
-        );
+        debug_assert_eq!(largest_triangle_area(&[[1, 0], [0, 0], [0, 1]]), 0.5);
     }
 
     #[test]
