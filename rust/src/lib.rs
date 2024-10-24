@@ -12,23 +12,29 @@ pub fn split_array_same_average(nums: &[i32]) -> bool {
         return false;
     }
     let sum: i32 = nums.iter().sum();
-    if !(1..=n / 2).any(|i| sum as usize * i % n == 0) {
-        return false;
-    }
-    let mut subsets = vec![HashSet::new(); 1 + n / 2];
-    subsets[0].insert(0);
-    for num in nums.iter() {
-        for idx in (1..=n / 2).rev() {
-            let a: Vec<_> = subsets[idx - 1].iter().map(|&v| num + v).collect();
-            subsets[idx].extend(a);
+    let (mut pos, mut neg) = (vec![], vec![]);
+    for num in nums.iter().map(|v| v * n as i32 - sum) {
+        match num.signum() {
+            0 => return true,
+            1 => pos.push(num),
+            -1 => neg.push(-num),
+            _ => unreachable!(),
         }
     }
-    for (idx, subset) in subsets.iter().enumerate().skip(1) {
-        if sum as usize * idx % n == 0 && subset.contains(&(sum * idx as i32 / n as i32)) {
-            return true;
-        }
+    mask(&pos).intersection(&mask(&neg)).next().is_some()
+}
+
+fn mask(nums: &[i32]) -> HashSet<i32> {
+    let mut res = HashSet::new();
+    let sum = nums.iter().sum();
+    for &num in nums.iter() {
+        let mut temp = res.clone();
+        temp.insert(num);
+        temp.extend(res.iter().map(|&v| v + sum));
+        res = temp
     }
-    false
+    res.remove(&sum);
+    res
 }
 
 #[cfg(test)]
