@@ -1,27 +1,21 @@
 mod helper;
 mod trie;
 
+use std::collections::HashSet;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn shortest_to_char(s: &str, c: char) -> Vec<i32> {
-    let n = s.len();
-    let mut res = Vec::with_capacity(n);
-    let mut seen = -10_001;
-    for (idx, ch) in s.char_indices() {
-        if c == ch {
-            seen = idx as i32;
-        }
-        res.push(idx as i32 - seen);
-    }
-    seen = 10_001;
-    for (idx, ch) in s.char_indices().rev() {
-        if c == ch {
-            seen = idx as i32;
-        }
-        res[idx] = res[idx].min(seen - idx as i32)
-    }
-    res
+pub fn flipgame(fronts: &[i32], backs: &[i32]) -> i32 {
+    let mut nums: Vec<i32> = fronts.iter().chain(backs.iter()).copied().collect();
+    let dels: HashSet<_> = fronts
+        .iter()
+        .zip(backs.iter())
+        .filter_map(|(a, b)| if a == b { Some(*a) } else { None })
+        .collect();
+    nums.retain(|n| !dels.contains(n));
+    nums.sort_unstable();
+    nums.first().copied().unwrap_or(0)
 }
 
 #[cfg(test)]
@@ -32,11 +26,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            shortest_to_char("loveleetcode", 'e'),
-            [3, 2, 1, 0, 1, 0, 0, 1, 2, 2, 1, 0]
-        );
-        debug_assert_eq!(shortest_to_char("aaab", 'b'), [3, 2, 1, 0]);
+        debug_assert_eq!(flipgame(&[1, 2, 4, 4, 7], &[1, 3, 4, 1, 3]), 2);
+        debug_assert_eq!(flipgame(&[1], &[1]), 0);
     }
 
     #[test]
