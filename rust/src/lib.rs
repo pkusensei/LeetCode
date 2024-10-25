@@ -1,51 +1,49 @@
 mod helper;
 mod trie;
 
-use core::f64;
+use std::collections::{HashMap, HashSet, VecDeque};
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn largest_sum_of_averages(nums: &[i32], k: i32) -> f64 {
-    let (n, k) = (nums.len(), k as usize);
-    let mut prefix = Vec::with_capacity(1 + n);
-    prefix.push(0.0);
-    for &num in nums.iter() {
-        prefix.push(f64::from(num) + prefix.last().unwrap_or(&0.0));
+pub fn num_buses_to_destination(routes: &[&[i32]], source: i32, target: i32) -> i32 {
+    if source == target {
+        return 0;
     }
-    // dfs(&prefix, n, 0, k, &mut vec![vec![-1.0; 1 + k]; n])
-    let mut dp: Vec<_> = (0..n)
-        .map(|i| (prefix[n] - prefix[i]) / (n - i) as f64)
-        .collect();
-    for _ in 0..k - 1 {
-        for i1 in 0..n {
-            for i2 in 1 + i1..n {
-                dp[i1] = dp[i1].max((prefix[i2] - prefix[i1]) / (i2 - i1) as f64 + dp[i2]);
+    let buses: HashMap<i32, Vec<usize>> =
+        routes
+            .iter()
+            .enumerate()
+            .fold(HashMap::new(), |mut acc, (i, v)| {
+                for &num in v.iter() {
+                    acc.entry(num).or_default().push(i);
+                }
+                acc
+            });
+    let Some(mut queue) = buses
+        .get(&source)
+        .map(|v| v.iter().map(|&i| (i, 1)).collect::<VecDeque<_>>())
+    else {
+        return -1;
+    };
+    let mut seen = HashSet::new();
+    while let Some((bus, dist)) = queue.pop_front() {
+        if !seen.insert(bus) {
+            continue;
+        }
+        for &num in routes[bus].iter() {
+            if num == target {
+                return dist;
+            }
+            let Some(next) = buses.get(&num) else {
+                continue;
+            };
+            for &v in next.iter().filter(|&&v| v != bus) {
+                queue.push_back((v, 1 + dist));
             }
         }
     }
-    dp[0]
-}
-
-fn dfs(prefix: &[f64], n: usize, idx: usize, k: usize, dp: &mut [Vec<f64>]) -> f64 {
-    if idx >= n {
-        return 0.0;
-    }
-    if k == 0 {
-        return f64::MIN;
-    }
-    if dp[idx][k] > -1.0 {
-        return dp[idx][k];
-    }
-    let mut res = f64::MIN;
-    for i in idx..n {
-        // 1+i => prefix starts with artificial 0.0
-        let mut temp = (prefix[1 + i] - prefix[idx]) / (1 + i - idx) as f64;
-        temp += dfs(prefix, n, 1 + i, k - 1, dp);
-        res = res.max(temp);
-    }
-    dp[idx][k] = res;
-    res
+    -1
 }
 
 #[cfg(test)]
@@ -56,8 +54,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(largest_sum_of_averages(&[9, 1, 2, 3, 9], 3), 20.0);
-        debug_assert_eq!(largest_sum_of_averages(&[1, 2, 3, 4, 5, 6, 7], 4), 20.5);
+        debug_assert_eq!(num_buses_to_destination(&[&[1, 2, 7], &[3, 6, 7]], 1, 6), 2);
+        debug_assert_eq!(
+            num_buses_to_destination(
+                &[&[7, 12], &[4, 5, 15], &[6], &[15, 19], &[9, 12, 13]],
+                15,
+                12
+            ),
+            -1
+        );
     }
 
     #[test]
