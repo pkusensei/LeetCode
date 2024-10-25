@@ -1,30 +1,26 @@
 mod helper;
 mod trie;
 
-use std::collections::{HashSet, VecDeque};
+use std::collections::{HashMap, HashSet};
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn racecar(target: i32) -> i32 {
-    let mut queue = VecDeque::from([[0, 1, 0]]); // [pos, vel, dist]
-    let mut seen = HashSet::from([[0, 1]]);
-    while let Some([pos, vel, dist]) = queue.pop_front() {
-        if pos == target {
-            return dist;
-        }
-        if !(0..=2 * target).contains(&pos) {
-            continue;
-        }
-        if seen.insert([pos + vel, 2 * vel]) {
-            queue.push_back([pos + vel, 2 * vel, 1 + dist]);
-        }
-        let flip = -vel.signum();
-        if seen.insert([pos, flip]) {
-            queue.push_back([pos, flip, 1 + dist]);
-        }
-    }
-    -1
+pub fn most_common_word(paragraph: &str, banned: &[&str]) -> String {
+    let banned: HashSet<_> = banned.iter().collect();
+    paragraph
+        .split(|c: char| !c.is_ascii_alphabetic())
+        .fold(HashMap::new(), |mut acc, s| {
+            let s = s.to_ascii_lowercase();
+            if !banned.contains(&s.as_str()) && !s.is_empty() {
+                *acc.entry(s).or_insert(0) += 1;
+            }
+            acc
+        })
+        .into_iter()
+        .max_by_key(|(_k, v)| *v)
+        .map(|(k, _v)| k)
+        .unwrap_or_default()
 }
 
 #[cfg(test)]
@@ -35,14 +31,18 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(racecar(3), 2);
-        debug_assert_eq!(racecar(6), 5);
+        debug_assert_eq!(
+            most_common_word(
+                "Bob hit a ball, the hit BALL flew far after it was hit.",
+                &["hit"]
+            ),
+            "ball"
+        );
+        debug_assert_eq!(most_common_word("a.", &[]), "a");
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(racecar(4), 5);
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
