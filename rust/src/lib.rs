@@ -1,58 +1,51 @@
 mod helper;
 mod trie;
 
-use std::collections::HashSet;
+use core::f64;
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn remove_subfolders(mut folder: Vec<&str>) -> Vec<&str> {
-    folder.sort_unstable_by_key(|s| s.len());
-    let mut dels = HashSet::new();
-    for (i1, needle) in folder.iter().enumerate() {
-        if dels.contains(&i1) {
-            continue;
-        }
-        for (i2, hay) in folder.iter().enumerate().skip(i1) {
-            if dels.contains(&i2) {
-                continue;
-            }
-            if hay.strip_prefix(needle).is_some_and(|v| v.starts_with('/')) {
-                dels.insert(i2);
+pub fn largest_sum_of_averages(nums: &[i32], k: i32) -> f64 {
+    let (n, k) = (nums.len(), k as usize);
+    let mut prefix = Vec::with_capacity(1 + n);
+    prefix.push(0.0);
+    for &num in nums.iter() {
+        prefix.push(f64::from(num) + prefix.last().unwrap_or(&0.0));
+    }
+    // dfs(&prefix, n, 0, k, &mut vec![vec![-1.0; 1 + k]; n])
+    let mut dp: Vec<_> = (0..n)
+        .map(|i| (prefix[n] - prefix[i]) / (n - i) as f64)
+        .collect();
+    for _ in 0..k - 1 {
+        for i1 in 0..n {
+            for i2 in 1 + i1..n {
+                dp[i1] = dp[i1].max((prefix[i2] - prefix[i1]) / (i2 - i1) as f64 + dp[i2]);
             }
         }
     }
-    folder
-        .into_iter()
-        .enumerate()
-        .filter_map(|(i, s)| if dels.contains(&i) { None } else { Some(s) })
-        .collect()
+    dp[0]
 }
 
-fn with_trie(mut folder: Vec<&str>) -> Vec<&str> {
-    folder.sort_unstable_by_key(|s| s.len());
-    let mut trie = Trie::default();
-    folder.into_iter().filter(|s| trie.insert(s)).collect()
-}
-
-#[derive(Debug, Clone, Default)]
-struct Trie<'a> {
-    nodes: std::collections::HashMap<&'a str, Trie<'a>>,
-    is_end: bool,
-}
-
-impl<'a> Trie<'a> {
-    fn insert(&mut self, s: &'a str) -> bool {
-        let mut curr = self;
-        for seg in s.split('/').skip(1) {
-            curr = curr.nodes.entry(seg).or_default();
-            if curr.is_end {
-                return false; // has seen prefix
-            }
-        }
-        curr.is_end = true;
-        true
+fn dfs(prefix: &[f64], n: usize, idx: usize, k: usize, dp: &mut [Vec<f64>]) -> f64 {
+    if idx >= n {
+        return 0.0;
     }
+    if k == 0 {
+        return f64::MIN;
+    }
+    if dp[idx][k] > -1.0 {
+        return dp[idx][k];
+    }
+    let mut res = f64::MIN;
+    for i in idx..n {
+        // 1+i => prefix starts with artificial 0.0
+        let mut temp = (prefix[1 + i] - prefix[idx]) / (1 + i - idx) as f64;
+        temp += dfs(prefix, n, 1 + i, k - 1, dp);
+        res = res.max(temp);
+    }
+    dp[idx][k] = res;
+    res
 }
 
 #[cfg(test)]
@@ -63,43 +56,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        sort_eq(
-            with_trie(vec!["/a", "/a/b", "/c/d", "/c/d/e", "/c/f"]),
-            ["/a", "/c/d", "/c/f"],
-        );
-        sort_eq(with_trie(vec!["/a", "/a/b/c", "/a/b/d"]), ["/a"]);
-        sort_eq(
-            with_trie(vec!["/a/b/c", "/a/b/ca", "/a/b/d"]),
-            ["/a/b/c", "/a/b/ca", "/a/b/d"],
-        );
+        debug_assert_eq!(largest_sum_of_averages(&[9, 1, 2, 3, 9], 3), 20.0);
+        debug_assert_eq!(largest_sum_of_averages(&[1, 2, 3, 4, 5, 6, 7], 4), 20.5);
     }
 
     #[test]
-    fn test() {
-        sort_eq(
-            with_trie(vec![
-                "/aa/ab/ac/ad",
-                "/aa/aq/ay",
-                "/bf/bv/cd/ch/cj",
-                "/bf/bg",
-                "/aa/aq/ar",
-                "/bf",
-                "/aa/ab/aj/an/ao",
-                "/aa/aq/ay/az",
-                "/aa/aq/ay/bc",
-                "/bf/bg/bh/bi/bj",
-                "/bf/bv/bw/ca/cc",
-                "/bf/bg/bh/bl",
-            ]),
-            [
-                "/aa/ab/ac/ad",
-                "/aa/ab/aj/an/ao",
-                "/aa/aq/ar",
-                "/aa/aq/ay",
-                "/bf",
-            ],
-        );
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
