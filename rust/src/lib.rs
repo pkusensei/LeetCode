@@ -1,52 +1,30 @@
 mod helper;
 mod trie;
 
+use std::collections::{HashSet, VecDeque};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn ambiguous_coordinates(s: &str) -> Vec<String> {
-    let s = s.trim_matches(['(', ')']);
-    let mut res = vec![];
-    for i in 1..s.len() {
-        if let (Some(left), Some(right)) = (parse(&s[..i]), parse(&s[i..])) {
-            for a in left.iter() {
-                for b in right.iter() {
-                    res.push(format!("({}, {})", a, b));
-                }
-            }
+pub fn racecar(target: i32) -> i32 {
+    let mut queue = VecDeque::from([[0, 1, 0]]); // [pos, vel, dist]
+    let mut seen = HashSet::from([[0, 1]]);
+    while let Some([pos, vel, dist]) = queue.pop_front() {
+        if pos == target {
+            return dist;
+        }
+        if !(0..=2 * target).contains(&pos) {
+            continue;
+        }
+        if seen.insert([pos + vel, 2 * vel]) {
+            queue.push_back([pos + vel, 2 * vel, 1 + dist]);
+        }
+        let flip = -vel.signum();
+        if seen.insert([pos, flip]) {
+            queue.push_back([pos, flip, 1 + dist]);
         }
     }
-    res
-}
-
-fn parse(s: &str) -> Option<Vec<String>> {
-    if s.is_empty() {
-        return None;
-    }
-    let mut res = vec![s.to_string()];
-    if s.len() == 1 {
-        return Some(res);
-    }
-    if s.ends_with('0') {
-        if s.starts_with('0') {
-            return None;
-        }
-        Some(res)
-    } else {
-        let mut v = s.as_bytes().to_vec();
-        if s.starts_with('0') {
-            res.clear(); // remove vec![s.to_string()]
-            v.insert(1, b'.');
-            res.push(String::from_utf8(v).unwrap());
-        } else {
-            res.extend((1..s.len()).map(|i| {
-                let mut temp = v.clone();
-                temp.insert(i, b'.');
-                String::from_utf8(temp).unwrap()
-            }));
-        }
-        Some(res)
-    }
+    -1
 }
 
 #[cfg(test)]
@@ -57,30 +35,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        sort_eq(
-            ambiguous_coordinates("(123)"),
-            ["(1, 2.3)", "(1, 23)", "(1.2, 3)", "(12, 3)"],
-        );
-        sort_eq(
-            ambiguous_coordinates("(0123)"),
-            [
-                "(0, 1.23)",
-                "(0, 12.3)",
-                "(0, 123)",
-                "(0.1, 2.3)",
-                "(0.1, 23)",
-                "(0.12, 3)",
-            ],
-        );
-        sort_eq(
-            ambiguous_coordinates("(00011)"),
-            ["(0, 0.011)", "(0.001, 1)"],
-        );
+        debug_assert_eq!(racecar(3), 2);
+        debug_assert_eq!(racecar(6), 5);
     }
 
     #[test]
     fn test() {
-        sort_eq(ambiguous_coordinates("(0100)"), ["(0, 100)"]);
+        debug_assert_eq!(racecar(4), 5);
     }
 
     #[allow(dead_code)]
