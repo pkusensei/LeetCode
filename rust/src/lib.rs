@@ -1,49 +1,52 @@
 mod helper;
 mod trie;
 
-use std::collections::{HashMap, HashSet, VecDeque};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_buses_to_destination(routes: &[&[i32]], source: i32, target: i32) -> i32 {
-    if source == target {
-        return 0;
-    }
-    let buses: HashMap<i32, Vec<usize>> =
-        routes
-            .iter()
-            .enumerate()
-            .fold(HashMap::new(), |mut acc, (i, v)| {
-                for &num in v.iter() {
-                    acc.entry(num).or_default().push(i);
+pub fn ambiguous_coordinates(s: &str) -> Vec<String> {
+    let s = s.trim_matches(['(', ')']);
+    let mut res = vec![];
+    for i in 1..s.len() {
+        if let (Some(left), Some(right)) = (parse(&s[..i]), parse(&s[i..])) {
+            for a in left.iter() {
+                for b in right.iter() {
+                    res.push(format!("({}, {})", a, b));
                 }
-                acc
-            });
-    let Some(mut queue) = buses
-        .get(&source)
-        .map(|v| v.iter().map(|&i| (i, 1)).collect::<VecDeque<_>>())
-    else {
-        return -1;
-    };
-    let mut seen = HashSet::new();
-    while let Some((bus, dist)) = queue.pop_front() {
-        if !seen.insert(bus) {
-            continue;
-        }
-        for &num in routes[bus].iter() {
-            if num == target {
-                return dist;
-            }
-            let Some(next) = buses.get(&num) else {
-                continue;
-            };
-            for &v in next.iter().filter(|&&v| v != bus) {
-                queue.push_back((v, 1 + dist));
             }
         }
     }
-    -1
+    res
+}
+
+fn parse(s: &str) -> Option<Vec<String>> {
+    if s.is_empty() {
+        return None;
+    }
+    let mut res = vec![s.to_string()];
+    if s.len() == 1 {
+        return Some(res);
+    }
+    if s.ends_with('0') {
+        if s.starts_with('0') {
+            return None;
+        }
+        Some(res)
+    } else {
+        let mut v = s.as_bytes().to_vec();
+        if s.starts_with('0') {
+            res.clear(); // remove vec![s.to_string()]
+            v.insert(1, b'.');
+            res.push(String::from_utf8(v).unwrap());
+        } else {
+            res.extend((1..s.len()).map(|i| {
+                let mut temp = v.clone();
+                temp.insert(i, b'.');
+                String::from_utf8(temp).unwrap()
+            }));
+        }
+        Some(res)
+    }
 }
 
 #[cfg(test)]
@@ -54,19 +57,31 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(num_buses_to_destination(&[&[1, 2, 7], &[3, 6, 7]], 1, 6), 2);
-        debug_assert_eq!(
-            num_buses_to_destination(
-                &[&[7, 12], &[4, 5, 15], &[6], &[15, 19], &[9, 12, 13]],
-                15,
-                12
-            ),
-            -1
+        sort_eq(
+            ambiguous_coordinates("(123)"),
+            ["(1, 2.3)", "(1, 23)", "(1.2, 3)", "(12, 3)"],
+        );
+        sort_eq(
+            ambiguous_coordinates("(0123)"),
+            [
+                "(0, 1.23)",
+                "(0, 12.3)",
+                "(0, 123)",
+                "(0.1, 2.3)",
+                "(0.1, 23)",
+                "(0.12, 3)",
+            ],
+        );
+        sort_eq(
+            ambiguous_coordinates("(00011)"),
+            ["(0, 0.011)", "(0.001, 1)"],
         );
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        sort_eq(ambiguous_coordinates("(0100)"), ["(0, 100)"]);
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
