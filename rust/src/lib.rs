@@ -1,26 +1,58 @@
 mod helper;
 mod trie;
 
-use std::collections::{HashMap, HashSet};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn most_common_word(paragraph: &str, banned: &[&str]) -> String {
-    let banned: HashSet<_> = banned.iter().collect();
-    paragraph
-        .split(|c: char| !c.is_ascii_alphabetic())
-        .fold(HashMap::new(), |mut acc, s| {
-            let s = s.to_ascii_lowercase();
-            if !banned.contains(&s.as_str()) && !s.is_empty() {
-                *acc.entry(s).or_insert(0) += 1;
+pub fn minimum_length_encoding(words: &[&str]) -> i32 {
+    let mut trie = Trie::new(|b: u8| usize::from(b - b'a'));
+    for s in words.iter() {
+        trie.insert(s.bytes().rev());
+    }
+    trie.probe(0)
+}
+
+#[derive(Debug, Clone)]
+struct Trie<F> {
+    data: [Option<Box<Trie<F>>>; 26],
+    index_of: F,
+}
+
+impl<F> Trie<F> {
+    fn new(index_of: F) -> Self {
+        Self {
+            data: [const { None }; 26],
+            index_of,
+        }
+    }
+
+    fn insert<I>(&mut self, mut it: I)
+    where
+        I: Iterator<Item = u8>,
+        F: Fn(u8) -> usize + Clone,
+    {
+        if let Some(byte) = it.next() {
+            let idx = (self.index_of)(byte);
+            if let Some(n) = self.data.get_mut(idx).and_then(|opt| opt.as_mut()) {
+                n.insert(it);
+            } else {
+                let mut node = Box::new(Self::new(self.index_of.clone()));
+                node.insert(it);
+                self.data[idx] = Some(node);
             }
-            acc
-        })
-        .into_iter()
-        .max_by_key(|(_k, v)| *v)
-        .map(|(k, _v)| k)
-        .unwrap_or_default()
+        }
+    }
+
+    fn probe(&self, depth: i32) -> i32 {
+        if self.data.iter().all(|n| n.is_none()) {
+            return 1 + depth; // add in '#'
+        }
+        self.data
+            .iter()
+            .filter_map(|n| n.as_ref())
+            .map(|n| n.probe(1 + depth))
+            .sum()
+    }
 }
 
 #[cfg(test)]
@@ -31,14 +63,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            most_common_word(
-                "Bob hit a ball, the hit BALL flew far after it was hit.",
-                &["hit"]
-            ),
-            "ball"
-        );
-        debug_assert_eq!(most_common_word("a.", &[]), "a");
+        debug_assert_eq!(minimum_length_encoding(&["time", "me", "bell"]), 10);
+        debug_assert_eq!(minimum_length_encoding(&["t"]), 2);
     }
 
     #[test]
