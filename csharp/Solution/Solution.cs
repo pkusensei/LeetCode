@@ -5,15 +5,12 @@ namespace Solution;
 
 public class Solution
 {
-    public bool FlipEquiv(TreeNode root1, TreeNode root2)
-    {
-        if (root1 is null && root2 is null) { return true; }
-        if (root1 is null ^ root2 is null) { return false; }
-        if (root1.val == root2.val)
-        {
-            return (FlipEquiv(root1.left, root2.right) && FlipEquiv(root1.right, root2.left))
-                || (FlipEquiv(root1.left, root2.left) && FlipEquiv(root1.right, root2.right));
-        }
-        return false;
+    public TreeNode PruneTree(TreeNode root) {
+        if (root is null){ return null; }
+        var left = PruneTree(root.left);
+        var right = PruneTree(root.right);
+        if (left is null && right is null && root.val==0){ return null; }
+        (root.left, root.right) = (left, right);
+        return root;
     }
 }
