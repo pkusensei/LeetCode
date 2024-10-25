@@ -5,12 +5,24 @@ namespace Solution;
 
 public class Solution
 {
-    public TreeNode PruneTree(TreeNode root) {
-        if (root is null){ return null; }
-        var left = PruneTree(root.left);
-        var right = PruneTree(root.right);
-        if (left is null && right is null && root.val==0){ return null; }
-        (root.left, root.right) = (left, right);
-        return root;
+    public int NumComponents(ListNode head, int[] nums)
+    {
+        if (head is null) { return 0; }
+        var set = nums.ToHashSet();
+        var curr = head;
+        var res = 0;
+        while (curr is not null)
+        {
+            while (curr is not null && !set.Contains(curr.val))
+            {
+                curr = curr.next;
+            }
+            if (curr is not null) { res += 1; }
+            while (curr is not null && set.Contains(curr.val))
+            {
+                curr = curr.next;
+            }
+        }
+        return res;
     }
 }

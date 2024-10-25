@@ -12,28 +12,24 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
-        var a = TreeNode.Make([1, null, 0, 0, 1]);
-        var b = sol.PruneTree(a);
-        var c = "[1,null,0,null,1]";
-        Assert.AreEqual(c, b.ToString());
+        var a = ListNode.Make([0, 1, 2, 3]);
+        var b = sol.NumComponents(a, [0, 1, 3]);
+        var c = 2;
+        Assert.AreEqual(c, b);
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        var a = TreeNode.Make([1, 0, 1, 0, 0, 0, 1]);
-        var b = sol.PruneTree(a);
-        var c = "[1,null,1,null,1]";
-        Assert.AreEqual(c, b.ToString());
+        var a = ListNode.Make([0, 1, 2, 3, 4]);
+        var b = sol.NumComponents(a, [0, 3, 1, 4]);
+        var c = 2;
+        Assert.AreEqual(c, b);
     }
 
     [TestMethod]
     public void TestMethod3()
     {
-        var a = TreeNode.Make([1, 1, 0, 1, 1, 0, 1, 0]);
-        var b = sol.PruneTree(a);
-        var c = "[1,1,0,1,1,null,1]";
-        Assert.AreEqual(c, b.ToString());
     }
 
     [TestMethod]
