@@ -1,21 +1,33 @@
 mod helper;
 mod trie;
 
-use std::collections::HashSet;
+use std::collections::HashMap;
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn flipgame(fronts: &[i32], backs: &[i32]) -> i32 {
-    let mut nums: Vec<i32> = fronts.iter().chain(backs.iter()).copied().collect();
-    let dels: HashSet<_> = fronts
-        .iter()
-        .zip(backs.iter())
-        .filter_map(|(a, b)| if a == b { Some(*a) } else { None })
-        .collect();
-    nums.retain(|n| !dels.contains(n));
-    nums.sort_unstable();
-    nums.first().copied().unwrap_or(0)
+pub fn num_factored_binary_trees(arr: &mut [i32]) -> i32 {
+    const MOD: i64 = 1_000_000_007;
+    arr.sort_unstable();
+    let mut dp: HashMap<i64, i64> = HashMap::new();
+    for &num in arr.iter() {
+        let num = i64::from(num);
+        let mut count = 1;
+        for &left in dp.keys() {
+            if num % left == 0 {
+                let right = num / left;
+                if let Some(&v) = dp.get(&right) {
+                    // For 16 = 2*8 4*4
+                    // [2,8] and [8,2] are both counted
+                    // but each key is visited only once
+                    // i.e [4,4] is counted only once
+                    count = (count + v * dp[&left]) % MOD;
+                }
+            }
+        }
+        dp.insert(num, count);
+    }
+    dp.into_values().fold(0, |acc, v| (acc + v) % MOD) as i32
 }
 
 #[cfg(test)]
@@ -26,8 +38,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(flipgame(&[1, 2, 4, 4, 7], &[1, 3, 4, 1, 3]), 2);
-        debug_assert_eq!(flipgame(&[1], &[1]), 0);
+        debug_assert_eq!(num_factored_binary_trees(&mut [2, 4]), 3);
+        debug_assert_eq!(num_factored_binary_trees(&mut [2, 4, 5, 10]), 7);
+        debug_assert_eq!(num_factored_binary_trees(&mut [2, 4, 8, 16]), 23);
     }
 
     #[test]
