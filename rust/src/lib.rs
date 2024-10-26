@@ -4,21 +4,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn unique_letter_string(s: &str) -> i32 {
-    let n = s.len();
-    // latest two occurrences of each char
-    let mut indices = [[-1, -1]; 26];
+pub fn consecutive_numbers_sum(n: i32) -> i32 {
+    // n = a + (a+1) + (a+2) + .. + (a+k)
+    // n = a*(1+k) + (1+2+..k)
     let mut res = 0;
-    for (idx, b) in s.bytes().enumerate() {
-        let idx = idx as i32;
-        let pos = usize::from(b - b'A');
-        res += (idx - indices[pos][1]) * (indices[pos][1] - indices[pos][0]);
-        indices[pos] = [indices[pos][1], idx];
+    let mut k = 0;
+    while k * (1 + k) / 2 < n {
+        let delta = n - k * (1 + k) / 2;
+        if delta % (1 + k) == 0 {
+            res += 1;
+        }
+        k += 1;
     }
-    res + indices
-        .into_iter()
-        .map(|v| (n as i32 - v[1]) * (v[1] - v[0]))
-        .sum::<i32>()
+    res
 }
 
 #[cfg(test)]
@@ -29,9 +27,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(unique_letter_string("ABC"), 10);
-        debug_assert_eq!(unique_letter_string("ABA"), 8);
-        debug_assert_eq!(unique_letter_string("LEETCODE"), 92);
+        debug_assert_eq!(consecutive_numbers_sum(5), 2);
+        debug_assert_eq!(consecutive_numbers_sum(9), 3);
+        debug_assert_eq!(consecutive_numbers_sum(15), 4);
     }
 
     #[test]
