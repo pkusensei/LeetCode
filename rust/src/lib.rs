@@ -1,32 +1,49 @@
 mod helper;
 mod trie;
 
+use std::collections::{HashMap, HashSet, VecDeque};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_profit_assignment(difficulty: &[i32], profit: &[i32], worker: &[i32]) -> i32 {
-    let mut map = difficulty
-        .iter()
-        .zip(profit.iter())
-        .map(|(&d, &p)| (d, p))
-        .fold(std::collections::BTreeMap::new(), |mut acc, (k, v)| {
-            if acc.get(&k).is_none_or(|&n| n < v) {
-                acc.insert(k, v);
+pub fn largest_island(grid: &[&[i32]]) -> i32 {
+    let mut seen = HashSet::new();
+    let mut fronts: HashMap<Coord, Vec<i32>> = HashMap::new();
+    for (y, row) in grid.iter().enumerate() {
+        for (x, &n) in row.iter().enumerate() {
+            if n == 1 && seen.insert((x, y)) {
+                let (island, front) = bfs(grid, (x, y), &mut seen);
+                for c in front {
+                    fronts.entry(c).or_default().push(island);
+                }
             }
-            acc
-        });
-    let mut prev = 0;
-    for v in map.values_mut() {
-        if *v > prev {
-            prev = *v;
         }
-        *v = (*v).max(prev);
     }
-    let mut res = 0;
-    for &w in worker.iter() {
-        res += map.range(..=w).next_back().map(|(_, &v)| v).unwrap_or(0);
+    let n = grid.len();
+    if seen.len() == n * n {
+        return (n * n) as i32;
     }
-    res
+    1 + fronts.values().map(|v| v.iter().sum()).max().unwrap_or(0)
+}
+
+fn bfs(grid: &[&[i32]], (x, y): Coord, seen: &mut HashSet<Coord>) -> (i32, HashSet<Coord>) {
+    let mut front = HashSet::new();
+    let mut queue = VecDeque::from([(x, y)]);
+    seen.insert((x, y));
+    let mut count = 0;
+    while let Some((x, y)) = queue.pop_front() {
+        count += 1;
+        for (nx, ny) in neighbors((x, y)) {
+            match grid.get(ny).and_then(|r| r.get(nx)) {
+                Some(&1) if seen.insert((nx, ny)) => queue.push_back((nx, ny)),
+                Some(&0) => {
+                    front.insert((nx, ny));
+                }
+                _ => (),
+            }
+        }
+    }
+    (count, front)
 }
 
 #[cfg(test)]
@@ -37,25 +54,24 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            max_profit_assignment(&[2, 4, 6, 8, 10], &[10, 20, 30, 40, 50], &[4, 5, 6, 7]),
-            100
-        );
-        debug_assert_eq!(
-            max_profit_assignment(&[85, 47, 57], &[24, 66, 99], &[40, 25, 25]),
-            0
-        );
+        debug_assert_eq!(largest_island(&[&[1, 0], &[0, 1]]), 3);
+        debug_assert_eq!(largest_island(&[&[1, 1], &[1, 0]]), 4);
+        debug_assert_eq!(largest_island(&[&[1, 1], &[1, 1]]), 4);
     }
 
     #[test]
     fn test() {
         debug_assert_eq!(
-            max_profit_assignment(
-                &[66, 1, 28, 73, 53, 35, 45, 60, 100, 44, 59, 94, 27, 88, 7, 18, 83, 18, 72, 63],
-                &[66, 20, 84, 81, 56, 40, 37, 82, 53, 45, 43, 96, 67, 27, 12, 54, 98, 19, 47, 77],
-                &[61, 33, 68, 38, 63, 45, 1, 10, 53, 23, 66, 70, 14, 51, 94, 18, 28, 78, 100, 16]
-            ),
-            1392
+            largest_island(&[
+                &[0, 0, 0, 0, 0, 0, 0],
+                &[0, 1, 1, 1, 1, 0, 0],
+                &[0, 1, 0, 0, 1, 0, 0],
+                &[1, 0, 1, 0, 1, 0, 0],
+                &[0, 1, 0, 0, 1, 0, 0],
+                &[0, 1, 0, 0, 1, 0, 0],
+                &[0, 1, 1, 1, 1, 0, 0]
+            ]),
+            18
         );
     }
 
