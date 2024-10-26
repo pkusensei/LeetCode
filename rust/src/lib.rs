@@ -4,17 +4,14 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn consecutive_numbers_sum(n: i32) -> i32 {
-    // n = a + (a+1) + (a+2) + .. + (a+k)
-    // n = a*(1+k) + (1+2+..k)
-    let mut res = 0;
-    let mut k = 0;
-    while k * (1 + k) / 2 < n {
-        let delta = n - k * (1 + k) / 2;
-        if delta % (1 + k) == 0 {
-            res += 1;
+pub fn large_group_positions(s: &str) -> Vec<[i32; 2]> {
+    let mut res = vec![];
+    let mut idx = 0;
+    for ch in s.as_bytes().chunk_by(|a, b| *a == *b) {
+        if ch.len() >= 3 {
+            res.push([idx as i32, (idx + ch.len() - 1) as i32]);
         }
-        k += 1;
+        idx += ch.len();
     }
     res
 }
@@ -27,9 +24,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(consecutive_numbers_sum(5), 2);
-        debug_assert_eq!(consecutive_numbers_sum(9), 3);
-        debug_assert_eq!(consecutive_numbers_sum(15), 4);
+        debug_assert_eq!(large_group_positions("abbxxxxzzy"), [[3, 6]]);
+        debug_assert!(large_group_positions("abc").is_empty());
+        debug_assert_eq!(
+            large_group_positions("abcdddeeeeaabbbcd"),
+            [[3, 5], [6, 9], [12, 14]]
+        );
     }
 
     #[test]
