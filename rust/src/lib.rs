@@ -1,33 +1,30 @@
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_factored_binary_trees(arr: &mut [i32]) -> i32 {
-    const MOD: i64 = 1_000_000_007;
-    arr.sort_unstable();
-    let mut dp: HashMap<i64, i64> = HashMap::new();
-    for &num in arr.iter() {
-        let num = i64::from(num);
-        let mut count = 1;
-        for &left in dp.keys() {
-            if num % left == 0 {
-                let right = num / left;
-                if let Some(&v) = dp.get(&right) {
-                    // For 16 = 2*8 4*4
-                    // [2,8] and [8,2] are both counted
-                    // but each key is visited only once
-                    // i.e [4,4] is counted only once
-                    count = (count + v * dp[&left]) % MOD;
-                }
-            }
-        }
-        dp.insert(num, count);
+pub fn to_goat_latin(sentence: &str) -> String {
+    sentence
+        .split_whitespace()
+        .enumerate()
+        .map(|(i, s)| transform(s, i))
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+fn transform(s: &str, idx: usize) -> String {
+    const VOWELS: &str = "aeiouAEIOU";
+    let mut res = vec![];
+    if s.starts_with(|c| VOWELS.contains(c)) {
+        res.extend(s.bytes());
+    } else {
+        res.extend(s[1..].bytes());
+        res.push(s.as_bytes()[0]);
     }
-    dp.into_values().fold(0, |acc, v| (acc + v) % MOD) as i32
+    res.extend_from_slice(b"ma");
+    res.extend(std::iter::repeat(b'a').take(1 + idx));
+    String::from_utf8(res).unwrap()
 }
 
 #[cfg(test)]
@@ -38,9 +35,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(num_factored_binary_trees(&mut [2, 4]), 3);
-        debug_assert_eq!(num_factored_binary_trees(&mut [2, 4, 5, 10]), 7);
-        debug_assert_eq!(num_factored_binary_trees(&mut [2, 4, 8, 16]), 23);
+        debug_assert_eq!(
+            to_goat_latin(&"I speak Goat Latin"),
+            "Imaa peaksmaaa oatGmaaaa atinLmaaaaa"
+        );
+        debug_assert_eq!(to_goat_latin(& "The quick brown fox jumped over the lazy dog"),"heTmaa uickqmaaa rownbmaaaa oxfmaaaaa umpedjmaaaaaa overmaaaaaaa hetmaaaaaaaa azylmaaaaaaaaa ogdmaaaaaaaaaa");
     }
 
     #[test]
