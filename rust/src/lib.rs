@@ -4,16 +4,26 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn large_group_positions(s: &str) -> Vec<[i32; 2]> {
-    let mut res = vec![];
-    let mut idx = 0;
-    for ch in s.as_bytes().chunk_by(|a, b| *a == *b) {
-        if ch.len() >= 3 {
-            res.push([idx as i32, (idx + ch.len() - 1) as i32]);
-        }
-        idx += ch.len();
+pub fn mask_pii(s: &str) -> String {
+    if let Some((name, dom)) = s.split_once('@') {
+        let name = name.as_bytes();
+        let (a, b) = (name[0], name.last().copied().unwrap());
+        let mut v = vec![a.to_ascii_lowercase()];
+        v.extend_from_slice(b"*****");
+        v.push(b.to_ascii_lowercase());
+        let r = String::from_utf8(v).unwrap();
+        format!("{}@{}", r, dom.to_ascii_lowercase())
+    } else {
+        let digits: Vec<_> = s.bytes().filter(|b| b.is_ascii_digit()).collect();
+        let mut code = match digits.len() {
+            11 => b"+*-***-***-".to_vec(),
+            12 => b"+**-***-***-".to_vec(),
+            13 => b"+***-***-***-".to_vec(),
+            _ => b"***-***-".to_vec(),
+        };
+        code.extend_from_slice(&digits[digits.len() - 4..]);
+        String::from_utf8(code).unwrap()
     }
-    res
 }
 
 #[cfg(test)]
@@ -24,12 +34,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(large_group_positions("abbxxxxzzy"), [[3, 6]]);
-        debug_assert!(large_group_positions("abc").is_empty());
-        debug_assert_eq!(
-            large_group_positions("abcdddeeeeaabbbcd"),
-            [[3, 5], [6, 9], [12, 14]]
-        );
+        debug_assert_eq!(mask_pii("LeetCode@LeetCode.com"), "l*****e@leetcode.com");
+        debug_assert_eq!(mask_pii("AB@qq.com"), "a*****b@qq.com");
+        debug_assert_eq!(mask_pii("1(234)567-890"), "***-***-7890");
     }
 
     #[test]
