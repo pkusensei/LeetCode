@@ -4,27 +4,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn to_goat_latin(sentence: &str) -> String {
-    sentence
-        .split_whitespace()
-        .enumerate()
-        .map(|(i, s)| transform(s, i))
-        .collect::<Vec<_>>()
-        .join(" ")
-}
-
-fn transform(s: &str, idx: usize) -> String {
-    const VOWELS: &str = "aeiouAEIOU";
-    let mut res = vec![];
-    if s.starts_with(|c| VOWELS.contains(c)) {
-        res.extend(s.bytes());
-    } else {
-        res.extend(s[1..].bytes());
-        res.push(s.as_bytes()[0]);
+pub fn num_friend_requests(ages: &mut [i32]) -> i32 {
+    ages.sort_unstable();
+    let mut res = 0;
+    for &num in ages.iter() {
+        let min = num / 2 + 7;
+        if min < num {
+            let left = ages.partition_point(|&n| n <= min);
+            let right = ages.partition_point(|&n| n <= num);
+            res += right.saturating_sub(1 + left);
+        }
     }
-    res.extend_from_slice(b"ma");
-    res.extend(std::iter::repeat(b'a').take(1 + idx));
-    String::from_utf8(res).unwrap()
+    res as _
 }
 
 #[cfg(test)]
@@ -35,11 +26,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            to_goat_latin(&"I speak Goat Latin"),
-            "Imaa peaksmaaa oatGmaaaa atinLmaaaaa"
-        );
-        debug_assert_eq!(to_goat_latin(& "The quick brown fox jumped over the lazy dog"),"heTmaa uickqmaaa rownbmaaaa oxfmaaaaa umpedjmaaaaaa overmaaaaaaa hetmaaaaaaaa azylmaaaaaaaaa ogdmaaaaaaaaaa");
+        // debug_assert_eq!(num_friend_requests(&mut [16, 16]), 2);
+        debug_assert_eq!(num_friend_requests(&mut [16, 17, 18]), 2);
+        debug_assert_eq!(num_friend_requests(&mut [20, 30, 100, 110, 120]), 3);
     }
 
     #[test]
