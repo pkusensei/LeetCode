@@ -4,26 +4,14 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn mask_pii(s: &str) -> String {
-    if let Some((name, dom)) = s.split_once('@') {
-        let name = name.as_bytes();
-        let (a, b) = (name[0], name.last().copied().unwrap());
-        let mut v = vec![a.to_ascii_lowercase()];
-        v.extend_from_slice(b"*****");
-        v.push(b.to_ascii_lowercase());
-        let r = String::from_utf8(v).unwrap();
-        format!("{}@{}", r, dom.to_ascii_lowercase())
-    } else {
-        let digits: Vec<_> = s.bytes().filter(|b| b.is_ascii_digit()).collect();
-        let mut code = match digits.len() {
-            11 => b"+*-***-***-".to_vec(),
-            12 => b"+**-***-***-".to_vec(),
-            13 => b"+***-***-***-".to_vec(),
-            _ => b"***-***-".to_vec(),
-        };
-        code.extend_from_slice(&digits[digits.len() - 4..]);
-        String::from_utf8(code).unwrap()
+pub fn flip_and_invert_image(mut image: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
+    for v in image.iter_mut() {
+        v.reverse();
+        for n in v.iter_mut() {
+            *n = 1 - *n;
+        }
     }
+    image
 }
 
 #[cfg(test)]
@@ -34,9 +22,19 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(mask_pii("LeetCode@LeetCode.com"), "l*****e@leetcode.com");
-        debug_assert_eq!(mask_pii("AB@qq.com"), "a*****b@qq.com");
-        debug_assert_eq!(mask_pii("1(234)567-890"), "***-***-7890");
+        debug_assert_eq!(
+            flip_and_invert_image(vec![vec![1, 1, 0], vec![1, 0, 1], vec![0, 0, 0]]),
+            [[1, 0, 0], [0, 1, 0], [1, 1, 1]]
+        );
+        debug_assert_eq!(
+            flip_and_invert_image(vec![
+                vec![1, 1, 0, 0],
+                vec![1, 0, 0, 1],
+                vec![0, 1, 1, 1],
+                vec![1, 0, 1, 0]
+            ]),
+            [[1, 1, 0, 0], [0, 1, 1, 0], [0, 0, 0, 1], [1, 0, 1, 0]]
+        );
     }
 
     #[test]
