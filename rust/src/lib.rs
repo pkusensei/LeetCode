@@ -4,12 +4,44 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_rectangle_overlap(rec1: [i32; 4], rec2: [i32; 4]) -> bool {
-    overlap(rec1[0], rec1[2], rec2[0], rec2[2]) && overlap(rec1[1], rec1[3], rec2[1], rec2[3])
+pub fn new21_game(n: i32, k: i32, max_pts: i32) -> f64 {
+    // dfs(0, n, k, max_pts, &mut vec![-1.0; 1 + n as usize])
+    if k == 0 || n >= k + max_pts {
+        return 1.0;
+    }
+    let [n, k, mp] = [n, k, max_pts].map(|v| v as usize);
+    let mut dp = Vec::with_capacity(1 + n);
+    dp.push(1.0);
+    let mut curr = 1.0; // the sum of previous window [score-mp..score-1]
+    for score in 1..=n {
+        dp.push(curr / mp as f64);
+        if score < k {
+            curr += dp[score];
+        }
+        if score >= mp {
+            curr -= dp[score - mp];
+        }
+    }
+    dp[k..].iter().sum()
 }
 
-fn overlap(x1: i32, x2: i32, x3: i32, x4: i32) -> bool {
-    !(x2 <= x3 || x4 <= x1)
+// tle
+fn dfs(curr: i32, n: i32, k: i32, max_pts: i32, dp: &mut [f64]) -> f64 {
+    if n < curr {
+        return 0.0;
+    }
+    if k <= curr {
+        return 1.0;
+    }
+    if dp[curr as usize] > -1.0 {
+        return dp[curr as usize];
+    }
+    let mut res = 0.0;
+    for delta in 1..=max_pts {
+        res += dfs(curr + delta, n, k, max_pts, dp) / f64::from(max_pts)
+    }
+    dp[curr as usize] = res;
+    res
 }
 
 #[cfg(test)]
@@ -20,9 +52,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(is_rectangle_overlap([0, 0, 2, 2], [1, 1, 3, 3]));
-        debug_assert!(!is_rectangle_overlap([0, 0, 1, 1], [1, 0, 2, 1]));
-        debug_assert!(!is_rectangle_overlap([0, 0, 1, 1], [2, 2, 3, 3]));
+        // debug_assert_eq!(new21_game(10, 1, 10), 1.0);
+        debug_assert_eq!(new21_game(6, 1, 10), 0.6);
+        debug_assert_eq!(new21_game(21, 17, 10), 0.73278);
     }
 
     #[test]
