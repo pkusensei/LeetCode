@@ -1,39 +1,29 @@
+mod dsu;
 mod helper;
 mod trie;
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn push_dominoes(dominoes: &str) -> String {
-    let n = dominoes.len();
-    let mut forces = Vec::with_capacity(n);
-    let mut curr = 0;
-    for b in dominoes.bytes() {
-        curr = match b {
-            b'R' => n as i32,
-            b'L' => 0,
-            // influence of domino decreases per distance
-            _ => (curr - 1).max(0),
-        };
-        forces.push(curr);
+pub fn num_similar_groups(strs: &[&str]) -> i32 {
+    let mut dsu = dsu::DSU::new(strs.len());
+    for (i1, a) in strs.iter().enumerate() {
+        for (i2, b) in strs.iter().enumerate().skip(1 + i1) {
+            if check(a, b) {
+                dsu.union(i1, i2);
+            }
+        }
     }
-    curr = 0;
-    for (i, b) in dominoes.bytes().enumerate().rev() {
-        curr = match b {
-            b'R' => 0,
-            b'L' => n as i32,
-            _ => (curr - 1).max(0),
-        };
-        forces[i] -= curr;
+    dsu.count() as i32
+}
+
+fn check(a: &str, b: &str) -> bool {
+    let mut it = a.bytes().zip(b.bytes()).filter(|&(a, b)| a != b);
+    match (it.next(), it.next()) {
+        (None, None) => true,
+        (Some((a1, b1)), Some((a2, b2))) => it.next().is_none() && (a1, a2) == (b2, b1),
+        _ => false,
     }
-    forces
-        .into_iter()
-        .map(|f| match f.cmp(&0) {
-            std::cmp::Ordering::Less => 'L',
-            std::cmp::Ordering::Equal => '.',
-            std::cmp::Ordering::Greater => 'R',
-        })
-        .collect()
 }
 
 #[cfg(test)]
@@ -44,8 +34,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(push_dominoes("RR.L"), "RR.L");
-        debug_assert_eq!(push_dominoes(".L.R...LR..L.."), "LL.RR.LLRRLL..");
+        debug_assert_eq!(num_similar_groups(&["tars", "rats", "arts", "star"]), 2);
+        debug_assert_eq!(num_similar_groups(&["omv", "ovm"]), 1);
     }
 
     #[test]
