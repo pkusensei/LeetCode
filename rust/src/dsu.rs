@@ -1,3 +1,4 @@
+#[allow(clippy::upper_case_acronyms)]
 #[derive(Debug, Clone)]
 pub struct DSU {
     parent: Vec<usize>,
@@ -5,6 +6,7 @@ pub struct DSU {
     count: usize,
 }
 
+#[allow(dead_code)]
 impl DSU {
     pub fn new(size: usize) -> Self {
         Self {

@@ -2,28 +2,22 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::{HashSet, VecDeque};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_similar_groups(strs: &[&str]) -> i32 {
-    let mut dsu = dsu::DSU::new(strs.len());
-    for (i1, a) in strs.iter().enumerate() {
-        for (i2, b) in strs.iter().enumerate().skip(1 + i1) {
-            if check(a, b) {
-                dsu.union(i1, i2);
+pub fn can_visit_all_rooms(rooms: &[&[i32]]) -> bool {
+    let mut queue = VecDeque::from([0]);
+    let mut seen = HashSet::from([0]);
+    while let Some(curr) = queue.pop_front() {
+        for &num in rooms[curr] {
+            if seen.insert(num) {
+                queue.push_back(num as usize);
             }
         }
     }
-    dsu.count() as i32
-}
-
-fn check(a: &str, b: &str) -> bool {
-    let mut it = a.bytes().zip(b.bytes()).filter(|&(a, b)| a != b);
-    match (it.next(), it.next()) {
-        (None, None) => true,
-        (Some((a1, b1)), Some((a2, b2))) => it.next().is_none() && (a1, a2) == (b2, b1),
-        _ => false,
-    }
+    seen.len() == rooms.len()
 }
 
 #[cfg(test)]
@@ -34,8 +28,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(num_similar_groups(&["tars", "rats", "arts", "star"]), 2);
-        debug_assert_eq!(num_similar_groups(&["omv", "ovm"]), 1);
+        debug_assert!(can_visit_all_rooms(&[&[1], &[2], &[3], &[]]));
+        debug_assert!(!can_visit_all_rooms(&[&[1, 3], &[3, 0, 1], &[2], &[0]]));
     }
 
     #[test]
