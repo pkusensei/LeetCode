@@ -4,14 +4,45 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn flip_and_invert_image(mut image: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
-    for v in image.iter_mut() {
-        v.reverse();
-        for n in v.iter_mut() {
-            *n = 1 - *n;
+pub fn count_squares(matrix: &[&[i32]]) -> i32 {
+    let (rows, cols) = get_dimensions(matrix);
+    let mut dp = vec![vec![0; 1 + cols]; 1 + rows];
+    for (y, r) in matrix.iter().enumerate() {
+        for (x, &n) in r.iter().enumerate() {
+            if n == 1 {
+                dp[1 + y][1 + x] = 1 + dp[y][x].min(dp[y + 1][x]).min(dp[y][x + 1]);
+            }
         }
     }
-    image
+    dp.into_iter().flatten().sum()
+}
+
+fn top_down(matrix: &[&[i32]]) -> i32 {
+    fn solve(matrix: &[&[i32]], dp: &mut [Vec<i32>], row: usize, col: usize) -> i32 {
+        if matrix.get(row).is_none_or(|r| r.get(col).is_none()) {
+            return 0;
+        }
+        if matrix[row][col] == 0 {
+            return 0;
+        }
+        if dp[row][col] > -1 {
+            return dp[row][col];
+        }
+        let right = solve(matrix, dp, row, 1 + col);
+        let down = solve(matrix, dp, 1 + row, col);
+        let diag = solve(matrix, dp, 1 + row, 1 + col);
+        dp[row][col] = 1 + right.min(down).min(diag);
+        dp[row][col]
+    }
+    let (rows, cols) = get_dimensions(matrix);
+    let mut dp = vec![vec![-1; cols]; rows];
+    let mut res = 0;
+    for r in 0..rows {
+        for c in 0..cols {
+            res += solve(matrix, &mut dp, r, c);
+        }
+    }
+    res // Well dp still has -1 in it
 }
 
 #[cfg(test)]
@@ -22,19 +53,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            flip_and_invert_image(vec![vec![1, 1, 0], vec![1, 0, 1], vec![0, 0, 0]]),
-            [[1, 0, 0], [0, 1, 0], [1, 1, 1]]
-        );
-        debug_assert_eq!(
-            flip_and_invert_image(vec![
-                vec![1, 1, 0, 0],
-                vec![1, 0, 0, 1],
-                vec![0, 1, 1, 1],
-                vec![1, 0, 1, 0]
-            ]),
-            [[1, 1, 0, 0], [0, 1, 1, 0], [0, 0, 0, 1], [1, 0, 1, 0]]
-        );
+        debug_assert_eq!(top_down(&[&[0, 1, 1, 1], &[1, 1, 1, 1], &[0, 1, 1, 1]]), 15);
+        debug_assert_eq!(top_down(&[&[1, 0, 1], &[1, 1, 0], &[1, 1, 0]]), 7);
     }
 
     #[test]
