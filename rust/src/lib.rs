@@ -1,41 +1,15 @@
 mod helper;
 mod trie;
 
-use std::collections::{HashMap, HashSet};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn largest_overlap(img1: &[&[i32]], img2: &[&[i32]]) -> i32 {
-    let n = img1.len();
-    let mut source = vec![];
-    let mut target = HashSet::new();
-    for y in 0..n {
-        for x in 0..n {
-            if img1[y][x] == 1 {
-                source.push([x as i32, y as i32]);
-            }
-            if img2[y][x] == 1 {
-                target.insert([x as i32, y as i32]);
-            }
-        }
-    }
-    let mut moves = HashMap::new();
-    for &[x1, y1] in source.iter() {
-        for &[x2, y2] in target.iter() {
-            let t = [x2 - x1, y2 - y1];
-            moves.entry(t).or_insert_with(|| count(t, &source, &target));
-        }
-    }
-    moves.into_values().max().unwrap_or(0)
+pub fn is_rectangle_overlap(rec1: [i32; 4], rec2: [i32; 4]) -> bool {
+    overlap(rec1[0], rec1[2], rec2[0], rec2[2]) && overlap(rec1[1], rec1[3], rec2[1], rec2[3])
 }
 
-fn count(t: [i32; 2], source: &[[i32; 2]], target: &HashSet<[i32; 2]>) -> i32 {
-    source
-        .iter()
-        .map(|v| [v[0] + t[0], v[1] + t[1]])
-        .filter(|v| target.contains(v))
-        .count() as i32
+fn overlap(x1: i32, x2: i32, x3: i32, x4: i32) -> bool {
+    !(x2 <= x3 || x4 <= x1)
 }
 
 #[cfg(test)]
@@ -46,13 +20,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            largest_overlap(
-                &[&[1, 1, 0], &[0, 1, 0], &[0, 1, 0]],
-                &[&[0, 0, 0], &[0, 1, 1], &[0, 0, 1]]
-            ),
-            3
-        );
+        debug_assert!(is_rectangle_overlap([0, 0, 2, 2], [1, 1, 3, 3]));
+        debug_assert!(!is_rectangle_overlap([0, 0, 1, 1], [1, 0, 2, 1]));
+        debug_assert!(!is_rectangle_overlap([0, 0, 1, 1], [2, 2, 3, 3]));
     }
 
     #[test]
