@@ -2,59 +2,23 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::{HashMap, HashSet, VecDeque};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_secret_word(words: &[&str], master: &Master) {
-    // str_idx -> common count -> Vec<str_idx>
-    let mut graph: HashMap<usize, HashMap<usize, HashSet<usize>>> = HashMap::new();
-    for (i1, w1) in words.iter().enumerate() {
-        for (i2, w2) in words.iter().enumerate().skip(1 + i1) {
-            let s = similar(&w1, &w2);
-            graph
-                .entry(i1)
-                .or_default()
-                .entry(s)
-                .or_default()
-                .insert(i2);
-            graph
-                .entry(i2)
-                .or_default()
-                .entry(s)
-                .or_default()
-                .insert(i1);
-        }
-    }
-    let mut candid: VecDeque<_> = (0..words.len()).collect();
-    let mut seen = HashSet::new();
-    while let Some(idx) = candid.pop_front() {
-        if !seen.insert(idx) {
-            continue;
-        }
-        match master.guess(words[idx].to_string()) {
-            6 => break,
-            n => {
-                candid = graph[&idx][&(n as usize)].iter().copied().collect();
-            }
-        }
-    }
+pub fn backspace_compare(s: &str, t: &str) -> bool {
+    process(s) == process(t)
 }
 
-fn similar(a: &str, b: &str) -> usize {
-    a.bytes()
-        .zip(b.bytes())
-        .enumerate()
-        .filter_map(|(i, (b1, b2))| if b1 == b2 { Some(i) } else { None })
-        .count()
-}
-
-struct Master;
-impl Master {
-    fn guess(&self, word: String) -> i32 {
-        0
+fn process(s: &str) -> Vec<u8> {
+    let mut stack = vec![];
+    for b in s.bytes() {
+        if b == b'#' {
+            stack.pop();
+        } else {
+            stack.push(b);
+        }
     }
+    stack
 }
 
 #[cfg(test)]
@@ -64,7 +28,11 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        debug_assert!(backspace_compare("ab#c", "ad#c"));
+        debug_assert!(backspace_compare("ab##", "c#d#",));
+        debug_assert!(!backspace_compare("a#c", "b",))
+    }
 
     #[test]
     fn test() {}
