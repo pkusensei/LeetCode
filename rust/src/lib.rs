@@ -2,22 +2,31 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::{HashSet, VecDeque};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn can_visit_all_rooms(rooms: &[&[i32]]) -> bool {
-    let mut queue = VecDeque::from([0]);
-    let mut seen = HashSet::from([0]);
-    while let Some(curr) = queue.pop_front() {
-        for &num in rooms[curr] {
-            if seen.insert(num) {
-                queue.push_back(num as usize);
-            }
+pub fn longest_square_streak(nums: &mut [i32]) -> i32 {
+    nums.sort_unstable();
+    let mut seen = std::collections::HashSet::new();
+    let mut res = -1;
+    for &(mut num) in nums.iter() {
+        if !seen.insert(num) {
+            continue;
+        }
+        let mut count = 1;
+        while num
+            .checked_mul(num)
+            .is_some_and(|v| nums.binary_search(&v).is_ok())
+        {
+            num *= num;
+            seen.insert(num);
+            count += 1;
+        }
+        if count > 1 {
+            res = res.max(count);
         }
     }
-    seen.len() == rooms.len()
+    res
 }
 
 #[cfg(test)]
@@ -28,8 +37,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(can_visit_all_rooms(&[&[1], &[2], &[3], &[]]));
-        debug_assert!(!can_visit_all_rooms(&[&[1, 3], &[3, 0, 1], &[2], &[0]]));
+        debug_assert_eq!(longest_square_streak(&mut [4, 3, 6, 16, 8, 2]), 3);
+        debug_assert_eq!(longest_square_streak(&mut [2, 3, 5, 6, 7]), -1);
     }
 
     #[test]
