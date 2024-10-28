@@ -5,20 +5,30 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn backspace_compare(s: &str, t: &str) -> bool {
-    process(s) == process(t)
-}
-
-fn process(s: &str) -> Vec<u8> {
-    let mut stack = vec![];
-    for b in s.bytes() {
-        if b == b'#' {
-            stack.pop();
-        } else {
-            stack.push(b);
+pub fn longest_mountain(arr: &[i32]) -> i32 {
+    let n = arr.len();
+    let mut idx = 0;
+    let mut res = 0;
+    while idx < n {
+        let start = idx;
+        while arr.get(1 + idx).is_some_and(|&v| arr[idx] < v) {
+            idx += 1; // try find peak
         }
+        if idx == start {
+            idx += 1; // not valid peak
+            continue;
+        }
+        let peak = idx;
+        while arr.get(1 + idx).is_some_and(|&v| arr[idx] > v) {
+            idx += 1
+        }
+        if peak == idx {
+            idx += 1; // possible plateau
+            continue;
+        }
+        res = res.max(idx - start + 1);
     }
-    stack
+    res as _
 }
 
 #[cfg(test)]
@@ -29,9 +39,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(backspace_compare("ab#c", "ad#c"));
-        debug_assert!(backspace_compare("ab##", "c#d#",));
-        debug_assert!(!backspace_compare("a#c", "b",))
+        debug_assert_eq!(longest_mountain(&[2, 1, 4, 7, 3, 2, 5]), 5);
+        debug_assert_eq!(longest_mountain(&[2, 2, 2]), 0);
     }
 
     #[test]
