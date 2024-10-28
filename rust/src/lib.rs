@@ -2,33 +2,31 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::BTreeMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn longest_mountain(arr: &[i32]) -> i32 {
-    let n = arr.len();
-    let mut idx = 0;
-    let mut res = 0;
-    while idx < n {
-        let start = idx;
-        while arr.get(1 + idx).is_some_and(|&v| arr[idx] < v) {
-            idx += 1; // try find peak
-        }
-        if idx == start {
-            idx += 1; // not valid peak
-            continue;
-        }
-        let peak = idx;
-        while arr.get(1 + idx).is_some_and(|&v| arr[idx] > v) {
-            idx += 1
-        }
-        if peak == idx {
-            idx += 1; // possible plateau
-            continue;
-        }
-        res = res.max(idx - start + 1);
+pub fn is_n_straight_hand(hand: &[i32], size: i32) -> bool {
+    if hand.len() % size as usize > 0 {
+        return false;
     }
-    res as _
+    let mut nums = hand.iter().fold(BTreeMap::new(), |mut acc, &num| {
+        *acc.entry(num).or_insert(0) += 1;
+        acc
+    });
+    while let Some(start) = nums.keys().next().copied() {
+        let mut count = 0;
+        for (_, v) in nums.range_mut(start..start + size) {
+            *v -= 1;
+            count += 1;
+        }
+        if count != size {
+            return false;
+        }
+        nums.retain(|_, &mut v| v > 0);
+    }
+    true
 }
 
 #[cfg(test)]
@@ -39,12 +37,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(longest_mountain(&[2, 1, 4, 7, 3, 2, 5]), 5);
-        debug_assert_eq!(longest_mountain(&[2, 2, 2]), 0);
+        debug_assert!(is_n_straight_hand(&[1, 2, 3, 6, 2, 3, 4, 7, 8], 3));
+        debug_assert!(!is_n_straight_hand(&[1, 2, 3, 4, 5], 4));
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert!(is_n_straight_hand(&[1, 2, 3, 4, 5, 6], 2));
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
