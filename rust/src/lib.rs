@@ -2,62 +2,59 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::{HashMap, HashSet, VecDeque};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn split_into_fibonacci(num: &str) -> Vec<i32> {
-    let mut res = vec![];
-    backtrack(num, 0, &mut res).unwrap_or_default()
+pub fn find_secret_word(words: &[&str], master: &Master) {
+    // str_idx -> common count -> Vec<str_idx>
+    let mut graph: HashMap<usize, HashMap<usize, HashSet<usize>>> = HashMap::new();
+    for (i1, w1) in words.iter().enumerate() {
+        for (i2, w2) in words.iter().enumerate().skip(1 + i1) {
+            let s = similar(&w1, &w2);
+            graph
+                .entry(i1)
+                .or_default()
+                .entry(s)
+                .or_default()
+                .insert(i2);
+            graph
+                .entry(i2)
+                .or_default()
+                .entry(s)
+                .or_default()
+                .insert(i1);
+        }
+    }
+    let mut candid: VecDeque<_> = (0..words.len()).collect();
+    let mut seen = HashSet::new();
+    while let Some(idx) = candid.pop_front() {
+        if !seen.insert(idx) {
+            continue;
+        }
+        match master.guess(words[idx].to_string()) {
+            6 => break,
+            n => {
+                candid = graph[&idx][&(n as usize)].iter().copied().collect();
+            }
+        }
+    }
 }
 
-fn backtrack(num: &str, idx: usize, curr: &mut Vec<i32>) -> Option<Vec<i32>> {
-    if idx == num.len() {
-        if curr.len() > 2 {
-            return Some(curr.clone());
-        }
-        return None;
+fn similar(a: &str, b: &str) -> usize {
+    a.bytes()
+        .zip(b.bytes())
+        .enumerate()
+        .filter_map(|(i, (b1, b2))| if b1 == b2 { Some(i) } else { None })
+        .count()
+}
+
+struct Master;
+impl Master {
+    fn guess(&self, word: String) -> i32 {
+        0
     }
-    if num[idx..].starts_with('0') {
-        let n = curr.len();
-        if n >= 2 {
-            let (n1, n2) = (curr[n - 1], curr[n - 2]);
-            if Some(0) == n1.checked_add(n2) {
-                curr.push(0);
-                return backtrack(num, 1 + idx, curr);
-            }
-            return None;
-        } else {
-            curr.push(0);
-            if let Some(v) = backtrack(num, 1 + idx, curr) {
-                return Some(v);
-            }
-            curr.pop();
-            return None;
-        }
-    }
-    for i in 1 + idx..=num.len() {
-        let Ok(temp) = num[idx..i].parse::<i32>() else {
-            continue;
-        };
-        let n = curr.len();
-        if n >= 2 {
-            let (n1, n2) = (curr[n - 1], curr[n - 2]);
-            if Some(temp) == n1.checked_add(n2) {
-                curr.push(temp);
-                if let Some(v) = backtrack(num, i, curr) {
-                    return Some(v);
-                }
-                curr.pop();
-            }
-        } else {
-            curr.push(temp);
-            if let Some(v) = backtrack(num, i, curr) {
-                return Some(v);
-            }
-            curr.pop();
-        }
-    }
-    None
 }
 
 #[cfg(test)]
@@ -67,20 +64,10 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {
-        debug_assert_eq!(split_into_fibonacci("1101111"), [11, 0, 11, 11]);
-        debug_assert!(split_into_fibonacci("112358130").is_empty());
-        debug_assert!(split_into_fibonacci("0123").is_empty());
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        debug_assert_eq!(split_into_fibonacci("0000"), [0, 0, 0, 0]);
-        debug_assert_eq!(
-            split_into_fibonacci("1320581321313221264343965566089105744171833277577"),
-            [13205, 8, 13213, 13221, 26434, 39655, 66089, 105744, 171833, 277577]
-        );
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
