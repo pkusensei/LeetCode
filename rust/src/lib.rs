@@ -5,34 +5,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn shortest_path_length(graph: &[&[i32]]) -> i32 {
-    let n = graph.len();
-    let mut visited = vec![vec![false; n]; 1 << n];
-    for i in 0..n {
-        visited[1 << i][i] = true;
-    }
-    // multi-source BFS
-    let mut queue: std::collections::VecDeque<_> = (0..n).map(|node| (1 << node, node)).collect();
-    let mut count = 0;
-    while !queue.is_empty() {
-        for _ in 0..queue.len() {
-            let Some((mask, node)) = queue.pop_front() else {
-                break;
-            };
-            if mask == (1 << n) - 1 {
-                return count;
-            }
-            for &neighbor in graph[node].iter() {
-                let nmask = mask | (1 << neighbor);
-                if !visited[nmask][neighbor as usize] {
-                    visited[nmask][neighbor as usize] = true;
-                    queue.push_back((nmask, neighbor as usize));
-                }
-            }
-        }
-        count += 1;
-    }
-    -1
+pub fn shifting_letters(s: &str, shifts: &[i32]) -> String {
+    let (_, v) = s.bytes().zip(shifts.iter()).rev().fold(
+        (0, Vec::with_capacity(s.len())),
+        |(num, mut res), (b, &n)| {
+            let num = (num + n) % 26;
+            res.insert(0, shift(b, num as u8));
+            (num, res)
+        },
+    );
+    String::from_utf8(v).unwrap()
+}
+
+fn shift(b: u8, num: u8) -> u8 {
+    (b - b'a' + num) % 26 + b'a'
 }
 
 #[cfg(test)]
@@ -43,11 +29,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(shortest_path_length(&[&[1, 2, 3], &[0], &[0], &[0]]), 4);
-        debug_assert_eq!(
-            shortest_path_length(&[&[1], &[0, 2, 4], &[1, 3, 4], &[2], &[1, 2]]),
-            4
-        );
+        debug_assert_eq!(shifting_letters("abc", &[3, 5, 9],), "rpl");
+        debug_assert_eq!(shifting_letters("aaa", &[1, 2, 3],), "gfd");
     }
 
     #[test]
