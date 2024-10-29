@@ -5,20 +5,34 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn shifting_letters(s: &str, shifts: &[i32]) -> String {
-    let (_, v) = s.bytes().zip(shifts.iter()).rev().fold(
-        (0, Vec::with_capacity(s.len())),
-        |(num, mut res), (b, &n)| {
-            let num = (num + n) % 26;
-            res.insert(0, shift(b, num as u8));
-            (num, res)
-        },
-    );
-    String::from_utf8(v).unwrap()
-}
-
-fn shift(b: u8, num: u8) -> u8 {
-    (b - b'a' + num) % 26 + b'a'
+pub fn max_dist_to_closest(seats: &[i32]) -> i32 {
+    let n = seats.len();
+    let mut prev = None;
+    let mut dist = vec![n; n];
+    for (i, &num) in seats.iter().enumerate() {
+        match (num, prev) {
+            (1, _) => {
+                dist[i] = 0;
+                prev = Some(i);
+            }
+            (0, None) => dist[i] = dist[i].min(n),
+            (0, Some(v)) => dist[i] = i - v,
+            _ => unreachable!(),
+        }
+    }
+    prev = None;
+    for (i, &num) in seats.iter().enumerate().rev() {
+        match (num, prev) {
+            (1, _) => {
+                dist[i] = 0;
+                prev = Some(i);
+            }
+            (0, None) => dist[i] = dist[i].min(n),
+            (0, Some(v)) => dist[i] = dist[i].min(v - i),
+            _ => unreachable!(),
+        }
+    }
+    dist.into_iter().max().unwrap_or(1) as i32
 }
 
 #[cfg(test)]
@@ -29,8 +43,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(shifting_letters("abc", &[3, 5, 9],), "rpl");
-        debug_assert_eq!(shifting_letters("aaa", &[1, 2, 3],), "gfd");
+        debug_assert_eq!(max_dist_to_closest(&[1, 0, 0, 0, 1, 0, 1]), 2);
+        debug_assert_eq!(max_dist_to_closest(&[1, 0, 0, 0]), 3);
+        debug_assert_eq!(max_dist_to_closest(&[0, 1]), 1);
     }
 
     #[test]
