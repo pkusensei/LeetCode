@@ -2,63 +2,41 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::BTreeMap;
+use std::collections::HashMap;
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn rectangle_area(rectangles: &[[i32; 4]]) -> i32 {
-    const MOD: i64 = 1_000_000_007;
-    // Align y values onto x's
-    // and attach +1 to left side, -1 to right side
-    // so that when a rectangle is "out of scope"
-    // all of its vertices have count==0
-    let rects: BTreeMap<i32, Vec<_>> = rectangles.iter().fold(BTreeMap::new(), |mut acc, v| {
-        acc.entry(v[0]).or_default().push((v[1], v[3], 1));
-        acc.entry(v[2]).or_default().push((v[1], v[3], -1));
+pub fn loud_and_rich(richer: &[[i32; 2]], quiet: &[i32]) -> Vec<i32> {
+    let n = quiet.len();
+    let graph: HashMap<_, Vec<_>> = richer.iter().fold(HashMap::new(), |mut acc, v| {
+        acc.entry(v[1] as usize).or_default().push(v[0] as usize);
         acc
     });
-    let mut counts = BTreeMap::new();
-    let mut prev = -1;
-    let mut res = 0;
-    for (x, ys) in rects {
-        // Sweep thru left to right
-        // When encountering x2, deal everything that's aligned on x1
-        // |
-        // |   |
-        // |   |
-        // |
-        // x1  x2
-        // Filling the "taller" area between x1 and x2
-        // If the y vertices on x2 are all covered in overlap area
-        // They have no impact on final number
-        // since line sweeping only cares when total_count==0
-        if prev >= 0 && x > prev {
-            let mut bottom = -1;
-            let mut total_count = 0;
-            let mut y_range = 0;
-            for (&y, &count) in counts.iter() {
-                if count == 0 {
-                    continue;
-                }
-                if bottom == -1 {
-                    bottom = y;
-                }
-                total_count += count;
-                if total_count == 0 {
-                    y_range += y - bottom;
-                    bottom = -1;
-                }
-            }
-            res = (res + ((x - prev) as i64 * y_range as i64) % MOD) % MOD;
-        }
-        prev = x;
-        for y in ys {
-            *counts.entry(y.0).or_insert(0) += y.2;
-            *counts.entry(y.1).or_insert(0) -= y.2;
-        }
+    let mut res = vec![-1; n];
+    for i in 0..n {
+        dfs(&graph, quiet, i, &mut res);
     }
-    res as i32
+    res
+}
+
+fn dfs(graph: &HashMap<usize, Vec<usize>>, quiet: &[i32], curr: usize, res: &mut [i32]) -> usize {
+    if res[curr] > -1 {
+        return res[curr] as usize;
+    }
+    if let Some(v) = graph.get(&curr) {
+        let r = v
+            .iter()
+            .map(|&next| dfs(graph, quiet, next, res))
+            .chain(std::iter::once(curr))
+            .min_by_key(|i| quiet[*i])
+            .unwrap_or(curr);
+        res[curr] = r as i32;
+        r
+    } else {
+        res[curr] = curr as i32;
+        curr
+    }
 }
 
 #[cfg(test)]
@@ -70,16 +48,17 @@ mod tests {
     #[test]
     fn basics() {
         debug_assert_eq!(
-            rectangle_area(&[[0, 0, 2, 2], [1, 0, 2, 3], [1, 0, 3, 1]]),
-            6
+            loud_and_rich(
+                &[[1, 0], [2, 1], [3, 1], [3, 7], [4, 3], [5, 3], [6, 3]],
+                &[3, 2, 5, 4, 6, 1, 7, 0],
+            ),
+            [5, 5, 2, 5, 4, 5, 6, 7]
         );
-        debug_assert_eq!(rectangle_area(&[[0, 0, 1000000000, 1000000000]]), 49);
+        debug_assert_eq!(loud_and_rich(&[], &[0]), [0]);
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(rectangle_area(&[[0, 0, 4, 4], [1, 1, 3, 3]]), 16);
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
