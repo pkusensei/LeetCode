@@ -5,20 +5,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn peak_index_in_mountain_array(arr: &[i32]) -> i32 {
-    let n = arr.len();
-    let (mut left, mut right) = (0, n - 1);
-    while left < right {
-        let mid = left + (right - left) / 2;
-        if (arr[mid - 1]..arr[mid + 1]).contains(&arr[mid]) {
-            left = mid
-        } else if (arr[mid + 1]..arr[mid - 1]).contains(&arr[mid]) {
-            right = mid
-        } else {
-            return mid as i32;
+pub fn car_fleet(target: i32, position: &[i32], speed: &[i32]) -> i32 {
+    let mut pairs: Vec<_> = position
+        .iter()
+        .copied()
+        .zip(speed.iter().copied())
+        .collect();
+    pairs.sort_unstable_by_key(|&(pos, _)| std::cmp::Reverse(pos));
+    let mut stack = vec![];
+    for (pos, speed) in pairs {
+        let t = f64::from(target - pos) / f64::from(speed);
+        if stack.last().is_some_and(|&v| v >= t) {
+            continue; // catches up and stays in fleet
         }
+        stack.push(t);
     }
-    -1
+    stack.len() as _
 }
 
 #[cfg(test)]
@@ -29,13 +31,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(peak_index_in_mountain_array(&[0, 1, 0]), 1);
-        debug_assert_eq!(peak_index_in_mountain_array(&[0, 2, 1, 0]), 1);
-        debug_assert_eq!(peak_index_in_mountain_array(&[0, 2, 1, 0]), 1);
+        debug_assert_eq!(car_fleet(12, &[10, 8, 0, 5, 3], &[2, 4, 1, 1, 3],), 3);
+        debug_assert_eq!(car_fleet(10, &[3], &[3],), 1);
+        debug_assert_eq!(car_fleet(100, &[0, 2, 4], &[4, 2, 1],), 1);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(car_fleet(10, &[0, 4, 2], &[2, 1, 3]), 1);
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
