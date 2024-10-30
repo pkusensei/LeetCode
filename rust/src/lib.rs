@@ -5,76 +5,28 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_mountain_removals(nums: &[i32]) -> i32 {
-    let n = nums.len();
-    let (mut inc, mut dec) = (vec![1; n], vec![1; n]);
-    for i1 in 1..n {
-        for i2 in 0..i1 {
-            if nums[i2] < nums[i1] {
-                inc[i1] = inc[i1].max(1 + inc[i2]);
-            }
-        }
-    }
-    for i1 in (0..n).rev() {
-        for i2 in 1 + i1..n {
-            if nums[i1] > nums[i2] {
-                dec[i1] = dec[i1].max(1 + dec[i2]);
-            }
-        }
-    }
-    let mount = inc
-        .into_iter()
-        .zip(dec)
-        .filter_map(|(a, b)| {
-            if a > 1 && b > 1 {
-                Some(a + b - 1)
-            } else {
-                None
-            }
-        })
-        .max()
-        .unwrap_or(1);
-    nums.len() as i32 - mount
+pub fn k_similarity(s1: String, s2: &str) -> i32 {
+    let (mut s1, s2) = (s1.into_bytes(), s2.as_bytes());
+    dfs(&mut s1, s2, 0)
 }
 
-fn with_binary_search(nums: &mut [i32]) -> i32 {
-    let inc = lis(nums);
-    nums.reverse();
-    let mut dec = lis(nums);
-    dec.reverse();
-
-    let mount = inc
-        .into_iter()
-        .zip(dec)
-        .filter_map(|(a, b)| {
-            if a > 1 && b > 1 {
-                Some(a + b - 1)
-            } else {
-                None
+fn dfs(s1: &mut [u8], s2: &[u8], start: usize) -> i32 {
+    if start == s1.len() - 1 {
+        0
+    } else if s1[start] == s2[start] {
+        dfs(s1, s2, 1 + start)
+    } else {
+        let mut res = i32::MAX;
+        for idx in 1 + start..s1.len() {
+            if s1[idx] == s2[idx] || s2[start] != s1[idx] {
+                continue;
             }
-        })
-        .max()
-        .unwrap_or(1);
-    nums.len() as i32 - mount
-}
-
-fn lis(nums: &[i32]) -> Vec<i32> {
-    let n = nums.len();
-    let mut res = vec![1; n]; // track length of LIS by each index
-    let mut lis = vec![nums[0]]; // track LIS
-    for (idx, &num) in nums.iter().enumerate().skip(1) {
-        // binary search to find num in lis
-        let i = lis.partition_point(|&v| v < num);
-        if i == lis.len() {
-            // num is bigger than all LIS
-            lis.push(num);
-        } else {
-            // update num into LIS
-            lis[i] = num;
+            s1.swap(start, idx);
+            res = res.min(1 + dfs(s1, s2, 1 + start));
+            s1.swap(start, idx);
         }
-        res[idx] = lis.len() as i32;
+        res
     }
-    res
 }
 
 #[cfg(test)]
@@ -85,8 +37,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(with_binary_search(&mut [1, 3, 1]), 0);
-        debug_assert_eq!(with_binary_search(&mut [2, 1, 1, 5, 6, 2, 3, 1]), 3);
+        debug_assert_eq!(k_similarity("ab".into(), "ba"), 1);
+        debug_assert_eq!(k_similarity("abc".into(), "bca"), 2);
+        debug_assert_eq!(k_similarity("abccaacceecdeea".into(), "bcaacceeccdeaae"), 9);
     }
 
     #[test]
