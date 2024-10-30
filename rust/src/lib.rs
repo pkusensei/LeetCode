@@ -5,25 +5,29 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn buddy_strings(s: &str, goal: &str) -> bool {
-    if s.len() != goal.len() {
-        return false;
+pub fn matrix_score(mut grid: Vec<Vec<i32>>) -> i32 {
+    // row starts with 0 => flip
+    for v in grid.iter_mut() {
+        if v.first() == Some(&0) {
+            for n in v.iter_mut() {
+                *n = 1 - *n;
+            }
+        }
     }
-    if s == goal {
-        goal.bytes()
-            .fold([0; 26], |mut acc, b| {
-                acc[usize::from(b - b'a')] += 1;
-                acc
-            })
-            .into_iter()
-            .any(|v| v > 1)
-    } else {
-        let mut it = s.bytes().zip(goal.bytes()).filter(|(a, b)| a != b);
-        let (Some(a), Some(b)) = (it.next(), it.next()) else {
-            return false;
-        };
-        it.next().is_none() && a.0 == b.1 && a.1 == b.0
+    let (rows, cols) = get_dimensions(&grid);
+    // col has more 0s than 1s => flip
+    for c in 0..cols {
+        let ones: i32 = (0..rows).map(|r| grid[r][c]).sum();
+        let zeros = rows as i32 - ones;
+        if ones < zeros {
+            for v in grid.iter_mut() {
+                v[c] = 1 - v[c]
+            }
+        }
     }
+    grid.into_iter()
+        .map(|v| v.into_iter().fold(0, |acc, n| (acc << 1) | n))
+        .sum()
 }
 
 #[cfg(test)]
@@ -34,9 +38,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(buddy_strings("ab", "ba"));
-        debug_assert!(!buddy_strings("ab", "ab"));
-        debug_assert!(buddy_strings("aa", "aa"));
+        debug_assert_eq!(
+            matrix_score(vec![vec![0, 0, 1, 1], vec![1, 0, 1, 0], vec![1, 1, 0, 0]]),
+            39
+        );
+        debug_assert_eq!(matrix_score(vec![vec![0]]), 1);
     }
 
     #[test]
