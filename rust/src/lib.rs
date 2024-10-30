@@ -2,35 +2,37 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::BinaryHeap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn score_of_parentheses(s: &str) -> i32 {
-    dfs(s)
-}
-
-fn dfs(s: &str) -> i32 {
-    if s.is_empty() {
-        return 0;
-    }
-    if s == "()" {
-        return 1;
-    }
-    let mut open = 0;
-    for (idx, b) in s.bytes().enumerate() {
-        match b {
-            b'(' => open += 1,
-            _ => open -= 1,
+pub fn mincost_to_hire_workers(quality: &[i32], wage: &[i32], k: i32) -> f64 {
+    let mut pairs: Vec<_> = quality
+        .iter()
+        .zip(wage.iter())
+        .map(|(&q, &w)| (q, f64::from(w) / f64::from(q)))
+        .collect();
+    pairs.sort_unstable_by(|a, b| a.1.total_cmp(&b.1));
+    // want lowest wage/quality ratio
+    // and keep lowest quality in heap
+    let mut heap = BinaryHeap::new();
+    let mut res = f64::MAX;
+    let mut quality = 0;
+    for curr in pairs.into_iter() {
+        heap.push(curr.0);
+        quality += curr.0;
+        if heap.len() > k as usize {
+            let Some(top) = heap.pop() else {
+                continue;
+            };
+            quality -= top;
         }
-        if open == 0 {
-            if idx == s.len() - 1 {
-                return 2 * dfs(&s[1..s.len() - 1]);
-            } else {
-                return dfs(&s[..=idx]) + dfs(&s[1 + idx..]);
-            }
+        if heap.len() == k as usize {
+            res = res.min(f64::from(quality) * curr.1);
         }
     }
-    0
+    res
 }
 
 #[cfg(test)]
@@ -41,9 +43,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(score_of_parentheses("()"), 1);
-        debug_assert_eq!(score_of_parentheses("(())"), 2);
-        debug_assert_eq!(score_of_parentheses("()()"), 2);
+        float_eq(
+            mincost_to_hire_workers(&[10, 20, 5], &[70, 50, 30], 2),
+            105.0,
+        );
+        float_eq(
+            mincost_to_hire_workers(&[3, 1, 10, 10, 1], &[4, 8, 2, 2, 7], 3),
+            30.66667,
+        );
     }
 
     #[test]
@@ -60,5 +67,15 @@ mod tests {
         i1.as_mut().sort_unstable();
         i2.as_mut().sort_unstable();
         debug_assert_eq!(i1.as_mut(), i2.as_mut());
+    }
+
+    #[allow(dead_code)]
+    fn float_eq<T1, T2>(a: T1, b: T2) -> bool
+    where
+        T1: Into<f64>,
+        T2: Into<f64>,
+    {
+        const EP: f64 = 1e-5;
+        (<T1 as Into<f64>>::into(a) - <T2 as Into<f64>>::into(b)).abs() <= EP
     }
 }
