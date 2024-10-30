@@ -5,15 +5,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn mirror_reflection(p: i32, q: i32) -> i32 {
-    let gcd = gcd(p, q);
-    let lcm = p * q / gcd;
-    // the first corner that ray hits
-    let (a, b) = (lcm / p, lcm / q);
-    match (a & 1, b & 1) {
-        (1, 1) => 1,
-        (0, 1) => 0,
-        _ => 2,
+pub fn buddy_strings(s: &str, goal: &str) -> bool {
+    if s.len() != goal.len() {
+        return false;
+    }
+    if s == goal {
+        goal.bytes()
+            .fold([0; 26], |mut acc, b| {
+                acc[usize::from(b - b'a')] += 1;
+                acc
+            })
+            .into_iter()
+            .any(|v| v > 1)
+    } else {
+        let mut it = s.bytes().zip(goal.bytes()).filter(|(a, b)| a != b);
+        let (Some(a), Some(b)) = (it.next(), it.next()) else {
+            return false;
+        };
+        it.next().is_none() && a.0 == b.1 && a.1 == b.0
     }
 }
 
@@ -25,8 +34,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(mirror_reflection(2, 1), 2);
-        debug_assert_eq!(mirror_reflection(3, 1), 1);
+        debug_assert!(buddy_strings("ab", "ba"));
+        debug_assert!(!buddy_strings("ab", "ab"));
+        debug_assert!(buddy_strings("aa", "aa"));
     }
 
     #[test]
