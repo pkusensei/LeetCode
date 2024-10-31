@@ -2,42 +2,57 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::{HashSet, VecDeque};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn shortest_subarray(nums: &[i32], k: i32) -> i32 {
-    let n = nums.len();
-    let mut prefix = Vec::with_capacity(1 + n);
-    prefix.push(0);
-    for &num in nums.iter() {
-        prefix.push(i64::from(num) + prefix.last().unwrap_or(&0));
-    }
-    // increasing monoqueue on prefix sum
-    let mut monoqueue = std::collections::VecDeque::new();
-    let mut res = 1 + n;
-    for (idx, p) in prefix.into_iter().enumerate() {
-        // maintain mono-increasing
-        while monoqueue.back().is_some_and(|&(_, v)| v >= p) {
-            monoqueue.pop_back();
+pub fn shortest_path_all_keys(grid: &[&str]) -> i32 {
+    let mut start = (0, 0);
+    let mut k = 0;
+    for (y, row) in grid.iter().enumerate() {
+        for (x, b) in row.bytes().enumerate() {
+            if b == b'@' {
+                start = (x, y);
+            }
+            if b.is_ascii_lowercase() {
+                k += 1;
+            }
         }
-        // the front element i1 satisfies [idx]-[i1]>=k
-        // pop i1 out and get distance
-        while monoqueue
-            .front()
-            .is_some_and(|&(_, v)| v + i64::from(k) <= p)
-        {
-            let Some((i, _)) = monoqueue.pop_front() else {
-                break;
+    }
+    let mut queue = VecDeque::from([(start, 0i32, 0)]);
+    let mut seen = HashSet::from([(start, 0)]);
+    // ((x, y), bit mask of keys, dist)
+    while let Some(((x, y), keys, dist)) = queue.pop_front() {
+        if keys.count_ones() == k {
+            return dist;
+        }
+        for (nx, ny) in neighbors((x, y)) {
+            let Some(&b) = grid.get(ny).and_then(|row| row.as_bytes().get(nx)) else {
+                continue;
             };
-            res = res.min(idx - i)
+            match b {
+                b'.' | b'@' => {
+                    if seen.insert(((nx, ny), keys)) {
+                        queue.push_back(((nx, ny), keys, 1 + dist));
+                    }
+                }
+                b if b.is_ascii_lowercase() => {
+                    let nkeys = keys | (1 << (b - b'a'));
+                    if seen.insert(((nx, ny), nkeys)) {
+                        queue.push_back(((nx, ny), nkeys, 1 + dist));
+                    }
+                }
+                b if b.is_ascii_uppercase() => {
+                    if keys & (1 << (b - b'A')) > 0 && seen.insert(((nx, ny), keys)) {
+                        queue.push_back(((nx, ny), keys, 1 + dist));
+                    }
+                }
+                _ => (),
+            }
         }
-        monoqueue.push_back((idx, p));
     }
-    if res < 1 + n {
-        res as i32
-    } else {
-        -1
-    }
+    -1
 }
 
 #[cfg(test)]
@@ -48,13 +63,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(shortest_subarray(&[1], 1), 1);
-        debug_assert_eq!(shortest_subarray(&[1, 2], 4), -1);
-        debug_assert_eq!(shortest_subarray(&[2, -1, 2], 3), 3);
+        debug_assert_eq!(shortest_path_all_keys(&["@.a..", "###.#", "b.A.B"]), 8);
+        debug_assert_eq!(shortest_path_all_keys(&["@..aA", "..B#.", "....b"]), 6);
+        debug_assert_eq!(shortest_path_all_keys(&["@Aa"]), -1);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(shortest_path_all_keys(&["@...a", ".###A", "b.BCc"]), 10);
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
