@@ -5,34 +5,37 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<int> DistanceK(TreeNode root, TreeNode target, int k)
+    public TreeNode SubtreeWithAllDeepest(TreeNode root)
     {
-        List<int> res = [];
-        if (root is null) { return res; }
-
-        Dictionary<TreeNode, TreeNode> parents = [];
-        FindParent(root, null, parents);
-        Dfs(target, k, res, parents, []);
-        return res;
+        var dict = new Dictionary<TreeNode, int>();
+        var target = FindDepth(root, 0, dict);
+        return Dfs(root, target, dict);
     }
 
-    static void Dfs(TreeNode node, int k, List<int> nums, Dictionary<TreeNode, TreeNode> parents, HashSet<int> seen)
+    static TreeNode Dfs(TreeNode node, int target, Dictionary<TreeNode, int> dict)
     {
-        if (node is null || !seen.Add(node.val)) { return; }
-        if (k == 0) { nums.Add(node.val); return; }
-        Dfs(node.left, k - 1, nums, parents, seen);
-        Dfs(node.right, k - 1, nums, parents, seen);
-        if (parents.TryGetValue(node, out var p))
+        if (node is null) { return null; }
+        if (dict[node] == target)
         {
-            Dfs(p, k - 1, nums, parents, seen);
+            var left = node.left is not null && dict.TryGetValue(node.left, out var v1) && v1 == target;
+            var right = node.right is not null && dict.TryGetValue(node.right, out var v2) && v2 == target;
+            return (left, right) switch
+            {
+                (true, false) => Dfs(node.left, target, dict),
+                (false, true) => Dfs(node.right, target, dict),
+                _ => node,
+            };
         }
+        return null;
     }
 
-    static void FindParent(TreeNode node, TreeNode parent, Dictionary<TreeNode, TreeNode> parents)
+    static int FindDepth(TreeNode node, int depth, Dictionary<TreeNode, int> dict)
     {
-        if (node is null) { return; }
-        parents.Add(node, parent);
-        FindParent(node.left, node, parents);
-        FindParent(node.right, node, parents);
+        if (node is null) { return depth - 1; }
+        var a = FindDepth(node.left, 1 + depth, dict);
+        var b = FindDepth(node.right, 1 + depth, dict);
+        var v = Math.Max(a, b);
+        dict.Add(node, v);
+        return v;
     }
 }
