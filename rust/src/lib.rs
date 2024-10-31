@@ -5,37 +5,15 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-// all palindrome numbers with even length is divisible by 11
-pub fn prime_palindrome(n: i32) -> i32 {
-    if (8..=11).contains(&n) {
-        return 11;
-    }
-    for i in 1..100_000 {
-        let mut s = i.to_string();
-        let rev: String = s.chars().rev().skip(1).collect();
-        s.push_str(&rev);
-        let Ok(x) = s.parse::<i32>() else {
-            continue;
-        };
-        if x >= n && is_prime(x) {
-            return x;
+pub fn transpose(matrix: &[&[i32]]) -> Vec<Vec<i32>> {
+    let (rows, cols) = get_dimensions(matrix);
+    let mut res = vec![vec![0; rows]; cols];
+    for (y, r) in matrix.iter().enumerate() {
+        for (x, &v) in r.iter().enumerate() {
+            res[x][y] = v
         }
     }
-    -1
-}
-
-const fn is_prime(n: i32) -> bool {
-    if n <= 2 || n & 1 == 0 {
-        return n == 2;
-    }
-    let mut x = 3;
-    while x * x <= n {
-        if n % x == 0 {
-            return false;
-        }
-        x += 2
-    }
-    true
+    res
 }
 
 #[cfg(test)]
@@ -46,9 +24,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(prime_palindrome(6), 7);
-        debug_assert_eq!(prime_palindrome(8), 11);
-        debug_assert_eq!(prime_palindrome(13), 101);
+        debug_assert_eq!(
+            transpose(&[&[1, 2, 3], &[4, 5, 6], &[7, 8, 9]]),
+            [[1, 4, 7], [2, 5, 8], [3, 6, 9]]
+        );
+        debug_assert_eq!(
+            transpose(&[&[1, 2, 3], &[4, 5, 6]]),
+            [[1, 4], [2, 5], [3, 6]]
+        );
     }
 
     #[test]
