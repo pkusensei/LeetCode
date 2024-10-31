@@ -2,57 +2,40 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::{HashSet, VecDeque};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn shortest_path_all_keys(grid: &[&str]) -> i32 {
-    let mut start = (0, 0);
-    let mut k = 0;
-    for (y, row) in grid.iter().enumerate() {
-        for (x, b) in row.bytes().enumerate() {
-            if b == b'@' {
-                start = (x, y);
-            }
-            if b.is_ascii_lowercase() {
-                k += 1;
-            }
-        }
+// all palindrome numbers with even length is divisible by 11
+pub fn prime_palindrome(n: i32) -> i32 {
+    if (8..=11).contains(&n) {
+        return 11;
     }
-    let mut queue = VecDeque::from([(start, 0i32, 0)]);
-    let mut seen = HashSet::from([(start, 0)]);
-    // ((x, y), bit mask of keys, dist)
-    while let Some(((x, y), keys, dist)) = queue.pop_front() {
-        if keys.count_ones() == k {
-            return dist;
-        }
-        for (nx, ny) in neighbors((x, y)) {
-            let Some(&b) = grid.get(ny).and_then(|row| row.as_bytes().get(nx)) else {
-                continue;
-            };
-            match b {
-                b'.' | b'@' => {
-                    if seen.insert(((nx, ny), keys)) {
-                        queue.push_back(((nx, ny), keys, 1 + dist));
-                    }
-                }
-                b if b.is_ascii_lowercase() => {
-                    let nkeys = keys | (1 << (b - b'a'));
-                    if seen.insert(((nx, ny), nkeys)) {
-                        queue.push_back(((nx, ny), nkeys, 1 + dist));
-                    }
-                }
-                b if b.is_ascii_uppercase() => {
-                    if keys & (1 << (b - b'A')) > 0 && seen.insert(((nx, ny), keys)) {
-                        queue.push_back(((nx, ny), keys, 1 + dist));
-                    }
-                }
-                _ => (),
-            }
+    for i in 1..100_000 {
+        let mut s = i.to_string();
+        let rev: String = s.chars().rev().skip(1).collect();
+        s.push_str(&rev);
+        let Ok(x) = s.parse::<i32>() else {
+            continue;
+        };
+        if x >= n && is_prime(x) {
+            return x;
         }
     }
     -1
+}
+
+const fn is_prime(n: i32) -> bool {
+    if n <= 2 || n & 1 == 0 {
+        return n == 2;
+    }
+    let mut x = 3;
+    while x * x <= n {
+        if n % x == 0 {
+            return false;
+        }
+        x += 2
+    }
+    true
 }
 
 #[cfg(test)]
@@ -63,15 +46,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(shortest_path_all_keys(&["@.a..", "###.#", "b.A.B"]), 8);
-        debug_assert_eq!(shortest_path_all_keys(&["@..aA", "..B#.", "....b"]), 6);
-        debug_assert_eq!(shortest_path_all_keys(&["@Aa"]), -1);
+        debug_assert_eq!(prime_palindrome(6), 7);
+        debug_assert_eq!(prime_palindrome(8), 11);
+        debug_assert_eq!(prime_palindrome(13), 101);
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(shortest_path_all_keys(&["@...a", ".###A", "b.BCc"]), 10);
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
