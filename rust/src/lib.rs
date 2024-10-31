@@ -5,57 +5,39 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_total_distance(robot: &mut [i32], factory: &[[i32; 2]]) -> i64 {
-    robot.sort_unstable();
-    let mut facts: Vec<_> = factory
-        .iter()
-        .flat_map(|v| std::iter::repeat(v[0]).take(v[1] as usize))
-        .collect();
-    facts.sort_unstable();
-    let (n1, n2) = (robot.len(), facts.len());
-
-    // let mut dp = vec![vec![0; 1 + n2]; 1 + n1];
-    // for v in dp.iter_mut().take(n1) {
-    //     v[n2] = i64::MAX / 2;
-    // }
-    // // rev to ensure all future choices are considered
-    // // i.e no robot is left behind
-    // for (i1, &rob) in robot.iter().enumerate().rev() {
-    //     for (i2, &fact) in facts.iter().enumerate().rev() {
-    //         dp[i1][i2] = dp[i1][1 + i2].min(dp[1 + i1][1 + i2] + i64::from(rob.abs_diff(fact)));
-    //     }
-    // }
-    // dp[0][0]
-
-    let [mut curr, mut next] = [0, 1].map(|_| vec![0; 1 + n2]);
-    for (i1, &rob) in robot.iter().enumerate().rev() {
-        if i1 != n1 - 1 {
-            next[n2] = i64::MAX / 2;
+pub fn shortest_subarray(nums: &[i32], k: i32) -> i32 {
+    let n = nums.len();
+    let mut prefix = Vec::with_capacity(1 + n);
+    prefix.push(0);
+    for &num in nums.iter() {
+        prefix.push(i64::from(num) + prefix.last().unwrap_or(&0));
+    }
+    // increasing monoqueue on prefix sum
+    let mut monoqueue = std::collections::VecDeque::new();
+    let mut res = 1 + n;
+    for (idx, p) in prefix.into_iter().enumerate() {
+        // maintain mono-increasing
+        while monoqueue.back().is_some_and(|&(_, v)| v >= p) {
+            monoqueue.pop_back();
         }
-        curr[n2] = i64::MAX / 2;
-        for (i2, &fact) in facts.iter().enumerate().rev() {
-            curr[i2] = curr[1 + i2].min(next[1 + i2] + i64::from(rob.abs_diff(fact)));
+        // the front element i1 satisfies [idx]-[i1]>=k
+        // pop i1 out and get distance
+        while monoqueue
+            .front()
+            .is_some_and(|&(_, v)| v + i64::from(k) <= p)
+        {
+            let Some((i, _)) = monoqueue.pop_front() else {
+                break;
+            };
+            res = res.min(idx - i)
         }
-        next = curr.clone();
+        monoqueue.push_back((idx, p));
     }
-    curr[0]
-    // dfs(robot, &facts, 0, 0, &mut vec![vec![-1; n2]; n1])
-}
-
-fn dfs(robot: &[i32], facts: &[i32], i1: usize, i2: usize, dp: &mut [Vec<i64>]) -> i64 {
-    if i1 == robot.len() {
-        return 0;
+    if res < 1 + n {
+        res as i32
+    } else {
+        -1
     }
-    if i2 == facts.len() {
-        return i64::MAX / 2;
-    }
-    if dp[i1][i2] > -1 {
-        return dp[i1][i2];
-    }
-    let pick = i64::from(robot[i1].abs_diff(facts[i2])) + dfs(robot, facts, 1 + i1, 1 + i2, dp);
-    let skip = dfs(robot, facts, i1, 1 + i2, dp);
-    dp[i1][i2] = pick.min(skip);
-    dp[i1][i2]
 }
 
 #[cfg(test)]
@@ -66,15 +48,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(minimum_total_distance(&mut [0, 4, 6], &[[2, 2], [6, 2]]), 4);
-        debug_assert_eq!(minimum_total_distance(&mut [1, -1], &[[-2, 1], [2, 1]]), 2);
-        debug_assert_eq!(
-            minimum_total_distance(
-                &mut [9, 11, 99, 101],
-                &[[10, 1], [7, 1], [14, 1], [100, 1], [96, 1], [103, 1]]
-            ),
-            6
-        );
+        debug_assert_eq!(shortest_subarray(&[1], 1), 1);
+        debug_assert_eq!(shortest_subarray(&[1, 2], 4), -1);
+        debug_assert_eq!(shortest_subarray(&[2, -1, 2], 3), 3);
     }
 
     #[test]
