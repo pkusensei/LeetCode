@@ -5,29 +5,57 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn matrix_score(mut grid: Vec<Vec<i32>>) -> i32 {
-    // row starts with 0 => flip
-    for v in grid.iter_mut() {
-        if v.first() == Some(&0) {
-            for n in v.iter_mut() {
-                *n = 1 - *n;
-            }
+pub fn minimum_total_distance(robot: &mut [i32], factory: &[[i32; 2]]) -> i64 {
+    robot.sort_unstable();
+    let mut facts: Vec<_> = factory
+        .iter()
+        .flat_map(|v| std::iter::repeat(v[0]).take(v[1] as usize))
+        .collect();
+    facts.sort_unstable();
+    let (n1, n2) = (robot.len(), facts.len());
+
+    // let mut dp = vec![vec![0; 1 + n2]; 1 + n1];
+    // for v in dp.iter_mut().take(n1) {
+    //     v[n2] = i64::MAX / 2;
+    // }
+    // // rev to ensure all future choices are considered
+    // // i.e no robot is left behind
+    // for (i1, &rob) in robot.iter().enumerate().rev() {
+    //     for (i2, &fact) in facts.iter().enumerate().rev() {
+    //         dp[i1][i2] = dp[i1][1 + i2].min(dp[1 + i1][1 + i2] + i64::from(rob.abs_diff(fact)));
+    //     }
+    // }
+    // dp[0][0]
+
+    let [mut curr, mut next] = [0, 1].map(|_| vec![0; 1 + n2]);
+    for (i1, &rob) in robot.iter().enumerate().rev() {
+        if i1 != n1 - 1 {
+            next[n2] = i64::MAX / 2;
         }
-    }
-    let (rows, cols) = get_dimensions(&grid);
-    // col has more 0s than 1s => flip
-    for c in 0..cols {
-        let ones: i32 = (0..rows).map(|r| grid[r][c]).sum();
-        let zeros = rows as i32 - ones;
-        if ones < zeros {
-            for v in grid.iter_mut() {
-                v[c] = 1 - v[c]
-            }
+        curr[n2] = i64::MAX / 2;
+        for (i2, &fact) in facts.iter().enumerate().rev() {
+            curr[i2] = curr[1 + i2].min(next[1 + i2] + i64::from(rob.abs_diff(fact)));
         }
+        next = curr.clone();
     }
-    grid.into_iter()
-        .map(|v| v.into_iter().fold(0, |acc, n| (acc << 1) | n))
-        .sum()
+    curr[0]
+    // dfs(robot, &facts, 0, 0, &mut vec![vec![-1; n2]; n1])
+}
+
+fn dfs(robot: &[i32], facts: &[i32], i1: usize, i2: usize, dp: &mut [Vec<i64>]) -> i64 {
+    if i1 == robot.len() {
+        return 0;
+    }
+    if i2 == facts.len() {
+        return i64::MAX / 2;
+    }
+    if dp[i1][i2] > -1 {
+        return dp[i1][i2];
+    }
+    let pick = i64::from(robot[i1].abs_diff(facts[i2])) + dfs(robot, facts, 1 + i1, 1 + i2, dp);
+    let skip = dfs(robot, facts, i1, 1 + i2, dp);
+    dp[i1][i2] = pick.min(skip);
+    dp[i1][i2]
 }
 
 #[cfg(test)]
@@ -38,11 +66,15 @@ mod tests {
 
     #[test]
     fn basics() {
+        debug_assert_eq!(minimum_total_distance(&mut [0, 4, 6], &[[2, 2], [6, 2]]), 4);
+        debug_assert_eq!(minimum_total_distance(&mut [1, -1], &[[-2, 1], [2, 1]]), 2);
         debug_assert_eq!(
-            matrix_score(vec![vec![0, 0, 1, 1], vec![1, 0, 1, 0], vec![1, 1, 0, 0]]),
-            39
+            minimum_total_distance(
+                &mut [9, 11, 99, 101],
+                &[[10, 1], [7, 1], [14, 1], [100, 1], [96, 1], [103, 1]]
+            ),
+            6
         );
-        debug_assert_eq!(matrix_score(vec![vec![0]]), 1);
     }
 
     #[test]
