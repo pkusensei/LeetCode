@@ -5,13 +5,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn transpose(matrix: &[&[i32]]) -> Vec<Vec<i32>> {
-    let (rows, cols) = get_dimensions(matrix);
-    let mut res = vec![vec![0; rows]; cols];
-    for (y, r) in matrix.iter().enumerate() {
-        for (x, &v) in r.iter().enumerate() {
-            res[x][y] = v
+pub fn binary_gap(mut n: i32) -> i32 {
+    let (mut res, mut streak) = (0, 0);
+    let mut seen_one = false;
+    while n > 0 {
+        if n & 1 == 1 {
+            seen_one = true;
+            res = res.max(streak);
+            streak = 1;
+        } else if seen_one {
+            streak += 1;
+            res = res.max(streak);
         }
+        n >>= 1;
     }
     res
 }
@@ -24,14 +30,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            transpose(&[&[1, 2, 3], &[4, 5, 6], &[7, 8, 9]]),
-            [[1, 4, 7], [2, 5, 8], [3, 6, 9]]
-        );
-        debug_assert_eq!(
-            transpose(&[&[1, 2, 3], &[4, 5, 6]]),
-            [[1, 4], [2, 5], [3, 6]]
-        );
+        debug_assert_eq!(binary_gap(22), 2);
+        debug_assert_eq!(binary_gap(8), 0);
+        debug_assert_eq!(binary_gap(5), 2);
     }
 
     #[test]
