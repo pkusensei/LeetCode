@@ -5,24 +5,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_eating_speed(piles: &[i32], h: i32) -> i32 {
-    let (mut left, mut right) = (1, piles.iter().copied().max().unwrap());
-    while left < right {
-        let mid = left + (right - left) / 2;
-        let t = calc(piles, mid);
-        if t > h {
-            left = mid + 1
-        } else {
-            right = mid;
-        }
-    }
-    left
+pub fn stone_game(nums: &[i32]) -> bool {
+    let n = nums.len();
+    let sum: i32 = nums.iter().sum();
+    dfs(nums, 0, n - 1, &mut vec![vec![-1; n]; n]) > sum / 2
+    // All of these to day: return true;
 }
 
-fn calc(nums: &[i32], x: i32) -> i32 {
-    nums.iter()
-        .map(|&num| num / x + i32::from(num % x > 0))
-        .sum()
+fn dfs(nums: &[i32], start: usize, end: usize, dp: &mut [Vec<i32>]) -> i32 {
+    if start >= end {
+        return 0;
+    }
+    if dp[start][end] > -1 {
+        return dp[start][end];
+    }
+    let a = dfs(nums, 1 + start, end, dp) + nums[start];
+    let b = dfs(nums, start, end - 1, dp) + nums[end];
+    dp[start][end] = a.max(b);
+    dp[start][end]
 }
 
 #[cfg(test)]
@@ -33,9 +33,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(min_eating_speed(&[3, 6, 7, 11], 8), 4);
-        debug_assert_eq!(min_eating_speed(&[30, 11, 23, 4, 20], 5), 30);
-        debug_assert_eq!(min_eating_speed(&[30, 11, 23, 4, 20], 6), 23);
+        debug_assert!(stone_game(&[5, 3, 4, 5]));
+        debug_assert!(stone_game(&[3, 7, 2, 3]));
     }
 
     #[test]
