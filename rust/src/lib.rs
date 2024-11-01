@@ -5,24 +5,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn stone_game(nums: &[i32]) -> bool {
-    let n = nums.len();
-    let sum: i32 = nums.iter().sum();
-    dfs(nums, 0, n - 1, &mut vec![vec![-1; n]; n]) > sum / 2
-    // All of these to day: return true;
-}
-
-fn dfs(nums: &[i32], start: usize, end: usize, dp: &mut [Vec<i32>]) -> i32 {
-    if start >= end {
-        return 0;
+pub fn nth_magical_number(n: i32, a: i32, b: i32) -> i32 {
+    const MOD: i64 = 1_000_000_007;
+    let [a, b, n] = [a, b, n].map(i64::from);
+    let mut left = a.min(b);
+    let mut right = a.max(b) * n;
+    let lcm = a * b / gcd(a, b);
+    while left <= right {
+        let mut mid = left + (right - left) / 2;
+        let count = mid / a + mid / b - mid / lcm;
+        match count.cmp(&n) {
+            std::cmp::Ordering::Less => left = mid + 1,
+            std::cmp::Ordering::Greater => right = mid - 1,
+            std::cmp::Ordering::Equal => {
+                while mid % a > 0 && mid % b > 0 {
+                    mid -= 1;
+                }
+                return (mid % MOD) as i32;
+            }
+        }
     }
-    if dp[start][end] > -1 {
-        return dp[start][end];
-    }
-    let a = dfs(nums, 1 + start, end, dp) + nums[start];
-    let b = dfs(nums, start, end - 1, dp) + nums[end];
-    dp[start][end] = a.max(b);
-    dp[start][end]
+    -1
 }
 
 #[cfg(test)]
@@ -33,12 +36,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(stone_game(&[5, 3, 4, 5]));
-        debug_assert!(stone_game(&[3, 7, 2, 3]));
+        debug_assert_eq!(nth_magical_number(1, 2, 3), 2);
+        debug_assert_eq!(nth_magical_number(4, 2, 3), 6);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(nth_magical_number(8, 8, 8), 64);
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
