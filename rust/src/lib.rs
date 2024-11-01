@@ -2,30 +2,33 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::{cmp::Reverse, collections::BinaryHeap};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn reordered_power_of2(n: i32) -> bool {
-    const ALL: [[u8; 10]; 31] = preprocess();
-    let x = get_digits(n);
-    ALL.iter().any(|&v| v == x)
-}
-
-const fn preprocess() -> [[u8; 10]; 31] {
-    let mut res = [[0; 10]; 31];
-    let mut x = 0;
-    while x < 31 {
-        res[x as usize] = get_digits(2i32.pow(x));
-        x += 1;
+pub fn advantage_count(nums1: &[i32], nums2: &[i32]) -> Vec<i32> {
+    let n = nums1.len();
+    let mut heap: BinaryHeap<_> = nums1.iter().copied().map(Reverse).collect();
+    let mut nums2: Vec<_> = nums2.iter().copied().enumerate().collect();
+    nums2.sort_unstable_by_key(|&(_, v)| v);
+    let mut res = vec![-1; n];
+    let mut temp = vec![];
+    for (i, num) in nums2.into_iter() {
+        while let Some(Reverse(v)) = heap.pop() {
+            if v <= num {
+                temp.push(v);
+            } else {
+                res[i] = v;
+                break;
+            }
+        }
+        heap.extend(temp.into_iter().map(Reverse));
+        temp = vec![];
     }
-    res
-}
-
-const fn get_digits(mut n: i32) -> [u8; 10] {
-    let mut res = [0; 10];
-    while n > 0 {
-        res[(n % 10) as usize] += 1;
-        n /= 10;
+    for v in res.iter_mut().filter(|v| **v < 0) {
+        let Some(x) = heap.pop() else { break };
+        *v = x.0;
     }
     res
 }
@@ -38,9 +41,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(reordered_power_of2(1));
-        debug_assert!(!reordered_power_of2(10));
-        debug_assert!(reordered_power_of2(46));
+        debug_assert_eq!(
+            advantage_count(&[2, 7, 11, 15], &[1, 10, 4, 11]),
+            [2, 11, 7, 15]
+        );
+        debug_assert_eq!(
+            advantage_count(&[12, 24, 8, 32], &[13, 25, 32, 11]),
+            [24, 32, 8, 12]
+        );
     }
 
     #[test]
