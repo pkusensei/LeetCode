@@ -2,33 +2,27 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn len_longest_fib_subseq(arr: &[i32]) -> i32 {
-    let n = arr.len();
-    let map = arr
-        .iter()
-        .enumerate()
-        .fold(HashMap::new(), |mut acc, (i, &num)| {
-            acc.insert(num, i);
-            acc
-        });
-    let mut dp = vec![vec![1; n]; n];
-    for i1 in 0..n - 2 {
-        for i2 in 1 + i1..n - 1 {
-            if let Some(&i3) = map.get(&(arr[i1] + arr[i2])) {
-                dp[i2][i3] = dp[i2][i3].max(1 + dp[i1][i2]).max(3);
-            }
+pub fn min_eating_speed(piles: &[i32], h: i32) -> i32 {
+    let (mut left, mut right) = (1, piles.iter().copied().max().unwrap());
+    while left < right {
+        let mid = left + (right - left) / 2;
+        let t = calc(piles, mid);
+        if t > h {
+            left = mid + 1
+        } else {
+            right = mid;
         }
     }
-    dp.into_iter()
-        .flatten()
-        .max()
-        .filter(|&v| v >= 3)
-        .unwrap_or(0)
+    left
+}
+
+fn calc(nums: &[i32], x: i32) -> i32 {
+    nums.iter()
+        .map(|&num| num / x + i32::from(num % x > 0))
+        .sum()
 }
 
 #[cfg(test)]
@@ -39,17 +33,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(len_longest_fib_subseq(&[1, 2, 3, 4, 5, 6, 7, 8]), 5);
-        debug_assert_eq!(len_longest_fib_subseq(&[1, 3, 7, 11, 12, 14, 18]), 3);
+        debug_assert_eq!(min_eating_speed(&[3, 6, 7, 11], 8), 4);
+        debug_assert_eq!(min_eating_speed(&[30, 11, 23, 4, 20], 5), 30);
+        debug_assert_eq!(min_eating_speed(&[30, 11, 23, 4, 20], 6), 23);
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(
-            len_longest_fib_subseq(&[1, 2, 3, 4, 5, 7, 8, 9, 10, 12, 17, 19, 27, 29]),
-            5
-        );
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
