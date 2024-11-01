@@ -12,28 +12,22 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
-        var a = TreeNode.Make([3, 5, 1, 6, 2, 0, 8, null, null, 7, 4]);
-        var b = sol.SubtreeWithAllDeepest(a);
-        var c = "[2,7,4]";
-        Assert.AreEqual(c, b.ToString());
+        var a1 = TreeNode.Make([3, 5, 1, 6, 2, 9, 8, null, null, 7, 4]);
+        var a2 = TreeNode.Make([3, 5, 1, 6, 7, 4, 2, null, null, null, null, null, null, 9, 8]);
+        Assert.IsTrue(sol.LeafSimilar(a1, a2));
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        var a = TreeNode.Make([1]);
-        var b = sol.SubtreeWithAllDeepest(a);
-        var c = "[1]";
-        Assert.AreEqual(c, b.ToString());
+        var a1 = TreeNode.Make([1, 2, 3]);
+        var a2 = TreeNode.Make([1, 3, 2]);
+        Assert.IsFalse(sol.LeafSimilar(a1, a2));
     }
 
     [TestMethod]
     public void TestMethod3()
     {
-        var a = TreeNode.Make([0, 1, 3, null, 2]);
-        var b = sol.SubtreeWithAllDeepest(a);
-        var c = "[2]";
-        Assert.AreEqual(c, b.ToString());
     }
 
     [TestMethod]
