@@ -2,35 +2,55 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::{cmp::Reverse, collections::BinaryHeap};
+use std::collections::BinaryHeap;
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn advantage_count(nums1: &[i32], nums2: &[i32]) -> Vec<i32> {
-    let n = nums1.len();
-    let mut heap: BinaryHeap<_> = nums1.iter().copied().map(Reverse).collect();
-    let mut nums2: Vec<_> = nums2.iter().copied().enumerate().collect();
-    nums2.sort_unstable_by_key(|&(_, v)| v);
-    let mut res = vec![-1; n];
-    let mut temp = vec![];
-    for (i, num) in nums2.into_iter() {
-        while let Some(Reverse(v)) = heap.pop() {
-            if v <= num {
-                temp.push(v);
-            } else {
-                res[i] = v;
-                break;
+pub fn min_refuel_stops(target: i32, start_fuel: i32, stations: &[[i32; 2]]) -> i32 {
+    let mut curr = start_fuel;
+    if curr >= target {
+        return 0;
+    }
+    let mut heap = BinaryHeap::new();
+    let mut res = 0;
+    for station in stations.iter() {
+        let (pos, fuel) = (station[0], station[1]);
+        // Has to reach pos before adding its fuel to heap
+        while curr < pos {
+            let Some(fuel) = heap.pop() else { return -1 };
+            curr += fuel;
+            res += 1;
+        }
+        heap.push(fuel);
+    }
+    if target <= curr {
+        res
+    } else {
+        while curr < target {
+            let Some(fuel) = heap.pop() else { return -1 };
+            curr += fuel;
+            res += 1;
+        }
+        res
+    }
+}
+
+fn with_dp(target: i32, start_fuel: i32, stations: &[[i32; 2]]) -> i32 {
+    let n = stations.len();
+    let mut dp = vec![0; 1 + n];
+    dp[0] = start_fuel;
+    for (idx, &[pos, fuel]) in stations.iter().enumerate() {
+        for t in (0..=idx).rev() {
+            if pos <= dp[t] {
+                dp[t + 1] = dp[t + 1].max(fuel + dp[t]);
             }
         }
-        heap.extend(temp.into_iter().map(Reverse));
-        temp = vec![];
     }
-    for v in res.iter_mut().filter(|v| **v < 0) {
-        let Some(x) = heap.pop() else { break };
-        *v = x.0;
-    }
-    res
+    dp.into_iter()
+        .enumerate()
+        .find_map(|(i, v)| if target <= v { Some(i as i32) } else { None })
+        .unwrap_or(-1)
 }
 
 #[cfg(test)]
@@ -41,18 +61,36 @@ mod tests {
 
     #[test]
     fn basics() {
+        debug_assert_eq!(with_dp(1, 1, &[]), 0);
+        debug_assert_eq!(with_dp(100, 1, &[[10, 100]]), -1);
         debug_assert_eq!(
-            advantage_count(&[2, 7, 11, 15], &[1, 10, 4, 11]),
-            [2, 11, 7, 15]
-        );
-        debug_assert_eq!(
-            advantage_count(&[12, 24, 8, 32], &[13, 25, 32, 11]),
-            [24, 32, 8, 12]
+            with_dp(100, 10, &[[10, 60], [20, 30], [30, 30], [60, 40]]),
+            2
         );
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(
+            with_dp(
+                1000,
+                299,
+                &[
+                    [13, 21],
+                    [26, 115],
+                    [100, 47],
+                    [225, 99],
+                    [299, 141],
+                    [444, 198],
+                    [608, 190],
+                    [636, 157],
+                    [647, 255],
+                    [841, 123]
+                ]
+            ),
+            4
+        );
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
