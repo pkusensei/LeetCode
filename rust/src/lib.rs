@@ -5,21 +5,11 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn binary_gap(mut n: i32) -> i32 {
-    let (mut res, mut streak) = (0, 0);
-    let mut seen_one = false;
-    while n > 0 {
-        if n & 1 == 1 {
-            seen_one = true;
-            res = res.max(streak);
-            streak = 1;
-        } else if seen_one {
-            streak += 1;
-            res = res.max(streak);
-        }
-        n >>= 1;
-    }
-    res
+pub fn make_fancy_string(s: &str) -> String {
+    s.as_bytes()
+        .chunk_by(|a, b| a == b)
+        .flat_map(|ch| ch.iter().take(2).copied().map(char::from))
+        .collect()
 }
 
 #[cfg(test)]
@@ -30,9 +20,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(binary_gap(22), 2);
-        debug_assert_eq!(binary_gap(8), 0);
-        debug_assert_eq!(binary_gap(5), 2);
+        debug_assert_eq!(make_fancy_string("leeetcode"), "leetcode");
+        debug_assert_eq!(make_fancy_string("aaabaaaa"), "aabaa");
+        debug_assert_eq!(make_fancy_string("aab"), "aab");
     }
 
     #[test]
