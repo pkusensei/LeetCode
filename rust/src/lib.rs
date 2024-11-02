@@ -5,27 +5,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn nth_magical_number(n: i32, a: i32, b: i32) -> i32 {
-    const MOD: i64 = 1_000_000_007;
-    let [a, b, n] = [a, b, n].map(i64::from);
-    let mut left = a.min(b);
-    let mut right = a.max(b) * n;
-    let lcm = a * b / gcd(a, b);
-    while left <= right {
-        let mut mid = left + (right - left) / 2;
-        let count = mid / a + mid / b - mid / lcm;
-        match count.cmp(&n) {
-            std::cmp::Ordering::Less => left = mid + 1,
-            std::cmp::Ordering::Greater => right = mid - 1,
-            std::cmp::Ordering::Equal => {
-                while mid % a > 0 && mid % b > 0 {
-                    mid -= 1;
-                }
-                return (mid % MOD) as i32;
-            }
-        }
+pub fn is_circular_sentence(sentence: &str) -> bool {
+    if sentence.starts_with(' ') || sentence.ends_with(' ') {
+        return false;
     }
-    -1
+    sentence.bytes().next() == sentence.bytes().last()
+        && sentence
+            .as_bytes()
+            .windows(3)
+            .filter(|w| w[1] == b' ')
+            .all(|w| w[0] == w[2] && w[0] != b' ')
 }
 
 #[cfg(test)]
@@ -36,14 +25,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(nth_magical_number(1, 2, 3), 2);
-        debug_assert_eq!(nth_magical_number(4, 2, 3), 6);
+        debug_assert!(is_circular_sentence("leetcode exercises sound delightful"));
+        debug_assert!(is_circular_sentence("eetcode"));
+        debug_assert!(!is_circular_sentence("Leetcode is cool"));
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(nth_magical_number(8, 8, 8), 64);
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
