@@ -2,31 +2,22 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::VecDeque;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn decode_at_index(s: &str, k: i32) -> String {
-    let mut curr = 0;
-    let k = k as usize;
-    for b in s.bytes() {
-        if b.is_ascii_alphabetic() {
-            curr += 1;
-            if k == curr {
-                return char::from(b).into();
+pub fn num_rescue_boats(people: &mut [i32], limit: i32) -> i32 {
+        people.sort_unstable();
+        let mut queue: VecDeque<i32> = people.iter().copied().collect();
+        let mut res = 0;
+        while let Some(end) = queue.pop_back() {
+            res += 1;
+            if queue.front().is_some_and(|&v| v + end <= limit) {
+                queue.pop_front();
             }
-        } else if b.is_ascii_digit() {
-            let digit = usize::from(b - b'0');
-            if curr * digit >= k {
-                if k % curr == 0 {
-                    return decode_at_index(s, curr as i32);
-                } else {
-                    return decode_at_index(s, (k % curr) as i32);
-                }
-            }
-            curr *= digit
         }
-    }
-    "".to_string()
+        res
 }
 
 #[cfg(test)]
@@ -37,9 +28,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(decode_at_index("leet2code3", 10), "o");
-        debug_assert_eq!(decode_at_index("ha22", 5), "h");
-        debug_assert_eq!(decode_at_index("a2345678999999999999999", 1), "a");
+        debug_assert_eq!(num_rescue_boats(&mut [1, 2], 3), 1);
+        debug_assert_eq!(num_rescue_boats(&mut [3, 2, 2, 1], 3), 3);
+        debug_assert_eq!(num_rescue_boats(&mut [3, 5, 3, 4], 5), 4);
     }
 
     #[test]
