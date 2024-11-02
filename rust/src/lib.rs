@@ -5,16 +5,42 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_circular_sentence(sentence: &str) -> bool {
-    if sentence.starts_with(' ') || sentence.ends_with(' ') {
-        return false;
+pub fn profitable_schemes(n: i32, min_profit: i32, group: &[i32], profit: &[i32]) -> i32 {
+    let size = group.len();
+    let mut dp = vec![vec![vec![-1; size]; 1 + min_profit as usize]; 1 + n as usize];
+    dfs(n, min_profit, group, profit, 0, &mut dp)
+}
+
+fn dfs(
+    n: i32,
+    min_profit: i32,
+    group: &[i32],
+    profit: &[i32],
+    idx: usize,
+    dp: &mut [Vec<Vec<i32>>],
+) -> i32 {
+    const MOD: i32 = 1_000_000_007;
+    if n < 0 {
+        return 0;
     }
-    sentence.bytes().next() == sentence.bytes().last()
-        && sentence
-            .as_bytes()
-            .windows(3)
-            .filter(|w| w[1] == b' ')
-            .all(|w| w[0] == w[2] && w[0] != b' ')
+    if idx == group.len() {
+        return (n >= 0 && min_profit == 0).into();
+    }
+    if dp[n as usize][min_profit as usize][idx] > -1 {
+        return dp[n as usize][min_profit as usize][idx];
+    }
+    let pick = dfs(
+        n - group[idx],
+        (min_profit - profit[idx]).max(0),
+        group,
+        profit,
+        1 + idx,
+        dp,
+    );
+    let skip = dfs(n, min_profit, group, profit, 1 + idx, dp);
+    let res = (pick + skip) % MOD;
+    dp[n as usize][min_profit as usize][idx] = res;
+    res
 }
 
 #[cfg(test)]
@@ -25,9 +51,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(is_circular_sentence("leetcode exercises sound delightful"));
-        debug_assert!(is_circular_sentence("eetcode"));
-        debug_assert!(!is_circular_sentence("Leetcode is cool"));
+        debug_assert_eq!(profitable_schemes(5, 3, &[2, 2], &[2, 3]), 2);
+        debug_assert_eq!(profitable_schemes(10, 5, &[2, 3, 5], &[6, 7, 8]), 7);
     }
 
     #[test]
