@@ -2,11 +2,30 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashSet;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_monotonic(nums: &[i32]) -> bool {
-    nums.windows(2).all(|w| w[0] <= w[1]) || nums.windows(2).all(|w| w[0] >= w[1])
+pub fn subarray_bitwise_ors(arr: &[i32]) -> i32 {
+    let mut res: HashSet<i32> = HashSet::new();
+    let mut prev = HashSet::new();
+    // Suppose for numbers up until i-1
+    // Their bitor results are in prev,
+    // ... i-1, i, ..
+    for &num in arr.iter() {
+        // Now for number [i], the current set is
+        // the union of [i] , and [i] bitor each number in result
+        // since a bit set with bitor can never be unset by future bitors
+        let curr: HashSet<_> = prev
+            .iter()
+            .map(|i| i | num)
+            .chain(std::iter::once(num))
+            .collect();
+        prev = curr; // could be on the same line, but for clarity...
+        res.extend(prev.iter());
+    }
+    res.len() as _
 }
 
 #[cfg(test)]
@@ -17,9 +36,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(is_monotonic(&[1, 2, 2, 3]));
-        debug_assert!(is_monotonic(&[6, 5, 4, 4]));
-        debug_assert!(!is_monotonic(&[1, 3, 2]));
+        debug_assert_eq!(subarray_bitwise_ors(&[0]), 1);
+        debug_assert_eq!(subarray_bitwise_ors(&[1, 1, 2]), 3);
+        debug_assert_eq!(subarray_bitwise_ors(&[1, 2, 4]), 6);
     }
 
     #[test]
