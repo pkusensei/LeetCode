@@ -5,30 +5,25 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn surface_area(grid: &[&[i32]]) -> i32 {
-    let mut res = 0;
-    for (y, row) in grid.iter().enumerate() {
-        for (x, &num) in row.iter().enumerate() {
-            if num == 0 {
-                continue;
-            }
-            res += 2;
-            for (nx, ny) in [
-                (x.saturating_sub(1), y),
-                (x + 1, y),
-                (x, y.saturating_sub(1)),
-                (x, y + 1),
-            ] {
-                if (nx, ny) == (x, y) {
-                    res += num;
-                } else {
-                    let v = grid.get(ny).and_then(|r| r.get(nx)).copied().unwrap_or(0);
-                    res += (num - v).max(0);
-                }
-            }
+pub fn num_special_equiv_groups(words: &[&str]) -> i32 {
+    words
+        .iter()
+        .map(|s| count(s))
+        .collect::<std::collections::HashSet<_>>()
+        .len() as i32
+}
+
+fn count(s: &str) -> [[i32; 26]; 2] {
+    let [mut even, mut odd] = [0, 1].map(|_| [0; 26]);
+    for (idx, b) in s.bytes().enumerate() {
+        let i = usize::from(b - b'a');
+        if idx & 1 == 1 {
+            odd[i] += 1;
+        } else {
+            even[i] += 1;
         }
     }
-    res
+    [even, odd]
 }
 
 #[cfg(test)]
@@ -39,9 +34,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(surface_area(&[&[1, 2], &[3, 4]]), 34);
-        debug_assert_eq!(surface_area(&[&[1, 1, 1], &[1, 0, 1], &[1, 1, 1]]), 32);
-        debug_assert_eq!(surface_area(&[&[2, 2, 2], &[2, 1, 2], &[2, 2, 2]]), 46);
+        debug_assert_eq!(
+            num_special_equiv_groups(&["abcd", "cdab", "cbad", "xyzz", "zzxy", "zzyx"]),
+            3
+        );
+        debug_assert_eq!(
+            num_special_equiv_groups(&["abc", "acb", "bac", "bca", "cab", "cba"]),
+            3
+        );
     }
 
     #[test]
