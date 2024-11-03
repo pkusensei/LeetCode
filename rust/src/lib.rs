@@ -2,46 +2,28 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::VecDeque;
-
 #[allow(unused_imports)]
 use helper::*;
 
-struct RLEIterator {
-    data: VecDeque<(i32, i32)>,
+struct StockSpanner {
+    stack: Vec<(i32, i32)>, // (count, num)
 }
 
-impl RLEIterator {
-    fn new(encoding: Vec<i32>) -> Self {
-        Self {
-            data: encoding
-                .chunks_exact(2)
-                .filter_map(|ch| {
-                    if ch[0] > 0 {
-                        Some((ch[0], ch[1]))
-                    } else {
-                        None
-                    }
-                })
-                .collect(),
-        }
+impl StockSpanner {
+    fn new() -> Self {
+        Self { stack: vec![] }
     }
 
-    fn next(&mut self, mut n: i32) -> i32 {
-        while self.data.front().is_some_and(|&(count, _)| count < n) {
-            let Some((count, _)) = self.data.pop_front() else {
-                return -1;
+    fn next(&mut self, price: i32) -> i32 {
+        let mut res = 1;
+        while self.stack.last().is_some_and(|&(_, v)| v <= price) {
+            let Some((count, _)) = self.stack.pop() else {
+                return 1;
             };
-            n -= count;
+            res += count;
         }
-        let Some((mut count, num)) = self.data.pop_front() else {
-            return -1;
-        };
-        count -= n;
-        if count > 0 {
-            self.data.push_front((count, num));
-        }
-        num
+        self.stack.push((res, price));
+        res
     }
 }
 
@@ -53,11 +35,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        let mut it = RLEIterator::new(vec![3, 8, 0, 9, 2, 5]); // This maps to the sequence [8,8,8,5,5].
-        debug_assert_eq!(it.next(2), 8); // exhausts 2 terms of the sequence, returning 8. The remaining sequence is now [8, 5, 5].
-        debug_assert_eq!(it.next(1), 8); // exhausts 1 term of the sequence, returning 8. The remaining sequence is now [5, 5].
-        debug_assert_eq!(it.next(1), 5); // exhausts 1 term of the sequence, returning 5. The remaining sequence is now [5].
-        debug_assert_eq!(it.next(2), -1); // exhausts 2 terms, returning -1. This is because the first term exhausted was 5,
+        let mut it = StockSpanner::new();
+        debug_assert_eq!(it.next(100), 1); // return 1
+        debug_assert_eq!(it.next(80), 1); // return 1
+        debug_assert_eq!(it.next(60), 1); // return 1
+        debug_assert_eq!(it.next(70), 2); // return 2
+        debug_assert_eq!(it.next(60), 1); // return 1
+        debug_assert_eq!(it.next(75), 4); // return 4, because the last 4 prices (including today's price of 75) were less than or equal to today's price.
+        debug_assert_eq!(it.next(85), 6); // return 6
     }
 
     #[test]
