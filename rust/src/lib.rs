@@ -2,33 +2,30 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_and_replace_pattern<'a>(words: &[&'a str], pattern: &str) -> Vec<&'a str> {
-    let pattern = shape(pattern);
-    words
-        .iter()
-        .filter(|s| shape(s) == pattern)
-        .copied()
-        .collect()
-}
-
-fn shape(s: &str) -> Vec<u8> {
-    let mut map = HashMap::new();
-    let mut res = vec![];
-    for b in s.bytes() {
-        if let Some(&id) = map.get(&b) {
-            res.push(id);
-        } else {
-            let id = map.len() as u8;
-            res.push(id);
-            map.insert(b, id);
-        }
+pub fn sum_subseq_widths(nums: &mut [i32]) -> i32 {
+    const MOD: i64 = 1_000_000_007;
+    let n = nums.len();
+    let mut prefix = Vec::with_capacity(n);
+    prefix.push(1);
+    for _ in 1..n {
+        prefix.push(prefix.last().unwrap_or(&1) * 2 % MOD);
     }
-    res
+    // min max has nothing to do with sorting
+    nums.sort_unstable();
+    // Array [..,i] has subseq with count of 2^i; non-empty 2^i -1
+    // Its count is ( 2^i -1 )*([i] - [0])
+    // Array [1+i..] has 2^(n-1-i)
+    // Similarly it's ( 2^(n-1-i) -1 ) * ([n-1] - [i])
+    // Thus for [i], its contribution is ( (2^i -1) - (2^(n-1-i) -1) ) * [i]
+    // The two (-1)s cancel out
+    let mut res = 0;
+    for (i, &num) in nums.iter().enumerate() {
+        res = (res + (prefix[i] - prefix[n - 1 - i]) * i64::from(num)) % MOD;
+    }
+    res as i32
 }
 
 #[cfg(test)]
@@ -39,14 +36,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            find_and_replace_pattern(&["abc", "deq", "mee", "aqq", "dkd", "ccc"], "abb"),
-            ["mee", "aqq"]
-        );
-        debug_assert_eq!(
-            find_and_replace_pattern(&["a", "b", "c"], "a"),
-            ["a", "b", "c"]
-        );
+        debug_assert_eq!(sum_subseq_widths(&mut [2, 1, 3]), 6);
+        debug_assert_eq!(sum_subseq_widths(&mut [2]), 0);
     }
 
     #[test]
