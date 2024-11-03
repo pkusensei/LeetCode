@@ -12,19 +12,19 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
-        var a = sol.AllPossibleFBT(7);
-        var b = a.Select(t => t.ToString()).Order().Print();
-        var c = "[[0,0,0,null,null,0,0,null,null,0,0],[0,0,0,null,null,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,null,null,null,null,0,0],[0,0,0,0,0,null,null,0,0]]";
-        Assert.AreEqual(c, b);
+        var a = TreeNode.Make([5, 3, 6, 2, 4, null, 8, 1, null, null, null, 7, 9]);
+        var b = sol.IncreasingBST(a);
+        var c = "[1,null,2,null,3,null,4,null,5,null,6,null,7,null,8,null,9]";
+        Assert.AreEqual(c, b.ToString());
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        var a = sol.AllPossibleFBT(3);
-        var b = a.Select(t => t.ToString()).Order().Print();
-        var c = "[[0,0,0]]";
-        Assert.AreEqual(c, b);
+        var a = TreeNode.Make([5, 1, 7]);
+        var b = sol.IncreasingBST(a);
+        var c = "[1,null,5,null,7]";
+        Assert.AreEqual(c, b.ToString());
     }
 
     [TestMethod]

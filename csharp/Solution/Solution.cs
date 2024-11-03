@@ -5,29 +5,31 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<TreeNode> AllPossibleFBT(int n)
+    public TreeNode IncreasingBST(TreeNode root)
     {
-        if (n == 1)
+        return Dfs(root).head;
+    }
+
+    static (TreeNode head, TreeNode tail) Dfs(TreeNode node)
+    {
+        if (node is null) { return (null, null); }
+        var (h1, t1) = Dfs(node.left);
+        var (h2, t2) = Dfs(node.right);
+        if (h1 is not null)
         {
-            return [new(0)];
+            var head = h1;
+            t1.right = node;
+            node.left = null;
+            node.right = h2;
+            var tail = t2 ?? node;
+            return (head, tail);
         }
-        if (n == 3)
+        else
         {
-            return [new(0, new(0), new(0))];
+            var head = node;
+            node.right = h2;
+            var tail = t2 ?? node;
+            return (head, tail);
         }
-        List<TreeNode> res = [];
-        for (int i = 1; i < n - 1; i += 2)
-        {
-            var left = AllPossibleFBT(i);
-            var right = AllPossibleFBT(n - 1 - i);
-            foreach (var a in left)
-            {
-                foreach (var b in right)
-                {
-                    res.Add(new(0, a, b));
-                }
-            }
-        }
-        return res;
     }
 }
