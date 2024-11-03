@@ -12,17 +12,19 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
-        var b = sol.ConstructFromPrePost([1, 2, 4, 5, 3, 6, 7], [4, 5, 2, 6, 7, 3, 1]);
-        var c = "[1,2,3,4,5,6,7]";
-        Assert.AreEqual(c, b.ToString());
+        var a = sol.AllPossibleFBT(7);
+        var b = a.Select(t => t.ToString()).Order().Print();
+        var c = "[[0,0,0,null,null,0,0,null,null,0,0],[0,0,0,null,null,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,null,null,null,null,0,0],[0,0,0,0,0,null,null,0,0]]";
+        Assert.AreEqual(c, b);
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        var b = sol.ConstructFromPrePost([1], [1]);
-        var c = "[1]";
-        Assert.AreEqual(c, b.ToString());
+        var a = sol.AllPossibleFBT(3);
+        var b = a.Select(t => t.ToString()).Order().Print();
+        var c = "[[0,0,0]]";
+        Assert.AreEqual(c, b);
     }
 
     [TestMethod]
