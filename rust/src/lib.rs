@@ -2,28 +2,45 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::{BTreeMap, HashMap};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_special_equiv_groups(words: &[&str]) -> i32 {
-    words
-        .iter()
-        .map(|s| count(s))
-        .collect::<std::collections::HashSet<_>>()
-        .len() as i32
+#[derive(Debug, Clone, Default)]
+struct FreqStack {
+    num_freq: HashMap<i32, i32>,
+    freq_num: BTreeMap<i32, Vec<i32>>,
 }
 
-fn count(s: &str) -> [[i32; 26]; 2] {
-    let [mut even, mut odd] = [0, 1].map(|_| [0; 26]);
-    for (idx, b) in s.bytes().enumerate() {
-        let i = usize::from(b - b'a');
-        if idx & 1 == 1 {
-            odd[i] += 1;
+impl FreqStack {
+    fn new() -> Self {
+        Default::default()
+    }
+
+    fn push(&mut self, val: i32) {
+        if let Some(freq) = self.num_freq.get_mut(&val) {
+            *freq += 1;
+            self.freq_num.entry(*freq).or_default().push(val);
         } else {
-            even[i] += 1;
+            *self.num_freq.entry(val).or_insert(0) += 1;
+            self.freq_num.entry(1).or_default().push(val);
         }
     }
-    [even, odd]
+
+    fn pop(&mut self) -> i32 {
+        let Some((&k, v)) = self.freq_num.iter_mut().next_back() else {
+            return 0;
+        };
+        let Some(res) = v.pop() else { return 0 };
+        if v.is_empty() {
+            self.freq_num.remove(&k);
+        }
+        if k > 1 {
+            self.num_freq.insert(res, k - 1);
+        }
+        res
+    }
 }
 
 #[cfg(test)]
@@ -34,14 +51,17 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            num_special_equiv_groups(&["abcd", "cdab", "cbad", "xyzz", "zzxy", "zzyx"]),
-            3
-        );
-        debug_assert_eq!(
-            num_special_equiv_groups(&["abc", "acb", "bac", "bca", "cab", "cba"]),
-            3
-        );
+        let mut st = FreqStack::new();
+        st.push(5); // The stack is [5]
+        st.push(7); // The stack is [5,7]
+        st.push(5); // The stack is [5,7,5]
+        st.push(7); // The stack is [5,7,5,7]
+        st.push(4); // The stack is [5,7,5,7,4]
+        st.push(5); // The stack is [5,7,5,7,4,5]
+        debug_assert_eq!(st.pop(), 5); // return 5, as 5 is the most frequent. The stack becomes [5,7,5,7,4].
+        debug_assert_eq!(st.pop(), 7); // return 7, as 5 and 7 is the most frequent, but 7 is closest to the top. The stack becomes [5,7,5,4].
+        debug_assert_eq!(st.pop(), 5); // return 5, as 5 is the most frequent. The stack becomes [5,7,4].
+        debug_assert_eq!(st.pop(), 4); // return 4, as 4, 5 and 7 is the most frequent, but 4 is closest to the top. The stack becomes [5,7].
     }
 
     #[test]
