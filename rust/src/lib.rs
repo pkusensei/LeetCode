@@ -5,27 +5,30 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn sum_subseq_widths(nums: &mut [i32]) -> i32 {
-    const MOD: i64 = 1_000_000_007;
-    let n = nums.len();
-    let mut prefix = Vec::with_capacity(n);
-    prefix.push(1);
-    for _ in 1..n {
-        prefix.push(prefix.last().unwrap_or(&1) * 2 % MOD);
-    }
-    // min max has nothing to do with sorting
-    nums.sort_unstable();
-    // Array [..,i] has subseq with count of 2^i; non-empty 2^i -1
-    // Its count is ( 2^i -1 )*([i] - [0])
-    // Array [1+i..] has 2^(n-1-i)
-    // Similarly it's ( 2^(n-1-i) -1 ) * ([n-1] - [i])
-    // Thus for [i], its contribution is ( (2^i -1) - (2^(n-1-i) -1) ) * [i]
-    // The two (-1)s cancel out
+pub fn surface_area(grid: &[&[i32]]) -> i32 {
     let mut res = 0;
-    for (i, &num) in nums.iter().enumerate() {
-        res = (res + (prefix[i] - prefix[n - 1 - i]) * i64::from(num)) % MOD;
+    for (y, row) in grid.iter().enumerate() {
+        for (x, &num) in row.iter().enumerate() {
+            if num == 0 {
+                continue;
+            }
+            res += 2;
+            for (nx, ny) in [
+                (x.saturating_sub(1), y),
+                (x + 1, y),
+                (x, y.saturating_sub(1)),
+                (x, y + 1),
+            ] {
+                if (nx, ny) == (x, y) {
+                    res += num;
+                } else {
+                    let v = grid.get(ny).and_then(|r| r.get(nx)).copied().unwrap_or(0);
+                    res += (num - v).max(0);
+                }
+            }
+        }
     }
-    res as i32
+    res
 }
 
 #[cfg(test)]
@@ -36,8 +39,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(sum_subseq_widths(&mut [2, 1, 3]), 6);
-        debug_assert_eq!(sum_subseq_widths(&mut [2]), 0);
+        debug_assert_eq!(surface_area(&[&[1, 2], &[3, 4]]), 34);
+        debug_assert_eq!(surface_area(&[&[1, 1, 1], &[1, 0, 1], &[1, 1, 1]]), 32);
+        debug_assert_eq!(surface_area(&[&[2, 2, 2], &[2, 1, 2], &[2, 2, 2]]), 46);
     }
 
     #[test]
