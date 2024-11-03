@@ -2,20 +2,33 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn fair_candy_swap(alice_sizes: &[i32], bob_sizes: &[i32]) -> Vec<i32> {
-    let sa: i32 = alice_sizes.iter().sum();
-    let sb: i32 = bob_sizes.iter().sum();
-    let delta = sa - sb;
-    let b: std::collections::HashSet<_> = bob_sizes.iter().copied().collect();
-    for &a in alice_sizes.iter() {
-        if b.contains(&(a - delta / 2)) {
-            return vec![a, a - delta / 2];
+pub fn find_and_replace_pattern<'a>(words: &[&'a str], pattern: &str) -> Vec<&'a str> {
+    let pattern = shape(pattern);
+    words
+        .iter()
+        .filter(|s| shape(s) == pattern)
+        .copied()
+        .collect()
+}
+
+fn shape(s: &str) -> Vec<u8> {
+    let mut map = HashMap::new();
+    let mut res = vec![];
+    for b in s.bytes() {
+        if let Some(&id) = map.get(&b) {
+            res.push(id);
+        } else {
+            let id = map.len() as u8;
+            res.push(id);
+            map.insert(b, id);
         }
     }
-    vec![]
+    res
 }
 
 #[cfg(test)]
@@ -26,9 +39,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(fair_candy_swap(&[1, 1], &[2, 2]), [1, 2]);
-        debug_assert_eq!(fair_candy_swap(&[1, 2], &[2, 3]), [1, 2]);
-        debug_assert_eq!(fair_candy_swap(&[2], &[1, 3]), [2, 3]);
+        debug_assert_eq!(
+            find_and_replace_pattern(&["abc", "deq", "mee", "aqq", "dkd", "ccc"], "abb"),
+            ["mee", "aqq"]
+        );
+        debug_assert_eq!(
+            find_and_replace_pattern(&["a", "b", "c"], "a"),
+            ["a", "b", "c"]
+        );
     }
 
     #[test]
