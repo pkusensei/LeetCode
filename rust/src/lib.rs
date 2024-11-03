@@ -2,30 +2,22 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashSet;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn subarray_bitwise_ors(arr: &[i32]) -> i32 {
-    let mut res: HashSet<i32> = HashSet::new();
-    let mut prev = HashSet::new();
-    // Suppose for numbers up until i-1
-    // Their bitor results are in prev,
-    // ... i-1, i, ..
-    for &num in arr.iter() {
-        // Now for number [i], the current set is
-        // the union of [i] , and [i] bitor each number in result
-        // since a bit set with bitor can never be unset by future bitors
-        let curr: HashSet<_> = prev
-            .iter()
-            .map(|i| i | num)
-            .chain(std::iter::once(num))
-            .collect();
-        prev = curr; // could be on the same line, but for clarity...
-        res.extend(prev.iter());
+pub fn orderly_queue(s: String, k: i32) -> String {
+    if k >= 2 {
+        let mut s = s.into_bytes();
+        s.sort_unstable();
+        String::from_utf8(s).unwrap()
+    } else {
+        let n = s.len();
+        let v = format!("{s}{s}").into_bytes();
+        v.windows(n)
+            .min()
+            .and_then(|s| String::from_utf8(s.to_vec()).ok())
+            .unwrap_or_default()
     }
-    res.len() as _
 }
 
 #[cfg(test)]
@@ -36,9 +28,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(subarray_bitwise_ors(&[0]), 1);
-        debug_assert_eq!(subarray_bitwise_ors(&[1, 1, 2]), 3);
-        debug_assert_eq!(subarray_bitwise_ors(&[1, 2, 4]), 6);
+        debug_assert_eq!(orderly_queue("cba".into(), 1), "acb");
+        debug_assert_eq!(orderly_queue("baaca".into(), 3), "aaabc");
     }
 
     #[test]
