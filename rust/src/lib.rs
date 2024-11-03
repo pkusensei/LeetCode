@@ -5,26 +5,30 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-struct StockSpanner {
-    stack: Vec<(i32, i32)>, // (count, num)
-}
-
-impl StockSpanner {
-    fn new() -> Self {
-        Self { stack: vec![] }
-    }
-
-    fn next(&mut self, price: i32) -> i32 {
-        let mut res = 1;
-        while self.stack.last().is_some_and(|&(_, v)| v <= price) {
-            let Some((count, _)) = self.stack.pop() else {
-                return 1;
-            };
-            res += count;
+pub fn at_most_n_given_digit_set(digits: &[&str], n: i32) -> i32 {
+    let digits: Vec<i32> = digits.iter().map(|s| s.parse().unwrap_or(1)).collect();
+    let d_count = digits.len();
+    let n_bytes = n.to_string().into_bytes();
+    let n_len = n_bytes.len();
+    let mut dp = vec![0; 1 + n_len];
+    dp[n_len] = 1;
+    for (idx, b) in n_bytes.into_iter().enumerate().rev() {
+        let digit = i32::from(b - b'0');
+        for &d in digits.iter() {
+            match d.cmp(&digit) {
+                // (d in n) < (digit option)
+                // take all combos on digits to the right [1+idx..]
+                // count ** (n_len - 1-idx)
+                std::cmp::Ordering::Less => dp[idx] += d_count.pow((n_len - idx - 1) as _),
+                // d == option
+                // Choices on [1+idx..] is limited
+                std::cmp::Ordering::Equal => dp[idx] += dp[1 + idx],
+                std::cmp::Ordering::Greater => (),
+            }
         }
-        self.stack.push((res, price));
-        res
     }
+    // add up nums with less digits than n
+    ((1..n_len).map(|v| d_count.pow(v as _)).sum::<usize>() + dp[0]) as _
 }
 
 #[cfg(test)]
@@ -35,14 +39,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        let mut it = StockSpanner::new();
-        debug_assert_eq!(it.next(100), 1); // return 1
-        debug_assert_eq!(it.next(80), 1); // return 1
-        debug_assert_eq!(it.next(60), 1); // return 1
-        debug_assert_eq!(it.next(70), 2); // return 2
-        debug_assert_eq!(it.next(60), 1); // return 1
-        debug_assert_eq!(it.next(75), 4); // return 4, because the last 4 prices (including today's price of 75) were less than or equal to today's price.
-        debug_assert_eq!(it.next(85), 6); // return 6
+        debug_assert_eq!(at_most_n_given_digit_set(&["1", "3", "5", "7"], 100), 20);
+        debug_assert_eq!(
+            at_most_n_given_digit_set(&["1", "4", "9"], 1_000_000_000),
+            29523
+        );
+        debug_assert_eq!(at_most_n_given_digit_set(&["7"], 8), 1);
     }
 
     #[test]
