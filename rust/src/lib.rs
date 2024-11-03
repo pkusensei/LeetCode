@@ -2,21 +2,46 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::VecDeque;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn orderly_queue(s: String, k: i32) -> String {
-    if k >= 2 {
-        let mut s = s.into_bytes();
-        s.sort_unstable();
-        String::from_utf8(s).unwrap()
-    } else {
-        let n = s.len();
-        let v = format!("{s}{s}").into_bytes();
-        v.windows(n)
-            .min()
-            .and_then(|s| String::from_utf8(s.to_vec()).ok())
-            .unwrap_or_default()
+struct RLEIterator {
+    data: VecDeque<(i32, i32)>,
+}
+
+impl RLEIterator {
+    fn new(encoding: Vec<i32>) -> Self {
+        Self {
+            data: encoding
+                .chunks_exact(2)
+                .filter_map(|ch| {
+                    if ch[0] > 0 {
+                        Some((ch[0], ch[1]))
+                    } else {
+                        None
+                    }
+                })
+                .collect(),
+        }
+    }
+
+    fn next(&mut self, mut n: i32) -> i32 {
+        while self.data.front().is_some_and(|&(count, _)| count < n) {
+            let Some((count, _)) = self.data.pop_front() else {
+                return -1;
+            };
+            n -= count;
+        }
+        let Some((mut count, num)) = self.data.pop_front() else {
+            return -1;
+        };
+        count -= n;
+        if count > 0 {
+            self.data.push_front((count, num));
+        }
+        num
     }
 }
 
@@ -28,8 +53,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(orderly_queue("cba".into(), 1), "acb");
-        debug_assert_eq!(orderly_queue("baaca".into(), 3), "aaabc");
+        let mut it = RLEIterator::new(vec![3, 8, 0, 9, 2, 5]); // This maps to the sequence [8,8,8,5,5].
+        debug_assert_eq!(it.next(2), 8); // exhausts 2 terms of the sequence, returning 8. The remaining sequence is now [8, 5, 5].
+        debug_assert_eq!(it.next(1), 8); // exhausts 1 term of the sequence, returning 8. The remaining sequence is now [5, 5].
+        debug_assert_eq!(it.next(1), 5); // exhausts 1 term of the sequence, returning 5. The remaining sequence is now [5].
+        debug_assert_eq!(it.next(2), -1); // exhausts 2 terms, returning -1. This is because the first term exhausted was 5,
     }
 
     #[test]
