@@ -5,30 +5,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn total_fruit(fruits: &[i32]) -> i32 {
-    let mut left = 0;
-    let mut counts = std::collections::HashMap::new();
-    let mut res = 0;
-    for (right, &num) in fruits.iter().enumerate() {
-        *counts.entry(num).or_insert(0) += 1;
-        if counts.len() < 3 {
-            continue;
-        }
-        let temp = counts.values().sum::<i32>() - 1;
-        res = res.max(temp);
-        while counts.len() > 2 && left < right {
-            let n = fruits[left];
-            left += 1;
-            let Some(v) = counts.get_mut(&n) else {
-                continue;
-            };
-            *v -= 1;
-            if *v == 0 {
-                counts.remove(&n);
-            }
-        }
-    }
-    res.max(counts.into_values().sum())
+pub fn superpalindromes_in_range(left: &str, right: &str) -> i32 {
+        const ROOTS: [u64; 70] = [
+            1, 2, 3, 11, 22, 101, 111, 121, 202, 212, 1001, 1111, 2002, 10001, 10101, 10201, 11011,
+            11111, 11211, 20002, 20102, 100001, 101101, 110011, 111111, 200002, 1000001, 1001001,
+            1002001, 1010101, 1011101, 1012101, 1100011, 1101011, 1102011, 1110111, 1111111, 2000002,
+            2001002, 10000001, 10011001, 10100101, 10111101, 11000011, 11011011, 11100111, 11111111,
+            20000002, 100000001, 100010001, 100020001, 100101001, 100111001, 100121001, 101000101,
+            101010101, 101020101, 101101101, 101111101, 110000011, 110010011, 110020011, 110101011,
+            110111011, 111000111, 111010111, 111101111, 111111111, 200000002, 200010002,
+        ];
+        let a = left.parse().unwrap();
+        let b = right.parse().unwrap();
+        ROOTS
+            .into_iter()
+            .filter(|n| (a..=b).contains(&(n * n)))
+            .count() as _
 }
 
 #[cfg(test)]
@@ -39,9 +31,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(total_fruit(&[1, 2, 1]), 3);
-        debug_assert_eq!(total_fruit(&[0, 1, 2, 2]), 3);
-        debug_assert_eq!(total_fruit(&[1, 2, 3, 2, 2]), 4);
+        debug_assert_eq!(superpalindromes_in_range("4", "1000"), 4);
+        debug_assert_eq!(superpalindromes_in_range("1", "2"), 1);
     }
 
     #[test]
