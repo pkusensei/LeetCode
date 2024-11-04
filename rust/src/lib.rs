@@ -5,30 +5,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn at_most_n_given_digit_set(digits: &[&str], n: i32) -> i32 {
-    let digits: Vec<i32> = digits.iter().map(|s| s.parse().unwrap_or(1)).collect();
-    let d_count = digits.len();
-    let n_bytes = n.to_string().into_bytes();
-    let n_len = n_bytes.len();
-    let mut dp = vec![0; 1 + n_len];
-    dp[n_len] = 1;
-    for (idx, b) in n_bytes.into_iter().enumerate().rev() {
-        let digit = i32::from(b - b'0');
-        for &d in digits.iter() {
-            match d.cmp(&digit) {
-                // (d in n) < (digit option)
-                // take all combos on digits to the right [1+idx..]
-                // count ** (n_len - 1-idx)
-                std::cmp::Ordering::Less => dp[idx] += d_count.pow((n_len - idx - 1) as _),
-                // d == option
-                // Choices on [1+idx..] is limited
-                std::cmp::Ordering::Equal => dp[idx] += dp[1 + idx],
-                std::cmp::Ordering::Greater => (),
-            }
+pub fn compressed_string(word: &str) -> String {
+    let mut res = vec![];
+    for ch in word.as_bytes().chunk_by(|a, b| a == b) {
+        let mut n = ch.len();
+        let b = ch[0];
+        while n >= 9 {
+            res.push(b'9');
+            res.push(b);
+            n -= 9;
+        }
+        if n > 0 {
+            res.push(n as u8 + b'0');
+            res.push(b);
         }
     }
-    // add up nums with less digits than n
-    ((1..n_len).map(|v| d_count.pow(v as _)).sum::<usize>() + dp[0]) as _
+    String::from_utf8(res).unwrap()
 }
 
 #[cfg(test)]
@@ -39,12 +31,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(at_most_n_given_digit_set(&["1", "3", "5", "7"], 100), 20);
-        debug_assert_eq!(
-            at_most_n_given_digit_set(&["1", "4", "9"], 1_000_000_000),
-            29523
-        );
-        debug_assert_eq!(at_most_n_given_digit_set(&["7"], 8), 1);
+        debug_assert_eq!(compressed_string("abcde"), "1a1b1c1d1e");
+        debug_assert_eq!(compressed_string("aaaaaaaaaaaaaabb"), "9a5a2b");
     }
 
     #[test]
