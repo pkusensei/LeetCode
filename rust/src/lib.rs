@@ -5,57 +5,30 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-const MOD: i32 = 1_000_000_007;
-
-pub fn num_perms_di_sequence(s: &str) -> i32 {
-    let n = s.len();
-    let mut dp = vec![vec![-1; 1 + n]; 1 + n];
-    (0..=n)
-        .map(|i| solve(s.as_bytes(), i, &mut dp))
-        .fold(0, |acc, v| (acc + v) % MOD)
-
-    // let mut dp = vec![vec![0; 1 + n]; 1 + n];
-    // dp[0] = vec![1; 1 + n];
-    // for (i1, b) in s.bytes().enumerate() {
-    //     let mut curr = 0;
-    //     if b == b'D' {
-    //         for i2 in 0..n - i1 {
-    //             curr = (curr + dp[i1][i2]) % MOD;
-    //             dp[1 + i1][i2] = curr;
-    //         }
-    //     } else {
-    //         for i2 in (0..n - i1).rev() {
-    //             curr = (curr + dp[i1][1 + i2]) % MOD;
-    //             dp[1 + i1][i2] = curr;
-    //         }
-    //     }
-    // }
-    // dp[n][0]
-}
-
-fn solve(s: &[u8], idx: usize, dp: &mut [Vec<i32>]) -> i32 {
-    if s.is_empty() {
-        return 1;
-    }
-    let n = s.len();
-    if dp[n][idx] > -1 {
-        return dp[n][idx];
-    }
+pub fn total_fruit(fruits: &[i32]) -> i32 {
+    let mut left = 0;
+    let mut counts = std::collections::HashMap::new();
     let mut res = 0;
-    match s[0] {
-        b'I' => {
-            for i in 1 + idx..=n {
-                res = (res + solve(&s[1..], i - 1, dp)) % MOD;
-            }
+    for (right, &num) in fruits.iter().enumerate() {
+        *counts.entry(num).or_insert(0) += 1;
+        if counts.len() < 3 {
+            continue;
         }
-        _ => {
-            for i in (0..idx).rev() {
-                res = (res + solve(&s[1..], i, dp)) % MOD;
+        let temp = counts.values().sum::<i32>() - 1;
+        res = res.max(temp);
+        while counts.len() > 2 && left < right {
+            let n = fruits[left];
+            left += 1;
+            let Some(v) = counts.get_mut(&n) else {
+                continue;
+            };
+            *v -= 1;
+            if *v == 0 {
+                counts.remove(&n);
             }
         }
     }
-    dp[n][idx] = res;
-    res
+    res.max(counts.into_values().sum())
 }
 
 #[cfg(test)]
@@ -66,8 +39,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(num_perms_di_sequence("DID"), 5);
-        debug_assert_eq!(num_perms_di_sequence("D"), 1);
+        debug_assert_eq!(total_fruit(&[1, 2, 1]), 3);
+        debug_assert_eq!(total_fruit(&[0, 1, 2, 2]), 3);
+        debug_assert_eq!(total_fruit(&[1, 2, 3, 2, 2]), 4);
     }
 
     #[test]
