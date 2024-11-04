@@ -5,22 +5,57 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn compressed_string(word: &str) -> String {
-    let mut res = vec![];
-    for ch in word.as_bytes().chunk_by(|a, b| a == b) {
-        let mut n = ch.len();
-        let b = ch[0];
-        while n >= 9 {
-            res.push(b'9');
-            res.push(b);
-            n -= 9;
+const MOD: i32 = 1_000_000_007;
+
+pub fn num_perms_di_sequence(s: &str) -> i32 {
+    let n = s.len();
+    let mut dp = vec![vec![-1; 1 + n]; 1 + n];
+    (0..=n)
+        .map(|i| solve(s.as_bytes(), i, &mut dp))
+        .fold(0, |acc, v| (acc + v) % MOD)
+
+    // let mut dp = vec![vec![0; 1 + n]; 1 + n];
+    // dp[0] = vec![1; 1 + n];
+    // for (i1, b) in s.bytes().enumerate() {
+    //     let mut curr = 0;
+    //     if b == b'D' {
+    //         for i2 in 0..n - i1 {
+    //             curr = (curr + dp[i1][i2]) % MOD;
+    //             dp[1 + i1][i2] = curr;
+    //         }
+    //     } else {
+    //         for i2 in (0..n - i1).rev() {
+    //             curr = (curr + dp[i1][1 + i2]) % MOD;
+    //             dp[1 + i1][i2] = curr;
+    //         }
+    //     }
+    // }
+    // dp[n][0]
+}
+
+fn solve(s: &[u8], idx: usize, dp: &mut [Vec<i32>]) -> i32 {
+    if s.is_empty() {
+        return 1;
+    }
+    let n = s.len();
+    if dp[n][idx] > -1 {
+        return dp[n][idx];
+    }
+    let mut res = 0;
+    match s[0] {
+        b'I' => {
+            for i in 1 + idx..=n {
+                res = (res + solve(&s[1..], i - 1, dp)) % MOD;
+            }
         }
-        if n > 0 {
-            res.push(n as u8 + b'0');
-            res.push(b);
+        _ => {
+            for i in (0..idx).rev() {
+                res = (res + solve(&s[1..], i, dp)) % MOD;
+            }
         }
     }
-    String::from_utf8(res).unwrap()
+    dp[n][idx] = res;
+    res
 }
 
 #[cfg(test)]
@@ -31,8 +66,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(compressed_string("abcde"), "1a1b1c1d1e");
-        debug_assert_eq!(compressed_string("aaaaaaaaaaaaaabb"), "9a5a2b");
+        debug_assert_eq!(num_perms_di_sequence("DID"), 5);
+        debug_assert_eq!(num_perms_di_sequence("D"), 1);
     }
 
     #[test]
