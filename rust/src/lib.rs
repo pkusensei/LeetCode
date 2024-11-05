@@ -2,36 +2,77 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::{BTreeMap, HashMap};
-
 #[allow(unused_imports)]
 use helper::*;
+use rand::Rng;
 
-struct TopVotedCandidate {
-    data: BTreeMap<i32, i32>,
+pub fn sort_array(mut nums: Vec<i32>) -> Vec<i32> {
+    // merge_sort(&mut nums);
+    // counting_sort(&mut nums);
+    quicksort(&mut nums);
+    nums
 }
 
-impl TopVotedCandidate {
-    fn new(persons: Vec<i32>, times: Vec<i32>) -> Self {
-        let mut tally = HashMap::new();
-        let mut data = BTreeMap::new();
-        for (idx, (&p, t)) in persons.iter().zip(times).enumerate() {
-            *tally.entry(p).or_insert(0) += 1;
-            let max = *tally.values().max().unwrap_or(&1);
-            if let Some(&v) = persons[..=idx].iter().rev().find(|&v| tally[&v] == max) {
-                data.insert(t, v);
-            }
+fn merge_sort(nums: &mut [i32]) {
+    let n = nums.len();
+    if n == 1 {
+        return;
+    }
+    merge_sort(&mut nums[..n / 2]);
+    merge_sort(&mut nums[n / 2..]);
+    let mut sorted = Vec::with_capacity(n);
+    let (mut left, mut right) = (0, n / 2);
+    while left < n / 2 && right < n {
+        if nums[left] <= nums[right] {
+            sorted.push(nums[left]);
+            left += 1;
+        } else {
+            sorted.push(nums[right]);
+            right += 1;
         }
-        Self { data }
     }
+    sorted.extend_from_slice(&nums[left..n / 2]);
+    sorted.extend_from_slice(&nums[right..]);
+    nums.copy_from_slice(&sorted);
+}
 
-    fn q(&self, t: i32) -> i32 {
-        self.data
-            .range(..=t)
-            .next_back()
-            .map(|(_, &p)| p)
-            .unwrap_or(0)
+fn counting_sort(nums: &mut [i32]) {
+    let (min, max) = nums
+        .iter()
+        .fold((i32::MAX, i32::MIN), |(curr_min, curr_max), &num| {
+            (curr_min.min(num), curr_max.max(num))
+        });
+    let width = max - min;
+    let mut counts = vec![0; 1 + width as usize];
+    for &num in nums.iter() {
+        counts[(num - min) as usize] += 1;
     }
+    let mut idx = 0;
+    for (delta, freq) in counts.into_iter().enumerate() {
+        for _ in 0..freq {
+            nums[idx] = min + delta as i32;
+            idx += 1;
+        }
+    }
+}
+
+fn quicksort(nums: &mut [i32]) {
+    if nums.len() < 2 {
+        return;
+    }
+    let pivot = rand::thread_rng().gen_range(0..nums.len());
+    let val = nums[pivot];
+    nums.swap(pivot, nums.len() - 1);
+    let mut idx = 0;
+    for i in 0..nums.len() - 1 {
+        if nums[i] <= val {
+            nums.swap(i, idx);
+            idx += 1;
+        }
+    }
+    nums.swap(idx, nums.len() - 1);
+    quicksort(&mut nums[..idx]);
+    quicksort(&mut nums[1 + idx..]);
 }
 
 #[cfg(test)]
@@ -42,13 +83,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        let v = TopVotedCandidate::new(vec![0, 1, 1, 0, 0, 1, 0], vec![0, 5, 10, 15, 20, 25, 30]);
-        debug_assert_eq!(v.q(3), 0); // return 0, At time 3, the votes are [0], and 0 is leading.
-        debug_assert_eq!(v.q(12), 1); // return 1, At time 12, the votes are [0,1,1], and 1 is leading.
-        debug_assert_eq!(v.q(25), 1); // return 1, At time 25, the votes are [0,1,1,0,0,1], and 1 is leading (as ties go to the most recent vote.)
-        debug_assert_eq!(v.q(15), 0); // return 0
-        debug_assert_eq!(v.q(24), 0); // return 0
-        debug_assert_eq!(v.q(8), 1); // return 1
+        debug_assert_eq!(sort_array(vec![5, 2, 3, 1]), [1, 2, 3, 5]);
+        debug_assert_eq!(sort_array(vec![5, 1, 1, 2, 0, 0]), [0, 0, 1, 1, 2, 5]);
     }
 
     #[test]
