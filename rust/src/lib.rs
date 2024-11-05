@@ -5,11 +5,12 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_changes(s: &str) -> i32 {
-    s.as_bytes()
-        .chunks_exact(2)
-        .filter(|ch| ch[0] != ch[1])
-        .count() as _
+pub fn smallest_range_i(nums: &[i32], k: i32) -> i32 {
+    nums.iter()
+        .max()
+        .zip(nums.iter().min())
+        .map(|(a, b)| (a - b - 2 * k).max(0))
+        .unwrap_or(0)
 }
 
 #[cfg(test)]
@@ -20,9 +21,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(min_changes("1001"), 2);
-        debug_assert_eq!(min_changes("10"), 1);
-        debug_assert_eq!(min_changes("0000"), 0);
+        debug_assert_eq!(smallest_range_i(&[1], 0), 0);
+        debug_assert_eq!(smallest_range_i(&[0, 10], 2), 6);
+        debug_assert_eq!(smallest_range_i(&[1, 3, 6], 3), 0);
     }
 
     #[test]
