@@ -2,22 +2,36 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::{BTreeMap, HashMap};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn smallest_range_ii(nums: &mut [i32], k: i32) -> i32 {
-    nums.sort_unstable();
-    let (first, last) = (nums[0], *nums.last().unwrap());
-    let temp = last - first;
-    nums.windows(2)
-        .map(|w| {
-            let min = (first + k).min(w[1] - k);
-            let max = (last - k).max(w[0] + k);
-            max - min
-        })
-        .min()
-        .map(|v| v.min(temp))
-        .unwrap_or(temp)
+struct TopVotedCandidate {
+    data: BTreeMap<i32, i32>,
+}
+
+impl TopVotedCandidate {
+    fn new(persons: Vec<i32>, times: Vec<i32>) -> Self {
+        let mut tally = HashMap::new();
+        let mut data = BTreeMap::new();
+        for (idx, (&p, t)) in persons.iter().zip(times).enumerate() {
+            *tally.entry(p).or_insert(0) += 1;
+            let max = *tally.values().max().unwrap_or(&1);
+            if let Some(&v) = persons[..=idx].iter().rev().find(|&v| tally[&v] == max) {
+                data.insert(t, v);
+            }
+        }
+        Self { data }
+    }
+
+    fn q(&self, t: i32) -> i32 {
+        self.data
+            .range(..=t)
+            .next_back()
+            .map(|(_, &p)| p)
+            .unwrap_or(0)
+    }
 }
 
 #[cfg(test)]
@@ -28,16 +42,17 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(smallest_range_ii(&mut [1], 0), 0);
-        debug_assert_eq!(smallest_range_ii(&mut [0, 10], 2), 6);
-        debug_assert_eq!(smallest_range_ii(&mut [1, 3, 6], 3), 3);
+        let v = TopVotedCandidate::new(vec![0, 1, 1, 0, 0, 1, 0], vec![0, 5, 10, 15, 20, 25, 30]);
+        debug_assert_eq!(v.q(3), 0); // return 0, At time 3, the votes are [0], and 0 is leading.
+        debug_assert_eq!(v.q(12), 1); // return 1, At time 12, the votes are [0,1,1], and 1 is leading.
+        debug_assert_eq!(v.q(25), 1); // return 1, At time 25, the votes are [0,1,1,0,0,1], and 1 is leading (as ties go to the most recent vote.)
+        debug_assert_eq!(v.q(15), 0); // return 0
+        debug_assert_eq!(v.q(24), 0); // return 0
+        debug_assert_eq!(v.q(8), 1); // return 1
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(smallest_range_ii(&mut [2, 7, 2], 1), 3);
-        debug_assert_eq!(smallest_range_ii(&mut [7, 8, 8], 5), 1);
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
