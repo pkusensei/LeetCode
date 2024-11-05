@@ -2,77 +2,72 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::VecDeque;
+
 #[allow(unused_imports)]
 use helper::*;
-use rand::Rng;
 
-pub fn sort_array(mut nums: Vec<i32>) -> Vec<i32> {
-    // merge_sort(&mut nums);
-    // counting_sort(&mut nums);
-    quicksort(&mut nums);
-    nums
-}
+pub fn cat_mouse_game(graph: &[&[i32]]) -> i32 {
+    const DRAW: i32 = 0;
+    const MOUSE: i32 = 1;
+    const CAT: i32 = 2;
+    let n = graph.len();
 
-fn merge_sort(nums: &mut [i32]) {
-    let n = nums.len();
-    if n == 1 {
-        return;
-    }
-    merge_sort(&mut nums[..n / 2]);
-    merge_sort(&mut nums[n / 2..]);
-    let mut sorted = Vec::with_capacity(n);
-    let (mut left, mut right) = (0, n / 2);
-    while left < n / 2 && right < n {
-        if nums[left] <= nums[right] {
-            sorted.push(nums[left]);
-            left += 1;
-        } else {
-            sorted.push(nums[right]);
-            right += 1;
+    let mut color = vec![vec![vec![0; 2]; n]; n];
+    let mut degree = vec![vec![vec![0; 2]; n]; n];
+    for mouse in 0..n {
+        for cat in 0..n {
+            degree[mouse][cat][1] = graph[mouse].len() as i32;
+            degree[mouse][cat][0] = graph[cat].len() as i32;
+            degree[mouse][cat][0] -= graph[cat].iter().filter(|&&v| v == 0).count() as i32;
         }
     }
-    sorted.extend_from_slice(&nums[left..n / 2]);
-    sorted.extend_from_slice(&nums[right..]);
-    nums.copy_from_slice(&sorted);
-}
 
-fn counting_sort(nums: &mut [i32]) {
-    let (min, max) = nums
-        .iter()
-        .fold((i32::MAX, i32::MIN), |(curr_min, curr_max), &num| {
-            (curr_min.min(num), curr_max.max(num))
-        });
-    let width = max - min;
-    let mut counts = vec![0; 1 + width as usize];
-    for &num in nums.iter() {
-        counts[(num - min) as usize] += 1;
-    }
-    let mut idx = 0;
-    for (delta, freq) in counts.into_iter().enumerate() {
-        for _ in 0..freq {
-            nums[idx] = min + delta as i32;
-            idx += 1;
+    let mut queue = VecDeque::new();
+    for node in 0..n {
+        for turn in 0..=1 {
+            color[0][node][turn] = MOUSE;
+            queue.push_back((0, node, turn, MOUSE));
+            if node > 0 {
+                color[node][node][turn] = CAT;
+                queue.push_back((node, node, turn, CAT));
+            }
         }
     }
-}
-
-fn quicksort(nums: &mut [i32]) {
-    if nums.len() < 2 {
-        return;
-    }
-    let pivot = rand::thread_rng().gen_range(0..nums.len());
-    let val = nums[pivot];
-    nums.swap(pivot, nums.len() - 1);
-    let mut idx = 0;
-    for i in 0..nums.len() - 1 {
-        if nums[i] <= val {
-            nums.swap(i, idx);
-            idx += 1;
+    // mouse location, cat location, turn, state
+    while let Some((m, c, t, s)) = queue.pop_front() {
+        for [m2, c2, t2] in parents(graph, m, c, t) {
+            if color[m2][c2][t2] == DRAW {
+                if t2 == 1 && s == MOUSE || t2 == 0 && s == CAT {
+                    color[m2][c2][t2] = s;
+                    queue.push_back((m2, c2, t2, s));
+                } else {
+                    degree[m2][c2][t2] -= 1;
+                    if degree[m2][c2][t2] == 0 {
+                        let temp = if t2 == 1 { CAT } else { MOUSE };
+                        color[m2][c2][t2] = temp;
+                        queue.push_back((m2, c2, t2, temp));
+                    }
+                }
+            }
         }
     }
-    nums.swap(idx, nums.len() - 1);
-    quicksort(&mut nums[..idx]);
-    quicksort(&mut nums[1 + idx..]);
+    color[1][2][1]
+}
+
+fn parents(graph: &[&[i32]], mouse: usize, cat: usize, turn: usize) -> Vec<[usize; 3]> {
+    if turn == 0 {
+        graph[mouse]
+            .iter()
+            .map(|&v| [v as usize, cat, 1 - turn])
+            .collect()
+    } else {
+        graph[cat]
+            .iter()
+            .filter(|&&v| v > 0)
+            .map(|&v| [mouse, v as usize, 1 - turn])
+            .collect()
+    }
 }
 
 #[cfg(test)]
@@ -83,12 +78,20 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(sort_array(vec![5, 2, 3, 1]), [1, 2, 3, 5]);
-        debug_assert_eq!(sort_array(vec![5, 1, 1, 2, 0, 0]), [0, 0, 1, 1, 2, 5]);
+        debug_assert_eq!(
+            cat_mouse_game(&[&[2, 5], &[3], &[0, 4, 5], &[1, 4, 5], &[2, 3], &[0, 2, 3]]),
+            0
+        );
+        debug_assert_eq!(cat_mouse_game(&[&[1, 3], &[0], &[3], &[0, 2]]), 1);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(
+            cat_mouse_game(&[&[2, 3], &[3, 4], &[0, 4], &[0, 1], &[1, 2]]),
+            1
+        );
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
