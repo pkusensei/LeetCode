@@ -5,66 +5,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-const MOD: usize = 1_000_000_007;
-
-pub fn num_music_playlists(n: i32, goal: i32, k: i32) -> i32 {
-    let [n, goal, k] = [n, goal, k].map(|v| v as usize);
-    let mut dp = vec![vec![0; 1 + n]; 1 + goal];
-    dp[0][0] = 1;
-    for len in 1..=goal {
-        for choice in 1..=n.min(len) {
-            // choice is a new song
-            // (choice-1) songs have been used => (n-(choice-1))
-            dp[len][choice] = dp[len - 1][choice - 1] * (n - choice + 1) % MOD;
-            if choice > k {
-                // able to pick an a used song
-                // the latest k songs are ineligible => (choice-k)
-                dp[len][choice] += dp[len - 1][choice] * (choice - k) % MOD;
-                dp[len][choice] %= MOD
-            }
-        }
+pub fn sort_array_by_parity_ii(mut nums: Vec<i32>) -> Vec<i32> {
+    nums.sort_by_key(|n| n & 1);
+    let i = nums.partition_point(|v| v & 1 == 0);
+    let mut right = if i & 1 == 1 { i + 1 } else { i };
+    let mut left = 1;
+    let n = nums.len();
+    while right < n {
+        nums.swap(left, right);
+        left += 2;
+        right += 2
     }
-    dp[goal][n] as i32
-}
-
-fn combinatorics(n: i32, goal: i32, k: i32) -> i32 {
-    let [n, goal, k] = [n, goal, k].map(|v| v as usize);
-    let [factorials, inv_fact] = factorials(n);
-    let mut sign = 1;
-    let mut res = 0;
-    for idx in (k..=n).rev() {
-        let mut temp = mod_pow(idx - k, goal - k);
-        temp = (temp * inv_fact[n - idx]) % MOD;
-        temp = (temp * inv_fact[idx - k]) % MOD;
-        res = (res + sign * temp as i64).rem_euclid(MOD as i64);
-        sign *= -1;
-    }
-    ((factorials[n] * res as usize) % MOD) as i32
-}
-
-fn factorials(n: usize) -> [Vec<usize>; 2] {
-    let [mut factorial, mut inv_fact] = [0, 1].map(|_| {
-        let mut v = Vec::with_capacity(1 + n);
-        v.push(1);
-        v
-    });
-    for i in 1..=n {
-        factorial.push((factorial[i - 1] * i) % MOD);
-        inv_fact.push(mod_pow(factorial[i], MOD - 2));
-    }
-    [factorial, inv_fact]
-}
-
-fn mod_pow(mut base: usize, mut exp: usize) -> usize {
-    let mut res = 1;
-    while exp > 0 {
-        if exp & 1 == 1 {
-            res = (res * base) % MOD;
-        }
-        exp >>= 1;
-        base = (base * base) % MOD;
-    }
-    res
+    nums
 }
 
 #[cfg(test)]
@@ -75,9 +27,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(combinatorics(3, 3, 1), 6);
-        debug_assert_eq!(combinatorics(2, 3, 0), 6);
-        debug_assert_eq!(combinatorics(2, 3, 1), 2);
+        debug_assert_eq!(sort_array_by_parity_ii(vec![4, 2, 5, 7]), [4, 5, 2, 7]);
+        debug_assert_eq!(sort_array_by_parity_ii(vec![2, 3]), [2, 3]);
     }
 
     #[test]
