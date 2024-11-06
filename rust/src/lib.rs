@@ -5,22 +5,33 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn partition_disjoint(nums: &[i32]) -> i32 {
-    let n = nums.len();
-    let [mut left, mut right] = [0, 1].map(|_| Vec::with_capacity(n));
-    for &num in nums.iter() {
-        left.push(num.max(left.last().copied().unwrap_or(0)));
-    }
-    for &num in nums.iter().rev() {
-        right.push(num.min(right.last().copied().unwrap_or(i32::MAX)));
-    }
-    right.reverse();
-    for i in 0..n - 1 {
-        if left[i] <= right[i + 1] {
-            return 1 + i as i32;
-        }
-    }
-    -1
+pub fn word_subsets<'a>(words1: &[&'a str], words2: &[&'a str]) -> Vec<&'a str> {
+    let counts = words2
+        .iter()
+        .map(|s| count(s))
+        .fold([0; 26], |mut acc, curr| {
+            for (a, c) in acc.iter_mut().zip(curr) {
+                *a = (*a).max(c);
+            }
+            acc
+        });
+    words1
+        .iter()
+        .filter(|s| {
+            count(s)
+                .into_iter()
+                .zip(counts.iter())
+                .all(|(a, &b)| a >= b)
+        })
+        .copied()
+        .collect()
+}
+
+fn count(s: &str) -> [i32; 26] {
+    s.bytes().fold([0; 26], |mut acc, b| {
+        acc[usize::from(b - b'a')] += 1;
+        acc
+    })
 }
 
 #[cfg(test)]
@@ -31,8 +42,20 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(partition_disjoint(&[5, 0, 3, 8, 6]), 3);
-        debug_assert_eq!(partition_disjoint(&[1, 1, 1, 0, 6, 12]), 4);
+        debug_assert_eq!(
+            word_subsets(
+                &["amazon", "apple", "facebook", "google", "leetcode"],
+                &["e", "o"]
+            ),
+            ["facebook", "google", "leetcode"]
+        );
+        debug_assert_eq!(
+            word_subsets(
+                &["amazon", "apple", "facebook", "google", "leetcode"],
+                &["l", "e"]
+            ),
+            ["apple", "google", "leetcode"]
+        );
     }
 
     #[test]
