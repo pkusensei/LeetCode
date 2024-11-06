@@ -2,19 +2,25 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn has_groups_size_x(deck: &[i32]) -> bool {
-    let count = deck.iter().fold(HashMap::new(), |mut acc, &n| {
-        *acc.entry(n).or_insert(0) += 1;
-        acc
-    });
-    let mut it = count.into_values();
-    let first = it.next().unwrap_or(1);
-    it.fold(first, |acc, v| gcd(acc, v)) > 1
+pub fn can_sort_array(nums: &[i32]) -> bool {
+    if nums.is_sorted() {
+        true
+    } else {
+        let mut max = 0;
+        for ch in nums.chunk_by(|a, b| a.count_ones() == b.count_ones()) {
+            let curr_min = *ch.iter().min().unwrap();
+            let curr_max = *ch.iter().max().unwrap();
+            if max < curr_min {
+                max = curr_max
+            } else {
+                return false;
+            }
+        }
+        true
+    }
 }
 
 #[cfg(test)]
@@ -25,8 +31,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(has_groups_size_x(&[1, 2, 3, 4, 4, 3, 2, 1]));
-        debug_assert!(!has_groups_size_x(&[1, 1, 1, 2, 2, 2, 3, 3]));
+        debug_assert!(can_sort_array(&[8, 4, 2, 30, 15]));
+        debug_assert!(can_sort_array(&[1, 2, 3, 4, 5]));
+        debug_assert!(!can_sort_array(&[3, 16, 8, 4, 2]));
     }
 
     #[test]
