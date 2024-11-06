@@ -5,50 +5,66 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_subarray_sum_circular(nums: &[i32]) -> i32 {
-    let [mut min, mut curr_min] = [30_001; 2];
-    let [mut max, mut curr_max] = [-30_001; 2];
-    let mut sum = 0;
-    for &num in nums.iter() {
-        curr_min = num.min(curr_min + num);
-        curr_max = num.max(curr_max + num);
-        min = min.min(curr_min);
-        max = max.max(curr_max);
-        sum += num;
-    }
-    if max < 0 {
-        // Everything is negative, returns max
-        max
-    } else {
-        // max => the max sum in original array
-        // (sum-min) => max sum in wrapped around array
-        // as in, dodged the min part
-        max.max(sum - min)
-    }
-}
+const MOD: usize = 1_000_000_007;
 
-fn prefix_suffix(nums: &[i32]) -> i32 {
-    let n = nums.len();
-    let mut suffix = Vec::with_capacity(n);
-    let mut suff_sum = nums[n - 1];
-    suffix.push(nums[n - 1]);
-    for &num in nums.iter().rev().skip(1) {
-        suff_sum += num;
-        suffix.push(suff_sum.max(*suffix.last().unwrap()));
-    }
-    suffix.reverse();
-
-    let [mut max, mut special] = [nums[0]; 2];
-    let [mut prefix, mut curr] = [0; 2];
-    for (idx, &num) in nums.iter().enumerate() {
-        curr = num.max(curr + num);
-        max = max.max(curr);
-        prefix += num;
-        if 1 + idx < n {
-            special = special.max(prefix + suffix[1 + idx]);
+pub fn num_music_playlists(n: i32, goal: i32, k: i32) -> i32 {
+    let [n, goal, k] = [n, goal, k].map(|v| v as usize);
+    let mut dp = vec![vec![0; 1 + n]; 1 + goal];
+    dp[0][0] = 1;
+    for len in 1..=goal {
+        for choice in 1..=n.min(len) {
+            // choice is a new song
+            // (choice-1) songs have been used => (n-(choice-1))
+            dp[len][choice] = dp[len - 1][choice - 1] * (n - choice + 1) % MOD;
+            if choice > k {
+                // able to pick an a used song
+                // the latest k songs are ineligible => (choice-k)
+                dp[len][choice] += dp[len - 1][choice] * (choice - k) % MOD;
+                dp[len][choice] %= MOD
+            }
         }
     }
-    max.max(special)
+    dp[goal][n] as i32
+}
+
+fn combinatorics(n: i32, goal: i32, k: i32) -> i32 {
+    let [n, goal, k] = [n, goal, k].map(|v| v as usize);
+    let [factorials, inv_fact] = factorials(n);
+    let mut sign = 1;
+    let mut res = 0;
+    for idx in (k..=n).rev() {
+        let mut temp = mod_pow(idx - k, goal - k);
+        temp = (temp * inv_fact[n - idx]) % MOD;
+        temp = (temp * inv_fact[idx - k]) % MOD;
+        res = (res + sign * temp as i64).rem_euclid(MOD as i64);
+        sign *= -1;
+    }
+    ((factorials[n] * res as usize) % MOD) as i32
+}
+
+fn factorials(n: usize) -> [Vec<usize>; 2] {
+    let [mut factorial, mut inv_fact] = [0, 1].map(|_| {
+        let mut v = Vec::with_capacity(1 + n);
+        v.push(1);
+        v
+    });
+    for i in 1..=n {
+        factorial.push((factorial[i - 1] * i) % MOD);
+        inv_fact.push(mod_pow(factorial[i], MOD - 2));
+    }
+    [factorial, inv_fact]
+}
+
+fn mod_pow(mut base: usize, mut exp: usize) -> usize {
+    let mut res = 1;
+    while exp > 0 {
+        if exp & 1 == 1 {
+            res = (res * base) % MOD;
+        }
+        exp >>= 1;
+        base = (base * base) % MOD;
+    }
+    res
 }
 
 #[cfg(test)]
@@ -59,15 +75,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(prefix_suffix(&[1, -2, 3, -2]), 3);
-        debug_assert_eq!(prefix_suffix(&[5, -3, 5]), 10);
-        debug_assert_eq!(prefix_suffix(&[-3, -2, -3]), -2);
+        debug_assert_eq!(combinatorics(3, 3, 1), 6);
+        debug_assert_eq!(combinatorics(2, 3, 0), 6);
+        debug_assert_eq!(combinatorics(2, 3, 1), 2);
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(prefix_suffix(&[2, -2, 2, 7, 8, 0]), 19);
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
