@@ -5,33 +5,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn word_subsets<'a>(words1: &[&'a str], words2: &[&'a str]) -> Vec<&'a str> {
-    let counts = words2
-        .iter()
-        .map(|s| count(s))
-        .fold([0; 26], |mut acc, curr| {
-            for (a, c) in acc.iter_mut().zip(curr) {
-                *a = (*a).max(c);
-            }
-            acc
-        });
-    words1
-        .iter()
-        .filter(|s| {
-            count(s)
-                .into_iter()
-                .zip(counts.iter())
-                .all(|(a, &b)| a >= b)
-        })
-        .copied()
-        .collect()
-}
-
-fn count(s: &str) -> [i32; 26] {
-    s.bytes().fold([0; 26], |mut acc, b| {
-        acc[usize::from(b - b'a')] += 1;
-        acc
-    })
+pub fn reverse_only_letters(s: String) -> String {
+    let mut s = s.into_bytes();
+    let (mut left, mut right) = (0, s.len() - 1);
+    while left < right {
+        while left < right && !s[left].is_ascii_alphabetic() {
+            left += 1;
+        }
+        while left < right && !s[right].is_ascii_alphabetic() {
+            right -= 1;
+        }
+        s.swap(left, right);
+        left += 1;
+        right -= 1;
+    }
+    String::from_utf8(s).unwrap()
 }
 
 #[cfg(test)]
@@ -42,19 +30,14 @@ mod tests {
 
     #[test]
     fn basics() {
+        debug_assert_eq!(reverse_only_letters("ab-cd".into()), "dc-ba");
         debug_assert_eq!(
-            word_subsets(
-                &["amazon", "apple", "facebook", "google", "leetcode"],
-                &["e", "o"]
-            ),
-            ["facebook", "google", "leetcode"]
+            reverse_only_letters("a-bC-dEf-ghIj".into()),
+            "j-Ih-gfE-dCba"
         );
         debug_assert_eq!(
-            word_subsets(
-                &["amazon", "apple", "facebook", "google", "leetcode"],
-                &["l", "e"]
-            ),
-            ["apple", "google", "leetcode"]
+            reverse_only_letters("Test1ng-Leet=code-Q!".into()),
+            "Qedo1ct-eeLg=ntse-T!"
         );
     }
 
