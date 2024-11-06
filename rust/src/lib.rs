@@ -5,22 +5,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn can_sort_array(nums: &[i32]) -> bool {
-    if nums.is_sorted() {
-        true
-    } else {
-        let mut max = 0;
-        for ch in nums.chunk_by(|a, b| a.count_ones() == b.count_ones()) {
-            let curr_min = *ch.iter().min().unwrap();
-            let curr_max = *ch.iter().max().unwrap();
-            if max < curr_min {
-                max = curr_max
-            } else {
-                return false;
-            }
-        }
-        true
+pub fn partition_disjoint(nums: &[i32]) -> i32 {
+    let n = nums.len();
+    let [mut left, mut right] = [0, 1].map(|_| Vec::with_capacity(n));
+    for &num in nums.iter() {
+        left.push(num.max(left.last().copied().unwrap_or(0)));
     }
+    for &num in nums.iter().rev() {
+        right.push(num.min(right.last().copied().unwrap_or(i32::MAX)));
+    }
+    right.reverse();
+    for i in 0..n - 1 {
+        if left[i] <= right[i + 1] {
+            return 1 + i as i32;
+        }
+    }
+    -1
 }
 
 #[cfg(test)]
@@ -31,9 +31,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(can_sort_array(&[8, 4, 2, 30, 15]));
-        debug_assert!(can_sort_array(&[1, 2, 3, 4, 5]));
-        debug_assert!(!can_sort_array(&[3, 16, 8, 4, 2]));
+        debug_assert_eq!(partition_disjoint(&[5, 0, 3, 8, 6]), 3);
+        debug_assert_eq!(partition_disjoint(&[1, 1, 1, 0, 6, 12]), 4);
     }
 
     #[test]
