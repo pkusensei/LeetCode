@@ -3,33 +3,36 @@ using Solution.Tree;
 
 namespace Solution;
 
-public class Solution
+public class CBTInserter
 {
-    public TreeNode IncreasingBST(TreeNode root)
+    TreeNode root;
+
+    public CBTInserter(TreeNode root)
     {
-        return Dfs(root).head;
+        this.root = root;
     }
 
-    static (TreeNode head, TreeNode tail) Dfs(TreeNode node)
+    public int Insert(int val)
     {
-        if (node is null) { return (null, null); }
-        var (h1, t1) = Dfs(node.left);
-        var (h2, t2) = Dfs(node.right);
-        if (h1 is not null)
+        var queue = new Queue<TreeNode>();
+        queue.Enqueue(root);
+        while (queue.TryDequeue(out var node))
         {
-            var head = h1;
-            t1.right = node;
-            node.left = null;
-            node.right = h2;
-            var tail = t2 ?? node;
-            return (head, tail);
+            if (node.left is null) { node.left = new(val); return node.val; }
+            if (node.right is null) { node.right = new(val); return node.val; }
+            queue.Enqueue(node.left);
+            queue.Enqueue(node.right);
         }
-        else
-        {
-            var head = node;
-            node.right = h2;
-            var tail = t2 ?? node;
-            return (head, tail);
-        }
+        return -1;
     }
+
+    public TreeNode Get_root()
+    {
+        return root;
+    }
+}
+
+public class Solution
+{
+
 }
