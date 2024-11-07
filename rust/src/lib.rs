@@ -5,44 +5,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_subarrays_with_sum(nums: &[i32], goal: i32) -> i32 {
-    let mut prefix = std::collections::HashMap::new();
-    let mut res = 0;
-    let mut sum = 0;
-    for &num in nums.iter() {
-        sum += num;
-        if sum == goal {
-            res += 1;
+pub fn min_falling_path_sum(matrix: &[&[i32]]) -> i32 {
+    let n = matrix.len();
+    let mut dp = matrix[0].to_vec();
+    for row in matrix.iter().skip(1) {
+        let mut dp2 = vec![];
+        for (x, v) in row.iter().enumerate() {
+            let temp = (x.saturating_sub(1)..=(x + 1).min(n - 1))
+                .map(|i| dp[i])
+                .min()
+                .unwrap_or(0)
+                + v;
+            dp2.push(temp);
         }
-        if let Some(&count) = prefix.get(&(sum - goal)) {
-            res += count
-        }
-        *prefix.entry(sum).or_insert(0) += 1;
+        dp = dp2
     }
-    res
-}
-
-fn with_sliding_window(nums: &[i32], goal: i32) -> i32 {
-    let mut left = 0;
-    let mut prefix_zeros = 0;
-    let mut curr = 0;
-    let mut res = 0;
-    for (right, &num) in nums.iter().enumerate() {
-        curr += num;
-        while left < right && (nums[left] == 0 || curr > goal) {
-            if nums[left] == 1 {
-                prefix_zeros = 0;
-            } else {
-                prefix_zeros += 1;
-            }
-            curr -= nums[left];
-            left += 1;
-        }
-        if goal == curr {
-            res += 1 + prefix_zeros;
-        }
-    }
-    res
+    dp.into_iter().min().unwrap_or(0)
 }
 
 #[cfg(test)]
@@ -53,8 +31,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(with_sliding_window(&[1, 0, 1, 0, 1], 2), 4);
-        debug_assert_eq!(with_sliding_window(&[0, 0, 0, 0, 0], 0), 15);
+        debug_assert_eq!(
+            min_falling_path_sum(&[&[2, 1, 3], &[6, 5, 4], &[7, 8, 9]]),
+            13
+        );
+        debug_assert_eq!(min_falling_path_sum(&[&[-19, 57], &[-40, -5]]), -59);
     }
 
     #[test]
