@@ -5,20 +5,39 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_flips_mono_incr(s: &str) -> i32 {
-    let mut zeros: i32 = s.bytes().map(|b| i32::from(b == b'0')).sum();
-    let mut ones = 0;
-    let mut res = i32::MAX;
-    for b in s.bytes() {
-        if b == b'0' {
-            zeros -= 1;
-            res = res.min(zeros + ones);
-        } else {
-            res = res.min(zeros + ones);
-            ones += 1;
+pub fn three_equal_parts(arr: &[i32]) -> Vec<i32> {
+    let n = arr.len();
+    let ones: i32 = arr.iter().sum();
+    if ones == 0 {
+        return vec![0, n as i32 - 1];
+    }
+    if ones % 3 > 0 {
+        return vec![-1, -1];
+    }
+    let mut indices = Vec::with_capacity(2);
+    let mut count = 0;
+    for (idx, &num) in arr.iter().enumerate() {
+        if num == 1 {
+            count += 1;
+        }
+        if ones / 3 == count {
+            indices.push(idx);
+            count = 0;
         }
     }
-    res
+    let zero_suffix_len = n - 1 - indices[2];
+    let i = indices[0] + zero_suffix_len;
+    let j = indices[1] + zero_suffix_len + 1;
+    if let [Some(a), Some(b), Some(c)] = [arr, &arr[1 + i..], &arr[j..]].map(|v| {
+        v.iter()
+            .enumerate()
+            .find_map(|(i, &v)| if v == 1 { Some(i) } else { None })
+    }) {
+        if arr[a..=i] == arr[b + i + 1..j] && arr[a..=i] == arr[c + j..] {
+            return [i as i32, j as i32].into();
+        }
+    }
+    vec![-1, -1]
 }
 
 #[cfg(test)]
@@ -29,14 +48,20 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(min_flips_mono_incr("00110"), 1);
-        debug_assert_eq!(min_flips_mono_incr("010110"), 2);
+        debug_assert_eq!(three_equal_parts(&[1, 0, 1, 0, 1]), [0, 3]);
+        debug_assert_eq!(three_equal_parts(&[1, 1, 0, 1, 1]), [-1, -1]);
+        debug_assert_eq!(three_equal_parts(&[1, 1, 0, 0, 1]), [0, 2]);
     }
 
     #[test]
     fn test() {
-        debug_assert_eq!(min_flips_mono_incr("0101100011"), 3);
-        debug_assert_eq!(min_flips_mono_incr("10011111110010111011"), 5);
+        debug_assert_eq!(
+            three_equal_parts(&[
+                1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0,
+                0, 1, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0
+            ]),
+            [15, 32]
+        );
     }
 
     #[allow(dead_code)]
