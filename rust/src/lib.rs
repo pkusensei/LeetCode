@@ -5,27 +5,44 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_unique_emails(emails: &[&str]) -> i32 {
-    emails
-        .iter()
-        .map(|s| process(s))
-        .collect::<std::collections::HashSet<_>>()
-        .len() as _
+pub fn num_subarrays_with_sum(nums: &[i32], goal: i32) -> i32 {
+    let mut prefix = std::collections::HashMap::new();
+    let mut res = 0;
+    let mut sum = 0;
+    for &num in nums.iter() {
+        sum += num;
+        if sum == goal {
+            res += 1;
+        }
+        if let Some(&count) = prefix.get(&(sum - goal)) {
+            res += count
+        }
+        *prefix.entry(sum).or_insert(0) += 1;
+    }
+    res
 }
 
-fn process(s: &str) -> String {
-    let (a, b) = s.split_once('@').unwrap_or_default();
-    let mut res = vec![];
-    for b in a.bytes() {
-        match b {
-            b'+' => break,
-            b'.' => continue,
-            _ => res.push(b),
+fn with_sliding_window(nums: &[i32], goal: i32) -> i32 {
+    let mut left = 0;
+    let mut prefix_zeros = 0;
+    let mut curr = 0;
+    let mut res = 0;
+    for (right, &num) in nums.iter().enumerate() {
+        curr += num;
+        while left < right && (nums[left] == 0 || curr > goal) {
+            if nums[left] == 1 {
+                prefix_zeros = 0;
+            } else {
+                prefix_zeros += 1;
+            }
+            curr -= nums[left];
+            left += 1;
+        }
+        if goal == curr {
+            res += 1 + prefix_zeros;
         }
     }
-    res.push(b'@');
-    res.extend_from_slice(b.as_bytes());
-    String::from_utf8(res).unwrap()
+    res
 }
 
 #[cfg(test)]
@@ -36,30 +53,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            num_unique_emails(&[
-                "test.email+alex@leetcode.com",
-                "test.e.mail+bob.cathy@leetcode.com",
-                "testemail+david@lee.tcode.com"
-            ]),
-            2
-        );
-        debug_assert_eq!(
-            num_unique_emails(&["a@leetcode.com", "b@leetcode.com", "c@leetcode.com"]),
-            3
-        );
+        debug_assert_eq!(with_sliding_window(&[1, 0, 1, 0, 1], 2), 4);
+        debug_assert_eq!(with_sliding_window(&[0, 0, 0, 0, 0], 0), 15);
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(
-            num_unique_emails(&[
-                "test.email+alex@leetcode.com",
-                "test.email.leet+alex@code.com"
-            ]),
-            2
-        );
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
