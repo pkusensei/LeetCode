@@ -5,39 +5,45 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn three_equal_parts(arr: &[i32]) -> Vec<i32> {
-    let n = arr.len();
-    let ones: i32 = arr.iter().sum();
-    if ones == 0 {
-        return vec![0, n as i32 - 1];
-    }
-    if ones % 3 > 0 {
-        return vec![-1, -1];
-    }
-    let mut indices = Vec::with_capacity(2);
-    let mut count = 0;
-    for (idx, &num) in arr.iter().enumerate() {
-        if num == 1 {
-            count += 1;
+pub fn min_malware_spread(graph: &[&[i32]], initial: &[i32]) -> i32 {
+    let n = graph.len();
+    let (mut curr, mut res) = (i32::MAX, 0);
+    for &ini in initial.iter() {
+        let mut dsu = dsu::DSU::new(n);
+        for (x, row) in graph.iter().enumerate() {
+            if x == ini as usize {
+                continue;
+            }
+            for (y, &v) in row.iter().enumerate().skip(1 + x) {
+                if y != ini as usize && v == 1 {
+                    dsu.union(x, y);
+                }
+            }
         }
-        if ones / 3 == count {
-            indices.push(idx);
-            count = 0;
-        }
+        let temp: i32 = initial
+            .iter()
+            .filter_map(|&v| {
+                let v = v as usize;
+                if v != ini as usize {
+                    Some(dsu.find(v))
+                } else {
+                    None
+                }
+            })
+            .collect::<std::collections::HashSet<_>>()
+            .into_iter()
+            .map(|v| dsu.get_size(v))
+            .sum();
+        match temp.cmp(&curr) {
+            std::cmp::Ordering::Less => {
+                curr = temp;
+                res = ini;
+            }
+            std::cmp::Ordering::Equal => res = res.min(ini),
+            std::cmp::Ordering::Greater => (),
+        };
     }
-    let zero_suffix_len = n - 1 - indices[2];
-    let i = indices[0] + zero_suffix_len;
-    let j = indices[1] + zero_suffix_len + 1;
-    if let [Some(a), Some(b), Some(c)] = [arr, &arr[1 + i..], &arr[j..]].map(|v| {
-        v.iter()
-            .enumerate()
-            .find_map(|(i, &v)| if v == 1 { Some(i) } else { None })
-    }) {
-        if arr[a..=i] == arr[b + i + 1..j] && arr[a..=i] == arr[c + j..] {
-            return [i as i32, j as i32].into();
-        }
-    }
-    vec![-1, -1]
+    res
 }
 
 #[cfg(test)]
@@ -48,20 +54,42 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(three_equal_parts(&[1, 0, 1, 0, 1]), [0, 3]);
-        debug_assert_eq!(three_equal_parts(&[1, 1, 0, 1, 1]), [-1, -1]);
-        debug_assert_eq!(three_equal_parts(&[1, 1, 0, 0, 1]), [0, 2]);
+        debug_assert_eq!(
+            min_malware_spread(&[&[1, 1, 0], &[1, 1, 0], &[0, 0, 1]], &[0, 1]),
+            0
+        );
+        debug_assert_eq!(
+            min_malware_spread(&[&[1, 1, 0], &[1, 1, 1], &[0, 1, 1]], &[0, 1]),
+            1
+        );
+        debug_assert_eq!(
+            min_malware_spread(
+                &[&[1, 1, 0, 0], &[1, 1, 1, 0], &[0, 1, 1, 1], &[0, 0, 1, 1]],
+                &[0, 1]
+            ),
+            1
+        );
     }
 
     #[test]
     fn test() {
         debug_assert_eq!(
-            three_equal_parts(&[
-                1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0,
-                0, 1, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0
-            ]),
-            [15, 32]
-        );
+            min_malware_spread(
+                &[
+                    &[1, 0, 0, 0, 0, 0, 0, 0, 0],
+                    &[0, 1, 0, 0, 0, 0, 0, 0, 0],
+                    &[0, 0, 1, 0, 1, 0, 1, 0, 0],
+                    &[0, 0, 0, 1, 0, 0, 0, 0, 0],
+                    &[0, 0, 1, 0, 1, 0, 0, 0, 0],
+                    &[0, 0, 0, 0, 0, 1, 0, 0, 0],
+                    &[0, 0, 1, 0, 0, 0, 1, 0, 0],
+                    &[0, 0, 0, 0, 0, 0, 0, 1, 0],
+                    &[0, 0, 0, 0, 0, 0, 0, 0, 1]
+                ],
+                &[6, 0, 4]
+            ),
+            0
+        )
     }
 
     #[allow(dead_code)]
