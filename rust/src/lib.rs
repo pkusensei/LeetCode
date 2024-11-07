@@ -5,45 +5,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_malware_spread(graph: &[&[i32]], initial: &[i32]) -> i32 {
-    let n = graph.len();
-    let (mut curr, mut res) = (i32::MAX, 0);
-    for &ini in initial.iter() {
-        let mut dsu = dsu::DSU::new(n);
-        for (x, row) in graph.iter().enumerate() {
-            if x == ini as usize {
-                continue;
-            }
-            for (y, &v) in row.iter().enumerate().skip(1 + x) {
-                if y != ini as usize && v == 1 {
-                    dsu.union(x, y);
-                }
-            }
+pub fn num_unique_emails(emails: &[&str]) -> i32 {
+    emails
+        .iter()
+        .map(|s| process(s))
+        .collect::<std::collections::HashSet<_>>()
+        .len() as _
+}
+
+fn process(s: &str) -> String {
+    let (a, b) = s.split_once('@').unwrap_or_default();
+    let mut res = vec![];
+    for b in a.bytes() {
+        match b {
+            b'+' => break,
+            b'.' => continue,
+            _ => res.push(b),
         }
-        let temp: i32 = initial
-            .iter()
-            .filter_map(|&v| {
-                let v = v as usize;
-                if v != ini as usize {
-                    Some(dsu.find(v))
-                } else {
-                    None
-                }
-            })
-            .collect::<std::collections::HashSet<_>>()
-            .into_iter()
-            .map(|v| dsu.get_size(v))
-            .sum();
-        match temp.cmp(&curr) {
-            std::cmp::Ordering::Less => {
-                curr = temp;
-                res = ini;
-            }
-            std::cmp::Ordering::Equal => res = res.min(ini),
-            std::cmp::Ordering::Greater => (),
-        };
     }
-    res
+    res.push(b'@');
+    res.extend_from_slice(b.as_bytes());
+    String::from_utf8(res).unwrap()
 }
 
 #[cfg(test)]
@@ -55,41 +37,28 @@ mod tests {
     #[test]
     fn basics() {
         debug_assert_eq!(
-            min_malware_spread(&[&[1, 1, 0], &[1, 1, 0], &[0, 0, 1]], &[0, 1]),
-            0
+            num_unique_emails(&[
+                "test.email+alex@leetcode.com",
+                "test.e.mail+bob.cathy@leetcode.com",
+                "testemail+david@lee.tcode.com"
+            ]),
+            2
         );
         debug_assert_eq!(
-            min_malware_spread(&[&[1, 1, 0], &[1, 1, 1], &[0, 1, 1]], &[0, 1]),
-            1
-        );
-        debug_assert_eq!(
-            min_malware_spread(
-                &[&[1, 1, 0, 0], &[1, 1, 1, 0], &[0, 1, 1, 1], &[0, 0, 1, 1]],
-                &[0, 1]
-            ),
-            1
+            num_unique_emails(&["a@leetcode.com", "b@leetcode.com", "c@leetcode.com"]),
+            3
         );
     }
 
     #[test]
     fn test() {
         debug_assert_eq!(
-            min_malware_spread(
-                &[
-                    &[1, 0, 0, 0, 0, 0, 0, 0, 0],
-                    &[0, 1, 0, 0, 0, 0, 0, 0, 0],
-                    &[0, 0, 1, 0, 1, 0, 1, 0, 0],
-                    &[0, 0, 0, 1, 0, 0, 0, 0, 0],
-                    &[0, 0, 1, 0, 1, 0, 0, 0, 0],
-                    &[0, 0, 0, 0, 0, 1, 0, 0, 0],
-                    &[0, 0, 1, 0, 0, 0, 1, 0, 0],
-                    &[0, 0, 0, 0, 0, 0, 0, 1, 0],
-                    &[0, 0, 0, 0, 0, 0, 0, 0, 1]
-                ],
-                &[6, 0, 4]
-            ),
-            0
-        )
+            num_unique_emails(&[
+                "test.email+alex@leetcode.com",
+                "test.email.leet+alex@code.com"
+            ]),
+            2
+        );
     }
 
     #[allow(dead_code)]
