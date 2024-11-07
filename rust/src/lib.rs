@@ -5,12 +5,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_long_pressed_name(name: &str, typed: &str) -> bool {
-    let [a, b] = [name, typed].map(|s| s.as_bytes().chunk_by(|a, b| a == b).collect::<Vec<_>>());
-    a.len() == b.len()
-        && a.into_iter()
-            .zip(b)
-            .all(|(a, b)| a[0] == b[0] && a.len() <= b.len())
+pub fn min_flips_mono_incr(s: &str) -> i32 {
+    let mut zeros: i32 = s.bytes().map(|b| i32::from(b == b'0')).sum();
+    let mut ones = 0;
+    let mut res = i32::MAX;
+    for b in s.bytes() {
+        if b == b'0' {
+            zeros -= 1;
+            res = res.min(zeros + ones);
+        } else {
+            res = res.min(zeros + ones);
+            ones += 1;
+        }
+    }
+    res
 }
 
 #[cfg(test)]
@@ -21,12 +29,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(is_long_pressed_name("alex", "aaleex"));
-        debug_assert!(!is_long_pressed_name("saeed", "ssaaedd"))
+        debug_assert_eq!(min_flips_mono_incr("00110"), 1);
+        debug_assert_eq!(min_flips_mono_incr("010110"), 2);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(min_flips_mono_incr("0101100011"), 3);
+        debug_assert_eq!(min_flips_mono_incr("10011111110010111011"), 5);
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
