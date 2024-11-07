@@ -5,12 +5,12 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn largest_combination(candidates: &[i32]) -> i32 {
-    let mut res = 0;
-    for bit in 0..24 {
-        res = res.max(candidates.iter().filter(|&&v| (v >> bit) & 1 == 1).count());
-    }
-    res as i32
+pub fn is_long_pressed_name(name: &str, typed: &str) -> bool {
+    let [a, b] = [name, typed].map(|s| s.as_bytes().chunk_by(|a, b| a == b).collect::<Vec<_>>());
+    a.len() == b.len()
+        && a.into_iter()
+            .zip(b)
+            .all(|(a, b)| a[0] == b[0] && a.len() <= b.len())
 }
 
 #[cfg(test)]
@@ -21,8 +21,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(largest_combination(&[16, 17, 71, 62, 12, 24, 14]), 4);
-        debug_assert_eq!(largest_combination(&[8, 8]), 2);
+        debug_assert!(is_long_pressed_name("alex", "aaleex"));
+        debug_assert!(!is_long_pressed_name("saeed", "ssaaedd"))
     }
 
     #[test]
