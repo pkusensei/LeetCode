@@ -5,44 +5,12 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_malware_spread(graph: &[&[i32]], initial: &[i32]) -> i32 {
-    let n = graph.len();
-    let mut dsu = dsu::DSU::new(n);
-    for (x, row) in graph.iter().enumerate() {
-        for (y, &v) in row.iter().enumerate() {
-            if v == 1 {
-                dsu.union(x, y);
-            }
-        }
+pub fn largest_combination(candidates: &[i32]) -> i32 {
+    let mut res = 0;
+    for bit in 0..24 {
+        res = res.max(candidates.iter().filter(|&&v| (v >> bit) & 1 == 1).count());
     }
-
-    // If 2 or more nodes are connected, removing any won't change result
-    // Find single/isolated nodes first
-    // i.e count[root(node)] == 1
-    let mut count = vec![0; n];
-    for &v in initial.iter() {
-        count[dsu.find(v as usize)] += 1;
-    }
-    let mut res = -1;
-    let mut size = -1;
-    for &v in initial.iter() {
-        let root = dsu.find(v as usize);
-        if count[root] == 1 {
-            let temp = dsu.get_size(root);
-            if temp > size {
-                size = temp;
-                res = v;
-            } else if temp == size && v < res {
-                res = v;
-            }
-        }
-    }
-    // No isolcated/unique nodes
-    // Find smallest in connected part(s)
-    if res == -1 {
-        res = *initial.iter().min().unwrap_or(&0);
-    }
-    res
+    res as i32
 }
 
 #[cfg(test)]
@@ -53,27 +21,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            min_malware_spread(&[&[1, 1, 0], &[1, 1, 0], &[0, 0, 1]], &[0, 1]),
-            0
-        );
-        debug_assert_eq!(
-            min_malware_spread(&[&[1, 0, 0], &[0, 1, 0], &[0, 0, 1]], &[0, 2]),
-            0
-        );
-        debug_assert_eq!(
-            min_malware_spread(&[&[1, 1, 1], &[1, 1, 1], &[1, 1, 1]], &[1, 2]),
-            1
-        );
+        debug_assert_eq!(largest_combination(&[16, 17, 71, 62, 12, 24, 14]), 4);
+        debug_assert_eq!(largest_combination(&[8, 8]), 2);
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(
-            min_malware_spread(&[&[1, 1, 0], &[1, 1, 0], &[0, 0, 1]], &[0, 1, 2]),
-            2
-        );
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
