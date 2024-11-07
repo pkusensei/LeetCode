@@ -5,33 +5,44 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn three_sum_multi(arr: &[i32], target: i32) -> i32 {
-    const MOD: i64 = 1_000_000_007;
-    let nums = arr
-        .iter()
-        .fold(std::collections::HashMap::new(), |mut acc, &num| {
-            *acc.entry(num).or_insert(0i64) += 1;
-            acc
-        });
-    let mut res = 0;
-    for (&n1, &c1) in nums.iter() {
-        for (&n2, &c2) in nums.iter() {
-            let n3 = target - n1 - n2;
-            let Some(&c3) = nums.get(&n3) else {
-                continue;
-            };
-            if n1 == n2 && n2 == n3 {
-                res += c1 * (c1 - 1) * (c1 - 2) / 6 % MOD;
-            }
-            if n1 == n2 && n2 != n3 {
-                res += c1 * (c1 - 1) / 2 * c3 % MOD;
-            }
-            if n1 < n2 && n2 < n3 {
-                res += c1 * c2 * c3 % MOD;
+pub fn min_malware_spread(graph: &[&[i32]], initial: &[i32]) -> i32 {
+    let n = graph.len();
+    let mut dsu = dsu::DSU::new(n);
+    for (x, row) in graph.iter().enumerate() {
+        for (y, &v) in row.iter().enumerate() {
+            if v == 1 {
+                dsu.union(x, y);
             }
         }
     }
-    (res % MOD) as i32
+
+    // If 2 or more nodes are connected, removing any won't change result
+    // Find single/isolated nodes first
+    // i.e count[root(node)] == 1
+    let mut count = vec![0; n];
+    for &v in initial.iter() {
+        count[dsu.find(v as usize)] += 1;
+    }
+    let mut res = -1;
+    let mut size = -1;
+    for &v in initial.iter() {
+        let root = dsu.find(v as usize);
+        if count[root] == 1 {
+            let temp = dsu.get_size(root);
+            if temp > size {
+                size = temp;
+                res = v;
+            } else if temp == size && v < res {
+                res = v;
+            }
+        }
+    }
+    // No isolcated/unique nodes
+    // Find smallest in connected part(s)
+    if res == -1 {
+        res = *initial.iter().min().unwrap_or(&0);
+    }
+    res
 }
 
 #[cfg(test)]
@@ -42,13 +53,27 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(three_sum_multi(&[1, 1, 2, 2, 3, 3, 4, 4, 5, 5], 8), 20);
-        debug_assert_eq!(three_sum_multi(&[1, 1, 2, 2, 2, 2], 5), 12);
-        debug_assert_eq!(three_sum_multi(&[2, 1, 3], 6), 1);
+        debug_assert_eq!(
+            min_malware_spread(&[&[1, 1, 0], &[1, 1, 0], &[0, 0, 1]], &[0, 1]),
+            0
+        );
+        debug_assert_eq!(
+            min_malware_spread(&[&[1, 0, 0], &[0, 1, 0], &[0, 0, 1]], &[0, 2]),
+            0
+        );
+        debug_assert_eq!(
+            min_malware_spread(&[&[1, 1, 1], &[1, 1, 1], &[1, 1, 1]], &[1, 2]),
+            1
+        );
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(
+            min_malware_spread(&[&[1, 1, 0], &[1, 1, 0], &[0, 0, 1]], &[0, 1, 2]),
+            2
+        );
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
