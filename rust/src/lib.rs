@@ -5,18 +5,33 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn sort_array_by_parity_ii(mut nums: Vec<i32>) -> Vec<i32> {
-    nums.sort_by_key(|n| n & 1);
-    let i = nums.partition_point(|v| v & 1 == 0);
-    let mut right = if i & 1 == 1 { i + 1 } else { i };
-    let mut left = 1;
-    let n = nums.len();
-    while right < n {
-        nums.swap(left, right);
-        left += 2;
-        right += 2
+pub fn three_sum_multi(arr: &[i32], target: i32) -> i32 {
+    const MOD: i64 = 1_000_000_007;
+    let nums = arr
+        .iter()
+        .fold(std::collections::HashMap::new(), |mut acc, &num| {
+            *acc.entry(num).or_insert(0i64) += 1;
+            acc
+        });
+    let mut res = 0;
+    for (&n1, &c1) in nums.iter() {
+        for (&n2, &c2) in nums.iter() {
+            let n3 = target - n1 - n2;
+            let Some(&c3) = nums.get(&n3) else {
+                continue;
+            };
+            if n1 == n2 && n2 == n3 {
+                res += c1 * (c1 - 1) * (c1 - 2) / 6 % MOD;
+            }
+            if n1 == n2 && n2 != n3 {
+                res += c1 * (c1 - 1) / 2 * c3 % MOD;
+            }
+            if n1 < n2 && n2 < n3 {
+                res += c1 * c2 * c3 % MOD;
+            }
+        }
     }
-    nums
+    (res % MOD) as i32
 }
 
 #[cfg(test)]
@@ -27,8 +42,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(sort_array_by_parity_ii(vec![4, 2, 5, 7]), [4, 5, 2, 7]);
-        debug_assert_eq!(sort_array_by_parity_ii(vec![2, 3]), [2, 3]);
+        debug_assert_eq!(three_sum_multi(&[1, 1, 2, 2, 3, 3, 4, 4, 5, 5], 8), 20);
+        debug_assert_eq!(three_sum_multi(&[1, 1, 2, 2, 2, 2], 5), 12);
+        debug_assert_eq!(three_sum_multi(&[2, 1, 3], 6), 1);
     }
 
     #[test]
