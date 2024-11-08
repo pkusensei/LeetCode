@@ -2,71 +2,28 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::{HashSet, VecDeque};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn moves_to_stamp(stamp: &str, target: &str) -> Vec<i32> {
-    let (n1, n2) = (stamp.len(), target.len());
-    let mut queue = VecDeque::new();
-    let mut done = vec![false; n2];
-    let mut res = vec![];
-    let mut nodes = vec![];
-
-    for wi in 0..=n2 - n1 {
-        // window [wi..wi+n1]
-        let [mut made, mut todo] = [0, 1].map(|_| HashSet::new());
-        // For each window, map out target against stamp
-        // Find out indices' match state
-        for (si, b) in stamp.bytes().enumerate() {
-            if target.as_bytes()[wi + si] == b {
-                made.insert(wi + si);
-            } else {
-                todo.insert(wi + si);
-            }
-        }
-        // Everything is matched in this window
-        // i.e this is the last stamp => search backwards
-        if todo.is_empty() {
-            res.push(wi as i32);
-            for i in wi..wi + n1 {
-                if !done[i] {
-                    queue.push_back(i);
-                    done[i] = true
-                }
-            }
-        }
-        // Collect all windows
-        nodes.push(Node { made, todo });
-    }
-    while let Some(idx) = queue.pop_front() {
-        // For each window that contains a match/stamped idx
-        for wi in (idx + 1).saturating_sub(n1)..=idx.min(n2 - n1) {
-            if nodes[wi].todo.remove(&idx) && nodes[wi].todo.is_empty() {
-                // This window could be totally matched
-                // i.e one step backwards
-                res.push(wi as i32);
-                for &i in nodes[wi].made.iter() {
-                    if !done[i] {
-                        done[i] = true;
-                        queue.push_back(i);
-                    }
-                }
-            }
+pub fn reorder_log_files<'a>(logs: &[&'a str]) -> Vec<&'a str> {
+    let (mut letters, mut digits) = (vec![], vec![]);
+    for s in logs.iter() {
+        let Some((_a, b)) = s.split_once(' ') else {
+            continue;
+        };
+        if b.bytes().any(|byte| byte.is_ascii_lowercase()) {
+            letters.push(*s);
+        } else {
+            digits.push(*s);
         }
     }
-    if done.into_iter().any(|b| !b) {
-        return vec![];
-    }
-    res.reverse();
-    res
-}
-
-#[derive(Debug, Clone)]
-struct Node {
-    made: HashSet<usize>,
-    todo: HashSet<usize>,
+    letters.sort_unstable_by(|x, y| {
+        let (a1, b1) = x.split_once(' ').unwrap();
+        let (a2, b2) = y.split_once(' ').unwrap();
+        b1.cmp(b2).then(a1.cmp(a2))
+    });
+    letters.extend(digits);
+    letters
 }
 
 #[cfg(test)]
@@ -77,8 +34,38 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(moves_to_stamp("abc", "ababc"), [1, 0, 2]);
-        debug_assert_eq!(moves_to_stamp("abca", "aabcaca"), [2, 3, 0, 1]);
+        debug_assert_eq!(
+            reorder_log_files(&[
+                "dig1 8 1 5 1",
+                "let1 art can",
+                "dig2 3 6",
+                "let2 own kit dig",
+                "let3 art zero"
+            ]),
+            [
+                "let1 art can",
+                "let3 art zero",
+                "let2 own kit dig",
+                "dig1 8 1 5 1",
+                "dig2 3 6"
+            ]
+        );
+        debug_assert_eq!(
+            reorder_log_files(&[
+                "a1 9 2 3 1",
+                "g1 act car",
+                "zo4 4 7",
+                "ab1 off key dog",
+                "a8 act zoo"
+            ]),
+            [
+                "g1 act car",
+                "a8 act zoo",
+                "ab1 off key dog",
+                "a1 9 2 3 1",
+                "zo4 4 7"
+            ]
+        );
     }
 
     #[test]
