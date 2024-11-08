@@ -5,22 +5,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_falling_path_sum(matrix: &[&[i32]]) -> i32 {
-    let n = matrix.len();
-    let mut dp = matrix[0].to_vec();
-    for row in matrix.iter().skip(1) {
-        let mut dp2 = vec![];
-        for (x, v) in row.iter().enumerate() {
-            let temp = (x.saturating_sub(1)..=(x + 1).min(n - 1))
-                .map(|i| dp[i])
-                .min()
-                .unwrap_or(0)
-                + v;
-            dp2.push(temp);
-        }
-        dp = dp2
+pub fn get_maximum_xor(nums: &[i32], maximum_bit: i32) -> Vec<i32> {
+    let max = (1 << maximum_bit) - 1;
+    let mut xor = 0;
+    let mut res = vec![];
+    for &num in nums.iter() {
+        xor ^= num;
+        res.push(max ^ xor);
     }
-    dp.into_iter().min().unwrap_or(0)
+    res.reverse();
+    res
 }
 
 #[cfg(test)]
@@ -31,11 +25,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            min_falling_path_sum(&[&[2, 1, 3], &[6, 5, 4], &[7, 8, 9]]),
-            13
-        );
-        debug_assert_eq!(min_falling_path_sum(&[&[-19, 57], &[-40, -5]]), -59);
+        debug_assert_eq!(get_maximum_xor(&[0, 1, 1, 3], 2), [0, 3, 2, 3]);
+        debug_assert_eq!(get_maximum_xor(&[2, 3, 4, 7], 3), [5, 2, 6, 5]);
+        debug_assert_eq!(get_maximum_xor(&[0, 1, 2, 2, 5, 7], 3), [4, 3, 6, 4, 6, 7]);
     }
 
     #[test]
