@@ -2,28 +2,53 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::VecDeque;
+use std::collections::{HashSet, VecDeque};
 
 #[allow(unused_imports)]
 use helper::*;
 
-#[derive(Debug, Clone, Default)]
-struct RecentCounter {
-    data: VecDeque<i32>,
-}
-
-impl RecentCounter {
-    fn new() -> Self {
-        Default::default()
-    }
-
-    fn ping(&mut self, t: i32) -> i32 {
-        while self.data.front().is_some_and(|&v| v + 3000 < t) {
-            self.data.pop_front();
+pub fn shortest_bridge(grid: &[&[i32]]) -> i32 {
+    let [mut island, mut front] = [0, 1].map(|_| HashSet::new());
+    'outer: for (y, row) in grid.iter().enumerate() {
+        for (x, &v) in row.iter().enumerate() {
+            if v == 1 {
+                let mut queue = VecDeque::from([(x, y)]);
+                island.insert((x, y));
+                while let Some((cx, cy)) = queue.pop_front() {
+                    for (nx, ny) in neighbors((cx, cy)) {
+                        if let Some(&nv) = grid.get(ny).and_then(|r| r.get(nx)) {
+                            if nv == 0 {
+                                front.insert((nx, ny));
+                            } else if island.insert((nx, ny)) {
+                                queue.push_back((nx, ny));
+                            }
+                        }
+                    }
+                }
+                break 'outer;
+            }
         }
-        self.data.push_back(t);
-        self.data.len() as _
     }
+
+    let mut queue: VecDeque<_> = front.iter().map(|&(x, y)| (x, y, 0)).collect();
+    while !queue.is_empty() {
+        let n = queue.len();
+        for _ in 0..n {
+            let Some((x, y, dist)) = queue.pop_front() else {
+                continue;
+            };
+            for (nx, ny) in neighbors((x, y)) {
+                if let Some(&nv) = grid.get(ny).and_then(|r| r.get(nx)) {
+                    if nv == 0 && front.insert((nx, ny)) {
+                        queue.push_back((nx, ny, 1 + dist));
+                    } else if nv == 1 && !island.contains(&(nx, ny)) {
+                        return 1 + dist;
+                    }
+                }
+            }
+        }
+    }
+    -1
 }
 
 #[cfg(test)]
@@ -34,11 +59,18 @@ mod tests {
 
     #[test]
     fn basics() {
-        let mut c = RecentCounter::new();
-        debug_assert_eq!(c.ping(1), 1); // requests = [1], range is [-2999,1], return 1
-        debug_assert_eq!(c.ping(100), 2); // requests = [1, 100], range is [-2900,100], return 2
-        debug_assert_eq!(c.ping(3001), 3); // requests = [1, 100, 3001], range is [1,3001], return 3
-        debug_assert_eq!(c.ping(3002), 3); // requests = [1, 100, 3001, 3002], range is [2,3002], return 3
+        debug_assert_eq!(shortest_bridge(&[&[0, 1], &[1, 0]]), 1);
+        debug_assert_eq!(shortest_bridge(&[&[0, 1, 0], &[0, 0, 0], &[0, 0, 1]]), 2);
+        debug_assert_eq!(
+            shortest_bridge(&[
+                &[1, 1, 1, 1, 1],
+                &[1, 0, 0, 0, 1],
+                &[1, 0, 1, 0, 1],
+                &[1, 0, 0, 0, 1],
+                &[1, 1, 1, 1, 1]
+            ]),
+            1
+        );
     }
 
     #[test]
