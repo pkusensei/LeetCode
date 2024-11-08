@@ -2,28 +2,28 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
+use std::collections::VecDeque;
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn beautiful_array(n: i32) -> Vec<i32> {
-    solve(n, &mut HashMap::new())
+#[derive(Debug, Clone, Default)]
+struct RecentCounter {
+    data: VecDeque<i32>,
 }
 
-fn solve(n: i32, memo: &mut HashMap<i32, Vec<i32>>) -> Vec<i32> {
-    if let Some(v) = memo.get(&n) {
-        return v.to_vec();
+impl RecentCounter {
+    fn new() -> Self {
+        Default::default()
     }
-    let mut res = Vec::with_capacity(n as usize);
-    if n == 1 {
-        res.push(1);
-    } else {
-        res.extend(solve((n + 1) / 2, memo).into_iter().map(|v| v * 2 - 1));
-        res.extend(solve(n / 2, memo).into_iter().map(|v| v * 2));
+
+    fn ping(&mut self, t: i32) -> i32 {
+        while self.data.front().is_some_and(|&v| v + 3000 < t) {
+            self.data.pop_front();
+        }
+        self.data.push_back(t);
+        self.data.len() as _
     }
-    memo.insert(n, res.clone());
-    res
 }
 
 #[cfg(test)]
@@ -34,8 +34,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(beautiful_array(4), [1, 3, 2, 4]);
-        debug_assert_eq!(beautiful_array(5), [1, 5, 3, 2, 4]);
+        let mut c = RecentCounter::new();
+        debug_assert_eq!(c.ping(1), 1); // requests = [1], range is [-2999,1], return 1
+        debug_assert_eq!(c.ping(100), 2); // requests = [1, 100], range is [-2900,100], return 2
+        debug_assert_eq!(c.ping(3001), 3); // requests = [1, 100, 3001], range is [1,3001], return 3
+        debug_assert_eq!(c.ping(3002), 3); // requests = [1, 100, 3001, 3002], range is [2,3002], return 3
     }
 
     #[test]
