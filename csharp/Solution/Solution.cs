@@ -5,16 +5,10 @@ namespace Solution;
 
 public class Solution
 {
-    public int MinAddToMakeValid(string s)
+    public int RangeSumBST(TreeNode root, int low, int high)
     {
-        var open = 0;
-        var res = 0;
-        foreach (var item in s)
-        {
-            if (item == '(') { open += 1; }
-            else if (item == ')' && open > 0) { open -= 1; }
-            else { res += 1; }
-        }
-        return res + open;
+        if (root is null) { return 0; }
+        var res = low <= root.val && root.val <= high ? root.val : 0;
+        return res + RangeSumBST(root.left, low, high) + RangeSumBST(root.right, low, high);
     }
 }

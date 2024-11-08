@@ -12,13 +12,17 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
-        Assert.AreEqual(1, sol.MinAddToMakeValid("())"));
-        Assert.AreEqual(3, sol.MinAddToMakeValid("((("));
+        var a = TreeNode.Make([10, 5, 15, 3, 7, null, 18]);
+        var b = sol.RangeSumBST(a, 7, 15);
+        Assert.AreEqual(32, b);
     }
 
     [TestMethod]
     public void TestMethod2()
     {
+        var a = TreeNode.Make([10, 5, 15, 3, 7, 13, 18, 1, null, 6]);
+        var b = sol.RangeSumBST(a, 6, 10);
+        Assert.AreEqual(23, b);
     }
 
     [TestMethod]
