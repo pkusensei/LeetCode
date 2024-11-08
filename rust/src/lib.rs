@@ -2,18 +2,27 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn get_maximum_xor(nums: &[i32], maximum_bit: i32) -> Vec<i32> {
-    let max = (1 << maximum_bit) - 1;
-    let mut xor = 0;
-    let mut res = vec![];
-    for &num in nums.iter() {
-        xor ^= num;
-        res.push(max ^ xor);
+pub fn beautiful_array(n: i32) -> Vec<i32> {
+    solve(n, &mut HashMap::new())
+}
+
+fn solve(n: i32, memo: &mut HashMap<i32, Vec<i32>>) -> Vec<i32> {
+    if let Some(v) = memo.get(&n) {
+        return v.to_vec();
     }
-    res.reverse();
+    let mut res = Vec::with_capacity(n as usize);
+    if n == 1 {
+        res.push(1);
+    } else {
+        res.extend(solve((n + 1) / 2, memo).into_iter().map(|v| v * 2 - 1));
+        res.extend(solve(n / 2, memo).into_iter().map(|v| v * 2));
+    }
+    memo.insert(n, res.clone());
     res
 }
 
@@ -25,9 +34,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(get_maximum_xor(&[0, 1, 1, 3], 2), [0, 3, 2, 3]);
-        debug_assert_eq!(get_maximum_xor(&[2, 3, 4, 7], 3), [5, 2, 6, 5]);
-        debug_assert_eq!(get_maximum_xor(&[0, 1, 2, 2, 5, 7], 3), [4, 3, 6, 4, 6, 7]);
+        debug_assert_eq!(beautiful_array(4), [1, 3, 2, 4]);
+        debug_assert_eq!(beautiful_array(5), [1, 5, 3, 2, 4]);
     }
 
     #[test]
