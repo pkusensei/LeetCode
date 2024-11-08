@@ -2,53 +2,27 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::{HashSet, VecDeque};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn shortest_bridge(grid: &[&[i32]]) -> i32 {
-    let [mut island, mut front] = [0, 1].map(|_| HashSet::new());
-    'outer: for (y, row) in grid.iter().enumerate() {
-        for (x, &v) in row.iter().enumerate() {
-            if v == 1 {
-                let mut queue = VecDeque::from([(x, y)]);
-                island.insert((x, y));
-                while let Some((cx, cy)) = queue.pop_front() {
-                    for (nx, ny) in neighbors((cx, cy)) {
-                        if let Some(&nv) = grid.get(ny).and_then(|r| r.get(nx)) {
-                            if nv == 0 {
-                                front.insert((nx, ny));
-                            } else if island.insert((nx, ny)) {
-                                queue.push_back((nx, ny));
-                            }
-                        }
-                    }
-                }
-                break 'outer;
-            }
-        }
+pub fn knight_dialer(n: i32) -> i32 {
+    const MOD: i64 = 1_000_000_007;
+    let mut prev = [1; 10];
+    for _ in 1..n {
+        let mut curr = [0; 10];
+        curr[0] = (prev[4] + prev[6]) % MOD;
+        curr[1] = (prev[6] + prev[8]) % MOD;
+        curr[2] = (prev[7] + prev[9]) % MOD;
+        curr[3] = (prev[4] + prev[8]) % MOD;
+        curr[4] = (prev[0] + prev[3] + prev[9]) % MOD;
+        // curr[5]=0;
+        curr[6] = (prev[0] + prev[1] + prev[7]) % MOD;
+        curr[7] = (prev[2] + prev[6]) % MOD;
+        curr[8] = (prev[1] + prev[3]) % MOD;
+        curr[9] = (prev[2] + prev[4]) % MOD;
+        prev = curr;
     }
-
-    let mut queue: VecDeque<_> = front.iter().map(|&(x, y)| (x, y, 0)).collect();
-    while !queue.is_empty() {
-        let n = queue.len();
-        for _ in 0..n {
-            let Some((x, y, dist)) = queue.pop_front() else {
-                continue;
-            };
-            for (nx, ny) in neighbors((x, y)) {
-                if let Some(&nv) = grid.get(ny).and_then(|r| r.get(nx)) {
-                    if nv == 0 && front.insert((nx, ny)) {
-                        queue.push_back((nx, ny, 1 + dist));
-                    } else if nv == 1 && !island.contains(&(nx, ny)) {
-                        return 1 + dist;
-                    }
-                }
-            }
-        }
-    }
-    -1
+    prev.into_iter().fold(0, |acc, num| (acc + num) % MOD) as _
 }
 
 #[cfg(test)]
@@ -59,18 +33,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(shortest_bridge(&[&[0, 1], &[1, 0]]), 1);
-        debug_assert_eq!(shortest_bridge(&[&[0, 1, 0], &[0, 0, 0], &[0, 0, 1]]), 2);
-        debug_assert_eq!(
-            shortest_bridge(&[
-                &[1, 1, 1, 1, 1],
-                &[1, 0, 0, 0, 1],
-                &[1, 0, 1, 0, 1],
-                &[1, 0, 0, 0, 1],
-                &[1, 1, 1, 1, 1]
-            ]),
-            1
-        );
+        debug_assert_eq!(knight_dialer(1), 10);
+        debug_assert_eq!(knight_dialer(2), 20);
+        debug_assert_eq!(knight_dialer(3131), 136006598);
     }
 
     #[test]
