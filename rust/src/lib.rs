@@ -2,27 +2,71 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::{HashSet, VecDeque};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn knight_dialer(n: i32) -> i32 {
-    const MOD: i64 = 1_000_000_007;
-    let mut prev = [1; 10];
-    for _ in 1..n {
-        let mut curr = [0; 10];
-        curr[0] = (prev[4] + prev[6]) % MOD;
-        curr[1] = (prev[6] + prev[8]) % MOD;
-        curr[2] = (prev[7] + prev[9]) % MOD;
-        curr[3] = (prev[4] + prev[8]) % MOD;
-        curr[4] = (prev[0] + prev[3] + prev[9]) % MOD;
-        // curr[5]=0;
-        curr[6] = (prev[0] + prev[1] + prev[7]) % MOD;
-        curr[7] = (prev[2] + prev[6]) % MOD;
-        curr[8] = (prev[1] + prev[3]) % MOD;
-        curr[9] = (prev[2] + prev[4]) % MOD;
-        prev = curr;
+pub fn moves_to_stamp(stamp: &str, target: &str) -> Vec<i32> {
+    let (n1, n2) = (stamp.len(), target.len());
+    let mut queue = VecDeque::new();
+    let mut done = vec![false; n2];
+    let mut res = vec![];
+    let mut nodes = vec![];
+
+    for wi in 0..=n2 - n1 {
+        // window [wi..wi+n1]
+        let [mut made, mut todo] = [0, 1].map(|_| HashSet::new());
+        // For each window, map out target against stamp
+        // Find out indices' match state
+        for (si, b) in stamp.bytes().enumerate() {
+            if target.as_bytes()[wi + si] == b {
+                made.insert(wi + si);
+            } else {
+                todo.insert(wi + si);
+            }
+        }
+        // Everything is matched in this window
+        // i.e this is the last stamp => search backwards
+        if todo.is_empty() {
+            res.push(wi as i32);
+            for i in wi..wi + n1 {
+                if !done[i] {
+                    queue.push_back(i);
+                    done[i] = true
+                }
+            }
+        }
+        // Collect all windows
+        nodes.push(Node { made, todo });
     }
-    prev.into_iter().fold(0, |acc, num| (acc + num) % MOD) as _
+    while let Some(idx) = queue.pop_front() {
+        // For each window that contains a match/stamped idx
+        for wi in (idx + 1).saturating_sub(n1)..=idx.min(n2 - n1) {
+            if nodes[wi].todo.remove(&idx) && nodes[wi].todo.is_empty() {
+                // This window could be totally matched
+                // i.e one step backwards
+                res.push(wi as i32);
+                for &i in nodes[wi].made.iter() {
+                    if !done[i] {
+                        done[i] = true;
+                        queue.push_back(i);
+                    }
+                }
+            }
+        }
+    }
+    if done.into_iter().any(|b| !b) {
+        return vec![];
+    }
+    res.reverse();
+    res
+}
+
+#[derive(Debug, Clone)]
+struct Node {
+    made: HashSet<usize>,
+    todo: HashSet<usize>,
 }
 
 #[cfg(test)]
@@ -33,9 +77,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(knight_dialer(1), 10);
-        debug_assert_eq!(knight_dialer(2), 20);
-        debug_assert_eq!(knight_dialer(3131), 136006598);
+        debug_assert_eq!(moves_to_stamp("abc", "ababc"), [1, 0, 2]);
+        debug_assert_eq!(moves_to_stamp("abca", "aabcaca"), [2, 3, 0, 1]);
     }
 
     #[test]
