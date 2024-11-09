@@ -2,54 +2,48 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_end(n: i32, x: i32) -> i64 {
-    // fit bits of (n-1) onto "empty" bits of x
-    // as if counting up from x for 0..n times
-    let mut bits = format!("{:b}", x).into_bytes();
-    let fill = format!("{:b}", n - 1).into_bytes();
-    let mut idx = bits.len() - 1;
-    for b in fill.into_iter().rev() {
-        while idx > 0 && bits[idx] != b'0' {
-            idx -= 1;
-        }
-        if idx > 0 {
-            bits[idx] = b;
-            idx -= 1;
+pub fn distinct_subseq_ii(s: &str) -> i32 {
+    const MOD: i32 = 1_000_000_007;
+    let n = s.len();
+    let mut dp: Vec<i32> = vec![0; 1 + n];
+    // dp[1+i] is the count of subseqs that end with [i]
+    // i.e its length is 1+i
+    // dp[0] => empty str has no subseq
+    let mut last: HashMap<u8, usize> = HashMap::new();
+    for (idx, b) in s.bytes().enumerate() {
+        if let Some(&v) = last.get(&b) {
+            // Similaly double the count
+            // But current letter was last seen at v
+            // dp[v] sebseqs are double counted
+            dp[1 + idx] = (2 * dp[idx] - dp[v]).rem_euclid(MOD);
         } else {
-            bits.insert(0, b);
+            // Current letter is first seen
+            // 1 => this letter
+            // 2*dp[idx] => previous subseqs
+            //              previous subseqs with current letter
+            dp[1 + idx] = (1 + 2 * dp[idx]).rem_euclid(MOD);
         }
+        last.insert(b, idx);
     }
-    let mut res = 0;
-    for b in bits.into_iter() {
-        res <<= 1;
-        res |= i64::from(b - b'0');
-    }
-    res
+    dp[n]
 }
 
-fn consecutive_or(n: i32, x: i32) -> i64 {
-    let mut res = i64::from(x);
-    for _ in 1..n {
-        res = (res + 1) | i64::from(x);
+fn editorial(s: &str) -> i32 {
+    const MOD: i32 = 1_000_000_007;
+    let [mut prev, mut curr] = [1_i32; 2];
+    let mut last = [0; 26];
+    for b in s.bytes() {
+        let idx = usize::from(b - b'a');
+        curr = (2 * prev - last[idx]).rem_euclid(MOD);
+        last[idx] = prev;
+        prev = curr;
     }
-    res
-}
-
-fn bitmask(n: i32, x: i32) -> i64 {
-    let mut res: i64 = x.into();
-    let mut mask: i64 = 1;
-    let mut n: i64 = (n - 1).into();
-    while n > 0 {
-        if mask & i64::from(x) == 0 {
-            res |= (n & 1) * mask;
-            n >>= 1;
-        }
-        mask <<= 1;
-    }
-    res
+    (curr - 1).rem_euclid(MOD) // remove empty subseq
 }
 
 #[cfg(test)]
@@ -60,8 +54,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(bitmask(3, 4), 6);
-        debug_assert_eq!(bitmask(2, 7), 15);
+        debug_assert_eq!(editorial("aba"), 6);
+        debug_assert_eq!(editorial("aaa"), 3);
     }
 
     #[test]
