@@ -5,14 +5,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_deletion_size(strs: &[&str]) -> i32 {
-    let n = strs[0].len();
-    (0..n)
-        .filter(|&i| {
-            strs.windows(2)
-                .any(|w| w[0].as_bytes()[i] > w[1].as_bytes()[i])
-        })
-        .count() as _
+pub fn min_increment_for_unique(nums: &mut [i32]) -> i32 {
+    nums.sort_unstable();
+    let mut res = 0;
+    let n = nums.len();
+    for i in 1..n {
+        while nums[i] <= nums[i - 1] {
+            nums[i] += 1;
+            res += 1;
+        }
+    }
+    res
 }
 
 #[cfg(test)]
@@ -23,9 +26,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(min_deletion_size(&["cba", "daf", "ghi"]), 1);
-        debug_assert_eq!(min_deletion_size(&["a", "b"]), 0);
-        debug_assert_eq!(min_deletion_size(&["zyx", "wvu", "tsr"]), 3);
+        debug_assert_eq!(min_increment_for_unique(&mut [1, 2, 2]), 1);
+        debug_assert_eq!(min_increment_for_unique(&mut [3, 2, 1, 2, 1, 7]), 6);
     }
 
     #[test]
