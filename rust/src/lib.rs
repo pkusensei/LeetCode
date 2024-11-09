@@ -2,48 +2,24 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn distinct_subseq_ii(s: &str) -> i32 {
-    const MOD: i32 = 1_000_000_007;
+pub fn di_string_match(s: &str) -> Vec<i32> {
     let n = s.len();
-    let mut dp: Vec<i32> = vec![0; 1 + n];
-    // dp[1+i] is the count of subseqs that end with [i]
-    // i.e its length is 1+i
-    // dp[0] => empty str has no subseq
-    let mut last: HashMap<u8, usize> = HashMap::new();
-    for (idx, b) in s.bytes().enumerate() {
-        if let Some(&v) = last.get(&b) {
-            // Similaly double the count
-            // But current letter was last seen at v
-            // dp[v] sebseqs are double counted
-            dp[1 + idx] = (2 * dp[idx] - dp[v]).rem_euclid(MOD);
-        } else {
-            // Current letter is first seen
-            // 1 => this letter
-            // 2*dp[idx] => previous subseqs
-            //              previous subseqs with current letter
-            dp[1 + idx] = (1 + 2 * dp[idx]).rem_euclid(MOD);
-        }
-        last.insert(b, idx);
-    }
-    dp[n]
-}
-
-fn editorial(s: &str) -> i32 {
-    const MOD: i32 = 1_000_000_007;
-    let [mut prev, mut curr] = [1_i32; 2];
-    let mut last = [0; 26];
+    let mut res = Vec::with_capacity(1 + n);
+    let (mut low, mut high) = (0, n as i32);
     for b in s.bytes() {
-        let idx = usize::from(b - b'a');
-        curr = (2 * prev - last[idx]).rem_euclid(MOD);
-        last[idx] = prev;
-        prev = curr;
+        if b == b'D' {
+            res.push(high);
+            high -= 1;
+        } else {
+            res.push(low);
+            low += 1;
+        }
     }
-    (curr - 1).rem_euclid(MOD) // remove empty subseq
+    res.push(low);
+    res
 }
 
 #[cfg(test)]
@@ -54,8 +30,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(editorial("aba"), 6);
-        debug_assert_eq!(editorial("aaa"), 3);
+        debug_assert_eq!(di_string_match("IDID"), [0, 4, 1, 3, 2]);
+        debug_assert_eq!(di_string_match("III"), [0, 1, 2, 3]);
+        debug_assert_eq!(di_string_match("DDI"), [3, 2, 0, 1]);
     }
 
     #[test]
