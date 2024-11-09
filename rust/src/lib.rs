@@ -2,28 +2,29 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashSet;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn reorder_log_files<'a>(logs: &[&'a str]) -> Vec<&'a str> {
-    let (mut letters, mut digits) = (vec![], vec![]);
-    for s in logs.iter() {
-        let Some((_a, b)) = s.split_once(' ') else {
-            continue;
-        };
-        if b.bytes().any(|byte| byte.is_ascii_lowercase()) {
-            letters.push(*s);
-        } else {
-            digits.push(*s);
+pub fn min_area_rect(points: &[[i32; 2]]) -> i32 {
+    let points: HashSet<_> = points.iter().map(|p| [p[0], p[1]]).collect();
+    let mut res = None::<i32>;
+    for (i, &p1) in points.iter().enumerate() {
+        let [x1, y1] = p1;
+        for &p2 in points.iter().skip(1 + i) {
+            let [x2, y2] = p2;
+            if x1 != x2 && y1 != y2 && points.contains(&[x1, y2]) && points.contains(&[x2, y1]) {
+                let temp = ((x1 - x2) * (y1 - y2)).abs();
+                if let Some(ref mut v) = res {
+                    *v = (*v).min(temp)
+                } else {
+                    res = Some(temp);
+                }
+            }
         }
     }
-    letters.sort_unstable_by(|x, y| {
-        let (a1, b1) = x.split_once(' ').unwrap();
-        let (a2, b2) = y.split_once(' ').unwrap();
-        b1.cmp(b2).then(a1.cmp(a2))
-    });
-    letters.extend(digits);
-    letters
+    res.unwrap_or(0)
 }
 
 #[cfg(test)]
@@ -34,37 +35,10 @@ mod tests {
 
     #[test]
     fn basics() {
+        debug_assert_eq!(min_area_rect(&[[1, 1], [1, 3], [3, 1], [3, 3], [2, 2]]), 4);
         debug_assert_eq!(
-            reorder_log_files(&[
-                "dig1 8 1 5 1",
-                "let1 art can",
-                "dig2 3 6",
-                "let2 own kit dig",
-                "let3 art zero"
-            ]),
-            [
-                "let1 art can",
-                "let3 art zero",
-                "let2 own kit dig",
-                "dig1 8 1 5 1",
-                "dig2 3 6"
-            ]
-        );
-        debug_assert_eq!(
-            reorder_log_files(&[
-                "a1 9 2 3 1",
-                "g1 act car",
-                "zo4 4 7",
-                "ab1 off key dog",
-                "a8 act zoo"
-            ]),
-            [
-                "g1 act car",
-                "a8 act zoo",
-                "ab1 off key dog",
-                "a1 9 2 3 1",
-                "zo4 4 7"
-            ]
+            min_area_rect(&[[1, 1], [1, 3], [3, 1], [3, 3], [4, 1], [4, 3]]),
+            2
         );
     }
 
