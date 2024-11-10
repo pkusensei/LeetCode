@@ -2,26 +2,33 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn can_reorder_doubled(arr: &mut [i32]) -> bool {
-    arr.sort_unstable();
-    let mut counts = arr.iter().fold(HashMap::new(), |mut acc, &num| {
-        *acc.entry(num).or_insert(0) += 1;
-        acc
-    });
-    for &num in arr.iter() {
-        if counts.get(&num).is_some_and(|&v| v > 0)
-            && counts.get(&(2 * num)).is_some_and(|&v| v > 0)
-        {
-            counts.entry(num).and_modify(|v| *v -= 1);
-            counts.entry(2 * num).and_modify(|v| *v -= 1);
+pub fn min_deletion_size(strs: &[&str]) -> i32 {
+    let (rows, cols) = get_dimensions(strs);
+    let mut keep: Vec<usize> = vec![];
+    for c in 0..cols {
+        let mut can_keep = true;
+        for r in 1..rows {
+            if strs[r - 1].as_bytes()[c] > strs[r].as_bytes()[c] {
+                can_keep = false;
+                for &prev in keep.iter().rev() {
+                    if strs[r - 1].as_bytes()[prev] < strs[r].as_bytes()[prev] {
+                        can_keep = true;
+                        break;
+                    }
+                }
+                if !can_keep {
+                    break;
+                }
+            }
+        }
+        if can_keep {
+            keep.push(c);
         }
     }
-    counts.into_values().all(|v| v == 0)
+    (cols - keep.len()) as i32
 }
 
 #[cfg(test)]
@@ -32,15 +39,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(!can_reorder_doubled(&mut [3, 1, 3, 6]));
-        debug_assert!(!can_reorder_doubled(&mut [2, 1, 2, 6]));
-        debug_assert!(can_reorder_doubled(&mut [4, -2, 2, -4]));
+        debug_assert_eq!(min_deletion_size(&["ca", "bb", "ac"]), 1);
+        debug_assert_eq!(min_deletion_size(&["xc", "yb", "za"]), 0);
+        debug_assert_eq!(min_deletion_size(&["zyx", "wvu", "tsr"]), 3);
     }
 
     #[test]
-    fn test() {
-        debug_assert!(can_reorder_doubled(&mut [2, 4, 0, 0, 8, 1]));
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
