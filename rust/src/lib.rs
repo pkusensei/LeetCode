@@ -5,72 +5,44 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_subarray_length(nums: &[i32], k: i32) -> i32 {
-    let mut bits = [0; 32];
-    let mut left = 0;
-    let mut res = None::<i32>;
-    for (right, &num) in nums.iter().enumerate() {
-        bits = update(bits, num, 1);
-        while left <= right && to_num(&bits) >= k {
-            if let Some(ref mut v) = res {
-                *v = (*v).min((right - left + 1) as i32);
-            } else {
-                res = Some((right - left + 1) as i32)
-            }
-            bits = update(bits, nums[left], -1);
-            left += 1;
-        }
-    }
-    res.unwrap_or(-1)
-}
-
-fn to_num(bits: &[i32; 32]) -> i32 {
-    let mut res = 0;
-    for (i, &b) in bits.iter().enumerate() {
-        if b > 0 {
-            res |= 1 << i;
-        }
+pub fn largest_time_from_digits(arr: [i32; 4]) -> String {
+    let nums = [0, 1, 2, 3].map(|i| arr[i] as u8);
+    let mut res = String::new();
+    for bit in 0..4 {
+        enumerate(nums, 1 << bit, &mut vec![nums[bit]], &mut res);
     }
     res
 }
 
-fn update(mut bits: [i32; 32], num: i32, delta: i32) -> [i32; 32] {
-    for (i, bit) in bits.iter_mut().enumerate() {
-        if (num >> i) & 1 == 1 {
-            *bit += delta;
+fn enumerate(nums: [u8; 4], mask: u8, curr: &mut Vec<u8>, record: &mut String) {
+    if mask == 0b1111 {
+        if let Some(s) = check(curr) {
+            if s > *record {
+                *record = s;
+            }
+        }
+        return;
+    }
+    for bit in 0..4 {
+        if (mask >> bit) & 1 == 0 {
+            curr.push(nums[bit]);
+            enumerate(nums, mask | (1 << bit), curr, record);
+            curr.pop();
         }
     }
-    bits
 }
 
-fn with_binary_search(nums: &[i32], k: i32) -> i32 {
-    let n = nums.len();
-    let (mut left, mut right) = (1, n);
-    let mut res = None::<i32>;
-    while left <= right {
-        let mid = left + (right - left) / 2;
-        if is_valid(nums, k, mid) {
-            res = Some(mid as i32);
-            right = mid - 1;
-        } else {
-            left = mid + 1;
-        }
+fn check(s: &[u8]) -> Option<String> {
+    if s.len() != 4 {
+        return None;
     }
-    res.unwrap_or(-1)
-}
-
-fn is_valid(nums: &[i32], k: i32, window: usize) -> bool {
-    let mut bits = [0; 32];
-    for (right, &num) in nums.iter().enumerate() {
-        bits = update(bits, num, 1);
-        if right >= window {
-            bits = update(bits, nums[right - window], -1);
-        }
-        if right >= window - 1 && to_num(&bits) >= k {
-            return true;
-        }
+    let (h, m) = s.split_at(2);
+    let [h, m] = [h, m].map(|v| v[0] * 10 + v[1]);
+    if (0..24).contains(&h) && (0..60).contains(&m) {
+        Some(format!("{:02}:{:02}", h, m))
+    } else {
+        None
     }
-    false
 }
 
 #[cfg(test)]
@@ -81,9 +53,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(with_binary_search(&[1, 2, 3], 2), 1);
-        debug_assert_eq!(with_binary_search(&[2, 1, 8], 10), 3);
-        debug_assert_eq!(with_binary_search(&[1, 2], 0), 1);
+        debug_assert_eq!(largest_time_from_digits([1, 2, 3, 4]), "23:41");
+        debug_assert_eq!(largest_time_from_digits([5, 5, 5, 5]), "");
     }
 
     #[test]
