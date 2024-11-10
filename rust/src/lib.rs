@@ -5,17 +5,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_increment_for_unique(nums: &mut [i32]) -> i32 {
-    nums.sort_unstable();
-    let mut res = 0;
-    let n = nums.len();
-    for i in 1..n {
-        while nums[i] <= nums[i - 1] {
-            nums[i] += 1;
-            res += 1;
+pub fn validate_stack_sequences(pushed: &[i32], popped: &[i32]) -> bool {
+    let n = pushed.len();
+    let mut stack = Vec::with_capacity(n);
+    let mut idx = 0;
+    for &num in pushed.iter() {
+        stack.push(num);
+        while stack.last().is_some_and(|&v| v == popped[idx]) {
+            stack.pop();
+            idx += 1;
         }
     }
-    res
+    stack.is_empty()
 }
 
 #[cfg(test)]
@@ -26,8 +27,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(min_increment_for_unique(&mut [1, 2, 2]), 1);
-        debug_assert_eq!(min_increment_for_unique(&mut [3, 2, 1, 2, 1, 7]), 6);
+        debug_assert!(validate_stack_sequences(&[1, 2, 3, 4, 5], &[4, 5, 3, 2, 1]));
+        debug_assert!(!validate_stack_sequences(
+            &[1, 2, 3, 4, 5],
+            &[4, 3, 5, 1, 2]
+        ))
     }
 
     #[test]
