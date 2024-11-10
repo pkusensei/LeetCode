@@ -2,34 +2,75 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::VecDeque;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn bag_of_tokens_score(mut tokens: Vec<i32>, mut power: i32) -> i32 {
-    tokens.sort_unstable();
-    let mut tokens = VecDeque::from(tokens);
-    let mut curr = 0;
+pub fn minimum_subarray_length(nums: &[i32], k: i32) -> i32 {
+    let mut bits = [0; 32];
+    let mut left = 0;
+    let mut res = None::<i32>;
+    for (right, &num) in nums.iter().enumerate() {
+        bits = update(bits, num, 1);
+        while left <= right && to_num(&bits) >= k {
+            if let Some(ref mut v) = res {
+                *v = (*v).min((right - left + 1) as i32);
+            } else {
+                res = Some((right - left + 1) as i32)
+            }
+            bits = update(bits, nums[left], -1);
+            left += 1;
+        }
+    }
+    res.unwrap_or(-1)
+}
+
+fn to_num(bits: &[i32; 32]) -> i32 {
     let mut res = 0;
-    while !tokens.is_empty() {
-        while tokens.front().is_some_and(|&v| v <= power) {
-            let Some(v) = tokens.pop_front() else {
-                break;
-            };
-            power -= v;
-            curr += 1;
-        }
-        if curr == 0 {
-            break;
-        }
-        res = res.max(curr);
-        if let Some(v) = tokens.pop_back() {
-            curr -= 1;
-            power += v;
+    for (i, &b) in bits.iter().enumerate() {
+        if b > 0 {
+            res |= 1 << i;
         }
     }
     res
+}
+
+fn update(mut bits: [i32; 32], num: i32, delta: i32) -> [i32; 32] {
+    for (i, bit) in bits.iter_mut().enumerate() {
+        if (num >> i) & 1 == 1 {
+            *bit += delta;
+        }
+    }
+    bits
+}
+
+fn with_binary_search(nums: &[i32], k: i32) -> i32 {
+    let n = nums.len();
+    let (mut left, mut right) = (1, n);
+    let mut res = None::<i32>;
+    while left <= right {
+        let mid = left + (right - left) / 2;
+        if is_valid(nums, k, mid) {
+            res = Some(mid as i32);
+            right = mid - 1;
+        } else {
+            left = mid + 1;
+        }
+    }
+    res.unwrap_or(-1)
+}
+
+fn is_valid(nums: &[i32], k: i32, window: usize) -> bool {
+    let mut bits = [0; 32];
+    for (right, &num) in nums.iter().enumerate() {
+        bits = update(bits, num, 1);
+        if right >= window {
+            bits = update(bits, nums[right - window], -1);
+        }
+        if right >= window - 1 && to_num(&bits) >= k {
+            return true;
+        }
+    }
+    false
 }
 
 #[cfg(test)]
@@ -40,15 +81,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(bag_of_tokens_score(vec![100], 50), 0);
-        debug_assert_eq!(bag_of_tokens_score(vec![200, 100], 150), 1);
-        debug_assert_eq!(bag_of_tokens_score(vec![100, 200, 300, 400], 200), 2);
+        debug_assert_eq!(with_binary_search(&[1, 2, 3], 2), 1);
+        debug_assert_eq!(with_binary_search(&[2, 1, 8], 10), 3);
+        debug_assert_eq!(with_binary_search(&[1, 2], 0), 1);
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(bag_of_tokens_score(vec![33, 4, 28, 24, 96], 35), 3);
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
