@@ -2,21 +2,34 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::VecDeque;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn validate_stack_sequences(pushed: &[i32], popped: &[i32]) -> bool {
-    let n = pushed.len();
-    let mut stack = Vec::with_capacity(n);
-    let mut idx = 0;
-    for &num in pushed.iter() {
-        stack.push(num);
-        while stack.last().is_some_and(|&v| v == popped[idx]) {
-            stack.pop();
-            idx += 1;
+pub fn bag_of_tokens_score(mut tokens: Vec<i32>, mut power: i32) -> i32 {
+    tokens.sort_unstable();
+    let mut tokens = VecDeque::from(tokens);
+    let mut curr = 0;
+    let mut res = 0;
+    while !tokens.is_empty() {
+        while tokens.front().is_some_and(|&v| v <= power) {
+            let Some(v) = tokens.pop_front() else {
+                break;
+            };
+            power -= v;
+            curr += 1;
+        }
+        if curr == 0 {
+            break;
+        }
+        res = res.max(curr);
+        if let Some(v) = tokens.pop_back() {
+            curr -= 1;
+            power += v;
         }
     }
-    stack.is_empty()
+    res
 }
 
 #[cfg(test)]
@@ -27,15 +40,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(validate_stack_sequences(&[1, 2, 3, 4, 5], &[4, 5, 3, 2, 1]));
-        debug_assert!(!validate_stack_sequences(
-            &[1, 2, 3, 4, 5],
-            &[4, 3, 5, 1, 2]
-        ))
+        debug_assert_eq!(bag_of_tokens_score(vec![100], 50), 0);
+        debug_assert_eq!(bag_of_tokens_score(vec![200, 100], 150), 1);
+        debug_assert_eq!(bag_of_tokens_score(vec![100, 200, 300, 400], 200), 2);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(bag_of_tokens_score(vec![33, 4, 28, 24, 96], 35), 3);
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
