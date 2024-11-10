@@ -2,33 +2,62 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::{HashMap, HashSet};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_deletion_size(strs: &[&str]) -> i32 {
-    let (rows, cols) = get_dimensions(strs);
-    let mut keep: Vec<usize> = vec![];
-    for c in 0..cols {
-        let mut can_keep = true;
-        for r in 1..rows {
-            if strs[r - 1].as_bytes()[c] > strs[r].as_bytes()[c] {
-                can_keep = false;
-                for &prev in keep.iter().rev() {
-                    if strs[r - 1].as_bytes()[prev] < strs[r].as_bytes()[prev] {
-                        can_keep = true;
-                        break;
-                    }
-                }
-                if !can_keep {
-                    break;
-                }
-            }
+pub fn tallest_billboard(rods: &[i32]) -> i32 {
+    // taller - shorter <-> taller
+    let mut dp = HashMap::from([(0, 0)]);
+    for &num in rods.iter() {
+        let mut curr = dp.clone();
+        for (&diff, &tall) in dp.iter() {
+            let short = tall - diff;
+
+            let new_tall = curr.get(&(diff + num)).copied().unwrap_or(0);
+            curr.insert(diff + num, new_tall.max(tall + num));
+
+            let new_diff = (short + num - tall).abs();
+            let new_tall = tall.max(short + num);
+            let v = curr.get(&new_diff).copied().unwrap_or(0).max(new_tall);
+            curr.insert(new_diff, v);
         }
-        if can_keep {
-            keep.push(c);
+        dp = curr;
+    }
+    *dp.get(&0).unwrap_or(&0)
+}
+
+fn meet_in_middle(nums: &[i32]) -> i32 {
+    fn build_half(nums: &[i32]) -> HashMap<i32, i32> {
+        let mut states = HashSet::from([(0, 0)]);
+        for &num in nums.iter() {
+            let mut curr = HashSet::new();
+            for &(a, b) in states.iter() {
+                curr.insert((a + num, b));
+                curr.insert((a, b + num));
+            }
+            states.extend(curr);
+        }
+        states
+            .into_iter()
+            .fold(HashMap::new(), |mut acc, (left, right)| {
+                let val = acc.get(&(left - right)).copied().unwrap_or(0).max(left);
+                acc.insert(left - right, val);
+                acc
+            })
+    }
+
+    let n = nums.len();
+    let first = build_half(&nums[..n / 2]);
+    let second = build_half(&nums[n / 2..]);
+    let mut res = 0;
+    for (diff, v1) in first.iter() {
+        if let Some(v2) = second.get(&(-diff)) {
+            res = res.max(v1 + v2);
         }
     }
-    (cols - keep.len()) as i32
+    res
 }
 
 #[cfg(test)]
@@ -39,13 +68,21 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(min_deletion_size(&["ca", "bb", "ac"]), 1);
-        debug_assert_eq!(min_deletion_size(&["xc", "yb", "za"]), 0);
-        debug_assert_eq!(min_deletion_size(&["zyx", "wvu", "tsr"]), 3);
+        debug_assert_eq!(tallest_billboard(&[1, 2, 3, 6]), 6);
+        debug_assert_eq!(tallest_billboard(&[1, 2, 3, 4, 5, 6]), 10);
+        debug_assert_eq!(tallest_billboard(&[1, 2]), 0);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(
+            tallest_billboard(&[
+                102, 101, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
+                100, 100, 100, 100
+            ]),
+            900
+        );
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
