@@ -2,38 +2,44 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::{HashMap, HashSet};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn deck_revealed_increasing(deck: &mut [i32]) -> Vec<i32> {
-    deck.sort_unstable_by(|a, b| b.cmp(a));
-    let mut queue = std::collections::VecDeque::with_capacity(deck.len());
-    for &num in deck.iter() {
-        if let Some(v) = queue.pop_back() {
-            queue.push_front(v);
+pub fn largest_component_size(nums: &[i32]) -> i32 {
+    let n = nums.len();
+    let mut dsu = dsu::DSU::new(n);
+    let factors: HashMap<i32, Vec<_>> =
+        nums.iter()
+            .enumerate()
+            .fold(HashMap::new(), |mut acc, (i, &num)| {
+                let v = primes(num);
+                for f in v {
+                    acc.entry(f).or_default().push(i);
+                }
+                acc
+            });
+    for v in factors.values() {
+        for &idx in v.iter().skip(1) {
+            dsu.union(v[0], idx);
         }
-        queue.push_front(num);
     }
-    queue.into()
+    dsu.size.iter().copied().max().unwrap_or(1)
 }
 
-fn with_two_pointers(deck: &mut [i32]) -> Vec<i32> {
-    let n = deck.len();
-    let mut res = vec![0; n];
-    let mut skip = false;
-    let (mut in_deck, mut in_res) = (0, 0);
-    deck.sort_unstable();
-    while in_deck < n {
-        if res[in_res] == 0 {
-            if !skip {
-                res[in_res] = deck[in_deck];
-                in_deck += 1;
-            }
-            skip = !skip;
+fn primes(num: i32) -> HashSet<i32> {
+    let mut f = 2;
+    while f * f <= num {
+        if num % f == 0 {
+            return primes(num / f)
+                .into_iter()
+                .chain(std::iter::once(f))
+                .collect();
         }
-        in_res = (in_res + 1) % n;
+        f += 1;
     }
-    res
+    HashSet::from([num])
 }
 
 #[cfg(test)]
@@ -44,11 +50,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            with_two_pointers(&mut [17, 13, 11, 2, 3, 5, 7]),
-            [2, 13, 3, 11, 5, 17, 7]
-        );
-        debug_assert_eq!(with_two_pointers(&mut [1, 1000]), [1, 1000]);
+        debug_assert_eq!(largest_component_size(&[4, 6, 15, 35]), 4);
+        debug_assert_eq!(largest_component_size(&[20, 50, 9, 63]), 2);
+        debug_assert_eq!(largest_component_size(&[2, 3, 6, 7, 4, 12, 21, 39]), 8);
     }
 
     #[test]

@@ -3,7 +3,7 @@
 pub struct DSU {
     parent: Vec<usize>,
     rank: Vec<i32>,
-    size: Vec<i32>,
+    pub size: Vec<i32>,
     count: usize,
 }
 
