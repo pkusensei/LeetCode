@@ -5,44 +5,35 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn largest_time_from_digits(arr: [i32; 4]) -> String {
-    let nums = [0, 1, 2, 3].map(|i| arr[i] as u8);
-    let mut res = String::new();
-    for bit in 0..4 {
-        enumerate(nums, 1 << bit, &mut vec![nums[bit]], &mut res);
+pub fn deck_revealed_increasing(deck: &mut [i32]) -> Vec<i32> {
+    deck.sort_unstable_by(|a, b| b.cmp(a));
+    let mut queue = std::collections::VecDeque::with_capacity(deck.len());
+    for &num in deck.iter() {
+        if let Some(v) = queue.pop_back() {
+            queue.push_front(v);
+        }
+        queue.push_front(num);
+    }
+    queue.into()
+}
+
+fn with_two_pointers(deck: &mut [i32]) -> Vec<i32> {
+    let n = deck.len();
+    let mut res = vec![0; n];
+    let mut skip = false;
+    let (mut in_deck, mut in_res) = (0, 0);
+    deck.sort_unstable();
+    while in_deck < n {
+        if res[in_res] == 0 {
+            if !skip {
+                res[in_res] = deck[in_deck];
+                in_deck += 1;
+            }
+            skip = !skip;
+        }
+        in_res = (in_res + 1) % n;
     }
     res
-}
-
-fn enumerate(nums: [u8; 4], mask: u8, curr: &mut Vec<u8>, record: &mut String) {
-    if mask == 0b1111 {
-        if let Some(s) = check(curr) {
-            if s > *record {
-                *record = s;
-            }
-        }
-        return;
-    }
-    for bit in 0..4 {
-        if (mask >> bit) & 1 == 0 {
-            curr.push(nums[bit]);
-            enumerate(nums, mask | (1 << bit), curr, record);
-            curr.pop();
-        }
-    }
-}
-
-fn check(s: &[u8]) -> Option<String> {
-    if s.len() != 4 {
-        return None;
-    }
-    let (h, m) = s.split_at(2);
-    let [h, m] = [h, m].map(|v| v[0] * 10 + v[1]);
-    if (0..24).contains(&h) && (0..60).contains(&m) {
-        Some(format!("{:02}:{:02}", h, m))
-    } else {
-        None
-    }
 }
 
 #[cfg(test)]
@@ -53,8 +44,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(largest_time_from_digits([1, 2, 3, 4]), "23:41");
-        debug_assert_eq!(largest_time_from_digits([5, 5, 5, 5]), "");
+        debug_assert_eq!(
+            with_two_pointers(&mut [17, 13, 11, 2, 3, 5, 7]),
+            [2, 13, 3, 11, 5, 17, 7]
+        );
+        debug_assert_eq!(with_two_pointers(&mut [1, 1000]), [1, 1000]);
     }
 
     #[test]
