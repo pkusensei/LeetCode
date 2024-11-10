@@ -7,18 +7,21 @@ use std::collections::HashMap;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_alien_sorted(words: &[&str], order: &str) -> bool {
-    let order = order
-        .bytes()
-        .enumerate()
-        .fold(HashMap::new(), |mut acc, (i, b)| {
-            acc.insert(b, i as u8);
-            acc
-        });
-    words.windows(2).all(|w| {
-        let [s1, s2] = [w[0], w[1]].map(|s| s.bytes().map(|b| order[&b]).collect::<Vec<_>>());
-        s1 <= s2
-    })
+pub fn can_reorder_doubled(arr: &mut [i32]) -> bool {
+    arr.sort_unstable();
+    let mut counts = arr.iter().fold(HashMap::new(), |mut acc, &num| {
+        *acc.entry(num).or_insert(0) += 1;
+        acc
+    });
+    for &num in arr.iter() {
+        if counts.get(&num).is_some_and(|&v| v > 0)
+            && counts.get(&(2 * num)).is_some_and(|&v| v > 0)
+        {
+            counts.entry(num).and_modify(|v| *v -= 1);
+            counts.entry(2 * num).and_modify(|v| *v -= 1);
+        }
+    }
+    counts.into_values().all(|v| v == 0)
 }
 
 #[cfg(test)]
@@ -29,22 +32,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(is_alien_sorted(
-            &["hello", "leetcode"],
-            "hlabcdefgijkmnopqrstuvwxyz"
-        ));
-        debug_assert!(!is_alien_sorted(
-            &["word", "world", "row"],
-            "worldabcefghijkmnpqstuvxyz"
-        ));
-        debug_assert!(!is_alien_sorted(
-            &["apple", "app"],
-            "abcdefghijklmnopqrstuvwxyz"
-        ));
+        debug_assert!(!can_reorder_doubled(&mut [3, 1, 3, 6]));
+        debug_assert!(!can_reorder_doubled(&mut [2, 1, 2, 6]));
+        debug_assert!(can_reorder_doubled(&mut [4, -2, 2, -4]));
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert!(can_reorder_doubled(&mut [2, 4, 0, 0, 8, 1]));
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
