@@ -2,44 +2,23 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn largest_component_size(nums: &[i32]) -> i32 {
-    let n = nums.len();
-    let mut dsu = dsu::DSU::new(n);
-    let factors: HashMap<i32, Vec<_>> =
-        nums.iter()
-            .enumerate()
-            .fold(HashMap::new(), |mut acc, (i, &num)| {
-                let v = primes(num);
-                for f in v {
-                    acc.entry(f).or_default().push(i);
-                }
-                acc
-            });
-    for v in factors.values() {
-        for &idx in v.iter().skip(1) {
-            dsu.union(v[0], idx);
-        }
-    }
-    dsu.size.iter().copied().max().unwrap_or(1)
-}
-
-fn primes(num: i32) -> HashSet<i32> {
-    let mut f = 2;
-    while f * f <= num {
-        if num % f == 0 {
-            return primes(num / f)
-                .into_iter()
-                .chain(std::iter::once(f))
-                .collect();
-        }
-        f += 1;
-    }
-    HashSet::from([num])
+pub fn is_alien_sorted(words: &[&str], order: &str) -> bool {
+    let order = order
+        .bytes()
+        .enumerate()
+        .fold(HashMap::new(), |mut acc, (i, b)| {
+            acc.insert(b, i as u8);
+            acc
+        });
+    words.windows(2).all(|w| {
+        let [s1, s2] = [w[0], w[1]].map(|s| s.bytes().map(|b| order[&b]).collect::<Vec<_>>());
+        s1 <= s2
+    })
 }
 
 #[cfg(test)]
@@ -50,9 +29,18 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(largest_component_size(&[4, 6, 15, 35]), 4);
-        debug_assert_eq!(largest_component_size(&[20, 50, 9, 63]), 2);
-        debug_assert_eq!(largest_component_size(&[2, 3, 6, 7, 4, 12, 21, 39]), 8);
+        debug_assert!(is_alien_sorted(
+            &["hello", "leetcode"],
+            "hlabcdefgijkmnopqrstuvwxyz"
+        ));
+        debug_assert!(!is_alien_sorted(
+            &["word", "world", "row"],
+            "worldabcefghijkmnpqstuvxyz"
+        ));
+        debug_assert!(!is_alien_sorted(
+            &["apple", "app"],
+            "abcdefghijklmnopqrstuvwxyz"
+        ));
     }
 
     #[test]
