@@ -12,17 +12,15 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
-        var a = TreeNode.Make([10, 5, 15, 3, 7, null, 18]);
-        var b = sol.RangeSumBST(a, 7, 15);
-        Assert.AreEqual(32, b);
+        var a = TreeNode.Make([1, 2, 3, 4, 5, 6]);
+        Assert.IsTrue(sol.IsCompleteTree(a));
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        var a = TreeNode.Make([10, 5, 15, 3, 7, 13, 18, 1, null, 6]);
-        var b = sol.RangeSumBST(a, 6, 10);
-        Assert.AreEqual(23, b);
+        var a = TreeNode.Make([1, 2, 3, 4, 5, null, 7]);
+        Assert.IsFalse(sol.IsCompleteTree(a));
     }
 
     [TestMethod]

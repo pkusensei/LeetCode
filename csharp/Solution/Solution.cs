@@ -5,10 +5,20 @@ namespace Solution;
 
 public class Solution
 {
-    public int RangeSumBST(TreeNode root, int low, int high)
+    public bool IsCompleteTree(TreeNode root)
     {
-        if (root is null) { return 0; }
-        var res = low <= root.val && root.val <= high ? root.val : 0;
-        return res + RangeSumBST(root.left, low, high) + RangeSumBST(root.right, low, high);
+        if (root is null) { return true; }
+        var queue = new Queue<TreeNode>();
+        queue.Enqueue(root);
+        while (queue.TryDequeue(out var node))
+        {
+            if (node is null) { return queue.All(n => n is null); }
+            else
+            {
+                queue.Enqueue(node.left);
+                queue.Enqueue(node.right);
+            }
+        }
+        return true;
     }
 }
