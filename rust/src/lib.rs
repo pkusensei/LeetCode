@@ -2,59 +2,41 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::{HashMap, HashSet};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn tallest_billboard(rods: &[i32]) -> i32 {
-    // taller - shorter <-> taller
-    let mut dp = HashMap::from([(0, 0)]);
-    for &num in rods.iter() {
-        let mut curr = dp.clone();
-        for (&diff, &tall) in dp.iter() {
-            let short = tall - diff;
-
-            let new_tall = curr.get(&(diff + num)).copied().unwrap_or(0);
-            curr.insert(diff + num, new_tall.max(tall + num));
-
-            let new_diff = (short + num - tall).abs();
-            let new_tall = tall.max(short + num);
-            let v = curr.get(&new_diff).copied().unwrap_or(0).max(new_tall);
-            curr.insert(new_diff, v);
+pub fn prison_after_n_days(mut cells: Vec<i32>, n: i32) -> Vec<i32> {
+    let mut map = std::collections::HashMap::new();
+    let mut idx = 0;
+    while idx <= n {
+        let num = to_num(&cells);
+        if let Some(prev) = map.get(&num) {
+            let period = idx - prev; // is 14
+            let count = (n - idx) / period;
+            idx += count * period - 1; // no idea why -1 is needed
+            map.clear();
+        } else {
+            if idx == n {
+                return cells;
+            }
+            map.insert(num, idx);
+            let mut next = cells.clone();
+            (next[0], next[7]) = (0, 0);
+            for i in 1..=6 {
+                next[i] = (cells[i - 1] == cells[i + 1]).into();
+            }
+            cells = next;
         }
-        dp = curr;
+        idx += 1;
     }
-    *dp.get(&0).unwrap_or(&0)
+    cells
 }
 
-fn meet_in_middle(nums: &[i32]) -> i32 {
-    fn build_half(nums: &[i32]) -> HashMap<i32, i32> {
-        let mut states = HashSet::from([(0, 0)]);
-        for &num in nums.iter() {
-            let mut curr = HashSet::new();
-            for &(a, b) in states.iter() {
-                curr.insert((a + num, b));
-                curr.insert((a, b + num));
-            }
-            states.extend(curr);
-        }
-        states
-            .into_iter()
-            .fold(HashMap::new(), |mut acc, (left, right)| {
-                let val = acc.get(&(left - right)).copied().unwrap_or(0).max(left);
-                acc.insert(left - right, val);
-                acc
-            })
-    }
-
-    let n = nums.len();
-    let first = build_half(&nums[..n / 2]);
-    let second = build_half(&nums[n / 2..]);
+fn to_num(bits: &[i32]) -> u8 {
     let mut res = 0;
-    for (diff, v1) in first.iter() {
-        if let Some(v2) = second.get(&(-diff)) {
-            res = res.max(v1 + v2);
+    for (i, &b) in bits.iter().enumerate() {
+        if b > 0 {
+            res |= 1 << i;
         }
     }
     res
@@ -68,21 +50,18 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(tallest_billboard(&[1, 2, 3, 6]), 6);
-        debug_assert_eq!(tallest_billboard(&[1, 2, 3, 4, 5, 6]), 10);
-        debug_assert_eq!(tallest_billboard(&[1, 2]), 0);
+        debug_assert_eq!(
+            prison_after_n_days(vec![0, 1, 0, 1, 1, 0, 0, 1], 7),
+            [0, 0, 1, 1, 0, 0, 0, 0]
+        );
+        debug_assert_eq!(
+            prison_after_n_days(vec![1, 0, 0, 1, 0, 0, 1, 0], 1000000000),
+            [0, 0, 1, 1, 1, 1, 1, 0]
+        );
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(
-            tallest_billboard(&[
-                102, 101, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
-                100, 100, 100, 100
-            ]),
-            900
-        );
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
