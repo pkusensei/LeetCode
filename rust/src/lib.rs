@@ -5,17 +5,25 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_deletion_size(strs: &[&str]) -> i32 {
-    let n = strs[0].len();
-    let mut dp = vec![1; n];
-    for i1 in 1..n {
-        for i2 in 0..i1 {
-            if strs.iter().all(|s| s.as_bytes()[i1] >= s.as_bytes()[i2]) {
-                dp[i1] = dp[i1].max(1 + dp[i2])
+pub fn repeated_n_times(nums: &[i32]) -> i32 {
+    let mut s = std::collections::HashSet::new();
+    for &num in nums.iter() {
+        if !s.insert(num) {
+            return num;
+        }
+    }
+    -1
+}
+
+fn pigeon_hole(nums: &[i32]) -> i32 {
+    for k in 1..4 {
+        for i in 0..nums.len() - k {
+            if nums[i] == nums[i + k] {
+                return nums[i];
             }
         }
     }
-    n as i32 - dp.into_iter().max().unwrap_or(1)
+    -1
 }
 
 #[cfg(test)]
@@ -26,9 +34,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(min_deletion_size(&["babca", "bbazb"]), 3);
-        debug_assert_eq!(min_deletion_size(&["edcba"]), 4);
-        debug_assert_eq!(min_deletion_size(&["ghi", "def", "abc"]), 0);
+        debug_assert_eq!(pigeon_hole(&[1, 2, 3, 3]), 3);
+        debug_assert_eq!(pigeon_hole(&[2, 1, 2, 5, 3, 2]), 2);
+        debug_assert_eq!(pigeon_hole(&[5, 1, 5, 2, 5, 3, 5, 4]), 5);
     }
 
     #[test]
