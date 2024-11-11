@@ -10,17 +10,18 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow(2, new[] { " /", "/ " })]
+    [DataRow(1, new[] { " /", "  " })]
+    [DataRow(5, new[] { "/\\", "\\/" })]
+    public void TestMethod1(int a, string[] grid)
     {
-        var a = TreeNode.Make([1, 2, 3, 4, 5, 6]);
-        Assert.IsTrue(sol.IsCompleteTree(a));
+        var b = sol.RegionsBySlashes(grid);
+        Assert.AreEqual(a, b);
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        var a = TreeNode.Make([1, 2, 3, 4, 5, null, 7]);
-        Assert.IsFalse(sol.IsCompleteTree(a));
     }
 
     [TestMethod]
