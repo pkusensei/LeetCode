@@ -10,12 +10,11 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(2, new[] { " /", "/ " })]
-    [DataRow(1, new[] { " /", "  " })]
-    [DataRow(5, new[] { "/\\", "\\/" })]
-    public void TestMethod1(int a, string[] grid)
+    [DataRow(4, new[] { 6, 0, 8, 2, 1, 5 })]
+    [DataRow(7, new[] { 9, 8, 1, 0, 1, 9, 4, 0, 4, 1 })]
+    public void TestMethod1(int a, int[] nums)
     {
-        var b = sol.RegionsBySlashes(grid);
+        var b = sol.MaxWidthRamp(nums);
         Assert.AreEqual(a, b);
     }
 
