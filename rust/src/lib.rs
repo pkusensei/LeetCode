@@ -2,38 +2,39 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::{BTreeMap, HashMap};
+use std::collections::HashMap;
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_beauty(items: &[[i32; 2]], queries: &[i32]) -> Vec<i32> {
-    let mut prefix: BTreeMap<i32, i32> = BTreeMap::new();
-    for &[key, val] in items.iter() {
-        let v = prefix.entry(key).or_insert(0);
-        *v = (*v).max(val);
-    }
-    let mut curr = *prefix.values().next().unwrap_or(&1);
-    for v in prefix.values_mut() {
-        curr = curr.max(*v);
-        *v = curr;
-    }
-    let mut seen = HashMap::new();
-    let mut res = Vec::with_capacity(queries.len());
-    for &num in queries.iter() {
-        if let Some(&v) = seen.get(&num) {
-            res.push(v);
-        } else {
-            let v = prefix
-                .range(..=num)
-                .next_back()
-                .map(|(_, &v)| v)
-                .unwrap_or(0);
-            res.push(v);
-            seen.insert(num, v);
+pub fn min_area_free_rect(points: &[[i32; 2]]) -> f64 {
+    let points: Vec<_> = points.iter().map(|v| [v[0], v[1]].map(i64::from)).collect();
+    let mut res = f64::MAX;
+    let mut seen: HashMap<_, Vec<[i64; 2]>> = HashMap::new();
+    for (idx, &[x1, y1]) in points.iter().enumerate() {
+        for &[x2, y2] in points.iter().skip(1 + idx) {
+            let center_x = x1 + x2; // divided by 2 is f64 => cannot be key of HashMap
+            let center_y = y1 + y2;
+            let diameter = (x1 - x2).pow(2) + (y1 - y2).pow(2); // same for sqrt() here
+            for &[x3, y3] in seen
+                .get(&(center_x, center_y, diameter))
+                .map(|v| v.as_slice())
+                .unwrap_or_default() 
+            {
+                let s1 = (x3 - x1).pow(2) + (y3 - y1).pow(2);
+                let s2 = (x3 - x2).pow(2) + (y3 - y2).pow(2);
+                res = res.min(((s1 * s2) as f64).sqrt());
+            }
+            seen.entry((center_x, center_y, diameter))
+                .or_default()
+                .push([x1, y1]);
         }
     }
-    res
+    if res == f64::MAX {
+        0.0
+    } else {
+        res
+    }
 }
 
 #[cfg(test)]
@@ -44,15 +45,18 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            maximum_beauty(
-                &[[1, 2], [3, 2], [2, 4], [5, 6], [3, 5]],
-                &[1, 2, 3, 4, 5, 6]
-            ),
-            [2, 4, 5, 5, 6, 6]
+        float_eq(
+            min_area_free_rect(&[[1, 2], [2, 1], [1, 0], [0, 1]]),
+            2.00000,
         );
-        debug_assert_eq!(maximum_beauty(&[[1, 2], [1, 2], [1, 3], [1, 4]], &[1]), [4]);
-        debug_assert_eq!(maximum_beauty(&[[10, 1000]], &[5]), [0]);
+        float_eq(
+            min_area_free_rect(&[[0, 1], [2, 1], [1, 1], [1, 0], [2, 0]]),
+            1.00000,
+        );
+        float_eq(
+            min_area_free_rect(&[[0, 3], [1, 2], [3, 1], [1, 3], [2, 1]]),
+            0.0,
+        );
     }
 
     #[test]
@@ -74,10 +78,12 @@ mod tests {
     #[allow(dead_code)]
     fn float_eq<T1, T2>(a: T1, b: T2)
     where
-        T1: Into<f64>,
-        T2: Into<f64>,
+        T1: Into<f64> + Copy + Debug,
+        T2: Into<f64> + Copy + Debug,
     {
         const EP: f64 = 1e-5;
-        debug_assert!((<T1 as Into<f64>>::into(a) - <T2 as Into<f64>>::into(b)).abs() <= EP);
+        if !((<T1 as Into<f64>>::into(a) - <T2 as Into<f64>>::into(b)).abs() <= EP) {
+            dbg!(a, b);
+        }
     }
 }
