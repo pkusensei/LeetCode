@@ -7,34 +7,30 @@ use std::collections::HashMap;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_area_free_rect(points: &[[i32; 2]]) -> f64 {
-    let points: Vec<_> = points.iter().map(|v| [v[0], v[1]].map(i64::from)).collect();
-    let mut res = f64::MAX;
-    let mut seen: HashMap<_, Vec<[i64; 2]>> = HashMap::new();
-    for (idx, &[x1, y1]) in points.iter().enumerate() {
-        for &[x2, y2] in points.iter().skip(1 + idx) {
-            let center_x = x1 + x2; // divided by 2 is f64 => cannot be key of HashMap
-            let center_y = y1 + y2;
-            let diameter = (x1 - x2).pow(2) + (y1 - y2).pow(2); // same for sqrt() here
-            for &[x3, y3] in seen
-                .get(&(center_x, center_y, diameter))
-                .map(|v| v.as_slice())
-                .unwrap_or_default() 
-            {
-                let s1 = (x3 - x1).pow(2) + (y3 - y1).pow(2);
-                let s2 = (x3 - x2).pow(2) + (y3 - y2).pow(2);
-                res = res.min(((s1 * s2) as f64).sqrt());
-            }
-            seen.entry((center_x, center_y, diameter))
-                .or_default()
-                .push([x1, y1]);
-        }
+pub fn least_ops_express_target(x: i32, target: i32) -> i32 {
+    dfs(x as _, target as _, &mut HashMap::new())
+}
+
+fn dfs(x: i64, target: i64, memo: &mut HashMap<i64, i32>) -> i32 {
+    if target < x {
+        return (target * 2 - 1).min(2 * (x - target)) as i32;
     }
-    if res == f64::MAX {
-        0.0
-    } else {
-        res
+    if let Some(&v) = memo.get(&target) {
+        return v;
     }
+    let n = target.ilog(x);
+    let pow = x.pow(1 + n);
+    if pow == target {
+        memo.insert(target, n as i32);
+        return n as _;
+    }
+    let mut res = n as i32 + dfs(x, target - pow / x, memo);
+    if pow - target < target {
+        let large = n as i32 + 1 + dfs(x, pow - target, memo);
+        res = res.min(large);
+    }
+    memo.insert(target, res);
+    res
 }
 
 #[cfg(test)]
@@ -45,18 +41,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        float_eq(
-            min_area_free_rect(&[[1, 2], [2, 1], [1, 0], [0, 1]]),
-            2.00000,
-        );
-        float_eq(
-            min_area_free_rect(&[[0, 1], [2, 1], [1, 1], [1, 0], [2, 0]]),
-            1.00000,
-        );
-        float_eq(
-            min_area_free_rect(&[[0, 3], [1, 2], [3, 1], [1, 3], [2, 1]]),
-            0.0,
-        );
+        debug_assert_eq!(least_ops_express_target(3, 19), 5);
+        debug_assert_eq!(least_ops_express_target(5, 501), 8);
+        debug_assert_eq!(least_ops_express_target(100, 100000000), 3);
     }
 
     #[test]
