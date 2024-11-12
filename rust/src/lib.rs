@@ -2,28 +2,38 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::{BTreeMap, HashMap};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn repeated_n_times(nums: &[i32]) -> i32 {
-    let mut s = std::collections::HashSet::new();
-    for &num in nums.iter() {
-        if !s.insert(num) {
-            return num;
+pub fn maximum_beauty(items: &[[i32; 2]], queries: &[i32]) -> Vec<i32> {
+    let mut prefix: BTreeMap<i32, i32> = BTreeMap::new();
+    for &[key, val] in items.iter() {
+        let v = prefix.entry(key).or_insert(0);
+        *v = (*v).max(val);
+    }
+    let mut curr = *prefix.values().next().unwrap_or(&1);
+    for v in prefix.values_mut() {
+        curr = curr.max(*v);
+        *v = curr;
+    }
+    let mut seen = HashMap::new();
+    let mut res = Vec::with_capacity(queries.len());
+    for &num in queries.iter() {
+        if let Some(&v) = seen.get(&num) {
+            res.push(v);
+        } else {
+            let v = prefix
+                .range(..=num)
+                .next_back()
+                .map(|(_, &v)| v)
+                .unwrap_or(0);
+            res.push(v);
+            seen.insert(num, v);
         }
     }
-    -1
-}
-
-fn pigeon_hole(nums: &[i32]) -> i32 {
-    for k in 1..4 {
-        for i in 0..nums.len() - k {
-            if nums[i] == nums[i + k] {
-                return nums[i];
-            }
-        }
-    }
-    -1
+    res
 }
 
 #[cfg(test)]
@@ -34,9 +44,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(pigeon_hole(&[1, 2, 3, 3]), 3);
-        debug_assert_eq!(pigeon_hole(&[2, 1, 2, 5, 3, 2]), 2);
-        debug_assert_eq!(pigeon_hole(&[5, 1, 5, 2, 5, 3, 5, 4]), 5);
+        debug_assert_eq!(
+            maximum_beauty(
+                &[[1, 2], [3, 2], [2, 4], [5, 6], [3, 5]],
+                &[1, 2, 3, 4, 5, 6]
+            ),
+            [2, 4, 5, 5, 6, 6]
+        );
+        debug_assert_eq!(maximum_beauty(&[[1, 2], [1, 2], [1, 3], [1, 4]], &[1]), [4]);
+        debug_assert_eq!(maximum_beauty(&[[10, 1000]], &[5]), [0]);
     }
 
     #[test]
