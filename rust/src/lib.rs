@@ -5,41 +5,25 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn nums_same_consec_diff(n: i32, k: i32) -> Vec<i32> {
+pub fn pancake_sort(arr: &mut [i32]) -> Vec<i32> {
     let mut res = vec![];
-    for d in 1..10 {
-        backtrack(n - 1, k, d, d, &mut res);
+    let n = arr.len();
+    for len in (1..=n).rev() {
+        let (idx, _) = arr[..len]
+            .iter()
+            .enumerate()
+            .max_by_key(|(_i, &v)| v)
+            .unwrap();
+        if idx == len - 1 {
+            continue;
+        } else if idx > 0 {
+            res.push(1 + idx as i32);
+            arr[..=idx].reverse();
+        }
+        res.push(len as i32);
+        arr[..len].reverse();
     }
     res
-}
-
-fn backtrack(n: i32, k: i32, acc: i32, digit: i32, res: &mut Vec<i32>) {
-    if n == 0 {
-        res.push(acc);
-        return;
-    }
-    for d in 0i32..10 {
-        if d.abs_diff(digit) == k as u32 {
-            backtrack(n - 1, k, acc * 10 + d, d, res);
-        }
-    }
-}
-
-fn with_bfs(n: i32, k: i32) -> Vec<i32> {
-    let mut queue: Vec<i32> = (1..10).collect();
-    for _ in 1..n {
-        let mut next = vec![];
-        for num in queue {
-            let tail = num % 10;
-            for d in 0..10 {
-                if tail.abs_diff(d) == k as u32 {
-                    next.push(num * 10 + d);
-                }
-            }
-        }
-        queue = next;
-    }
-    queue
 }
 
 #[cfg(test)]
@@ -50,13 +34,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        sort_eq(with_bfs(3, 7), [181, 292, 707, 818, 929]);
-        sort_eq(
-            with_bfs(2, 1),
-            [
-                10, 12, 21, 23, 32, 34, 43, 45, 54, 56, 65, 67, 76, 78, 87, 89, 98,
-            ],
-        );
+        // 3 [4 2 3 1]
+        // 4 [1 3 2 4]
+        // 2 [3 1 2 4]
+        // 3 [2 1 3 4]
+        // 2 [1 2 3 4]
+        debug_assert_eq!(pancake_sort(&mut [3, 2, 4, 1]), [3, 4, 2, 3, 2]);
+        debug_assert!(pancake_sort(&mut [1, 2, 3]).is_empty());
     }
 
     #[test]
