@@ -2,28 +2,42 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashSet;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn pancake_sort(arr: &mut [i32]) -> Vec<i32> {
-    let mut res = vec![];
-    let n = arr.len();
-    for len in (1..=n).rev() {
-        let (idx, _) = arr[..len]
-            .iter()
-            .enumerate()
-            .max_by_key(|(_i, &v)| v)
-            .unwrap();
-        if idx == len - 1 {
-            continue;
-        } else if idx > 0 {
-            res.push(1 + idx as i32);
-            arr[..=idx].reverse();
-        }
-        res.push(len as i32);
-        arr[..len].reverse();
+pub fn powerful_integers(x: i32, y: i32, bound: i32) -> Vec<i32> {
+    if bound < 2 {
+        return vec![];
     }
-    res
+    match (x, y) {
+        (1, 1) => vec![2],
+        (1, num) | (num, 1) => {
+            debug_assert!(num > 1);
+            let mut p = 0;
+            let mut res = HashSet::new();
+            while num.pow(p) < bound {
+                res.insert(1 + num.pow(p));
+                p += 1;
+            }
+            res.into_iter().collect()
+        }
+        _ => {
+            let mut res = HashSet::new();
+            let px = bound.ilog(x);
+            let py = bound.ilog(y);
+            for ix in 0..=px {
+                for iy in 0..=py {
+                    let temp = x.pow(ix) + y.pow(iy);
+                    if temp <= bound {
+                        res.insert(temp);
+                    }
+                }
+            }
+            res.into_iter().collect()
+        }
+    }
 }
 
 #[cfg(test)]
@@ -34,17 +48,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        // 3 [4 2 3 1]
-        // 4 [1 3 2 4]
-        // 2 [3 1 2 4]
-        // 3 [2 1 3 4]
-        // 2 [1 2 3 4]
-        debug_assert_eq!(pancake_sort(&mut [3, 2, 4, 1]), [3, 4, 2, 3, 2]);
-        debug_assert!(pancake_sort(&mut [1, 2, 3]).is_empty());
+        sort_eq(powerful_integers(2, 3, 10), [2, 3, 4, 5, 7, 9, 10]);
+        sort_eq(powerful_integers(3, 5, 15), [2, 4, 6, 8, 10, 14]);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert!(powerful_integers(1, 1, 0).is_empty());
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
