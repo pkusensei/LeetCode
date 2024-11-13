@@ -5,15 +5,37 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_fair_pairs(nums: &mut [i32], lower: i32, upper: i32) -> i64 {
-    nums.sort_unstable();
-    let mut res = 0;
-    for (idx, &num) in nums.iter().enumerate() {
-        let left = nums[1 + idx..].partition_point(|&v| v < lower - num);
-        let right = nums[1 + idx..].partition_point(|&v| v <= upper - num);
-        res += right - left;
+pub fn spellchecker(wordlist: &[&str], queries: &[&str]) -> Vec<String> {
+    const VOWELS: &[u8] = b"aeiouAEIOU";
+    let mut res = Vec::with_capacity(queries.len());
+    for q in queries.iter() {
+        let [mut exact, mut capit, mut vowel] = [None; 3];
+        for w in wordlist.iter() {
+            if q == w {
+                exact = Some(w);
+                break;
+            } else {
+                let mut diff = q.bytes().zip(w.bytes()).filter(|(a, b)| a != b);
+                if capit.is_none() && diff.clone().all(|(a, b)| a.abs_diff(b) == 32) {
+                    capit = Some(w);
+                } else if vowel.is_none()
+                    && diff.all(|(a, b)| {
+                        a.abs_diff(b) == 32 || VOWELS.contains(&a) && VOWELS.contains(&b)
+                    })
+                {
+                    vowel = Some(w);
+                }
+            }
+        }
+        res.push(
+            exact
+                .or(capit)
+                .or(vowel)
+                .map(|s| s.to_string())
+                .unwrap_or_default(),
+        );
     }
-    res as i64
+    res
 }
 
 #[cfg(test)]
@@ -24,13 +46,19 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(count_fair_pairs(&mut [0, 1, 7, 4, 4, 5], 3, 6), 6);
-        debug_assert_eq!(count_fair_pairs(&mut [1, 7, 9, 2, 5], 11, 11), 1);
+        debug_assert_eq!(
+            spellchecker(
+                &["KiTe", "kite", "hare", "Hare"],
+                &["kite", "Kite", "KiTe", "Hare", "HARE", "Hear", "hear", "keti", "keet", "keto"]
+            ),
+            ["kite", "KiTe", "KiTe", "Hare", "hare", "", "", "KiTe", "", "KiTe"]
+        );
+        debug_assert_eq!(spellchecker(&["yellow"], &["YellOw"]), ["yellow"]);
     }
 
     #[test]
     fn test() {
-        debug_assert_eq!(count_fair_pairs(&mut [0, 0, 0, 0, 0, 0], 0, 0), 15);
+        debug_assert_eq!(spellchecker(&["zeo", "Zuo"], &["zuo"]), &["Zuo"]);
     }
 
     #[allow(dead_code)]
