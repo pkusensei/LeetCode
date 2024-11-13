@@ -10,22 +10,27 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(4, new[] { 6, 0, 8, 2, 1, 5 })]
-    [DataRow(7, new[] { 9, 8, 1, 0, 1, 9, 4, 0, 4, 1 })]
-    public void TestMethod1(int a, int[] nums)
+    public void TestMethod1()
     {
-        var b = sol.MaxWidthRamp(nums);
-        Assert.AreEqual(a, b);
+        var t = TreeNode.Make([0, 0, null, 0, 0]);
+        var b = sol.WithDp(t);
+        Assert.AreEqual(1, b);
     }
 
     [TestMethod]
     public void TestMethod2()
     {
+        var t = TreeNode.Make([0, 0, null, 0, null, 0, null, null, 0]);
+        var b = sol.WithDp(t);
+        Assert.AreEqual(2, b);
     }
 
     [TestMethod]
     public void TestMethod3()
     {
+        var t = TreeNode.Make([0]);
+        var b = sol.WithDp(t);
+        Assert.AreEqual(1, b);
     }
 
     [TestMethod]
