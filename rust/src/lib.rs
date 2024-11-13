@@ -2,35 +2,18 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn least_ops_express_target(x: i32, target: i32) -> i32 {
-    dfs(x as _, target as _, &mut HashMap::new())
-}
-
-fn dfs(x: i64, target: i64, memo: &mut HashMap<i64, i32>) -> i32 {
-    if target < x {
-        return (target * 2 - 1).min(2 * (x - target)) as i32;
+pub fn count_fair_pairs(nums: &mut [i32], lower: i32, upper: i32) -> i64 {
+    nums.sort_unstable();
+    let mut res = 0;
+    for (idx, &num) in nums.iter().enumerate() {
+        let left = nums[1 + idx..].partition_point(|&v| v < lower - num);
+        let right = nums[1 + idx..].partition_point(|&v| v <= upper - num);
+        res += right - left;
     }
-    if let Some(&v) = memo.get(&target) {
-        return v;
-    }
-    let n = target.ilog(x);
-    let pow = x.pow(1 + n);
-    if pow == target {
-        memo.insert(target, n as i32);
-        return n as _;
-    }
-    let mut res = n as i32 + dfs(x, target - pow / x, memo);
-    if pow - target < target {
-        let large = n as i32 + 1 + dfs(x, pow - target, memo);
-        res = res.min(large);
-    }
-    memo.insert(target, res);
-    res
+    res as i64
 }
 
 #[cfg(test)]
@@ -41,13 +24,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(least_ops_express_target(3, 19), 5);
-        debug_assert_eq!(least_ops_express_target(5, 501), 8);
-        debug_assert_eq!(least_ops_express_target(100, 100000000), 3);
+        debug_assert_eq!(count_fair_pairs(&mut [0, 1, 7, 4, 4, 5], 3, 6), 6);
+        debug_assert_eq!(count_fair_pairs(&mut [1, 7, 9, 2, 5], 11, 11), 1);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(count_fair_pairs(&mut [0, 0, 0, 0, 0, 0], 0, 0), 15);
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
