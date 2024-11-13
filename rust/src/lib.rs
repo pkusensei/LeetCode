@@ -5,37 +5,41 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn spellchecker(wordlist: &[&str], queries: &[&str]) -> Vec<String> {
-    const VOWELS: &[u8] = b"aeiouAEIOU";
-    let mut res = Vec::with_capacity(queries.len());
-    for q in queries.iter() {
-        let [mut exact, mut capit, mut vowel] = [None; 3];
-        for w in wordlist.iter() {
-            if q == w {
-                exact = Some(w);
-                break;
-            } else {
-                let mut diff = q.bytes().zip(w.bytes()).filter(|(a, b)| a != b);
-                if capit.is_none() && diff.clone().all(|(a, b)| a.abs_diff(b) == 32) {
-                    capit = Some(w);
-                } else if vowel.is_none()
-                    && diff.all(|(a, b)| {
-                        a.abs_diff(b) == 32 || VOWELS.contains(&a) && VOWELS.contains(&b)
-                    })
-                {
-                    vowel = Some(w);
+pub fn nums_same_consec_diff(n: i32, k: i32) -> Vec<i32> {
+    let mut res = vec![];
+    for d in 1..10 {
+        backtrack(n - 1, k, d, d, &mut res);
+    }
+    res
+}
+
+fn backtrack(n: i32, k: i32, acc: i32, digit: i32, res: &mut Vec<i32>) {
+    if n == 0 {
+        res.push(acc);
+        return;
+    }
+    for d in 0i32..10 {
+        if d.abs_diff(digit) == k as u32 {
+            backtrack(n - 1, k, acc * 10 + d, d, res);
+        }
+    }
+}
+
+fn with_bfs(n: i32, k: i32) -> Vec<i32> {
+    let mut queue: Vec<i32> = (1..10).collect();
+    for _ in 1..n {
+        let mut next = vec![];
+        for num in queue {
+            let tail = num % 10;
+            for d in 0..10 {
+                if tail.abs_diff(d) == k as u32 {
+                    next.push(num * 10 + d);
                 }
             }
         }
-        res.push(
-            exact
-                .or(capit)
-                .or(vowel)
-                .map(|s| s.to_string())
-                .unwrap_or_default(),
-        );
+        queue = next;
     }
-    res
+    queue
 }
 
 #[cfg(test)]
@@ -46,20 +50,17 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            spellchecker(
-                &["KiTe", "kite", "hare", "Hare"],
-                &["kite", "Kite", "KiTe", "Hare", "HARE", "Hear", "hear", "keti", "keet", "keto"]
-            ),
-            ["kite", "KiTe", "KiTe", "Hare", "hare", "", "", "KiTe", "", "KiTe"]
+        sort_eq(with_bfs(3, 7), [181, 292, 707, 818, 929]);
+        sort_eq(
+            with_bfs(2, 1),
+            [
+                10, 12, 21, 23, 32, 34, 43, 45, 54, 56, 65, 67, 76, 78, 87, 89, 98,
+            ],
         );
-        debug_assert_eq!(spellchecker(&["yellow"], &["YellOw"]), ["yellow"]);
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(spellchecker(&["zeo", "Zuo"], &["zuo"]), &["Zuo"]);
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
