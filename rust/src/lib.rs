@@ -2,42 +2,67 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashSet;
+use std::collections::BinaryHeap;
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn powerful_integers(x: i32, y: i32, bound: i32) -> Vec<i32> {
-    if bound < 2 {
-        return vec![];
-    }
-    match (x, y) {
-        (1, 1) => vec![2],
-        (1, num) | (num, 1) => {
-            debug_assert!(num > 1);
-            let mut p = 0;
-            let mut res = HashSet::new();
-            while num.pow(p) < bound {
-                res.insert(1 + num.pow(p));
-                p += 1;
-            }
-            res.into_iter().collect()
-        }
-        _ => {
-            let mut res = HashSet::new();
-            let px = bound.ilog(x);
-            let py = bound.ilog(y);
-            for ix in 0..=px {
-                for iy in 0..=py {
-                    let temp = x.pow(ix) + y.pow(iy);
-                    if temp <= bound {
-                        res.insert(temp);
-                    }
-                }
-            }
-            res.into_iter().collect()
+pub fn minimized_maximum(n: i32, quantities: &[i32]) -> i32 {
+    let mut left = 1;
+    let mut right = *quantities.iter().max().unwrap();
+    while left < right {
+        let mid = left + (right - left) / 2;
+        if count(mid, quantities) > n {
+            left = 1 + mid;
+        } else {
+            right = mid;
         }
     }
+    left
+}
+
+fn count(mid: i32, nums: &[i32]) -> i32 {
+    nums.iter().map(|v| v / mid + i32::from(v % mid > 0)).sum()
+}
+
+fn with_pq(n: i32, nums: &[i32]) -> i32 {
+    #[derive(Debug, Clone, Copy)]
+    struct State {
+        num: i32,
+        count: i32,
+    }
+
+    impl PartialEq for State {
+        fn eq(&self, other: &Self) -> bool {
+            self.num * other.count == other.num * self.count
+        }
+    }
+
+    impl Eq for State {}
+
+    impl PartialOrd for State {
+        fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+            Some(self.cmp(other))
+        }
+    }
+
+    impl Ord for State {
+        fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+            (self.num * other.count).cmp(&(self.count * other.num))
+        }
+    }
+
+    let mut pq: BinaryHeap<_> = nums.iter().map(|&v| State { num: v, count: 1 }).collect();
+    let m = nums.len();
+    for _ in 0..n - m as i32 {
+        if let Some(mut v) = pq.peek_mut() {
+            v.count += 1;
+        }
+    }
+    let Some(State { num, count }) = pq.pop() else {
+        return -1;
+    };
+    num / count + i32::from(num % count > 0)
 }
 
 #[cfg(test)]
@@ -48,14 +73,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        sort_eq(powerful_integers(2, 3, 10), [2, 3, 4, 5, 7, 9, 10]);
-        sort_eq(powerful_integers(3, 5, 15), [2, 4, 6, 8, 10, 14]);
+        debug_assert_eq!(with_pq(7, &[11, 3]), 3);
+        debug_assert_eq!(with_pq(7, &[15, 10, 10]), 5);
+        debug_assert_eq!(with_pq(1, &[100000]), 100000);
     }
 
     #[test]
-    fn test() {
-        debug_assert!(powerful_integers(1, 1, 0).is_empty());
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
