@@ -2,34 +2,22 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::BinaryHeap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn k_closest(points: &[[i32; 2]], k: i32) -> Vec<Vec<i32>> {
-    let mut queue: BinaryHeap<_> = points.iter().map(|v| Point { p: [v[0], v[1]] }).collect();
-    while queue.len() > k as usize {
-        queue.pop();
+pub fn subarrays_div_by_k(nums: &[i32], k: i32) -> i32 {
+    let mut prefix = 0;
+    let mut mod_groups = vec![0; k as usize];
+    mod_groups[0] = 1;
+    let mut res = 0;
+    for &num in nums.iter() {
+        prefix = (prefix + num.rem_euclid(k)).rem_euclid(k);
+        // any mod that's seen again means
+        // a pair of indices (i, j) creates a wanted subarray
+        res += mod_groups[prefix as usize];
+        mod_groups[prefix as usize] += 1;
     }
-    queue.into_iter().map(|v| v.p.to_vec()).collect()
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-struct Point {
-    p: [i32; 2],
-}
-
-impl PartialOrd for Point {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl Ord for Point {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        (self.p[0].pow(2) + self.p[1].pow(2)).cmp(&(other.p[0].pow(2) + other.p[1].pow(2)))
-    }
+    res
 }
 
 #[cfg(test)]
@@ -40,11 +28,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        sort_eq(k_closest(&[[1, 3], [-2, 2]], 1), vec![vec![-2, 2]]);
-        sort_eq(
-            k_closest(&[[3, 3], [5, -1], [-2, 4]], 2),
-            vec![vec![3, 3], vec![-2, 4]],
-        );
+        debug_assert_eq!(subarrays_div_by_k(&[4, 5, 0, -2, -3, 1], 5), 7);
+        debug_assert_eq!(subarrays_div_by_k(&[5], 9), 0);
     }
 
     #[test]
