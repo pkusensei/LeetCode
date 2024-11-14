@@ -2,67 +2,75 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::BinaryHeap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimized_maximum(n: i32, quantities: &[i32]) -> i32 {
-    let mut left = 1;
-    let mut right = *quantities.iter().max().unwrap();
-    while left < right {
-        let mid = left + (right - left) / 2;
-        if count(mid, quantities) > n {
-            left = 1 + mid;
-        } else {
-            right = mid;
-        }
-    }
-    left
-}
-
-fn count(mid: i32, nums: &[i32]) -> i32 {
-    nums.iter().map(|v| v / mid + i32::from(v % mid > 0)).sum()
-}
-
-fn with_pq(n: i32, nums: &[i32]) -> i32 {
-    #[derive(Debug, Clone, Copy)]
-    struct State {
-        num: i32,
-        count: i32,
-    }
-
-    impl PartialEq for State {
-        fn eq(&self, other: &Self) -> bool {
-            self.num * other.count == other.num * self.count
-        }
-    }
-
-    impl Eq for State {}
-
-    impl PartialOrd for State {
-        fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-            Some(self.cmp(other))
-        }
-    }
-
-    impl Ord for State {
-        fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-            (self.num * other.count).cmp(&(self.count * other.num))
-        }
-    }
-
-    let mut pq: BinaryHeap<_> = nums.iter().map(|&v| State { num: v, count: 1 }).collect();
-    let m = nums.len();
-    for _ in 0..n - m as i32 {
-        if let Some(mut v) = pq.peek_mut() {
-            v.count += 1;
-        }
-    }
-    let Some(State { num, count }) = pq.pop() else {
-        return -1;
+pub fn is_rational_equal(s: &str, t: &str) -> bool {
+    let (Ok(a), Ok(b)) = (s.parse::<Rat>(), t.parse::<Rat>()) else {
+        return false;
     };
-    num / count + i32::from(num % count > 0)
+    a == b
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct Rat {
+    int: i32,
+    dec: Vec<u8>,
+}
+
+impl std::str::FromStr for Rat {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if let Some((int, dec_str)) = s.split_once('.') {
+            let int = int.parse().map_err(|_| ())?;
+            if dec_str.is_empty() {
+                return Ok(Self {
+                    int,
+                    dec: vec![b'0'; 8],
+                });
+            }
+            let mut it = dec_str.split(&['(', ')']);
+            let mut dec = it.next().map(|v| v.as_bytes().to_vec()).unwrap_or_default();
+            if let Some(rpt) = it.next() {
+                // (99)
+                if rpt.bytes().all(|v| v == b'9') {
+                    if let Some(idx) = dec.iter().rposition(|&v| v != b'9') {
+                        dec[idx] += 1;
+                        dec[1 + idx..].fill(b'0');
+                        while dec.len() < 8 {
+                            dec.push(b'0');
+                        }
+                        return Ok(Self { int, dec });
+                    } else {
+                        return Ok(Self {
+                            int: 1 + int,
+                            dec: vec![b'0'; 8],
+                        });
+                    }
+                }
+                for b in rpt.bytes().cycle() {
+                    if dec.len() < 8 {
+                        dec.push(b);
+                        continue;
+                    }
+                    break;
+                }
+                Ok(Self { int, dec })
+            } else {
+                while dec.len() < 8 {
+                    dec.push(b'0');
+                }
+                Ok(Self { int, dec })
+            }
+        } else {
+            let int = s.parse().map_err(|_| ())?;
+            Ok(Self {
+                int,
+                dec: vec![b'0'; 8],
+            })
+        }
+    }
 }
 
 #[cfg(test)]
@@ -73,13 +81,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(with_pq(7, &[11, 3]), 3);
-        debug_assert_eq!(with_pq(7, &[15, 10, 10]), 5);
-        debug_assert_eq!(with_pq(1, &[100000]), 100000);
+        debug_assert!(is_rational_equal("0.(52)", "0.5(25)"));
+        debug_assert!(is_rational_equal("0.1666(6)", "0.166(66)"));
+        debug_assert!(is_rational_equal("0.9(9)", "1."));
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert!(is_rational_equal("1.0", "1"));
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
