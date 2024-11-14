@@ -2,74 +2,33 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::BinaryHeap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_rational_equal(s: &str, t: &str) -> bool {
-    let (Ok(a), Ok(b)) = (s.parse::<Rat>(), t.parse::<Rat>()) else {
-        return false;
-    };
-    a == b
+pub fn k_closest(points: &[[i32; 2]], k: i32) -> Vec<Vec<i32>> {
+    let mut queue: BinaryHeap<_> = points.iter().map(|v| Point { p: [v[0], v[1]] }).collect();
+    while queue.len() > k as usize {
+        queue.pop();
+    }
+    queue.into_iter().map(|v| v.p.to_vec()).collect()
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-struct Rat {
-    int: i32,
-    dec: Vec<u8>,
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct Point {
+    p: [i32; 2],
 }
 
-impl std::str::FromStr for Rat {
-    type Err = ();
+impl PartialOrd for Point {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if let Some((int, dec_str)) = s.split_once('.') {
-            let int = int.parse().map_err(|_| ())?;
-            if dec_str.is_empty() {
-                return Ok(Self {
-                    int,
-                    dec: vec![b'0'; 8],
-                });
-            }
-            let mut it = dec_str.split(&['(', ')']);
-            let mut dec = it.next().map(|v| v.as_bytes().to_vec()).unwrap_or_default();
-            if let Some(rpt) = it.next() {
-                // (99)
-                if rpt.bytes().all(|v| v == b'9') {
-                    if let Some(idx) = dec.iter().rposition(|&v| v != b'9') {
-                        dec[idx] += 1;
-                        dec[1 + idx..].fill(b'0');
-                        while dec.len() < 8 {
-                            dec.push(b'0');
-                        }
-                        return Ok(Self { int, dec });
-                    } else {
-                        return Ok(Self {
-                            int: 1 + int,
-                            dec: vec![b'0'; 8],
-                        });
-                    }
-                }
-                for b in rpt.bytes().cycle() {
-                    if dec.len() < 8 {
-                        dec.push(b);
-                        continue;
-                    }
-                    break;
-                }
-                Ok(Self { int, dec })
-            } else {
-                while dec.len() < 8 {
-                    dec.push(b'0');
-                }
-                Ok(Self { int, dec })
-            }
-        } else {
-            let int = s.parse().map_err(|_| ())?;
-            Ok(Self {
-                int,
-                dec: vec![b'0'; 8],
-            })
-        }
+impl Ord for Point {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        (self.p[0].pow(2) + self.p[1].pow(2)).cmp(&(other.p[0].pow(2) + other.p[1].pow(2)))
     }
 }
 
@@ -81,15 +40,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(is_rational_equal("0.(52)", "0.5(25)"));
-        debug_assert!(is_rational_equal("0.1666(6)", "0.166(66)"));
-        debug_assert!(is_rational_equal("0.9(9)", "1."));
+        sort_eq(k_closest(&[[1, 3], [-2, 2]], 1), vec![vec![-2, 2]]);
+        sort_eq(
+            k_closest(&[[3, 3], [5, -1], [-2, 4]], 2),
+            vec![vec![3, 3], vec![-2, 4]],
+        );
     }
 
     #[test]
-    fn test() {
-        debug_assert!(is_rational_equal("1.0", "1"));
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
