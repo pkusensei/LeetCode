@@ -12,29 +12,40 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
-        var t = TreeNode.Make([0, 0, null, 0, 0]);
-        var b = sol.WithDp(t);
-        Assert.AreEqual(1, b);
+        var a = TreeNode.Make([1, 2]);
+        var b = sol.FlipMatchVoyage(a, [2, 1]);
+        Assert.AreEqual("[-1]", b.Print());
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        var t = TreeNode.Make([0, 0, null, 0, null, 0, null, null, 0]);
-        var b = sol.WithDp(t);
-        Assert.AreEqual(2, b);
+        var a = TreeNode.Make([1, 2, 3]);
+        var b = sol.FlipMatchVoyage(a, [1, 3, 2]);
+        Assert.AreEqual("[1]", b.Print());
     }
 
     [TestMethod]
     public void TestMethod3()
     {
-        var t = TreeNode.Make([0]);
-        var b = sol.WithDp(t);
-        Assert.AreEqual(1, b);
+        var a = TreeNode.Make([1, 2, 3]);
+        var b = sol.FlipMatchVoyage(a, [1, 2, 3]);
+        Assert.AreEqual(0, b.Count);
     }
 
     [TestMethod]
     public void TestMethod4()
     {
+        var a = TreeNode.Make([1, null, 2]);
+        var b = sol.FlipMatchVoyage(a, [1, 2]);
+        Assert.AreEqual(0, b.Count);
+    }
+
+    [TestMethod]
+    public void TestMethod5()
+    {
+        var a = TreeNode.Make([1, 2, null, 3]);
+        var b = sol.FlipMatchVoyage(a, [1, 3, 2]);
+        Assert.AreEqual("[-1]", b.Print());
     }
 }
