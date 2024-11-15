@@ -5,30 +5,41 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_turbulence_size(arr: &[i32]) -> i32 {
-    let n = arr.len();
-    if n < 2 {
-        return n as i32;
-    }
-    let mut i1 = 0;
-    let mut res = 1;
-    while i1 + 1 < n {
-        if arr[i1] != arr[i1 + 1] {
-            res = res.max(2);
-        }
-        let mut i2 = 2 + i1;
-        while i2 < n {
-            if i64::from(arr[i2 - 2] - arr[i2 - 1]) * i64::from(arr[i2 - 1] - arr[i2]) < 0 {
-                res = res.max(i2 + 1 - i1);
-            } else {
-                i1 = i2 - 2;
-                break;
+pub fn unique_paths_iii(grid: &mut [&mut [i32]]) -> i32 {
+    let [x, y] = {
+        let mut start = [0, 0];
+        for (y, row) in grid.iter().enumerate() {
+            for (x, &v) in row.iter().enumerate() {
+                if v == 1 {
+                    start = [x, y];
+                }
             }
-            i2 += 1
         }
-        i1 += 1;
+        start
+    };
+    grid[y][x] = -1;
+    let mut res = 0;
+    backtrack(grid, x, y, &mut res);
+    res
+}
+
+fn backtrack(grid: &mut [&mut [i32]], x: usize, y: usize, res: &mut i32) {
+    if grid[y][x] == 2 {
+        if grid.iter().all(|r| r.iter().all(|&v| v == -1 || v == 2)) {
+            *res += 1;
+        }
+        return;
     }
-    res as i32
+    grid[y][x] = -1;
+    for (nx, ny) in neighbors((x, y)) {
+        if grid
+            .get(ny)
+            .is_some_and(|r| r.get(nx).is_some_and(|&v| v > -1))
+        {
+            backtrack(grid, nx, ny, res);
+        }
+    }
+    grid[y][x] = 0;
 }
 
 #[cfg(test)]
@@ -39,9 +50,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(max_turbulence_size(&[9, 4, 2, 10, 7, 8, 8, 1, 9]), 5);
-        debug_assert_eq!(max_turbulence_size(&[4, 8, 12, 16]), 2);
-        debug_assert_eq!(max_turbulence_size(&[100]), 1);
+        debug_assert_eq!(
+            unique_paths_iii(&mut [&mut [1, 0, 0, 0], &mut [0, 0, 0, 0], &mut [0, 0, 2, -1]]),
+            2
+        );
+        debug_assert_eq!(
+            unique_paths_iii(&mut [&mut [1, 0, 0, 0], &mut [0, 0, 0, 0], &mut [0, 0, 0, 2]]),
+            4
+        );
+        debug_assert_eq!(unique_paths_iii(&mut [&mut [0, 1], &mut [2, 0]]), 0);
     }
 
     #[test]
