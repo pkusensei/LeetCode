@@ -5,19 +5,33 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn subarrays_div_by_k(nums: &[i32], k: i32) -> i32 {
-    let mut prefix = 0;
-    let mut mod_groups = vec![0; k as usize];
-    mod_groups[0] = 1;
-    let mut res = 0;
-    for &num in nums.iter() {
-        prefix = (prefix + num.rem_euclid(k)).rem_euclid(k);
-        // any mod that's seen again means
-        // a pair of indices (i, j) creates a wanted subarray
-        res += mod_groups[prefix as usize];
-        mod_groups[prefix as usize] += 1;
+pub fn find_length_of_shortest_subarray(arr: &[i32]) -> i32 {
+    let n = arr.len();
+    let mut right = n - 1;
+    for (idx, &num) in arr.iter().enumerate().rev() {
+        if num <= arr[right] {
+            right = idx;
+        } else {
+            break;
+        }
     }
-    res
+    let mut left = 0;
+    for (idx, &num) in arr.iter().enumerate() {
+        if num >= arr[left] {
+            left = idx
+        } else {
+            break;
+        }
+    }
+    let mut res = right;
+    let mut high = right;
+    for low in 0..=left {
+        while high < n && arr[low] > arr[high] {
+            high += 1;
+        }
+        res = res.min(high.saturating_sub(1 + low));
+    }
+    res as i32
 }
 
 #[cfg(test)]
@@ -28,12 +42,25 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(subarrays_div_by_k(&[4, 5, 0, -2, -3, 1], 5), 7);
-        debug_assert_eq!(subarrays_div_by_k(&[5], 9), 0);
+        debug_assert_eq!(
+            find_length_of_shortest_subarray(&[1, 2, 3, 10, 4, 2, 3, 5]),
+            3
+        );
+        debug_assert_eq!(find_length_of_shortest_subarray(&[5, 4, 3, 2, 1]), 4);
+        debug_assert_eq!(find_length_of_shortest_subarray(&[1, 2, 3]), 0);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(
+            find_length_of_shortest_subarray(&[1, 2, 3, 10, 0, 7, 8, 9]),
+            2
+        );
+        debug_assert_eq!(
+            find_length_of_shortest_subarray(&[16, 10, 0, 3, 22, 1, 14, 7, 1, 12, 15]),
+            8
+        );
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
