@@ -5,37 +5,24 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<int> FlipMatchVoyage(TreeNode root, int[] voyage)
+    public int DistributeCoins(TreeNode root)
     {
-        List<int> res = [];
-        int idx = 0;
-        Dfs(root);
-        if (res.Count > 0 && res[0] == -1)
-        {
-            return [-1];
-        }
-        return res;
+        return Dfs(root).moves;
+    }
 
-        void Dfs(TreeNode node)
-        {
-            if (node is null) { return; }
-            if (node.val != voyage[idx])
-            {
-                res = [-1];
-                return;
-            }
-            idx += 1;
-            if (idx < voyage.Length && node.left is not null && node.left.val != voyage[idx])
-            {
-                res.Add(node.val);
-                Dfs(node.right);
-                Dfs(node.left);
-            }
-            else
-            {
-                Dfs(node.left);
-                Dfs(node.right);
-            }
-        }
+    (int flow, int moves) Dfs(TreeNode node)
+    {
+        if (node is null) { return (0, 0); }
+        var left = Dfs(node.left);
+        var right = Dfs(node.right);
+        // net flow of current subtree
+        // negative => flow in
+        // positive => flow out
+        // This flow needs to be addressed by node's parent
+        var curr = left.flow + right.flow + node.val - 1;
+        // Thus one recursion stack up,
+        // the parent node accumulates all of its children's flows
+        var moves = left.moves + right.moves + Math.Abs(left.flow) + Math.Abs(right.flow);
+        return (curr, moves);
     }
 }
