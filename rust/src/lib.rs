@@ -5,66 +5,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn odd_even_jumps(arr: &[i32]) -> i32 {
-    let n = arr.len();
-    let mut dp = vec![[-1; 2]; n];
-    (0..n).map(|i| dfs(arr, i, 1, &mut dp)).sum()
-}
-
-fn dfs(nums: &[i32], idx: usize, odd: usize, dp: &mut [[i32; 2]]) -> i32 {
-    if idx >= nums.len() - 1 {
-        return 1;
-    }
-    if dp[idx][odd] > -1 {
-        return dp[idx][odd];
-    }
-    let res = if odd == 1 {
-        if let Some(jump) = nums[1 + idx..]
-            .iter()
-            .enumerate()
-            .filter(|(_, &v)| v >= nums[idx])
-            .min_by_key(|(_, &v)| v)
-            .map(|(i, _)| i + 1 + idx)
-        {
-            dfs(nums, jump, 1 - odd, dp)
-        } else {
-            0
-        }
-    } else if let Some(jump) = nums[1 + idx..]
-        .iter()
-        .enumerate()
-        .filter(|(_, &v)| v <= nums[idx])
-        .max_by(|(i1, v1), (i2, v2)| v1.cmp(v2).then(i2.cmp(i1)))
-        .map(|(i, _)| i + 1 + idx)
-    {
-        dfs(nums, jump, 1 - odd, dp)
-    } else {
-        0
-    };
-    dp[idx][odd] = res;
-    res
-}
-
-fn with_btreemap(nums: &[i32]) -> i32 {
-    let n = nums.len();
-    let [mut odd, mut even] = [0, 1].map(|_| vec![false; n]);
-    odd[n - 1] = true;
-    even[n - 1] = true;
-    let mut res = 1;
-    let mut map = std::collections::BTreeMap::from([(nums[n - 1], n - 1)]);
-    for (idx, &num) in nums.iter().enumerate().rev().skip(1) {
-        if let Some((_, &i)) = map.range(num..).next() {
-            odd[idx] = even[i];
-        }
-        if let Some((_, &i)) = map.range(..=num).next_back() {
-            even[idx] = odd[i];
-        }
-        if odd[idx] {
-            res += 1;
-        }
-        map.insert(num, idx);
-    }
-    res
+pub fn largest_perimeter(nums: &mut [i32]) -> i32 {
+        nums.sort_unstable_by_key(|&v| std::cmp::Reverse(v));
+        nums.windows(3)
+            .find_map(|w| {
+                if w[0] < w[1] + w[2] {
+                    Some(w[0] + w[1] + w[2])
+                } else {
+                    None
+                }
+            })
+            .unwrap_or(0)
 }
 
 #[cfg(test)]
@@ -75,9 +26,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(with_btreemap(&[10, 13, 12, 14, 15]), 2);
-        debug_assert_eq!(with_btreemap(&[2, 3, 1, 1, 4]), 3);
-        debug_assert_eq!(with_btreemap(&[5, 1, 3, 4, 2]), 3);
+        debug_assert_eq!(largest_perimeter(&mut [2, 1, 2]), 5);
+        debug_assert_eq!(largest_perimeter(&mut [1, 2, 1, 10]), 0);
     }
 
     #[test]
