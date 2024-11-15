@@ -5,17 +5,30 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn largest_perimeter(nums: &mut [i32]) -> i32 {
-        nums.sort_unstable_by_key(|&v| std::cmp::Reverse(v));
-        nums.windows(3)
-            .find_map(|w| {
-                if w[0] < w[1] + w[2] {
-                    Some(w[0] + w[1] + w[2])
-                } else {
-                    None
-                }
-            })
-            .unwrap_or(0)
+pub fn max_turbulence_size(arr: &[i32]) -> i32 {
+    let n = arr.len();
+    if n < 2 {
+        return n as i32;
+    }
+    let mut i1 = 0;
+    let mut res = 1;
+    while i1 + 1 < n {
+        if arr[i1] != arr[i1 + 1] {
+            res = res.max(2);
+        }
+        let mut i2 = 2 + i1;
+        while i2 < n {
+            if i64::from(arr[i2 - 2] - arr[i2 - 1]) * i64::from(arr[i2 - 1] - arr[i2]) < 0 {
+                res = res.max(i2 + 1 - i1);
+            } else {
+                i1 = i2 - 2;
+                break;
+            }
+            i2 += 1
+        }
+        i1 += 1;
+    }
+    res as i32
 }
 
 #[cfg(test)]
@@ -26,8 +39,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(largest_perimeter(&mut [2, 1, 2]), 5);
-        debug_assert_eq!(largest_perimeter(&mut [1, 2, 1, 10]), 0);
+        debug_assert_eq!(max_turbulence_size(&[9, 4, 2, 10, 7, 8, 8, 1, 9]), 5);
+        debug_assert_eq!(max_turbulence_size(&[4, 8, 12, 16]), 2);
+        debug_assert_eq!(max_turbulence_size(&[100]), 1);
     }
 
     #[test]
