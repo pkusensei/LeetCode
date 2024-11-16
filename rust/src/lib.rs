@@ -5,23 +5,30 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn results_array(nums: &[i32], k: i32) -> Vec<i32> {
-    let n = nums.len();
-    let mut res = Vec::with_capacity(n + 1 - k as usize);
-    let mut prev = None;
-    for win in nums.windows(k as usize) {
-        if prev.is_some_and(|v| v + 1 == win[k as usize - 1])
-            || win.windows(2).all(|w| w[0] + 1 == w[1])
-        {
-            let temp = win[k as usize - 1];
-            prev = Some(temp);
-            res.push(temp);
+pub fn mincost_tickets(days: &[i32], costs: [i32; 3]) -> i32 {
+    let n = *days.last().unwrap_or(&1);
+    let set: std::collections::HashSet<i32> = days.iter().copied().collect();
+    let mut dp = Vec::with_capacity(1 + n as usize);
+    dp.push(0); // day 0 => no cost
+    for day in 1..=n {
+        if set.contains(&day) {
+            let d1 = costs[0] + dp[day as usize - 1];
+            let d2 = if day >= 7 {
+                costs[1] + dp[day as usize - 7]
+            } else {
+                costs[1]
+            };
+            let d3 = if day >= 30 {
+                costs[2] + dp[day as usize - 30]
+            } else {
+                costs[2]
+            };
+            dp.push(d1.min(d2).min(d3));
         } else {
-            prev = None;
-            res.push(-1);
+            dp.push(*dp.last().unwrap_or(&0));
         }
     }
-    res
+    dp[n as usize]
 }
 
 #[cfg(test)]
@@ -32,9 +39,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(results_array(&[1, 2, 3, 4, 3, 2, 5], 3), [3, 4, -1, -1, -1]);
-        debug_assert_eq!(results_array(&[2, 2, 2, 2, 2], 4), [-1, -1]);
-        debug_assert_eq!(results_array(&[3, 2, 3, 2, 3, 2], 2), [-1, 3, -1, 3, -1]);
+        debug_assert_eq!(mincost_tickets(&[1, 4, 6, 7, 8, 20], [2, 7, 15]), 11);
+        debug_assert_eq!(
+            mincost_tickets(&[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 30, 31], [2, 7, 15]),
+            17
+        );
     }
 
     #[test]
