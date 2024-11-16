@@ -2,35 +2,25 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::{BTreeMap, HashMap};
-
 #[allow(unused_imports)]
 use helper::*;
 
-#[derive(Debug, Clone, Default)]
-struct TimeMap {
-    data: HashMap<String, BTreeMap<i32, String>>,
-}
-
-impl TimeMap {
-    fn new() -> Self {
-        Default::default()
+pub fn count_triplets(nums: &[i32]) -> i32 {
+    let mut pairs = [0; 1 << 16];
+    for a in nums.iter() {
+        for b in nums.iter() {
+            pairs[(a & b) as usize] += 1;
+        }
     }
-
-    fn set(&mut self, key: String, value: String, timestamp: i32) {
-        self.data.entry(key).or_default().insert(timestamp, value);
+    let mut res = 0;
+    for c in nums.iter() {
+        for bit in 0..1 << 16 {
+            if c & bit == 0 {
+                res += pairs[bit as usize];
+            }
+        }
     }
-
-    fn get(&self, key: String, timestamp: i32) -> String {
-        self.data
-            .get(&key)
-            .and_then(|m| {
-                m.range(..=timestamp)
-                    .next_back()
-                    .map(|(_, v)| v.to_string())
-            })
-            .unwrap_or_default()
-    }
+    res as i32
 }
 
 #[cfg(test)]
@@ -41,13 +31,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        let mut tm = TimeMap::new();
-        tm.set("foo".into(), "bar".into(), 1); // store the key "foo" and value "bar" along with timestamp = 1.
-        debug_assert_eq!(tm.get("foo".into(), 1), "bar"); // return "bar"
-        debug_assert_eq!(tm.get("foo".into(), 3), "bar"); // return "bar", since there is no value corresponding to foo at timestamp 3 and timestamp 2, then the only value is at timestamp 1 is "bar".
-        tm.set("foo".into(), "bar2".into(), 4); // store the key "foo" and value "bar2" along with timestamp = 4.
-        debug_assert_eq!(tm.get("foo".into(), 4), "bar2"); // return "bar2"
-        debug_assert_eq!(tm.get("foo".into(), 5), "bar2"); // return "bar2"
+        debug_assert_eq!(count_triplets(&[2, 1, 3]), 12);
+        debug_assert_eq!(count_triplets(&[0, 0, 0]), 27);
     }
 
     #[test]
