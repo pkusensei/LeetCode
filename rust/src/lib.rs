@@ -2,44 +2,35 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::{BTreeMap, HashMap};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn unique_paths_iii(grid: &mut [&mut [i32]]) -> i32 {
-    let [x, y] = {
-        let mut start = [0, 0];
-        for (y, row) in grid.iter().enumerate() {
-            for (x, &v) in row.iter().enumerate() {
-                if v == 1 {
-                    start = [x, y];
-                }
-            }
-        }
-        start
-    };
-    grid[y][x] = -1;
-    let mut res = 0;
-    backtrack(grid, x, y, &mut res);
-    res
+#[derive(Debug, Clone, Default)]
+struct TimeMap {
+    data: HashMap<String, BTreeMap<i32, String>>,
 }
 
-fn backtrack(grid: &mut [&mut [i32]], x: usize, y: usize, res: &mut i32) {
-    if grid[y][x] == 2 {
-        if grid.iter().all(|r| r.iter().all(|&v| v == -1 || v == 2)) {
-            *res += 1;
-        }
-        return;
+impl TimeMap {
+    fn new() -> Self {
+        Default::default()
     }
-    grid[y][x] = -1;
-    for (nx, ny) in neighbors((x, y)) {
-        if grid
-            .get(ny)
-            .is_some_and(|r| r.get(nx).is_some_and(|&v| v > -1))
-        {
-            backtrack(grid, nx, ny, res);
-        }
+
+    fn set(&mut self, key: String, value: String, timestamp: i32) {
+        self.data.entry(key).or_default().insert(timestamp, value);
     }
-    grid[y][x] = 0;
+
+    fn get(&self, key: String, timestamp: i32) -> String {
+        self.data
+            .get(&key)
+            .and_then(|m| {
+                m.range(..=timestamp)
+                    .next_back()
+                    .map(|(_, v)| v.to_string())
+            })
+            .unwrap_or_default()
+    }
 }
 
 #[cfg(test)]
@@ -50,15 +41,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            unique_paths_iii(&mut [&mut [1, 0, 0, 0], &mut [0, 0, 0, 0], &mut [0, 0, 2, -1]]),
-            2
-        );
-        debug_assert_eq!(
-            unique_paths_iii(&mut [&mut [1, 0, 0, 0], &mut [0, 0, 0, 0], &mut [0, 0, 0, 2]]),
-            4
-        );
-        debug_assert_eq!(unique_paths_iii(&mut [&mut [0, 1], &mut [2, 0]]), 0);
+        let mut tm = TimeMap::new();
+        tm.set("foo".into(), "bar".into(), 1); // store the key "foo" and value "bar" along with timestamp = 1.
+        debug_assert_eq!(tm.get("foo".into(), 1), "bar"); // return "bar"
+        debug_assert_eq!(tm.get("foo".into(), 3), "bar"); // return "bar", since there is no value corresponding to foo at timestamp 3 and timestamp 2, then the only value is at timestamp 1 is "bar".
+        tm.set("foo".into(), "bar2".into(), 4); // store the key "foo" and value "bar2" along with timestamp = 4.
+        debug_assert_eq!(tm.get("foo".into(), 4), "bar2"); // return "bar2"
+        debug_assert_eq!(tm.get("foo".into(), 5), "bar2"); // return "bar2"
     }
 
     #[test]
