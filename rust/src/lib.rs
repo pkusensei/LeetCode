@@ -5,15 +5,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn sum_even_after_queries(nums: &mut [i32], queries: &[[i32; 2]]) -> Vec<i32> {
-    queries
-        .iter()
-        .map(|v| {
-            let idx = v[1] as usize;
-            nums[idx] += v[0];
-            nums.iter().filter(|&&n| n & 1 == 0).sum()
-        })
-        .collect()
+pub fn interval_intersection(first_list: &[[i32; 2]], second_list: &[[i32; 2]]) -> Vec<[i32; 2]> {
+    let mut res = vec![];
+    let (mut i1, mut i2) = (0, 0);
+    while i1 < first_list.len() && i2 < second_list.len() {
+        let (s1, e1) = (first_list[i1][0], first_list[i1][1]);
+        let (s2, e2) = (second_list[i2][0], second_list[i2][1]);
+        let start = s1.max(s2);
+        let end = e1.min(e2);
+        if start <= end {
+            res.push([start, end]);
+        }
+        if e1 <= e2 {
+            i1 += 1;
+        } else {
+            i2 += 1;
+        }
+    }
+    res
 }
 
 #[cfg(test)]
@@ -25,10 +34,13 @@ mod tests {
     #[test]
     fn basics() {
         debug_assert_eq!(
-            sum_even_after_queries(&mut [1, 2, 3, 4], &[[1, 0], [-3, 1], [-4, 0], [2, 3]]),
-            [8, 6, 2, 4]
+            interval_intersection(
+                &[[0, 2], [5, 10], [13, 23], [24, 25]],
+                &[[1, 5], [8, 12], [15, 24], [25, 26]]
+            ),
+            [[1, 2], [5, 5], [8, 10], [15, 23], [24, 24], [25, 25]]
         );
-        debug_assert_eq!(sum_even_after_queries(&mut [1], &[[4, 0]]), [0]);
+        debug_assert!(interval_intersection(&[[1, 3], [5, 9]], &[]).is_empty());
     }
 
     #[test]
