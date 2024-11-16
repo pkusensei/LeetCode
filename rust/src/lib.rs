@@ -5,30 +5,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn mincost_tickets(days: &[i32], costs: [i32; 3]) -> i32 {
-    let n = *days.last().unwrap_or(&1);
-    let set: std::collections::HashSet<i32> = days.iter().copied().collect();
-    let mut dp = Vec::with_capacity(1 + n as usize);
-    dp.push(0); // day 0 => no cost
-    for day in 1..=n {
-        if set.contains(&day) {
-            let d1 = costs[0] + dp[day as usize - 1];
-            let d2 = if day >= 7 {
-                costs[1] + dp[day as usize - 7]
-            } else {
-                costs[1]
+pub fn str_without3a3b(a: i32, b: i32) -> String {
+    let mut heap = std::collections::BinaryHeap::from([(a, b'a'), (b, b'b')]);
+    let mut res = Vec::with_capacity((a + b) as usize);
+    while let Some((c1, b1)) = heap.pop() {
+        if res.ends_with(&[b1; 2]) {
+            let Some((c2, b2)) = heap.pop() else {
+                break;
             };
-            let d3 = if day >= 30 {
-                costs[2] + dp[day as usize - 30]
-            } else {
-                costs[2]
-            };
-            dp.push(d1.min(d2).min(d3));
+            res.push(b2);
+            if c2 > 1 {
+                heap.push((c2 - 1, b2));
+            }
+            heap.push((c1, b1));
         } else {
-            dp.push(*dp.last().unwrap_or(&0));
+            res.push(b1);
+            if c1 > 1 {
+                heap.push((c1 - 1, b1));
+            }
         }
     }
-    dp[n as usize]
+    String::from_utf8(res).unwrap()
 }
 
 #[cfg(test)]
@@ -39,11 +36,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(mincost_tickets(&[1, 4, 6, 7, 8, 20], [2, 7, 15]), 11);
-        debug_assert_eq!(
-            mincost_tickets(&[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 30, 31], [2, 7, 15]),
-            17
-        );
+        debug_assert_eq!(str_without3a3b(1, 2), "bba");
+        debug_assert_eq!(str_without3a3b(4, 1), "aabaa");
     }
 
     #[test]
