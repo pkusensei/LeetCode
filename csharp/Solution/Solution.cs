@@ -5,33 +5,30 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<IList<int>> VerticalTraversal(TreeNode root)
+    public string SmallestFromLeaf(TreeNode root)
     {
-        SortedDictionary<int, List<(int row, int val)>> map = [];
-        Queue<(TreeNode node, int row, int col)> queue = [];
-        queue.Enqueue((root, 0, 0));
-        while (queue.TryDequeue(out var item))
+        var res = "";
+        Backtrack(root, [], ref res);
+        return res;
+    }
+
+    static void Backtrack(TreeNode node, List<char> curr, ref string res)
+    {
+        if (node is null) { return; }
+        curr.Insert(0, (char)('a' + node.val));
+        if (node.left is null && node.right is null)
         {
-            var (node, row, col) = item;
-            if (node is not null)
+            var s = string.Join(null, curr);
+            if (res.Length == 0 || s.CompareTo(res) < 0)
             {
-                if (map.TryGetValue(col, out var list))
-                {
-                    list.Add((row, node.val));
-                }
-                else
-                {
-                    map.Add(col, [(row, node.val)]);
-                }
-                queue.Enqueue((node.left, row + 1, col - 1));
-                queue.Enqueue((node.right, row + 1, col + 1));
+                res = s;
             }
         }
-        List<IList<int>> res = [];
-        foreach (var v in map.Values)
+        else
         {
-            res.Add(v.OrderBy(n => n.row).ThenBy(n => n.val).Select(n => n.val).ToList());
+            Backtrack(node.left, curr, ref res);
+            Backtrack(node.right, curr, ref res);
         }
-        return res;
+        curr.RemoveAt(0);
     }
 }
