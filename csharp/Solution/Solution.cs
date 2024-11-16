@@ -5,24 +5,33 @@ namespace Solution;
 
 public class Solution
 {
-    public int DistributeCoins(TreeNode root)
+    public IList<IList<int>> VerticalTraversal(TreeNode root)
     {
-        return Dfs(root).moves;
-    }
-
-    (int flow, int moves) Dfs(TreeNode node)
-    {
-        if (node is null) { return (0, 0); }
-        var left = Dfs(node.left);
-        var right = Dfs(node.right);
-        // net flow of current subtree
-        // negative => flow in
-        // positive => flow out
-        // This flow needs to be addressed by node's parent
-        var curr = left.flow + right.flow + node.val - 1;
-        // Thus one recursion stack up,
-        // the parent node accumulates all of its children's flows
-        var moves = left.moves + right.moves + Math.Abs(left.flow) + Math.Abs(right.flow);
-        return (curr, moves);
+        SortedDictionary<int, List<(int row, int val)>> map = [];
+        Queue<(TreeNode node, int row, int col)> queue = [];
+        queue.Enqueue((root, 0, 0));
+        while (queue.TryDequeue(out var item))
+        {
+            var (node, row, col) = item;
+            if (node is not null)
+            {
+                if (map.TryGetValue(col, out var list))
+                {
+                    list.Add((row, node.val));
+                }
+                else
+                {
+                    map.Add(col, [(row, node.val)]);
+                }
+                queue.Enqueue((node.left, row + 1, col - 1));
+                queue.Enqueue((node.right, row + 1, col + 1));
+            }
+        }
+        List<IList<int>> res = [];
+        foreach (var v in map.Values)
+        {
+            res.Add(v.OrderBy(n => n.row).ThenBy(n => n.val).Select(n => n.val).ToList());
+        }
+        return res;
     }
 }
