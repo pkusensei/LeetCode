@@ -5,27 +5,15 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn str_without3a3b(a: i32, b: i32) -> String {
-    let mut heap = std::collections::BinaryHeap::from([(a, b'a'), (b, b'b')]);
-    let mut res = Vec::with_capacity((a + b) as usize);
-    while let Some((c1, b1)) = heap.pop() {
-        if res.ends_with(&[b1; 2]) {
-            let Some((c2, b2)) = heap.pop() else {
-                break;
-            };
-            res.push(b2);
-            if c2 > 1 {
-                heap.push((c2 - 1, b2));
-            }
-            heap.push((c1, b1));
-        } else {
-            res.push(b1);
-            if c1 > 1 {
-                heap.push((c1 - 1, b1));
-            }
-        }
-    }
-    String::from_utf8(res).unwrap()
+pub fn sum_even_after_queries(nums: &mut [i32], queries: &[[i32; 2]]) -> Vec<i32> {
+    queries
+        .iter()
+        .map(|v| {
+            let idx = v[1] as usize;
+            nums[idx] += v[0];
+            nums.iter().filter(|&&n| n & 1 == 0).sum()
+        })
+        .collect()
 }
 
 #[cfg(test)]
@@ -36,8 +24,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(str_without3a3b(1, 2), "bba");
-        debug_assert_eq!(str_without3a3b(4, 1), "aabaa");
+        debug_assert_eq!(
+            sum_even_after_queries(&mut [1, 2, 3, 4], &[[1, 0], [-3, 1], [-4, 0], [2, 3]]),
+            [8, 6, 2, 4]
+        );
+        debug_assert_eq!(sum_even_after_queries(&mut [1], &[[4, 0]]), [0]);
     }
 
     #[test]
