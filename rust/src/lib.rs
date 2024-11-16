@@ -5,22 +5,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_triplets(nums: &[i32]) -> i32 {
-    let mut pairs = [0; 1 << 16];
-    for a in nums.iter() {
-        for b in nums.iter() {
-            pairs[(a & b) as usize] += 1;
+pub fn results_array(nums: &[i32], k: i32) -> Vec<i32> {
+    let n = nums.len();
+    let mut res = Vec::with_capacity(n + 1 - k as usize);
+    let mut prev = None;
+    for win in nums.windows(k as usize) {
+        if prev.is_some_and(|v| v + 1 == win[k as usize - 1])
+            || win.windows(2).all(|w| w[0] + 1 == w[1])
+        {
+            let temp = win[k as usize - 1];
+            prev = Some(temp);
+            res.push(temp);
+        } else {
+            prev = None;
+            res.push(-1);
         }
     }
-    let mut res = 0;
-    for c in nums.iter() {
-        for bit in 0..1 << 16 {
-            if c & bit == 0 {
-                res += pairs[bit as usize];
-            }
-        }
-    }
-    res as i32
+    res
 }
 
 #[cfg(test)]
@@ -31,8 +32,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(count_triplets(&[2, 1, 3]), 12);
-        debug_assert_eq!(count_triplets(&[0, 0, 0]), 27);
+        debug_assert_eq!(results_array(&[1, 2, 3, 4, 3, 2, 5], 3), [3, 4, -1, -1, -1]);
+        debug_assert_eq!(results_array(&[2, 2, 2, 2, 2], 4), [-1, -1]);
+        debug_assert_eq!(results_array(&[3, 2, 3, 2, 3, 2], 2), [-1, 3, -1, 3, -1]);
     }
 
     #[test]
