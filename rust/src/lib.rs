@@ -5,36 +5,67 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn add_to_array_form(mut num: Vec<i32>, mut k: i32) -> Vec<i32> {
-    num.reverse();
-    let mut idx = 0;
-    let mut carry = 0;
-    while k > 0 {
-        if let Some(v) = num.get_mut(idx) {
-            let sum = *v + k % 10 + carry;
-            carry = sum / 10;
-            *v = sum % 10;
-        } else {
-            let sum = k % 10 + carry;
-            carry = sum / 10;
-            num.push(sum % 10);
-        }
-        idx += 1;
-        k /= 10;
+pub fn equations_possible(equations: &[&str]) -> bool {
+    let mut dsu = DSU::new();
+    for [a, b] in equations.iter().filter_map(|s| {
+        s.split_once("==")
+            .and_then(|(a, b)| [a, b].map(|v| usize::from(v.as_bytes()[0] - b'a')).into())
+    }) {
+        dsu.union(a, b);
     }
-    while carry > 0 {
-        if let Some(v) = num.get_mut(idx) {
-            let sum = *v + carry;
-            carry = sum / 10;
-            *v = sum % 10;
-        } else {
-            num.push(carry);
-            carry = 0;
+    for [a, b] in equations.iter().filter_map(|s| {
+        s.split_once("!=")
+            .and_then(|(a, b)| [a, b].map(|v| usize::from(v.as_bytes()[0] - b'a')).into())
+    }) {
+        if dsu.find(a) == dsu.find(b) {
+            return false;
         }
-        idx += 1;
     }
-    num.reverse();
-    num
+    true
+}
+
+#[derive(Debug, Clone)]
+struct DSU {
+    parent: [usize; 26],
+    rank: [usize; 26],
+}
+
+impl DSU {
+    fn new() -> Self {
+        let mut parent = [0; 26];
+        for (i, v) in parent.iter_mut().enumerate() {
+            *v = i;
+        }
+        Self {
+            parent,
+            rank: [1; 26],
+        }
+    }
+
+    fn find(&mut self, x: usize) -> usize {
+        if self.parent[x] != x {
+            self.parent[x] = self.find(self.parent[x]);
+        }
+        self.parent[x]
+    }
+
+    fn union(&mut self, x: usize, y: usize) {
+        if x == y {
+            return;
+        }
+        let [rx, ry] = [x, y].map(|v| self.find(v));
+        if rx == ry {
+            return;
+        }
+        match self.rank[rx].cmp(&self.rank[ry]) {
+            std::cmp::Ordering::Less => self.parent[rx] = ry,
+            std::cmp::Ordering::Equal => {
+                self.parent[ry] = rx;
+                self.rank[rx] += 1;
+            }
+            std::cmp::Ordering::Greater => self.parent[ry] = rx,
+        }
+    }
 }
 
 #[cfg(test)]
@@ -45,17 +76,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(add_to_array_form(vec![1, 2, 0, 0], 34), [1, 2, 3, 4]);
-        debug_assert_eq!(add_to_array_form(vec![2, 7, 4], 181), [4, 5, 5]);
-        debug_assert_eq!(add_to_array_form(vec![2, 1, 5], 806), [1, 0, 2, 1]);
+        debug_assert!(!equations_possible(&["a==b", "b!=a"]));
+        debug_assert!(equations_possible(&["b==a", "a==b"]));
     }
 
     #[test]
     fn test() {
-        debug_assert_eq!(
-            add_to_array_form(vec![9, 9, 9, 9, 9, 9, 9, 9, 9, 9], 1),
-            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-        );
+        debug_assert!(equations_possible(&["a!=b", "b!=c", "c!=a"]));
     }
 
     #[allow(dead_code)]
