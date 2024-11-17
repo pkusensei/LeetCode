@@ -5,24 +5,36 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn interval_intersection(first_list: &[[i32; 2]], second_list: &[[i32; 2]]) -> Vec<[i32; 2]> {
-    let mut res = vec![];
-    let (mut i1, mut i2) = (0, 0);
-    while i1 < first_list.len() && i2 < second_list.len() {
-        let (s1, e1) = (first_list[i1][0], first_list[i1][1]);
-        let (s2, e2) = (second_list[i2][0], second_list[i2][1]);
-        let start = s1.max(s2);
-        let end = e1.min(e2);
-        if start <= end {
-            res.push([start, end]);
-        }
-        if e1 <= e2 {
-            i1 += 1;
+pub fn add_to_array_form(mut num: Vec<i32>, mut k: i32) -> Vec<i32> {
+    num.reverse();
+    let mut idx = 0;
+    let mut carry = 0;
+    while k > 0 {
+        if let Some(v) = num.get_mut(idx) {
+            let sum = *v + k % 10 + carry;
+            carry = sum / 10;
+            *v = sum % 10;
         } else {
-            i2 += 1;
+            let sum = k % 10 + carry;
+            carry = sum / 10;
+            num.push(sum % 10);
         }
+        idx += 1;
+        k /= 10;
     }
-    res
+    while carry > 0 {
+        if let Some(v) = num.get_mut(idx) {
+            let sum = *v + carry;
+            carry = sum / 10;
+            *v = sum % 10;
+        } else {
+            num.push(carry);
+            carry = 0;
+        }
+        idx += 1;
+    }
+    num.reverse();
+    num
 }
 
 #[cfg(test)]
@@ -33,18 +45,18 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            interval_intersection(
-                &[[0, 2], [5, 10], [13, 23], [24, 25]],
-                &[[1, 5], [8, 12], [15, 24], [25, 26]]
-            ),
-            [[1, 2], [5, 5], [8, 10], [15, 23], [24, 24], [25, 25]]
-        );
-        debug_assert!(interval_intersection(&[[1, 3], [5, 9]], &[]).is_empty());
+        debug_assert_eq!(add_to_array_form(vec![1, 2, 0, 0], 34), [1, 2, 3, 4]);
+        debug_assert_eq!(add_to_array_form(vec![2, 7, 4], 181), [4, 5, 5]);
+        debug_assert_eq!(add_to_array_form(vec![2, 1, 5], 806), [1, 0, 2, 1]);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(
+            add_to_array_form(vec![9, 9, 9, 9, 9, 9, 9, 9, 9, 9], 1),
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        );
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
