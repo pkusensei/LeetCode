@@ -2,21 +2,64 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn broken_calc(start_value: i32, target: i32) -> i32 {
-    dfs(start_value, target)
+pub fn subarrays_with_k_distinct(nums: &[i32], k: i32) -> i32 {
+    window_at_most(nums, k) - window_at_most(nums, k - 1)
 }
 
-fn dfs(start: i32, target: i32) -> i32 {
-    if start >= target {
-        start - target
-    } else if target & 1 == 1 {
-        1 + dfs(start, 1 + target)
-    } else {
-        1 + dfs(start, target / 2)
+fn window_at_most(nums: &[i32], k: i32) -> i32 {
+    let mut res = 0;
+    let mut left = 0;
+    let mut map = HashMap::new();
+    for (right, &num) in nums.iter().enumerate() {
+        *map.entry(num).or_insert(0) += 1;
+        while map.len() > k as usize {
+            let Some(v) = map.get_mut(&nums[left]) else {
+                break;
+            };
+            *v -= 1;
+            if *v == 0 {
+                map.remove(&nums[left]);
+            }
+            left += 1;
+        }
+        res += right - left + 1;
     }
+    res as i32
+}
+
+fn single_pass(nums: &[i32], mut k: i32) -> i32 {
+    let mut counts = vec![0; 1 + nums.len()];
+    let mut res = 0;
+    let mut left = 0;
+    let mut curr = 0;
+    for &num in nums.iter() {
+        counts[num as usize] += 1;
+        if counts[num as usize] == 1 {
+            k -= 1;
+        }
+        if k < 0 {
+            counts[nums[left] as usize] -= 1;
+            if counts[nums[left] as usize] == 0 {
+                k += 1;
+            }
+            left += 1;
+            curr = 0;
+        }
+        if k == 0 {
+            while counts[nums[left] as usize] > 1 {
+                counts[nums[left] as usize] -= 1;
+                left += 1;
+                curr += 1;
+            }
+            res += 1 + curr;
+        }
+    }
+    res
 }
 
 #[cfg(test)]
@@ -27,9 +70,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(broken_calc(2, 3), 2);
-        debug_assert_eq!(broken_calc(5, 8), 2);
-        debug_assert_eq!(broken_calc(3, 10), 3);
+        debug_assert_eq!(single_pass(&[1, 2, 1, 2, 3], 2), 7);
+        debug_assert_eq!(single_pass(&[1, 2, 1, 3, 4], 3), 3);
     }
 
     #[test]
