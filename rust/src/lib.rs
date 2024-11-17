@@ -2,64 +2,41 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn subarrays_with_k_distinct(nums: &[i32], k: i32) -> i32 {
-    window_at_most(nums, k) - window_at_most(nums, k - 1)
-}
-
-fn window_at_most(nums: &[i32], k: i32) -> i32 {
+pub fn oranges_rotting(grid: &mut [&mut [i32]]) -> i32 {
+    let mut queue = std::collections::VecDeque::new();
+    for (y, row) in grid.iter().enumerate() {
+        for (x, &v) in row.iter().enumerate() {
+            if v == 2 {
+                queue.push_back((x, y));
+            }
+        }
+    }
     let mut res = 0;
-    let mut left = 0;
-    let mut map = HashMap::new();
-    for (right, &num) in nums.iter().enumerate() {
-        *map.entry(num).or_insert(0) += 1;
-        while map.len() > k as usize {
-            let Some(v) = map.get_mut(&nums[left]) else {
-                break;
+    while !queue.is_empty() {
+        let n = queue.len();
+        res += 1;
+        for _ in 0..n {
+            let Some((x, y)) = queue.pop_front() else {
+                continue;
             };
-            *v -= 1;
-            if *v == 0 {
-                map.remove(&nums[left]);
+            for (nx, ny) in neighbors((x, y)) {
+                if let Some(v) = grid.get_mut(ny).and_then(|r| r.get_mut(nx)) {
+                    if *v == 1 {
+                        *v = 2;
+                        queue.push_back((nx, ny));
+                    }
+                }
             }
-            left += 1;
-        }
-        res += right - left + 1;
-    }
-    res as i32
-}
-
-fn single_pass(nums: &[i32], mut k: i32) -> i32 {
-    let mut counts = vec![0; 1 + nums.len()];
-    let mut res = 0;
-    let mut left = 0;
-    let mut curr = 0;
-    for &num in nums.iter() {
-        counts[num as usize] += 1;
-        if counts[num as usize] == 1 {
-            k -= 1;
-        }
-        if k < 0 {
-            counts[nums[left] as usize] -= 1;
-            if counts[nums[left] as usize] == 0 {
-                k += 1;
-            }
-            left += 1;
-            curr = 0;
-        }
-        if k == 0 {
-            while counts[nums[left] as usize] > 1 {
-                counts[nums[left] as usize] -= 1;
-                left += 1;
-                curr += 1;
-            }
-            res += 1 + curr;
         }
     }
-    res
+    if grid.iter().any(|r| r.iter().any(|&v| v == 1)) {
+        -1
+    } else {
+        (res - 1).max(0)
+    }
 }
 
 #[cfg(test)]
@@ -70,8 +47,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(single_pass(&[1, 2, 1, 2, 3], 2), 7);
-        debug_assert_eq!(single_pass(&[1, 2, 1, 3, 4], 3), 3);
+        debug_assert_eq!(
+            oranges_rotting(&mut [&mut [2, 1, 1], &mut [1, 1, 0], &mut [0, 1, 1]]),
+            4
+        );
+        debug_assert_eq!(
+            oranges_rotting(&mut [&mut [2, 1, 1], &mut [0, 1, 1], &mut [1, 0, 1]]),
+            -1
+        );
+        debug_assert_eq!(oranges_rotting(&mut [&mut [0, 2]]), 0);
     }
 
     #[test]
