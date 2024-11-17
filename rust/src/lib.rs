@@ -5,66 +5,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn equations_possible(equations: &[&str]) -> bool {
-    let mut dsu = DSU::new();
-    for [a, b] in equations.iter().filter_map(|s| {
-        s.split_once("==")
-            .and_then(|(a, b)| [a, b].map(|v| usize::from(v.as_bytes()[0] - b'a')).into())
-    }) {
-        dsu.union(a, b);
-    }
-    for [a, b] in equations.iter().filter_map(|s| {
-        s.split_once("!=")
-            .and_then(|(a, b)| [a, b].map(|v| usize::from(v.as_bytes()[0] - b'a')).into())
-    }) {
-        if dsu.find(a) == dsu.find(b) {
-            return false;
-        }
-    }
-    true
+pub fn broken_calc(start_value: i32, target: i32) -> i32 {
+    dfs(start_value, target)
 }
 
-#[derive(Debug, Clone)]
-struct DSU {
-    parent: [usize; 26],
-    rank: [usize; 26],
-}
-
-impl DSU {
-    fn new() -> Self {
-        let mut parent = [0; 26];
-        for (i, v) in parent.iter_mut().enumerate() {
-            *v = i;
-        }
-        Self {
-            parent,
-            rank: [1; 26],
-        }
-    }
-
-    fn find(&mut self, x: usize) -> usize {
-        if self.parent[x] != x {
-            self.parent[x] = self.find(self.parent[x]);
-        }
-        self.parent[x]
-    }
-
-    fn union(&mut self, x: usize, y: usize) {
-        if x == y {
-            return;
-        }
-        let [rx, ry] = [x, y].map(|v| self.find(v));
-        if rx == ry {
-            return;
-        }
-        match self.rank[rx].cmp(&self.rank[ry]) {
-            std::cmp::Ordering::Less => self.parent[rx] = ry,
-            std::cmp::Ordering::Equal => {
-                self.parent[ry] = rx;
-                self.rank[rx] += 1;
-            }
-            std::cmp::Ordering::Greater => self.parent[ry] = rx,
-        }
+fn dfs(start: i32, target: i32) -> i32 {
+    if start >= target {
+        start - target
+    } else if target & 1 == 1 {
+        1 + dfs(start, 1 + target)
+    } else {
+        1 + dfs(start, target / 2)
     }
 }
 
@@ -76,14 +27,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(!equations_possible(&["a==b", "b!=a"]));
-        debug_assert!(equations_possible(&["b==a", "a==b"]));
+        debug_assert_eq!(broken_calc(2, 3), 2);
+        debug_assert_eq!(broken_calc(5, 8), 2);
+        debug_assert_eq!(broken_calc(3, 10), 3);
     }
 
     #[test]
-    fn test() {
-        debug_assert!(equations_possible(&["a!=b", "b!=c", "c!=a"]));
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
