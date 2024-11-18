@@ -5,21 +5,39 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn largest_sum_after_k_negations(nums: &mut [i32], mut k: i32) -> i32 {
-    nums.sort_unstable();
-    for num in nums.iter_mut() {
-        if *num < 0 && k > 0 {
-            *num = -*num;
-            k -= 1;
+pub const fn clumsy(mut n: i32) -> i32 {
+    let mut op = 0; // [* / + -]
+    let mut num1 = n;
+    let mut num2 = 0;
+    n -= 1;
+    while n > 0 {
+        match op {
+            0 => num1 *= n,
+            1 => num1 /= n,
+            2 => {
+                num2 += num1 + n;
+                num1 = 0;
+            }
+            3 => num1 = -n,
+            _ => unreachable!(),
         }
+        n -= 1;
+        op = (op + 1) % 4;
     }
-    if k > 0 {
-        nums.sort_unstable();
-        if k & 1 == 1 {
-            nums[0] = -nums[0];
-        }
+    num1 + num2
+}
+
+const fn pattern(n: i32) -> i32 {
+    match n {
+        1 | 2 => n,
+        3 => 6,
+        4 => 7,
+        _ => match n % 4 {
+            1 | 2 => 2 + n,
+            3 => n - 1,
+            _ => 1 + n,
+        },
     }
-    nums.iter().sum()
 }
 
 #[cfg(test)]
@@ -30,12 +48,10 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(largest_sum_after_k_negations(&mut [4, 2, 3], 1), 5);
-        debug_assert_eq!(largest_sum_after_k_negations(&mut [3, -1, 0, 2], 3), 6);
-        debug_assert_eq!(
-            largest_sum_after_k_negations(&mut [2, -3, -1, 5, -4], 2),
-            13
-        );
+        debug_assert_eq!(clumsy(4), 7);
+        debug_assert_eq!(clumsy(10), 12);
+        debug_assert_eq!(pattern(4), 7);
+        debug_assert_eq!(pattern(10), 12);
     }
 
     #[test]
