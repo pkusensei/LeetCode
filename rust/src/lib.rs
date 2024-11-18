@@ -5,95 +5,47 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_k_bit_flips(nums: &mut [i32], k: i32) -> i32 {
+pub fn num_squareful_perms(nums: &mut [i32]) -> i32 {
     let n = nums.len();
-    let k = k as usize;
-    let mut idx = 0;
-    let mut res = 0;
-    while idx <= n - k {
-        if nums[idx] == 1 {
-            idx += 1;
-            continue;
-        }
-        for v in nums[idx..].iter_mut().take(k) {
-            *v = 1 - *v;
-        }
-        res += 1;
-        idx += 1;
+    if n == 1 {
+        return 1;
     }
-    if nums.iter().all(|&v| v == 1) {
-        res
-    } else {
-        -1
-    }
-}
-
-fn with_array(nums: &[i32], k: i32) -> i32 {
-    let (n, k) = (nums.len(), k as usize);
-    let mut flipped = vec![false; n];
-    let mut valid_flips = 0;
+    nums.sort_unstable();
+    let mut dp = vec![vec![-1; n]; 1 << n];
     let mut res = 0;
-    for (idx, &num) in nums.iter().enumerate() {
-        if idx >= k && flipped[idx - k] {
-            valid_flips -= 1;
-        }
-        if num == valid_flips & 1 {
-            if idx + k > n {
-                return -1;
-            }
-            valid_flips += 1;
-            flipped[idx] = true;
-            res += 1;
-        }
+    for i in 0..n {
+        res += backtrack(nums, 1 << i, i, &mut dp);
     }
     res
 }
 
-fn with_deque(nums: &[i32], k: i32) -> i32 {
-    let (n, k) = (nums.len(), k as usize);
-    let mut flip_queue = std::collections::VecDeque::with_capacity(k);
-    let mut flipped = 0;
-    let mut res = 0;
-    for (idx, &num) in nums.iter().enumerate() {
-        if idx >= k {
-            let Some(v) = flip_queue.pop_front() else {
-                break;
-            };
-            flipped ^= v;
-        }
-        if num == flipped {
-            if idx + k > n {
-                return -1;
-            }
-            flip_queue.push_back(1);
-            flipped ^= 1;
-            res += 1;
-        } else {
-            flip_queue.push_back(0);
-        }
+fn backtrack(nums: &[i32], mask: usize, prev: usize, dp: &mut [Vec<i32>]) -> i32 {
+    let n = nums.len();
+    if mask == (1 << n) - 1 {
+        return 1;
     }
-    res
-}
-
-fn with_constant_space(nums: &mut [i32], k: i32) -> i32 {
-    let (n, k) = (nums.len(), k as usize);
-    let mut curr = 0;
+    if dp[mask][prev] > -1 {
+        return dp[mask][prev];
+    }
     let mut res = 0;
     for idx in 0..n {
-        if idx >= k && nums[idx - k] == 2 {
-            curr -= 1;
-            // nums[idx - k] -= 2; // restores original state
+        if (mask >> idx) & 1 == 1 {
+            continue;
         }
-        if curr & 1 == nums[idx] {
-            if idx + k > n {
-                return -1;
-            }
-            nums[idx] = 2;
-            curr += 1;
-            res += 1;
+        if idx > 0 && nums[idx] == nums[idx - 1] && (mask >> (idx - 1)) & 1 == 1 {
+            continue;
+        }
+        if is_square(nums[prev] + nums[idx]) {
+            res += backtrack(nums, mask | (1 << idx), idx, dp);
         }
     }
+    dp[mask][prev] = res;
     res
+}
+
+fn is_square(num: i32) -> bool {
+    let r = f64::from(num).sqrt().floor() as i32;
+    r * r == num
 }
 
 #[cfg(test)]
@@ -104,9 +56,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(with_constant_space(&mut [0, 1, 0], 1), 2);
-        debug_assert_eq!(with_constant_space(&mut [1, 1, 0], 2), -1);
-        debug_assert_eq!(with_constant_space(&mut [0, 0, 0, 1, 0, 1, 1, 0], 3), 3);
+        debug_assert_eq!(num_squareful_perms(&mut [1, 17, 8]), 2);
+        debug_assert_eq!(num_squareful_perms(&mut [2, 2, 2]), 1);
     }
 
     #[test]
