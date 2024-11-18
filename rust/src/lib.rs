@@ -5,15 +5,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_valid(s: &str) -> bool {
-    let mut stack = vec![];
-    for b in s.bytes() {
-        stack.push(b);
-        if stack.ends_with(b"abc") {
-            stack.truncate(stack.len() - 3);
+pub fn longest_ones(nums: &[i32], k: i32) -> i32 {
+    let n = nums.len();
+    let mut left = 0;
+    let mut zeros = k;
+    let mut res = 0;
+    for (right, &num) in nums.iter().enumerate() {
+        if num == 0 {
+            zeros -= 1;
         }
+        while zeros < 0 && num == 0 && left < n {
+            if nums[left] == 0 {
+                zeros += 1;
+            }
+            left += 1;
+        }
+        res = res.max(right - left + 1);
     }
-    stack.is_empty()
+    res as _
 }
 
 #[cfg(test)]
@@ -24,14 +33,19 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(is_valid("aabcbc"));
-        debug_assert!(is_valid("abcabcababcc"));
-        debug_assert!(!is_valid("abccba"));
+        debug_assert_eq!(longest_ones(&[1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0], 2), 6);
+        debug_assert_eq!(
+            longest_ones(
+                &[0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 1, 1],
+                3
+            ),
+            10
+        );
     }
 
     #[test]
     fn test() {
-        debug_assert!(!is_valid("aabbcc"));
+        debug_assert_eq!(longest_ones(&[0, 0, 0, 1], 4), 4);
     }
 
     #[allow(dead_code)]
