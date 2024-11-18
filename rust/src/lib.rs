@@ -5,23 +5,50 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_judge(n: i32, trust: &[[i32; 2]]) -> i32 {
-    let [mut outs, mut ins] = [0, 1].map(|_| vec![0; n as usize]);
-    for v in trust.iter() {
-        outs[v[0] as usize - 1] += 1;
-        ins[v[1] as usize - 1] += 1;
-    }
-    outs.into_iter()
-        .zip(ins)
-        .enumerate()
-        .find_map(|(i, (a, b))| {
-            if a == 0 && b == n - 1 {
-                Some(i as i32 + 1)
-            } else {
-                None
+pub fn num_rook_captures(board: [[char; 8]; 8]) -> i32 {
+    let mut start = [0, 0];
+    for (y, row) in board.iter().enumerate() {
+        for (x, &ch) in row.iter().enumerate() {
+            if ch == 'R' {
+                start = [x, y];
             }
-        })
-        .unwrap_or(-1)
+        }
+    }
+    let [x, y] = start;
+    let mut res = 0;
+    for i in (0..y).rev() {
+        if board[i][x] == 'p' {
+            res += 1;
+            break;
+        } else if board[i][x] == 'B' {
+            break;
+        }
+    }
+    for i in y..8 {
+        if board[i][x] == 'p' {
+            res += 1;
+            break;
+        } else if board[i][x] == 'B' {
+            break;
+        }
+    }
+    for i in (0..x).rev() {
+        if board[y][i] == 'p' {
+            res += 1;
+            break;
+        } else if board[y][i] == 'B' {
+            break;
+        }
+    }
+    for i in x..8 {
+        if board[y][i] == 'p' {
+            res += 1;
+            break;
+        } else if board[y][i] == 'B' {
+            break;
+        }
+    }
+    res
 }
 
 #[cfg(test)]
@@ -32,9 +59,45 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(find_judge(2, &[[1, 2]]), 2);
-        debug_assert_eq!(find_judge(3, &[[1, 3], [2, 3]]), 3);
-        debug_assert_eq!(find_judge(3, &[[1, 3], [2, 3], [3, 1]]), -1);
+        debug_assert_eq!(
+            num_rook_captures([
+                ['.', '.', '.', '.', '.', '.', '.', '.'],
+                ['.', '.', '.', 'p', '.', '.', '.', '.'],
+                ['.', '.', '.', 'R', '.', '.', '.', 'p'],
+                ['.', '.', '.', '.', '.', '.', '.', '.'],
+                ['.', '.', '.', '.', '.', '.', '.', '.'],
+                ['.', '.', '.', 'p', '.', '.', '.', '.'],
+                ['.', '.', '.', '.', '.', '.', '.', '.'],
+                ['.', '.', '.', '.', '.', '.', '.', '.']
+            ]),
+            3
+        );
+        debug_assert_eq!(
+            num_rook_captures([
+                ['.', '.', '.', '.', '.', '.', '.', '.'],
+                ['.', 'p', 'p', 'p', 'p', 'p', '.', '.'],
+                ['.', 'p', 'p', 'B', 'p', 'p', '.', '.'],
+                ['.', 'p', 'B', 'R', 'B', 'p', '.', '.'],
+                ['.', 'p', 'p', 'B', 'p', 'p', '.', '.'],
+                ['.', 'p', 'p', 'p', 'p', 'p', '.', '.'],
+                ['.', '.', '.', '.', '.', '.', '.', '.'],
+                ['.', '.', '.', '.', '.', '.', '.', '.']
+            ]),
+            0
+        );
+        debug_assert_eq!(
+            num_rook_captures([
+                ['.', '.', '.', '.', '.', '.', '.', '.'],
+                ['.', '.', '.', 'p', '.', '.', '.', '.'],
+                ['.', '.', '.', 'p', '.', '.', '.', '.'],
+                ['p', 'p', '.', 'R', '.', 'p', 'B', '.'],
+                ['.', '.', '.', '.', '.', '.', '.', '.'],
+                ['.', '.', '.', 'B', '.', '.', '.', '.'],
+                ['.', '.', '.', 'p', '.', '.', '.', '.'],
+                ['.', '.', '.', '.', '.', '.', '.', '.']
+            ]),
+            3
+        );
     }
 
     #[test]
