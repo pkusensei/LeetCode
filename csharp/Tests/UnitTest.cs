@@ -12,21 +12,24 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
-        var a = TreeNode.Make([1, 2, 3, 4]);
-        Assert.IsFalse(sol.IsCousins(a, 4, 3));
+        var a = TreeNode.Make([4, 1, 3, null, null, 2]);
+        var b = sol.InsertIntoMaxTree(a, 5);
+        Assert.AreEqual("[5,4,null,1,3,null,null,2]", b.ToString());
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        var a = TreeNode.Make([1, 2, 3, null, 4, null, 5]);
-        Assert.IsTrue(sol.IsCousins(a, 5, 4));
+        var a = TreeNode.Make([5, 2, 4, null, 1]);
+        var b = sol.InsertIntoMaxTree(a, 3);
+        Assert.AreEqual("[5,2,4,null,1,null,3]", b.ToString());
     }
 
     [TestMethod]
     public void TestMethod3()
     {
-        var a = TreeNode.Make([1, 2, 3, null, 4]);
-        Assert.IsFalse(sol.IsCousins(a, 2, 3));
+        var a = TreeNode.Make([5, 2, 3, null, 1]);
+        var b = sol.InsertIntoMaxTree(a, 4);
+        Assert.AreEqual("[5,2,4,null,1,3]", b.ToString());
     }
 }
