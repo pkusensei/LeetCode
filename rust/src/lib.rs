@@ -5,47 +5,31 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_squareful_perms(nums: &mut [i32]) -> i32 {
-    let n = nums.len();
-    if n == 1 {
-        return 1;
+pub fn decrypt(code: &[i32], k: i32) -> Vec<i32> {
+    let n = code.len();
+    if k == 0 {
+        return vec![0; n];
     }
-    nums.sort_unstable();
-    let mut dp = vec![vec![-1; n]; 1 << n];
-    let mut res = 0;
-    for i in 0..n {
-        res += backtrack(nums, 1 << i, i, &mut dp);
+    let mut res = Vec::with_capacity(n);
+    for idx in 0..n as i32 {
+        let v = if k > 0 {
+            idx + 1..idx + k + 1
+        } else {
+            idx + k..idx
+        }
+        .map(|i| code[i.rem_euclid(n as i32) as usize])
+        .sum();
+        res.push(v);
     }
     res
-}
 
-fn backtrack(nums: &[i32], mask: usize, prev: usize, dp: &mut [Vec<i32>]) -> i32 {
-    let n = nums.len();
-    if mask == (1 << n) - 1 {
-        return 1;
-    }
-    if dp[mask][prev] > -1 {
-        return dp[mask][prev];
-    }
-    let mut res = 0;
-    for idx in 0..n {
-        if (mask >> idx) & 1 == 1 {
-            continue;
-        }
-        if idx > 0 && nums[idx] == nums[idx - 1] && (mask >> (idx - 1)) & 1 == 1 {
-            continue;
-        }
-        if is_square(nums[prev] + nums[idx]) {
-            res += backtrack(nums, mask | (1 << idx), idx, dp);
-        }
-    }
-    dp[mask][prev] = res;
-    res
-}
-
-fn is_square(num: i32) -> bool {
-    let r = f64::from(num).sqrt().floor() as i32;
-    r * r == num
+    // if k < 0 {
+    //     code.reverse();
+    //     k = -k;
+    //     (0..code.len()).map(|i| code.iter().cycle().skip(i+1).take(k as usize).sum()).rev().collect()
+    // } else {
+    //     (0..code.len()).map(|i| code.iter().cycle().skip(i+1).take(k as usize).sum()).collect()
+    // }
 }
 
 #[cfg(test)]
@@ -56,8 +40,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(num_squareful_perms(&mut [1, 17, 8]), 2);
-        debug_assert_eq!(num_squareful_perms(&mut [2, 2, 2]), 1);
+        debug_assert_eq!(decrypt(&[5, 7, 1, 4], 3), [12, 10, 16, 13]);
+        debug_assert_eq!(decrypt(&[1, 2, 3, 4], 0), [0, 0, 0, 0]);
+        debug_assert_eq!(decrypt(&[2, 4, 9, 3], -2), [12, 5, 6, 13]);
     }
 
     #[test]
