@@ -5,21 +5,28 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn grid_illumination(_n: i32, lamps: &[[i32; 2]], queries: &[[i32; 2]]) -> Vec<i32> {
-    let mut lights: Vec<_> = lamps.iter().map(|v| [v[0], v[1]]).collect();
-    let mut res = Vec::with_capacity(queries.len());
-    for _q in queries.iter() {
-        let [qx, qy] = [_q[0], _q[1]];
-        res.push(i32::from(is_lit(&lights, qx, qy)));
-        lights.retain(|&[x, y]| x.abs_diff(qx) > 1 || y.abs_diff(qy) > 1);
+pub fn common_chars(words: &[&str]) -> Vec<String> {
+    let mut chs = [u16::MAX; 26];
+    for s in words.iter() {
+        for (a, b) in chs.iter_mut().zip(count(s)) {
+            if *a > 0 {
+                (*a) = (*a).min(b);
+            }
+        }
     }
-    res
+    chs.into_iter()
+        .enumerate()
+        .flat_map(|(i, v)| {
+            std::iter::repeat(char::from(i as u8 + b'a').to_string()).take(v as usize)
+        })
+        .collect()
 }
 
-fn is_lit(lights: &[[i32; 2]], qx: i32, qy: i32) -> bool {
-    lights
-        .iter()
-        .any(|&[x, y]| x == qx || y == qy || x - qx == y - qy || x - qx == qy - y)
+fn count(s: &str) -> [u16; 26] {
+    s.bytes().fold([0; 26], |mut acc, b| {
+        acc[usize::from(b - b'a')] += 1;
+        acc
+    })
 }
 
 #[cfg(test)]
@@ -30,18 +37,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            grid_illumination(5, &[[0, 0], [4, 4]], &[[1, 1], [1, 0]]),
-            [1, 0]
-        );
-        debug_assert_eq!(
-            grid_illumination(5, &[[0, 0], [4, 4]], &[[1, 1], [1, 1]]),
-            [1, 1]
-        );
-        debug_assert_eq!(
-            grid_illumination(5, &[[0, 0], [0, 4]], &[[0, 4], [0, 1], [1, 4]]),
-            [1, 1, 0]
-        );
+        debug_assert_eq!(common_chars(&["bella", "label", "roller"]), ["e", "l", "l"]);
+        debug_assert_eq!(common_chars(&["cool", "lock", "cook"]), ["c", "o"]);
     }
 
     #[test]
