@@ -5,24 +5,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn longest_ones(nums: &[i32], k: i32) -> i32 {
-    let n = nums.len();
-    let mut left = 0;
-    let mut zeros = k;
-    let mut res = 0;
-    for (right, &num) in nums.iter().enumerate() {
-        if num == 0 {
-            zeros -= 1;
+pub fn largest_sum_after_k_negations(nums: &mut [i32], mut k: i32) -> i32 {
+    nums.sort_unstable();
+    for num in nums.iter_mut() {
+        if *num < 0 && k > 0 {
+            *num = -*num;
+            k -= 1;
         }
-        while zeros < 0 && num == 0 && left < n {
-            if nums[left] == 0 {
-                zeros += 1;
-            }
-            left += 1;
-        }
-        res = res.max(right - left + 1);
     }
-    res as _
+    if k > 0 {
+        nums.sort_unstable();
+        if k & 1 == 1 {
+            nums[0] = -nums[0];
+        }
+    }
+    nums.iter().sum()
 }
 
 #[cfg(test)]
@@ -33,20 +30,16 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(longest_ones(&[1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0], 2), 6);
+        debug_assert_eq!(largest_sum_after_k_negations(&mut [4, 2, 3], 1), 5);
+        debug_assert_eq!(largest_sum_after_k_negations(&mut [3, -1, 0, 2], 3), 6);
         debug_assert_eq!(
-            longest_ones(
-                &[0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 1, 1],
-                3
-            ),
-            10
+            largest_sum_after_k_negations(&mut [2, -3, -1, 5, -4], 2),
+            13
         );
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(longest_ones(&[0, 0, 0, 1], 4), 4);
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
