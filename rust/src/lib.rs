@@ -5,28 +5,15 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn common_chars(words: &[&str]) -> Vec<String> {
-    let mut chs = [u16::MAX; 26];
-    for s in words.iter() {
-        for (a, b) in chs.iter_mut().zip(count(s)) {
-            if *a > 0 {
-                (*a) = (*a).min(b);
-            }
+pub fn is_valid(s: &str) -> bool {
+    let mut stack = vec![];
+    for b in s.bytes() {
+        stack.push(b);
+        if stack.ends_with(b"abc") {
+            stack.truncate(stack.len() - 3);
         }
     }
-    chs.into_iter()
-        .enumerate()
-        .flat_map(|(i, v)| {
-            std::iter::repeat(char::from(i as u8 + b'a').to_string()).take(v as usize)
-        })
-        .collect()
-}
-
-fn count(s: &str) -> [u16; 26] {
-    s.bytes().fold([0; 26], |mut acc, b| {
-        acc[usize::from(b - b'a')] += 1;
-        acc
-    })
+    stack.is_empty()
 }
 
 #[cfg(test)]
@@ -37,12 +24,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(common_chars(&["bella", "label", "roller"]), ["e", "l", "l"]);
-        debug_assert_eq!(common_chars(&["cool", "lock", "cook"]), ["c", "o"]);
+        debug_assert!(is_valid("aabcbc"));
+        debug_assert!(is_valid("abcabcababcc"));
+        debug_assert!(!is_valid("abccba"));
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert!(!is_valid("aabbcc"));
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
