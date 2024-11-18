@@ -5,31 +5,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn decrypt(code: &[i32], k: i32) -> Vec<i32> {
-    let n = code.len();
-    if k == 0 {
-        return vec![0; n];
+pub fn find_judge(n: i32, trust: &[[i32; 2]]) -> i32 {
+    let [mut outs, mut ins] = [0, 1].map(|_| vec![0; n as usize]);
+    for v in trust.iter() {
+        outs[v[0] as usize - 1] += 1;
+        ins[v[1] as usize - 1] += 1;
     }
-    let mut res = Vec::with_capacity(n);
-    for idx in 0..n as i32 {
-        let v = if k > 0 {
-            idx + 1..idx + k + 1
-        } else {
-            idx + k..idx
-        }
-        .map(|i| code[i.rem_euclid(n as i32) as usize])
-        .sum();
-        res.push(v);
-    }
-    res
-
-    // if k < 0 {
-    //     code.reverse();
-    //     k = -k;
-    //     (0..code.len()).map(|i| code.iter().cycle().skip(i+1).take(k as usize).sum()).rev().collect()
-    // } else {
-    //     (0..code.len()).map(|i| code.iter().cycle().skip(i+1).take(k as usize).sum()).collect()
-    // }
+    outs.into_iter()
+        .zip(ins)
+        .enumerate()
+        .find_map(|(i, (a, b))| {
+            if a == 0 && b == n - 1 {
+                Some(i as i32 + 1)
+            } else {
+                None
+            }
+        })
+        .unwrap_or(-1)
 }
 
 #[cfg(test)]
@@ -40,9 +32,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(decrypt(&[5, 7, 1, 4], 3), [12, 10, 16, 13]);
-        debug_assert_eq!(decrypt(&[1, 2, 3, 4], 0), [0, 0, 0, 0]);
-        debug_assert_eq!(decrypt(&[2, 4, 9, 3], -2), [12, 5, 6, 13]);
+        debug_assert_eq!(find_judge(2, &[[1, 2]]), 2);
+        debug_assert_eq!(find_judge(3, &[[1, 3], [2, 3]]), 3);
+        debug_assert_eq!(find_judge(3, &[[1, 3], [2, 3], [3, 1]]), -1);
     }
 
     #[test]
