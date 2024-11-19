@@ -5,40 +5,13 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_domino_rotations(tops: &[i32], bottoms: &[i32]) -> i32 {
-    let n = tops.len();
-    if n != bottoms.len() {
-        return -1;
+pub const fn bitwise_complement(n: i32) -> i32 {
+    if n == 0 {
+        1
+    } else {
+        let k = 1 + n.ilog2();
+        (1 << k) - 1 - n
     }
-    let counts =
-        tops.iter()
-            .chain(bottoms.iter())
-            .fold(std::collections::HashMap::new(), |mut acc, &v| {
-                *acc.entry(v).or_insert(0) += 1;
-                acc
-            });
-    let mut res = None::<i32>;
-    for candid in counts
-        .iter()
-        .filter_map(|(&num, &count)| if count >= n { Some(num) } else { None })
-    {
-        let (mut t1, mut t2) = (0, 0);
-        for (&a, &b) in tops.iter().zip(bottoms.iter()) {
-            if a != candid && b != candid {
-                return -1;
-            } else if a != candid && b == candid {
-                t1 += 1;
-            } else if b != candid && a == candid {
-                t2 += 1;
-            }
-        }
-        if let Some(ref mut v) = res {
-            *v = (*v).min(t1).min(t2)
-        } else {
-            res = Some(t1.min(t2))
-        }
-    }
-    res.unwrap_or(-1)
 }
 
 #[cfg(test)]
@@ -49,20 +22,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            min_domino_rotations(&[2, 1, 2, 4, 2, 2], &[5, 2, 6, 2, 3, 2]),
-            2
-        );
-        debug_assert_eq!(min_domino_rotations(&[3, 5, 1, 2, 3], &[3, 6, 3, 3, 4]), -1);
+        debug_assert_eq!(bitwise_complement(5), 2);
+        debug_assert_eq!(bitwise_complement(7), 0);
+        debug_assert_eq!(bitwise_complement(10), 5);
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(
-            min_domino_rotations(&[1, 2, 1, 1, 1, 2, 2, 2], &[2, 1, 2, 2, 2, 2, 2, 2]),
-            1
-        );
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
