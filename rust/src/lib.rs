@@ -5,31 +5,42 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn ship_within_days(weights: &[i32], days: i32) -> i32 {
-        let mut left = weights.iter().copied().max().unwrap_or(weights[0]);
-        let mut right: i32 = weights.iter().sum();
-        while left < right {
-            let mid = left + (right - left) / 2;
-            if count(weights, mid) > days {
-                left = 1 + mid;
-            } else {
-                right = mid
-            }
-        }
-        left
+pub fn num_dup_digits_at_most_n(n: i32) -> i32 {
+    n - no_dups(n)
 }
 
-fn count(weights: &[i32], mid: i32) -> i32 {
-    let (mut res, mut sum) = (0, 0);
-    for &num in weights.iter() {
-        if sum + num <= mid {
-            sum += num;
-        } else {
-            sum = num;
-            res += 1
+fn no_dups(n: i32) -> i32 {
+    let digits = {
+        let mut v = vec![];
+        let mut n = 1 + n; // to count in n itself
+        while n > 0 {
+            v.push(n % 10);
+            n /= 10;
+        }
+        v.reverse();
+        v
+    };
+    let len = digits.len();
+    // all nums with less "length" than n
+    let mut res = (1..len).map(|v| 9 * permutations(9, v as i32 - 1)).sum();
+
+    // all nums with same prefix as n
+    let mut seen = std::collections::HashSet::with_capacity(len);
+    for (idx, &digit) in digits.iter().enumerate() {
+        for d in i32::from(idx == 0)..digit {
+            if !seen.contains(&d) {
+                res += permutations(9 - idx as i32, (len - idx) as i32 - 1);
+            }
+        }
+        if !seen.insert(digit) {
+            break;
         }
     }
-    res + i32::from(sum > 0)
+    res
+}
+
+fn permutations(n: i32, k: i32) -> i32 {
+    (n - k + 1..=n).product()
 }
 
 #[cfg(test)]
@@ -40,9 +51,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(ship_within_days(&[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 5), 15);
-        debug_assert_eq!(ship_within_days(&[3, 2, 2, 4, 1, 4], 3), 6);
-        debug_assert_eq!(ship_within_days(&[1, 2, 3, 1, 1], 4), 3);
+        debug_assert_eq!(num_dup_digits_at_most_n(20), 1);
+        debug_assert_eq!(num_dup_digits_at_most_n(100), 10);
+        debug_assert_eq!(num_dup_digits_at_most_n(1000), 262);
     }
 
     #[test]
