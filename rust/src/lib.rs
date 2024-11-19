@@ -5,13 +5,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub const fn bitwise_complement(n: i32) -> i32 {
-    if n == 0 {
-        1
-    } else {
-        let k = 1 + n.ilog2();
-        (1 << k) - 1 - n
+pub fn num_pairs_divisible_by60(time: &[i32]) -> i32 {
+    let mut map = std::collections::HashMap::new();
+    let mut res = 0;
+    for &num in time.iter() {
+        let k = num % 60;
+        let m = if k > 0 { 60 - k } else { 0 };
+        if let Some(v) = map.get(&m) {
+            res += v
+        }
+        *map.entry(k).or_insert(0) += 1;
     }
+    res
 }
 
 #[cfg(test)]
@@ -22,9 +27,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(bitwise_complement(5), 2);
-        debug_assert_eq!(bitwise_complement(7), 0);
-        debug_assert_eq!(bitwise_complement(10), 5);
+        debug_assert_eq!(num_pairs_divisible_by60(&[30, 20, 150, 100, 40]), 3);
+        debug_assert_eq!(num_pairs_divisible_by60(&[60, 60, 60]), 3);
     }
 
     #[test]
