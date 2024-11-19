@@ -5,42 +5,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_dup_digits_at_most_n(n: i32) -> i32 {
-    n - no_dups(n)
-}
-
-fn no_dups(n: i32) -> i32 {
-    let digits = {
-        let mut v = vec![];
-        let mut n = 1 + n; // to count in n itself
-        while n > 0 {
-            v.push(n % 10);
-            n /= 10;
+pub fn can_three_parts_equal_sum(arr: &[i32]) -> bool {
+    let sum: i32 = arr.iter().sum();
+    if sum % 3 > 0 {
+        return false;
+    }
+    let sum = sum / 3;
+    let mut curr = 0;
+    let mut count = 3;
+    let mut idx = 0;
+    for (i, &num) in arr.iter().enumerate() {
+        curr += num;
+        if curr == sum {
+            curr = 0;
+            count -= 1;
         }
-        v.reverse();
-        v
-    };
-    let len = digits.len();
-    // all nums with less "length" than n
-    let mut res = (1..len).map(|v| 9 * permutations(9, v as i32 - 1)).sum();
-
-    // all nums with same prefix as n
-    let mut seen = std::collections::HashSet::with_capacity(len);
-    for (idx, &digit) in digits.iter().enumerate() {
-        for d in i32::from(idx == 0)..digit {
-            if !seen.contains(&d) {
-                res += permutations(9 - idx as i32, (len - idx) as i32 - 1);
-            }
-        }
-        if !seen.insert(digit) {
+        if count == 1 {
+            idx = 1 + i;
             break;
         }
     }
-    res
-}
-
-fn permutations(n: i32, k: i32) -> i32 {
-    (n - k + 1..=n).product()
+    count == 1 && idx < arr.len() && arr[idx..].iter().sum::<i32>() == sum
 }
 
 #[cfg(test)]
@@ -51,13 +36,20 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(num_dup_digits_at_most_n(20), 1);
-        debug_assert_eq!(num_dup_digits_at_most_n(100), 10);
-        debug_assert_eq!(num_dup_digits_at_most_n(1000), 262);
+        debug_assert!(can_three_parts_equal_sum(&[
+            0, 2, 1, -6, 6, -7, 9, 1, 2, 0, 1
+        ]));
+        debug_assert!(!can_three_parts_equal_sum(&[
+            0, 2, 1, -6, 6, 7, 9, -1, 2, 0, 1
+        ]));
+        debug_assert!(can_three_parts_equal_sum(&[3, 3, 6, 5, -2, 2, 5, 1, -9, 4]));
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert!(can_three_parts_equal_sum(&[0, 0, 0, 0, 0]));
+        debug_assert!(!can_three_parts_equal_sum(&[1, -1, 1, -1]));
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
