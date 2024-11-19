@@ -5,18 +5,31 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_pairs_divisible_by60(time: &[i32]) -> i32 {
-    let mut map = std::collections::HashMap::new();
-    let mut res = 0;
-    for &num in time.iter() {
-        let k = num % 60;
-        let m = if k > 0 { 60 - k } else { 0 };
-        if let Some(v) = map.get(&m) {
-            res += v
+pub fn ship_within_days(weights: &[i32], days: i32) -> i32 {
+        let mut left = weights.iter().copied().max().unwrap_or(weights[0]);
+        let mut right: i32 = weights.iter().sum();
+        while left < right {
+            let mid = left + (right - left) / 2;
+            if count(weights, mid) > days {
+                left = 1 + mid;
+            } else {
+                right = mid
+            }
         }
-        *map.entry(k).or_insert(0) += 1;
+        left
+}
+
+fn count(weights: &[i32], mid: i32) -> i32 {
+    let (mut res, mut sum) = (0, 0);
+    for &num in weights.iter() {
+        if sum + num <= mid {
+            sum += num;
+        } else {
+            sum = num;
+            res += 1
+        }
     }
-    res
+    res + i32::from(sum > 0)
 }
 
 #[cfg(test)]
@@ -27,8 +40,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(num_pairs_divisible_by60(&[30, 20, 150, 100, 40]), 3);
-        debug_assert_eq!(num_pairs_divisible_by60(&[60, 60, 60]), 3);
+        debug_assert_eq!(ship_within_days(&[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 5), 15);
+        debug_assert_eq!(ship_within_days(&[3, 2, 2, 4, 1, 4], 3), 6);
+        debug_assert_eq!(ship_within_days(&[1, 2, 3, 1, 1], 4), 3);
     }
 
     #[test]
