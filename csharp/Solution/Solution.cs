@@ -5,11 +5,13 @@ namespace Solution;
 
 public class Solution
 {
-    public TreeNode InsertIntoMaxTree(TreeNode root, int val)
+    public TreeNode BstFromPreorder(int[] preorder)
     {
-        if (root is null) { return new(val); }
-        if (root.val < val) { return new(val, root, null); }
-        root.right = InsertIntoMaxTree(root.right, val);
+        if (preorder.Length == 0) { return null; }
+        var val = preorder[0];
+        var left = preorder.Where(v => v < val).ToArray();
+        var right = preorder.Where(v => v > val).ToArray();
+        TreeNode root = new(val, BstFromPreorder(left), BstFromPreorder(right));
         return root;
     }
 }

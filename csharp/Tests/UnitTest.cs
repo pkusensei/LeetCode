@@ -10,26 +10,22 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow(new int[] { 8, 5, 1, 7, 10, 12 }, "[8,5,10,1,7,null,12]")]
+    [DataRow(new int[] { 1, 3 }, "[1,null,3]")]
+    [DataRow(new int[] { 4, 2 }, "[4,2]")]
+    public void TestMethod1(int[] nums, string c)
     {
-        var a = TreeNode.Make([4, 1, 3, null, null, 2]);
-        var b = sol.InsertIntoMaxTree(a, 5);
-        Assert.AreEqual("[5,4,null,1,3,null,null,2]", b.ToString());
+        var b = sol.BstFromPreorder(nums);
+        Assert.AreEqual(c, b.ToString());
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        var a = TreeNode.Make([5, 2, 4, null, 1]);
-        var b = sol.InsertIntoMaxTree(a, 3);
-        Assert.AreEqual("[5,2,4,null,1,null,3]", b.ToString());
     }
 
     [TestMethod]
     public void TestMethod3()
     {
-        var a = TreeNode.Make([5, 2, 3, null, 1]);
-        var b = sol.InsertIntoMaxTree(a, 4);
-        Assert.AreEqual("[5,2,4,null,1,3]", b.ToString());
     }
 }

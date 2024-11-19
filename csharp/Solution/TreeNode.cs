@@ -93,6 +93,7 @@ public abstract class TreeNodeBase<T> where T : TreeNodeBase<T>, new()
         }
     }
 
+
     public static T Make(IList<int?> values)
     {
         if (values.Count == 0 || !values[0].HasValue) { return null; }
@@ -112,6 +113,32 @@ public abstract class TreeNodeBase<T> where T : TreeNodeBase<T>, new()
             if (i < values.Count && values[i].HasValue)
             {
                 curr.right = new() { val = values[i].Value };
+                queue.Enqueue(curr.right);
+            }
+            i += 1;
+        }
+        return root;
+    }
+
+    public static T Make(IList<int> values)
+    {
+        if (values.Count == 0) { return null; }
+
+        T root = new() { val = values[0] };
+        var queue = new Queue<T>();
+        queue.Enqueue(root);
+        var i = 1;
+        while (queue.TryDequeue(out var curr) && i < values.Count)
+        {
+            if (i < values.Count)
+            {
+                curr.left = new() { val = values[i] };
+                queue.Enqueue(curr.left);
+            }
+            i += 1;
+            if (i < values.Count)
+            {
+                curr.right = new() { val = values[i] };
                 queue.Enqueue(curr.right);
             }
             i += 1;
