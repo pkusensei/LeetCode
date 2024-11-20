@@ -5,11 +5,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn query_string(s: &str, n: i32) -> bool {
-    if n > 2047 {
-        false
+pub fn base_neg2(mut n: i32) -> String {
+    let mut res = vec![];
+    while n != 0 {
+        res.push(b'0' + (n & 1) as u8);
+        n = -(n >> 1); // same thing as base2 except the minus
+    }
+    res.reverse();
+    if res.is_empty() {
+        "0".into()
     } else {
-        (1..=n).all(|i| s.contains(&format!("{i:b}")))
+        String::from_utf8(res).unwrap()
     }
 }
 
@@ -21,8 +27,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(query_string("0110", 3));
-        debug_assert!(!query_string("0110", 4));
+        debug_assert_eq!(base_neg2(2), "110");
+        debug_assert_eq!(base_neg2(3), "111");
+        debug_assert_eq!(base_neg2(4), "100");
     }
 
     #[test]
