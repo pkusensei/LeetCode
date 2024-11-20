@@ -5,24 +5,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn camel_match(queries: &[&str], pattern: &str) -> Vec<bool> {
-    queries.iter().map(|s| check(s, pattern)).collect()
-}
-
-fn check(s: &str, t: &str) -> bool {
-    let (s, t) = (s.as_bytes(), t.as_bytes());
-    let mut idx = 0;
-    for &b in s.iter() {
-        if b.is_ascii_uppercase() {
-            if t.get(idx) != Some(&b) {
-                return false;
-            }
-            idx += 1;
-        } else if t.get(idx).is_some_and(|&v| v == b) {
-            idx += 1;
+pub fn video_stitching(clips: &mut [[i32; 2]], time: i32) -> i32 {
+    let time = time as usize;
+    clips.sort_unstable();
+    let mut dp = vec![101; 1 + time];
+    dp[0] = 0;
+    for clip in clips.iter() {
+        let [a, b] = [clip[0], clip[1]].map(|v| v as usize);
+        for i in 1 + a..=b.min(time) {
+            dp[i] = dp[i].min(1 + dp[a])
         }
     }
-    idx == t.len()
+    if dp[time] == 101 {
+        -1
+    } else {
+        dp[time]
+    }
 }
 
 #[cfg(test)]
@@ -34,48 +32,40 @@ mod tests {
     #[test]
     fn basics() {
         debug_assert_eq!(
-            camel_match(
-                &[
-                    "FooBar",
-                    "FooBarTest",
-                    "FootBall",
-                    "FrameBuffer",
-                    "ForceFeedBack"
-                ],
-                "FB"
-            ),
-            [true, false, true, true, false]
+            video_stitching(&mut [[0, 2], [4, 6], [8, 10], [1, 9], [1, 5], [5, 9]], 10),
+            3
         );
+        debug_assert_eq!(video_stitching(&mut [[0, 1], [1, 2]], 5), -1);
         debug_assert_eq!(
-            camel_match(
-                &[
-                    "FooBar",
-                    "FooBarTest",
-                    "FootBall",
-                    "FrameBuffer",
-                    "ForceFeedBack"
+            video_stitching(
+                &mut [
+                    [0, 1],
+                    [6, 8],
+                    [0, 2],
+                    [5, 6],
+                    [0, 4],
+                    [0, 3],
+                    [6, 7],
+                    [1, 3],
+                    [4, 7],
+                    [1, 4],
+                    [2, 5],
+                    [2, 6],
+                    [3, 4],
+                    [4, 5],
+                    [5, 7],
+                    [6, 9]
                 ],
-                "FoBa"
+                9
             ),
-            [true, false, true, false, false]
-        );
-        debug_assert_eq!(
-            camel_match(
-                &[
-                    "FooBar",
-                    "FooBarTest",
-                    "FootBall",
-                    "FrameBuffer",
-                    "ForceFeedBack"
-                ],
-                "FoBaT"
-            ),
-            [false, true, false, false, false]
+            3
         );
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(video_stitching(&mut [[0, 4], [2, 8]], 5), 2)
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
