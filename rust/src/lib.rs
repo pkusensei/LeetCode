@@ -5,8 +5,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn divisor_game(n: i32) -> bool {
-    n & 1 == 0
+pub fn longest_arith_seq_length(nums: &[i32]) -> i32 {
+    let n = nums.len();
+    let mut dp = std::collections::HashMap::new();
+    for i1 in 1..n {
+        for i2 in 0..i1 {
+            let d = nums[i2] - nums[i1];
+            let curr = 1 + dp.get(&(i2, d)).copied().unwrap_or(1);
+            dp.insert((i1, d), curr);
+        }
+    }
+    dp.into_values().max().unwrap_or(2)
 }
 
 #[cfg(test)]
@@ -17,12 +26,18 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(divisor_game(2));
-        debug_assert!(!divisor_game(3));
+        debug_assert_eq!(longest_arith_seq_length(&[3, 6, 9, 12]), 4);
+        debug_assert_eq!(longest_arith_seq_length(&[9, 4, 7, 2, 10]), 3);
+        debug_assert_eq!(longest_arith_seq_length(&[20, 1, 15, 3, 10, 5, 8]), 4);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(
+            longest_arith_seq_length(&[75, 12, 29, 77, 29, 84, 63, 44, 79, 59, 10]),
+            3
+        );
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
