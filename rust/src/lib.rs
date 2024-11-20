@@ -5,14 +5,29 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_score_sightseeing_pair(values: &[i32]) -> i32 {
-    let mut res = 0;
-    let mut left = values[0]; // values[i] + i
-    for (i, &v) in values.iter().enumerate().skip(1) {
-        res = res.max(left + v - i as i32); // values[i]+i + values[j]-j
-        left = left.max(v + i as i32);
+pub fn take_characters(s: &str, k: i32) -> i32 {
+    let counts = s.bytes().fold([0; 3], |mut acc, b| {
+        acc[usize::from(b - b'a')] += 1;
+        acc
+    });
+    if counts.iter().any(|&v| v < k) {
+        return -1;
     }
-    res
+    let upper = counts.map(|v| v - k);
+    let mut window = [0; 3];
+    let mut left = 0;
+    let mut len = 0;
+    for (right, b) in s.bytes().enumerate() {
+        window[usize::from(b - b'a')] += 1;
+        if window.iter().zip(upper).all(|(&a, b)| a <= b) {
+            len = len.max(right - left + 1);
+        }
+        while window.iter().zip(upper).any(|(&a, b)| a > b) {
+            window[usize::from(s.as_bytes()[left] - b'a')] -= 1;
+            left += 1;
+        }
+    }
+    (s.len() - len) as i32
 }
 
 #[cfg(test)]
@@ -23,8 +38,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(max_score_sightseeing_pair(&[8, 1, 5, 2, 6]), 11);
-        debug_assert_eq!(max_score_sightseeing_pair(&[1, 2]), 2);
+        debug_assert_eq!(take_characters("aabaaaacaabc", 2), 8);
+        debug_assert_eq!(take_characters("a", 1), -1);
     }
 
     #[test]
