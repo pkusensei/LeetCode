@@ -5,29 +5,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn take_characters(s: &str, k: i32) -> i32 {
-    let counts = s.bytes().fold([0; 3], |mut acc, b| {
-        acc[usize::from(b - b'a')] += 1;
-        acc
-    });
-    if counts.iter().any(|&v| v < k) {
+pub fn smallest_repunit_div_by_k(k: i32) -> i32 {
+    if k & 1 == 0 || k % 5 == 0 {
         return -1;
     }
-    let upper = counts.map(|v| v - k);
-    let mut window = [0; 3];
-    let mut left = 0;
-    let mut len = 0;
-    for (right, b) in s.bytes().enumerate() {
-        window[usize::from(b - b'a')] += 1;
-        if window.iter().zip(upper).all(|(&a, b)| a <= b) {
-            len = len.max(right - left + 1);
+    let mut n = 0;
+    // let mut set = std::collections::HashSet::new();
+    // there can be at most (k-1) rems
+    for len in 1..=k {
+        n = 10 * n + 1;
+        n %= k;
+        if n == 0 {
+            return len;
         }
-        while window.iter().zip(upper).any(|(&a, b)| a > b) {
-            window[usize::from(s.as_bytes()[left] - b'a')] -= 1;
-            left += 1;
-        }
+        // if !set.insert(n) {
+        //     break;
+        // }
     }
-    (s.len() - len) as i32
+    -1
 }
 
 #[cfg(test)]
@@ -38,8 +33,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(take_characters("aabaaaacaabc", 2), 8);
-        debug_assert_eq!(take_characters("a", 1), -1);
+        debug_assert_eq!(smallest_repunit_div_by_k(1), 1);
+        debug_assert_eq!(smallest_repunit_div_by_k(2), -1);
+        debug_assert_eq!(smallest_repunit_div_by_k(3), 3);
     }
 
     #[test]
