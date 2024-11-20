@@ -5,41 +5,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_enclaves(grid: &[&[i32]]) -> i32 {
-    let (rows, cols) = get_dimensions(grid);
-    let (mut count, mut edge) = (0, 0);
-    let mut seen = vec![vec![false; cols]; rows];
-    for (y, r) in grid.iter().enumerate() {
-        for (x, &v) in r.iter().enumerate() {
-            if v == 1 {
-                count += 1;
-                if x == 0 || x == cols - 1 || y == 0 || y == rows - 1 {
-                    edge += bfs(grid, x, y, &mut seen);
-                }
-            }
+pub fn remove_outer_parentheses(s: &str) -> String {
+    let mut left = 0;
+    let mut res = String::new();
+    let mut open = 0;
+    for (right, b) in s.bytes().enumerate() {
+        if b == b'(' {
+            open += 1;
+        } else {
+            open -= 1;
         }
-    }
-    count - edge
-}
-
-fn bfs(grid: &[&[i32]], x: usize, y: usize, seen: &mut [Vec<bool>]) -> i32 {
-    if seen[y][x] {
-        return 0;
-    }
-    seen[y][x] = true;
-    let mut queue = std::collections::VecDeque::from([(x, y)]);
-    let mut res = 0;
-    while let Some((x, y)) = queue.pop_front() {
-        res += 1;
-        for (nx, ny) in neighbors((x, y)) {
-            if grid
-                .get(ny)
-                .is_some_and(|r| r.get(nx).is_some_and(|&v| v == 1))
-                && !seen[ny][nx]
-            {
-                seen[ny][nx] = true;
-                queue.push_back((nx, ny));
-            }
+        if open == 0 {
+            res.push_str(&s[1 + left..right]);
+            left = 1 + right
         }
     }
     res
@@ -53,14 +31,12 @@ mod tests {
 
     #[test]
     fn basics() {
+        debug_assert_eq!(remove_outer_parentheses("(()())(())"), "()()()");
         debug_assert_eq!(
-            num_enclaves(&[&[0, 0, 0, 0], &[1, 0, 1, 0], &[0, 1, 1, 0], &[0, 0, 0, 0]]),
-            3
+            remove_outer_parentheses("(()())(())(()(()))"),
+            "()()()()(())"
         );
-        debug_assert_eq!(
-            num_enclaves(&[&[0, 1, 1, 0], &[0, 0, 1, 0], &[0, 0, 1, 0], &[0, 0, 0, 0]]),
-            0
-        );
+        debug_assert_eq!(remove_outer_parentheses("()()"), "");
     }
 
     #[test]
