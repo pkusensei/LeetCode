@@ -5,24 +5,17 @@ namespace Solution;
 
 public class Solution
 {
-    public int[] NextLargerNodes(ListNode head)
+    public int SumRootToLeaf(TreeNode root)
     {
-        List<int> res = [];
-        Stack<(int idx, int num)> nums = [];
-        var curr = head;
-        var idx = 0;
-        while (curr is not null)
-        {
-            while (nums.TryPeek(out var v) && v.num < curr.val)
-            {
-                nums.Pop();
-                res[v.idx] = curr.val;
-            }
-            nums.Push((idx, curr.val));
-            res.Add(0);
-            curr = curr.next;
-            idx += 1;
-        }
-        return [.. res];
+        if (root is null) { return 0; }
+        return Dfs(root, 0);
+    }
+
+    static int Dfs(TreeNode node, int curr)
+    {
+        if (node is null) { return 0; }
+        curr = (curr << 1) | node.val;
+        if (node.left is null && node.right is null) { return curr; }
+        return Dfs(node.left, curr) + Dfs(node.right, curr);
     }
 }
