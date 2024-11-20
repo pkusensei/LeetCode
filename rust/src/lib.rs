@@ -5,13 +5,42 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn prefixes_div_by5(nums: &[i32]) -> Vec<bool> {
-    let mut res = Vec::with_capacity(nums.len());
-    let mut curr = 0;
-    for &num in nums.iter() {
-        curr = (curr << 1) | num;
-        curr %= 5;
-        res.push(curr == 0);
+pub fn num_enclaves(grid: &[&[i32]]) -> i32 {
+    let (rows, cols) = get_dimensions(grid);
+    let (mut count, mut edge) = (0, 0);
+    let mut seen = vec![vec![false; cols]; rows];
+    for (y, r) in grid.iter().enumerate() {
+        for (x, &v) in r.iter().enumerate() {
+            if v == 1 {
+                count += 1;
+                if x == 0 || x == cols - 1 || y == 0 || y == rows - 1 {
+                    edge += bfs(grid, x, y, &mut seen);
+                }
+            }
+        }
+    }
+    count - edge
+}
+
+fn bfs(grid: &[&[i32]], x: usize, y: usize, seen: &mut [Vec<bool>]) -> i32 {
+    if seen[y][x] {
+        return 0;
+    }
+    seen[y][x] = true;
+    let mut queue = std::collections::VecDeque::from([(x, y)]);
+    let mut res = 0;
+    while let Some((x, y)) = queue.pop_front() {
+        res += 1;
+        for (nx, ny) in neighbors((x, y)) {
+            if grid
+                .get(ny)
+                .is_some_and(|r| r.get(nx).is_some_and(|&v| v == 1))
+                && !seen[ny][nx]
+            {
+                seen[ny][nx] = true;
+                queue.push_back((nx, ny));
+            }
+        }
     }
     res
 }
@@ -24,25 +53,18 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(prefixes_div_by5(&[0, 1, 1]), [true, false, false]);
-        debug_assert_eq!(prefixes_div_by5(&[1, 1, 1]), [false, false, false]);
+        debug_assert_eq!(
+            num_enclaves(&[&[0, 0, 0, 0], &[1, 0, 1, 0], &[0, 1, 1, 0], &[0, 0, 0, 0]]),
+            3
+        );
+        debug_assert_eq!(
+            num_enclaves(&[&[0, 1, 1, 0], &[0, 0, 1, 0], &[0, 0, 1, 0], &[0, 0, 0, 0]]),
+            0
+        );
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(
-            prefixes_div_by5(&[
-                1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0,
-                0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 1
-            ]),
-            [
-                false, false, false, false, false, false, false, false, false, false, false, false,
-                false, false, false, false, false, false, false, false, false, false, false, false,
-                false, false, false, false, false, false, false, true, false, false, true, true,
-                true, true, false
-            ]
-        );
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
