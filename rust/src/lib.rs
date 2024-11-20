@@ -5,24 +5,12 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn smallest_repunit_div_by_k(k: i32) -> i32 {
-    if k & 1 == 0 || k % 5 == 0 {
-        return -1;
+pub fn query_string(s: &str, n: i32) -> bool {
+    if n > 2047 {
+        false
+    } else {
+        (1..=n).all(|i| s.contains(&format!("{i:b}")))
     }
-    let mut n = 0;
-    // let mut set = std::collections::HashSet::new();
-    // there can be at most (k-1) rems
-    for len in 1..=k {
-        n = 10 * n + 1;
-        n %= k;
-        if n == 0 {
-            return len;
-        }
-        // if !set.insert(n) {
-        //     break;
-        // }
-    }
-    -1
 }
 
 #[cfg(test)]
@@ -33,9 +21,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(smallest_repunit_div_by_k(1), 1);
-        debug_assert_eq!(smallest_repunit_div_by_k(2), -1);
-        debug_assert_eq!(smallest_repunit_div_by_k(3), 3);
+        debug_assert!(query_string("0110", 3));
+        debug_assert!(!query_string("0110", 4));
     }
 
     #[test]
