@@ -5,22 +5,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn remove_outer_parentheses(s: &str) -> String {
-    let mut left = 0;
-    let mut res = String::new();
-    let mut open = 0;
-    for (right, b) in s.bytes().enumerate() {
-        if b == b'(' {
-            open += 1;
-        } else {
-            open -= 1;
-        }
-        if open == 0 {
-            res.push_str(&s[1 + left..right]);
-            left = 1 + right
+pub fn camel_match(queries: &[&str], pattern: &str) -> Vec<bool> {
+    queries.iter().map(|s| check(s, pattern)).collect()
+}
+
+fn check(s: &str, t: &str) -> bool {
+    let (s, t) = (s.as_bytes(), t.as_bytes());
+    let mut idx = 0;
+    for &b in s.iter() {
+        if b.is_ascii_uppercase() {
+            if t.get(idx) != Some(&b) {
+                return false;
+            }
+            idx += 1;
+        } else if t.get(idx).is_some_and(|&v| v == b) {
+            idx += 1;
         }
     }
-    res
+    idx == t.len()
 }
 
 #[cfg(test)]
@@ -31,12 +33,45 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(remove_outer_parentheses("(()())(())"), "()()()");
         debug_assert_eq!(
-            remove_outer_parentheses("(()())(())(()(()))"),
-            "()()()()(())"
+            camel_match(
+                &[
+                    "FooBar",
+                    "FooBarTest",
+                    "FootBall",
+                    "FrameBuffer",
+                    "ForceFeedBack"
+                ],
+                "FB"
+            ),
+            [true, false, true, true, false]
         );
-        debug_assert_eq!(remove_outer_parentheses("()()"), "");
+        debug_assert_eq!(
+            camel_match(
+                &[
+                    "FooBar",
+                    "FooBarTest",
+                    "FootBall",
+                    "FrameBuffer",
+                    "ForceFeedBack"
+                ],
+                "FoBa"
+            ),
+            [true, false, true, false, false]
+        );
+        debug_assert_eq!(
+            camel_match(
+                &[
+                    "FooBar",
+                    "FooBarTest",
+                    "FootBall",
+                    "FrameBuffer",
+                    "ForceFeedBack"
+                ],
+                "FoBaT"
+            ),
+            [false, true, false, false, false]
+        );
     }
 
     #[test]
