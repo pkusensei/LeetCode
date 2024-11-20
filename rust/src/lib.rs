@@ -5,27 +5,14 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn can_three_parts_equal_sum(arr: &[i32]) -> bool {
-    let sum: i32 = arr.iter().sum();
-    if sum % 3 > 0 {
-        return false;
+pub fn max_score_sightseeing_pair(values: &[i32]) -> i32 {
+    let mut res = 0;
+    let mut left = values[0]; // values[i] + i
+    for (i, &v) in values.iter().enumerate().skip(1) {
+        res = res.max(left + v - i as i32); // values[i]+i + values[j]-j
+        left = left.max(v + i as i32);
     }
-    let sum = sum / 3;
-    let mut curr = 0;
-    let mut count = 3;
-    let mut idx = 0;
-    for (i, &num) in arr.iter().enumerate() {
-        curr += num;
-        if curr == sum {
-            curr = 0;
-            count -= 1;
-        }
-        if count == 1 {
-            idx = 1 + i;
-            break;
-        }
-    }
-    count == 1 && idx < arr.len() && arr[idx..].iter().sum::<i32>() == sum
+    res
 }
 
 #[cfg(test)]
@@ -36,20 +23,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(can_three_parts_equal_sum(&[
-            0, 2, 1, -6, 6, -7, 9, 1, 2, 0, 1
-        ]));
-        debug_assert!(!can_three_parts_equal_sum(&[
-            0, 2, 1, -6, 6, 7, 9, -1, 2, 0, 1
-        ]));
-        debug_assert!(can_three_parts_equal_sum(&[3, 3, 6, 5, -2, 2, 5, 1, -9, 4]));
+        debug_assert_eq!(max_score_sightseeing_pair(&[8, 1, 5, 2, 6]), 11);
+        debug_assert_eq!(max_score_sightseeing_pair(&[1, 2]), 2);
     }
 
     #[test]
-    fn test() {
-        debug_assert!(can_three_parts_equal_sum(&[0, 0, 0, 0, 0]));
-        debug_assert!(!can_three_parts_equal_sum(&[1, -1, 1, -1]));
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
