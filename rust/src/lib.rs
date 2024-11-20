@@ -5,18 +5,15 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn base_neg2(mut n: i32) -> String {
-    let mut res = vec![];
-    while n != 0 {
-        res.push(b'0' + (n & 1) as u8);
-        n = -(n >> 1); // same thing as base2 except the minus
+pub fn prefixes_div_by5(nums: &[i32]) -> Vec<bool> {
+    let mut res = Vec::with_capacity(nums.len());
+    let mut curr = 0;
+    for &num in nums.iter() {
+        curr = (curr << 1) | num;
+        curr %= 5;
+        res.push(curr == 0);
     }
-    res.reverse();
-    if res.is_empty() {
-        "0".into()
-    } else {
-        String::from_utf8(res).unwrap()
-    }
+    res
 }
 
 #[cfg(test)]
@@ -27,13 +24,25 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(base_neg2(2), "110");
-        debug_assert_eq!(base_neg2(3), "111");
-        debug_assert_eq!(base_neg2(4), "100");
+        debug_assert_eq!(prefixes_div_by5(&[0, 1, 1]), [true, false, false]);
+        debug_assert_eq!(prefixes_div_by5(&[1, 1, 1]), [false, false, false]);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(
+            prefixes_div_by5(&[
+                1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0,
+                0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 1
+            ]),
+            [
+                false, false, false, false, false, false, false, false, false, false, false, false,
+                false, false, false, false, false, false, false, false, false, false, false, false,
+                false, false, false, false, false, false, false, true, false, false, true, true,
+                true, true, false
+            ]
+        );
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
