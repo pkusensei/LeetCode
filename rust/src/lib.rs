@@ -2,81 +2,20 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::VecDeque;
-
 #[allow(unused_imports)]
 use helper::*;
 
-#[derive(Debug, Clone, Default)]
-struct StreamChecker {
-    trie: Trie,
-    max_len: usize,
-    queue: VecDeque<u8>,
-}
-
-impl StreamChecker {
-    fn new(words: Vec<String>) -> Self {
-        let mut s = Self::default();
-        for w in words.into_iter() {
-            s.max_len = s.max_len.max(w.len());
-            s.trie.insert(w.bytes().rev());
-        }
-        s
+pub fn num_moves_stones(a: i32, b: i32, c: i32) -> Vec<i32> {
+    let mut nums = [a, b, c];
+    nums.sort_unstable();
+    let [a, b, c] = nums;
+    if a + 2 == c {
+        vec![0, 0]
+    } else if b - a <= 2 || c - b <= 2 {
+        vec![1, c - a - 2]
+    } else {
+        vec![2, c - a - 2]
     }
-
-    fn query(&mut self, letter: char) -> bool {
-        self.queue.push_front(letter as u8);
-        self.queue.truncate(self.max_len);
-        self.trie.check(self.queue.iter().copied())
-    }
-}
-
-#[derive(Debug, Clone, Default)]
-pub struct Trie {
-    data: [Option<Box<Trie>>; 26],
-    is_end: bool,
-}
-
-impl Trie {
-    const fn new() -> Self {
-        Self {
-            data: [const { None }; 26],
-            is_end: false,
-        }
-    }
-
-    fn insert(&mut self, mut it: impl Iterator<Item = u8>) {
-        if let Some(v) = it.next() {
-            let idx = index(v);
-            if let Some(n) = self.data.get_mut(idx).and_then(|opt| opt.as_mut()) {
-                n.insert(it);
-            } else {
-                let mut node = Box::new(Self::new());
-                node.insert(it);
-                self.data[idx] = Some(node);
-            }
-        } else {
-            self.is_end = true;
-        }
-    }
-
-    fn check(&self, mut it: impl Iterator<Item = u8>) -> bool {
-        if self.is_end {
-            return true;
-        }
-        let Some(idx) = it.next().map(index) else {
-            return false;
-        };
-        if let Some(node) = self.data.get(idx).and_then(|n| n.as_ref()) {
-            node.check(it)
-        } else {
-            false
-        }
-    }
-}
-
-fn index(byte: u8) -> usize {
-    usize::from(byte - b'a')
 }
 
 #[cfg(test)]
@@ -87,19 +26,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        let mut s = StreamChecker::new(vec!["cd".into(), "f".into(), "kl".into()]);
-        debug_assert!(!s.query('a')); // return False
-        debug_assert!(!s.query('b')); // return False
-        debug_assert!(!s.query('c')); // return False
-        debug_assert!(s.query('d')); // return True, because 'cd' is in the wordlist
-        debug_assert!(!s.query('e')); // return False
-        debug_assert!(s.query('f')); // return True, because 'f' is in the wordlist
-        debug_assert!(!s.query('g')); // return False
-        debug_assert!(!s.query('h')); // return False
-        debug_assert!(!s.query('i')); // return False
-        debug_assert!(!s.query('j')); // return False
-        debug_assert!(!s.query('k')); // return False
-        debug_assert!(s.query('l')); // return True, because 'kl' is in the wordlist
+        debug_assert_eq!(num_moves_stones(1, 2, 5), [1, 2]);
+        debug_assert_eq!(num_moves_stones(4, 3, 2), [0, 0]);
+        debug_assert_eq!(num_moves_stones(3, 5, 1), [1, 2]);
     }
 
     #[test]
