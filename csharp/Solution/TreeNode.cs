@@ -93,7 +93,6 @@ public abstract class TreeNodeBase<T> where T : TreeNodeBase<T>, new()
         }
     }
 
-
     public static T Make(IList<int?> values)
     {
         if (values.Count == 0 || !values[0].HasValue) { return null; }

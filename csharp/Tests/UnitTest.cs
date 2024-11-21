@@ -9,26 +9,20 @@ public class UnitTest
 {
     readonly Solution.Solution sol = new();
 
-    (int exp, int act) Run(IList<int?> nums, int c)
-    {
-        var a = TreeNode.Make(nums);
-        var b = sol.MaxAncestorDiff(a);
-        return (c, b);
-    }
-
     [TestMethod]
-    public void TestMethod1()
+    [DataRow("1-2--3--4-5--6--7", "[1,2,5,3,4,6,7]")]
+    [DataRow("1-2--3---4-5--6---7", "[1,2,5,3,null,6,null,4,null,7]")]
+    [DataRow("1-401--349---90--88", "[1,401,null,349,88,90]")]
+    public void TestMethod1(string s, string exp)
     {
-        var t = Run([8, 3, 10, 1, 6, null, 14, null, null, 4, 7, 13], 7);
-        Assert.AreEqual(t.exp, t.act);
+        var a = sol.RecoverFromPreorder(s);
+        Assert.AreEqual(exp, a.ToString());
     }
 
 
     [TestMethod]
     public void TestMethod2()
     {
-        var t = Run([1, null, 2, null, 0, 3], 3);
-        Assert.AreEqual(t.exp, t.act);
     }
 
     [TestMethod]

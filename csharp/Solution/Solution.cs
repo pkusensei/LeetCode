@@ -1,21 +1,42 @@
-﻿using Solution.LList;
+﻿using System.Text;
+using Solution.LList;
 using Solution.Tree;
 
 namespace Solution;
 
 public class Solution
 {
-    public int MaxAncestorDiff(TreeNode root)
+    public TreeNode RecoverFromPreorder(string s)
     {
-        if (root is null) { return 0; }
-        return Dfs(root, root.val, root.val);
-    }
-
-    static int Dfs(TreeNode node, int min, int max)
-    {
-        if (node is null) { return max - min; }
-        min = Math.Min(min, node.val);
-        max = Math.Max(max, node.val);
-        return Math.Max(Math.Max(max - min, Dfs(node.left, min, max)), Dfs(node.right, min, max));
+        var stack = new Stack<TreeNode>();
+        var idx = 0;
+        while (idx < s.Length)
+        {
+            var depth = 0;
+            while (idx < s.Length && s[idx] == '-')
+            {
+                depth += 1;
+                idx += 1;
+            }
+            var sb = new StringBuilder();
+            while (idx < s.Length && s[idx] != '-')
+            {
+                sb.Append(s[idx]);
+                idx += 1;
+            }
+            var num = int.Parse(sb.ToString());
+            TreeNode node = new(num);
+            while (stack.Count > depth)
+            {
+                stack.Pop();
+            }
+            if (stack.TryPeek(out var parent))
+            {
+                if (parent.left is null) { parent.left = node; }
+                else { parent.right = node; }
+            }
+            stack.Push(node);
+        }
+        return stack.Last();
     }
 }
