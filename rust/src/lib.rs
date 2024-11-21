@@ -5,14 +5,56 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn all_cells_dist_order(rows: i32, cols: i32, r_center: i32, c_center: i32) -> Vec<Vec<i32>> {
-    let mut res = vec![];
-    for r in 0..rows {
-        for c in 0..cols {
-            res.push(vec![r, c]);
+pub fn max_sum_two_no_overlap(nums: &[i32], first_len: i32, second_len: i32) -> i32 {
+    let n = nums.len();
+    let [len1, len2] = [first_len, second_len].map(|v| v as usize);
+    let prefix = nums
+        .iter()
+        .fold((Vec::with_capacity(n), 0), |(mut acc, sum), &num| {
+            let sum = sum + num;
+            acc.push(sum);
+            (acc, sum)
+        })
+        .0;
+    let mut res = 0;
+    let mut seen = vec![-1; n];
+    for i1 in 0..=n - len1 {
+        let s1 = if i1 == 0 {
+            prefix[i1 + len1 - 1]
+        } else {
+            prefix[i1 + len1 - 1] - prefix[i1 - 1]
+        };
+        let mut s2 = 0;
+        if i1 >= len2 {
+            for i2 in 0..=i1 - len2 {
+                let temp = {
+                    if seen[i2] >= 0 {
+                        seen[i2]
+                    } else {
+                        seen[i2] = if i2 == 0 {
+                            prefix[i2 + len2 - 1]
+                        } else {
+                            prefix[i2 + len2 - 1] - prefix[i2 - 1]
+                        };
+                        seen[i2]
+                    }
+                };
+                s2 = s2.max(temp);
+            }
         }
+        if i1 + len1 + len2 <= n {
+            for i2 in i1 + len1..=n - len2 {
+                let temp = if seen[i2] >= 0 {
+                    seen[i2]
+                } else {
+                    seen[i2] = prefix[i2 + len2 - 1] - prefix[i2 - 1];
+                    seen[i2]
+                };
+                s2 = s2.max(temp);
+            }
+        }
+        res = res.max(s1 + s2);
     }
-    res.sort_unstable_by_key(|v| v[0].abs_diff(r_center) + v[1].abs_diff(c_center));
     res
 }
 
@@ -24,14 +66,17 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(all_cells_dist_order(1, 2, 0, 0), [[0, 0], [0, 1]]);
         debug_assert_eq!(
-            all_cells_dist_order(2, 2, 0, 1),
-            [[0, 1], [0, 0], [1, 1], [1, 0]]
+            max_sum_two_no_overlap(&[0, 6, 5, 2, 2, 5, 1, 9, 4], 1, 2),
+            20
         );
         debug_assert_eq!(
-            all_cells_dist_order(2, 3, 1, 2),
-            [[1, 2], [0, 2], [1, 1], [0, 1], [1, 0], [0, 0]]
+            max_sum_two_no_overlap(&[3, 8, 1, 3, 2, 1, 8, 9, 0], 3, 2),
+            29
+        );
+        debug_assert_eq!(
+            max_sum_two_no_overlap(&[2, 1, 5, 6, 0, 9, 5, 0, 3, 8], 4, 3),
+            31
         );
     }
 
