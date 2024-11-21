@@ -5,41 +5,14 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_unguarded(m: i32, n: i32, guards: &[[i32; 2]], walls: &[[i32; 2]]) -> i32 {
-    let [rows, cols] = [m, n].map(|v| v as usize);
-    let mut grid = vec![vec![0; cols]; rows];
-    for v in walls.iter().chain(guards.iter()) {
-        let [r, c] = [v[0], v[1]].map(|v| v as usize);
-        grid[r][c] = 1;
-    }
-    for g in guards.iter() {
-        let [r, c] = [g[0], g[1]].map(|v| v as usize);
-        for i in 1 + r..rows {
-            if grid[i][c] == 1 {
-                break;
-            }
-            grid[i][c] = 2;
-        }
-        for i in (0..r).rev() {
-            if grid[i][c] == 1 {
-                break;
-            }
-            grid[i][c] = 2;
-        }
-        for i in 1 + c..cols {
-            if grid[r][i] == 1 {
-                break;
-            }
-            grid[r][i] = 2;
-        }
-        for i in (0..c).rev() {
-            if grid[r][i] == 1 {
-                break;
-            }
-            grid[r][i] = 2;
-        }
-    }
-    grid.into_iter().flatten().filter(|&v| v == 0).count() as i32
+pub fn two_city_sched_cost(costs: &mut [[i32; 2]]) -> i32 {
+    costs.sort_unstable_by_key(|v| v[0] - v[1]);
+    let n = costs.len();
+    costs[..n / 2]
+        .iter()
+        .map(|v| v[0])
+        .chain(costs[n / 2..].iter().map(|v| v[1]))
+        .sum()
 }
 
 #[cfg(test)]
@@ -51,22 +24,37 @@ mod tests {
     #[test]
     fn basics() {
         debug_assert_eq!(
-            count_unguarded(4, 6, &[[0, 0], [1, 1], [2, 3]], &[[0, 1], [2, 2], [1, 4]]),
-            7
+            two_city_sched_cost(&mut [[10, 20], [30, 200], [400, 50], [30, 20]]),
+            110
         );
         debug_assert_eq!(
-            count_unguarded(3, 3, &[[1, 1]], &[[0, 1], [1, 0], [2, 1], [1, 2]]),
-            4
+            two_city_sched_cost(&mut [
+                [259, 770],
+                [448, 54],
+                [926, 667],
+                [184, 139],
+                [840, 118],
+                [577, 469]
+            ]),
+            1859
+        );
+        debug_assert_eq!(
+            two_city_sched_cost(&mut [
+                [515, 563],
+                [451, 713],
+                [537, 709],
+                [343, 819],
+                [855, 779],
+                [457, 60],
+                [650, 359],
+                [631, 42]
+            ]),
+            3086
         );
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(
-            count_unguarded(10, 8, &[[6, 4], [4, 5], [0, 3], [8, 2], [6, 3]], &[[7, 2]]),
-            28
-        );
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
