@@ -5,14 +5,15 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn two_city_sched_cost(costs: &mut [[i32; 2]]) -> i32 {
-    costs.sort_unstable_by_key(|v| v[0] - v[1]);
-    let n = costs.len();
-    costs[..n / 2]
-        .iter()
-        .map(|v| v[0])
-        .chain(costs[n / 2..].iter().map(|v| v[1]))
-        .sum()
+pub fn all_cells_dist_order(rows: i32, cols: i32, r_center: i32, c_center: i32) -> Vec<Vec<i32>> {
+    let mut res = vec![];
+    for r in 0..rows {
+        for c in 0..cols {
+            res.push(vec![r, c]);
+        }
+    }
+    res.sort_unstable_by_key(|v| v[0].abs_diff(r_center) + v[1].abs_diff(c_center));
+    res
 }
 
 #[cfg(test)]
@@ -23,33 +24,14 @@ mod tests {
 
     #[test]
     fn basics() {
+        debug_assert_eq!(all_cells_dist_order(1, 2, 0, 0), [[0, 0], [0, 1]]);
         debug_assert_eq!(
-            two_city_sched_cost(&mut [[10, 20], [30, 200], [400, 50], [30, 20]]),
-            110
+            all_cells_dist_order(2, 2, 0, 1),
+            [[0, 1], [0, 0], [1, 1], [1, 0]]
         );
         debug_assert_eq!(
-            two_city_sched_cost(&mut [
-                [259, 770],
-                [448, 54],
-                [926, 667],
-                [184, 139],
-                [840, 118],
-                [577, 469]
-            ]),
-            1859
-        );
-        debug_assert_eq!(
-            two_city_sched_cost(&mut [
-                [515, 563],
-                [451, 713],
-                [537, 709],
-                [343, 819],
-                [855, 779],
-                [457, 60],
-                [650, 359],
-                [631, 42]
-            ]),
-            3086
+            all_cells_dist_order(2, 3, 1, 2),
+            [[1, 2], [0, 2], [1, 1], [0, 1], [1, 0], [0, 0]]
         );
     }
 
