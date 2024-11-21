@@ -2,60 +2,81 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::VecDeque;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_sum_two_no_overlap(nums: &[i32], first_len: i32, second_len: i32) -> i32 {
-    let n = nums.len();
-    let [len1, len2] = [first_len, second_len].map(|v| v as usize);
-    let prefix = nums
-        .iter()
-        .fold((Vec::with_capacity(n), 0), |(mut acc, sum), &num| {
-            let sum = sum + num;
-            acc.push(sum);
-            (acc, sum)
-        })
-        .0;
-    let mut res = 0;
-    let mut seen = vec![-1; n];
-    for i1 in 0..=n - len1 {
-        let s1 = if i1 == 0 {
-            prefix[i1 + len1 - 1]
-        } else {
-            prefix[i1 + len1 - 1] - prefix[i1 - 1]
-        };
-        let mut s2 = 0;
-        if i1 >= len2 {
-            for i2 in 0..=i1 - len2 {
-                let temp = {
-                    if seen[i2] >= 0 {
-                        seen[i2]
-                    } else {
-                        seen[i2] = if i2 == 0 {
-                            prefix[i2 + len2 - 1]
-                        } else {
-                            prefix[i2 + len2 - 1] - prefix[i2 - 1]
-                        };
-                        seen[i2]
-                    }
-                };
-                s2 = s2.max(temp);
-            }
+#[derive(Debug, Clone, Default)]
+struct StreamChecker {
+    trie: Trie,
+    max_len: usize,
+    queue: VecDeque<u8>,
+}
+
+impl StreamChecker {
+    fn new(words: Vec<String>) -> Self {
+        let mut s = Self::default();
+        for w in words.into_iter() {
+            s.max_len = s.max_len.max(w.len());
+            s.trie.insert(w.bytes().rev());
         }
-        if i1 + len1 + len2 <= n {
-            for i2 in i1 + len1..=n - len2 {
-                let temp = if seen[i2] >= 0 {
-                    seen[i2]
-                } else {
-                    seen[i2] = prefix[i2 + len2 - 1] - prefix[i2 - 1];
-                    seen[i2]
-                };
-                s2 = s2.max(temp);
-            }
-        }
-        res = res.max(s1 + s2);
+        s
     }
-    res
+
+    fn query(&mut self, letter: char) -> bool {
+        self.queue.push_front(letter as u8);
+        self.queue.truncate(self.max_len);
+        self.trie.check(self.queue.iter().copied())
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct Trie {
+    data: [Option<Box<Trie>>; 26],
+    is_end: bool,
+}
+
+impl Trie {
+    const fn new() -> Self {
+        Self {
+            data: [const { None }; 26],
+            is_end: false,
+        }
+    }
+
+    fn insert(&mut self, mut it: impl Iterator<Item = u8>) {
+        if let Some(v) = it.next() {
+            let idx = index(v);
+            if let Some(n) = self.data.get_mut(idx).and_then(|opt| opt.as_mut()) {
+                n.insert(it);
+            } else {
+                let mut node = Box::new(Self::new());
+                node.insert(it);
+                self.data[idx] = Some(node);
+            }
+        } else {
+            self.is_end = true;
+        }
+    }
+
+    fn check(&self, mut it: impl Iterator<Item = u8>) -> bool {
+        if self.is_end {
+            return true;
+        }
+        let Some(idx) = it.next().map(index) else {
+            return false;
+        };
+        if let Some(node) = self.data.get(idx).and_then(|n| n.as_ref()) {
+            node.check(it)
+        } else {
+            false
+        }
+    }
+}
+
+fn index(byte: u8) -> usize {
+    usize::from(byte - b'a')
 }
 
 #[cfg(test)]
@@ -66,18 +87,19 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            max_sum_two_no_overlap(&[0, 6, 5, 2, 2, 5, 1, 9, 4], 1, 2),
-            20
-        );
-        debug_assert_eq!(
-            max_sum_two_no_overlap(&[3, 8, 1, 3, 2, 1, 8, 9, 0], 3, 2),
-            29
-        );
-        debug_assert_eq!(
-            max_sum_two_no_overlap(&[2, 1, 5, 6, 0, 9, 5, 0, 3, 8], 4, 3),
-            31
-        );
+        let mut s = StreamChecker::new(vec!["cd".into(), "f".into(), "kl".into()]);
+        debug_assert!(!s.query('a')); // return False
+        debug_assert!(!s.query('b')); // return False
+        debug_assert!(!s.query('c')); // return False
+        debug_assert!(s.query('d')); // return True, because 'cd' is in the wordlist
+        debug_assert!(!s.query('e')); // return False
+        debug_assert!(s.query('f')); // return True, because 'f' is in the wordlist
+        debug_assert!(!s.query('g')); // return False
+        debug_assert!(!s.query('h')); // return False
+        debug_assert!(!s.query('i')); // return False
+        debug_assert!(!s.query('j')); // return False
+        debug_assert!(!s.query('k')); // return False
+        debug_assert!(s.query('l')); // return True, because 'kl' is in the wordlist
     }
 
     #[test]
