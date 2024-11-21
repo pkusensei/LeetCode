@@ -5,17 +5,41 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn longest_arith_seq_length(nums: &[i32]) -> i32 {
-    let n = nums.len();
-    let mut dp = std::collections::HashMap::new();
-    for i1 in 1..n {
-        for i2 in 0..i1 {
-            let d = nums[i2] - nums[i1];
-            let curr = 1 + dp.get(&(i2, d)).copied().unwrap_or(1);
-            dp.insert((i1, d), curr);
+pub fn count_unguarded(m: i32, n: i32, guards: &[[i32; 2]], walls: &[[i32; 2]]) -> i32 {
+    let [rows, cols] = [m, n].map(|v| v as usize);
+    let mut grid = vec![vec![0; cols]; rows];
+    for v in walls.iter().chain(guards.iter()) {
+        let [r, c] = [v[0], v[1]].map(|v| v as usize);
+        grid[r][c] = 1;
+    }
+    for g in guards.iter() {
+        let [r, c] = [g[0], g[1]].map(|v| v as usize);
+        for i in 1 + r..rows {
+            if grid[i][c] == 1 {
+                break;
+            }
+            grid[i][c] = 2;
+        }
+        for i in (0..r).rev() {
+            if grid[i][c] == 1 {
+                break;
+            }
+            grid[i][c] = 2;
+        }
+        for i in 1 + c..cols {
+            if grid[r][i] == 1 {
+                break;
+            }
+            grid[r][i] = 2;
+        }
+        for i in (0..c).rev() {
+            if grid[r][i] == 1 {
+                break;
+            }
+            grid[r][i] = 2;
         }
     }
-    dp.into_values().max().unwrap_or(2)
+    grid.into_iter().flatten().filter(|&v| v == 0).count() as i32
 }
 
 #[cfg(test)]
@@ -26,16 +50,21 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(longest_arith_seq_length(&[3, 6, 9, 12]), 4);
-        debug_assert_eq!(longest_arith_seq_length(&[9, 4, 7, 2, 10]), 3);
-        debug_assert_eq!(longest_arith_seq_length(&[20, 1, 15, 3, 10, 5, 8]), 4);
+        debug_assert_eq!(
+            count_unguarded(4, 6, &[[0, 0], [1, 1], [2, 3]], &[[0, 1], [2, 2], [1, 4]]),
+            7
+        );
+        debug_assert_eq!(
+            count_unguarded(3, 3, &[[1, 1]], &[[0, 1], [1, 0], [2, 1], [1, 2]]),
+            4
+        );
     }
 
     #[test]
     fn test() {
         debug_assert_eq!(
-            longest_arith_seq_length(&[75, 12, 29, 77, 29, 84, 63, 44, 79, 59, 10]),
-            3
+            count_unguarded(10, 8, &[[6, 4], [4, 5], [0, 3], [8, 2], [6, 3]], &[[7, 2]]),
+            28
         );
     }
 
