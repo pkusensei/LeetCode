@@ -2,24 +2,43 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::{HashSet, VecDeque};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_equal_rows_after_flips(matrix: &[&[i32]]) -> i32 {
-    let mut map = std::collections::HashMap::new();
-    for v in matrix.iter() {
-        let (mut zeros, mut ones) = (vec![], vec![]);
-        for (i, &num) in v.iter().enumerate() {
-            if num == 0 {
-                zeros.push(i);
-            } else {
-                ones.push(i);
+pub fn color_border(mut grid: Vec<Vec<i32>>, row: i32, col: i32, color: i32) -> Vec<Vec<i32>> {
+        let (rows, cols) = get_dimensions(&grid);
+        let [row, col] = [row, col].map(|v| v as usize);
+        let mark = grid[row][col];
+        let mut seen = vec![vec![false; cols]; rows];
+        seen[row][col] = true;
+        let mut front = HashSet::new();
+        let mut queue = VecDeque::from([[row, col]]);
+        while let Some([r, c]) = queue.pop_front() {
+            if r == 0 || r == rows - 1 || c == 0 || c == cols - 1 {
+                front.insert([r, c]);
+            }
+            for (nr, nc) in neighbors((r, c)) {
+                match grid.get(nr).and_then(|row| row.get(nc)) {
+                    None => {
+                        front.insert([r, c]);
+                    }
+                    Some(&v) if v == mark && !seen[nr][nc] => {
+                        queue.push_back([nr, nc]);
+                        seen[nr][nc] = true;
+                    }
+                    Some(&v) if v == mark => (),
+                    _ => {
+                        front.insert([r, c]);
+                    }
+                }
             }
         }
-        *map.entry(zeros).or_insert(0) += 1;
-        *map.entry(ones).or_insert(0) += 1;
-    }
-    map.into_values().max().unwrap_or(1)
+        for [r, c] in front.into_iter() {
+            grid[r][c] = color;
+        }
+        grid
 }
 
 #[cfg(test)]
@@ -30,21 +49,18 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(max_equal_rows_after_flips(&[&[0, 1], &[1, 1]]), 1);
-        debug_assert_eq!(max_equal_rows_after_flips(&[&[0, 1], &[1, 0]]), 2);
         debug_assert_eq!(
-            max_equal_rows_after_flips(&[&[0, 0, 0], &[0, 0, 1], &[1, 1, 0]]),
-            2
+            color_border(vec![vec![1, 1], vec![1, 2]], 0, 0, 3),
+            [[3, 3], [3, 2]]
         );
-        // debug_assert_eq!(color_border(&[&[1, 1], &[1, 2]], 0, 0, 3), [[3, 3], [3, 2]]);
-        // debug_assert_eq!(
-        //     color_border(&[&[1, 2, 2], &[2, 3, 2]], 0, 1, 3),
-        //     [[1, 3, 3], [2, 3, 3]]
-        // );
-        // debug_assert_eq!(
-        //     color_border(&[&[1, 1, 1], &[1, 1, 1], &[1, 1, 1]], 1, 1, 2),
-        //     [[2, 2, 2], [2, 1, 2], [2, 2, 2]]
-        // );
+        debug_assert_eq!(
+            color_border(vec![vec![1, 2, 2], vec![2, 3, 2]], 0, 1, 3),
+            [[1, 3, 3], [2, 3, 3]]
+        );
+        debug_assert_eq!(
+            color_border(vec![vec![1, 1, 1], vec![1, 1, 1], vec![1, 1, 1]], 1, 1, 2),
+            [[2, 2, 2], [2, 1, 2], [2, 2, 2]]
+        );
     }
 
     #[test]
