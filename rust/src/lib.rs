@@ -2,22 +2,64 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::{HashSet, VecDeque};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_uncrossed_lines(nums1: &[i32], nums2: &[i32]) -> i32 {
-    let (n1, n2) = (nums1.len(), nums2.len());
-    let mut dp = vec![vec![0; 1 + n2]; 1 + n1];
-    for i1 in 1..=n1 {
-        for i2 in 1..=n2 {
-            if nums1[i1 - 1] == nums2[i2 - 1] {
-                dp[i1][i2] = 1 + dp[i1 - 1][i2 - 1];
-            } else {
-                dp[i1][i2] = dp[i1 - 1][i2].max(dp[i1][i2 - 1])
+pub fn is_escape_possible(blocked: &[[i32; 2]], source: [i32; 2], target: [i32; 2]) -> bool {
+    let blocks: HashSet<_> = blocked.iter().map(|v| [v[0], v[1]]).collect();
+    bfs(source, target, &blocks) && bfs(target, source, &blocks)
+    // dfs(source, target, &blocks, &mut HashSet::new())
+    //     && dfs(target, source, &blocks, &mut HashSet::new())
+}
+
+const LIMIT: i32 = 1_000_000;
+
+fn bfs(source: [i32; 2], target: [i32; 2], blocks: &HashSet<[i32; 2]>) -> bool {
+    let mut queue = VecDeque::from([source]);
+    let mut seen = HashSet::from([source]);
+    while let Some([x, y]) = queue.pop_front() {
+        for next in [[0, 1], [0, -1], [1, 0], [-1, 0]].map(|[dx, dy]| [dx + x, dy + y]) {
+            if next.iter().any(|v| !(0..LIMIT).contains(v)) {
+                continue;
             }
+            if blocks.contains(&next) || !seen.insert(next) {
+                continue;
+            }
+            if next == target {
+                return true;
+            }
+            queue.push_back(next);
+        }
+        if seen.len() == 20_000 {
+            return true;
         }
     }
-    dp[n1][n2]
+    false
+}
+
+// stack overflow
+fn dfs(
+    source: [i32; 2],
+    target: [i32; 2],
+    blocks: &HashSet<[i32; 2]>,
+    seen: &mut HashSet<[i32; 2]>,
+) -> bool {
+    if source.iter().any(|v| !(0..LIMIT).contains(v)) {
+        return false;
+    }
+    if blocks.contains(&source) || !seen.insert(source) {
+        return false;
+    }
+    if source == target || seen.len() > 20_000 {
+        return true;
+    }
+    let [x, y] = source;
+    dfs([x - 1, y], target, blocks, seen)
+        || dfs([x + 1, y], target, blocks, seen)
+        || dfs([x, y - 1], target, blocks, seen)
+        || dfs([x, y + 1], target, blocks, seen)
 }
 
 #[cfg(test)]
@@ -28,15 +70,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(max_uncrossed_lines(&[1, 4, 2], &[1, 2, 4]), 2);
-        debug_assert_eq!(
-            max_uncrossed_lines(&[2, 5, 1, 2, 5], &[10, 5, 2, 1, 5, 2]),
-            3
-        );
-        debug_assert_eq!(
-            max_uncrossed_lines(&[1, 3, 7, 1, 7, 5], &[1, 9, 2, 5, 1]),
-            2
-        );
+        debug_assert!(!is_escape_possible(&[[0, 1], [1, 0]], [0, 0], [0, 2]));
+        debug_assert!(is_escape_possible(&[], [0, 0], [999999, 999999]));
     }
 
     #[test]
