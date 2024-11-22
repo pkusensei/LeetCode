@@ -10,19 +10,19 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow("1-2--3--4-5--6--7", "[1,2,5,3,4,6,7]")]
-    [DataRow("1-2--3---4-5--6---7", "[1,2,5,3,null,6,null,4,null,7]")]
-    [DataRow("1-401--349---90--88", "[1,401,null,349,88,90]")]
-    public void TestMethod1(string s, string exp)
+    public void TestMethod1()
     {
-        var a = sol.RecoverFromPreorder(s);
-        Assert.AreEqual(exp, a.ToString());
+        var a = TreeNode.Make([4, 1, 6, 0, 2, 5, 7, null, null, null, 3, null, null, null, 8]);
+        var b = sol.BstToGst(a);
+        Assert.AreEqual("[30,36,21,36,35,26,15,null,null,null,33,null,null,null,8]", b.ToString());
     }
-
 
     [TestMethod]
     public void TestMethod2()
     {
+        var a = TreeNode.Make([0, null, 1]);
+        var b = sol.BstToGst(a);
+        Assert.AreEqual("[1,null,1]", b.ToString());
     }
 
     [TestMethod]
