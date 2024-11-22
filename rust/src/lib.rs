@@ -5,17 +5,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_moves_stones(a: i32, b: i32, c: i32) -> Vec<i32> {
-    let mut nums = [a, b, c];
-    nums.sort_unstable();
-    let [a, b, c] = nums;
-    if a + 2 == c {
-        vec![0, 0]
-    } else if b - a <= 2 || c - b <= 2 {
-        vec![1, c - a - 2]
-    } else {
-        vec![2, c - a - 2]
+pub fn max_equal_rows_after_flips(matrix: &[&[i32]]) -> i32 {
+    let mut map = std::collections::HashMap::new();
+    for v in matrix.iter() {
+        let (mut zeros, mut ones) = (vec![], vec![]);
+        for (i, &num) in v.iter().enumerate() {
+            if num == 0 {
+                zeros.push(i);
+            } else {
+                ones.push(i);
+            }
+        }
+        *map.entry(zeros).or_insert(0) += 1;
+        *map.entry(ones).or_insert(0) += 1;
     }
+    map.into_values().max().unwrap_or(1)
 }
 
 #[cfg(test)]
@@ -26,9 +30,21 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(num_moves_stones(1, 2, 5), [1, 2]);
-        debug_assert_eq!(num_moves_stones(4, 3, 2), [0, 0]);
-        debug_assert_eq!(num_moves_stones(3, 5, 1), [1, 2]);
+        debug_assert_eq!(max_equal_rows_after_flips(&[&[0, 1], &[1, 1]]), 1);
+        debug_assert_eq!(max_equal_rows_after_flips(&[&[0, 1], &[1, 0]]), 2);
+        debug_assert_eq!(
+            max_equal_rows_after_flips(&[&[0, 0, 0], &[0, 0, 1], &[1, 1, 0]]),
+            2
+        );
+        // debug_assert_eq!(color_border(&[&[1, 1], &[1, 2]], 0, 0, 3), [[3, 3], [3, 2]]);
+        // debug_assert_eq!(
+        //     color_border(&[&[1, 2, 2], &[2, 3, 2]], 0, 1, 3),
+        //     [[1, 3, 3], [2, 3, 3]]
+        // );
+        // debug_assert_eq!(
+        //     color_border(&[&[1, 1, 1], &[1, 1, 1], &[1, 1, 1]], 1, 1, 2),
+        //     [[2, 2, 2], [2, 1, 2], [2, 2, 2]]
+        // );
     }
 
     #[test]
