@@ -5,11 +5,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_boomerang(points: [[i32; 2]; 3]) -> bool {
-    points[0][0] * (points[1][1] - points[2][1])
-        + points[1][0] * (points[2][1] - points[0][1])
-        + points[2][0] * (points[0][1] - points[1][1])
-        != 0
+pub fn rotate_the_box(grid: &mut [&mut [char]]) -> Vec<Vec<char>> {
+    for row in grid.iter_mut() {
+        for section in row.split_mut(|&ch| ch == '*') {
+            let n = section.len();
+            let count = section.iter().filter(|&&ch| ch == '#').count();
+            section.fill('#');
+            section[..n - count].fill('.');
+        }
+    }
+    let (rows, cols) = get_dimensions(grid);
+    let mut res = vec![vec!['.'; rows]; cols];
+    for r in 0..rows {
+        for c in 0..cols {
+            res[c][r] = grid[rows - 1 - r][c]
+        }
+    }
+    res
 }
 
 #[cfg(test)]
@@ -20,8 +32,29 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(is_boomerang([[1, 1], [2, 3], [3, 2]]));
-        debug_assert!(!is_boomerang([[1, 1], [2, 2], [3, 3]]));
+        debug_assert_eq!(
+            rotate_the_box(&mut [&mut ['#', '.', '#']]),
+            [['.'], ['#'], ['#']]
+        );
+        debug_assert_eq!(
+            rotate_the_box(&mut [&mut ['#', '.', '*', '.'], &mut ['#', '#', '*', '.']]),
+            [['#', '.'], ['#', '#'], ['*', '*'], ['.', '.']]
+        );
+        debug_assert_eq!(
+            rotate_the_box(&mut [
+                &mut ['#', '#', '*', '.', '*', '.'],
+                &mut ['#', '#', '#', '*', '.', '.'],
+                &mut ['#', '#', '#', '.', '#', '.']
+            ]),
+            [
+                ['.', '#', '#'],
+                ['.', '#', '#'],
+                ['#', '#', '*'],
+                ['#', '*', '.'],
+                ['#', '.', '*'],
+                ['#', '.', '.']
+            ]
+        )
     }
 
     #[test]
