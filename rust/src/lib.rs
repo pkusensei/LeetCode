@@ -5,43 +5,33 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-// 1 2 3 4
-// 1 2
-// 4 3
-// 1 2 3 <-> 1 3 4
-// 1 2 4 <-> 2 3 4
-pub fn min_score_triangulation(values: &[i32]) -> i32 {
-    let n = values.len();
-    // dfs(values, 0, n - 1, &mut vec![vec![-1; n]; n])
-    let mut dp = vec![vec![0; n]; n];
-    for len in 2..n {
-        for i1 in 0..n - len {
-            let i2 = i1 + len;
-            dp[i1][i2] = i32::MAX;
-            for k in 1 + i1..i2 {
-                let score = dp[i1][k] + dp[k][i2] + values[i1] * values[k] * values[i2];
-                dp[i1][i2] = dp[i1][i2].min(score);
-            }
+pub fn num_moves_stones_ii(stones: &mut [i32]) -> Vec<i32> {
+    stones.sort_unstable();
+    let n = stones.len();
+    // e.g [1,2,3,7]
+    // move 1 to 4 => [2,3,4,7]
+    // then 2 to 5 => [3,4,5,7] => [4,5,6,7]
+    // i.e always move the first item stones[0]
+    // hence the count is
+    // 1) distance between 1 and 7 => A[n-1]-A[1]-1
+    // 2) minus "free" items => n-3; the 3 are A[0], A[1], and A[n-1]
+    let upper = ((stones[n - 1] - stones[1] - 1) - (n as i32 - 3))
+        .max(stones[n - 2] - stones[0] - n as i32 + 2);
+    let (mut left, mut lower) = (0, n);
+    for (right, &num) in stones.iter().enumerate() {
+        while num - stones[left] >= n as i32 {
+            // The most between left and right is n
+            left += 1;
+        }
+        if num - stones[left] == n as i32 - 2 && right - left + 1 == n - 1 {
+            // window is consecutive && one stone is outside
+            lower = lower.min(2);
+        } else {
+            // move all stones into this window
+            lower = lower.min(n - (right - left + 1));
         }
     }
-    dp[0][n - 1]
-}
-
-fn dfs(values: &[i32], start: usize, end: usize, dp: &mut [Vec<i32>]) -> i32 {
-    let n = end - start + 1;
-    if n < 3 {
-        return 0;
-    }
-    if dp[start][end] > -1 {
-        return dp[start][end];
-    }
-    let mut res = i32::MAX;
-    for k in 1 + start..end {
-        let area = values[start] * values[end] * values[k];
-        res = res.min(area + dfs(values, start, k, dp) + dfs(values, k, end, dp))
-    }
-    dp[start][end] = res;
-    res
+    vec![lower as i32, upper]
 }
 
 #[cfg(test)]
@@ -52,9 +42,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(min_score_triangulation(&[1, 2, 3]), 6);
-        debug_assert_eq!(min_score_triangulation(&[3, 7, 4, 5]), 144);
-        debug_assert_eq!(min_score_triangulation(&[1, 3, 1, 4, 1, 5]), 13);
+        debug_assert_eq!(num_moves_stones_ii(&mut [7, 4, 9]), [1, 2]);
+        debug_assert_eq!(num_moves_stones_ii(&mut [6, 5, 4, 3, 10]), [2, 3]);
     }
 
     #[test]
