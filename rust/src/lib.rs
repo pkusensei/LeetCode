@@ -2,47 +2,38 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::{HashMap, HashSet};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_robot_bounded(instructions: &str) -> bool {
-    let mut rob = Robot::new();
-    let start = rob;
-    for b in instructions.bytes() {
-        rob.step(b);
+pub fn garden_no_adj(n: i32, paths: &[[i32; 2]]) -> Vec<i32> {
+    let graph: HashMap<i32, Vec<i32>> = paths.iter().fold(HashMap::new(), |mut acc, v| {
+        acc.entry(v[0]).or_default().push(v[1]);
+        acc.entry(v[1]).or_default().push(v[0]);
+        acc
+    });
+    let colors = HashSet::from([1, 2, 3, 4]);
+    let mut res = Vec::with_capacity(n as usize);
+    for i in 0..n {
+        let used = graph
+            .get(&(1 + i))
+            .and_then(|v| {
+                v.iter()
+                    .filter_map(|&neighbor| {
+                        if neighbor < 1 + i {
+                            Some(res[neighbor as usize - 1])
+                        } else {
+                            None
+                        }
+                    })
+                    .collect::<HashSet<_>>()
+                    .into()
+            })
+            .unwrap_or_default();
+        res.push(*colors.difference(&used).next().unwrap_or(&1));
     }
-    (rob.x == start.x && rob.y == start.y) || rob.dir != start.dir
-}
-
-#[derive(Debug, Clone, Copy)]
-struct Robot {
-    x: i16,
-    y: i16,
-    dir: Direction,
-}
-
-impl Robot {
-    const fn new() -> Self {
-        Self {
-            x: 0,
-            y: 0,
-            dir: Direction::North,
-        }
-    }
-
-    fn step(&mut self, b: u8) {
-        match b {
-            b'L' => self.dir = self.dir.turn_left(),
-            b'R' => self.dir = self.dir.turn_right(),
-            b'G' => match self.dir {
-                Direction::North => self.y += 1,
-                Direction::West => self.x -= 1,
-                Direction::South => self.y -= 1,
-                Direction::East => self.x += 1,
-            },
-            _ => unreachable!(),
-        }
-    }
+    res
 }
 
 #[cfg(test)]
@@ -53,8 +44,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert!(is_robot_bounded("GGLLGG"));
-        debug_assert!(!is_robot_bounded("GG"));
+        // debug_assert_eq!(garden_no_adj(3, &[[1, 2], [2, 3], [3, 1]]), [3, 4, 2]);
+        // debug_assert_eq!(garden_no_adj(4, &[[1, 2], [3, 4]]), [4, 1, 4, 1]);
+        debug_assert_eq!(
+            garden_no_adj(4, &[[1, 2], [2, 3], [3, 4], [4, 1], [1, 3], [2, 4]]),
+            [4, 3, 2, 1]
+        );
     }
 
     #[test]
