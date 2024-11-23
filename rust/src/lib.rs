@@ -5,33 +5,44 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_moves_stones_ii(stones: &mut [i32]) -> Vec<i32> {
-    stones.sort_unstable();
-    let n = stones.len();
-    // e.g [1,2,3,7]
-    // move 1 to 4 => [2,3,4,7]
-    // then 2 to 5 => [3,4,5,7] => [4,5,6,7]
-    // i.e always move the first item stones[0]
-    // hence the count is
-    // 1) distance between 1 and 7 => A[n-1]-A[1]-1
-    // 2) minus "free" items => n-3; the 3 are A[0], A[1], and A[n-1]
-    let upper = ((stones[n - 1] - stones[1] - 1) - (n as i32 - 3))
-        .max(stones[n - 2] - stones[0] - n as i32 + 2);
-    let (mut left, mut lower) = (0, n);
-    for (right, &num) in stones.iter().enumerate() {
-        while num - stones[left] >= n as i32 {
-            // The most between left and right is n
-            left += 1;
-        }
-        if num - stones[left] == n as i32 - 2 && right - left + 1 == n - 1 {
-            // window is consecutive && one stone is outside
-            lower = lower.min(2);
-        } else {
-            // move all stones into this window
-            lower = lower.min(n - (right - left + 1));
+pub fn is_robot_bounded(instructions: &str) -> bool {
+    let mut rob = Robot::new();
+    let start = rob;
+    for b in instructions.bytes() {
+        rob.step(b);
+    }
+    (rob.x == start.x && rob.y == start.y) || rob.dir != start.dir
+}
+
+#[derive(Debug, Clone, Copy)]
+struct Robot {
+    x: i16,
+    y: i16,
+    dir: Direction,
+}
+
+impl Robot {
+    const fn new() -> Self {
+        Self {
+            x: 0,
+            y: 0,
+            dir: Direction::North,
         }
     }
-    vec![lower as i32, upper]
+
+    fn step(&mut self, b: u8) {
+        match b {
+            b'L' => self.dir = self.dir.turn_left(),
+            b'R' => self.dir = self.dir.turn_right(),
+            b'G' => match self.dir {
+                Direction::North => self.y += 1,
+                Direction::West => self.x -= 1,
+                Direction::South => self.y -= 1,
+                Direction::East => self.x += 1,
+            },
+            _ => unreachable!(),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -42,8 +53,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(num_moves_stones_ii(&mut [7, 4, 9]), [1, 2]);
-        debug_assert_eq!(num_moves_stones_ii(&mut [6, 5, 4, 3, 10]), [2, 3]);
+        debug_assert!(is_robot_bounded("GGLLGG"));
+        debug_assert!(!is_robot_bounded("GG"));
     }
 
     #[test]
