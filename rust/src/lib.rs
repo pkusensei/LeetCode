@@ -2,38 +2,24 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::{HashMap, HashSet};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn garden_no_adj(n: i32, paths: &[[i32; 2]]) -> Vec<i32> {
-    let graph: HashMap<i32, Vec<i32>> = paths.iter().fold(HashMap::new(), |mut acc, v| {
-        acc.entry(v[0]).or_default().push(v[1]);
-        acc.entry(v[1]).or_default().push(v[0]);
-        acc
-    });
-    let colors = HashSet::from([1, 2, 3, 4]);
-    let mut res = Vec::with_capacity(n as usize);
-    for i in 0..n {
-        let used = graph
-            .get(&(1 + i))
-            .and_then(|v| {
-                v.iter()
-                    .filter_map(|&neighbor| {
-                        if neighbor < 1 + i {
-                            Some(res[neighbor as usize - 1])
-                        } else {
-                            None
-                        }
-                    })
-                    .collect::<HashSet<_>>()
-                    .into()
-            })
-            .unwrap_or_default();
-        res.push(*colors.difference(&used).next().unwrap_or(&1));
+pub fn max_matrix_sum(matrix: &[&[i32]]) -> i64 {
+    let count = matrix
+        .iter()
+        .flat_map(|r| r.iter())
+        .filter(|&&v| v < 0)
+        .count();
+    let it = matrix
+        .iter()
+        .flat_map(|v| v.iter().map(|&v| i64::from(v).abs()));
+    if count & 1 == 1 {
+        let min = it.clone().min().unwrap_or(0);
+        it.sum::<i64>() - 2 * min
+    } else {
+        it.sum()
     }
-    res
 }
 
 #[cfg(test)]
@@ -44,16 +30,17 @@ mod tests {
 
     #[test]
     fn basics() {
-        // debug_assert_eq!(garden_no_adj(3, &[[1, 2], [2, 3], [3, 1]]), [3, 4, 2]);
-        // debug_assert_eq!(garden_no_adj(4, &[[1, 2], [3, 4]]), [4, 1, 4, 1]);
-        debug_assert_eq!(
-            garden_no_adj(4, &[[1, 2], [2, 3], [3, 4], [4, 1], [1, 3], [2, 4]]),
-            [4, 3, 2, 1]
-        );
+        debug_assert_eq!(max_matrix_sum(&[&[1, -1], &[-1, 1]]), 4);
+        debug_assert_eq!(max_matrix_sum(&[&[1, 2, 3], &[-1, -2, -3], &[1, 2, 3]]), 16);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(
+            max_matrix_sum(&[&[9, -3, -4], &[-4, -1, -3], &[-6, -3, -3]]),
+            36
+        );
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
