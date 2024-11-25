@@ -5,17 +5,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn last_stone_weight(stones: Vec<i32>) -> i32 {
-    let mut heap = std::collections::BinaryHeap::from(stones);
-    while heap.len() > 1 {
-        let (Some(a), Some(b)) = (heap.pop(), heap.pop()) else {
-            break;
-        };
-        if a != b {
-            heap.push(a.abs_diff(b) as i32);
+pub fn remove_duplicates(s: &str) -> String {
+    let mut stack = vec![];
+    for b in s.bytes() {
+        if stack.last().is_some_and(|&v| v == b) {
+            stack.pop();
+        } else {
+            stack.push(b);
         }
     }
-    heap.pop().unwrap_or(0)
+    String::from_utf8(stack).unwrap()
 }
 
 #[cfg(test)]
@@ -26,8 +25,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(last_stone_weight([2, 7, 4, 1, 8, 1].into()), 1);
-        debug_assert_eq!(last_stone_weight([1].into()), 1);
+        debug_assert_eq!(remove_duplicates("abbaca"), "ca");
+        debug_assert_eq!(remove_duplicates("azxxzy"), "ay");
     }
 
     #[test]
