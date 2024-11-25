@@ -5,21 +5,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_matrix_sum(matrix: &[&[i32]]) -> i64 {
-    let count = matrix
-        .iter()
-        .flat_map(|r| r.iter())
-        .filter(|&&v| v < 0)
-        .count();
-    let it = matrix
-        .iter()
-        .flat_map(|v| v.iter().map(|&v| i64::from(v).abs()));
-    if count & 1 == 1 {
-        let min = it.clone().min().unwrap_or(0);
-        it.sum::<i64>() - 2 * min
-    } else {
-        it.sum()
+pub fn max_sum_after_partitioning(arr: &[i32], k: i32) -> i32 {
+    let (n, k) = (arr.len(), k as usize);
+    let mut dp = vec![0; 1 + n];
+    for len in 1..=n {
+        let mut curr_max = 0;
+        for i in (1..=k).filter(|i| *i <= len) {
+            curr_max = curr_max.max(arr[len.saturating_sub(i)]);
+            dp[len] = dp[len].max(dp[len.saturating_sub(i)] + curr_max * i as i32);
+        }
     }
+    dp[n]
 }
 
 #[cfg(test)]
@@ -30,17 +26,16 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(max_matrix_sum(&[&[1, -1], &[-1, 1]]), 4);
-        debug_assert_eq!(max_matrix_sum(&[&[1, 2, 3], &[-1, -2, -3], &[1, 2, 3]]), 16);
+        debug_assert_eq!(max_sum_after_partitioning(&[1, 15, 7, 9, 2, 5, 10], 3), 84);
+        debug_assert_eq!(
+            max_sum_after_partitioning(&[1, 4, 1, 5, 7, 3, 6, 1, 9, 9, 3], 4),
+            83
+        );
+        debug_assert_eq!(max_sum_after_partitioning(&[1], 1), 1);
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(
-            max_matrix_sum(&[&[9, -3, -4], &[-4, -1, -3], &[-6, -3, -3]]),
-            36
-        );
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
