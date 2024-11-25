@@ -5,16 +5,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn remove_duplicates(s: &str) -> String {
-    let mut stack = vec![];
-    for b in s.bytes() {
-        if stack.last().is_some_and(|&v| v == b) {
-            stack.pop();
-        } else {
-            stack.push(b);
+pub fn longest_str_chain(words: &mut [&str]) -> i32 {
+    let n = words.len();
+    let mut dp = std::collections::HashMap::with_capacity(n);
+    words.sort_unstable_by_key(|s| s.len());
+    let mut res = 1;
+    for s in words.iter() {
+        let mut curr = 1;
+        for skip in 0..s.len() {
+            let short = format!("{}{}", &s[..skip], &s[1 + skip..]);
+            if let Some(&v) = dp.get(short.as_str()) {
+                curr = curr.max(1 + v);
+            }
         }
+        dp.insert(*s, curr);
+        res = res.max(curr);
     }
-    String::from_utf8(stack).unwrap()
+    res
 }
 
 #[cfg(test)]
@@ -25,8 +32,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(remove_duplicates("abbaca"), "ca");
-        debug_assert_eq!(remove_duplicates("azxxzy"), "ay");
+        debug_assert_eq!(
+            longest_str_chain(&mut ["a", "b", "ba", "bca", "bda", "bdca"]),
+            4
+        );
+        debug_assert_eq!(
+            longest_str_chain(&mut ["xbc", "pcxbcf", "xb", "cxbc", "pcxbc"]),
+            5
+        );
+        debug_assert_eq!(longest_str_chain(&mut ["abcd", "dbqca"]), 1);
     }
 
     #[test]
