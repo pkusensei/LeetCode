@@ -2,20 +2,53 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_sum_after_partitioning(arr: &[i32], k: i32) -> i32 {
-    let (n, k) = (arr.len(), k as usize);
-    let mut dp = vec![0; 1 + n];
-    for len in 1..=n {
-        let mut curr_max = 0;
-        for i in (1..=k).filter(|i| *i <= len) {
-            curr_max = curr_max.max(arr[len.saturating_sub(i)]);
-            dp[len] = dp[len].max(dp[len.saturating_sub(i)] + curr_max * i as i32);
+const P: i64 = 127;
+const MOD: i64 = 1_000_000_007;
+
+pub fn longest_dup_substring(s: &str) -> String {
+    let n = s.len();
+    let [mut prefix, mut pows] = [0, 1].map(|_| Vec::with_capacity(n));
+    prefix.push(0);
+    pows.push(1);
+    for b in s.bytes() {
+        prefix.push((prefix.last().unwrap_or(&0) * P + i64::from(b)) % MOD);
+        pows.push((pows.last().unwrap_or(&1) * P) % MOD);
+    }
+
+    let (mut left, mut right) = (0, n);
+    let mut res = "";
+    while left < right {
+        let mid = left + (right - left) / 2;
+        if let Some(v) = check(s, mid, &prefix, pows[mid]) {
+            if v.len() > res.len() {
+                res = v;
+            }
+            left = mid + 1
+        } else {
+            right = mid
         }
     }
-    dp[n]
+    res.to_string()
+}
+
+fn check<'a>(s: &'a str, mid: usize, prefix: &[i64], pow: i64) -> Option<&'a str> {
+    let n = s.len();
+    let mut map = HashMap::new();
+    for i1 in 0..=n - mid {
+        let a = (prefix[i1 + mid] - prefix[i1] * pow).rem_euclid(MOD);
+        if let Some(&i2) = map.get(&a) {
+            if s[i1..i1 + mid] == s[i2..i2 + mid] {
+                return Some(&s[i1..i1 + mid]);
+            }
+        }
+        map.insert(a, i1);
+    }
+    None
 }
 
 #[cfg(test)]
@@ -26,16 +59,18 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(max_sum_after_partitioning(&[1, 15, 7, 9, 2, 5, 10], 3), 84);
-        debug_assert_eq!(
-            max_sum_after_partitioning(&[1, 4, 1, 5, 7, 3, 6, 1, 9, 9, 3], 4),
-            83
-        );
-        debug_assert_eq!(max_sum_after_partitioning(&[1], 1), 1);
+        debug_assert_eq!(longest_dup_substring("banana"), "ana");
+        debug_assert_eq!(longest_dup_substring("abcd"), "");
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(longest_dup_substring("aa"), "a");
+        debug_assert_eq!(
+            longest_dup_substring("nnpxouomcofdjuujloanjimymadkuepightrfodmauhrsy"),
+            "ma"
+        );
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
