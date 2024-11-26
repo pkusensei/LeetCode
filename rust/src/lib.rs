@@ -5,17 +5,15 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_champion(n: i32, edges: &[[i32; 2]]) -> i32 {
-    let mut degs = vec![0; n as usize];
-    for e in edges.iter() {
-        degs[e[1] as usize] += 1;
+pub fn last_stone_weight_ii(stones: &[i32]) -> i32 {
+    let mut dp = std::collections::HashSet::from([0]);
+    for num in stones.iter() {
+        dp = dp
+            .into_iter()
+            .flat_map(|v| [v + num, (v - num).abs()])
+            .collect();
     }
-    let mut it = degs.into_iter().enumerate().filter(|(_i, v)| *v == 0);
-    if let (Some(v), None) = (it.next(), it.next()) {
-        v.0 as i32
-    } else {
-        -1
-    }
+    dp.into_iter().min().unwrap_or(0)
 }
 
 #[cfg(test)]
@@ -26,12 +24,20 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(find_champion(3, &[[0, 1], [1, 2]]), 0);
-        debug_assert_eq!(find_champion(4, &[[0, 2], [1, 3], [1, 2]]), -1);
+        debug_assert_eq!(last_stone_weight_ii(&[2, 7, 4, 1, 8, 1]), 1);
+        debug_assert_eq!(last_stone_weight_ii(&[31, 26, 33, 21, 40]), 5);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(
+            last_stone_weight_ii(&[
+                89, 23, 100, 93, 82, 98, 91, 85, 33, 95, 72, 98, 63, 46, 17, 91, 92, 72, 77, 79,
+                99, 96, 55, 72, 24, 98, 79, 93, 88, 92
+            ]),
+            0
+        );
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
