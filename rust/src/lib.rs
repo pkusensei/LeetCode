@@ -5,23 +5,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn longest_str_chain(words: &mut [&str]) -> i32 {
-    let n = words.len();
-    let mut dp = std::collections::HashMap::with_capacity(n);
-    words.sort_unstable_by_key(|s| s.len());
-    let mut res = 1;
-    for s in words.iter() {
-        let mut curr = 1;
-        for skip in 0..s.len() {
-            let short = format!("{}{}", &s[..skip], &s[1 + skip..]);
-            if let Some(&v) = dp.get(short.as_str()) {
-                curr = curr.max(1 + v);
-            }
-        }
-        dp.insert(*s, curr);
-        res = res.max(curr);
+pub fn find_champion(n: i32, edges: &[[i32; 2]]) -> i32 {
+    let mut degs = vec![0; n as usize];
+    for e in edges.iter() {
+        degs[e[1] as usize] += 1;
     }
-    res
+    let mut it = degs.into_iter().enumerate().filter(|(_i, v)| *v == 0);
+    if let (Some(v), None) = (it.next(), it.next()) {
+        v.0 as i32
+    } else {
+        -1
+    }
 }
 
 #[cfg(test)]
@@ -32,15 +26,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            longest_str_chain(&mut ["a", "b", "ba", "bca", "bda", "bdca"]),
-            4
-        );
-        debug_assert_eq!(
-            longest_str_chain(&mut ["xbc", "pcxbcf", "xb", "cxbc", "pcxbc"]),
-            5
-        );
-        debug_assert_eq!(longest_str_chain(&mut ["abcd", "dbqca"]), 1);
+        debug_assert_eq!(find_champion(3, &[[0, 1], [1, 2]]), 0);
+        debug_assert_eq!(find_champion(4, &[[0, 2], [1, 3], [1, 2]]), -1);
     }
 
     #[test]
