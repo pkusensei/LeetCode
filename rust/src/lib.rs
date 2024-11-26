@@ -5,15 +5,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn last_stone_weight_ii(stones: &[i32]) -> i32 {
-    let mut dp = std::collections::HashSet::from([0]);
-    for num in stones.iter() {
-        dp = dp
-            .into_iter()
-            .flat_map(|v| [v + num, (v - num).abs()])
-            .collect();
+pub fn max_satisfied(customers: &[i32], grumpy: &[i32], minutes: i32) -> i32 {
+    let mut curr = 0;
+    let m = minutes as usize;
+    for (idx, (&c, &g)) in customers.iter().zip(grumpy.iter()).enumerate() {
+        if idx < m {
+            curr += c;
+        } else {
+            curr += c * (1 - g);
+        }
     }
-    dp.into_iter().min().unwrap_or(0)
+    let mut res = curr;
+    let n = customers.len();
+    for idx in 1..=n - m {
+        curr -= customers[idx - 1] * grumpy[idx - 1];
+        curr += customers[idx + m - 1] * grumpy[idx + m - 1];
+        res = res.max(curr)
+    }
+    res
 }
 
 #[cfg(test)]
@@ -24,20 +33,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(last_stone_weight_ii(&[2, 7, 4, 1, 8, 1]), 1);
-        debug_assert_eq!(last_stone_weight_ii(&[31, 26, 33, 21, 40]), 5);
+        debug_assert_eq!(
+            max_satisfied(&[1, 0, 1, 2, 1, 1, 7, 5], &[0, 1, 0, 1, 0, 1, 0, 1], 3),
+            16
+        );
+        debug_assert_eq!(max_satisfied(&[1], &[0], 1), 1);
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(
-            last_stone_weight_ii(&[
-                89, 23, 100, 93, 82, 98, 91, 85, 33, 95, 72, 98, 63, 46, 17, 91, 92, 72, 77, 79,
-                99, 96, 55, 72, 24, 98, 79, 93, 88, 92
-            ]),
-            0
-        );
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
