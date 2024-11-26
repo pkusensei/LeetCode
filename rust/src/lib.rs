@@ -5,24 +5,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_satisfied(customers: &[i32], grumpy: &[i32], minutes: i32) -> i32 {
-    let mut curr = 0;
-    let m = minutes as usize;
-    for (idx, (&c, &g)) in customers.iter().zip(grumpy.iter()).enumerate() {
-        if idx < m {
-            curr += c;
-        } else {
-            curr += c * (1 - g);
+pub fn prev_perm_opt1(mut arr: Vec<i32>) -> Vec<i32> {
+    let Some(i1) =
+        arr.windows(2)
+            .enumerate()
+            .rev()
+            .find_map(|(i, w)| if w[0] > w[1] { Some(i) } else { None })
+    else {
+        return arr;
+    };
+        let mut i2 = 1 + i1;
+        let n = arr.len();
+        for i in 1 + i1..n {
+            if (1 + arr[i2]..arr[i1]).contains(&arr[i]) {
+                i2 = i
+            }
         }
-    }
-    let mut res = curr;
-    let n = customers.len();
-    for idx in 1..=n - m {
-        curr -= customers[idx - 1] * grumpy[idx - 1];
-        curr += customers[idx + m - 1] * grumpy[idx + m - 1];
-        res = res.max(curr)
-    }
-    res
+        arr.swap(i1, i2);
+    arr
 }
 
 #[cfg(test)]
@@ -33,15 +33,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            max_satisfied(&[1, 0, 1, 2, 1, 1, 7, 5], &[0, 1, 0, 1, 0, 1, 0, 1], 3),
-            16
-        );
-        debug_assert_eq!(max_satisfied(&[1], &[0], 1), 1);
+        debug_assert_eq!(prev_perm_opt1(vec![3, 2, 1]), [3, 1, 2]);
+        debug_assert_eq!(prev_perm_opt1(vec![1, 1, 5]), [1, 1, 5]);
+        debug_assert_eq!(prev_perm_opt1(vec![1, 9, 4, 6, 7]), [1, 7, 4, 6, 9]);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(prev_perm_opt1(vec![3, 1, 1, 3]), [1, 3, 1, 3]);
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
