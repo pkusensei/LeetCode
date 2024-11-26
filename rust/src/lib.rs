@@ -5,24 +5,35 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn gcd_of_strings(str1: &str, str2: &str) -> String {
-    let (n1, n2) = (str1.len(), str2.len());
-    let n = n1.min(n2);
-    let mut res = "";
-    for len in 1..=n {
-        if n1 % len > 0 || n2 % len > 0 {
-            continue;
+pub fn add_negabinary(arr1: &mut [i32], arr2: &mut [i32]) -> Vec<i32> {
+    arr1.reverse();
+    arr2.reverse();
+    let mut carry = 0;
+    let n = arr1.len().max(arr2.len());
+    let mut res = vec![];
+    for i in 0..n {
+        if let Some(v) = arr1.get(i) {
+            carry += v;
         }
-        let prefix = &str1[..len];
-        if [str1, str2].into_iter().all(|s| {
-            s.as_bytes()
-                .chunks_exact(len)
-                .all(|w| w == prefix.as_bytes())
-        }) {
-            res = prefix;
+        if let Some(v) = arr2.get(i) {
+            carry += v;
         }
+        res.push(carry & 1);
+        carry = -(carry >> 1);
     }
-    res.into()
+    while carry != 0 {
+        res.push(carry & 1);
+        carry = -(carry >> 1);
+    }
+    while res.last().is_some_and(|&v| v == 0) {
+        res.pop();
+    }
+    if res.is_empty() {
+        vec![0]
+    } else {
+        res.reverse();
+        res
+    }
 }
 
 #[cfg(test)]
@@ -33,9 +44,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(gcd_of_strings("ABCABC", "ABC"), "ABC");
-        debug_assert_eq!(gcd_of_strings("ABABAB", "ABAB"), "AB");
-        debug_assert_eq!(gcd_of_strings("LEET", "CODE"), "");
+        debug_assert_eq!(
+            add_negabinary(&mut [1, 1, 1, 1, 1], &mut [1, 0, 1]),
+            [1, 0, 0, 0, 0]
+        );
+        debug_assert_eq!(add_negabinary(&mut [0], &mut [0]), [0]);
+        debug_assert_eq!(add_negabinary(&mut [0], &mut [1]), [1])
     }
 
     #[test]
