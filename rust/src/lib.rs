@@ -5,30 +5,90 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn shortest_path_binary_matrix(grid: &[&[i32]]) -> i32 {
-    if grid[0][0] == 1 {
-        return -1;
-    }
-    let n = grid.len();
-    let mut seen = vec![vec![false; n]; n];
-    seen[0][0] = true;
-    let mut queue = std::collections::VecDeque::from([(0, 0, 1)]);
-    while let Some((x, y, dist)) = queue.pop_front() {
-        if x == n - 1 && y == n - 1 {
-            return dist;
-        }
-        for (nx, ny) in around(x as i32, y as i32) {
-            if grid
-                .get(ny)
-                .is_some_and(|r| r.get(nx).is_some_and(|&v| v == 0))
-                && !seen[ny][nx]
-            {
-                queue.push_back((nx, ny, 1 + dist));
-                seen[ny][nx] = true;
+pub fn shortest_common_supersequence(str1: &str, str2: &str) -> String {
+    let [s1, s2] = [str1, str2].map(|s| s.as_bytes());
+    let [n1, n2] = [s1, s2].map(|s| s.len());
+    let mut dp = vec![vec![0; 1 + n2]; 1 + n1];
+    for (i1, &b1) in s1.iter().enumerate() {
+        for (i2, &b2) in s2.iter().enumerate() {
+            if b1 == b2 {
+                dp[i1 + 1][i2 + 1] = 1 + dp[i1][i2];
+            } else {
+                dp[i1 + 1][i2 + 1] = dp[i1 + 1][i2].max(dp[i1][i2 + 1]);
             }
         }
     }
-    -1
+    let mut res = vec![];
+    let (mut i1, mut i2) = (n1, n2);
+    while i1 > 0 && i2 > 0 {
+        if s1[i1 - 1] == s2[i2 - 1] {
+            res.push(s1[i1 - 1]);
+            i1 -= 1;
+            i2 -= 1;
+        } else if dp[i1 - 1][i2] > dp[i1][i2 - 1] {
+            res.push(s1[i1 - 1]);
+            i1 -= 1;
+        } else {
+            res.push(s2[i2 - 1]);
+            i2 -= 1;
+        }
+    }
+    if i1 > 0 {
+        res.extend(s1[..i1].iter().rev());
+    }
+    if i2 > 0 {
+        res.extend(s2[..i2].iter().rev());
+    }
+    // let (mut i1, mut i2) = (0, 0);
+    // for b in find_lcs(s1, s2) {
+    //     while i1 < s1.len() && s1[i1] != b {
+    //         res.push(s1[i1]);
+    //         i1 += 1;
+    //     }
+    //     while i2 < s2.len() && s2[i2] != b {
+    //         res.push(s2[i2]);
+    //         i2 += 1;
+    //     }
+    //     res.push(b);
+    //     i1 += 1;
+    //     i2 += 1;
+    // }
+    // if i1 < s1.len() {
+    //     res.extend_from_slice(&s1[i1..]);
+    // }
+    // if i2 < s2.len() {
+    //     res.extend_from_slice(&s2[i2..]);
+    // }
+    String::from_utf8(res).unwrap()
+}
+
+fn find_lcs(s1: &[u8], s2: &[u8]) -> Vec<u8> {
+    let [n1, n2] = [s1, s2].map(|s| s.len());
+    let mut dp = vec![vec![0; 1 + n2]; 1 + n1];
+    for (i1, &b1) in s1.iter().enumerate() {
+        for (i2, &b2) in s2.iter().enumerate() {
+            if b1 == b2 {
+                dp[i1 + 1][i2 + 1] = 1 + dp[i1][i2];
+            } else {
+                dp[i1 + 1][i2 + 1] = dp[i1 + 1][i2].max(dp[i1][i2 + 1]);
+            }
+        }
+    }
+    let mut res = Vec::with_capacity(dp[n1][n2]);
+    let (mut i1, mut i2) = (n1, n2);
+    while i1 > 0 && i2 > 0 {
+        if s1[i1 - 1] == s2[i2 - 1] {
+            res.push(s1[i1 - 1]);
+            i1 -= 1;
+            i2 -= 1;
+        } else if dp[i1 - 1][i2] > dp[i1][i2 - 1] {
+            i1 -= 1;
+        } else {
+            i2 -= 1;
+        }
+    }
+    res.reverse();
+    res
 }
 
 #[cfg(test)]
@@ -39,14 +99,10 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(shortest_path_binary_matrix(&[&[0, 1], &[1, 0]]), 2);
+        debug_assert_eq!(shortest_common_supersequence("abac", "cab"), "cabac");
         debug_assert_eq!(
-            shortest_path_binary_matrix(&[&[0, 0, 0], &[1, 1, 0], &[1, 1, 0]]),
-            4
-        );
-        debug_assert_eq!(
-            shortest_path_binary_matrix(&[&[1, 0, 0], &[1, 1, 0], &[1, 1, 0]]),
-            -1
+            shortest_common_supersequence("aaaaaaaa", "aaaaaaaa"),
+            "aaaaaaaa"
         );
     }
 
