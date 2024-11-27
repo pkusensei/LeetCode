@@ -2,37 +2,61 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::VecDeque;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_submatrix_sum_target(matrix: &[&[i32]], target: i32) -> i32 {
-    let (rows, cols) = get_dimensions(matrix);
-    let mut prefix = Vec::with_capacity(rows);
-    for row in matrix.iter() {
-        let mut curr = Vec::with_capacity(cols);
-        for &num in row.iter() {
-            curr.push(num + curr.last().unwrap_or(&0));
-        }
-        prefix.push(curr);
-    }
-    let mut res = 0;
-    for left in 0..cols {
-        for right in left..cols {
-            let mut map = std::collections::HashMap::from([(0, 1)]);
-            let mut curr = 0;
-            for row in prefix.iter() {
-                curr += row[right];
-                if left > 0 {
-                    curr -= row[left - 1];
+// naive bfs
+pub fn shortest_distance_after_queries(n: i32, queries: &[[i32; 2]]) -> Vec<i32> {
+    let mut dists: Vec<_> = (0..n).collect();
+    let mut graph: Vec<_> = (0..n - 1).map(|i| vec![1 + i]).collect();
+    let mut res = Vec::with_capacity(queries.len());
+    for q in queries {
+        graph[q[0] as usize].push(q[1]);
+        let mut queue = VecDeque::from([(q[0], dists[q[0] as usize])]);
+        let mut seen = vec![false; n as usize];
+        seen[q[0] as usize] = true;
+        while let Some((node, mut dist)) = queue.pop_front() {
+            match dist.cmp(&dists[node as usize]) {
+                std::cmp::Ordering::Less => dists[node as usize] = dist,
+                std::cmp::Ordering::Equal => (),
+                std::cmp::Ordering::Greater => dist = dists[node as usize],
+            }
+            if node == n - 1 {
+                res.push(dist);
+                break;
+            }
+            for &next in graph[node as usize].iter() {
+                if !seen[next as usize] {
+                    seen[next as usize] = true;
+                    queue.push_back((next, 1 + dist));
                 }
-                if let Some(v) = map.get(&(curr - target)) {
-                    res += v;
-                }
-                *map.entry(curr).or_insert(0) += 1;
             }
         }
     }
     res
+}
+
+fn with_dp(n: i32, queries: &[[i32; 2]]) -> Vec<i32> {
+    let n = n as usize;
+    let mut dists: Vec<_> = (0..n).collect();
+    let mut parents: Vec<_> = (1..=n).map(|i| vec![i - 1]).collect();
+    let mut res = Vec::with_capacity(queries.len());
+    for &q in queries.iter() {
+        let [from, to] = q.map(|v| v as usize);
+        parents[to].push(from);
+        if dists[from] + 1 < dists[to] {
+            dists[to] = 1 + dists[from];
+            for tail in 1 + to..n {
+                for &p in parents[tail].iter() {
+                    dists[tail] = dists[tail].min(1 + dists[p]);
+                }
+            }
+        }
+        res.push(dists[n - 1]);
+    }
+    res.into_iter().map(|v| v as i32).collect()
 }
 
 #[cfg(test)]
@@ -43,16 +67,17 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            num_submatrix_sum_target(&[&[0, 1, 0], &[1, 1, 1], &[0, 1, 0]], 0),
-            4
-        );
-        debug_assert_eq!(num_submatrix_sum_target(&[&[1, -1], &[-1, 1]], 0), 5);
-        debug_assert_eq!(num_submatrix_sum_target(&[&[904]], 0), 0);
+        debug_assert_eq!(with_dp(5, &[[2, 4], [0, 2], [0, 4]]), [3, 2, 1]);
+        debug_assert_eq!(with_dp(4, &[[0, 3], [0, 2]]), [1, 1]);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(
+            shortest_distance_after_queries(6, &[[1, 4], [2, 4]]),
+            [3, 3]
+        );
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
