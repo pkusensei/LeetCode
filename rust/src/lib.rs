@@ -5,32 +5,31 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn smallest_subsequence(s: &str) -> String {
-    let mut count = s.bytes().fold([0; 26], |mut acc, b| {
-        acc[usize::from(b - b'a')] += 1;
-        acc
-    });
-    let mut seen = [false; 26];
-    let mut stack = vec![];
-    for b in s.bytes() {
-        let idx = usize::from(b - b'a');
-        count[idx] -= 1;
-        if seen[idx] {
-            continue;
-        }
-        while stack
-            .last()
-            .is_some_and(|&v| v >= b && count[usize::from(v - b'a')] > 0)
-        {
-            let Some(v) = stack.pop() else {
+pub fn duplicate_zeros(arr: &mut [i32]) {
+    let mut dups = 0;
+    let mut len = arr.len();
+    let mut idx = 0;
+    while idx < len - dups {
+        if arr[idx] == 0 {
+            if idx + 1 == len - dups {
+                // Each 0 should be duped
+                // But this one sitting on the last slot avoids duplication
+                // Hence it's only moved over
+                arr[len - 1] = 0;
+                len -= 1;
                 break;
-            };
-            seen[usize::from(v - b'a')] = false;
+            }
+            dups += 1;
         }
-        stack.push(b);
-        seen[idx] = true;
+        idx += 1;
     }
-    String::from_utf8(stack).unwrap()
+    for idx in (0..len - dups).rev() {
+        arr[idx + dups] = arr[idx];
+        if arr[idx] == 0 {
+            dups -= 1;
+            arr[idx + dups] = 0;
+        }
+    }
 }
 
 #[cfg(test)]
@@ -41,8 +40,16 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(smallest_subsequence("bcabc"), "abc");
-        debug_assert_eq!(smallest_subsequence("cbacdcbc"), "acdb");
+        {
+            let arr = &mut [1, 0, 2, 3, 0, 4, 5, 0];
+            duplicate_zeros(arr);
+            debug_assert_eq!(*arr, [1, 0, 0, 2, 3, 0, 0, 4]);
+        }
+        {
+            let arr = &mut [1, 2, 3];
+            duplicate_zeros(arr);
+            debug_assert_eq!(*arr, [1, 2, 3]);
+        }
     }
 
     #[test]
