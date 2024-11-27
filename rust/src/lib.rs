@@ -2,61 +2,35 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashSet;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_tile_possibilities(tiles: &str) -> i32 {
-    let mut res = HashSet::new();
-    backtrack(
-        tiles.as_bytes(),
-        &mut Vec::with_capacity(tiles.len()),
-        &mut res,
-    );
-    res.len() as i32
-}
-
-fn backtrack(tiles: &[u8], curr: &mut Vec<u8>, res: &mut HashSet<Vec<u8>>) {
-    match tiles {
-        [] => {
-            if !curr.is_empty() {
-                res.insert(curr.clone());
-            }
-        }
-        [head, tail @ ..] => {
-            backtrack(tail, curr, res);
-            let n = curr.len();
-            for i in 0..=n {
-                curr.insert(i, *head);
-                backtrack(tail, curr, res);
-                curr.remove(i);
-            }
-        }
-    }
-}
-
-fn with_count(tiles: &str) -> i32 {
-    fn dfs(count: &mut [i32; 26]) -> i32 {
-        let mut res = 0;
-        for i in 0..26 {
-            if count[i] > 0 {
-                count[i] -= 1;
-                // res+1 => use current letter as single length str
-                // res+dfs(count) => dfs to build on current config
-                res += 1 + dfs(count);
-                // backtracking
-                count[i] += 1;
-            }
-        }
-        res
-    }
-
-    let mut count = tiles.bytes().fold([0; 26], |mut acc, b| {
-        acc[usize::from(b - b'A')] += 1;
+pub fn smallest_subsequence(s: &str) -> String {
+    let mut count = s.bytes().fold([0; 26], |mut acc, b| {
+        acc[usize::from(b - b'a')] += 1;
         acc
     });
-    dfs(&mut count)
+    let mut seen = [false; 26];
+    let mut stack = vec![];
+    for b in s.bytes() {
+        let idx = usize::from(b - b'a');
+        count[idx] -= 1;
+        if seen[idx] {
+            continue;
+        }
+        while stack
+            .last()
+            .is_some_and(|&v| v >= b && count[usize::from(v - b'a')] > 0)
+        {
+            let Some(v) = stack.pop() else {
+                break;
+            };
+            seen[usize::from(v - b'a')] = false;
+        }
+        stack.push(b);
+        seen[idx] = true;
+    }
+    String::from_utf8(stack).unwrap()
 }
 
 #[cfg(test)]
@@ -67,9 +41,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(with_count("AAB"), 8);
-        debug_assert_eq!(with_count("AAABBC"), 188);
-        debug_assert_eq!(with_count("V"), 1);
+        debug_assert_eq!(smallest_subsequence("bcabc"), "abc");
+        debug_assert_eq!(smallest_subsequence("cbacdcbc"), "acdb");
     }
 
     #[test]
