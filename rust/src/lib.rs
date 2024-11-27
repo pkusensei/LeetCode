@@ -2,34 +2,37 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::{BinaryHeap, HashMap};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn duplicate_zeros(arr: &mut [i32]) {
-    let mut dups = 0;
-    let mut len = arr.len();
-    let mut idx = 0;
-    while idx < len - dups {
-        if arr[idx] == 0 {
-            if idx + 1 == len - dups {
-                // Each 0 should be duped
-                // But this one sitting on the last slot avoids duplication
-                // Hence it's only moved over
-                arr[len - 1] = 0;
-                len -= 1;
-                break;
-            }
-            dups += 1;
+pub fn largest_vals_from_labels(
+    values: &[i32],
+    labels: &[i32],
+    num_wanted: i32,
+    use_limit: i32,
+) -> i32 {
+    let mut heap: BinaryHeap<_> = values
+        .iter()
+        .zip(labels.iter())
+        .map(|(val, lab)| (*val, *lab))
+        .collect();
+    let mut res = 0;
+    let mut count = HashMap::new();
+    let mut curr = num_wanted;
+    while curr > 0 {
+        let Some((val, lab)) = heap.pop() else {
+            break;
+        };
+        *count.entry(lab).or_insert(0) += 1;
+        if count[&lab] > use_limit {
+            continue;
         }
-        idx += 1;
+        res += val;
+        curr -= 1;
     }
-    for idx in (0..len - dups).rev() {
-        arr[idx + dups] = arr[idx];
-        if arr[idx] == 0 {
-            dups -= 1;
-            arr[idx + dups] = 0;
-        }
-    }
+    res
 }
 
 #[cfg(test)]
@@ -40,16 +43,18 @@ mod tests {
 
     #[test]
     fn basics() {
-        {
-            let arr = &mut [1, 0, 2, 3, 0, 4, 5, 0];
-            duplicate_zeros(arr);
-            debug_assert_eq!(*arr, [1, 0, 0, 2, 3, 0, 0, 4]);
-        }
-        {
-            let arr = &mut [1, 2, 3];
-            duplicate_zeros(arr);
-            debug_assert_eq!(*arr, [1, 2, 3]);
-        }
+        debug_assert_eq!(
+            largest_vals_from_labels(&[5, 4, 3, 2, 1], &[1, 1, 2, 2, 3], 3, 1),
+            9
+        );
+        debug_assert_eq!(
+            largest_vals_from_labels(&[5, 4, 3, 2, 1], &[1, 3, 3, 3, 2], 3, 2),
+            12
+        );
+        debug_assert_eq!(
+            largest_vals_from_labels(&[9, 8, 8, 7, 6], &[0, 0, 0, 1, 1], 3, 1),
+            16
+        );
     }
 
     #[test]
