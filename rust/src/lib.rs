@@ -5,35 +5,34 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn add_negabinary(arr1: &mut [i32], arr2: &mut [i32]) -> Vec<i32> {
-    arr1.reverse();
-    arr2.reverse();
-    let mut carry = 0;
-    let n = arr1.len().max(arr2.len());
-    let mut res = vec![];
-    for i in 0..n {
-        if let Some(v) = arr1.get(i) {
-            carry += v;
+pub fn num_submatrix_sum_target(matrix: &[&[i32]], target: i32) -> i32 {
+    let (rows, cols) = get_dimensions(matrix);
+    let mut prefix = Vec::with_capacity(rows);
+    for row in matrix.iter() {
+        let mut curr = Vec::with_capacity(cols);
+        for &num in row.iter() {
+            curr.push(num + curr.last().unwrap_or(&0));
         }
-        if let Some(v) = arr2.get(i) {
-            carry += v;
+        prefix.push(curr);
+    }
+    let mut res = 0;
+    for left in 0..cols {
+        for right in left..cols {
+            let mut map = std::collections::HashMap::from([(0, 1)]);
+            let mut curr = 0;
+            for row in prefix.iter() {
+                curr += row[right];
+                if left > 0 {
+                    curr -= row[left - 1];
+                }
+                if let Some(v) = map.get(&(curr - target)) {
+                    res += v;
+                }
+                *map.entry(curr).or_insert(0) += 1;
+            }
         }
-        res.push(carry & 1);
-        carry = -(carry >> 1);
     }
-    while carry != 0 {
-        res.push(carry & 1);
-        carry = -(carry >> 1);
-    }
-    while res.last().is_some_and(|&v| v == 0) {
-        res.pop();
-    }
-    if res.is_empty() {
-        vec![0]
-    } else {
-        res.reverse();
-        res
-    }
+    res
 }
 
 #[cfg(test)]
@@ -45,11 +44,11 @@ mod tests {
     #[test]
     fn basics() {
         debug_assert_eq!(
-            add_negabinary(&mut [1, 1, 1, 1, 1], &mut [1, 0, 1]),
-            [1, 0, 0, 0, 0]
+            num_submatrix_sum_target(&[&[0, 1, 0], &[1, 1, 1], &[0, 1, 0]], 0),
+            4
         );
-        debug_assert_eq!(add_negabinary(&mut [0], &mut [0]), [0]);
-        debug_assert_eq!(add_negabinary(&mut [0], &mut [1]), [1])
+        debug_assert_eq!(num_submatrix_sum_target(&[&[1, -1], &[-1, 1]], 0), 5);
+        debug_assert_eq!(num_submatrix_sum_target(&[&[904]], 0), 0);
     }
 
     #[test]
