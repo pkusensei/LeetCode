@@ -2,21 +2,61 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashSet;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_ocurrences(text: &str, first: &str, second: &str) -> Vec<String> {
-        text.split_ascii_whitespace()
-            .collect::<Vec<_>>()
-            .windows(3)
-            .filter_map(|w| {
-                if w[0] == first && w[1] == second {
-                    Some(w[2].to_string())
-                } else {
-                    None
-                }
-            })
-            .collect()
+pub fn num_tile_possibilities(tiles: &str) -> i32 {
+    let mut res = HashSet::new();
+    backtrack(
+        tiles.as_bytes(),
+        &mut Vec::with_capacity(tiles.len()),
+        &mut res,
+    );
+    res.len() as i32
+}
+
+fn backtrack(tiles: &[u8], curr: &mut Vec<u8>, res: &mut HashSet<Vec<u8>>) {
+    match tiles {
+        [] => {
+            if !curr.is_empty() {
+                res.insert(curr.clone());
+            }
+        }
+        [head, tail @ ..] => {
+            backtrack(tail, curr, res);
+            let n = curr.len();
+            for i in 0..=n {
+                curr.insert(i, *head);
+                backtrack(tail, curr, res);
+                curr.remove(i);
+            }
+        }
+    }
+}
+
+fn with_count(tiles: &str) -> i32 {
+    fn dfs(count: &mut [i32; 26]) -> i32 {
+        let mut res = 0;
+        for i in 0..26 {
+            if count[i] > 0 {
+                count[i] -= 1;
+                // res+1 => use current letter as single length str
+                // res+dfs(count) => dfs to build on current config
+                res += 1 + dfs(count);
+                // backtracking
+                count[i] += 1;
+            }
+        }
+        res
+    }
+
+    let mut count = tiles.bytes().fold([0; 26], |mut acc, b| {
+        acc[usize::from(b - b'A')] += 1;
+        acc
+    });
+    dfs(&mut count)
 }
 
 #[cfg(test)]
@@ -27,14 +67,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            find_ocurrences("alice is a good girl she is a good student", "a", "good"),
-            ["girl", "student"]
-        );
-        debug_assert_eq!(
-            find_ocurrences("we will we will rock you", "we", "will"),
-            ["we", "rock"]
-        );
+        debug_assert_eq!(with_count("AAB"), 8);
+        debug_assert_eq!(with_count("AAABBC"), 188);
+        debug_assert_eq!(with_count("V"), 1);
     }
 
     #[test]
