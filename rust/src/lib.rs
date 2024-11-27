@@ -2,37 +2,33 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::{BinaryHeap, HashMap};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn largest_vals_from_labels(
-    values: &[i32],
-    labels: &[i32],
-    num_wanted: i32,
-    use_limit: i32,
-) -> i32 {
-    let mut heap: BinaryHeap<_> = values
-        .iter()
-        .zip(labels.iter())
-        .map(|(val, lab)| (*val, *lab))
-        .collect();
-    let mut res = 0;
-    let mut count = HashMap::new();
-    let mut curr = num_wanted;
-    while curr > 0 {
-        let Some((val, lab)) = heap.pop() else {
-            break;
-        };
-        *count.entry(lab).or_insert(0) += 1;
-        if count[&lab] > use_limit {
-            continue;
-        }
-        res += val;
-        curr -= 1;
+pub fn shortest_path_binary_matrix(grid: &[&[i32]]) -> i32 {
+    if grid[0][0] == 1 {
+        return -1;
     }
-    res
+    let n = grid.len();
+    let mut seen = vec![vec![false; n]; n];
+    seen[0][0] = true;
+    let mut queue = std::collections::VecDeque::from([(0, 0, 1)]);
+    while let Some((x, y, dist)) = queue.pop_front() {
+        if x == n - 1 && y == n - 1 {
+            return dist;
+        }
+        for (nx, ny) in around(x as i32, y as i32) {
+            if grid
+                .get(ny)
+                .is_some_and(|r| r.get(nx).is_some_and(|&v| v == 0))
+                && !seen[ny][nx]
+            {
+                queue.push_back((nx, ny, 1 + dist));
+                seen[ny][nx] = true;
+            }
+        }
+    }
+    -1
 }
 
 #[cfg(test)]
@@ -43,17 +39,14 @@ mod tests {
 
     #[test]
     fn basics() {
+        debug_assert_eq!(shortest_path_binary_matrix(&[&[0, 1], &[1, 0]]), 2);
         debug_assert_eq!(
-            largest_vals_from_labels(&[5, 4, 3, 2, 1], &[1, 1, 2, 2, 3], 3, 1),
-            9
+            shortest_path_binary_matrix(&[&[0, 0, 0], &[1, 1, 0], &[1, 1, 0]]),
+            4
         );
         debug_assert_eq!(
-            largest_vals_from_labels(&[5, 4, 3, 2, 1], &[1, 3, 3, 3, 2], 3, 2),
-            12
-        );
-        debug_assert_eq!(
-            largest_vals_from_labels(&[9, 8, 8, 7, 6], &[0, 0, 0, 1, 1], 3, 1),
-            16
+            shortest_path_binary_matrix(&[&[1, 0, 0], &[1, 1, 0], &[1, 1, 0]]),
+            -1
         );
     }
 
