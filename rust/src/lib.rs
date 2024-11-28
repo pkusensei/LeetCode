@@ -2,26 +2,54 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::BTreeMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn car_pooling(trips: &[[i32; 3]], capacity: i32) -> bool {
-    let map = trips.iter().fold(BTreeMap::new(), |mut acc, v| {
-        let (num, from, to) = (v[0], v[1], v[2]);
-        *acc.entry(from).or_insert(0) += num;
-        *acc.entry(to).or_insert(0) -= num;
-        acc
-    });
-    let mut prefix = 0;
-    for num in map.into_values() {
-        prefix += num;
-        if prefix > capacity {
-            return false;
+pub fn find_in_mountain_array(target: i32, arr: &MountainArray) -> i32 {
+    let n = arr.length();
+    let (mut left, mut right) = (0, n - 1);
+    while left < right {
+        let mid = left + (right - left) / 2;
+        if arr.get(mid) < arr.get(mid + 1) {
+            left = 1 + mid;
+        } else {
+            right = mid;
         }
     }
-    true
+    search(arr, target, 0, left, |a, b| a < b)
+        .or(search(arr, target, left, n - 1, |a, b| a > b))
+        .unwrap_or(-1)
+}
+
+fn search(
+    arr: &MountainArray,
+    target: i32,
+    mut left: i32,
+    mut right: i32,
+    f: fn(i32, i32) -> bool,
+) -> Option<i32> {
+    while left < right {
+        let mid = left + (right - left) / 2;
+        let curr = arr.get(mid);
+        if curr == target {
+            return Some(mid);
+        } else if f(curr, target) {
+            left = 1 + mid;
+        } else {
+            right = mid - 1;
+        }
+    }
+    None
+}
+
+struct MountainArray;
+impl MountainArray {
+    fn get(&self, index: i32) -> i32 {
+        42
+    }
+    fn length(&self) -> i32 {
+        42
+    }
 }
 
 #[cfg(test)]
@@ -31,10 +59,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {
-        debug_assert!(!car_pooling(&[[2, 1, 5], [3, 3, 7]], 4));
-        debug_assert!(car_pooling(&[[2, 1, 5], [3, 3, 7]], 5));
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
