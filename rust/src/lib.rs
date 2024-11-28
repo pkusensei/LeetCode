@@ -2,54 +2,58 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashSet;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_in_mountain_array(target: i32, arr: &MountainArray) -> i32 {
-    let n = arr.length();
-    let (mut left, mut right) = (0, n - 1);
-    while left < right {
-        let mid = left + (right - left) / 2;
-        if arr.get(mid) < arr.get(mid + 1) {
-            left = 1 + mid;
-        } else {
-            right = mid;
-        }
-    }
-    search(arr, target, 0, left, |a, b| a < b)
-        .or(search(arr, target, left, n - 1, |a, b| a > b))
-        .unwrap_or(-1)
+pub fn brace_expansion_ii(expression: &str) -> Vec<String> {
+        let mut res: Vec<_> = parse(expression).into_iter().collect();
+        res.sort_unstable();
+        res
 }
 
-fn search(
-    arr: &MountainArray,
-    target: i32,
-    mut left: i32,
-    mut right: i32,
-    f: fn(i32, i32) -> bool,
-) -> Option<i32> {
-    while left < right {
-        let mid = left + (right - left) / 2;
-        let curr = arr.get(mid);
-        if curr == target {
-            return Some(mid);
-        } else if f(curr, target) {
-            left = 1 + mid;
-        } else {
-            right = mid - 1;
+fn parse(s: &str) -> HashSet<String> {
+    let mut groups = vec![vec![]];
+    let (mut open, mut left) = (0, 0);
+    for (right, ch) in s.char_indices() {
+        match ch {
+            '{' => {
+                if open == 0 {
+                    left = 1 + right;
+                }
+                open += 1;
+            }
+            '}' => {
+                open -= 1;
+                if open == 0 {
+                    if let Some(v) = groups.last_mut() {
+                        v.push(parse(&s[left..right]));
+                    }
+                }
+            }
+            ',' if open == 0 => groups.push(vec![]),
+            _ if open == 0 => {
+                if let Some(v) = groups.last_mut() {
+                    v.push(HashSet::from([ch.to_string()]));
+                }
+            }
+            _ => (),
         }
     }
-    None
-}
-
-struct MountainArray;
-impl MountainArray {
-    fn get(&self, index: i32) -> i32 {
-        42
+    let mut set = HashSet::new();
+    for group in groups.iter() {
+        let mut prev = vec!["".to_string()];
+        for words in group.iter() {
+            let mut temp = vec![];
+            for p in prev.iter() {
+                temp.extend(words.iter().map(|w| format!("{p}{w}")));
+            }
+            prev = temp;
+        }
+        set.extend(prev);
     }
-    fn length(&self) -> i32 {
-        42
-    }
+    set
 }
 
 #[cfg(test)]
@@ -59,7 +63,16 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        debug_assert_eq!(
+            brace_expansion_ii("{a,b}{c,{d,e}}"),
+            ["ac", "ad", "ae", "bc", "bd", "be"]
+        );
+        debug_assert_eq!(
+            brace_expansion_ii("{{a,z},a{b,c},{ab,z}}"),
+            ["a", "ab", "ac", "z"]
+        );
+    }
 
     #[test]
     fn test() {}
