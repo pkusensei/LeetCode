@@ -2,63 +2,53 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::{
-    cmp::Reverse,
-    collections::{BinaryHeap, VecDeque},
-};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_obstacles(grid: &[&[i32]]) -> i32 {
-    let (rows, cols) = get_dimensions(grid);
-    let mut dists = vec![vec![i32::MAX; cols]; rows];
-    dists[0][0] = grid[0][0];
-    // dijkstra(grid, cols, rows, &mut dists)
-    bfs(grid, cols, rows, &mut dists)
-}
-
-fn dijkstra(grid: &[&[i32]], cols: usize, rows: usize, dists: &mut [Vec<i32>]) -> i32 {
-    let mut heap = BinaryHeap::from([(Reverse(grid[0][0]), 0, 0)]);
-    while let Some((Reverse(cost), x, y)) = heap.pop() {
-        if x == cols - 1 && y == rows - 1 {
-            return cost;
+pub fn sample_stats(count: &[i32]) -> Vec<f64> {
+    let mut sum = 0i64;
+    let mut min = i32::MAX;
+    let [mut max, mut mode] = [0; 2];
+    let mut freq = 0;
+    let mut prefix = [0; 256];
+    for (num, &c) in count.iter().enumerate() {
+        if num == 0 {
+            prefix[0] = c
+        } else {
+            prefix[num] = prefix[num - 1] + c;
         }
-        if cost > dists[y][x] {
-            continue;
-        }
-        for (nx, ny) in neighbors((x, y)) {
-            if let Some(v) = grid.get(ny).and_then(|r| r.get(nx)) {
-                let nc = cost + v;
-                if nc < dists[ny][nx] {
-                    heap.push((Reverse(nc), nx, ny));
-                    dists[ny][nx] = nc;
-                }
+        if c > 0 {
+            sum += num as i64 * i64::from(c);
+            min = min.min(num as i32);
+            max = max.max(num as i32);
+            if c > freq {
+                freq = c;
+                mode = num as i32;
             }
         }
     }
-    -1
-}
-
-fn bfs(grid: &[&[i32]], cols: usize, rows: usize, dists: &mut [Vec<i32>]) -> i32 {
-    let mut queue = VecDeque::from([(grid[0][0], 0, 0)]);
-    while let Some((dist, x, y)) = queue.pop_front() {
-        for (nx, ny) in neighbors((x, y)) {
-            if let Some(&v) = grid.get(ny).and_then(|r| r.get(nx)) {
-                if dists[ny][nx] < i32::MAX {
-                    continue;
-                }
-                if v == 1 {
-                    dists[ny][nx] = 1 + dist;
-                    queue.push_back((1 + dist, nx, ny));
-                } else {
-                    dists[ny][nx] = dist;
-                    queue.push_front((dist, nx, ny));
-                }
-            }
-        }
-    }
-    dists[rows - 1][cols - 1]
+    let total = prefix[255];
+    let mean = sum as f64 / f64::from(total);
+    let median = if total & 1 == 1 {
+        let freq = total / 2;
+        let i = prefix.partition_point(|&v| v <= freq);
+        i as f64
+    } else {
+        (0..2)
+            .map(|d| {
+                let f = total / 2 + d;
+                prefix.partition_point(|&v| v < f)
+            })
+            .sum::<usize>() as f64
+            / 2.0
+    };
+    vec![
+        f64::from(min),
+        f64::from(max),
+        mean,
+        median,
+        f64::from(mode),
+    ]
 }
 
 #[cfg(test)]
@@ -67,17 +57,65 @@ mod tests {
 
     use super::*;
 
+    fn run(data: &[i32], exp: [f64; 5]) {
+        let v = sample_stats(data);
+        for (a, b) in v.into_iter().zip(exp) {
+            float_eq(a, b);
+        }
+    }
+
     #[test]
     fn basics() {
-        debug_assert_eq!(minimum_obstacles(&[&[0, 1, 1], &[1, 1, 0], &[1, 1, 0]]), 2);
-        debug_assert_eq!(
-            minimum_obstacles(&[&[0, 1, 0, 0, 0], &[0, 1, 0, 1, 0], &[0, 0, 0, 1, 0]]),
-            0
+        run(
+            &[
+                0, 1, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0,
+            ],
+            [1.00000, 3.00000, 2.37500, 2.50000, 3.00000],
+        );
+        run(
+            &[
+                0, 4, 3, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0,
+            ],
+            [1.00000, 4.00000, 2.18182, 2.00000, 1.00000],
         );
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        run(
+            &[
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0,
+                0, 0, 0, 1, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0,
+            ],
+            [191.00000, 204.00000, 200.40000, 204.00000, 204.00000],
+        );
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
@@ -99,7 +137,7 @@ mod tests {
         T2: Into<f64> + Copy + Debug,
     {
         const EP: f64 = 1e-5;
-        if !((<T1 as Into<f64>>::into(a) - <T2 as Into<f64>>::into(b)).abs() <= EP) {
+        if (<T1 as Into<f64>>::into(a) - <T2 as Into<f64>>::into(b)).abs() > EP {
             dbg!(a, b);
         }
     }
