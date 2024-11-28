@@ -2,58 +2,19 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashSet;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn brace_expansion_ii(expression: &str) -> Vec<String> {
-        let mut res: Vec<_> = parse(expression).into_iter().collect();
-        res.sort_unstable();
-        res
-}
-
-fn parse(s: &str) -> HashSet<String> {
-    let mut groups = vec![vec![]];
-    let (mut open, mut left) = (0, 0);
-    for (right, ch) in s.char_indices() {
-        match ch {
-            '{' => {
-                if open == 0 {
-                    left = 1 + right;
-                }
-                open += 1;
-            }
-            '}' => {
-                open -= 1;
-                if open == 0 {
-                    if let Some(v) = groups.last_mut() {
-                        v.push(parse(&s[left..right]));
-                    }
-                }
-            }
-            ',' if open == 0 => groups.push(vec![]),
-            _ if open == 0 => {
-                if let Some(v) = groups.last_mut() {
-                    v.push(HashSet::from([ch.to_string()]));
-                }
-            }
-            _ => (),
-        }
+pub fn distribute_candies(mut candies: i32, num_people: i32) -> Vec<i32> {
+    let n = num_people as usize;
+    let mut res = vec![0; n];
+    let mut idx = 0;
+    while candies > 0 {
+        res[idx % n] += (1 + idx as i32).min(candies);
+        idx += 1;
+        candies -= idx as i32;
     }
-    let mut set = HashSet::new();
-    for group in groups.iter() {
-        let mut prev = vec!["".to_string()];
-        for words in group.iter() {
-            let mut temp = vec![];
-            for p in prev.iter() {
-                temp.extend(words.iter().map(|w| format!("{p}{w}")));
-            }
-            prev = temp;
-        }
-        set.extend(prev);
-    }
-    set
+    res
 }
 
 #[cfg(test)]
@@ -64,14 +25,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            brace_expansion_ii("{a,b}{c,{d,e}}"),
-            ["ac", "ad", "ae", "bc", "bd", "be"]
-        );
-        debug_assert_eq!(
-            brace_expansion_ii("{{a,z},a{b,c},{ab,z}}"),
-            ["a", "ab", "ac", "z"]
-        );
+        debug_assert_eq!(distribute_candies(7, 4), [1, 2, 3, 1]);
+        debug_assert_eq!(distribute_candies(10, 3), [5, 2, 3]);
     }
 
     #[test]
