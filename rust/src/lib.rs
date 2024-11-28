@@ -5,16 +5,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn distribute_candies(mut candies: i32, num_people: i32) -> Vec<i32> {
-    let n = num_people as usize;
-    let mut res = vec![0; n];
-    let mut idx = 0;
-    while candies > 0 {
-        res[idx % n] += (1 + idx as i32).min(candies);
-        idx += 1;
-        candies -= idx as i32;
+pub fn path_in_zig_zag_tree(label: i32) -> Vec<i32> {
+    match label.ilog2() {
+        0 => vec![1],
+        1 => vec![1, label],
+        n => {
+            let min = 2i32.pow(n - 1);
+            let max = 2i32.pow(n) - 1;
+            let ideal = label / 2;
+            let parent = min + max - ideal;
+            let mut res = path_in_zig_zag_tree(parent);
+            res.push(label);
+            res
+        }
     }
-    res
 }
 
 #[cfg(test)]
@@ -25,8 +29,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(distribute_candies(7, 4), [1, 2, 3, 1]);
-        debug_assert_eq!(distribute_candies(10, 3), [5, 2, 3]);
+        debug_assert_eq!(path_in_zig_zag_tree(14), [1, 3, 4, 14]);
+        debug_assert_eq!(path_in_zig_zag_tree(26), [1, 2, 6, 10, 26]);
     }
 
     #[test]
