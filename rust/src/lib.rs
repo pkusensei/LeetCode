@@ -2,93 +2,63 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::{
+    cmp::Reverse,
+    collections::{BinaryHeap, VecDeque},
+};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn shortest_common_supersequence(str1: &str, str2: &str) -> String {
-    let [s1, s2] = [str1, str2].map(|s| s.as_bytes());
-    let [n1, n2] = [s1, s2].map(|s| s.len());
-    let mut dp = vec![vec![0; 1 + n2]; 1 + n1];
-    for (i1, &b1) in s1.iter().enumerate() {
-        for (i2, &b2) in s2.iter().enumerate() {
-            if b1 == b2 {
-                dp[i1 + 1][i2 + 1] = 1 + dp[i1][i2];
-            } else {
-                dp[i1 + 1][i2 + 1] = dp[i1 + 1][i2].max(dp[i1][i2 + 1]);
-            }
-        }
-    }
-    let mut res = vec![];
-    let (mut i1, mut i2) = (n1, n2);
-    while i1 > 0 && i2 > 0 {
-        if s1[i1 - 1] == s2[i2 - 1] {
-            res.push(s1[i1 - 1]);
-            i1 -= 1;
-            i2 -= 1;
-        } else if dp[i1 - 1][i2] > dp[i1][i2 - 1] {
-            res.push(s1[i1 - 1]);
-            i1 -= 1;
-        } else {
-            res.push(s2[i2 - 1]);
-            i2 -= 1;
-        }
-    }
-    if i1 > 0 {
-        res.extend(s1[..i1].iter().rev());
-    }
-    if i2 > 0 {
-        res.extend(s2[..i2].iter().rev());
-    }
-    // let (mut i1, mut i2) = (0, 0);
-    // for b in find_lcs(s1, s2) {
-    //     while i1 < s1.len() && s1[i1] != b {
-    //         res.push(s1[i1]);
-    //         i1 += 1;
-    //     }
-    //     while i2 < s2.len() && s2[i2] != b {
-    //         res.push(s2[i2]);
-    //         i2 += 1;
-    //     }
-    //     res.push(b);
-    //     i1 += 1;
-    //     i2 += 1;
-    // }
-    // if i1 < s1.len() {
-    //     res.extend_from_slice(&s1[i1..]);
-    // }
-    // if i2 < s2.len() {
-    //     res.extend_from_slice(&s2[i2..]);
-    // }
-    String::from_utf8(res).unwrap()
+pub fn minimum_obstacles(grid: &[&[i32]]) -> i32 {
+    let (rows, cols) = get_dimensions(grid);
+    let mut dists = vec![vec![i32::MAX; cols]; rows];
+    dists[0][0] = grid[0][0];
+    // dijkstra(grid, cols, rows, &mut dists)
+    bfs(grid, cols, rows, &mut dists)
 }
 
-fn find_lcs(s1: &[u8], s2: &[u8]) -> Vec<u8> {
-    let [n1, n2] = [s1, s2].map(|s| s.len());
-    let mut dp = vec![vec![0; 1 + n2]; 1 + n1];
-    for (i1, &b1) in s1.iter().enumerate() {
-        for (i2, &b2) in s2.iter().enumerate() {
-            if b1 == b2 {
-                dp[i1 + 1][i2 + 1] = 1 + dp[i1][i2];
-            } else {
-                dp[i1 + 1][i2 + 1] = dp[i1 + 1][i2].max(dp[i1][i2 + 1]);
+fn dijkstra(grid: &[&[i32]], cols: usize, rows: usize, dists: &mut [Vec<i32>]) -> i32 {
+    let mut heap = BinaryHeap::from([(Reverse(grid[0][0]), 0, 0)]);
+    while let Some((Reverse(cost), x, y)) = heap.pop() {
+        if x == cols - 1 && y == rows - 1 {
+            return cost;
+        }
+        if cost > dists[y][x] {
+            continue;
+        }
+        for (nx, ny) in neighbors((x, y)) {
+            if let Some(v) = grid.get(ny).and_then(|r| r.get(nx)) {
+                let nc = cost + v;
+                if nc < dists[ny][nx] {
+                    heap.push((Reverse(nc), nx, ny));
+                    dists[ny][nx] = nc;
+                }
             }
         }
     }
-    let mut res = Vec::with_capacity(dp[n1][n2]);
-    let (mut i1, mut i2) = (n1, n2);
-    while i1 > 0 && i2 > 0 {
-        if s1[i1 - 1] == s2[i2 - 1] {
-            res.push(s1[i1 - 1]);
-            i1 -= 1;
-            i2 -= 1;
-        } else if dp[i1 - 1][i2] > dp[i1][i2 - 1] {
-            i1 -= 1;
-        } else {
-            i2 -= 1;
+    -1
+}
+
+fn bfs(grid: &[&[i32]], cols: usize, rows: usize, dists: &mut [Vec<i32>]) -> i32 {
+    let mut queue = VecDeque::from([(grid[0][0], 0, 0)]);
+    while let Some((dist, x, y)) = queue.pop_front() {
+        for (nx, ny) in neighbors((x, y)) {
+            if let Some(&v) = grid.get(ny).and_then(|r| r.get(nx)) {
+                if dists[ny][nx] < i32::MAX {
+                    continue;
+                }
+                if v == 1 {
+                    dists[ny][nx] = 1 + dist;
+                    queue.push_back((1 + dist, nx, ny));
+                } else {
+                    dists[ny][nx] = dist;
+                    queue.push_front((dist, nx, ny));
+                }
+            }
         }
     }
-    res.reverse();
-    res
+    dists[rows - 1][cols - 1]
 }
 
 #[cfg(test)]
@@ -99,10 +69,10 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(shortest_common_supersequence("abac", "cab"), "cabac");
+        debug_assert_eq!(minimum_obstacles(&[&[0, 1, 1], &[1, 1, 0], &[1, 1, 0]]), 2);
         debug_assert_eq!(
-            shortest_common_supersequence("aaaaaaaa", "aaaaaaaa"),
-            "aaaaaaaa"
+            minimum_obstacles(&[&[0, 1, 0, 0, 0], &[0, 1, 0, 1, 0], &[0, 0, 0, 1, 0]]),
+            0
         );
     }
 
