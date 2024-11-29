@@ -5,20 +5,68 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn path_in_zig_zag_tree(label: i32) -> Vec<i32> {
-    match label.ilog2() {
-        0 => vec![1],
-        1 => vec![1, label],
-        n => {
-            let min = 2i32.pow(n - 1);
-            let max = 2i32.pow(n) - 1;
-            let ideal = label / 2;
-            let parent = min + max - ideal;
-            let mut res = path_in_zig_zag_tree(parent);
-            res.push(label);
-            res
+pub fn min_height_shelves(books: &[[i32; 2]], shelf_width: i32) -> i32 {
+    let n = books.len();
+    let mut dp = vec![i32::MAX; 1 + n];
+    dp[0] = 0;
+    for i1 in 1..=n {
+        let mut width = 0;
+        let mut height = 0;
+        for i2 in (1..=i1).rev() {
+            width += books[i2 - 1][0];
+            if width > shelf_width {
+                break;
+            }
+            height = height.max(books[i2 - 1][1]);
+            dp[i1] = dp[i1].min(dp[i2 - 1] + height)
         }
     }
+    dp[n]
+    // dfs(
+    //     books,
+    //     shelf_width,
+    //     0,
+    //     shelf_width,
+    //     0,
+    //     &mut vec![vec![0; 1 + shelf_width as usize]; n],
+    // )
+}
+
+fn dfs(
+    books: &[[i32; 2]],
+    shelf_width: i32,
+    idx: usize,
+    available: i32,
+    height: i32,
+    dp: &mut [Vec<i32>],
+) -> i32 {
+    if idx == books.len() {
+        return height;
+    }
+    if dp[idx][available as usize] > 0 {
+        return dp[idx][available as usize];
+    }
+    let mut res = height
+        + dfs(
+            books,
+            shelf_width,
+            1 + idx,
+            shelf_width - books[idx][0],
+            books[idx][1],
+            dp,
+        );
+    if available >= books[idx][0] {
+        res = res.min(dfs(
+            books,
+            shelf_width,
+            1 + idx,
+            available - books[idx][0],
+            height.max(books[idx][1]),
+            dp,
+        ));
+    }
+    dp[idx][available as usize] = res;
+    res
 }
 
 #[cfg(test)]
@@ -29,8 +77,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(path_in_zig_zag_tree(14), [1, 3, 4, 14]);
-        debug_assert_eq!(path_in_zig_zag_tree(26), [1, 2, 6, 10, 26]);
+        debug_assert_eq!(
+            min_height_shelves(&[[1, 1], [2, 3], [2, 3], [1, 1], [1, 1], [1, 1], [1, 2]], 4),
+            6
+        );
+        debug_assert_eq!(min_height_shelves(&[[1, 3], [2, 4], [3, 2]], 6), 4);
     }
 
     #[test]
