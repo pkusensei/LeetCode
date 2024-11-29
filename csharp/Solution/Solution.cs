@@ -6,22 +6,44 @@ namespace Solution;
 
 public class Solution
 {
-    public TreeNode SufficientSubset(TreeNode root, int limit)
+    public bool ParseBoolExpr(string expression)
     {
-        var n = Dfs(root, 0, limit);
-        if (n < limit) { return null; }
-        return root;
-    }
-
-    static int Dfs(TreeNode node, int curr, int limit)
-    {
-        if (node is null) { return int.MinValue; }
-        var sum = node.val + curr;
-        if (node.left is null && node.right is null) { return sum; }
-        var left = Dfs(node.left, sum, limit);
-        var right = Dfs(node.right, sum, limit);
-        node.left = left < limit ? null : node.left;
-        node.right = right < limit ? null : node.right;
-        return Math.Max(left, right);
+        Stack<char> st = [];
+        foreach (var ch in expression)
+        {
+            switch (ch)
+            {
+                case '&':
+                case '|':
+                case '!':
+                case 't':
+                case 'f':
+                    st.Push(ch);
+                    break;
+                case ')':
+                    List<bool> vals = [];
+                    while (st.TryPeek(out var v) && char.IsLower(v))
+                    {
+                        vals.Add(st.Pop() == 't');
+                    }
+                    switch (st.Pop())
+                    {
+                        case '!':
+                            st.Push(vals.Single() ? 'f' : 't');
+                            break;
+                        case '&':
+                            st.Push(vals.All(b => b) ? 't' : 'f');
+                            break;
+                        case '|':
+                            st.Push(vals.Any(b => b) ? 't' : 'f');
+                            break;
+                        default: break;
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+        return st.Single() == 't';
     }
 }
