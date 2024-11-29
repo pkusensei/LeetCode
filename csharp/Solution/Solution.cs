@@ -6,44 +6,32 @@ namespace Solution;
 
 public class Solution
 {
-    public bool ParseBoolExpr(string expression)
+    public IList<TreeNode> DelNodes(TreeNode root, int[] to_delete)
     {
-        Stack<char> st = [];
-        foreach (var ch in expression)
+        var res = Dfs(root, to_delete).tree;
+        if (!to_delete.Contains(root.val)) { res.Add(root); }
+        return res;
+    }
+
+    static (TreeNode node, List<TreeNode> tree) Dfs(TreeNode node, int[] dels)
+    {
+        if (node is null) { return (null, null); }
+        List<TreeNode> res = [];
+        var left = Dfs(node.left, dels);
+        var right = Dfs(node.right, dels);
+        if (left.tree is not null) { res.AddRange(left.tree); }
+        if (right.tree is not null) { res.AddRange(right.tree); }
+        if (dels.Contains(node.val))
         {
-            switch (ch)
-            {
-                case '&':
-                case '|':
-                case '!':
-                case 't':
-                case 'f':
-                    st.Push(ch);
-                    break;
-                case ')':
-                    List<bool> vals = [];
-                    while (st.TryPeek(out var v) && char.IsLower(v))
-                    {
-                        vals.Add(st.Pop() == 't');
-                    }
-                    switch (st.Pop())
-                    {
-                        case '!':
-                            st.Push(vals.Single() ? 'f' : 't');
-                            break;
-                        case '&':
-                            st.Push(vals.All(b => b) ? 't' : 'f');
-                            break;
-                        case '|':
-                            st.Push(vals.Any(b => b) ? 't' : 'f');
-                            break;
-                        default: break;
-                    }
-                    break;
-                default:
-                    break;
-            }
+            if (left.node is not null) { res.Add(left.node); }
+            if (right.node is not null) { res.Add(right.node); }
+            return (null, res);
         }
-        return st.Single() == 't';
+        else
+        {
+            node.left = left.node;
+            node.right = right.node;
+            return (node, res);
+        }
     }
 }
