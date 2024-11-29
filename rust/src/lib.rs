@@ -5,11 +5,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn corp_flight_bookings(bookings: &[[i32; 3]], n: i32) -> Vec<i32> {
-    let mut res = vec![0; n as usize];
-    for b in bookings.iter() {
-        for idx in (b[0]..=b[1]).map(|v| v as usize - 1) {
-            res[idx] += b[2];
+pub fn max_depth_after_split(seq: &str) -> Vec<i32> {
+    let mut res = Vec::with_capacity(seq.len());
+    let mut depth = 0;
+    for b in seq.bytes() {
+        if b == b'(' {
+            res.push(depth & 1);
+            depth += 1;
+        } else {
+            depth -= 1;
+            res.push(depth & 1);
         }
     }
     res
@@ -23,11 +28,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            corp_flight_bookings(&[[1, 2, 10], [2, 3, 20], [2, 5, 25]], 5),
-            [10, 55, 45, 25, 25]
-        );
-        debug_assert_eq!(corp_flight_bookings(&[[1, 2, 10], [2, 2, 15]], 2), [10, 25]);
+        debug_assert_eq!(max_depth_after_split("(()())"), [0, 1, 1, 1, 1, 0]);
+        debug_assert_eq!(max_depth_after_split("()(())()"), [0, 0, 0, 1, 1, 0, 0, 0]);
     }
 
     #[test]
