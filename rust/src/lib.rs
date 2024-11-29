@@ -2,36 +2,17 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::{cmp::Reverse, collections::BinaryHeap};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_time(grid: &[&[i32]]) -> i32 {
-    if grid[0][1] > 1 && grid[1][0] > 1 {
-        return -1;
-    }
-    let (rows, cols) = get_dimensions(grid);
-    let mut heap = BinaryHeap::from([(Reverse(0), 0, 0)]);
-    let mut seen = vec![vec![false; cols]; rows];
-    seen[0][0] = true;
-    while let Some((Reverse(t), x, y)) = heap.pop() {
-        if x == cols - 1 && y == rows - 1 {
-            return t;
-        }
-        for (nx, ny) in neighbors((x, y)) {
-            if let Some(&v) = grid.get(ny).and_then(|r| r.get(nx)) {
-                if seen[ny][nx] {
-                    continue;
-                }
-                seen[ny][nx] = true;
-                let wait = (v - (1 + t)) & 1;
-                let time = (1 + t).max(v + wait);
-                heap.push((Reverse(time), nx, ny));
-            }
+pub fn corp_flight_bookings(bookings: &[[i32; 3]], n: i32) -> Vec<i32> {
+    let mut res = vec![0; n as usize];
+    for b in bookings.iter() {
+        for idx in (b[0]..=b[1]).map(|v| v as usize - 1) {
+            res[idx] += b[2];
         }
     }
-    -1
+    res
 }
 
 #[cfg(test)]
@@ -43,10 +24,10 @@ mod tests {
     #[test]
     fn basics() {
         debug_assert_eq!(
-            minimum_time(&[&[0, 1, 3, 2], &[5, 1, 2, 5], &[4, 3, 8, 6]]),
-            7
+            corp_flight_bookings(&[[1, 2, 10], [2, 3, 20], [2, 5, 25]], 5),
+            [10, 55, 45, 25, 25]
         );
-        debug_assert_eq!(minimum_time(&[&[0, 2, 4], &[3, 2, 1], &[1, 0, 4]]), -1)
+        debug_assert_eq!(corp_flight_bookings(&[[1, 2, 10], [2, 2, 15]], 2), [10, 25]);
     }
 
     #[test]
