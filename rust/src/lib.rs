@@ -2,71 +2,36 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::{cmp::Reverse, collections::BinaryHeap};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_height_shelves(books: &[[i32; 2]], shelf_width: i32) -> i32 {
-    let n = books.len();
-    let mut dp = vec![i32::MAX; 1 + n];
-    dp[0] = 0;
-    for i1 in 1..=n {
-        let mut width = 0;
-        let mut height = 0;
-        for i2 in (1..=i1).rev() {
-            width += books[i2 - 1][0];
-            if width > shelf_width {
-                break;
+pub fn minimum_time(grid: &[&[i32]]) -> i32 {
+    if grid[0][1] > 1 && grid[1][0] > 1 {
+        return -1;
+    }
+    let (rows, cols) = get_dimensions(grid);
+    let mut heap = BinaryHeap::from([(Reverse(0), 0, 0)]);
+    let mut seen = vec![vec![false; cols]; rows];
+    seen[0][0] = true;
+    while let Some((Reverse(t), x, y)) = heap.pop() {
+        if x == cols - 1 && y == rows - 1 {
+            return t;
+        }
+        for (nx, ny) in neighbors((x, y)) {
+            if let Some(&v) = grid.get(ny).and_then(|r| r.get(nx)) {
+                if seen[ny][nx] {
+                    continue;
+                }
+                seen[ny][nx] = true;
+                let wait = (v - (1 + t)) & 1;
+                let time = (1 + t).max(v + wait);
+                heap.push((Reverse(time), nx, ny));
             }
-            height = height.max(books[i2 - 1][1]);
-            dp[i1] = dp[i1].min(dp[i2 - 1] + height)
         }
     }
-    dp[n]
-    // dfs(
-    //     books,
-    //     shelf_width,
-    //     0,
-    //     shelf_width,
-    //     0,
-    //     &mut vec![vec![0; 1 + shelf_width as usize]; n],
-    // )
-}
-
-fn dfs(
-    books: &[[i32; 2]],
-    shelf_width: i32,
-    idx: usize,
-    available: i32,
-    height: i32,
-    dp: &mut [Vec<i32>],
-) -> i32 {
-    if idx == books.len() {
-        return height;
-    }
-    if dp[idx][available as usize] > 0 {
-        return dp[idx][available as usize];
-    }
-    let mut res = height
-        + dfs(
-            books,
-            shelf_width,
-            1 + idx,
-            shelf_width - books[idx][0],
-            books[idx][1],
-            dp,
-        );
-    if available >= books[idx][0] {
-        res = res.min(dfs(
-            books,
-            shelf_width,
-            1 + idx,
-            available - books[idx][0],
-            height.max(books[idx][1]),
-            dp,
-        ));
-    }
-    dp[idx][available as usize] = res;
-    res
+    -1
 }
 
 #[cfg(test)]
@@ -78,10 +43,10 @@ mod tests {
     #[test]
     fn basics() {
         debug_assert_eq!(
-            min_height_shelves(&[[1, 1], [2, 3], [2, 3], [1, 1], [1, 1], [1, 1], [1, 2]], 4),
-            6
+            minimum_time(&[&[0, 1, 3, 2], &[5, 1, 2, 5], &[4, 3, 8, 6]]),
+            7
         );
-        debug_assert_eq!(min_height_shelves(&[[1, 3], [2, 4], [3, 2]], 6), 4);
+        debug_assert_eq!(minimum_time(&[&[0, 2, 4], &[3, 2, 1], &[1, 0, 4]]), -1)
     }
 
     #[test]
