@@ -4,31 +4,37 @@ using Solution.Tree;
 
 namespace Solution;
 
-public class Foo
+public class FooBar
 {
-    int count = 0;
+    private int n;
+    int flag = 0;
 
-    public Foo() { }
-
-    public void First(Action printFirst)
+    public FooBar(int n)
     {
-        // printFirst() outputs "first". Do not change or remove this line.
-        printFirst();
-        Interlocked.Increment(ref count);
+        this.n = n;
     }
 
-    public void Second(Action printSecond)
+    public void Foo(Action printFoo)
     {
-        while (1 != Interlocked.CompareExchange(ref count, 1, 1)) { Thread.Sleep(10); }
-        // printSecond() outputs "second". Do not change or remove this line.
-        printSecond();
-        Interlocked.Increment(ref count);
+
+        for (int i = 0; i < n; i++)
+        {
+            while (0 != Interlocked.CompareExchange(ref flag, 0, 0)) { Thread.Sleep(1); }
+            // printFoo() outputs "foo". Do not change or remove this line.
+            printFoo();
+            Interlocked.Increment(ref flag);
+        }
     }
 
-    public void Third(Action printThird)
+    public void Bar(Action printBar)
     {
-        while (2 != Interlocked.CompareExchange(ref count, 0, 2)) { Thread.Sleep(10); }
-        // printThird() outputs "third". Do not change or remove this line.
-        printThird();
+
+        for (int i = 0; i < n; i++)
+        {
+            while (1 != Interlocked.CompareExchange(ref flag, 1, 1)) { Thread.Sleep(1); }
+            // printBar() outputs "bar". Do not change or remove this line.
+            printBar();
+            Interlocked.Decrement(ref flag);
+        }
     }
 }
