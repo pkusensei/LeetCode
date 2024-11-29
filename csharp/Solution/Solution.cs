@@ -4,34 +4,31 @@ using Solution.Tree;
 
 namespace Solution;
 
-public class Solution
+public class Foo
 {
-    public IList<TreeNode> DelNodes(TreeNode root, int[] to_delete)
+    int count = 0;
+
+    public Foo() { }
+
+    public void First(Action printFirst)
     {
-        var res = Dfs(root, to_delete).tree;
-        if (!to_delete.Contains(root.val)) { res.Add(root); }
-        return res;
+        // printFirst() outputs "first". Do not change or remove this line.
+        printFirst();
+        Interlocked.Increment(ref count);
     }
 
-    static (TreeNode node, List<TreeNode> tree) Dfs(TreeNode node, int[] dels)
+    public void Second(Action printSecond)
     {
-        if (node is null) { return (null, null); }
-        List<TreeNode> res = [];
-        var left = Dfs(node.left, dels);
-        var right = Dfs(node.right, dels);
-        if (left.tree is not null) { res.AddRange(left.tree); }
-        if (right.tree is not null) { res.AddRange(right.tree); }
-        if (dels.Contains(node.val))
-        {
-            if (left.node is not null) { res.Add(left.node); }
-            if (right.node is not null) { res.Add(right.node); }
-            return (null, res);
-        }
-        else
-        {
-            node.left = left.node;
-            node.right = right.node;
-            return (node, res);
-        }
+        while (1 != Interlocked.CompareExchange(ref count, 1, 1)) { Thread.Sleep(10); }
+        // printSecond() outputs "second". Do not change or remove this line.
+        printSecond();
+        Interlocked.Increment(ref count);
+    }
+
+    public void Third(Action printThird)
+    {
+        while (2 != Interlocked.CompareExchange(ref count, 0, 2)) { Thread.Sleep(10); }
+        // printThird() outputs "third". Do not change or remove this line.
+        printThird();
     }
 }
