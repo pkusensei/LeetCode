@@ -4,37 +4,58 @@ using Solution.Tree;
 
 namespace Solution;
 
-public class FooBar
+public class ZeroEvenOdd
 {
     private int n;
-    int flag = 0;
+    bool zero = true;
+    int curr = 0;
 
-    public FooBar(int n)
+    public ZeroEvenOdd(int n)
     {
         this.n = n;
     }
 
-    public void Foo(Action printFoo)
+    // printNumber(x) outputs "x", where x is an integer.
+    public void Zero(Action<int> printNumber)
     {
-
-        for (int i = 0; i < n; i++)
+        while (curr < n)
         {
-            while (0 != Interlocked.CompareExchange(ref flag, 0, 0)) { Thread.Sleep(1); }
-            // printFoo() outputs "foo". Do not change or remove this line.
-            printFoo();
-            Interlocked.Increment(ref flag);
+            SpinWait.SpinUntil(() => zero);
+            printNumber(0);
+            curr += 1;
+            zero = false;
         }
     }
 
-    public void Bar(Action printBar)
+    public void Even(Action<int> printNumber)
     {
-
-        for (int i = 0; i < n; i++)
+        while (curr <= n)
         {
-            while (1 != Interlocked.CompareExchange(ref flag, 1, 1)) { Thread.Sleep(1); }
-            // printBar() outputs "bar". Do not change or remove this line.
-            printBar();
-            Interlocked.Decrement(ref flag);
+            SpinWait.SpinUntil(() => !zero && (curr & 1) == 0);
+            if (curr > n) { break; }
+            printNumber(curr);
+            if (curr >= n)
+            {
+                curr += 1;
+                break;
+            }
+            zero = true;
+        }
+    }
+
+    public void Odd(Action<int> printNumber)
+    {
+        while (curr <= n)
+        {
+            SpinWait.SpinUntil(() => !zero && (curr & 1) == 1);
+            if (curr > n) { break; }
+            printNumber(curr);
+            if (curr >= n)
+            {
+                curr += 1;
+                break;
+            }
+            zero = true;
         }
     }
 }
