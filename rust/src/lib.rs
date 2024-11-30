@@ -2,46 +2,23 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn smallest_sufficient_team(req_skills: &[&str], people: &[&[&str]]) -> Vec<i32> {
-        let skills = req_skills
-            .iter()
-            .enumerate()
-            .fold(HashMap::new(), |mut acc, (i, s)| {
-                acc.insert(*s, i);
-                acc
-            });
-        let nums: Vec<_> = people
-            .iter()
-            .map(|p| p.iter().map(|s| skills[s]).fold(0, |acc, v| acc | (1 << v)))
-            .collect();
-        let n = req_skills.len();
-        // Initially, keep all people in
-        let mut dp = vec![(1i64 << nums.len()) - 1; 1 << n];
-        dp[0] = 0;
-        for mask in 1..1 << n {
-            for (idx, &num) in nums.iter().enumerate() {
-                let rest = mask & (!num);
-                if rest != mask {
-                    let team = dp[rest] | (1 << idx);
-                    if team.count_ones() < dp[mask].count_ones() {
-                        dp[mask] = team;
-                    }
-                }
-            }
+pub fn num_equiv_domino_pairs(dominoes: &[[i32; 2]]) -> i32 {
+    let mut map = std::collections::HashMap::new();
+    let mut res = 0;
+    for d in dominoes {
+        let a = d[0].min(d[1]);
+        let b = d[0].max(d[1]);
+        if let Some(v) = map.get_mut(&[a, b]) {
+            res += *v;
+            *v += 1;
+        } else {
+            map.insert([a, b], 1);
         }
-        let team = dp[(1 << n) - 1];
-        let mut res = Vec::with_capacity(team.count_ones() as usize);
-        for i in 0..nums.len() {
-            if (team >> i) & 1 == 1 {
-                res.push(i as i32);
-            }
-        }
-        res
+    }
+    res
 }
 
 #[cfg(test)]
@@ -52,26 +29,10 @@ mod tests {
 
     #[test]
     fn basics() {
+        debug_assert_eq!(num_equiv_domino_pairs(&[[1, 2], [2, 1], [3, 4], [5, 6]]), 1);
         debug_assert_eq!(
-            smallest_sufficient_team(
-                &["java", "nodejs", "reactjs"],
-                &[&["java"], &["nodejs"], &["nodejs", "reactjs"]]
-            ),
-            [0, 2]
-        );
-        debug_assert_eq!(
-            smallest_sufficient_team(
-                &["algorithms", "math", "java", "reactjs", "csharp", "aws"],
-                &[
-                    &["algorithms", "math", "java"],
-                    &["algorithms", "math", "reactjs"],
-                    &["java", "csharp", "aws"],
-                    &["reactjs", "csharp"],
-                    &["csharp", "math"],
-                    &["aws", "java"]
-                ]
-            ),
-            [1, 2]
+            num_equiv_domino_pairs(&[[1, 2], [1, 2], [1, 1], [1, 2], [2, 2]]),
+            3
         );
     }
 
