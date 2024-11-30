@@ -7,41 +7,41 @@ use std::collections::HashMap;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn longest_wpi(hours: &mut [i32]) -> i32 {
-    // for v in hours.iter_mut() {
-    //     *v = if *v > 8 { 1 } else { -1 };
-    // }
-    // let n = hours.len();
-    // let mut prefix = Vec::with_capacity(1 + n);
-    // prefix.push(0);
-    // for v in hours.iter() {
-    //     prefix.push(v + prefix.last().unwrap_or(&0));
-    // }
-    // let mut res = 0;
-    // for i1 in 1..=n {
-    //     for i2 in 0..i1 {
-    //         if prefix[i2] < prefix[i1] {
-    //             res = res.max(i1 - i2);
-    //             break;
-    //         }
-    //     }
-    // }
-    // res as i32
-    let mut seen = HashMap::new();
-    let mut res = 0;
-    let mut sum = 0;
-    for (idx, &v) in hours.iter().enumerate() {
-        sum += if v > 8 { 1 } else { -1 };
-        if sum > 0 {
-            res = 1 + idx
-        } else {
-            seen.entry(sum).or_insert(idx);
-            if let Some(prev) = seen.get(&(sum - 1)) {
-                res = res.max(idx - prev);
+pub fn smallest_sufficient_team(req_skills: &[&str], people: &[&[&str]]) -> Vec<i32> {
+        let skills = req_skills
+            .iter()
+            .enumerate()
+            .fold(HashMap::new(), |mut acc, (i, s)| {
+                acc.insert(*s, i);
+                acc
+            });
+        let nums: Vec<_> = people
+            .iter()
+            .map(|p| p.iter().map(|s| skills[s]).fold(0, |acc, v| acc | (1 << v)))
+            .collect();
+        let n = req_skills.len();
+        // Initially, keep all people in
+        let mut dp = vec![(1i64 << nums.len()) - 1; 1 << n];
+        dp[0] = 0;
+        for mask in 1..1 << n {
+            for (idx, &num) in nums.iter().enumerate() {
+                let rest = mask & (!num);
+                if rest != mask {
+                    let team = dp[rest] | (1 << idx);
+                    if team.count_ones() < dp[mask].count_ones() {
+                        dp[mask] = team;
+                    }
+                }
             }
         }
-    }
-    res as i32
+        let team = dp[(1 << n) - 1];
+        let mut res = Vec::with_capacity(team.count_ones() as usize);
+        for i in 0..nums.len() {
+            if (team >> i) & 1 == 1 {
+                res.push(i as i32);
+            }
+        }
+        res
 }
 
 #[cfg(test)]
@@ -52,14 +52,31 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(longest_wpi(&mut [9, 9, 6, 0, 6, 6, 9]), 3);
-        debug_assert_eq!(longest_wpi(&mut [6, 6, 6]), 0);
+        debug_assert_eq!(
+            smallest_sufficient_team(
+                &["java", "nodejs", "reactjs"],
+                &[&["java"], &["nodejs"], &["nodejs", "reactjs"]]
+            ),
+            [0, 2]
+        );
+        debug_assert_eq!(
+            smallest_sufficient_team(
+                &["algorithms", "math", "java", "reactjs", "csharp", "aws"],
+                &[
+                    &["algorithms", "math", "java"],
+                    &["algorithms", "math", "reactjs"],
+                    &["java", "csharp", "aws"],
+                    &["reactjs", "csharp"],
+                    &["csharp", "math"],
+                    &["aws", "java"]
+                ]
+            ),
+            [1, 2]
+        );
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(longest_wpi(&mut [9, 9, 9]), 3);
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
