@@ -4,58 +4,29 @@ using Solution.Tree;
 
 namespace Solution;
 
-public class ZeroEvenOdd
+public class H2O
 {
-    private int n;
-    bool zero = true;
-    int curr = 0;
+    int count = 0;
+    readonly SemaphoreSlim hy = new(1, 1);
+    readonly SemaphoreSlim ox = new(0, 1);
 
-    public ZeroEvenOdd(int n)
+    public H2O() { }
+
+    public void Hydrogen(Action releaseHydrogen)
     {
-        this.n = n;
+        hy.Wait();
+        releaseHydrogen();
+        count += 1;
+        if (count == 1) { hy.Release(); }
+        else { ox.Release(); }
     }
 
-    // printNumber(x) outputs "x", where x is an integer.
-    public void Zero(Action<int> printNumber)
+    public void Oxygen(Action releaseOxygen)
     {
-        while (curr < n)
-        {
-            SpinWait.SpinUntil(() => zero);
-            printNumber(0);
-            curr += 1;
-            zero = false;
-        }
-    }
-
-    public void Even(Action<int> printNumber)
-    {
-        while (curr <= n)
-        {
-            SpinWait.SpinUntil(() => !zero && (curr & 1) == 0);
-            if (curr > n) { break; }
-            printNumber(curr);
-            if (curr >= n)
-            {
-                curr += 1;
-                break;
-            }
-            zero = true;
-        }
-    }
-
-    public void Odd(Action<int> printNumber)
-    {
-        while (curr <= n)
-        {
-            SpinWait.SpinUntil(() => !zero && (curr & 1) == 1);
-            if (curr > n) { break; }
-            printNumber(curr);
-            if (curr >= n)
-            {
-                curr += 1;
-                break;
-            }
-            zero = true;
-        }
+        ox.Wait();
+        // releaseOxygen() outputs "O". Do not change or remove this line.
+        releaseOxygen();
+        count = 0;
+        hy.Release();
     }
 }
