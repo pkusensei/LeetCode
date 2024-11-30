@@ -2,49 +2,30 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
+use std::{collections::HashMap, iter};
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn valid_arrangement(pairs: &[[i32; 2]]) -> Vec<Vec<i32>> {
-    let mut graph = pairs
-        .iter()
-        .fold(HashMap::<i32, Vec<_>>::new(), |mut acc, v| {
-            acc.entry(v[0]).or_default().push(v[1]);
-            acc
-        });
-    let start = find_ends(pairs).map(|v| v[0]).unwrap_or(pairs[0][0]);
-    let mut res = vec![];
-    dfs(&mut graph, start, &mut res);
-    res.reverse();
-    res.windows(2).map(|w| w.to_vec()).collect()
-}
-
-fn dfs(graph: &mut HashMap<i32, Vec<i32>>, curr: i32, path: &mut Vec<i32>) {
-    while let Some(next) = graph.get_mut(&curr).and_then(|v| v.pop()) {
-        dfs(graph, next, path);
-    }
-    path.push(curr);
-}
-
-fn find_ends(pairs: &[[i32; 2]]) -> Option<[i32; 2]> {
-    let counts = pairs.iter().fold(HashMap::new(), |mut acc, v| {
-        acc.entry(v[0]).or_insert((0, 0)).0 += 1;
-        acc.entry(v[1]).or_insert((0, 0)).1 += 1;
+pub fn relative_sort_array(arr1: &[i32], arr2: &[i32]) -> Vec<i32> {
+    let mut count = arr1.iter().fold(HashMap::new(), |mut acc, &num| {
+        *acc.entry(num).or_insert(0) += 1;
         acc
     });
-    let start = counts
-        .iter()
-        .find_map(|(&k, &v)| if v.0 - v.1 == 1 { Some(k) } else { None });
-    let end = counts
-        .iter()
-        .find_map(|(&k, &v)| if v.0 - v.1 == -1 { Some(k) } else { None });
-    if let (Some(a), Some(b)) = (start, end) {
-        Some([a, b])
-    } else {
-        None
+    let mut res = Vec::with_capacity(arr1.len());
+    for k in arr2.iter() {
+        let Some(v) = count.remove(k) else {
+            continue;
+        };
+        res.extend(iter::repeat(*k).take(v));
     }
+    let mut rest: Vec<_> = count
+        .into_iter()
+        .flat_map(|(k, v)| iter::repeat(k).take(v))
+        .collect();
+    rest.sort_unstable();
+    res.extend(rest);
+    res
 }
 
 #[cfg(test)]
@@ -56,16 +37,12 @@ mod tests {
     #[test]
     fn basics() {
         debug_assert_eq!(
-            valid_arrangement(&[[5, 1], [4, 5], [11, 9], [9, 4]]),
-            [[11, 9], [9, 4], [4, 5], [5, 1]]
+            relative_sort_array(&[2, 3, 1, 3, 2, 4, 6, 7, 9, 2, 19], &[2, 1, 4, 3, 9, 6]),
+            [2, 2, 2, 1, 4, 3, 3, 9, 6, 7, 19]
         );
         debug_assert_eq!(
-            valid_arrangement(&[[1, 3], [3, 2], [2, 1]]),
-            [[1, 3], [3, 2], [2, 1]]
-        );
-        debug_assert_eq!(
-            valid_arrangement(&[[1, 2], [1, 3], [2, 1]]),
-            [[1, 2], [2, 1], [1, 3]]
+            relative_sort_array(&[28, 6, 22, 8, 44, 17], &[22, 28, 8, 6]),
+            [22, 28, 8, 6, 17, 44]
         );
     }
 
