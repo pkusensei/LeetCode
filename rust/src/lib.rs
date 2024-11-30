@@ -2,30 +2,46 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::{collections::HashMap, iter};
+use std::collections::HashMap;
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn relative_sort_array(arr1: &[i32], arr2: &[i32]) -> Vec<i32> {
-    let mut count = arr1.iter().fold(HashMap::new(), |mut acc, &num| {
-        *acc.entry(num).or_insert(0) += 1;
-        acc
-    });
-    let mut res = Vec::with_capacity(arr1.len());
-    for k in arr2.iter() {
-        let Some(v) = count.remove(k) else {
-            continue;
-        };
-        res.extend(iter::repeat(*k).take(v));
+pub fn longest_wpi(hours: &mut [i32]) -> i32 {
+    // for v in hours.iter_mut() {
+    //     *v = if *v > 8 { 1 } else { -1 };
+    // }
+    // let n = hours.len();
+    // let mut prefix = Vec::with_capacity(1 + n);
+    // prefix.push(0);
+    // for v in hours.iter() {
+    //     prefix.push(v + prefix.last().unwrap_or(&0));
+    // }
+    // let mut res = 0;
+    // for i1 in 1..=n {
+    //     for i2 in 0..i1 {
+    //         if prefix[i2] < prefix[i1] {
+    //             res = res.max(i1 - i2);
+    //             break;
+    //         }
+    //     }
+    // }
+    // res as i32
+    let mut seen = HashMap::new();
+    let mut res = 0;
+    let mut sum = 0;
+    for (idx, &v) in hours.iter().enumerate() {
+        sum += if v > 8 { 1 } else { -1 };
+        if sum > 0 {
+            res = 1 + idx
+        } else {
+            seen.entry(sum).or_insert(idx);
+            if let Some(prev) = seen.get(&(sum - 1)) {
+                res = res.max(idx - prev);
+            }
+        }
     }
-    let mut rest: Vec<_> = count
-        .into_iter()
-        .flat_map(|(k, v)| iter::repeat(k).take(v))
-        .collect();
-    rest.sort_unstable();
-    res.extend(rest);
-    res
+    res as i32
 }
 
 #[cfg(test)]
@@ -36,18 +52,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            relative_sort_array(&[2, 3, 1, 3, 2, 4, 6, 7, 9, 2, 19], &[2, 1, 4, 3, 9, 6]),
-            [2, 2, 2, 1, 4, 3, 3, 9, 6, 7, 19]
-        );
-        debug_assert_eq!(
-            relative_sort_array(&[28, 6, 22, 8, 44, 17], &[22, 28, 8, 6]),
-            [22, 28, 8, 6, 17, 44]
-        );
+        debug_assert_eq!(longest_wpi(&mut [9, 9, 6, 0, 6, 6, 9]), 3);
+        debug_assert_eq!(longest_wpi(&mut [6, 6, 6]), 0);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(longest_wpi(&mut [9, 9, 9]), 3);
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
