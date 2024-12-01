@@ -5,31 +5,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_abs_val_expr(arr1: &[i32], arr2: &[i32]) -> i32 {
-    let n = arr1.len();
-    let mut res = 0;
-    for f in [f1, f2, f3, f4] {
-        let temp = (0..n).map(|idx| f(arr1, arr2, idx)).max().unwrap()
-            - (0..n).map(|idx| f(arr1, arr2, idx)).min().unwrap();
-        res = res.max(temp);
+pub fn tribonacci(n: i32) -> i32 {
+    match n {
+        0 => 0,
+        1 | 2 => 1,
+        _ => {
+            let n = n as usize;
+            let mut f = vec![0; 1 + n];
+            f[1] = 1;
+            f[2] = 1;
+            for i in 3..=n {
+                f[i] = f[i - 3] + f[i - 2] + f[i - 1];
+            }
+            f[n]
+        }
     }
-    res
-}
-
-fn f1(arr1: &[i32], arr2: &[i32], idx: usize) -> i32 {
-    arr1[idx] + arr2[idx] + idx as i32
-}
-
-fn f2(arr1: &[i32], arr2: &[i32], idx: usize) -> i32 {
-    arr1[idx] - arr2[idx] + idx as i32
-}
-
-fn f3(arr1: &[i32], arr2: &[i32], idx: usize) -> i32 {
-    -arr1[idx] + arr2[idx] + idx as i32
-}
-
-fn f4(arr1: &[i32], arr2: &[i32], idx: usize) -> i32 {
-    -arr1[idx] - arr2[idx] + idx as i32
 }
 
 #[cfg(test)]
@@ -40,11 +30,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!((max_abs_val_expr(&[1, 2, 3, 4], &[-1, 4, 5, 6])), 13);
-        debug_assert_eq!(
-            max_abs_val_expr(&[1, -2, -5, 0, 10], &[0, -2, -1, -7, -4]),
-            20
-        );
+        debug_assert_eq!(tribonacci(4), 4);
+        debug_assert_eq!(tribonacci(25), 1389537);
     }
 
     #[test]
