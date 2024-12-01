@@ -5,64 +5,31 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn mct_from_leaf_values(arr: Vec<i32>) -> i32 {
-    let n = arr.len();
-    dfs(&arr, 0, n - 1, &mut vec![vec![-1; n]; n])
-}
-
-fn dfs(arr: &[i32], start: usize, end: usize, dp: &mut [Vec<i32>]) -> i32 {
-    if start >= end {
-        return 0;
-    }
-    if dp[start][end] > -1 {
-        return dp[start][end];
-    }
-    let mut res = i32::MAX;
-    for i in start..end {
-        res = res.min(
-            arr[start..=i].iter().max().unwrap_or(&0) * arr[1 + i..=end].iter().max().unwrap_or(&0)
-                + dfs(arr, start, i, dp)
-                + dfs(arr, 1 + i, end, dp),
-        );
-    }
-    dp[start][end] = res;
-    res
-}
-
-fn iterative(mut arr: Vec<i32>) -> i32 {
+pub fn max_abs_val_expr(arr1: &[i32], arr2: &[i32]) -> i32 {
+    let n = arr1.len();
     let mut res = 0;
-    while let Some((i, w)) = arr
-        .windows(2)
-        .enumerate()
-        .min_by_key(|&(_i, w)| w[0] * w[1])
-    {
-        // Smaller values should always be used first
-        // so that bigger values can be evaluated for less times
-        // Thus, find smallest pair, put its product in result,
-        // and discard the smaller one of the two
-        res += w[0] * w[1];
-        arr.remove(if w[0] < w[1] { i } else { 1 + i });
+    for f in [f1, f2, f3, f4] {
+        let temp = (0..n).map(|idx| f(arr1, arr2, idx)).max().unwrap()
+            - (0..n).map(|idx| f(arr1, arr2, idx)).min().unwrap();
+        res = res.max(temp);
     }
     res
 }
 
-fn with_stack(arr: Vec<i32>) -> i32 {
-    let mut stack = vec![];
-    stack.push(i32::MAX);
-    let mut res = 0;
-    for &num in arr.iter() {
-        // Remove all local minimums
-        // e.g. [4, 2] with 3 coming in, remove 2
-        // add in the smaller product, 2*3, into result
-        while stack.last().is_some_and(|&v| v <= num) {
-            let mid = stack.pop().unwrap();
-            res += mid * stack.last().unwrap_or(&mid).min(&num);
-        }
-        stack.push(num);
-    }
-    // Evaluate all nums kept in stack, except sentinal i32::MAX
-    res += stack.windows(2).skip(1).map(|w| w[0] * w[1]).sum::<i32>();
-    res
+fn f1(arr1: &[i32], arr2: &[i32], idx: usize) -> i32 {
+    arr1[idx] + arr2[idx] + idx as i32
+}
+
+fn f2(arr1: &[i32], arr2: &[i32], idx: usize) -> i32 {
+    arr1[idx] - arr2[idx] + idx as i32
+}
+
+fn f3(arr1: &[i32], arr2: &[i32], idx: usize) -> i32 {
+    -arr1[idx] + arr2[idx] + idx as i32
+}
+
+fn f4(arr1: &[i32], arr2: &[i32], idx: usize) -> i32 {
+    -arr1[idx] - arr2[idx] + idx as i32
 }
 
 #[cfg(test)]
@@ -73,8 +40,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(with_stack(vec![6, 2, 4]), 32);
-        debug_assert_eq!(with_stack(vec![4, 11]), 44);
+        debug_assert_eq!((max_abs_val_expr(&[1, 2, 3, 4], &[-1, 4, 5, 6])), 13);
+        debug_assert_eq!(
+            max_abs_val_expr(&[1, -2, -5, 0, 10], &[0, -2, -1, -7, -4]),
+            20
+        );
     }
 
     #[test]
