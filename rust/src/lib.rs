@@ -2,52 +2,35 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::{collections::HashMap, iter};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn alphabet_board_path(target: &str) -> String {
-    const BOARD: [&str; 6] = ["abcde", "fghij", "klmno", "pqrst", "uvwxy", "z"];
-    let mut board = HashMap::new();
-    for (y, row) in BOARD.iter().enumerate() {
-        for (x, b) in row.bytes().enumerate() {
-            board.insert(b, (x, y));
-        }
-    }
-    let mut res = vec![];
-    let (mut x, mut y) = (0, 0);
-    for &(nx, ny) in target.bytes().filter_map(|b| board.get(&b)) {
-        use std::cmp::Ordering::*;
-        // L D U R to stay on board
-        match (x.cmp(&nx), y.cmp(&ny)) {
-            (Less, Less) => {
-                res.extend(iter::repeat(b'D').take(y.abs_diff(ny)));
-                res.extend(iter::repeat(b'R').take(x.abs_diff(nx)));
-            }
-            (Less, Equal) => res.extend(iter::repeat(b'R').take(x.abs_diff(nx))),
-            (Less, Greater) => {
-                res.extend(iter::repeat(b'U').take(y.abs_diff(ny)));
-                res.extend(iter::repeat(b'R').take(x.abs_diff(nx)));
-            }
-            (Equal, Less) => res.extend(iter::repeat(b'D').take(y.abs_diff(ny))),
-            (Equal, Equal) => (),
-            (Equal, Greater) => res.extend(iter::repeat(b'U').take(y.abs_diff(ny))),
-            (Greater, Less) => {
-                res.extend(iter::repeat(b'L').take(x.abs_diff(nx)));
-                res.extend(iter::repeat(b'D').take(y.abs_diff(ny)));
-            }
-            (Greater, Equal) => res.extend(iter::repeat(b'L').take(x.abs_diff(nx))),
-            (Greater, Greater) => {
-                res.extend(iter::repeat(b'L').take(x.abs_diff(nx)));
-                res.extend(iter::repeat(b'U').take(y.abs_diff(ny)));
+pub fn largest1_bordered_square(grid: &[&[i32]]) -> i32 {
+    let (rows, cols) = get_dimensions(grid);
+    let mut left = vec![vec![0; cols]; rows];
+    let mut top = left.clone();
+    for (r, row) in grid.iter().enumerate() {
+        for (c, &v) in row.iter().enumerate() {
+            if v == 1 {
+                left[r][c] = v + if c > 0 { left[r][c - 1] } else { 0 };
+                top[r][c] = v + if r > 0 { top[r - 1][c] } else { 0 };
             }
         }
-        res.push(b'!');
-        x = nx;
-        y = ny;
     }
-    String::from_utf8(res).unwrap()
+    for len in (1..=rows.min(cols)).rev() {
+        for row in 0..=rows - len {
+            for col in 0..=cols - len {
+                if top[row + len - 1][col] >= len as i32
+                    && top[row + len - 1][col + len - 1] >= len as i32
+                    && left[row][col + len - 1] >= len as i32
+                    && left[row + len - 1][col + len - 1] >= len as i32
+                {
+                    return (len * len) as i32;
+                }
+            }
+        }
+    }
+    0
 }
 
 #[cfg(test)]
@@ -58,13 +41,19 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(alphabet_board_path("leet"), "DDR!UURRR!!DDD!");
-        debug_assert_eq!(alphabet_board_path("code"), "RR!DDRR!LUU!R!");
+        debug_assert_eq!(
+            largest1_bordered_square(&[&[1, 1, 1], &[1, 0, 1], &[1, 1, 1]]),
+            9
+        );
+        debug_assert_eq!(largest1_bordered_square(&[&[1, 1, 0, 0]]), 1);
     }
 
     #[test]
     fn test() {
-        debug_assert_eq!(alphabet_board_path("zdz"), "DDDDD!UUUUURRR!LLLDDDDD!");
+        debug_assert_eq!(
+            largest1_bordered_square(&[&[1, 1, 1], &[1, 1, 0], &[1, 1, 1], &[0, 1, 1], &[1, 1, 1]]),
+            4
+        );
     }
 
     #[allow(dead_code)]
