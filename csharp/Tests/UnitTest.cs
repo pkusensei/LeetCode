@@ -10,27 +10,21 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow(new int[] { 10, 2, 5, 3 }, true)]
+    [DataRow(new int[] { 3, 1, 7, 11 }, false)]
+    public void TestMethod1(int[] nums, bool exp)
     {
-        var a = TreeNode.Make([3, 5, 1, 6, 2, 0, 8, null, null, 7, 4]);
-        var b = sol.LcaDeepestLeaves(a);
-        Assert.AreEqual("[2,7,4]", b.ToString());
+        Assert.AreEqual(exp, sol.CheckIfExist(nums));
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        var a = TreeNode.Make(new int[] { 1 });
-        var b = sol.LcaDeepestLeaves(a);
-        Assert.AreEqual("[1]", b.ToString());
     }
 
     [TestMethod]
     public void TestMethod3()
     {
-        var a = TreeNode.Make([0, 1, 3, null, 2]);
-        var b = sol.LcaDeepestLeaves(a);
-        Assert.AreEqual("[2]", b.ToString());
     }
 
     [TestMethod]
