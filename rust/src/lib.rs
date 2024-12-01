@@ -2,50 +2,66 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::VecDeque;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn shortest_alternating_paths(
-    n: i32,
-    red_edges: &[[i32; 2]],
-    blue_edges: &[[i32; 2]],
-) -> Vec<i32> {
-    let n = n as usize;
-    let (mut reds, mut blues) = (vec![vec![false; n]; n], vec![vec![false; n]; n]);
-    for v in red_edges.iter() {
-        reds[v[0] as usize][v[1] as usize] = true;
+pub fn mct_from_leaf_values(arr: Vec<i32>) -> i32 {
+    let n = arr.len();
+    dfs(&arr, 0, n - 1, &mut vec![vec![-1; n]; n])
+}
+
+fn dfs(arr: &[i32], start: usize, end: usize, dp: &mut [Vec<i32>]) -> i32 {
+    if start >= end {
+        return 0;
     }
-    for v in blue_edges.iter() {
-        blues[v[0] as usize][v[1] as usize] = true;
+    if dp[start][end] > -1 {
+        return dp[start][end];
     }
-    let mut res = vec![-1; n];
-    // (node, dist, color) => 0:red 1:blue
-    let mut queue = VecDeque::from([(0, 0, 0), (0, 0, 1)]);
-    let mut seen = vec![vec![false; n]; 2];
-    seen[0][0] = true;
-    seen[1][0] = true;
-    while let Some((node, dist, color)) = queue.pop_front() {
-        if res[node] == -1 {
-            res[node] = dist
+    let mut res = i32::MAX;
+    for i in start..end {
+        res = res.min(
+            arr[start..=i].iter().max().unwrap_or(&0) * arr[1 + i..=end].iter().max().unwrap_or(&0)
+                + dfs(arr, start, i, dp)
+                + dfs(arr, 1 + i, end, dp),
+        );
+    }
+    dp[start][end] = res;
+    res
+}
+
+fn iterative(mut arr: Vec<i32>) -> i32 {
+    let mut res = 0;
+    while let Some((i, w)) = arr
+        .windows(2)
+        .enumerate()
+        .min_by_key(|&(_i, w)| w[0] * w[1])
+    {
+        // Smaller values should always be used first
+        // so that bigger values can be evaluated for less times
+        // Thus, find smallest pair, put its product in result,
+        // and discard the smaller one of the two
+        res += w[0] * w[1];
+        arr.remove(if w[0] < w[1] { i } else { 1 + i });
+    }
+    res
+}
+
+fn with_stack(arr: Vec<i32>) -> i32 {
+    let mut stack = vec![];
+    stack.push(i32::MAX);
+    let mut res = 0;
+    for &num in arr.iter() {
+        // Remove all local minimums
+        // e.g. [4, 2] with 3 coming in, remove 2
+        // add in the smaller product, 2*3, into result
+        while stack.last().is_some_and(|&v| v <= num) {
+            let mid = stack.pop().unwrap();
+            res += mid * stack.last().unwrap_or(&mid).min(&num);
         }
-        if color == 0 {
-            for (next, b) in blues[node].iter().enumerate() {
-                if *b && !seen[1][next] {
-                    seen[1][next] = true;
-                    queue.push_back((next, 1 + dist, 1));
-                }
-            }
-        } else if color == 1 {
-            for (next, b) in reds[node].iter().enumerate() {
-                if *b && !seen[0][next] {
-                    seen[0][next] = true;
-                    queue.push_back((next, 1 + dist, 0));
-                }
-            }
-        }
+        stack.push(num);
     }
+    // Evaluate all nums kept in stack, except sentinal i32::MAX
+    res += stack.windows(2).skip(1).map(|w| w[0] * w[1]).sum::<i32>();
     res
 }
 
@@ -57,31 +73,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(
-            shortest_alternating_paths(3, &[[0, 1], [1, 2]], &[]),
-            [0, 1, -1]
-        );
-        debug_assert_eq!(
-            shortest_alternating_paths(3, &[[0, 1]], &[[2, 1]]),
-            [0, 1, -1]
-        );
+        debug_assert_eq!(with_stack(vec![6, 2, 4]), 32);
+        debug_assert_eq!(with_stack(vec![4, 11]), 44);
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(
-            shortest_alternating_paths(3, &[[0, 1], [0, 2]], &[[1, 0]]),
-            [0, 1, 1]
-        );
-        debug_assert_eq!(
-            shortest_alternating_paths(
-                5,
-                &[[0, 1], [1, 2], [2, 3], [3, 4]],
-                &[[1, 2], [2, 3], [3, 1]]
-            ),
-            [0, 1, 2, 3, 7]
-        );
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
