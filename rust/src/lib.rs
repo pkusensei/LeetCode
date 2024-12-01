@@ -2,24 +2,52 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::{collections::HashMap, iter};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn tribonacci(n: i32) -> i32 {
-    match n {
-        0 => 0,
-        1 | 2 => 1,
-        _ => {
-            let n = n as usize;
-            let mut f = vec![0; 1 + n];
-            f[1] = 1;
-            f[2] = 1;
-            for i in 3..=n {
-                f[i] = f[i - 3] + f[i - 2] + f[i - 1];
-            }
-            f[n]
+pub fn alphabet_board_path(target: &str) -> String {
+    const BOARD: [&str; 6] = ["abcde", "fghij", "klmno", "pqrst", "uvwxy", "z"];
+    let mut board = HashMap::new();
+    for (y, row) in BOARD.iter().enumerate() {
+        for (x, b) in row.bytes().enumerate() {
+            board.insert(b, (x, y));
         }
     }
+    let mut res = vec![];
+    let (mut x, mut y) = (0, 0);
+    for &(nx, ny) in target.bytes().filter_map(|b| board.get(&b)) {
+        use std::cmp::Ordering::*;
+        // L D U R to stay on board
+        match (x.cmp(&nx), y.cmp(&ny)) {
+            (Less, Less) => {
+                res.extend(iter::repeat(b'D').take(y.abs_diff(ny)));
+                res.extend(iter::repeat(b'R').take(x.abs_diff(nx)));
+            }
+            (Less, Equal) => res.extend(iter::repeat(b'R').take(x.abs_diff(nx))),
+            (Less, Greater) => {
+                res.extend(iter::repeat(b'U').take(y.abs_diff(ny)));
+                res.extend(iter::repeat(b'R').take(x.abs_diff(nx)));
+            }
+            (Equal, Less) => res.extend(iter::repeat(b'D').take(y.abs_diff(ny))),
+            (Equal, Equal) => (),
+            (Equal, Greater) => res.extend(iter::repeat(b'U').take(y.abs_diff(ny))),
+            (Greater, Less) => {
+                res.extend(iter::repeat(b'L').take(x.abs_diff(nx)));
+                res.extend(iter::repeat(b'D').take(y.abs_diff(ny)));
+            }
+            (Greater, Equal) => res.extend(iter::repeat(b'L').take(x.abs_diff(nx))),
+            (Greater, Greater) => {
+                res.extend(iter::repeat(b'L').take(x.abs_diff(nx)));
+                res.extend(iter::repeat(b'U').take(y.abs_diff(ny)));
+            }
+        }
+        res.push(b'!');
+        x = nx;
+        y = ny;
+    }
+    String::from_utf8(res).unwrap()
 }
 
 #[cfg(test)]
@@ -30,12 +58,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(tribonacci(4), 4);
-        debug_assert_eq!(tribonacci(25), 1389537);
+        debug_assert_eq!(alphabet_board_path("leet"), "DDR!UURRR!!DDD!");
+        debug_assert_eq!(alphabet_board_path("code"), "RR!DDRR!LUU!R!");
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        debug_assert_eq!(alphabet_board_path("zdz"), "DDDDD!UUUUURRR!LLLDDDDD!");
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
