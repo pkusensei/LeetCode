@@ -5,18 +5,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_prefix_of_word(sentence: &str, search_word: &str) -> i32 {
-    sentence
-        .split_ascii_whitespace()
-        .enumerate()
-        .find_map(|(i, s)| {
-            if s.starts_with(search_word) {
-                Some(1 + i as i32)
+pub fn longest_common_subsequence(text1: &str, text2: &str) -> i32 {
+    let (n1, n2) = (text1.len(), text2.len());
+    let mut dp = vec![vec![0; 1 + n2]; 1 + n1];
+    for i1 in 1..=n1 {
+        for i2 in 1..=n2 {
+            if text1.as_bytes()[i1 - 1] == text2.as_bytes()[i2 - 1] {
+                dp[i1][i2] = 1 + dp[i1 - 1][i2 - 1];
             } else {
-                None
+                dp[i1][i2] = dp[i1 - 1][i2].max(dp[i1][i2 - 1]);
             }
-        })
-        .unwrap_or(-1)
+        }
+    }
+    dp[n1][n2]
 }
 
 #[cfg(test)]
@@ -27,12 +28,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(is_prefix_of_word("i love eating burger", "burg"), 4);
-        debug_assert_eq!(
-            is_prefix_of_word("this problem is an easy problem", "pro"),
-            2
-        );
-        debug_assert_eq!(is_prefix_of_word("i am tired", "you"), -1);
+        debug_assert_eq!(longest_common_subsequence("abcde", "ace"), 3);
+        debug_assert_eq!(longest_common_subsequence("abc", "abc"), 3);
+        debug_assert_eq!(longest_common_subsequence("abc", "def"), 0);
     }
 
     #[test]
