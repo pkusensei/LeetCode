@@ -6,31 +6,24 @@ namespace Solution;
 
 public class Solution
 {
-    public int StoneGameII(int[] piles)
+    public bool BtreeGameWinningMove(TreeNode root, int n, int x)
     {
-        if (piles is null || piles.Length == 0) { return 0; }
-        if (piles.Length == 2) { return piles.Sum(); }
-        for (int i = piles.Length - 2; i >= 0; i -= 1)
-        {
-            piles[i] += piles[1 + i];
-        }
-        var dp = new int[piles.Length, piles.Length];
-        return Dfs(0, 1);
+        int left_count = -1;
+        int right_count = -1;
+        Dfs(root);
+        return left_count > n / 2 || right_count > n / 2 || n - left_count - right_count - 1 > n / 2;
 
-        int Dfs(int idx, int m)
+        int Dfs(TreeNode node)
         {
-            // able to take them all
-            if (idx + 2 * m >= piles.Length) { return piles[idx]; }
-            if (dp[idx, m] > 0) { return dp[idx, m]; }
-            var res = int.MaxValue;
-            for (int i = 1; i <= 2 * m; i++)
+            if (node is null) { return 0; }
+            var left = Dfs(node.left);
+            var right = Dfs(node.right);
+            if (x == node.val)
             {
-                // 1 <= i <= 2*m
-                // m is reset to max(i, m)
-                res = Math.Min(res, Dfs(i + idx, Math.Max(i, m)));
+                left_count = left;
+                right_count = right;
             }
-            dp[idx, m] = piles[idx] - res;
-            return dp[idx, m];
+            return left + right + 1;
         }
     }
 }
