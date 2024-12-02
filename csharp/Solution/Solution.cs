@@ -6,15 +6,31 @@ namespace Solution;
 
 public class Solution
 {
-    public bool CheckIfExist(int[] arr)
+    public int StoneGameII(int[] piles)
     {
-        var seen = new HashSet<int>();
-        foreach (var num in arr)
+        if (piles is null || piles.Length == 0) { return 0; }
+        if (piles.Length == 2) { return piles.Sum(); }
+        for (int i = piles.Length - 2; i >= 0; i -= 1)
         {
-            if (seen.Contains(2 * num)) { return true; }
-            if ((num & 1) == 0 && seen.Contains(num / 2)) { return true; }
-            seen.Add(num);
+            piles[i] += piles[1 + i];
         }
-        return false;
+        var dp = new int[piles.Length, piles.Length];
+        return Dfs(0, 1);
+
+        int Dfs(int idx, int m)
+        {
+            // able to take them all
+            if (idx + 2 * m >= piles.Length) { return piles[idx]; }
+            if (dp[idx, m] > 0) { return dp[idx, m]; }
+            var res = int.MaxValue;
+            for (int i = 1; i <= 2 * m; i++)
+            {
+                // 1 <= i <= 2*m
+                // m is reset to max(i, m)
+                res = Math.Min(res, Dfs(i + idx, Math.Max(i, m)));
+            }
+            dp[idx, m] = piles[idx] - res;
+            return dp[idx, m];
+        }
     }
 }

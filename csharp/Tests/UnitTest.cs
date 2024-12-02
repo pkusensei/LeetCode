@@ -10,11 +10,11 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(new int[] { 10, 2, 5, 3 }, true)]
-    [DataRow(new int[] { 3, 1, 7, 11 }, false)]
-    public void TestMethod1(int[] nums, bool exp)
+    [DataRow(new int[] { 2, 7, 9, 4, 4 }, 10)]
+    [DataRow(new int[] { 1, 2, 3, 4, 5, 100 }, 104)]
+    public void TestMethod1(int[] nums, int exp)
     {
-        Assert.AreEqual(exp, sol.CheckIfExist(nums));
+        Assert.AreEqual(exp, sol.StoneGameII(nums));
     }
 
     [TestMethod]
