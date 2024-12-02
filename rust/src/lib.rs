@@ -5,32 +5,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn largest1_bordered_square(grid: &[&[i32]]) -> i32 {
-    let (rows, cols) = get_dimensions(grid);
-    let mut left = vec![vec![0; cols]; rows];
-    let mut top = left.clone();
-    for (r, row) in grid.iter().enumerate() {
-        for (c, &v) in row.iter().enumerate() {
-            if v == 1 {
-                left[r][c] = v + if c > 0 { left[r][c - 1] } else { 0 };
-                top[r][c] = v + if r > 0 { top[r - 1][c] } else { 0 };
+pub fn is_prefix_of_word(sentence: &str, search_word: &str) -> i32 {
+    sentence
+        .split_ascii_whitespace()
+        .enumerate()
+        .find_map(|(i, s)| {
+            if s.starts_with(search_word) {
+                Some(1 + i as i32)
+            } else {
+                None
             }
-        }
-    }
-    for len in (1..=rows.min(cols)).rev() {
-        for row in 0..=rows - len {
-            for col in 0..=cols - len {
-                if top[row + len - 1][col] >= len as i32
-                    && top[row + len - 1][col + len - 1] >= len as i32
-                    && left[row][col + len - 1] >= len as i32
-                    && left[row + len - 1][col + len - 1] >= len as i32
-                {
-                    return (len * len) as i32;
-                }
-            }
-        }
-    }
-    0
+        })
+        .unwrap_or(-1)
 }
 
 #[cfg(test)]
@@ -41,20 +27,16 @@ mod tests {
 
     #[test]
     fn basics() {
+        debug_assert_eq!(is_prefix_of_word("i love eating burger", "burg"), 4);
         debug_assert_eq!(
-            largest1_bordered_square(&[&[1, 1, 1], &[1, 0, 1], &[1, 1, 1]]),
-            9
+            is_prefix_of_word("this problem is an easy problem", "pro"),
+            2
         );
-        debug_assert_eq!(largest1_bordered_square(&[&[1, 1, 0, 0]]), 1);
+        debug_assert_eq!(is_prefix_of_word("i am tired", "you"), -1);
     }
 
     #[test]
-    fn test() {
-        debug_assert_eq!(
-            largest1_bordered_square(&[&[1, 1, 1], &[1, 1, 0], &[1, 1, 1], &[0, 1, 1], &[1, 1, 1]]),
-            4
-        );
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
