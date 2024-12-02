@@ -5,19 +5,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn longest_common_subsequence(text1: &str, text2: &str) -> i32 {
-    let (n1, n2) = (text1.len(), text2.len());
-    let mut dp = vec![vec![0; 1 + n2]; 1 + n1];
-    for i1 in 1..=n1 {
-        for i2 in 1..=n2 {
-            if text1.as_bytes()[i1 - 1] == text2.as_bytes()[i2 - 1] {
-                dp[i1][i2] = 1 + dp[i1 - 1][i2 - 1];
+pub fn moves_to_make_zigzag(nums: &[i32]) -> i32 {
+    let [mut a, mut b] = [0; 2];
+    for (i, &num) in nums.iter().enumerate() {
+        let left = if i > 0 { nums[i - 1] } else { 1001 };
+        let right = *nums.get(1 + i).unwrap_or(&1001);
+        let min = left.min(right);
+        if num >= min {
+            if i & 1 == 0 {
+                a += num - (min - 1);
             } else {
-                dp[i1][i2] = dp[i1 - 1][i2].max(dp[i1][i2 - 1]);
+                b += num - (min - 1);
             }
         }
     }
-    dp[n1][n2]
+    a.min(b) as _
 }
 
 #[cfg(test)]
@@ -28,13 +30,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        debug_assert_eq!(longest_common_subsequence("abcde", "ace"), 3);
-        debug_assert_eq!(longest_common_subsequence("abc", "abc"), 3);
-        debug_assert_eq!(longest_common_subsequence("abc", "def"), 0);
+        assert_eq!(moves_to_make_zigzag(&[1, 2, 3]), 2);
+        assert_eq!(moves_to_make_zigzag(&[9, 6, 1, 6, 2]), 4);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(moves_to_make_zigzag(&[2, 1, 2]), 0);
+        assert_eq!(moves_to_make_zigzag(&[2, 7, 10, 9, 8, 9]), 4);
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
