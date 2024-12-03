@@ -5,21 +5,44 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn moves_to_make_zigzag(nums: &[i32]) -> i32 {
-    let [mut a, mut b] = [0; 2];
-    for (i, &num) in nums.iter().enumerate() {
-        let left = if i > 0 { nums[i - 1] } else { 1001 };
-        let right = *nums.get(1 + i).unwrap_or(&1001);
-        let min = left.min(right);
-        if num >= min {
-            if i & 1 == 0 {
-                a += num - (min - 1);
-            } else {
-                b += num - (min - 1);
-            }
+struct SnapshotArray {
+    id: i32,
+    data: Vec<Vec<(i32, i32)>>,
+}
+
+impl SnapshotArray {
+    fn new(length: i32) -> Self {
+        Self {
+            id: 0,
+            data: vec![vec![]; length as usize],
         }
     }
-    a.min(b) as _
+
+    fn set(&mut self, index: i32, val: i32) {
+        let idx = index as usize;
+        if let Some(v) = self.data[idx].last_mut() {
+            if v.0 == self.id {
+                v.1 = val
+            } else {
+                self.data[idx].push((self.id, val));
+            }
+        } else {
+            self.data[idx].push((self.id, val))
+        }
+    }
+
+    fn snap(&mut self) -> i32 {
+        self.id += 1;
+        self.id - 1
+    }
+
+    fn get(&self, index: i32, snap_id: i32) -> i32 {
+        match self.data[index as usize].binary_search_by_key(&snap_id, |v| v.0) {
+            Ok(i) => self.data[index as usize][i].1,
+            Err(i) if i == 0 => 0,
+            Err(i) => self.data[index as usize][i - 1].1,
+        }
+    }
 }
 
 #[cfg(test)]
@@ -30,15 +53,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(moves_to_make_zigzag(&[1, 2, 3]), 2);
-        assert_eq!(moves_to_make_zigzag(&[9, 6, 1, 6, 2]), 4);
+        let mut sn = SnapshotArray::new(3); // set the length to be 3
+        sn.set(0, 5); // Set array[0] = 5
+        assert_eq!(sn.snap(), 0); // Take a snapshot, return snap_id = 0
+        sn.set(0, 6);
+        assert_eq!(sn.get(0, 0), 5);
     }
 
     #[test]
-    fn test() {
-        assert_eq!(moves_to_make_zigzag(&[2, 1, 2]), 0);
-        assert_eq!(moves_to_make_zigzag(&[2, 7, 10, 9, 8, 9]), 4);
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
