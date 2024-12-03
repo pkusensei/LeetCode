@@ -5,26 +5,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn longest_decomposition(text: &str) -> i32 {
-    solve(text)
+pub fn day_of_year(date: &str) -> i32 {
+    const DAYS: [i32; 12] = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    let mut it = date.splitn(3, '-');
+    let y = it.next().and_then(|s| s.parse::<i32>().ok()).unwrap();
+    let m = it.next().and_then(|s| s.parse::<i32>().ok()).unwrap();
+    let d = it.next().and_then(|s| s.parse::<i32>().ok()).unwrap();
+    let mut res = d;
+    for i in 0..m - 1 {
+        res += DAYS[i as usize];
+    }
+    if leap(y) && m > 2 {
+        res += 1;
+    }
+    res
 }
 
-fn solve(text: &str) -> i32 {
-    let n = text.len();
-    match n {
-        0 => 0,
-        1 => 1,
-        _ => {
-            let mut len = 1;
-            while len <= n / 2 {
-                if text.ends_with(&text[..len]) {
-                    return 2 + solve(&text[len..n - len]);
-                }
-                len += 1;
-            }
-            1
-        }
-    }
+const fn leap(y: i32) -> bool {
+    y % 400 == 0 || (y % 4 == 0 && y % 100 > 0)
 }
 
 #[cfg(test)]
@@ -35,13 +33,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(longest_decomposition("ghiabcdefhelloadamhelloabcdefghi"), 7);
-        assert_eq!(longest_decomposition("merchant"), 1);
-        assert_eq!(longest_decomposition("antaprezatepzapreanta"), 11);
+        assert_eq!(day_of_year("2019-01-09"), 9);
+        assert_eq!(day_of_year("2019-02-10"), 41);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(day_of_year("2016-02-09"), 40);
+        assert_eq!(day_of_year("1900-05-02"), 122);
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
