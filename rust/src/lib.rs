@@ -7,41 +7,34 @@ use std::collections::HashMap;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_rep_opt1(text: &str) -> i32 {
-    let count: Vec<_> = text
-        .as_bytes()
-        .chunk_by(|&a, &b| a == b)
-        .map(|w| (w[0], w.len()))
-        .collect();
-    let map = text.bytes().fold(HashMap::new(), |mut acc, b| {
-        *acc.entry(b).or_insert(0) += 1;
-        acc
-    });
-    let a = count
-        .windows(3)
-        .filter_map(|w| {
-            if w[0].0 == w[2].0 && w[1].1 == 1 {
-                Some((w[0].0, w[0].1 + w[2].1))
-            } else {
-                None
-            }
-        })
-        .max_by_key(|(_b, c)| *c)
-        .map(|(b, c)| extend(&map, b, c))
-        .unwrap_or(0);
-    let freq = count.iter().max_by_key(|v| v.1).map(|v| v.1).unwrap_or(0);
-    let mut b = 0;
-    for v in count.iter().filter(|v| v.1 == freq) {
-        b = b.max(extend(&map, v.0, v.1));
-    }
-    a.max(b) as i32
+struct MajorityChecker {
+    data: HashMap<i32, Vec<i32>>,
 }
 
-fn extend(map: &HashMap<u8, usize>, b: u8, c: usize) -> usize {
-    if map.get(&b).is_some_and(|&v| v > c) {
-        1 + c
-    } else {
-        c
+impl MajorityChecker {
+    fn new(arr: Vec<i32>) -> Self {
+        let data = arr.into_iter().enumerate().fold(
+            HashMap::<i32, Vec<i32>>::new(),
+            |mut acc, (i, num)| {
+                acc.entry(num).or_default().push(i as i32);
+                acc
+            },
+        );
+        Self { data }
+    }
+
+    fn query(&self, left: i32, right: i32, threshold: i32) -> i32 {
+        for (&k, val) in self.data.iter() {
+            let li = val.partition_point(|&i| i < left);
+            let ri = val.partition_point(|&i| i <= right);
+            if li < val.len() && li < ri {
+                let count = ri - li;
+                if count >= threshold as usize {
+                    return k;
+                }
+            }
+        }
+        -1
     }
 }
 
@@ -53,15 +46,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_rep_opt1("ababa"), 3);
-        assert_eq!(max_rep_opt1("aaabaaa"), 6);
-        assert_eq!(max_rep_opt1("aaaaa"), 5);
+        let mc = MajorityChecker::new(vec![1, 1, 2, 2, 1, 1]);
+        assert_eq!(mc.query(0, 5, 4), 1); // return 1
+        assert_eq!(mc.query(0, 3, 3), -1); // return -1
+        assert_eq!(mc.query(2, 3, 2), 2); // return 2
     }
 
     #[test]
-    fn test() {
-        assert_eq!(max_rep_opt1("aabba"), 3);
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
