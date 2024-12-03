@@ -6,24 +6,23 @@ namespace Solution;
 
 public class Solution
 {
-    public bool BtreeGameWinningMove(TreeNode root, int n, int x)
+    public int MaxLevelSum(TreeNode root)
     {
-        int left_count = -1;
-        int right_count = -1;
-        Dfs(root);
-        return left_count > n / 2 || right_count > n / 2 || n - left_count - right_count - 1 > n / 2;
-
-        int Dfs(TreeNode node)
+        List<TreeNode> list = [root];
+        var level = 1;
+        var res = 0;
+        var sum = int.MinValue;
+        while (list.Count > 0)
         {
-            if (node is null) { return 0; }
-            var left = Dfs(node.left);
-            var right = Dfs(node.right);
-            if (x == node.val)
+            var curr = list.Select(n => n.val).Sum();
+            if (curr > sum)
             {
-                left_count = left;
-                right_count = right;
+                sum = curr;
+                res = level;
             }
-            return left + right + 1;
+            list = list.SelectMany(n => new[] { n.left, n.right }).Where(n => n is not null).ToList();
+            level += 1;
         }
+        return res;
     }
 }

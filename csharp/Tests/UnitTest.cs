@@ -10,17 +10,17 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(new int[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 }, 11, 3, true)]
-    [DataRow(new int[] { 1, 2, 3,}, 3,1,false)]
-    public void TestMethod1(int[] nums, int n, int x, bool exp)
+    public void TestMethod1()
     {
-        var a = TreeNode.Make(nums);
-        Assert.AreEqual(exp, sol.BtreeGameWinningMove(a, n, x));
+        var a = TreeNode.Make([1, 7, 0, 7, -8, null, null]);
+        Assert.AreEqual(2, sol.MaxLevelSum(a));
     }
 
     [TestMethod]
     public void TestMethod2()
     {
+        var a = TreeNode.Make([989, null, 10250, 98693, -89388, null, null, null, -32127]);
+        Assert.AreEqual(2, sol.MaxLevelSum(a));
     }
 
     [TestMethod]
