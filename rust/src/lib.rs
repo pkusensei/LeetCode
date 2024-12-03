@@ -2,46 +2,47 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-const MOD: i32 = 1_000_000_007;
-
-pub fn num_rolls_to_target(n: i32, k: i32, target: i32) -> i32 {
-    let [n, k, t] = [n, k, target].map(|v| v as usize);
-    // dfs(n, k, t, &mut vec![vec![-1; 1 + n]; 1 + t])
-    let mut dp = vec![0; 1 + t];
-    dp[0] = 1;
-    for _ in 0..n {
-        let mut next = vec![0; 1 + t];
-        for num in 1..=t {
-            for face in 1..=k {
-                if num >= face {
-                    next[num] = (next[num] + dp[num - face]) % MOD;
-                }
+pub fn max_rep_opt1(text: &str) -> i32 {
+    let count: Vec<_> = text
+        .as_bytes()
+        .chunk_by(|&a, &b| a == b)
+        .map(|w| (w[0], w.len()))
+        .collect();
+    let map = text.bytes().fold(HashMap::new(), |mut acc, b| {
+        *acc.entry(b).or_insert(0) += 1;
+        acc
+    });
+    let a = count
+        .windows(3)
+        .filter_map(|w| {
+            if w[0].0 == w[2].0 && w[1].1 == 1 {
+                Some((w[0].0, w[0].1 + w[2].1))
+            } else {
+                None
             }
-        }
-        dp = next;
+        })
+        .max_by_key(|(_b, c)| *c)
+        .map(|(b, c)| extend(&map, b, c))
+        .unwrap_or(0);
+    let freq = count.iter().max_by_key(|v| v.1).map(|v| v.1).unwrap_or(0);
+    let mut b = 0;
+    for v in count.iter().filter(|v| v.1 == freq) {
+        b = b.max(extend(&map, v.0, v.1));
     }
-    dp[t]
+    a.max(b) as i32
 }
 
-fn dfs(n: usize, k: usize, t: usize, dp: &mut [Vec<i32>]) -> i32 {
-    if n == 1 && (1..=k).contains(&t) {
-        return 1;
+fn extend(map: &HashMap<u8, usize>, b: u8, c: usize) -> usize {
+    if map.get(&b).is_some_and(|&v| v > c) {
+        1 + c
+    } else {
+        c
     }
-    if n <= 1 {
-        return 0;
-    }
-    if dp[t][n] > -1 {
-        return dp[t][n];
-    }
-    let mut res = 0;
-    for i in 1..=(k).min(t) {
-        res = (res + dfs(n - 1, k, t - i, dp)) % MOD;
-    }
-    dp[t][n] = res;
-    res
 }
 
 #[cfg(test)]
@@ -52,13 +53,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(num_rolls_to_target(1, 6, 3), 1);
-        assert_eq!(num_rolls_to_target(2, 6, 7), 6);
-        assert_eq!(num_rolls_to_target(30, 30, 500), 222616187);
+        assert_eq!(max_rep_opt1("ababa"), 3);
+        assert_eq!(max_rep_opt1("aaabaaa"), 6);
+        assert_eq!(max_rep_opt1("aaaaa"), 5);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(max_rep_opt1("aabba"), 3);
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
