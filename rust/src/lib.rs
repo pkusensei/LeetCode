@@ -2,40 +2,28 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-struct MajorityChecker {
-    data: HashMap<i32, Vec<i32>>,
+pub fn count_characters(words: &[&str], chars: &str) -> i32 {
+    let target = count(chars);
+    words
+        .iter()
+        .filter_map(|s| {
+            if count(s).into_iter().zip(target).all(|(a, b)| a <= b) {
+                Some(s.len())
+            } else {
+                None
+            }
+        })
+        .sum::<usize>() as i32
 }
 
-impl MajorityChecker {
-    fn new(arr: Vec<i32>) -> Self {
-        let data = arr.into_iter().enumerate().fold(
-            HashMap::<i32, Vec<i32>>::new(),
-            |mut acc, (i, num)| {
-                acc.entry(num).or_default().push(i as i32);
-                acc
-            },
-        );
-        Self { data }
-    }
-
-    fn query(&self, left: i32, right: i32, threshold: i32) -> i32 {
-        for (&k, val) in self.data.iter() {
-            let li = val.partition_point(|&i| i < left);
-            let ri = val.partition_point(|&i| i <= right);
-            if li < val.len() && li < ri {
-                let count = ri - li;
-                if count >= threshold as usize {
-                    return k;
-                }
-            }
-        }
-        -1
-    }
+fn count(s: &str) -> [u8; 26] {
+    s.bytes().fold([0; 26], |mut acc, b| {
+        acc[usize::from(b - b'a')] += 1;
+        acc
+    })
 }
 
 #[cfg(test)]
@@ -46,10 +34,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        let mc = MajorityChecker::new(vec![1, 1, 2, 2, 1, 1]);
-        assert_eq!(mc.query(0, 5, 4), 1); // return 1
-        assert_eq!(mc.query(0, 3, 3), -1); // return -1
-        assert_eq!(mc.query(2, 3, 2), 2); // return 2
+        assert_eq!(count_characters(&["cat", "bt", "hat", "tree"], "atach"), 6);
+        assert_eq!(
+            count_characters(&["hello", "world", "leetcode"], "welldonehoneyr"),
+            10
+        );
     }
 
     #[test]
