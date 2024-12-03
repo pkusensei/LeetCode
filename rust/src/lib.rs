@@ -5,42 +5,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-struct SnapshotArray {
-    id: i32,
-    data: Vec<Vec<(i32, i32)>>,
+pub fn longest_decomposition(text: &str) -> i32 {
+    solve(text)
 }
 
-impl SnapshotArray {
-    fn new(length: i32) -> Self {
-        Self {
-            id: 0,
-            data: vec![vec![]; length as usize],
-        }
-    }
-
-    fn set(&mut self, index: i32, val: i32) {
-        let idx = index as usize;
-        if let Some(v) = self.data[idx].last_mut() {
-            if v.0 == self.id {
-                v.1 = val
-            } else {
-                self.data[idx].push((self.id, val));
+fn solve(text: &str) -> i32 {
+    let n = text.len();
+    match n {
+        0 => 0,
+        1 => 1,
+        _ => {
+            let mut len = 1;
+            while len <= n / 2 {
+                if text.ends_with(&text[..len]) {
+                    return 2 + solve(&text[len..n - len]);
+                }
+                len += 1;
             }
-        } else {
-            self.data[idx].push((self.id, val))
-        }
-    }
-
-    fn snap(&mut self) -> i32 {
-        self.id += 1;
-        self.id - 1
-    }
-
-    fn get(&self, index: i32, snap_id: i32) -> i32 {
-        match self.data[index as usize].binary_search_by_key(&snap_id, |v| v.0) {
-            Ok(i) => self.data[index as usize][i].1,
-            Err(i) if i == 0 => 0,
-            Err(i) => self.data[index as usize][i - 1].1,
+            1
         }
     }
 }
@@ -53,11 +35,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        let mut sn = SnapshotArray::new(3); // set the length to be 3
-        sn.set(0, 5); // Set array[0] = 5
-        assert_eq!(sn.snap(), 0); // Take a snapshot, return snap_id = 0
-        sn.set(0, 6);
-        assert_eq!(sn.get(0, 0), 5);
+        assert_eq!(longest_decomposition("ghiabcdefhelloadamhelloabcdefghi"), 7);
+        assert_eq!(longest_decomposition("merchant"), 1);
+        assert_eq!(longest_decomposition("antaprezatepzapreanta"), 11);
     }
 
     #[test]
