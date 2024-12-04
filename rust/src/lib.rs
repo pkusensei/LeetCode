@@ -5,18 +5,43 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn can_make_subsequence(str1: &str, str2: &str) -> bool {
-    let mut i2 = 0;
-    for b1 in str1.bytes() {
-        if str2
-            .bytes()
-            .nth(i2)
-            .is_some_and(|b2| b2 == b1 || b1 + 1 == b2 || (b1 == b'z' && b2 == b'a'))
-        {
-            i2 += 1;
+pub fn max_distance(grid: &[&[i32]]) -> i32 {
+    let n = grid.len();
+    let mut seen = vec![vec![-1; n]; n];
+    let mut dist = 0;
+    let mut queue = std::collections::VecDeque::new();
+    for (y, row) in grid.iter().enumerate() {
+        for (x, &v) in row.iter().enumerate() {
+            if v == 1 {
+                seen[y][x] = 0;
+                queue.push_back((x, y));
+            }
         }
     }
-    i2 == str2.len()
+    while !queue.is_empty() {
+        dist += 1;
+        let _len = queue.len();
+        for _ in 0.._len {
+            let Some((x, y)) = queue.pop_front() else {
+                continue;
+            };
+            for (nx, ny) in neighbors((x, y)) {
+                if grid
+                    .get(ny)
+                    .is_some_and(|row| row.get(nx).is_some_and(|&v| v == 0))
+                    && seen[ny][nx] == -1
+                {
+                    seen[ny][nx] = dist;
+                    queue.push_back((nx, ny));
+                }
+            }
+        }
+    }
+    seen.into_iter()
+        .flatten()
+        .max()
+        .filter(|&v| v > 0)
+        .unwrap_or(-1)
 }
 
 #[cfg(test)]
@@ -27,9 +52,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert!(can_make_subsequence("abc", "ad"));
-        assert!(can_make_subsequence("zc", "ad"));
-        assert!(!can_make_subsequence("ab", "d"));
+        assert_eq!(max_distance(&[&[1, 0, 1], &[0, 0, 0], &[1, 0, 1]]), 2);
+        assert_eq!(max_distance(&[&[1, 0, 0], &[0, 0, 0], &[0, 0, 0]]), 4);
     }
 
     #[test]
