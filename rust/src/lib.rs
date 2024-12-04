@@ -5,34 +5,31 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn last_substring(s: String) -> String {
-    // let (n, mut s) = (s.len(), s.into_bytes());
-    // let (mut i1, mut i2) = (0, 1);
-    // let mut len = 0;
-    // while i2 + len < n {
-    //     if s[i1 + len] == s[i2 + len] {
-    //         len += 1;
-    //         continue;
-    //     }
-    //     if s[i1 + len] > s[i2 + len] {
-    //         i2 += 1;
-    //     } else {
-    //         i1 = i2;
-    //         i2 = 1 + i1;
-    //     }
-    //     len = 0;
-    // }
-    // unsafe { String::from_utf8_unchecked(s.split_off(i1)) }
-
-    // smh everything TLEs except this
-    let mut result = &s[..];
-    for i in 1..s.len() {
-        let candidate = &s[i..];
-        if candidate > result {
-            result = candidate
+pub fn invalid_transactions(transactions: &[&str]) -> Vec<String> {
+    let mut res = std::collections::HashSet::new();
+    let trs: Vec<_> = transactions.iter().filter_map(|s| parse(s)).collect();
+    for (i1, t1) in trs.iter().enumerate() {
+        if t1.2 > 1000 {
+            res.insert(i1);
+        }
+        for (i2, t2) in trs.iter().enumerate().skip(1 + i1) {
+            if t1.0 == t2.0 && t1.3 != t2.3 && t1.1.abs_diff(t2.1) <= 60 {
+                res.extend([i1, i2]);
+            }
         }
     }
-    result.to_string()
+    res.into_iter()
+        .map(|i| format!("{},{},{},{}", trs[i].0, trs[i].1, trs[i].2, trs[i].3))
+        .collect()
+}
+
+fn parse(line: &str) -> Option<(&str, u16, u16, &str)> {
+    let mut it = line.split(',');
+    let name = it.next()?;
+    let time = it.next().and_then(|s| s.parse().ok())?;
+    let amount = it.next().and_then(|s| s.parse().ok())?;
+    let city = it.next()?;
+    Some((name, time, amount, city))
 }
 
 #[cfg(test)]
@@ -43,13 +40,38 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(last_substring("abab".into()), "bab");
-        assert_eq!(last_substring("leetcode".into()), "tcode");
+        sort_eq(
+            invalid_transactions(&["alice,20,800,mtv", "alice,50,100,beijing"]),
+            ["alice,20,800,mtv", "alice,50,100,beijing"],
+        );
+        sort_eq(
+            invalid_transactions(&["alice,20,800,mtv", "alice,50,1200,mtv"]),
+            ["alice,50,1200,mtv"],
+        );
+        sort_eq(
+            invalid_transactions(&["alice,20,800,mtv", "bob,50,1200,mtv"]),
+            ["bob,50,1200,mtv"],
+        );
     }
 
     #[test]
     fn test() {
-        assert_eq!(last_substring("cacacb".into()), "cb");
+        sort_eq(
+            invalid_transactions(&[
+                "alice,20,800,mtv",
+                "alice,50,100,mtv",
+                "alice,51,100,frankfurt",
+            ]),
+            [
+                "alice,20,800,mtv",
+                "alice,50,100,mtv",
+                "alice,51,100,frankfurt",
+            ],
+        );
+        sort_eq(
+            invalid_transactions(&["alice,20,1220,mtv", "alice,20,1220,mtv"]),
+            ["alice,20,1220,mtv", "alice,20,1220,mtv"],
+        );
     }
 
     #[allow(dead_code)]
