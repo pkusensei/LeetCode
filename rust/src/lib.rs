@@ -5,43 +5,34 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_distance(grid: &[&[i32]]) -> i32 {
-    let n = grid.len();
-    let mut seen = vec![vec![-1; n]; n];
-    let mut dist = 0;
-    let mut queue = std::collections::VecDeque::new();
-    for (y, row) in grid.iter().enumerate() {
-        for (x, &v) in row.iter().enumerate() {
-            if v == 1 {
-                seen[y][x] = 0;
-                queue.push_back((x, y));
-            }
+pub fn last_substring(s: String) -> String {
+    // let (n, mut s) = (s.len(), s.into_bytes());
+    // let (mut i1, mut i2) = (0, 1);
+    // let mut len = 0;
+    // while i2 + len < n {
+    //     if s[i1 + len] == s[i2 + len] {
+    //         len += 1;
+    //         continue;
+    //     }
+    //     if s[i1 + len] > s[i2 + len] {
+    //         i2 += 1;
+    //     } else {
+    //         i1 = i2;
+    //         i2 = 1 + i1;
+    //     }
+    //     len = 0;
+    // }
+    // unsafe { String::from_utf8_unchecked(s.split_off(i1)) }
+
+    // smh everything TLEs except this
+    let mut result = &s[..];
+    for i in 1..s.len() {
+        let candidate = &s[i..];
+        if candidate > result {
+            result = candidate
         }
     }
-    while !queue.is_empty() {
-        dist += 1;
-        let _len = queue.len();
-        for _ in 0.._len {
-            let Some((x, y)) = queue.pop_front() else {
-                continue;
-            };
-            for (nx, ny) in neighbors((x, y)) {
-                if grid
-                    .get(ny)
-                    .is_some_and(|row| row.get(nx).is_some_and(|&v| v == 0))
-                    && seen[ny][nx] == -1
-                {
-                    seen[ny][nx] = dist;
-                    queue.push_back((nx, ny));
-                }
-            }
-        }
-    }
-    seen.into_iter()
-        .flatten()
-        .max()
-        .filter(|&v| v > 0)
-        .unwrap_or(-1)
+    result.to_string()
 }
 
 #[cfg(test)]
@@ -52,12 +43,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_distance(&[&[1, 0, 1], &[0, 0, 0], &[1, 0, 1]]), 2);
-        assert_eq!(max_distance(&[&[1, 0, 0], &[0, 0, 0], &[0, 0, 0]]), 4);
+        assert_eq!(last_substring("abab".into()), "bab");
+        assert_eq!(last_substring("leetcode".into()), "tcode");
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(last_substring("cacacb".into()), "cb");
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
