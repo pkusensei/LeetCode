@@ -5,22 +5,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn add_spaces(s: String, spaces: &[i32]) -> String {
-    // let mut s = s.into_bytes();
-    // for i in spaces.iter().rev() {
-    //     s.insert(*i as usize, b' ');
-    // }
-    // String::from_utf8(s).unwrap()
-    let mut res = Vec::with_capacity(s.len() + spaces.len());
-    let mut i1 = 0;
-    for (i2, b) in s.bytes().enumerate() {
-        if spaces.get(i1).is_some_and(|&v| v as usize == i2) {
-            res.push(b' ');
-            i1 += 1;
+pub fn can_make_subsequence(str1: &str, str2: &str) -> bool {
+    let mut i2 = 0;
+    for b1 in str1.bytes() {
+        if str2
+            .bytes()
+            .nth(i2)
+            .is_some_and(|b2| b2 == b1 || b1 + 1 == b2 || (b1 == b'z' && b2 == b'a'))
+        {
+            i2 += 1;
         }
-        res.push(b);
     }
-    String::from_utf8(res).unwrap()
+    i2 == str2.len()
 }
 
 #[cfg(test)]
@@ -31,18 +27,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            add_spaces("LeetcodeHelpsMeLearn".into(), &[8, 13, 15]),
-            "Leetcode Helps Me Learn"
-        );
-        assert_eq!(
-            add_spaces("icodeinpython".into(), &[1, 5, 7, 9]),
-            "i code in py thon"
-        );
-        assert_eq!(
-            add_spaces("spacing".into(), &[0, 1, 2, 3, 4, 5, 6]),
-            " s p a c i n g"
-        );
+        assert!(can_make_subsequence("abc", "ad"));
+        assert!(can_make_subsequence("zc", "ad"));
+        assert!(!can_make_subsequence("ab", "d"));
     }
 
     #[test]
