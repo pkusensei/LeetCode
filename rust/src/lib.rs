@@ -5,31 +5,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn invalid_transactions(transactions: &[&str]) -> Vec<String> {
-    let mut res = std::collections::HashSet::new();
-    let trs: Vec<_> = transactions.iter().filter_map(|s| parse(s)).collect();
-    for (i1, t1) in trs.iter().enumerate() {
-        if t1.2 > 1000 {
-            res.insert(i1);
-        }
-        for (i2, t2) in trs.iter().enumerate().skip(1 + i1) {
-            if t1.0 == t2.0 && t1.3 != t2.3 && t1.1.abs_diff(t2.1) <= 60 {
-                res.extend([i1, i2]);
-            }
-        }
-    }
-    res.into_iter()
-        .map(|i| format!("{},{},{},{}", trs[i].0, trs[i].1, trs[i].2, trs[i].3))
+pub fn num_smaller_by_frequency(queries: &[&str], words: &[&str]) -> Vec<i32> {
+    let mut freqs: Vec<_> = words.iter().map(|s| freq(s)).collect();
+    freqs.sort_unstable_by_key(|v| std::cmp::Reverse(*v));
+    queries
+        .iter()
+        .map(|s| {
+            let f = freq(s);
+            freqs.partition_point(|&v| f < v) as i32
+        })
         .collect()
 }
 
-fn parse(line: &str) -> Option<(&str, u16, u16, &str)> {
-    let mut it = line.split(',');
-    let name = it.next()?;
-    let time = it.next().and_then(|s| s.parse().ok())?;
-    let amount = it.next().and_then(|s| s.parse().ok())?;
-    let city = it.next()?;
-    Some((name, time, amount, city))
+fn freq(s: &str) -> i32 {
+    s.bytes()
+        .fold([0; 26], |mut acc, b| {
+            acc[usize::from(b - b'a')] += 1;
+            acc
+        })
+        .into_iter()
+        .find(|&v| v > 0)
+        .unwrap_or(1)
 }
 
 #[cfg(test)]
@@ -40,39 +36,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        sort_eq(
-            invalid_transactions(&["alice,20,800,mtv", "alice,50,100,beijing"]),
-            ["alice,20,800,mtv", "alice,50,100,beijing"],
-        );
-        sort_eq(
-            invalid_transactions(&["alice,20,800,mtv", "alice,50,1200,mtv"]),
-            ["alice,50,1200,mtv"],
-        );
-        sort_eq(
-            invalid_transactions(&["alice,20,800,mtv", "bob,50,1200,mtv"]),
-            ["bob,50,1200,mtv"],
+        // assert_eq!(num_smaller_by_frequency(&["cbd"], &["zaaaz"]), [1]);
+        assert_eq!(
+            num_smaller_by_frequency(&["bbb", "cc"], &["a", "aa", "aaa", "aaaa"]),
+            [1, 2]
         );
     }
 
     #[test]
-    fn test() {
-        sort_eq(
-            invalid_transactions(&[
-                "alice,20,800,mtv",
-                "alice,50,100,mtv",
-                "alice,51,100,frankfurt",
-            ]),
-            [
-                "alice,20,800,mtv",
-                "alice,50,100,mtv",
-                "alice,51,100,frankfurt",
-            ],
-        );
-        sort_eq(
-            invalid_transactions(&["alice,20,1220,mtv", "alice,20,1220,mtv"]),
-            ["alice,20,1220,mtv", "alice,20,1220,mtv"],
-        );
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
