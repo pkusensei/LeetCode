@@ -2,35 +2,37 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn can_make_pali_queries(s: &str, queries: &[[i32; 3]]) -> Vec<bool> {
-    let n = s.len();
-    let mut prefix: Vec<_> = (0..26).map(|_| Vec::with_capacity(n)).collect();
-    for b in s.bytes() {
-        for i in 0..26 {
-            let last = prefix[i].last().copied().unwrap_or(0);
-            prefix[i].push(i32::from(usize::from(b - b'a') == i) + last);
-        }
-    }
-    let mut res = Vec::with_capacity(n);
-    for q in queries.iter() {
-        let [left, right, k] = [q[0], q[1], q[2]].map(|v| v as usize);
-        let odd = prefix
-            .iter()
-            .map(|p| {
-                if left == 0 {
-                    p[right]
-                } else {
-                    p[right] - p[left - 1]
+pub fn find_num_of_valid_words(words: &[&str], puzzles: &[&str]) -> Vec<i32> {
+    let words = words
+        .iter()
+        .map(|s| to_bits(s))
+        .fold(HashMap::new(), |mut acc, mask| {
+            *acc.entry(mask).or_insert(0) += 1;
+            acc
+        });
+    puzzles
+        .iter()
+        .map(|p| {
+            let i = p.as_bytes()[0] - b'a';
+            let mask = to_bits(p);
+            let mut res = 0;
+            for (&k, &v) in words.iter() {
+                if (k >> i) & 1 == 1 && (mask & k) == k {
+                    res += v;
                 }
-            })
-            .filter(|&v| v & 1 == 1)
-            .count();
-        res.push(odd <= 1 + 2 * k);
-    }
-    res
+            }
+            res
+        })
+        .collect()
+}
+
+fn to_bits(s: &str) -> i32 {
+    s.bytes().fold(0, |acc, b| acc | 1 << (b - b'a'))
 }
 
 #[cfg(test)]
@@ -42,15 +44,18 @@ mod tests {
     #[test]
     fn basics() {
         assert_eq!(
-            can_make_pali_queries(
-                "abcda",
-                &[[3, 3, 0], [1, 2, 0], [0, 3, 1], [0, 3, 2], [0, 4, 1]]
+            find_num_of_valid_words(
+                &["aaaa", "asas", "able", "ability", "actt", "actor", "access"],
+                &["aboveyz", "abrodyz", "abslute", "absoryz", "actresz", "gaswxyz"],
             ),
-            [true, false, false, true, true]
+            [1, 1, 3, 2, 4, 0]
         );
         assert_eq!(
-            can_make_pali_queries("lyb", &[[0, 1, 0], [2, 2, 1]]),
-            [false, true]
+            find_num_of_valid_words(
+                &["apple", "pleas", "please"],
+                &["aelwxyz", "aelpxyz", "aelpsxy", "saelpxy", "xaelpsy"]
+            ),
+            [0, 1, 3, 2, 0]
         );
     }
 
