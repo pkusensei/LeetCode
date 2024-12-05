@@ -5,12 +5,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn distance_between_bus_stops(distance: &[i32], start: i32, destination: i32) -> i32 {
-    let min = start.min(destination) as usize;
-    let max = start.max(destination) as usize;
-    let sum: i32 = distance.iter().sum();
-    let a: i32 = distance[min..max].iter().sum();
-    a.min(sum - a)
+pub fn day_of_the_week(day: i32, month: i32, year: i32) -> String {
+    const SHIFT: [i32; 12] = [0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4];
+    const DOTW: [&str; 7] = [
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+    ];
+
+    let year = year - i32::from(month < 3);
+    let idx = SHIFT[month as usize - 1] + day + year + year / 4 - year / 100 + year / 400;
+    DOTW[idx as usize % 7].to_string()
 }
 
 #[cfg(test)]
@@ -21,8 +30,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(distance_between_bus_stops(&[1, 2, 3, 4], 0, 2), 3);
-        assert_eq!(distance_between_bus_stops(&[1, 2, 3, 4], 0, 3), 4);
+        assert_eq!(day_of_the_week(31, 8, 2019), "Saturday");
+        assert_eq!(day_of_the_week(18, 7, 1999), "Sunday");
+        assert_eq!(day_of_the_week(15, 8, 1993), "Sunday");
     }
 
     #[test]
