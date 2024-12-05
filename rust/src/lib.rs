@@ -2,37 +2,15 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_num_of_valid_words(words: &[&str], puzzles: &[&str]) -> Vec<i32> {
-    let words = words
-        .iter()
-        .map(|s| to_bits(s))
-        .fold(HashMap::new(), |mut acc, mask| {
-            *acc.entry(mask).or_insert(0) += 1;
-            acc
-        });
-    puzzles
-        .iter()
-        .map(|p| {
-            let i = p.as_bytes()[0] - b'a';
-            let mask = to_bits(p);
-            let mut res = 0;
-            for (&k, &v) in words.iter() {
-                if (k >> i) & 1 == 1 && (mask & k) == k {
-                    res += v;
-                }
-            }
-            res
-        })
-        .collect()
-}
-
-fn to_bits(s: &str) -> i32 {
-    s.bytes().fold(0, |acc, b| acc | 1 << (b - b'a'))
+pub fn distance_between_bus_stops(distance: &[i32], start: i32, destination: i32) -> i32 {
+    let min = start.min(destination) as usize;
+    let max = start.max(destination) as usize;
+    let sum: i32 = distance.iter().sum();
+    let a: i32 = distance[min..max].iter().sum();
+    a.min(sum - a)
 }
 
 #[cfg(test)]
@@ -43,20 +21,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            find_num_of_valid_words(
-                &["aaaa", "asas", "able", "ability", "actt", "actor", "access"],
-                &["aboveyz", "abrodyz", "abslute", "absoryz", "actresz", "gaswxyz"],
-            ),
-            [1, 1, 3, 2, 4, 0]
-        );
-        assert_eq!(
-            find_num_of_valid_words(
-                &["apple", "pleas", "please"],
-                &["aelwxyz", "aelpxyz", "aelpsxy", "saelpxy", "xaelpsy"]
-            ),
-            [0, 1, 3, 2, 0]
-        );
+        assert_eq!(distance_between_bus_stops(&[1, 2, 3, 4], 0, 2), 3);
+        assert_eq!(distance_between_bus_stops(&[1, 2, 3, 4], 0, 3), 4);
     }
 
     #[test]
