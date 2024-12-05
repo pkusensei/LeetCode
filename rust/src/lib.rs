@@ -5,27 +5,28 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_smaller_by_frequency(queries: &[&str], words: &[&str]) -> Vec<i32> {
-    let mut freqs: Vec<_> = words.iter().map(|s| freq(s)).collect();
-    freqs.sort_unstable_by_key(|v| std::cmp::Reverse(*v));
-    queries
-        .iter()
-        .map(|s| {
-            let f = freq(s);
-            freqs.partition_point(|&v| f < v) as i32
-        })
-        .collect()
-}
-
-fn freq(s: &str) -> i32 {
-    s.bytes()
-        .fold([0; 26], |mut acc, b| {
-            acc[usize::from(b - b'a')] += 1;
-            acc
-        })
-        .into_iter()
-        .find(|&v| v > 0)
-        .unwrap_or(1)
+pub fn can_change(start: &str, target: &str) -> bool {
+    let [start, target] =
+        [start, target].map(|v| v.bytes().enumerate().filter(|&(_i, b)| b != b'_'));
+    if start.clone().count() != target.clone().count() {
+        return false;
+    }
+    for (s, t) in start.zip(target) {
+        match (s.1, t.1) {
+            (b'L', b'L') => {
+                if s.0 < t.0 {
+                    return false;
+                }
+            }
+            (b'R', b'R') => {
+                if s.0 > t.0 {
+                    return false;
+                }
+            }
+            _ => return false,
+        }
+    }
+    true
 }
 
 #[cfg(test)]
@@ -36,11 +37,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        // assert_eq!(num_smaller_by_frequency(&["cbd"], &["zaaaz"]), [1]);
-        assert_eq!(
-            num_smaller_by_frequency(&["bbb", "cc"], &["a", "aa", "aaa", "aaaa"]),
-            [1, 2]
-        );
+        assert!(can_change("_L__R__R_", "L______RR"));
+        assert!(!can_change("R_L_", "__LR"));
+        assert!(!can_change("_R", "R_"));
     }
 
     #[test]
