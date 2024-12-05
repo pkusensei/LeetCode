@@ -5,67 +5,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-#[derive(Debug, Clone, Default)]
-struct DinnerPlates {
-    cap: usize,
-    stacks: Vec<Vec<i32>>,
-    slots: std::collections::BTreeSet<usize>,
+const MOD: i64 = 1_000_000_007;
+
+pub fn num_prime_arrangements(n: i32) -> i32 {
+    // Shamelessly ChatGPT'ed
+    const PRIME_COUNTS: [i64; 100] = [
+        0, 1, 2, 2, 3, 3, 4, 4, 4, 4, 5, 5, 6, 6, 6, 6, 7, 7, 8, 8, 8, 8, 9, 9, 9, 9, 9, 9, 10, 10,
+        11, 11, 11, 11, 11, 11, 12, 12, 12, 12, 13, 13, 14, 14, 14, 14, 15, 15, 15, 15, 15, 15, 16,
+        16, 16, 16, 16, 16, 17, 17, 18, 18, 18, 18, 18, 18, 19, 19, 19, 19, 20, 20, 21, 21, 21, 21,
+        21, 21, 22, 22, 22, 22, 23, 23, 23, 23, 23, 23, 24, 24, 24, 24, 24, 24, 24, 24, 25, 25, 25,
+        25,
+    ];
+    let p = PRIME_COUNTS[n as usize - 1];
+    let np = i64::from(n) - p;
+    (fact(p) * fact(np) % MOD) as i32
 }
 
-impl DinnerPlates {
-    fn new(capacity: i32) -> Self {
-        Self {
-            cap: capacity as usize,
-            ..Default::default()
-        }
-    }
-
-    fn push(&mut self, val: i32) {
-        if let Some(&i) = self.slots.iter().next() {
-            self.stacks[i].push(val);
-            if self.stacks[i].len() == self.cap {
-                self.slots.remove(&i);
-            }
-        } else {
-            let v = vec![val];
-            self.stacks.push(v);
-            if self.cap > 1 {
-                self.slots.insert(self.stacks.len() - 1);
-            }
-        }
-    }
-
-    fn pop(&mut self) -> i32 {
-        let Some((idx, st)) = self
-            .stacks
-            .iter_mut()
-            .enumerate()
-            .rfind(|(_i, st)| !st.is_empty())
-        else {
-            return -1;
-        };
-        let res = st.pop().unwrap_or(-1);
-        if st.is_empty() {
-            self.slots.retain(|&i| i < idx);
-            self.stacks.truncate(idx);
-        } else {
-            self.slots.insert(idx);
-        }
-        res
-    }
-
-    fn pop_at_stack(&mut self, index: i32) -> i32 {
-        let idx = index as usize;
-        if self.stacks.len() <= idx {
-            return -1;
-        }
-        if self.stacks.len() - 1 == idx {
-            return self.pop();
-        }
-        if self.stacks[idx].len() == self.cap {
-            self.slots.insert(idx);
-        }
-        self.stacks[idx].pop().unwrap_or(-1)
+const fn fact(n: i64) -> i64 {
+    if n <= 1 {
+        1
+    } else {
+        n * fact(n - 1) % MOD
     }
 }
 
@@ -77,22 +37,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        let mut D = DinnerPlates::new(2); // Initialize with capacity = 2
-        D.push(1);
-        D.push(2);
-        D.push(3);
-        D.push(4);
-        D.push(5);
-        assert_eq!(D.pop_at_stack(0), 2);
-        D.push(20);
-        D.push(21);
-        assert_eq!(D.pop_at_stack(0), 20);
-        assert_eq!(D.pop_at_stack(2), 21);
-        assert_eq!(D.pop(), 5);
-        assert_eq!(D.pop(), 4);
-        assert_eq!(D.pop(), 3);
-        assert_eq!(D.pop(), 1);
-        assert_eq!(D.pop(), -1);
+        assert_eq!(num_prime_arrangements(5), 12);
+        assert_eq!(num_prime_arrangements(100), 682289015);
     }
 
     #[test]
