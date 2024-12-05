@@ -6,23 +6,29 @@ namespace Solution;
 
 public class Solution
 {
-    public int MaxLevelSum(TreeNode root)
+    public ListNode RemoveZeroSumSublists(ListNode head)
     {
-        List<TreeNode> list = [root];
-        var level = 1;
-        var res = 0;
-        var sum = int.MinValue;
-        while (list.Count > 0)
+        ListNode dummy = new(0, head);
+        Dictionary<int, ListNode> dict = [];
+        int sum = 0;
+        var curr = dummy;
+        while (curr is not null)
         {
-            var curr = list.Select(n => n.val).Sum();
-            if (curr > sum)
-            {
-                sum = curr;
-                res = level;
-            }
-            list = list.SelectMany(n => new[] { n.left, n.right }).Where(n => n is not null).ToList();
-            level += 1;
+            sum += curr.val;
+            dict[sum] = curr;
+            curr = curr.next;
         }
-        return res;
+        sum = 0;
+        curr = dummy;
+        while (curr is not null)
+        {
+            sum += curr.val;
+            if (dict.TryGetValue(sum, out var node))
+            {
+                curr.next = node.next;
+            }
+            curr = curr.next;
+        }
+        return dummy.next;
     }
 }

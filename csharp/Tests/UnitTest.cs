@@ -10,17 +10,19 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow(new int[] { 1, 2, -3, 3, 1 }, "[3,1]")]
+    [DataRow(new int[] { 1, 2, 3, -3, 4 }, "[1,2,4]")]
+    [DataRow(new int[] { 1, 2, 3, -3, -2 }, "[1]")]
+    [DataRow(new int[] { 1, 3, 2, -3, -2, 5, 5, -5, 1 }, "[1,5,1]")]
+    public void TestMethod1(int[] nums, string exp)
     {
-        var a = TreeNode.Make([1, 7, 0, 7, -8, null, null]);
-        Assert.AreEqual(2, sol.MaxLevelSum(a));
+        var a = ListNode.Make(nums);
+        Assert.AreEqual(exp, sol.RemoveZeroSumSublists(a).ToString());
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        var a = TreeNode.Make([989, null, 10250, 98693, -89388, null, null, null, -32127]);
-        Assert.AreEqual(2, sol.MaxLevelSum(a));
     }
 
     [TestMethod]
