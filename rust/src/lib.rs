@@ -5,28 +5,32 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-const MOD: i64 = 1_000_000_007;
-
-pub fn num_prime_arrangements(n: i32) -> i32 {
-    // Shamelessly ChatGPT'ed
-    const PRIME_COUNTS: [i64; 100] = [
-        0, 1, 2, 2, 3, 3, 4, 4, 4, 4, 5, 5, 6, 6, 6, 6, 7, 7, 8, 8, 8, 8, 9, 9, 9, 9, 9, 9, 10, 10,
-        11, 11, 11, 11, 11, 11, 12, 12, 12, 12, 13, 13, 14, 14, 14, 14, 15, 15, 15, 15, 15, 15, 16,
-        16, 16, 16, 16, 16, 17, 17, 18, 18, 18, 18, 18, 18, 19, 19, 19, 19, 20, 20, 21, 21, 21, 21,
-        21, 21, 22, 22, 22, 22, 23, 23, 23, 23, 23, 23, 24, 24, 24, 24, 24, 24, 24, 24, 25, 25, 25,
-        25,
-    ];
-    let p = PRIME_COUNTS[n as usize - 1];
-    let np = i64::from(n) - p;
-    (fact(p) * fact(np) % MOD) as i32
-}
-
-const fn fact(n: i64) -> i64 {
-    if n <= 1 {
-        1
-    } else {
-        n * fact(n - 1) % MOD
+pub fn can_make_pali_queries(s: &str, queries: &[[i32; 3]]) -> Vec<bool> {
+    let n = s.len();
+    let mut prefix: Vec<_> = (0..26).map(|_| Vec::with_capacity(n)).collect();
+    for b in s.bytes() {
+        for i in 0..26 {
+            let last = prefix[i].last().copied().unwrap_or(0);
+            prefix[i].push(i32::from(usize::from(b - b'a') == i) + last);
+        }
     }
+    let mut res = Vec::with_capacity(n);
+    for q in queries.iter() {
+        let [left, right, k] = [q[0], q[1], q[2]].map(|v| v as usize);
+        let odd = prefix
+            .iter()
+            .map(|p| {
+                if left == 0 {
+                    p[right]
+                } else {
+                    p[right] - p[left - 1]
+                }
+            })
+            .filter(|&v| v & 1 == 1)
+            .count();
+        res.push(odd <= 1 + 2 * k);
+    }
+    res
 }
 
 #[cfg(test)]
@@ -37,8 +41,17 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(num_prime_arrangements(5), 12);
-        assert_eq!(num_prime_arrangements(100), 682289015);
+        assert_eq!(
+            can_make_pali_queries(
+                "abcda",
+                &[[3, 3, 0], [1, 2, 0], [0, 3, 1], [0, 3, 2], [0, 4, 1]]
+            ),
+            [true, false, false, true, true]
+        );
+        assert_eq!(
+            can_make_pali_queries("lyb", &[[0, 1, 0], [2, 2, 1]]),
+            [false, true]
+        );
     }
 
     #[test]
