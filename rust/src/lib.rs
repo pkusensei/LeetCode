@@ -5,18 +5,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_count(banned: &[i32], n: i32, max_sum: i32) -> i32 {
-    let banned: std::collections::HashSet<i32> =
-        banned.iter().copied().filter(|&num| num <= n).collect();
-    let mut res = 0;
-    let mut sum = 0;
-    for num in (1..=n).filter(|num| !banned.contains(num)) {
-        sum += num;
-        if sum <= max_sum {
-            res += 1;
-        } else {
-            break;
-        }
+pub fn maximum_sum(arr: &[i32]) -> i32 {
+    let mut prev_delete = 0;
+    let mut prev_keep = arr[0];
+    let mut res = arr[0];
+    for num in arr.iter().skip(1) {
+        // attemp to skip current num
+        prev_delete = (prev_delete + num).max(prev_keep);
+        // add current in or start from current
+        prev_keep = (prev_keep + num).max(*num);
+        res = res.max(prev_delete).max(prev_keep);
     }
     res
 }
@@ -29,9 +27,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_count(&[1, 6, 5], 5, 6), 2);
-        assert_eq!(max_count(&[1, 2, 3, 4, 5, 6, 7], 8, 1), 0);
-        assert_eq!(max_count(&[11], 7, 50), 7);
+        assert_eq!(maximum_sum(&[1, -2, 0, 3]), 4);
+        assert_eq!(maximum_sum(&[1, -2, -2, 3]), 3);
+        assert_eq!(maximum_sum(&[-1, -1, -1, -1]), -1);
     }
 
     #[test]
