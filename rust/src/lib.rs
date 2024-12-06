@@ -5,21 +5,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn day_of_the_week(day: i32, month: i32, year: i32) -> String {
-    const SHIFT: [i32; 12] = [0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4];
-    const DOTW: [&str; 7] = [
-        "Sunday",
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday",
-    ];
-
-    let year = year - i32::from(month < 3);
-    let idx = SHIFT[month as usize - 1] + day + year + year / 4 - year / 100 + year / 400;
-    DOTW[idx as usize % 7].to_string()
+pub fn max_count(banned: &[i32], n: i32, max_sum: i32) -> i32 {
+    let banned: std::collections::HashSet<i32> =
+        banned.iter().copied().filter(|&num| num <= n).collect();
+    let mut res = 0;
+    let mut sum = 0;
+    for num in (1..=n).filter(|num| !banned.contains(num)) {
+        sum += num;
+        if sum <= max_sum {
+            res += 1;
+        } else {
+            break;
+        }
+    }
+    res
 }
 
 #[cfg(test)]
@@ -30,9 +29,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(day_of_the_week(31, 8, 2019), "Saturday");
-        assert_eq!(day_of_the_week(18, 7, 1999), "Sunday");
-        assert_eq!(day_of_the_week(15, 8, 1993), "Sunday");
+        assert_eq!(max_count(&[1, 6, 5], 5, 6), 2);
+        assert_eq!(max_count(&[1, 2, 3, 4, 5, 6, 7], 8, 1), 0);
+        assert_eq!(max_count(&[11], 7, 50), 7);
     }
 
     #[test]
