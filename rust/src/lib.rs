@@ -5,18 +5,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_number_of_balloons(text: &str) -> i32 {
-    let [bal, t] = ["balloon", text].map(|s| {
-        s.bytes().fold([0; 26], |mut acc, b| {
-            acc[usize::from(b - b'a')] += 1;
-            acc
-        })
-    });
-    t.into_iter()
-        .zip(bal)
-        .filter_map(|(t, b)| if b > 0 { Some(t / b) } else { None })
-        .min()
-        .unwrap_or(0)
+pub fn minimum_size(nums: &[i32], max_operations: i32) -> i32 {
+    let mut left = 1;
+    let mut right = nums.iter().copied().max().unwrap_or(nums[0]);
+    while left < right {
+        let mid = left + (right - left) / 2;
+        if count(nums, mid) > nums.len() as i32 + max_operations {
+            left = 1 + mid;
+        } else {
+            right = mid;
+        }
+    }
+    left
+}
+
+fn count(nums: &[i32], mid: i32) -> i32 {
+    nums.iter()
+        .map(|num| num / mid + i32::from(num % mid > 0))
+        .sum()
 }
 
 #[cfg(test)]
@@ -27,9 +33,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_number_of_balloons("nlaebolko"), 1);
-        assert_eq!(max_number_of_balloons("loonbalxballpoon"), 2);
-        assert_eq!(max_number_of_balloons("leetcode"), 0);
+        assert_eq!(minimum_size(&[9], 2), 3);
+        assert_eq!(minimum_size(&[2, 4, 8, 2], 4), 2);
     }
 
     #[test]
