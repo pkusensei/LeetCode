@@ -5,24 +5,57 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_size(nums: &[i32], max_operations: i32) -> i32 {
-    let mut left = 1;
-    let mut right = nums.iter().copied().max().unwrap_or(nums[0]);
-    while left < right {
-        let mid = left + (right - left) / 2;
-        if count(nums, mid) > nums.len() as i32 + max_operations {
-            left = 1 + mid;
-        } else {
-            right = mid;
+pub fn reverse_parentheses(s: &str) -> String {
+    let mut stack = vec![];
+    let mut curr = vec![];
+    for b in s.bytes() {
+        match b {
+            b'(' => {
+                stack.push(curr);
+                curr = vec![];
+            }
+            b')' => {
+                let mut prev = stack.pop().unwrap_or_default();
+                prev.extend(curr.into_iter().rev());
+                curr = prev;
+            }
+            _ => curr.push(b),
         }
     }
-    left
+    String::from_utf8(curr).unwrap()
 }
 
-fn count(nums: &[i32], mid: i32) -> i32 {
-    nums.iter()
-        .map(|num| num / mid + i32::from(num % mid > 0))
-        .sum()
+fn wormhole_teleport(s: &str) -> String {
+    let n = s.len();
+    let mut open = vec![];
+    let mut pair = vec![0; n];
+    for (i, b) in s.bytes().enumerate() {
+        if b == b'(' {
+            open.push(i);
+        } else if b == b')' {
+            let prev = open.pop().unwrap_or(0);
+            pair[i] = prev;
+            pair[prev] = i;
+        }
+    }
+    let mut res = Vec::with_capacity(n);
+    let mut idx = 0;
+    let mut dir = true;
+    while let Some(&b) = s.as_bytes().get(idx) {
+        match b {
+            b'(' | b')' => {
+                idx = pair[idx];
+                dir = !dir;
+            }
+            _ => res.push(b),
+        }
+        if dir {
+            idx += 1;
+        } else {
+            idx -= 1;
+        }
+    }
+    String::from_utf8(res).unwrap()
 }
 
 #[cfg(test)]
@@ -33,8 +66,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(minimum_size(&[9], 2), 3);
-        assert_eq!(minimum_size(&[2, 4, 8, 2], 4), 2);
+        assert_eq!(wormhole_teleport("(abcd)"), "dcba");
+        assert_eq!(wormhole_teleport("(u(love)i)"), "iloveu");
+        assert_eq!(wormhole_teleport("(ed(et(oc))el)"), "leetcode");
     }
 
     #[test]
