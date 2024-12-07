@@ -5,57 +5,43 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn reverse_parentheses(s: &str) -> String {
-    let mut stack = vec![];
-    let mut curr = vec![];
-    for b in s.bytes() {
-        match b {
-            b'(' => {
-                stack.push(curr);
-                curr = vec![];
-            }
-            b')' => {
-                let mut prev = stack.pop().unwrap_or_default();
-                prev.extend(curr.into_iter().rev());
-                curr = prev;
-            }
-            _ => curr.push(b),
-        }
-    }
-    String::from_utf8(curr).unwrap()
-}
+pub fn k_concatenation_max_sum(arr: &[i32], k: i32) -> i32 {
+    const MOD: i64 = 1_000_000_007;
 
-fn wormhole_teleport(s: &str) -> String {
-    let n = s.len();
-    let mut open = vec![];
-    let mut pair = vec![0; n];
-    for (i, b) in s.bytes().enumerate() {
-        if b == b'(' {
-            open.push(i);
-        } else if b == b')' {
-            let prev = open.pop().unwrap_or(0);
-            pair[i] = prev;
-            pair[prev] = i;
+    // Kadane's algo for k==1
+    let kadane = {
+        let mut curr = 0;
+        let mut max = i64::MIN;
+        for num in arr.iter().map(|&v| i64::from(v)) {
+            curr = num.max(curr + num);
+            max = max.max(curr);
         }
+        max
+    };
+    let mut prefix = i64::MIN; // prefix max
+    let mut sum = 0;
+    for num in arr.iter().map(|&v| i64::from(v)) {
+        sum += num;
+        prefix = prefix.max(sum);
     }
-    let mut res = Vec::with_capacity(n);
-    let mut idx = 0;
-    let mut dir = true;
-    while let Some(&b) = s.as_bytes().get(idx) {
-        match b {
-            b'(' | b')' => {
-                idx = pair[idx];
-                dir = !dir;
-            }
-            _ => res.push(b),
-        }
-        if dir {
-            idx += 1;
-        } else {
-            idx -= 1;
-        }
+    sum = 0;
+    let mut suffix = i64::MIN; // suffix max
+    for num in arr.iter().rev().map(|&v| i64::from(v)) {
+        sum += num;
+        suffix = suffix.max(sum);
     }
-    String::from_utf8(res).unwrap()
+    let k_sum = |c| (0..c).fold(0, |acc, _| acc + sum);
+    // max is
+    // - Kadanes for k==1
+    // - sum * k
+    // - prefix_max + suffix_max
+    // - prefix_max + suffix_max + sum*(k-2) when k>1
+    let mut res = kadane.max(k_sum(k));
+    if k > 1 {
+        res = res.max(prefix + suffix);
+        res = res.max((prefix + suffix) + k_sum(k - 2));
+    }
+    (res.max(0) % MOD) as i32
 }
 
 #[cfg(test)]
@@ -66,13 +52,22 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(wormhole_teleport("(abcd)"), "dcba");
-        assert_eq!(wormhole_teleport("(u(love)i)"), "iloveu");
-        assert_eq!(wormhole_teleport("(ed(et(oc))el)"), "leetcode");
+        assert_eq!(k_concatenation_max_sum(&[1, 2], 3), 9);
+        assert_eq!(k_concatenation_max_sum(&[1, -2, 1], 5), 2);
+        assert_eq!(k_concatenation_max_sum(&[-1, -2], 7), 0);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(k_concatenation_max_sum(&[1, 2], 1), 3);
+        assert_eq!(
+            k_concatenation_max_sum(
+                &[-9, 13, 4, -16, -12, -16, 3, -7, 5, -16, 16, 8, -1, -13, 15, 3],
+                6
+            ),
+            36
+        );
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
