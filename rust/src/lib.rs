@@ -5,43 +5,46 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn k_concatenation_max_sum(arr: &[i32], k: i32) -> i32 {
-    const MOD: i64 = 1_000_000_007;
+pub fn critical_connections(n: i32, connections: &[[i32; 2]]) -> Vec<Vec<i32>> {
+    let n = n as usize;
+    let mut adj = vec![vec![]; n];
+    for c in connections.iter() {
+        adj[c[0] as usize].push(c[1] as usize);
+        adj[c[1] as usize].push(c[0] as usize);
+    }
+    let mut ranks = vec![-2; n];
+    let mut res = vec![];
+    dfs(&adj, &mut ranks, n, 0, 0, &mut res);
+    res
+}
 
-    // Kadane's algo for k==1
-    let kadane = {
-        let mut curr = 0;
-        let mut max = i64::MIN;
-        for num in arr.iter().map(|&v| i64::from(v)) {
-            curr = num.max(curr + num);
-            max = max.max(curr);
+fn dfs(
+    adj: &[Vec<usize>],
+    ranks: &mut [i32],
+    n: usize,
+    node: usize,
+    rank: i32,
+    res: &mut Vec<Vec<i32>>,
+) -> i32 {
+    if ranks[node] >= 0 {
+        return ranks[node];
+    }
+    ranks[node] = rank;
+    let mut min_rank = rank;
+    for &neighbor in adj[node].iter() {
+        // avoid goes back to parent immediately => init value == -2
+        // a neighbor with a highrt rank => a cycle is found
+        if ranks[neighbor] == rank - 1 || ranks[neighbor] > rank {
+            continue;
         }
-        max
-    };
-    let mut prefix = i64::MIN; // prefix max
-    let mut sum = 0;
-    for num in arr.iter().map(|&v| i64::from(v)) {
-        sum += num;
-        prefix = prefix.max(sum);
+        let nr = dfs(adj, ranks, n, neighbor, 1 + rank, res);
+        min_rank = min_rank.min(nr);
+        // bridges => edges not in a cycle
+        if nr > rank {
+            res.push(vec![node as i32, neighbor as i32]);
+        }
     }
-    sum = 0;
-    let mut suffix = i64::MIN; // suffix max
-    for num in arr.iter().rev().map(|&v| i64::from(v)) {
-        sum += num;
-        suffix = suffix.max(sum);
-    }
-    let k_sum = |c| (0..c).fold(0, |acc, _| acc + sum);
-    // max is
-    // - Kadanes for k==1
-    // - sum * k
-    // - prefix_max + suffix_max
-    // - prefix_max + suffix_max + sum*(k-2) when k>1
-    let mut res = kadane.max(k_sum(k));
-    if k > 1 {
-        res = res.max(prefix + suffix);
-        res = res.max((prefix + suffix) + k_sum(k - 2));
-    }
-    (res.max(0) % MOD) as i32
+    min_rank
 }
 
 #[cfg(test)]
@@ -52,22 +55,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(k_concatenation_max_sum(&[1, 2], 3), 9);
-        assert_eq!(k_concatenation_max_sum(&[1, -2, 1], 5), 2);
-        assert_eq!(k_concatenation_max_sum(&[-1, -2], 7), 0);
+        assert_eq!(
+            critical_connections(4, &[[0, 1], [1, 2], [2, 0], [1, 3]]),
+            [[1, 3]]
+        );
+        assert_eq!(critical_connections(2, &[[0, 1]]), [[0, 1]]);
     }
 
     #[test]
-    fn test() {
-        assert_eq!(k_concatenation_max_sum(&[1, 2], 1), 3);
-        assert_eq!(
-            k_concatenation_max_sum(
-                &[-9, 13, 4, -16, -12, -16, 3, -7, 5, -16, 16, 8, -1, -13, 15, 3],
-                6
-            ),
-            36
-        );
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
