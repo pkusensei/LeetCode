@@ -5,24 +5,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_abs_difference(arr: &mut [i32]) -> Vec<Vec<i32>> {
-    arr.sort_unstable();
-    let mut delta = i32::MAX;
-    let mut res = vec![];
-    for w in arr.windows(2) {
-        let d = w[1] - w[0];
-        match d.cmp(&delta) {
-            std::cmp::Ordering::Less => {
-                delta = d;
-                res = vec![vec![w[0], w[1]]];
-            }
-            std::cmp::Ordering::Equal => {
-                res.push(vec![w[0], w[1]]);
-            }
-            std::cmp::Ordering::Greater => (),
+pub fn nth_ugly_number(n: i32, a: i32, b: i32, c: i32) -> i32 {
+    let [n, a, b, c] = [n, a, b, c].map(i64::from);
+    let ab = a * b / gcd(a, b);
+    let ac = a * c / gcd(a, c);
+    let bc = b * c / gcd(c, b);
+    let abc = ab * c / gcd(ab, c);
+    let mut left = 1;
+    let mut right = 2_000_000_000;
+    while left < right {
+        let mid = left + (right - left) / 2;
+        let count = mid / a + mid / b + mid / c - mid / ab - mid / ac - mid / bc + mid / abc;
+        if count < n {
+            left = 1 + mid
+        } else {
+            right = mid
         }
     }
-    res
+    left as i32
 }
 
 #[cfg(test)]
@@ -33,15 +33,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            minimum_abs_difference(&mut [4, 2, 1, 3]),
-            [[1, 2], [2, 3], [3, 4]]
-        );
-        assert_eq!(minimum_abs_difference(&mut [1, 3, 6, 10, 15]), [[1, 3]]);
-        assert_eq!(
-            minimum_abs_difference(&mut [3, 8, -10, 23, 19, -4, -14, 27]),
-            [[-14, -10], [19, 23], [23, 27]]
-        );
+        assert_eq!(nth_ugly_number(3, 2, 3, 5), 4);
+        assert_eq!(nth_ugly_number(4, 2, 3, 4), 6);
+        assert_eq!(nth_ugly_number(5, 2, 11, 13), 10);
     }
 
     #[test]
