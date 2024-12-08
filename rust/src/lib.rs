@@ -2,49 +2,63 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::cmp::Reverse;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn critical_connections(n: i32, connections: &[[i32; 2]]) -> Vec<Vec<i32>> {
-    let n = n as usize;
-    let mut adj = vec![vec![]; n];
-    for c in connections.iter() {
-        adj[c[0] as usize].push(c[1] as usize);
-        adj[c[1] as usize].push(c[0] as usize);
+pub fn max_two_events(events: &mut [[i32; 3]]) -> i32 {
+    events.sort_unstable_by_key(|v| v[0]);
+    let n = events.len();
+    let mut suffix = Vec::with_capacity(n);
+    let mut curr = 0;
+    for e in events.iter().rev() {
+        curr = curr.max(e[2]);
+        suffix.push(curr);
     }
-    let mut ranks = vec![-2; n];
-    let mut res = vec![];
-    dfs(&adj, &mut ranks, n, 0, 0, &mut res);
+    suffix.reverse();
+    let mut res = 0;
+    for e in events.iter() {
+        let i = events.partition_point(|v| v[0] <= e[1]);
+        let temp = e[2] + suffix.get(i).unwrap_or(&0);
+        res = res.max(temp);
+    }
     res
 }
 
-fn dfs(
-    adj: &[Vec<usize>],
-    ranks: &mut [i32],
-    n: usize,
-    node: usize,
-    rank: i32,
-    res: &mut Vec<Vec<i32>>,
-) -> i32 {
-    if ranks[node] >= 0 {
-        return ranks[node];
-    }
-    ranks[node] = rank;
-    let mut min_rank = rank;
-    for &neighbor in adj[node].iter() {
-        // avoid goes back to parent immediately => init value == -2
-        // a neighbor with a highrt rank => a cycle is found
-        if ranks[neighbor] == rank - 1 || ranks[neighbor] > rank {
-            continue;
+fn with_heap(events: &mut [[i32; 3]]) -> i32 {
+    events.sort_unstable_by_key(|v| v[0]);
+    let mut heap = std::collections::BinaryHeap::new();
+    let mut res = 0;
+    let mut temp = 0; // record previous max value
+    for e in events.iter() {
+        while heap.peek().is_some_and(|&(Reverse(end), _v)| end < e[0]) {
+            let (_, val) = heap.pop().unwrap();
+            temp = temp.max(val);
         }
-        let nr = dfs(adj, ranks, n, neighbor, 1 + rank, res);
-        min_rank = min_rank.min(nr);
-        // bridges => edges not in a cycle
-        if nr > rank {
-            res.push(vec![node as i32, neighbor as i32]);
+        res = res.max(e[2] + temp);
+        heap.push((Reverse(e[1]), e[2]));
+    }
+    res
+}
+
+fn greedy(events: &[[i32; 3]]) -> i32 {
+    let mut times = Vec::with_capacity(2 * events.len());
+    for e in events.iter() {
+        times.push([e[0], 1, e[2]]);
+        times.push([1 + e[1], 0, e[2]]); // 0 so that sorting put end first
+    }
+    times.sort_unstable();
+    let mut res = 0;
+    let mut temp = 0;
+    for t in times {
+        if t[1] == 1 {
+            res = res.max(t[2] + temp);
+        } else {
+            temp = temp.max(t[2]);
         }
     }
-    min_rank
+    res
 }
 
 #[cfg(test)]
@@ -55,11 +69,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            critical_connections(4, &[[0, 1], [1, 2], [2, 0], [1, 3]]),
-            [[1, 3]]
-        );
-        assert_eq!(critical_connections(2, &[[0, 1]]), [[0, 1]]);
+        assert_eq!(greedy(&mut [[1, 3, 2], [4, 5, 2], [2, 4, 3]]), 4);
+        assert_eq!(greedy(&mut [[1, 3, 2], [4, 5, 2], [1, 5, 5]]), 5);
+        assert_eq!(greedy(&mut [[1, 5, 3], [1, 5, 1], [6, 6, 5]]), 8);
     }
 
     #[test]
