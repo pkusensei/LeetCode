@@ -5,70 +5,65 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_array_special(nums: &[i32], queries: &[[i32; 2]]) -> Vec<bool> {
-    let mut prefix = Vec::with_capacity(nums.len());
-    prefix.push(0);
-    for (i, &num) in nums.iter().enumerate().skip(1) {
-        prefix.push(prefix.last().unwrap_or(&0) + i32::from(num & 1 == nums[i - 1] & 1));
+pub fn smallest_string_with_swaps(s: &str, pairs: &[[i32; 2]]) -> String {
+    let n = s.len();
+    let mut dsu = DSU::new(n);
+    for p in pairs.iter() {
+        // The idea is: [0, 1] and [1, 3] are swappable
+        // Then [0, 1, 3] is a swappable group
+        dsu.union(p[0] as usize, p[1] as usize);
     }
-    let mut res = Vec::with_capacity(queries.len());
-    for q in queries.iter() {
-        // No increase in "abnormal" numbers
-        res.push(prefix[q[1] as usize] == prefix[q[0] as usize]);
+    let mut groups = vec![vec![]; n];
+    for (i, b) in s.bytes().enumerate() {
+        // Collect chars in a group together
+        groups[dsu.find(i)].push(b);
     }
-    res
+    for v in groups.iter_mut() {
+        // As going from 0..n, pop smallest char first
+        v.sort_unstable_by_key(|&v| std::cmp::Reverse(v));
+    }
+    let mut res = Vec::with_capacity(n);
+    for i in 0..n {
+        res.push(groups[dsu.find(i)].pop().unwrap());
+    }
+    String::from_utf8(res).unwrap()
 }
 
-fn with_binary_search(nums: &[i32], queries: &[[i32; 2]]) -> Vec<bool> {
-    fn bs(indices: &[usize], start: usize, end: usize) -> bool {
-        let mut left = 0;
-        let mut right = indices.len() - 1;
-        while left <= right {
-            let mid = left + (right - left) / 2;
-            let i = indices[mid];
-            if i < start {
-                left = 1 + mid;
-            } else if i > end {
-                right = mid - 1;
-            } else {
-                return true;
-            }
-        }
-        false
-    }
-
-    let indices: Vec<_> = nums
-        .windows(2)
-        .enumerate()
-        .filter_map(|(i, w)| {
-            if w[0] & 1 == w[1] & 1 {
-                Some(1 + i)
-            } else {
-                None
-            }
-        })
-        .collect();
-    queries
-        .iter()
-        .map(|q| !bs(&indices, 1 + q[0] as usize, q[1] as usize))
-        .collect()
+#[derive(Debug, Clone)]
+struct DSU {
+    parent: Vec<usize>,
+    rank: Vec<i32>,
 }
 
-fn sliding_window(nums: &[i32], queries: &[[i32; 2]]) -> Vec<bool> {
-    let n = nums.len();
-    let mut reach = Vec::with_capacity(n);
-    let mut end = 0;
-    for start in 0..n {
-        end = start.max(end);
-        while end < n - 1 && nums[end] & 1 != nums[1 + end] & 1 {
-            end += 1;
+impl DSU {
+    pub fn new(n: usize) -> Self {
+        Self {
+            parent: (0..n).collect(),
+            rank: vec![0; n],
         }
-        reach.push(end);
     }
-    queries
-        .iter()
-        .map(|q| q[1] as usize <= reach[q[0] as usize])
-        .collect()
+
+    pub fn find(&mut self, x: usize) -> usize {
+        if self.parent[x] != x {
+            self.parent[x] = self.find(self.parent[x]);
+        }
+        self.parent[x]
+    }
+
+    pub fn union(&mut self, x: usize, y: usize) {
+        let [rx, ry] = [x, y].map(|v| self.find(v));
+        if rx == ry {
+            return;
+        }
+        match self.rank[rx].cmp(&self.rank[ry]) {
+            std::cmp::Ordering::Less => self.parent[rx] = ry,
+            std::cmp::Ordering::Greater => self.parent[ry] = rx,
+            std::cmp::Ordering::Equal => {
+                self.rank[rx] += 1;
+                self.parent[ry] = rx;
+            }
+        }
+    }
 }
 
 #[cfg(test)]
@@ -79,11 +74,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(sliding_window(&[3, 4, 1, 2, 6], &[[0, 4]]), [false]);
         assert_eq!(
-            sliding_window(&[4, 3, 1, 6], &[[0, 2], [2, 3]]),
-            [false, true]
+            smallest_string_with_swaps("dcab", &[[0, 3], [1, 2]]),
+            "bacd"
         );
+        assert_eq!(
+            smallest_string_with_swaps("dcab", &[[0, 3], [1, 2], [0, 2]]),
+            "abcd"
+        );
+        assert_eq!(smallest_string_with_swaps("cba", &[[0, 1], [1, 2]]), "abc");
     }
 
     #[test]
