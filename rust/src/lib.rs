@@ -5,65 +5,73 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn smallest_string_with_swaps(s: &str, pairs: &[[i32; 2]]) -> String {
-    let n = s.len();
-    let mut dsu = DSU::new(n);
-    for p in pairs.iter() {
-        // The idea is: [0, 1] and [1, 3] are swappable
-        // Then [0, 1, 3] is a swappable group
-        dsu.union(p[0] as usize, p[1] as usize);
+pub fn sort_items(n: i32, m: i32, group: &mut [i32], before_items: &[&[i32]]) -> Vec<i32> {
+    let [n, m] = [n, m].map(|v| v as usize);
+    let mut indegs = vec![0; n];
+    let mut adj = vec![vec![]; n];
+    for (item, bef) in before_items.iter().enumerate() {
+        for &b in bef.iter() {
+            adj[b as usize].push(item);
+            indegs[item] += 1;
+        }
     }
-    let mut groups = vec![vec![]; n];
-    for (i, b) in s.bytes().enumerate() {
-        // Collect chars in a group together
-        groups[dsu.find(i)].push(b);
+    // Topo sort each item
+    let item_ids = topo_sort(&adj, &mut indegs);
+    if item_ids.len() != n {
+        return vec![];
     }
-    for v in groups.iter_mut() {
-        // As going from 0..n, pop smallest char first
-        v.sort_unstable_by_key(|&v| std::cmp::Reverse(v));
+
+    // Put each item into their groups now that they're in order
+    let mut groups = vec![vec![]; m];
+    for id in item_ids.into_iter() {
+        if group[id] == -1 {
+            group[id] = groups.len() as i32;
+            groups.push(vec![]);
+        }
+        groups[group[id] as usize].push(id as i32);
     }
-    let mut res = Vec::with_capacity(n);
-    for i in 0..n {
-        res.push(groups[dsu.find(i)].pop().unwrap());
+    let gn = groups.len();
+    let mut indegs = vec![0; gn];
+    let mut adj = vec![vec![]; gn];
+    for (item, bef) in before_items.iter().enumerate() {
+        for &b in bef.iter() {
+            // source group, target group
+            let (src, dst) = (group[b as usize] as usize, group[item] as usize);
+            if src == dst {
+                continue;
+            }
+            adj[src].push(dst);
+            indegs[dst] += 1;
+        }
     }
-    String::from_utf8(res).unwrap()
+    // Topo sort groups
+    let group_ids = topo_sort(&adj, &mut indegs);
+    if group_ids.len() != gn {
+        return vec![];
+    }
+    group_ids.into_iter().fold(vec![], |mut acc, i| {
+        acc.append(&mut groups[i]);
+        acc
+    })
 }
 
-#[derive(Debug, Clone)]
-struct DSU {
-    parent: Vec<usize>,
-    rank: Vec<i32>,
-}
-
-impl DSU {
-    pub fn new(n: usize) -> Self {
-        Self {
-            parent: (0..n).collect(),
-            rank: vec![0; n],
-        }
-    }
-
-    pub fn find(&mut self, x: usize) -> usize {
-        if self.parent[x] != x {
-            self.parent[x] = self.find(self.parent[x]);
-        }
-        self.parent[x]
-    }
-
-    pub fn union(&mut self, x: usize, y: usize) {
-        let [rx, ry] = [x, y].map(|v| self.find(v));
-        if rx == ry {
-            return;
-        }
-        match self.rank[rx].cmp(&self.rank[ry]) {
-            std::cmp::Ordering::Less => self.parent[rx] = ry,
-            std::cmp::Ordering::Greater => self.parent[ry] = rx,
-            std::cmp::Ordering::Equal => {
-                self.rank[rx] += 1;
-                self.parent[ry] = rx;
+fn topo_sort(adj: &[Vec<usize>], indegs: &mut [i32]) -> Vec<usize> {
+    let mut queue: std::collections::VecDeque<_> = indegs
+        .iter()
+        .enumerate()
+        .filter_map(|(i, &d)| if d == 0 { Some(i) } else { None })
+        .collect();
+    let mut res = Vec::with_capacity(indegs.len());
+    while let Some(node) = queue.pop_front() {
+        res.push(node);
+        for &next in adj[node].iter() {
+            indegs[next] -= 1;
+            if indegs[next] == 0 {
+                queue.push_back(next);
             }
         }
     }
+    res
 }
 
 #[cfg(test)]
@@ -75,14 +83,21 @@ mod tests {
     #[test]
     fn basics() {
         assert_eq!(
-            smallest_string_with_swaps("dcab", &[[0, 3], [1, 2]]),
-            "bacd"
+            sort_items(
+                8,
+                2,
+                &mut [-1, -1, 1, 0, 0, 1, 0, -1],
+                &[&[], &[6], &[5], &[6], &[3, 6], &[], &[], &[]]
+            ),
+            [6, 3, 4, 5, 2, 0, 7, 1]
         );
-        assert_eq!(
-            smallest_string_with_swaps("dcab", &[[0, 3], [1, 2], [0, 2]]),
-            "abcd"
-        );
-        assert_eq!(smallest_string_with_swaps("cba", &[[0, 1], [1, 2]]), "abc");
+        assert!(sort_items(
+            8,
+            2,
+            &mut [-1, -1, 1, 0, 0, 1, 0, -1],
+            &[&[], &[6], &[5], &[6], &[3, 6], &[], &[4], &[]]
+        )
+        .is_empty());
     }
 
     #[test]
