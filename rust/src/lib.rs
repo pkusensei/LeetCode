@@ -2,73 +2,34 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::{collections::HashMap, iter};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn sort_items(n: i32, m: i32, group: &mut [i32], before_items: &[&[i32]]) -> Vec<i32> {
-    let [n, m] = [n, m].map(|v| v as usize);
-    let mut indegs = vec![0; n];
-    let mut adj = vec![vec![]; n];
-    for (item, bef) in before_items.iter().enumerate() {
-        for &b in bef.iter() {
-            adj[b as usize].push(item);
-            indegs[item] += 1;
-        }
-    }
-    // Topo sort each item
-    let item_ids = topo_sort(&adj, &mut indegs);
-    if item_ids.len() != n {
-        return vec![];
-    }
-
-    // Put each item into their groups now that they're in order
-    let mut groups = vec![vec![]; m];
-    for id in item_ids.into_iter() {
-        if group[id] == -1 {
-            group[id] = groups.len() as i32;
-            groups.push(vec![]);
-        }
-        groups[group[id] as usize].push(id as i32);
-    }
-    let gn = groups.len();
-    let mut indegs = vec![0; gn];
-    let mut adj = vec![vec![]; gn];
-    for (item, bef) in before_items.iter().enumerate() {
-        for &b in bef.iter() {
-            // source group, target group
-            let (src, dst) = (group[b as usize] as usize, group[item] as usize);
-            if src == dst {
-                continue;
-            }
-            adj[src].push(dst);
-            indegs[dst] += 1;
-        }
-    }
-    // Topo sort groups
-    let group_ids = topo_sort(&adj, &mut indegs);
-    if group_ids.len() != gn {
-        return vec![];
-    }
-    group_ids.into_iter().fold(vec![], |mut acc, i| {
-        acc.append(&mut groups[i]);
-        acc
-    })
-}
-
-fn topo_sort(adj: &[Vec<usize>], indegs: &mut [i32]) -> Vec<usize> {
-    let mut queue: std::collections::VecDeque<_> = indegs
-        .iter()
-        .enumerate()
-        .filter_map(|(i, &d)| if d == 0 { Some(i) } else { None })
-        .collect();
-    let mut res = Vec::with_capacity(indegs.len());
-    while let Some(node) = queue.pop_front() {
-        res.push(node);
-        for &next in adj[node].iter() {
-            indegs[next] -= 1;
-            if indegs[next] == 0 {
-                queue.push_back(next);
-            }
+pub fn maximum_length(s: &str) -> i32 {
+    let map: HashMap<u8, HashMap<usize, i32>> =
+        s.as_bytes()
+            .chunk_by(|a, b| a == b)
+            .fold(HashMap::new(), |mut acc, w| {
+                let v = acc.entry(w[0]).or_default();
+                *v.entry(w.len()).or_insert(0) += 1;
+                acc
+            });
+    let mut res = -1;
+    for map in map.into_values() {
+        let mut lens: Vec<_> = map
+            .into_iter()
+            .flat_map(|(k, count)| iter::repeat(k).take(count as usize))
+            .collect();
+        lens.sort_unstable();
+        match (lens.pop(), lens.pop(), lens.pop()) {
+            (Some(v), None, None) if v >= 3 => res = res.max(v as i32 - 2),
+            (Some(1), Some(1), Some(1)) => res = res.max(1),
+            (Some(a), Some(b), Some(c)) if a == b && b == c => res = res.max(a as i32),
+            (Some(a), Some(b), _) if a > 1 && a == b => res = res.max(a as i32 - 1),
+            (Some(a), Some(b), _) if a > 1 => res = res.max(a as i32 - 2).max(b as i32),
+            _ => (),
         }
     }
     res
@@ -82,26 +43,16 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            sort_items(
-                8,
-                2,
-                &mut [-1, -1, 1, 0, 0, 1, 0, -1],
-                &[&[], &[6], &[5], &[6], &[3, 6], &[], &[], &[]]
-            ),
-            [6, 3, 4, 5, 2, 0, 7, 1]
-        );
-        assert!(sort_items(
-            8,
-            2,
-            &mut [-1, -1, 1, 0, 0, 1, 0, -1],
-            &[&[], &[6], &[5], &[6], &[3, 6], &[], &[4], &[]]
-        )
-        .is_empty());
+        assert_eq!(maximum_length("aaaa"), 2);
+        assert_eq!(maximum_length("abcdef"), -1);
+        assert_eq!(maximum_length("abcaba"), 1);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(maximum_length("fafff"), 1);
+        assert_eq!(maximum_length("ceeeeeeeeeeeebmmmfffeeeeeeeeeeeewww"), 11);
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
