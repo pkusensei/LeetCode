@@ -2,24 +2,26 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn unique_occurrences(arr: &[i32]) -> bool {
-    arr.iter()
-        .fold(HashMap::new(), |mut acc, &num| {
-            *acc.entry(num).or_insert(0) += 1;
-            acc
-        })
-        .into_values()
-        .fold(HashMap::new(), |mut acc, num| {
-            *acc.entry(num).or_insert(0) += 1;
-            acc
-        })
-        .into_values()
-        .all(|v| v <= 1)
+pub fn equal_substring(s: &str, t: &str, max_cost: i32) -> i32 {
+    debug_assert_eq!(s.len(), t.len());
+    let n = s.len();
+    let mut prefix = Vec::with_capacity(1 + n);
+    prefix.push(0);
+    for (b1, b2) in s.bytes().zip(t.bytes()) {
+        prefix.push(i32::from(b1.abs_diff(b2)) + prefix.last().unwrap_or(&0));
+    }
+    let mut left = 0;
+    let mut res = 0;
+    for (right, &num) in prefix.iter().enumerate() {
+        while num - prefix[left] > max_cost {
+            left += 1;
+        }
+        res = res.max(right - left);
+    }
+    res as i32
 }
 
 #[cfg(test)]
@@ -30,9 +32,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert!(unique_occurrences(&[1, 2, 2, 1, 1, 3]));
-        assert!(!unique_occurrences(&[1, 2]));
-        assert!(unique_occurrences(&[-3, 0, 1, -3, 1, 1, 1, -3, 10, 0]));
+        assert_eq!(equal_substring("abcd", "bcdf", 3), 3);
+        assert_eq!(equal_substring("abcd", "cdef", 3), 1);
+        assert_eq!(equal_substring("abcd", "acde", 0), 1);
     }
 
     #[test]
