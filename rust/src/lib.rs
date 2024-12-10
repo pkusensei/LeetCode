@@ -2,21 +2,36 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn longest_subsequence(arr: &[i32], difference: i32) -> i32 {
-    let mut dp = HashMap::with_capacity(arr.len());
-    for &num in arr.iter() {
-        if let Some(&v) = dp.get(&(num - difference)) {
-            dp.insert(num, 1 + v);
-        } else {
-            dp.insert(num, 1);
+pub fn get_maximum_gold(mut grid: Vec<Vec<i32>>) -> i32 {
+    let mut res = 0;
+    let (rows, cols) = get_dimensions(&grid);
+    for row in 0..rows {
+        for col in 0..cols {
+            if grid[row][col] > 0 {
+                res = res.max(dfs(&mut grid, row, col))
+            }
         }
     }
-    dp.into_values().max().unwrap_or(1)
+    res
+}
+
+fn dfs(grid: &mut [Vec<i32>], row: usize, col: usize) -> i32 {
+    if grid[row][col] == 0 {
+        return 0;
+    }
+    let curr = grid[row][col];
+    grid[row][col] = 0;
+    let mut res = 0;
+    for (nr, nc) in neighbors((row, col)) {
+        if grid.get(nr).is_some_and(|r| r.get(nc).is_some()) {
+            res = res.max(curr + dfs(grid, nr, nc));
+        }
+    }
+    grid[row][col] = curr;
+    res
 }
 
 #[cfg(test)]
@@ -27,9 +42,20 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(longest_subsequence(&[1, 2, 3, 4], 1), 4);
-        assert_eq!(longest_subsequence(&[1, 3, 5, 7], 1), 1);
-        assert_eq!(longest_subsequence(&[1, 5, 7, 8, 5, 3, 4, 2, 1], -2), 4);
+        assert_eq!(
+            get_maximum_gold(vec![vec![0, 6, 0], vec![5, 8, 7], vec![0, 9, 0]]),
+            24
+        );
+        assert_eq!(
+            get_maximum_gold(vec![
+                vec![1, 0, 7],
+                vec![2, 0, 6],
+                vec![3, 4, 5],
+                vec![0, 3, 0],
+                vec![9, 0, 20]
+            ]),
+            28
+        );
     }
 
     #[test]
