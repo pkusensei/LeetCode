@@ -7,17 +7,21 @@ namespace Tests;
 [TestClass]
 public class UnitTest
 {
-    readonly Solution.Solution sol = new();
+    // readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(new int[] { 1, 2, -3, 3, 1 }, "[3,1]")]
-    [DataRow(new int[] { 1, 2, 3, -3, 4 }, "[1,2,4]")]
-    [DataRow(new int[] { 1, 2, 3, -3, -2 }, "[1]")]
-    [DataRow(new int[] { 1, 3, 2, -3, -2, 5, 5, -5, 1 }, "[1,5,1]")]
-    public void TestMethod1(int[] nums, string exp)
+    public void TestMethod1()
     {
-        var a = ListNode.Make(nums);
-        Assert.AreEqual(exp, sol.RemoveZeroSumSublists(a).ToString());
+        Skiplist skiplist = new Skiplist();
+        skiplist.Add(1);
+        skiplist.Add(2);
+        skiplist.Add(3);
+        Assert.IsFalse(skiplist.Search(0)); // return False
+        skiplist.Add(4);
+        Assert.IsTrue(skiplist.Search(1)); // return True
+        Assert.IsFalse(skiplist.Erase(0));  // return False, 0 is not in skiplist.
+        Assert.IsTrue(skiplist.Erase(1));  // return True
+        Assert.IsFalse(skiplist.Search(1)); // return False, 1 has already been erased.
     }
 
     [TestMethod]
