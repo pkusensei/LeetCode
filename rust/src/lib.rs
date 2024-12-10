@@ -5,23 +5,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn equal_substring(s: &str, t: &str, max_cost: i32) -> i32 {
-    debug_assert_eq!(s.len(), t.len());
-    let n = s.len();
-    let mut prefix = Vec::with_capacity(1 + n);
-    prefix.push(0);
-    for (b1, b2) in s.bytes().zip(t.bytes()) {
-        prefix.push(i32::from(b1.abs_diff(b2)) + prefix.last().unwrap_or(&0));
-    }
-    let mut left = 0;
-    let mut res = 0;
-    for (right, &num) in prefix.iter().enumerate() {
-        while num - prefix[left] > max_cost {
-            left += 1;
+pub fn remove_duplicates(s: &str, k: i32) -> String {
+    let mut stack = vec![];
+    for b in s.bytes() {
+        if stack.iter().rev().take_while(|&&v| v == b).count() as i32 == k - 1 {
+            for _ in 0..k - 1 {
+                stack.pop();
+            }
+        } else {
+            stack.push(b);
         }
-        res = res.max(right - left);
     }
-    res as i32
+    String::from_utf8(stack).unwrap()
 }
 
 #[cfg(test)]
@@ -32,9 +27,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(equal_substring("abcd", "bcdf", 3), 3);
-        assert_eq!(equal_substring("abcd", "cdef", 3), 1);
-        assert_eq!(equal_substring("abcd", "acde", 0), 1);
+        assert_eq!(remove_duplicates("abcd", 2), "abcd");
+        assert_eq!(remove_duplicates("deeedbbcccbdaa", 3), "aa");
+        assert_eq!(remove_duplicates("pbbcggttciiippooaais", 2), "ps");
     }
 
     #[test]
