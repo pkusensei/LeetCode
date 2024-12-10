@@ -2,37 +2,24 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::{collections::HashMap, iter};
+use std::collections::HashMap;
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_length(s: &str) -> i32 {
-    let map: HashMap<u8, HashMap<usize, i32>> =
-        s.as_bytes()
-            .chunk_by(|a, b| a == b)
-            .fold(HashMap::new(), |mut acc, w| {
-                let v = acc.entry(w[0]).or_default();
-                *v.entry(w.len()).or_insert(0) += 1;
-                acc
-            });
-    let mut res = -1;
-    for map in map.into_values() {
-        let mut lens: Vec<_> = map
-            .into_iter()
-            .flat_map(|(k, count)| iter::repeat(k).take(count as usize))
-            .collect();
-        lens.sort_unstable();
-        match (lens.pop(), lens.pop(), lens.pop()) {
-            (Some(v), None, None) if v >= 3 => res = res.max(v as i32 - 2),
-            (Some(1), Some(1), Some(1)) => res = res.max(1),
-            (Some(a), Some(b), Some(c)) if a == b && b == c => res = res.max(a as i32),
-            (Some(a), Some(b), _) if a > 1 && a == b => res = res.max(a as i32 - 1),
-            (Some(a), Some(b), _) if a > 1 => res = res.max(a as i32 - 2).max(b as i32),
-            _ => (),
-        }
-    }
-    res
+pub fn unique_occurrences(arr: &[i32]) -> bool {
+    arr.iter()
+        .fold(HashMap::new(), |mut acc, &num| {
+            *acc.entry(num).or_insert(0) += 1;
+            acc
+        })
+        .into_values()
+        .fold(HashMap::new(), |mut acc, num| {
+            *acc.entry(num).or_insert(0) += 1;
+            acc
+        })
+        .into_values()
+        .all(|v| v <= 1)
 }
 
 #[cfg(test)]
@@ -43,16 +30,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(maximum_length("aaaa"), 2);
-        assert_eq!(maximum_length("abcdef"), -1);
-        assert_eq!(maximum_length("abcaba"), 1);
+        assert!(unique_occurrences(&[1, 2, 2, 1, 1, 3]));
+        assert!(!unique_occurrences(&[1, 2]));
+        assert!(unique_occurrences(&[-3, 0, 1, -3, 1, 1, 1, -3, 10, 0]));
     }
 
     #[test]
-    fn test() {
-        assert_eq!(maximum_length("fafff"), 1);
-        assert_eq!(maximum_length("ceeeeeeeeeeeebmmmfffeeeeeeeeeeeewww"), 11);
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
