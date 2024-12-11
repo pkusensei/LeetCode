@@ -5,32 +5,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_vowel_permutation(n: i32) -> i32 {
-    const MOD: i32 = 1_000_000_007;
-    // a e i o u
-    // 0 1 2 3 4
-    let mut curr = [1; 5];
-    for _ in 1..n {
-        let mut next = [0; 5];
-        // ae
-        next[1] = (next[1] + curr[0]) % MOD;
-        // ea
-        next[0] = (next[0] + curr[1]) % MOD;
-        // ei
-        next[2] = (next[2] + curr[1]) % MOD;
-        // ia, ie, io, iu
-        for i in [0, 1, 3, 4] {
-            next[i] = (next[i] + curr[2]) % MOD;
+pub fn balanced_string_split(s: &str) -> i32 {
+    let mut res = 0;
+    let mut open = 0;
+    for b in s.bytes() {
+        if b == b'L' {
+            open += 1;
+        } else {
+            open -= 1;
         }
-        // oi
-        next[2] = (next[2] + curr[3]) % MOD;
-        // ou
-        next[4] = (next[4] + curr[3]) % MOD;
-        // ua
-        next[0] = (next[0] + curr[4]) % MOD;
-        curr = next
+        if open == 0 {
+            res += 1;
+        }
     }
-    curr.into_iter().fold(0, |acc, v| (acc + v) % MOD)
+    res
 }
 
 #[cfg(test)]
@@ -41,9 +29,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(count_vowel_permutation(1), 5);
-        assert_eq!(count_vowel_permutation(2), 10);
-        assert_eq!(count_vowel_permutation(5), 68);
+        assert_eq!(balanced_string_split("RLRRLLRLRL"), 4);
+        assert_eq!(balanced_string_split("RLRRRLLRLL"), 2);
+        assert_eq!(balanced_string_split("LLLLRRRR"), 1);
     }
 
     #[test]
