@@ -2,23 +2,38 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashSet;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn balanced_string_split(s: &str) -> i32 {
-    let mut res = 0;
-    let mut open = 0;
-    for b in s.bytes() {
-        if b == b'L' {
-            open += 1;
-        } else {
-            open -= 1;
+pub fn queens_attackthe_king(queens: &[[i32; 2]], king: [i32; 2]) -> Vec<[i32; 2]> {
+    const DIRS: [(i32, i32); 8] = [
+        (-1, -1),
+        (0, -1),
+        (1, -1),
+        (-1, 0),
+        (1, 0),
+        (-1, 1),
+        (0, 1),
+        (1, 1),
+    ];
+    let set = queens.iter().map(|v| [v[0], v[1]]).collect();
+    DIRS.into_iter()
+        .filter_map(|d| dfs(&set, king[0], king[1], d.0, d.1))
+        .map(|v| v.into())
+        .collect()
+}
+
+fn dfs(queens: &HashSet<[i32; 2]>, x: i32, y: i32, dx: i32, dy: i32) -> Option<[i32; 2]> {
+    if (0..8).contains(&x) && (0..8).contains(&y) {
+        if queens.contains(&[x, y]) {
+            return Some([x, y]);
         }
-        if open == 0 {
-            res += 1;
-        }
+        dfs(queens, x + dx, y + dy, dx, dy)
+    } else {
+        None
     }
-    res
 }
 
 #[cfg(test)]
@@ -29,9 +44,17 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(balanced_string_split("RLRRLLRLRL"), 4);
-        assert_eq!(balanced_string_split("RLRRRLLRLL"), 2);
-        assert_eq!(balanced_string_split("LLLLRRRR"), 1);
+        sort_eq(
+            queens_attackthe_king(&[[0, 1], [1, 0], [4, 0], [0, 4], [3, 3], [2, 4]], [0, 0]),
+            [[0, 1], [1, 0], [3, 3]],
+        );
+        sort_eq(
+            queens_attackthe_king(
+                &[[0, 0], [1, 1], [2, 2], [3, 4], [3, 5], [4, 4], [4, 5]],
+                [3, 3],
+            ),
+            [[2, 2], [3, 4], [4, 4]],
+        );
     }
 
     #[test]

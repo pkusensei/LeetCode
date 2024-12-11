@@ -25,6 +25,17 @@ pub fn neighbors((a, b): Coord) -> impl Iterator<Item = Coord> {
     .filter(move |&p| p != (a, b))
 }
 
+pub const ALL_DIRS: [[i32; 2]; 8] = [
+    [-1, -1],
+    [0, -1],
+    [1, -1],
+    [-1, 0],
+    [1, 0],
+    [-1, 1],
+    [0, 1],
+    [1, 1],
+];
+
 pub fn around(x: i32, y: i32) -> impl Iterator<Item = Coord> {
     [
         (x - 1, y - 1),
