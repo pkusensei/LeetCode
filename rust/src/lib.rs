@@ -5,32 +5,35 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn get_maximum_gold(mut grid: Vec<Vec<i32>>) -> i32 {
+pub fn maximum_beauty(nums: &mut [i32], k: i32) -> i32 {
+    nums.sort_unstable();
     let mut res = 0;
-    let (rows, cols) = get_dimensions(&grid);
-    for row in 0..rows {
-        for col in 0..cols {
-            if grid[row][col] > 0 {
-                res = res.max(dfs(&mut grid, row, col))
-            }
+    let mut left = 0;
+    for (right, &num) in nums.iter().enumerate() {
+        while left < right && num - nums[left] > 2 * k {
+            left += 1
         }
+        res = res.max(right - left + 1);
     }
-    res
+    res as i32
 }
 
-fn dfs(grid: &mut [Vec<i32>], row: usize, col: usize) -> i32 {
-    if grid[row][col] == 0 {
-        return 0;
+fn with_prefix_sum(nums: &[i32], k: i32) -> i32 {
+    if nums.len() == 1 {
+        return 1;
     }
-    let curr = grid[row][col];
-    grid[row][col] = 0;
+    let max = nums.iter().copied().max().unwrap();
+    let mut count = vec![0; 1 + max as usize];
+    for &num in nums.iter() {
+        count[(num - k).max(0) as usize] += 1;
+        count[(num + k + 1).min(max) as usize] -= 1;
+    }
     let mut res = 0;
-    for (nr, nc) in neighbors((row, col)) {
-        if grid.get(nr).is_some_and(|r| r.get(nc).is_some()) {
-            res = res.max(curr + dfs(grid, nr, nc));
-        }
+    let mut curr = 0;
+    for c in count {
+        curr += c;
+        res = res.max(curr);
     }
-    grid[row][col] = curr;
     res
 }
 
@@ -42,20 +45,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            get_maximum_gold(vec![vec![0, 6, 0], vec![5, 8, 7], vec![0, 9, 0]]),
-            24
-        );
-        assert_eq!(
-            get_maximum_gold(vec![
-                vec![1, 0, 7],
-                vec![2, 0, 6],
-                vec![3, 4, 5],
-                vec![0, 3, 0],
-                vec![9, 0, 20]
-            ]),
-            28
-        );
+        assert_eq!(with_prefix_sum(&mut [4, 6, 1, 2], 2), 3);
+        assert_eq!(with_prefix_sum(&mut [1, 1, 1, 1], 10), 4);
     }
 
     #[test]
