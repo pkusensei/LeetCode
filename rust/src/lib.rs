@@ -5,36 +5,32 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_beauty(nums: &mut [i32], k: i32) -> i32 {
-    nums.sort_unstable();
-    let mut res = 0;
-    let mut left = 0;
-    for (right, &num) in nums.iter().enumerate() {
-        while left < right && num - nums[left] > 2 * k {
-            left += 1
+pub fn count_vowel_permutation(n: i32) -> i32 {
+    const MOD: i32 = 1_000_000_007;
+    // a e i o u
+    // 0 1 2 3 4
+    let mut curr = [1; 5];
+    for _ in 1..n {
+        let mut next = [0; 5];
+        // ae
+        next[1] = (next[1] + curr[0]) % MOD;
+        // ea
+        next[0] = (next[0] + curr[1]) % MOD;
+        // ei
+        next[2] = (next[2] + curr[1]) % MOD;
+        // ia, ie, io, iu
+        for i in [0, 1, 3, 4] {
+            next[i] = (next[i] + curr[2]) % MOD;
         }
-        res = res.max(right - left + 1);
+        // oi
+        next[2] = (next[2] + curr[3]) % MOD;
+        // ou
+        next[4] = (next[4] + curr[3]) % MOD;
+        // ua
+        next[0] = (next[0] + curr[4]) % MOD;
+        curr = next
     }
-    res as i32
-}
-
-fn with_prefix_sum(nums: &[i32], k: i32) -> i32 {
-    if nums.len() == 1 {
-        return 1;
-    }
-    let max = nums.iter().copied().max().unwrap();
-    let mut count = vec![0; 1 + max as usize];
-    for &num in nums.iter() {
-        count[(num - k).max(0) as usize] += 1;
-        count[(num + k + 1).min(max) as usize] -= 1;
-    }
-    let mut res = 0;
-    let mut curr = 0;
-    for c in count {
-        curr += c;
-        res = res.max(curr);
-    }
-    res
+    curr.into_iter().fold(0, |acc, v| (acc + v) % MOD)
 }
 
 #[cfg(test)]
@@ -45,8 +41,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(with_prefix_sum(&mut [4, 6, 1, 2], 2), 3);
-        assert_eq!(with_prefix_sum(&mut [1, 1, 1, 1], 10), 4);
+        assert_eq!(count_vowel_permutation(1), 5);
+        assert_eq!(count_vowel_permutation(2), 10);
+        assert_eq!(count_vowel_permutation(5), 68);
     }
 
     #[test]
