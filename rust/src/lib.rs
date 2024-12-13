@@ -5,12 +5,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn nth_person_gets_nth_seat(n: i32) -> f64 {
-    if n == 1 {
-        1.0
-    } else {
-        0.5
+pub fn check_straight_line(coordinates: &[[i32; 2]]) -> bool {
+    if coordinates.len() <= 2 {
+        return true;
     }
+    let [x1, y1] = [coordinates[0][0], coordinates[0][1]];
+    let [x2, y2] = [coordinates[1][0], coordinates[1][1]];
+    let dx = x2 - x1;
+    let dy = y2 - y1;
+    for v in coordinates.iter().skip(2) {
+        if dy * (v[0] - x1) != dx * (v[1] - y1) {
+            return false;
+        }
+    }
+    true
 }
 
 #[cfg(test)]
@@ -21,8 +29,22 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(nth_person_gets_nth_seat(1), 1.0);
-        assert_eq!(nth_person_gets_nth_seat(2), 0.5);
+        assert!(check_straight_line(&[
+            [1, 2],
+            [2, 3],
+            [3, 4],
+            [4, 5],
+            [5, 6],
+            [6, 7]
+        ]));
+        assert!(!check_straight_line(&[
+            [1, 1],
+            [2, 2],
+            [3, 4],
+            [4, 5],
+            [5, 6],
+            [7, 7]
+        ]));
     }
 
     #[test]
