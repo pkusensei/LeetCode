@@ -5,30 +5,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_solution(customfunction: &CustomFunction, z: i32) -> Vec<Vec<i32>> {
-    let mut res = vec![];
-    'out: for x in 1..=1000 {
-        let [mut left, mut right] = [1, 1000];
-        while left <= right {
-            let mid = left + (right - left) / 2;
-            match customfunction.f(x, mid).cmp(&z) {
-                std::cmp::Ordering::Less => left = 1 + mid,
-                std::cmp::Ordering::Equal => {
-                    res.push(vec![x, mid]);
-                    continue 'out;
-                }
-                std::cmp::Ordering::Greater => right = mid - 1,
-            }
-        }
-    }
-    res
-}
-
-pub struct CustomFunction;
-impl CustomFunction {
-    pub fn f(&self, x: i32, y: i32) -> i32 {
-        42
-    }
+pub fn circular_permutation(n: i32, start: i32) -> Vec<i32> {
+    // let mut res = Vec::with_capacity(1 << n);
+    // let mut idx = 0;
+    // for (i, x) in (0..(1 << n)).enumerate() {
+    //     let v = x ^ (x >> 1);
+    //     res.push(v);
+    //     if v == start {
+    //         idx = i;
+    //     }
+    // }
+    // res.rotate_left(idx);
+    // res
+    (0..(1 << n)).map(|i| start ^ i ^ (i >> 1)).collect()
 }
 
 #[cfg(test)]
@@ -38,7 +27,10 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(circular_permutation(2, 3), [3, 2, 0, 1]);
+        assert_eq!(circular_permutation(3, 2), [2, 6, 7, 5, 4, 0, 1, 3]);
+    }
 
     #[test]
     fn test() {}
