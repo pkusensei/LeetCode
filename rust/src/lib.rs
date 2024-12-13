@@ -5,20 +5,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn check_straight_line(coordinates: &[[i32; 2]]) -> bool {
-    if coordinates.len() <= 2 {
-        return true;
-    }
-    let [x1, y1] = [coordinates[0][0], coordinates[0][1]];
-    let [x2, y2] = [coordinates[1][0], coordinates[1][1]];
-    let dx = x2 - x1;
-    let dy = y2 - y1;
-    for v in coordinates.iter().skip(2) {
-        if dy * (v[0] - x1) != dx * (v[1] - y1) {
-            return false;
+pub fn balanced_string(s: &str) -> i32 {
+    let n = s.len();
+    let mut count = s.bytes().fold([0; 26], |mut acc, b| {
+        acc[usize::from(b - b'A')] += 1;
+        acc
+    });
+    let mut res = n;
+    let mut left = 0;
+    // Find the window whose removal leads to all counts <= n/4
+    for (right, b) in s.bytes().enumerate() {
+        count[usize::from(b - b'A')] -= 1;
+        while left < n && count.iter().all(|&v| v <= n / 4) {
+            res = res.min(right + 1 - left);
+            count[usize::from(s.as_bytes()[left] - b'A')] += 1;
+            left += 1
         }
     }
-    true
+    res as i32
 }
 
 #[cfg(test)]
@@ -29,22 +33,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert!(check_straight_line(&[
-            [1, 2],
-            [2, 3],
-            [3, 4],
-            [4, 5],
-            [5, 6],
-            [6, 7]
-        ]));
-        assert!(!check_straight_line(&[
-            [1, 1],
-            [2, 2],
-            [3, 4],
-            [4, 5],
-            [5, 6],
-            [7, 7]
-        ]));
+        assert_eq!(balanced_string("QWER"), 0);
+        assert_eq!(balanced_string("QQWE"), 1);
+        assert_eq!(balanced_string("QQQW"), 2);
     }
 
     #[test]
