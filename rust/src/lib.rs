@@ -5,19 +5,36 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn circular_permutation(n: i32, start: i32) -> Vec<i32> {
-    // let mut res = Vec::with_capacity(1 << n);
-    // let mut idx = 0;
-    // for (i, x) in (0..(1 << n)).enumerate() {
-    //     let v = x ^ (x >> 1);
-    //     res.push(v);
-    //     if v == start {
-    //         idx = i;
-    //     }
-    // }
-    // res.rotate_left(idx);
-    // res
-    (0..(1 << n)).map(|i| start ^ i ^ (i >> 1)).collect()
+pub fn max_length(arr: &[&str]) -> i32 {
+    dfs(arr, 0) as i32
+}
+
+fn dfs(arr: &[&str], curr: u32) -> u32 {
+    match arr {
+        [] => curr.count_ones(),
+        [head, tail @ ..] => {
+            let mut res = curr.count_ones();
+            if let Some(mask) = unique_mask(head) {
+                if curr & mask == 0 {
+                    res = res.max(dfs(tail, curr | mask))
+                }
+            }
+            res = res.max(dfs(tail, curr));
+            res
+        }
+    }
+}
+
+fn unique_mask(s: &str) -> Option<u32> {
+    let mut res = 0;
+    for b in s.bytes() {
+        let n = 1 << (b - b'a');
+        if res & n != 0 {
+            return None;
+        }
+        res |= n;
+    }
+    Some(res)
 }
 
 #[cfg(test)]
@@ -28,8 +45,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(circular_permutation(2, 3), [3, 2, 0, 1]);
-        assert_eq!(circular_permutation(3, 2), [2, 6, 7, 5, 4, 0, 1, 3]);
+        assert_eq!(max_length(&["un", "iq", "ue"]), 4);
+        assert_eq!(max_length(&["cha", "r", "act", "ers"]), 6);
+        assert_eq!(max_length(&["abcdefghijklmnopqrstuvwxyz"]), 26);
     }
 
     #[test]
