@@ -5,24 +5,30 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn job_scheduling(start_time: &[i32], end_time: &[i32], profit: &[i32]) -> i32 {
-    let mut jobs: Vec<_> = start_time
-        .iter()
-        .zip(end_time.iter())
-        .zip(profit.iter())
-        .map(|((s, e), p)| [*s, *e, *p])
-        .collect();
-    jobs.sort_unstable_by_key(|v| v[1]);
-    let n = jobs.len();
-    let mut dp = vec![0; 1 + n];
-    for (idx, &[s, _e, p]) in jobs.iter().enumerate() {
-        let i = jobs.partition_point(|v| v[1] <= s);
-        // skip current item
-        // vs
-        // pick item, and prev item(s)
-        dp[1 + idx] = dp[idx].max(p + dp[i])
+pub fn find_solution(customfunction: &CustomFunction, z: i32) -> Vec<Vec<i32>> {
+    let mut res = vec![];
+    'out: for x in 1..=1000 {
+        let [mut left, mut right] = [1, 1000];
+        while left <= right {
+            let mid = left + (right - left) / 2;
+            match customfunction.f(x, mid).cmp(&z) {
+                std::cmp::Ordering::Less => left = 1 + mid,
+                std::cmp::Ordering::Equal => {
+                    res.push(vec![x, mid]);
+                    continue 'out;
+                }
+                std::cmp::Ordering::Greater => right = mid - 1,
+            }
+        }
     }
-    dp[n]
+    res
+}
+
+pub struct CustomFunction;
+impl CustomFunction {
+    pub fn f(&self, x: i32, y: i32) -> i32 {
+        42
+    }
 }
 
 #[cfg(test)]
@@ -32,17 +38,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {
-        assert_eq!(
-            job_scheduling(&[1, 2, 3, 3], &[3, 4, 5, 6], &[50, 10, 40, 70]),
-            120
-        );
-        assert_eq!(
-            job_scheduling(&[1, 2, 3, 4, 6], &[3, 5, 10, 6, 9], &[20, 20, 100, 70, 60]),
-            150
-        );
-        assert_eq!(job_scheduling(&[1, 1, 1], &[2, 3, 4], &[5, 6, 4]), 6);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
