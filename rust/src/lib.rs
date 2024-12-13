@@ -2,32 +2,15 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::{cmp::Reverse, collections::BinaryHeap};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_score(nums: &[i32]) -> i64 {
-    let n = nums.len();
-    let mut seen = vec![false; n];
-    let mut heap: BinaryHeap<_> = nums
-        .iter()
-        .enumerate()
-        .map(|(i, &v)| Reverse((v, i)))
-        .collect();
-    let mut res = 0;
-    while let Some(Reverse((num, idx))) = heap.pop() {
-        if seen[idx] {
-            continue;
-        }
-        seen[idx] = true;
-        res += i64::from(num);
-        let left = idx.saturating_sub(1);
-        let right = (1 + idx).min(n - 1);
-        seen[left] = true;
-        seen[right] = true;
+pub fn nth_person_gets_nth_seat(n: i32) -> f64 {
+    if n == 1 {
+        1.0
+    } else {
+        0.5
     }
-    res
 }
 
 #[cfg(test)]
@@ -38,8 +21,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(find_score(&[2, 1, 3, 4, 5, 2]), 7);
-        assert_eq!(find_score(&[2, 3, 5, 1, 3, 2]), 5);
+        assert_eq!(nth_person_gets_nth_seat(1), 1.0);
+        assert_eq!(nth_person_gets_nth_seat(2), 0.5);
     }
 
     #[test]
