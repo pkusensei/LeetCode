@@ -5,24 +5,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn balanced_string(s: &str) -> i32 {
-    let n = s.len();
-    let mut count = s.bytes().fold([0; 26], |mut acc, b| {
-        acc[usize::from(b - b'A')] += 1;
-        acc
-    });
-    let mut res = n;
-    let mut left = 0;
-    // Find the window whose removal leads to all counts <= n/4
-    for (right, b) in s.bytes().enumerate() {
-        count[usize::from(b - b'A')] -= 1;
-        while left < n && count.iter().all(|&v| v <= n / 4) {
-            res = res.min(right + 1 - left);
-            count[usize::from(s.as_bytes()[left] - b'A')] += 1;
-            left += 1
-        }
+pub fn job_scheduling(start_time: &[i32], end_time: &[i32], profit: &[i32]) -> i32 {
+    let mut jobs: Vec<_> = start_time
+        .iter()
+        .zip(end_time.iter())
+        .zip(profit.iter())
+        .map(|((s, e), p)| [*s, *e, *p])
+        .collect();
+    jobs.sort_unstable_by_key(|v| v[1]);
+    let n = jobs.len();
+    let mut dp = vec![0; 1 + n];
+    for (idx, &[s, _e, p]) in jobs.iter().enumerate() {
+        let i = jobs.partition_point(|v| v[1] <= s);
+        // skip current item
+        // vs
+        // pick item, and prev item(s)
+        dp[1 + idx] = dp[idx].max(p + dp[i])
     }
-    res as i32
+    dp[n]
 }
 
 #[cfg(test)]
@@ -33,9 +33,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(balanced_string("QWER"), 0);
-        assert_eq!(balanced_string("QQWE"), 1);
-        assert_eq!(balanced_string("QQQW"), 2);
+        assert_eq!(
+            job_scheduling(&[1, 2, 3, 3], &[3, 4, 5, 6], &[50, 10, 40, 70]),
+            120
+        );
+        assert_eq!(
+            job_scheduling(&[1, 2, 3, 4, 6], &[3, 5, 10, 6, 9], &[20, 20, 100, 70, 60]),
+            150
+        );
+        assert_eq!(job_scheduling(&[1, 1, 1], &[2, 3, 4], &[5, 6, 4]), 6);
     }
 
     #[test]
