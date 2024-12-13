@@ -2,31 +2,30 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
+use std::{cmp::Reverse, collections::BinaryHeap};
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_equal_freq(nums: &[i32]) -> i32 {
-    let mut count = HashMap::new();
-    let mut freq = HashMap::new();
-    let mut max_freq = 0;
+pub fn find_score(nums: &[i32]) -> i64 {
+    let n = nums.len();
+    let mut seen = vec![false; n];
+    let mut heap: BinaryHeap<_> = nums
+        .iter()
+        .enumerate()
+        .map(|(i, &v)| Reverse((v, i)))
+        .collect();
     let mut res = 0;
-    for (idx, &num) in nums.iter().enumerate() {
-        let v = count.entry(num).or_insert(0);
-        *v += 1;
-        *freq.entry(*v).or_insert(0) += 1;
-        *freq.entry(*v - 1).or_insert(0) -= 1;
-        max_freq = max_freq.max(*v);
-        // everything once
-        // one item occurs exactly once
-        // one with max_freq, everything else with (max_freq-1)
-        if 1 == max_freq
-            || max_freq * freq[&max_freq] == idx as i32
-            || (max_freq - 1) * (freq.get(&(max_freq - 1)).unwrap_or(&0) + 1) == idx as i32
-        {
-            res = 1 + idx as i32
+    while let Some(Reverse((num, idx))) = heap.pop() {
+        if seen[idx] {
+            continue;
         }
+        seen[idx] = true;
+        res += i64::from(num);
+        let left = idx.saturating_sub(1);
+        let right = (1 + idx).min(n - 1);
+        seen[left] = true;
+        seen[right] = true;
     }
     res
 }
@@ -39,14 +38,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_equal_freq(&[2, 2, 1, 1, 5, 3, 3, 5]), 7);
-        assert_eq!(max_equal_freq(&[1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5]), 13);
+        assert_eq!(find_score(&[2, 1, 3, 4, 5, 2]), 7);
+        assert_eq!(find_score(&[2, 3, 5, 1, 3, 2]), 5);
     }
 
     #[test]
-    fn test() {
-        assert_eq!(max_equal_freq(&[1, 2]), 2);
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
