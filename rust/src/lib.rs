@@ -5,29 +5,38 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_swap(s1: &str, s2: &str) -> i32 {
-    let mut pairs: Vec<_> = s1.bytes().zip(s2.bytes()).filter(|(a, b)| a != b).collect();
+pub fn number_of_subarrays(nums: &[i32], k: i32) -> i32 {
+    let n = nums.len();
+    let mut odd_counts = vec![0; 1 + n];
+    odd_counts[0] = 1;
+    let mut curr = 0;
     let mut res = 0;
-    if pairs.is_empty() {
-        return res;
-    }
-    pairs.sort_unstable();
-    while pairs.len() >= 2 && pairs[0] == pairs[1] {
-        res += 1;
-        pairs.drain(..2);
-    }
-    if pairs.len() >= 2 {
-        pairs.reverse();
-        while pairs.len() >= 2 && pairs[0] == pairs[1] {
-            res += 1;
-            pairs.drain(..2);
+    for &num in nums.iter() {
+        curr += num & 1;
+        if curr >= k {
+            res += odd_counts[(curr - k) as usize];
         }
+        odd_counts[curr as usize] += 1;
     }
-    match pairs.len() {
-        2 => res + 2,
-        0 => res,
-        _ => -1,
+    res
+}
+
+fn with_simplified_queue(nums: &[i32], k: i32) -> i32 {
+    let mut res = 0;
+    let (mut qsize, mut left, mut init_gap) = (0, 0, 0);
+    for &num in nums.iter() {
+        qsize += num & 1;
+        if qsize == k {
+            init_gap = 0;
+            while qsize == k {
+                qsize -= nums[left] & 1;
+                init_gap += 1;
+                left += 1;
+            }
+        }
+        res += init_gap;
     }
+    res
 }
 
 #[cfg(test)]
@@ -38,15 +47,16 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(minimum_swap("xx", "yy"), 1);
-        assert_eq!(minimum_swap("xy", "yx"), 2);
-        assert_eq!(minimum_swap("xx", "xy"), -1);
+        assert_eq!(with_simplified_queue(&[1, 1, 2, 1, 1], 3), 2);
+        assert_eq!(with_simplified_queue(&[2, 4, 6], 1), 0);
+        assert_eq!(
+            with_simplified_queue(&[2, 2, 2, 1, 2, 2, 1, 2, 2, 2], 2),
+            16
+        );
     }
 
     #[test]
-    fn test() {
-        assert_eq!(minimum_swap("yxyxxxyyxxyxxxx", "yyyxyyyxyxxxyxy"), 4);
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
