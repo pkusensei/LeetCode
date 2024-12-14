@@ -2,113 +2,59 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::{
-    cmp::Reverse,
-    collections::{BTreeMap, BinaryHeap, VecDeque},
-};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn continuous_subarrays(nums: &[i32]) -> i64 {
-    let mut res = 0;
-    let mut left = 0;
-    let mut map = BTreeMap::new();
-    for (right, &num) in nums.iter().enumerate() {
-        *map.entry(num).or_insert(0) += 1;
-        while map.keys().next_back().unwrap() - map.keys().next().unwrap() > 2 {
-            map.entry(nums[left]).and_modify(|v| (*v) -= 1);
-            if map[&nums[left]] == 0 {
-                map.remove(&nums[left]);
-            }
-            left += 1;
-        }
-        res += right - left + 1;
+pub fn tiling_rectangle(n: i32, m: i32) -> i32 {
+    if n == m {
+        return 1;
     }
-    res as i64
+    let [rows, cols] = [n, m].map(|v| v as usize);
+    let mut seen = vec![vec![false; cols]; rows];
+    let mut res = n * m;
+    dfs(&mut seen, 0, 0, 0, &mut res);
+    res
 }
 
-fn two_ptrs(nums: &[i32]) -> i64 {
-    let mut res = 0;
-    let mut left = 0;
-    let [mut min, mut max] = [nums[0]; 2];
-    for (right, &num) in nums.iter().enumerate() {
-        min = min.min(num);
-        max = max.max(num);
-        if max - min > 2 {
-            // window is broken
-            let window = right - left;
-            res += window * (1 + window) / 2;
-            left = right;
-            [min, max] = [num; 2];
-            while left > 0 && num.abs_diff(nums[left - 1]) <= 2 {
-                left -= 1;
-                min = min.min(nums[left]);
-                max = max.max(nums[left]);
-            }
-            if left < right {
-                let window = right - left;
-                res -= window * (1 + window) / 2;
-            }
+fn dfs(seen: &mut [Vec<bool>], row: usize, col: usize, count: i32, res: &mut i32) {
+    if count >= *res {
+        return;
+    }
+    let (rows, cols) = get_dimensions(seen);
+    if row >= rows {
+        *res = (*res).min(count);
+        return;
+    }
+    if col >= cols {
+        dfs(seen, 1 + row, 0, count, res);
+        return;
+    }
+    if seen[row][col] {
+        dfs(seen, row, 1 + col, count, res);
+        return;
+    }
+    let delta = (rows - row).min(cols - col);
+    for d in (1..=delta).rev() {
+        if is_open(seen, row, col, d) {
+            flip(seen, row, col, d);
+            dfs(seen, row, col + d, count + 1, res);
+            flip(seen, row, col, d);
         }
     }
-    let window = nums.len() - left;
-    res += window * (1 + window) / 2;
-    res as _
 }
 
-fn with_heap(nums: &[i32]) -> i64 {
-    let mut res = 0;
-    let mut left = 0;
-    let mut min_heap = BinaryHeap::new();
-    let mut max_heap = BinaryHeap::new();
-    for (right, &num) in nums.iter().enumerate() {
-        min_heap.push((Reverse(num), right));
-        max_heap.push((num, right));
-        while left < right && max_heap.peek().unwrap().0 - min_heap.peek().unwrap().0 .0 > 2 {
-            left += 1;
-            while min_heap.peek().is_some_and(|(_, i)| *i < left) {
-                min_heap.pop();
-            }
-            while max_heap.peek().is_some_and(|(_, i)| *i < left) {
-                max_heap.pop();
-            }
-        }
-        res += right + 1 - left;
-    }
-    res as _
+fn is_open(seen: &[Vec<bool>], row: usize, col: usize, d: usize) -> bool {
+    seen[row..row + d]
+        .iter()
+        .all(|r| r[col..col + d].iter().all(|&v| !v))
 }
 
-fn with_deque(nums: &[i32]) -> i64 {
-    let mut res = 0;
-    let mut left = 0;
-    let mut min_q = VecDeque::new();
-    let mut max_q = VecDeque::new();
-    for (right, &num) in nums.iter().enumerate() {
-        // increasing
-        while min_q.back().is_some_and(|(_, v)| *v > num) {
-            min_q.pop_back();
+fn flip(seen: &mut [Vec<bool>], row: usize, col: usize, d: usize) {
+    for r in seen[row..row + d].iter_mut() {
+        for v in r[col..col + d].iter_mut() {
+            (*v) = !(*v);
         }
-        min_q.push_back((right, num));
-        // decreasing
-        while max_q.back().is_some_and(|(_, v)| *v < num) {
-            max_q.pop_back();
-        }
-        max_q.push_back((right, num));
-        while min_q
-            .front()
-            .zip(max_q.front())
-            .is_some_and(|(a, b)| a.1 + 2 < b.1)
-        {
-            if min_q.front().unwrap().0 < max_q.front().unwrap().0 {
-                left = 1 + min_q.pop_front().unwrap().0;
-            } else {
-                left = 1 + max_q.pop_front().unwrap().0;
-            }
-        }
-        res += right - left + 1;
     }
-    res as _
 }
 
 #[cfg(test)]
@@ -119,8 +65,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(two_ptrs(&[5, 4, 2, 4]), 8);
-        assert_eq!(two_ptrs(&[1, 2, 3]), 6);
+        assert_eq!(tiling_rectangle(2, 3), 3);
+        assert_eq!(tiling_rectangle(5, 8), 5);
+        assert_eq!(tiling_rectangle(11, 13), 6);
     }
 
     #[test]
