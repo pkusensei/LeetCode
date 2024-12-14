@@ -5,20 +5,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_good_array(nums: &[i32]) -> bool {
-    if nums.len() == 1 {
-        nums[0] == 1
-    } else {
-        nums[1..].iter().fold(nums[0], |acc, &v| gcd(acc, v)) == 1
+pub fn odd_cells(m: i32, n: i32, indices: &[[i32; 2]]) -> i32 {
+    let [mut rows, mut cols] = [m, n].map(|v| vec![0; v as usize]);
+    for v in indices.iter() {
+        rows[v[0] as usize] += 1;
+        cols[v[1] as usize] += 1;
     }
-}
-
-const fn gcd(a: i32, b: i32) -> i32 {
-    if a == 0 {
-        b
-    } else {
-        gcd(b % a, a)
+    let mut res = 0;
+    for row in rows.into_iter() {
+        for col in cols.iter() {
+            res += (row + col) & 1;
+        }
     }
+    res
 }
 
 #[cfg(test)]
@@ -29,13 +28,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert!(is_good_array(&[12, 5, 7, 23]));
-        assert!(is_good_array(&[29, 6, 10]));
-        assert!(!is_good_array(&[3, 6]));
+        assert_eq!(odd_cells(2, 3, &[[0, 1], [1, 1]]), 6);
+        assert_eq!(odd_cells(2, 2, &[[1, 1], [0, 0]]), 0);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(odd_cells(48, 37, &[[40, 5]]), 83)
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
