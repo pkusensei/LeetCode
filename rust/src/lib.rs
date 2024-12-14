@@ -5,38 +5,47 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn number_of_subarrays(nums: &[i32], k: i32) -> i32 {
-    let n = nums.len();
-    let mut odd_counts = vec![0; 1 + n];
-    odd_counts[0] = 1;
-    let mut curr = 0;
-    let mut res = 0;
-    for &num in nums.iter() {
-        curr += num & 1;
-        if curr >= k {
-            res += odd_counts[(curr - k) as usize];
-        }
-        odd_counts[curr as usize] += 1;
-    }
-    res
-}
-
-fn with_simplified_queue(nums: &[i32], k: i32) -> i32 {
-    let mut res = 0;
-    let (mut qsize, mut left, mut init_gap) = (0, 0, 0);
-    for &num in nums.iter() {
-        qsize += num & 1;
-        if qsize == k {
-            init_gap = 0;
-            while qsize == k {
-                qsize -= nums[left] & 1;
-                init_gap += 1;
-                left += 1;
+pub fn min_remove_to_make_valid(s: String) -> String {
+    let mut s = s.into_bytes();
+    let mut idx = 0;
+    let mut open = 0;
+    while let Some(&b) = s.get(idx) {
+        match b {
+            b'(' => open += 1,
+            b')' => {
+                open -= 1;
+                if open < 0 {
+                    s.remove(idx);
+                    open = 0;
+                    continue;
+                }
             }
+            _ => (),
         }
-        res += init_gap;
+        idx += 1;
     }
-    res
+    if !s.is_empty() {
+        idx = s.len() - 1;
+        let mut close = 0;
+        loop {
+            match s[idx] {
+                b')' => close += 1,
+                b'(' => {
+                    close -= 1;
+                    if close < 0 {
+                        s.remove(idx);
+                        close = 0;
+                    }
+                }
+                _ => (),
+            }
+            if idx == 0 {
+                break;
+            }
+            idx -= 1;
+        }
+    }
+    String::from_utf8(s).unwrap()
 }
 
 #[cfg(test)]
@@ -47,16 +56,18 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(with_simplified_queue(&[1, 1, 2, 1, 1], 3), 2);
-        assert_eq!(with_simplified_queue(&[2, 4, 6], 1), 0);
         assert_eq!(
-            with_simplified_queue(&[2, 2, 2, 1, 2, 2, 1, 2, 2, 2], 2),
-            16
+            min_remove_to_make_valid("lee(t(c)o)de)".into()),
+            "lee(t(c)o)de"
         );
+        assert_eq!(min_remove_to_make_valid("a)b(c)d".into()), "ab(c)d");
+        assert_eq!(min_remove_to_make_valid("))((".into()), "");
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(min_remove_to_make_valid(")))))".into()), "");
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
