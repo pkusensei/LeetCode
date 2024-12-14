@@ -5,47 +5,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_remove_to_make_valid(s: String) -> String {
-    let mut s = s.into_bytes();
-    let mut idx = 0;
-    let mut open = 0;
-    while let Some(&b) = s.get(idx) {
-        match b {
-            b'(' => open += 1,
-            b')' => {
-                open -= 1;
-                if open < 0 {
-                    s.remove(idx);
-                    open = 0;
-                    continue;
-                }
-            }
-            _ => (),
-        }
-        idx += 1;
+pub fn is_good_array(nums: &[i32]) -> bool {
+    if nums.len() == 1 {
+        nums[0] == 1
+    } else {
+        nums[1..].iter().fold(nums[0], |acc, &v| gcd(acc, v)) == 1
     }
-    if !s.is_empty() {
-        idx = s.len() - 1;
-        let mut close = 0;
-        loop {
-            match s[idx] {
-                b')' => close += 1,
-                b'(' => {
-                    close -= 1;
-                    if close < 0 {
-                        s.remove(idx);
-                        close = 0;
-                    }
-                }
-                _ => (),
-            }
-            if idx == 0 {
-                break;
-            }
-            idx -= 1;
-        }
+}
+
+const fn gcd(a: i32, b: i32) -> i32 {
+    if a == 0 {
+        b
+    } else {
+        gcd(b % a, a)
     }
-    String::from_utf8(s).unwrap()
 }
 
 #[cfg(test)]
@@ -56,18 +29,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            min_remove_to_make_valid("lee(t(c)o)de)".into()),
-            "lee(t(c)o)de"
-        );
-        assert_eq!(min_remove_to_make_valid("a)b(c)d".into()), "ab(c)d");
-        assert_eq!(min_remove_to_make_valid("))((".into()), "");
+        assert!(is_good_array(&[12, 5, 7, 23]));
+        assert!(is_good_array(&[29, 6, 10]));
+        assert!(!is_good_array(&[3, 6]));
     }
 
     #[test]
-    fn test() {
-        assert_eq!(min_remove_to_make_valid(")))))".into()), "");
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
