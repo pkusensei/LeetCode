@@ -5,55 +5,28 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn tiling_rectangle(n: i32, m: i32) -> i32 {
-    if n == m {
-        return 1;
+pub fn minimum_swap(s1: &str, s2: &str) -> i32 {
+    let mut pairs: Vec<_> = s1.bytes().zip(s2.bytes()).filter(|(a, b)| a != b).collect();
+    let mut res = 0;
+    if pairs.is_empty() {
+        return res;
     }
-    let [rows, cols] = [n, m].map(|v| v as usize);
-    let mut seen = vec![vec![false; cols]; rows];
-    let mut res = n * m;
-    dfs(&mut seen, 0, 0, 0, &mut res);
-    res
-}
-
-fn dfs(seen: &mut [Vec<bool>], row: usize, col: usize, count: i32, res: &mut i32) {
-    if count >= *res {
-        return;
+    pairs.sort_unstable();
+    while pairs.len() >= 2 && pairs[0] == pairs[1] {
+        res += 1;
+        pairs.drain(..2);
     }
-    let (rows, cols) = get_dimensions(seen);
-    if row >= rows {
-        *res = (*res).min(count);
-        return;
-    }
-    if col >= cols {
-        dfs(seen, 1 + row, 0, count, res);
-        return;
-    }
-    if seen[row][col] {
-        dfs(seen, row, 1 + col, count, res);
-        return;
-    }
-    let delta = (rows - row).min(cols - col);
-    for d in (1..=delta).rev() {
-        if is_open(seen, row, col, d) {
-            flip(seen, row, col, d);
-            dfs(seen, row, col + d, count + 1, res);
-            flip(seen, row, col, d);
+    if pairs.len() >= 2 {
+        pairs.reverse();
+        while pairs.len() >= 2 && pairs[0] == pairs[1] {
+            res += 1;
+            pairs.drain(..2);
         }
     }
-}
-
-fn is_open(seen: &[Vec<bool>], row: usize, col: usize, d: usize) -> bool {
-    seen[row..row + d]
-        .iter()
-        .all(|r| r[col..col + d].iter().all(|&v| !v))
-}
-
-fn flip(seen: &mut [Vec<bool>], row: usize, col: usize, d: usize) {
-    for r in seen[row..row + d].iter_mut() {
-        for v in r[col..col + d].iter_mut() {
-            (*v) = !(*v);
-        }
+    match pairs.len() {
+        2 => res + 2,
+        0 => res,
+        _ => -1,
     }
 }
 
@@ -65,13 +38,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(tiling_rectangle(2, 3), 3);
-        assert_eq!(tiling_rectangle(5, 8), 5);
-        assert_eq!(tiling_rectangle(11, 13), 6);
+        assert_eq!(minimum_swap("xx", "yy"), 1);
+        assert_eq!(minimum_swap("xy", "yx"), 2);
+        assert_eq!(minimum_swap("xx", "xy"), -1);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(minimum_swap("yxyxxxyyxxyxxxx", "yyyxyyyxyxxxyxy"), 4);
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
