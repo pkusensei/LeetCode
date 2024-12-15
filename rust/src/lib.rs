@@ -5,36 +5,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_score_words(words: &[&str], letters: &[char], score: &[i32]) -> i32 {
-    let mut letters = letters.iter().fold([0; 26], |mut acc, &c| {
-        acc[usize::from(c as u8 - b'a')] += 1;
-        acc
-    });
-    let mut res = 0;
-    dfs(words, &mut letters, score, 0, &mut res);
-    res
-}
-
-fn dfs(words: &[&str], letters: &mut [i32; 26], score: &[i32], curr: i32, res: &mut i32) {
-    match words {
-        [] => (*res) = (*res).max(curr),
-        [head, tail @ ..] => {
-            dfs(tail, letters, score, curr, res);
-            let mut temp = 0;
-            for b in head.bytes() {
-                let i = usize::from(b - b'a');
-                temp += score[i];
-                letters[i] -= 1;
-            }
-            if letters.iter().all(|&v| v >= 0) {
-                dfs(tail, letters, score, curr + temp, res);
-            }
-            for b in head.bytes() {
-                let i = usize::from(b - b'a');
-                letters[i] += 1;
-            }
+pub fn shift_grid(grid: Vec<Vec<i32>>, k: i32) -> Vec<Vec<i32>> {
+    let (rows, cols) = get_dimensions(&grid);
+    let mut nums: Vec<_> = grid.into_iter().flatten().collect();
+    let n = nums.len();
+    nums.rotate_right(k as usize % n);
+    let mut res = vec![vec![0; cols]; rows];
+    for (row, r) in res.iter_mut().enumerate() {
+        for (col, v) in r.iter_mut().enumerate() {
+            *v = nums[row * cols + col]
         }
     }
+    res
 }
 
 #[cfg(test)]
@@ -46,28 +28,24 @@ mod tests {
     #[test]
     fn basics() {
         assert_eq!(
-            max_score_words(
-                &["dog", "cat", "dad", "good"],
-                &['a', 'a', 'c', 'd', 'd', 'd', 'g', 'o', 'o'],
-                &[1, 0, 9, 5, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-            ),
-            23
+            shift_grid(vec![vec![1, 2, 3], vec![4, 5, 6], vec![7, 8, 9]], 1),
+            [[9, 1, 2], [3, 4, 5], [6, 7, 8]]
         );
         assert_eq!(
-            max_score_words(
-                &["xxxz", "ax", "bx", "cx"],
-                &['z', 'a', 'b', 'c', 'x', 'x', 'x'],
-                &[4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 10]
+            shift_grid(
+                vec![
+                    vec![3, 8, 1, 9],
+                    vec![19, 7, 2, 5],
+                    vec![4, 6, 11, 10],
+                    vec![12, 0, 21, 13]
+                ],
+                4
             ),
-            27
+            [[12, 0, 21, 13], [3, 8, 1, 9], [19, 7, 2, 5], [4, 6, 11, 10]]
         );
         assert_eq!(
-            max_score_words(
-                &["leetcode"],
-                &['l', 'e', 't', 'c', 'o', 'd'],
-                &[0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0]
-            ),
-            0
+            shift_grid(vec![vec![1, 2, 3], vec![4, 5, 6], vec![7, 8, 9]], 9),
+            [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         );
     }
 
