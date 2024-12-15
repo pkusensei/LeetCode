@@ -5,17 +5,34 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn shift_grid(grid: Vec<Vec<i32>>, k: i32) -> Vec<Vec<i32>> {
-    let (rows, cols) = get_dimensions(&grid);
-    let mut nums: Vec<_> = grid.into_iter().flatten().collect();
-    let n = nums.len();
-    nums.rotate_right(k as usize % n);
-    let mut res = vec![vec![0; cols]; rows];
-    for (row, r) in res.iter_mut().enumerate() {
-        for (col, v) in r.iter_mut().enumerate() {
-            *v = nums[row * cols + col]
+pub fn max_sum_div_three(nums: &[i32]) -> i32 {
+    // let n = nums.len();
+    // dfs(nums, 0, 0, &mut vec![[0; 3]; n])
+    let mut dp = [0; 3];
+    for num in nums.iter() {
+        let mut next = dp;
+        for v in dp.iter() {
+            let sum = v + num;
+            // this sum falls into idx==sum%3 bucket
+            let idx = sum as usize % 3;
+            next[idx] = next[idx].max(sum);
         }
+        dp = next;
     }
+    dp[0]
+}
+
+fn dfs(nums: &[i32], idx: usize, rem: usize, dp: &mut [[i32; 3]]) -> i32 {
+    if idx >= nums.len() {
+        return if rem == 0 { 0 } else { i32::MIN };
+    }
+    if dp[idx][rem] > 0 {
+        return dp[idx][rem];
+    }
+    let num = nums[idx];
+    let res =
+        (num + dfs(nums, 1 + idx, (rem + num as usize) % 3, dp)).max(dfs(nums, 1 + idx, rem, dp));
+    dp[idx][rem] = res;
     res
 }
 
@@ -27,26 +44,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            shift_grid(vec![vec![1, 2, 3], vec![4, 5, 6], vec![7, 8, 9]], 1),
-            [[9, 1, 2], [3, 4, 5], [6, 7, 8]]
-        );
-        assert_eq!(
-            shift_grid(
-                vec![
-                    vec![3, 8, 1, 9],
-                    vec![19, 7, 2, 5],
-                    vec![4, 6, 11, 10],
-                    vec![12, 0, 21, 13]
-                ],
-                4
-            ),
-            [[12, 0, 21, 13], [3, 8, 1, 9], [19, 7, 2, 5], [4, 6, 11, 10]]
-        );
-        assert_eq!(
-            shift_grid(vec![vec![1, 2, 3], vec![4, 5, 6], vec![7, 8, 9]], 9),
-            [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        );
+        assert_eq!(max_sum_div_three(&[3, 6, 5, 1, 8]), 18);
+        assert_eq!(max_sum_div_three(&[4]), 0);
+        assert_eq!(max_sum_div_three(&[1, 2, 3, 4, 4]), 12);
     }
 
     #[test]
