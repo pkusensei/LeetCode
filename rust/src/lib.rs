@@ -2,52 +2,39 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::VecDeque;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn closed_island(grid: &[&[i32]]) -> i32 {
-    let (rows, cols) = get_dimensions(grid);
-    let mut seen = vec![vec![false; cols]; rows];
+pub fn max_score_words(words: &[&str], letters: &[char], score: &[i32]) -> i32 {
+    let mut letters = letters.iter().fold([0; 26], |mut acc, &c| {
+        acc[usize::from(c as u8 - b'a')] += 1;
+        acc
+    });
     let mut res = 0;
-    for (row, r) in grid.iter().enumerate() {
-        for (col, &v) in r.iter().enumerate() {
-            if v == 0 && !seen[row][col] {
-                res += bfs(rows, cols, row, col, grid, &mut seen);
-            }
-        }
-    }
+    dfs(words, &mut letters, score, 0, &mut res);
     res
 }
 
-fn bfs(
-    rows: usize,
-    cols: usize,
-    row: usize,
-    col: usize,
-    grid: &[&[i32]],
-    seen: &mut [Vec<bool>],
-) -> i32 {
-    let mut queue = VecDeque::from([[row, col]]);
-    let mut inland = true;
-    seen[row][col] = true;
-    while let Some([row, col]) = queue.pop_front() {
-        if !(1..rows - 1).contains(&row) || !(1..cols - 1).contains(&col) {
-            inland = false
-        }
-        for (nr, nc) in neighbors((row, col)) {
-            if grid
-                .get(nr)
-                .is_some_and(|r| r.get(nc).is_some_and(|&v| v == 0))
-                && !seen[nr][nc]
-            {
-                seen[nr][nc] = true;
-                queue.push_back([nr, nc]);
+fn dfs(words: &[&str], letters: &mut [i32; 26], score: &[i32], curr: i32, res: &mut i32) {
+    match words {
+        [] => (*res) = (*res).max(curr),
+        [head, tail @ ..] => {
+            dfs(tail, letters, score, curr, res);
+            let mut temp = 0;
+            for b in head.bytes() {
+                let i = usize::from(b - b'a');
+                temp += score[i];
+                letters[i] -= 1;
+            }
+            if letters.iter().all(|&v| v >= 0) {
+                dfs(tail, letters, score, curr + temp, res);
+            }
+            for b in head.bytes() {
+                let i = usize::from(b - b'a');
+                letters[i] += 1;
             }
         }
     }
-    i32::from(inland)
 }
 
 #[cfg(test)]
@@ -59,30 +46,28 @@ mod tests {
     #[test]
     fn basics() {
         assert_eq!(
-            closed_island(&[
-                &[1, 1, 1, 1, 1, 1, 1, 0],
-                &[1, 0, 0, 0, 0, 1, 1, 0],
-                &[1, 0, 1, 0, 1, 1, 1, 0],
-                &[1, 0, 0, 0, 0, 1, 0, 1],
-                &[1, 1, 1, 1, 1, 1, 1, 0]
-            ]),
-            2
+            max_score_words(
+                &["dog", "cat", "dad", "good"],
+                &['a', 'a', 'c', 'd', 'd', 'd', 'g', 'o', 'o'],
+                &[1, 0, 9, 5, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+            ),
+            23
         );
         assert_eq!(
-            closed_island(&[&[0, 0, 1, 0, 0], &[0, 1, 0, 1, 0], &[0, 1, 1, 1, 0]]),
-            1
+            max_score_words(
+                &["xxxz", "ax", "bx", "cx"],
+                &['z', 'a', 'b', 'c', 'x', 'x', 'x'],
+                &[4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 10]
+            ),
+            27
         );
         assert_eq!(
-            closed_island(&[
-                &[1, 1, 1, 1, 1, 1, 1],
-                &[1, 0, 0, 0, 0, 0, 1],
-                &[1, 0, 1, 1, 1, 0, 1],
-                &[1, 0, 1, 0, 1, 0, 1],
-                &[1, 0, 1, 1, 1, 0, 1],
-                &[1, 0, 0, 0, 0, 0, 1],
-                &[1, 1, 1, 1, 1, 1, 1]
-            ]),
-            2
+            max_score_words(
+                &["leetcode"],
+                &['l', 'e', 't', 'c', 'o', 'd'],
+                &[0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0]
+            ),
+            0
         );
     }
 
