@@ -5,57 +5,43 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_average_ratio(classes: &[[i32; 2]], extra_students: i32) -> f64 {
-    let mut heap: std::collections::BinaryHeap<_> = classes
+pub fn reconstruct_matrix(mut upper: i32, mut lower: i32, colsum: &[i32]) -> Vec<Vec<i32>> {
+    if upper + lower != colsum.iter().sum() {
+        return vec![];
+    }
+    let n = colsum.len();
+    let mut res = vec![vec![0; n]; 2];
+    for i in colsum
         .iter()
-        .map(|v| Class {
-            pass: v[0],
-            total: v[1],
-        })
-        .collect();
-    for _ in 0..extra_students {
-        let Some(mut c) = heap.pop() else {
+        .enumerate()
+        .filter_map(|(i, v)| if *v == 2 { Some(i) } else { None })
+    {
+        upper -= 1;
+        lower -= 1;
+        if upper < 0 || lower < 0 {
+            return vec![];
+        }
+        res[0][i] = 1;
+        res[1][i] = 1;
+    }
+    for i in colsum
+        .iter()
+        .enumerate()
+        .filter_map(|(i, v)| if *v == 1 { Some(i) } else { None })
+    {
+        if upper > 0 {
+            upper -= 1;
+            res[0][i] = 1;
             continue;
-        };
-        c.pass += 1;
-        c.total += 1;
-        heap.push(c);
+        }
+        if lower > 0 {
+            lower -= 1;
+            res[1][i] = 1;
+            continue;
+        }
+        return vec![];
     }
-    heap.into_iter()
-        .map(|c| f64::from(c.pass) / f64::from(c.total))
-        .sum::<f64>()
-        / classes.len() as f64
-}
-
-#[derive(Debug, Clone, Copy)]
-struct Class {
-    pass: i32,
-    total: i32,
-}
-
-impl PartialEq for Class {
-    fn eq(&self, other: &Self) -> bool {
-        self.pass * other.total == self.total * other.pass
-    }
-}
-
-impl Eq for Class {}
-
-impl PartialOrd for Class {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(other))
-    }
-}
-// This is the most obvious and dirtiest way to write it
-impl Ord for Class {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        (f64::from(1 + self.pass) / f64::from(1 + self.total)
-            - f64::from(self.pass) / f64::from(self.total))
-        .total_cmp(
-            &(f64::from(1 + other.pass) / f64::from(1 + other.total)
-                - f64::from(other.pass) / f64::from(other.total)),
-        )
-    }
+    res
 }
 
 #[cfg(test)]
@@ -66,10 +52,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        // float_eq(max_average_ratio(&[[1, 2], [3, 5], [2, 2]], 2), 0.78333);
-        float_eq(
-            max_average_ratio(&[[2, 4], [3, 9], [4, 5], [2, 10]], 4),
-            0.53485,
+        assert_eq!(reconstruct_matrix(2, 1, &[1, 1, 1]), [[1, 1, 0], [0, 0, 1]]);
+        assert!(reconstruct_matrix(2, 3, &[2, 2, 1, 1]).is_empty());
+        assert_eq!(
+            reconstruct_matrix(5, 5, &[2, 1, 2, 0, 1, 0, 1, 2, 0, 1]),
+            [
+                [1, 1, 1, 0, 1, 0, 0, 1, 0, 0],
+                [1, 0, 1, 0, 0, 0, 1, 1, 0, 1]
+            ]
         );
     }
 
