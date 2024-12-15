@@ -2,46 +2,52 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::VecDeque;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn reconstruct_matrix(mut upper: i32, mut lower: i32, colsum: &[i32]) -> Vec<Vec<i32>> {
-    if upper + lower != colsum.iter().sum() {
-        return vec![];
-    }
-    let n = colsum.len();
-    let mut res = vec![vec![0; n]; 2];
-    for i in colsum
-        .iter()
-        .enumerate()
-        .filter_map(|(i, v)| if *v == 2 { Some(i) } else { None })
-    {
-        upper -= 1;
-        lower -= 1;
-        if upper < 0 || lower < 0 {
-            return vec![];
+pub fn closed_island(grid: &[&[i32]]) -> i32 {
+    let (rows, cols) = get_dimensions(grid);
+    let mut seen = vec![vec![false; cols]; rows];
+    let mut res = 0;
+    for (row, r) in grid.iter().enumerate() {
+        for (col, &v) in r.iter().enumerate() {
+            if v == 0 && !seen[row][col] {
+                res += bfs(rows, cols, row, col, grid, &mut seen);
+            }
         }
-        res[0][i] = 1;
-        res[1][i] = 1;
-    }
-    for i in colsum
-        .iter()
-        .enumerate()
-        .filter_map(|(i, v)| if *v == 1 { Some(i) } else { None })
-    {
-        if upper > 0 {
-            upper -= 1;
-            res[0][i] = 1;
-            continue;
-        }
-        if lower > 0 {
-            lower -= 1;
-            res[1][i] = 1;
-            continue;
-        }
-        return vec![];
     }
     res
+}
+
+fn bfs(
+    rows: usize,
+    cols: usize,
+    row: usize,
+    col: usize,
+    grid: &[&[i32]],
+    seen: &mut [Vec<bool>],
+) -> i32 {
+    let mut queue = VecDeque::from([[row, col]]);
+    let mut inland = true;
+    seen[row][col] = true;
+    while let Some([row, col]) = queue.pop_front() {
+        if !(1..rows - 1).contains(&row) || !(1..cols - 1).contains(&col) {
+            inland = false
+        }
+        for (nr, nc) in neighbors((row, col)) {
+            if grid
+                .get(nr)
+                .is_some_and(|r| r.get(nc).is_some_and(|&v| v == 0))
+                && !seen[nr][nc]
+            {
+                seen[nr][nc] = true;
+                queue.push_back([nr, nc]);
+            }
+        }
+    }
+    i32::from(inland)
 }
 
 #[cfg(test)]
@@ -52,14 +58,31 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(reconstruct_matrix(2, 1, &[1, 1, 1]), [[1, 1, 0], [0, 0, 1]]);
-        assert!(reconstruct_matrix(2, 3, &[2, 2, 1, 1]).is_empty());
         assert_eq!(
-            reconstruct_matrix(5, 5, &[2, 1, 2, 0, 1, 0, 1, 2, 0, 1]),
-            [
-                [1, 1, 1, 0, 1, 0, 0, 1, 0, 0],
-                [1, 0, 1, 0, 0, 0, 1, 1, 0, 1]
-            ]
+            closed_island(&[
+                &[1, 1, 1, 1, 1, 1, 1, 0],
+                &[1, 0, 0, 0, 0, 1, 1, 0],
+                &[1, 0, 1, 0, 1, 1, 1, 0],
+                &[1, 0, 0, 0, 0, 1, 0, 1],
+                &[1, 1, 1, 1, 1, 1, 1, 0]
+            ]),
+            2
+        );
+        assert_eq!(
+            closed_island(&[&[0, 0, 1, 0, 0], &[0, 1, 0, 1, 0], &[0, 1, 1, 1, 0]]),
+            1
+        );
+        assert_eq!(
+            closed_island(&[
+                &[1, 1, 1, 1, 1, 1, 1],
+                &[1, 0, 0, 0, 0, 0, 1],
+                &[1, 0, 1, 1, 1, 0, 1],
+                &[1, 0, 1, 0, 1, 0, 1],
+                &[1, 0, 1, 1, 1, 0, 1],
+                &[1, 0, 0, 0, 0, 0, 1],
+                &[1, 1, 1, 1, 1, 1, 1]
+            ]),
+            2
         );
     }
 
