@@ -2,95 +2,26 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::{HashSet, VecDeque};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_push_box(grid: &[&[char]]) -> i32 {
-    let (walls, [carton, start, target], borders) = build(grid);
-    let mut queue = VecDeque::new();
-    let mut seen = HashSet::new();
-    for pos in immediate(carton, borders) {
-        if !walls.contains(&pos) && reachable(&walls, carton, start, pos, borders) {
-            queue.push_back((carton, pos, 0));
-            seen.insert([carton, pos]);
-        }
+pub fn min_time_to_visit_all_points(points: &[[i32; 2]]) -> i32 {
+    if points.len() <= 1 {
+        return 0;
     }
-    while let Some((carton, pos, push)) = queue.pop_front() {
-        if carton == target {
-            return push;
-        }
-        let dx = carton[0] - pos[0];
-        let dy = carton[1] - pos[1];
-        let new_carton = [carton[0] + dx, carton[1] + dy];
-        if inside(new_carton, borders) && !walls.contains(&new_carton) {
-            for new_pos in immediate(new_carton, borders) {
-                if !walls.contains(&new_pos)
-                    && reachable(&walls, new_carton, pos, new_pos, borders)
-                    && seen.insert([new_carton, new_pos])
-                {
-                    queue.push_back((new_carton, new_pos, 1 + push));
-                }
-            }
-        }
+    let [mut x1, mut y1] = [points[0][0], points[0][1]];
+    let mut res = 0;
+    for p in points[1..].iter() {
+        let [x2, y2] = [p[0], p[1]];
+        let dx = x1.abs_diff(x2);
+        let dy = y1.abs_diff(y2);
+        let min = dx.min(dy);
+        let max = dx.max(dy);
+        res += min + max - min;
+        x1 = x2;
+        y1 = y2;
     }
-    -1
-}
-
-fn reachable(
-    walls: &HashSet<[i8; 2]>,
-    carton: [i8; 2],
-    start: [i8; 2],
-    goal: [i8; 2],
-    borders: [i8; 2],
-) -> bool {
-    let mut queue = VecDeque::from([start]);
-    let mut seen = HashSet::from([start]);
-    while let Some(node) = queue.pop_front() {
-        if goal == node {
-            return true;
-        }
-        for neighbor in immediate(node, borders) {
-            if !walls.contains(&neighbor) && neighbor != carton && seen.insert(neighbor) {
-                queue.push_back(neighbor);
-            }
-        }
-    }
-    false
-}
-
-fn immediate([x, y]: [i8; 2], borders: [i8; 2]) -> impl Iterator<Item = [i8; 2]> {
-    const DELTAS: [[i8; 2]; 4] = [[-1, 0], [1, 0], [0, -1], [0, 1]];
-    DELTAS
-        .map(|[dx, dy]| [x + dx, y + dy])
-        .into_iter()
-        .filter(move |&p| inside(p, borders))
-}
-
-fn inside([x, y]: [i8; 2], [xmax, ymax]: [i8; 2]) -> bool {
-    (0..xmax).contains(&x) && (0..ymax).contains(&y)
-}
-
-fn build(grid: &[&[char]]) -> (HashSet<[i8; 2]>, [[i8; 2]; 3], [i8; 2]) {
-    let [mut start, mut target, mut carton] = [[0, 0]; 3];
-    let (rows, cols) = get_dimensions(grid);
-    let mut walls = HashSet::new();
-    for (row, r) in grid.iter().enumerate() {
-        for (col, &ch) in r.iter().enumerate() {
-            let curr = [col as i8, row as i8];
-            match ch {
-                '#' => {
-                    walls.insert(curr);
-                }
-                'B' => carton = curr,
-                'S' => start = curr,
-                'T' => target = curr,
-                _ => (),
-            }
-        }
-    }
-    (walls, [carton, start, target], [cols as i8, rows as i8])
+    res as _
 }
 
 #[cfg(test)]
@@ -101,55 +32,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            min_push_box(&[
-                &['#', '#', '#', '#', '#', '#'],
-                &['#', 'T', '#', '#', '#', '#'],
-                &['#', '.', '.', 'B', '.', '#'],
-                &['#', '.', '#', '#', '.', '#'],
-                &['#', '.', '.', '.', 'S', '#'],
-                &['#', '#', '#', '#', '#', '#']
-            ]),
-            3
-        );
-        assert_eq!(
-            min_push_box(&[
-                &['#', '#', '#', '#', '#', '#'],
-                &['#', 'T', '#', '#', '#', '#'],
-                &['#', '.', '.', 'B', '.', '#'],
-                &['#', '#', '#', '#', '.', '#'],
-                &['#', '.', '.', '.', 'S', '#'],
-                &['#', '#', '#', '#', '#', '#']
-            ]),
-            -1
-        );
-        assert_eq!(
-            min_push_box(&[
-                &['#', '#', '#', '#', '#', '#'],
-                &['#', 'T', '.', '.', '#', '#'],
-                &['#', '.', '#', 'B', '.', '#'],
-                &['#', '.', '.', '.', '.', '#'],
-                &['#', '.', '.', '.', 'S', '#'],
-                &['#', '#', '#', '#', '#', '#']
-            ]),
-            5
-        );
+        assert_eq!(min_time_to_visit_all_points(&[[1, 1], [3, 4], [-1, 0]]), 7);
+        assert_eq!(min_time_to_visit_all_points(&[[3, 2], [-2, 2]]), 5);
     }
 
     #[test]
-    fn test() {
-        assert_eq!(
-            min_push_box(&[
-                &['#', '.', '.', '#', '#', '#', '#', '#'],
-                &['#', '.', '.', 'T', '#', '.', '.', '#'],
-                &['#', '.', '.', '.', '#', 'B', '.', '#'],
-                &['#', '.', '.', '.', '.', '.', '.', '#'],
-                &['#', '.', '.', '.', '#', '.', 'S', '#'],
-                &['#', '.', '.', '#', '#', '#', '#', '#']
-            ]),
-            7
-        );
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
