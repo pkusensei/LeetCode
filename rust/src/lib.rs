@@ -2,37 +2,28 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::{cmp::Reverse, collections::BinaryHeap};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_sum_div_three(nums: &[i32]) -> i32 {
-    // let n = nums.len();
-    // dfs(nums, 0, 0, &mut vec![[0; 3]; n])
-    let mut dp = [0; 3];
-    for num in nums.iter() {
-        let mut next = dp;
-        for v in dp.iter() {
-            let sum = v + num;
-            // this sum falls into idx==sum%3 bucket
-            let idx = sum as usize % 3;
-            next[idx] = next[idx].max(sum);
-        }
-        dp = next;
+pub fn get_final_state(nums: &[i32], k: i32, multiplier: i32) -> Vec<i32> {
+    let mut heap: BinaryHeap<_> = nums
+        .iter()
+        .enumerate()
+        .map(|(i, &v)| Reverse((v, i)))
+        .collect();
+    for _ in 0..k {
+        let Some(Reverse((mut v, i))) = heap.pop() else {
+            continue;
+        };
+        v *= multiplier;
+        heap.push(Reverse((v, i)));
     }
-    dp[0]
-}
-
-fn dfs(nums: &[i32], idx: usize, rem: usize, dp: &mut [[i32; 3]]) -> i32 {
-    if idx >= nums.len() {
-        return if rem == 0 { 0 } else { i32::MIN };
+    let mut res = vec![0; nums.len()];
+    for Reverse((v, i)) in heap.into_iter() {
+        res[i] = v;
     }
-    if dp[idx][rem] > 0 {
-        return dp[idx][rem];
-    }
-    let num = nums[idx];
-    let res =
-        (num + dfs(nums, 1 + idx, (rem + num as usize) % 3, dp)).max(dfs(nums, 1 + idx, rem, dp));
-    dp[idx][rem] = res;
     res
 }
 
@@ -44,9 +35,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_sum_div_three(&[3, 6, 5, 1, 8]), 18);
-        assert_eq!(max_sum_div_three(&[4]), 0);
-        assert_eq!(max_sum_div_three(&[1, 2, 3, 4, 4]), 12);
+        assert_eq!(get_final_state(&[2, 1, 3, 5, 6], 5, 2), [8, 4, 6, 5, 6]);
+        assert_eq!(get_final_state(&[1, 2], 3, 4), [16, 8]);
     }
 
     #[test]
