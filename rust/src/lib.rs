@@ -2,26 +2,86 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::{HashMap, HashSet, VecDeque};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_time_to_visit_all_points(points: &[[i32; 2]]) -> i32 {
-    if points.len() <= 1 {
+pub fn count_servers(grid: &[&[i32]]) -> i32 {
+    let mut xs = HashMap::<_, Vec<_>>::new();
+    let mut ys = HashMap::<_, Vec<_>>::new();
+    for (row, r) in grid.iter().enumerate() {
+        for (col, &v) in r.iter().enumerate() {
+            if v == 1 {
+                let [x, y] = [col, row].map(|v| v as u8);
+                xs.entry(x).or_default().push(y);
+                ys.entry(y).or_default().push(x);
+            }
+        }
+    }
+    let mut seen = HashSet::new();
+    let mut res = 0;
+    for (row, r) in grid.iter().enumerate() {
+        for (col, &v) in r.iter().enumerate() {
+            if v == 1 {
+                let [x, y] = [col, row].map(|v| v as u8);
+                res += bfs([x, y], &xs, &ys, &mut seen);
+            }
+        }
+    }
+    res
+}
+
+fn bfs(
+    curr: [u8; 2],
+    xs: &HashMap<u8, Vec<u8>>,
+    ys: &HashMap<u8, Vec<u8>>,
+    seen: &mut HashSet<[u8; 2]>,
+) -> i32 {
+    if !seen.insert(curr) {
         return 0;
     }
-    let [mut x1, mut y1] = [points[0][0], points[0][1]];
+    let mut queue = VecDeque::from([curr]);
     let mut res = 0;
-    for p in points[1..].iter() {
-        let [x2, y2] = [p[0], p[1]];
-        let dx = x1.abs_diff(x2);
-        let dy = y1.abs_diff(y2);
-        let min = dx.min(dy);
-        let max = dx.max(dy);
-        res += min + max - min;
-        x1 = x2;
-        y1 = y2;
+    while let Some([curr_x, curr_y]) = queue.pop_front() {
+        res += 1;
+        for &y in xs[&curr_x].iter() {
+            if seen.insert([curr_x, y]) {
+                queue.push_back([curr_x, y]);
+            }
+        }
+        for &x in ys[&curr_y].iter() {
+            if seen.insert([x, curr_y]) {
+                queue.push_back([x, curr_y]);
+            }
+        }
     }
-    res as _
+    if res > 1 {
+        res
+    } else {
+        0
+    }
+}
+
+fn without_bfs(grid: &[&[i32]]) -> i32 {
+    let (rows, cols) = get_dimensions(grid);
+    let mut row_count = vec![0; rows];
+    let mut col_count = vec![0; cols];
+    for (row, r) in grid.iter().enumerate() {
+        for (col, &v) in r.iter().enumerate() {
+            row_count[row] += v;
+            col_count[col] += v;
+        }
+    }
+    let mut res = 0;
+    for (row, r) in grid.iter().enumerate() {
+        for (col, &v) in r.iter().enumerate() {
+            if v == 1 && (row_count[row] > 1 || col_count[col] > 1) {
+                res += 1;
+            }
+        }
+    }
+    res
 }
 
 #[cfg(test)]
@@ -32,8 +92,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_time_to_visit_all_points(&[[1, 1], [3, 4], [-1, 0]]), 7);
-        assert_eq!(min_time_to_visit_all_points(&[[3, 2], [-2, 2]]), 5);
+        assert_eq!(without_bfs(&[&[1, 0], &[0, 1]]), 0);
+        assert_eq!(without_bfs(&[&[1, 0], &[1, 1]]), 3);
+        assert_eq!(
+            without_bfs(&[&[1, 1, 0, 0], &[0, 0, 1, 0], &[0, 0, 1, 0], &[0, 0, 0, 1]]),
+            4
+        );
     }
 
     #[test]
