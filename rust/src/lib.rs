@@ -2,86 +2,41 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::{HashMap, HashSet, VecDeque};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_servers(grid: &[&[i32]]) -> i32 {
-    let mut xs = HashMap::<_, Vec<_>>::new();
-    let mut ys = HashMap::<_, Vec<_>>::new();
-    for (row, r) in grid.iter().enumerate() {
-        for (col, &v) in r.iter().enumerate() {
-            if v == 1 {
-                let [x, y] = [col, row].map(|v| v as u8);
-                xs.entry(x).or_default().push(y);
-                ys.entry(y).or_default().push(x);
+pub fn repeat_limited_string(s: &str, repeat_limit: i32) -> String {
+    let mut heap: std::collections::BinaryHeap<_> = s
+        .bytes()
+        .fold([0; 26], |mut acc, b| {
+            acc[usize::from(b - b'a')] += 1;
+            acc
+        })
+        .into_iter()
+        .enumerate()
+        .filter(|(_, b)| *b > 0)
+        .map(|(i, v)| (i as u8 + b'a', v))
+        .collect();
+    let mut res = vec![];
+    let k = repeat_limit as usize;
+    while let Some((byte, count)) = heap.pop() {
+        if res.len() >= k && res.iter().rev().take(k).all(|&v| v == byte) {
+            let Some((b, c)) = heap.pop() else {
+                break;
+            };
+            res.push(b);
+            if c > 1 {
+                heap.push((b, c - 1));
+            }
+            heap.push((byte, count));
+        } else {
+            res.push(byte);
+            if count > 1 {
+                heap.push((byte, count - 1));
             }
         }
     }
-    let mut seen = HashSet::new();
-    let mut res = 0;
-    for (row, r) in grid.iter().enumerate() {
-        for (col, &v) in r.iter().enumerate() {
-            if v == 1 {
-                let [x, y] = [col, row].map(|v| v as u8);
-                res += bfs([x, y], &xs, &ys, &mut seen);
-            }
-        }
-    }
-    res
-}
-
-fn bfs(
-    curr: [u8; 2],
-    xs: &HashMap<u8, Vec<u8>>,
-    ys: &HashMap<u8, Vec<u8>>,
-    seen: &mut HashSet<[u8; 2]>,
-) -> i32 {
-    if !seen.insert(curr) {
-        return 0;
-    }
-    let mut queue = VecDeque::from([curr]);
-    let mut res = 0;
-    while let Some([curr_x, curr_y]) = queue.pop_front() {
-        res += 1;
-        for &y in xs[&curr_x].iter() {
-            if seen.insert([curr_x, y]) {
-                queue.push_back([curr_x, y]);
-            }
-        }
-        for &x in ys[&curr_y].iter() {
-            if seen.insert([x, curr_y]) {
-                queue.push_back([x, curr_y]);
-            }
-        }
-    }
-    if res > 1 {
-        res
-    } else {
-        0
-    }
-}
-
-fn without_bfs(grid: &[&[i32]]) -> i32 {
-    let (rows, cols) = get_dimensions(grid);
-    let mut row_count = vec![0; rows];
-    let mut col_count = vec![0; cols];
-    for (row, r) in grid.iter().enumerate() {
-        for (col, &v) in r.iter().enumerate() {
-            row_count[row] += v;
-            col_count[col] += v;
-        }
-    }
-    let mut res = 0;
-    for (row, r) in grid.iter().enumerate() {
-        for (col, &v) in r.iter().enumerate() {
-            if v == 1 && (row_count[row] > 1 || col_count[col] > 1) {
-                res += 1;
-            }
-        }
-    }
-    res
+    String::from_utf8(res).unwrap()
 }
 
 #[cfg(test)]
@@ -92,12 +47,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(without_bfs(&[&[1, 0], &[0, 1]]), 0);
-        assert_eq!(without_bfs(&[&[1, 0], &[1, 1]]), 3);
-        assert_eq!(
-            without_bfs(&[&[1, 1, 0, 0], &[0, 0, 1, 0], &[0, 0, 1, 0], &[0, 0, 0, 1]]),
-            4
-        );
+        assert_eq!(repeat_limited_string("cczazcc", 3), "zzcccac");
+        assert_eq!(repeat_limited_string("aababab", 2), "bbabaa");
     }
 
     #[test]
