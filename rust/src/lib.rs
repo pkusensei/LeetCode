@@ -5,38 +5,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn repeat_limited_string(s: &str, repeat_limit: i32) -> String {
-    let mut heap: std::collections::BinaryHeap<_> = s
-        .bytes()
-        .fold([0; 26], |mut acc, b| {
-            acc[usize::from(b - b'a')] += 1;
-            acc
-        })
-        .into_iter()
-        .enumerate()
-        .filter(|(_, b)| *b > 0)
-        .map(|(i, v)| (i as u8 + b'a', v))
-        .collect();
-    let mut res = vec![];
-    let k = repeat_limit as usize;
-    while let Some((byte, count)) = heap.pop() {
-        if res.len() >= k && res.iter().rev().take(k).all(|&v| v == byte) {
-            let Some((b, c)) = heap.pop() else {
-                break;
-            };
-            res.push(b);
-            if c > 1 {
-                heap.push((b, c - 1));
-            }
-            heap.push((byte, count));
-        } else {
-            res.push(byte);
-            if count > 1 {
-                heap.push((byte, count - 1));
-            }
+pub fn final_prices(prices: &[i32]) -> Vec<i32> {
+    let n = prices.len();
+    let [mut stack, mut res] = [0; 2].map(|_| Vec::with_capacity(n));
+    for &num in prices.iter().rev() {
+        while stack.last().is_some_and(|&v| v > num) {
+            stack.pop();
         }
+        res.push(num - stack.last().unwrap_or(&0));
+        stack.push(num);
     }
-    String::from_utf8(res).unwrap()
+    res.reverse();
+    res
 }
 
 #[cfg(test)]
@@ -47,8 +27,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(repeat_limited_string("cczazcc", 3), "zzcccac");
-        assert_eq!(repeat_limited_string("aababab", 2), "bbabaa");
+        assert_eq!(final_prices(&[8, 4, 6, 2, 3]), [4, 2, 4, 2, 3]);
+        assert_eq!(final_prices(&[1, 2, 3, 4, 5]), [1, 2, 3, 4, 5]);
+        assert_eq!(final_prices(&[10, 1, 1, 6]), [9, 0, 1, 6]);
     }
 
     #[test]
