@@ -5,21 +5,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_chunks_to_sorted(arr: &[i32]) -> i32 {
-    let mut stack = vec![];
-    for &num in arr.iter() {
-        match stack.last() {
-            None => stack.push(num),
-            Some(&v) if v < num => stack.push(num),
-            Some(&temp) => {
-                while stack.last().is_some_and(|&v| v > num) {
-                    stack.pop();
-                }
-                stack.push(temp);
+pub fn suggested_products(products: &mut [&str], search_word: &str) -> Vec<Vec<String>> {
+    products.sort_unstable();
+    let n = search_word.len();
+    let mut res = Vec::with_capacity(n);
+    let mut start = 0;
+    for end in 1..=n {
+        let prefix = &search_word[..end];
+        let idx = start + products[start..].partition_point(|&v| v < prefix);
+        let mut curr = vec![];
+        for prod in products.iter().skip(idx).take(3) {
+            if prod.starts_with(prefix) {
+                curr.push(prod.to_string());
             }
         }
+        res.push(curr);
+        start = idx;
     }
-    stack.len() as _
+    res
 }
 
 #[cfg(test)]
@@ -30,14 +33,34 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_chunks_to_sorted(&[4, 3, 2, 1, 0]), 1);
-        assert_eq!(max_chunks_to_sorted(&[1, 0, 2, 3, 4]), 4);
+        assert_eq!(
+            suggested_products(
+                &mut ["mobile", "mouse", "moneypot", "monitor", "mousepad"],
+                "mouse"
+            ),
+            [
+                vec!["mobile", "moneypot", "monitor"],
+                vec!["mobile", "moneypot", "monitor"],
+                vec!["mouse", "mousepad"],
+                vec!["mouse", "mousepad"],
+                vec!["mouse", "mousepad"]
+            ]
+        );
+        assert_eq!(
+            suggested_products(&mut ["havana"], "havana"),
+            [
+                ["havana"],
+                ["havana"],
+                ["havana"],
+                ["havana"],
+                ["havana"],
+                ["havana"]
+            ]
+        )
     }
 
     #[test]
-    fn test() {
-        assert_eq!(max_chunks_to_sorted(&[1, 2, 0, 3]), 2);
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
