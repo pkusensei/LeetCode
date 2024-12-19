@@ -5,23 +5,44 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn suggested_products(products: &mut [&str], search_word: &str) -> Vec<Vec<String>> {
-    products.sort_unstable();
-    let n = search_word.len();
-    let mut res = Vec::with_capacity(n);
-    let mut start = 0;
-    for end in 1..=n {
-        let prefix = &search_word[..end];
-        let idx = start + products[start..].partition_point(|&v| v < prefix);
-        let mut curr = vec![];
-        for prod in products.iter().skip(idx).take(3) {
-            if prod.starts_with(prefix) {
-                curr.push(prod.to_string());
+const MOD: i32 = 1_000_000_007;
+
+pub fn num_ways(steps: i32, arr_len: i32) -> i32 {
+    let alen = steps.min(arr_len);
+    // let mut dp = vec![vec![-1; alen as usize]; 1 + steps as usize];
+    // dfs(steps, alen, 0, &mut dp)
+    let mut dp = vec![vec![0; alen as usize]; 1 + steps as usize];
+    dp[0][0] = 1;
+    for remain in 1..=steps as usize {
+        for curr in (0..alen as usize).rev() {
+            let mut temp = dp[remain - 1][curr];
+            if curr > 0 {
+                temp = (temp + dp[remain - 1][curr - 1]) % MOD;
             }
+            if curr < alen as usize - 1 {
+                temp = (temp + dp[remain - 1][curr + 1]) % MOD;
+            }
+            dp[remain][curr] = temp
         }
-        res.push(curr);
-        start = idx;
     }
+    dp[steps as usize][0]
+}
+
+fn dfs(steps: i32, arr_len: i32, curr: i32, dp: &mut [Vec<i32>]) -> i32 {
+    if steps == 0 {
+        return i32::from(curr == 0);
+    }
+    if !(0..arr_len).contains(&curr) {
+        return 0;
+    }
+    if dp[steps as usize][curr as usize] > -1 {
+        return dp[steps as usize][curr as usize];
+    }
+    let mut res = 0;
+    res = (res + dfs(steps - 1, arr_len, curr, dp)) % MOD;
+    res = (res + dfs(steps - 1, arr_len, curr - 1, dp)) % MOD;
+    res = (res + dfs(steps - 1, arr_len, curr + 1, dp)) % MOD;
+    dp[steps as usize][curr as usize] = res;
     res
 }
 
@@ -33,30 +54,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            suggested_products(
-                &mut ["mobile", "mouse", "moneypot", "monitor", "mousepad"],
-                "mouse"
-            ),
-            [
-                vec!["mobile", "moneypot", "monitor"],
-                vec!["mobile", "moneypot", "monitor"],
-                vec!["mouse", "mousepad"],
-                vec!["mouse", "mousepad"],
-                vec!["mouse", "mousepad"]
-            ]
-        );
-        assert_eq!(
-            suggested_products(&mut ["havana"], "havana"),
-            [
-                ["havana"],
-                ["havana"],
-                ["havana"],
-                ["havana"],
-                ["havana"],
-                ["havana"]
-            ]
-        )
+        assert_eq!(num_ways(3, 2), 4);
+        assert_eq!(num_ways(2, 4), 2);
+        assert_eq!(num_ways(4, 2), 8);
     }
 
     #[test]
