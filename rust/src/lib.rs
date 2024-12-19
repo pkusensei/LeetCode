@@ -5,28 +5,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn tictactoe(moves: &[[i32; 2]]) -> String {
-    let mut board = [[0; 3]; 3];
-    let mut p = 1;
-    for m in moves {
-        board[m[0] as usize][m[1] as usize] = p;
-        p = -p;
-    }
-    let mut win = false;
-    win |= board.iter().any(|r| r.iter().sum::<i32>().abs() == 3);
-    win |= (0..3).any(|col| (0..3).map(|row| board[row][col]).sum::<i32>().abs() == 3);
-    win |= (board[0][0] + board[1][1] + board[2][2]).abs() == 3;
-    win |= (board[2][0] + board[1][1] + board[0][2]).abs() == 3;
-    if win {
-        if moves.len() & 1 == 1 {
-            "A".into()
-        } else {
-            "B".into()
-        }
-    } else if moves.len() == 9 {
-        "Draw".into()
+pub fn num_of_burgers(tomato_slices: i32, cheese_slices: i32) -> Vec<i32> {
+    // 4x + 2y = tomato
+    // x + y = cheese
+    // 2x = tomato - 2cheese
+    let x = (tomato_slices - 2 * cheese_slices) / 2;
+    let y = cheese_slices - x;
+    if x >= 0 && y >= 0 && 4 * x + 2 * y == tomato_slices {
+        vec![x, y]
     } else {
-        "Pending".into()
+        vec![]
     }
 }
 
@@ -38,25 +26,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(tictactoe(&[[0, 0], [2, 0], [1, 1], [2, 1], [2, 2]]), "A");
-        assert_eq!(
-            tictactoe(&[[0, 0], [1, 1], [0, 1], [0, 2], [1, 0], [2, 0]]),
-            "B"
-        );
-        assert_eq!(
-            tictactoe(&[
-                [0, 0],
-                [1, 1],
-                [2, 0],
-                [1, 0],
-                [1, 2],
-                [2, 1],
-                [0, 1],
-                [0, 2],
-                [2, 2]
-            ]),
-            "Draw"
-        );
+        assert_eq!(num_of_burgers(16, 7), [1, 6]);
+        assert!(num_of_burgers(17, 4).is_empty());
+        assert!(num_of_burgers(4, 17).is_empty());
     }
 
     #[test]
