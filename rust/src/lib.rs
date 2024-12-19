@@ -5,45 +5,29 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-const MOD: i32 = 1_000_000_007;
-
-pub fn num_ways(steps: i32, arr_len: i32) -> i32 {
-    let alen = steps.min(arr_len);
-    // let mut dp = vec![vec![-1; alen as usize]; 1 + steps as usize];
-    // dfs(steps, alen, 0, &mut dp)
-    let mut dp = vec![vec![0; alen as usize]; 1 + steps as usize];
-    dp[0][0] = 1;
-    for remain in 1..=steps as usize {
-        for curr in (0..alen as usize).rev() {
-            let mut temp = dp[remain - 1][curr];
-            if curr > 0 {
-                temp = (temp + dp[remain - 1][curr - 1]) % MOD;
-            }
-            if curr < alen as usize - 1 {
-                temp = (temp + dp[remain - 1][curr + 1]) % MOD;
-            }
-            dp[remain][curr] = temp
+pub fn tictactoe(moves: &[[i32; 2]]) -> String {
+    let mut board = [[0; 3]; 3];
+    let mut p = 1;
+    for m in moves {
+        board[m[0] as usize][m[1] as usize] = p;
+        p = -p;
+    }
+    let mut win = false;
+    win |= board.iter().any(|r| r.iter().sum::<i32>().abs() == 3);
+    win |= (0..3).any(|col| (0..3).map(|row| board[row][col]).sum::<i32>().abs() == 3);
+    win |= (board[0][0] + board[1][1] + board[2][2]).abs() == 3;
+    win |= (board[2][0] + board[1][1] + board[0][2]).abs() == 3;
+    if win {
+        if moves.len() & 1 == 1 {
+            "A".into()
+        } else {
+            "B".into()
         }
+    } else if moves.len() == 9 {
+        "Draw".into()
+    } else {
+        "Pending".into()
     }
-    dp[steps as usize][0]
-}
-
-fn dfs(steps: i32, arr_len: i32, curr: i32, dp: &mut [Vec<i32>]) -> i32 {
-    if steps == 0 {
-        return i32::from(curr == 0);
-    }
-    if !(0..arr_len).contains(&curr) {
-        return 0;
-    }
-    if dp[steps as usize][curr as usize] > -1 {
-        return dp[steps as usize][curr as usize];
-    }
-    let mut res = 0;
-    res = (res + dfs(steps - 1, arr_len, curr, dp)) % MOD;
-    res = (res + dfs(steps - 1, arr_len, curr - 1, dp)) % MOD;
-    res = (res + dfs(steps - 1, arr_len, curr + 1, dp)) % MOD;
-    dp[steps as usize][curr as usize] = res;
-    res
 }
 
 #[cfg(test)]
@@ -54,9 +38,25 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(num_ways(3, 2), 4);
-        assert_eq!(num_ways(2, 4), 2);
-        assert_eq!(num_ways(4, 2), 8);
+        assert_eq!(tictactoe(&[[0, 0], [2, 0], [1, 1], [2, 1], [2, 2]]), "A");
+        assert_eq!(
+            tictactoe(&[[0, 0], [1, 1], [0, 1], [0, 2], [1, 0], [2, 0]]),
+            "B"
+        );
+        assert_eq!(
+            tictactoe(&[
+                [0, 0],
+                [1, 1],
+                [2, 0],
+                [1, 0],
+                [1, 2],
+                [2, 1],
+                [0, 1],
+                [0, 2],
+                [2, 2]
+            ]),
+            "Draw"
+        );
     }
 
     #[test]
