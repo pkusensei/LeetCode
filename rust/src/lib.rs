@@ -5,17 +5,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_of_burgers(tomato_slices: i32, cheese_slices: i32) -> Vec<i32> {
-    // 4x + 2y = tomato
-    // x + y = cheese
-    // 2x = tomato - 2cheese
-    let x = (tomato_slices - 2 * cheese_slices) / 2;
-    let y = cheese_slices - x;
-    if x >= 0 && y >= 0 && 4 * x + 2 * y == tomato_slices {
-        vec![x, y]
-    } else {
-        vec![]
+pub fn count_squares(matrix: &[&[i32]]) -> i32 {
+    let (rows, cols) = get_dimensions(matrix);
+    let mut dp = vec![vec![0; 1 + cols]; 1 + rows];
+    for row in 0..rows {
+        for col in 0..cols {
+            if matrix[row][col] == 1 {
+                dp[1 + row][1 + col] = 1 + dp[row][col].min(dp[row + 1][col]).min(dp[row][col + 1])
+            }
+        }
     }
+    dp.into_iter().flatten().sum()
 }
 
 #[cfg(test)]
@@ -26,9 +26,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(num_of_burgers(16, 7), [1, 6]);
-        assert!(num_of_burgers(17, 4).is_empty());
-        assert!(num_of_burgers(4, 17).is_empty());
+        // assert_eq!(
+        //     count_squares(&[&[0, 1, 1, 1], &[1, 1, 1, 1], &[0, 1, 1, 1]]),
+        //     15
+        // );
+        assert_eq!(count_squares(&[&[1, 0, 1], &[1, 1, 0], &[1, 1, 0]]), 7);
     }
 
     #[test]
