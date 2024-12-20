@@ -4,24 +4,34 @@ using Solution.Tree;
 
 namespace Solution;
 
-public class FindElements
+public class Solution
 {
-    public HashSet<int> Nums { get; }
-
-    public FindElements(TreeNode root)
+    public TreeNode ReverseOddLevels(TreeNode root)
     {
-        Nums = [];
-        Dfs(root, 0);
-
-        void Dfs(TreeNode node, int val)
+        if (root is null || root.left is null) { return root; }
+        List<TreeNode> odd = [root.left, root.right];
+        while (odd.Count > 0)
         {
-            if (node is null) { return; }
-            node.val = val;
-            Nums.Add(val);
-            Dfs(node.left, 1 + 2 * val);
-            Dfs(node.right, 2 + 2 * val);
+            (var left, var right) = (0, odd.Count - 1);
+            while (left < right)
+            {
+                (odd[left].val, odd[right].val) = (odd[right].val, odd[left].val);
+                left += 1; right -= 1;
+            }
+            odd = odd.SelectMany(n => new[] { n.left, n.right })
+                     .Where(n => n is not null) // Next even level exists
+                     .SelectMany(n => new[] { n.left, n.right })
+                     .Where(n => n is not null) // Next odd level exists
+                     .ToList();
         }
+        return root;
     }
 
-    public bool Find(int target) => Nums.Contains(target);
+    static void Dfs(TreeNode n1, TreeNode n2, bool isOdd)
+    {
+        if (n1 is null || n2 is null) { return; }
+        if (isOdd) { (n1.val, n2.val) = (n2.val, n1.val); }
+        Dfs(n1.left, n2.right, !isOdd);
+        Dfs(n1.right, n2.left, !isOdd);
+    }
 }
