@@ -2,20 +2,46 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashSet;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_squares(matrix: &[&[i32]]) -> i32 {
-    let (rows, cols) = get_dimensions(matrix);
-    let mut dp = vec![vec![0; 1 + cols]; 1 + rows];
-    for row in 0..rows {
-        for col in 0..cols {
-            if matrix[row][col] == 1 {
-                dp[1 + row][1 + col] = 1 + dp[row][col].min(dp[row + 1][col]).min(dp[row][col + 1])
+pub fn max_k_divisible_components(n: i32, edges: &[[i32; 2]], values: &[i32], k: i32) -> i32 {
+    let mut adj = vec![vec![]; n as usize];
+    for e in edges.iter() {
+        adj[e[0] as usize].push(e[1] as usize);
+        adj[e[1] as usize].push(e[0] as usize);
+    }
+    let (_, count) = dfs(0, &adj, values, k.into(), &mut HashSet::new());
+    // count node 0 in <= sum(values)%k==0
+    1 + count
+}
+
+fn dfs(
+    node: usize,
+    adj: &[Vec<usize>],
+    values: &[i32],
+    k: i64,
+    seen: &mut HashSet<usize>,
+) -> (i64, i32) {
+    let mut sum = i64::from(values[node]);
+    let mut count = 0;
+    seen.insert(node);
+    for &neighbor in adj[node].iter() {
+        if !seen.contains(&neighbor) {
+            let (s, c) = dfs(neighbor, adj, values, k, seen);
+            count += c; // propagate subtree count
+            if s % k == 0 {
+                // subtree sum is multiple of k => detach
+                count += 1;
+            } else {
+                // merge it with current node
+                sum += s;
             }
         }
     }
-    dp.into_iter().flatten().sum()
+    (sum, count)
 }
 
 #[cfg(test)]
@@ -26,11 +52,19 @@ mod tests {
 
     #[test]
     fn basics() {
-        // assert_eq!(
-        //     count_squares(&[&[0, 1, 1, 1], &[1, 1, 1, 1], &[0, 1, 1, 1]]),
-        //     15
-        // );
-        assert_eq!(count_squares(&[&[1, 0, 1], &[1, 1, 0], &[1, 1, 0]]), 7);
+        assert_eq!(
+            max_k_divisible_components(5, &[[0, 2], [1, 2], [1, 3], [2, 4]], &[1, 8, 1, 4, 4], 6),
+            2
+        );
+        assert_eq!(
+            max_k_divisible_components(
+                7,
+                &[[0, 1], [0, 2], [1, 3], [1, 4], [2, 5], [2, 6]],
+                &[3, 0, 6, 1, 5, 2, 1],
+                3
+            ),
+            3
+        );
     }
 
     #[test]
