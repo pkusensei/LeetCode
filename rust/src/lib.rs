@@ -2,46 +2,72 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashSet;
+use std::{cmp::Reverse, collections::BinaryHeap};
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_k_divisible_components(n: i32, edges: &[[i32; 2]], values: &[i32], k: i32) -> i32 {
-    let mut adj = vec![vec![]; n as usize];
-    for e in edges.iter() {
-        adj[e[0] as usize].push(e[1] as usize);
-        adj[e[1] as usize].push(e[0] as usize);
-    }
-    let (_, count) = dfs(0, &adj, values, k.into(), &mut HashSet::new());
-    // count node 0 in <= sum(values)%k==0
-    1 + count
-}
-
-fn dfs(
-    node: usize,
-    adj: &[Vec<usize>],
-    values: &[i32],
-    k: i64,
-    seen: &mut HashSet<usize>,
-) -> (i64, i32) {
-    let mut sum = i64::from(values[node]);
-    let mut count = 0;
-    seen.insert(node);
-    for &neighbor in adj[node].iter() {
-        if !seen.contains(&neighbor) {
-            let (s, c) = dfs(neighbor, adj, values, k, seen);
-            count += c; // propagate subtree count
-            if s % k == 0 {
-                // subtree sum is multiple of k => detach
-                count += 1;
-            } else {
-                // merge it with current node
-                sum += s;
-            }
+pub fn leftmost_building_queries(heights: &[i32], queries: &[[i32; 2]]) -> Vec<i32> {
+    let mut res = vec![-1; queries.len()];
+    let mut pending = vec![vec![]; heights.len()];
+    for (idx, q) in queries.iter().enumerate() {
+        let x = q[0].min(q[1]) as usize;
+        let y = q[0].max(q[1]) as usize;
+        if x == y || heights[x] < heights[y] {
+            res[idx] = y as i32;
+        } else {
+            // heights[x] >= heights[y]
+            pending[y].push((idx, heights[x]));
         }
     }
-    (sum, count)
+    let mut stack = vec![];
+    for (hi, &num) in heights.iter().enumerate().rev() {
+        for &(pi, height) in pending[hi].iter() {
+            let i = stack.partition_point(|&(_, v)| v > height);
+            if let Some(&(_i, _h)) = i.checked_sub(1).and_then(|i| stack.get(i)) {
+                res[pi] = _i as i32;
+            }
+        }
+        // Scan from right to left
+        // Maintain mono-increasing stack viewed from right
+        // When doing stack.partition_point(|v|v>height),
+        // the search result points to [i] <= height
+        // Thus reading [i-1]
+        while stack.last().is_some_and(|&(_, v)| v <= num) {
+            stack.pop();
+        }
+        stack.push((hi, num));
+    }
+    res
+}
+
+fn with_pq(heights: &[i32], queries: &[[i32; 2]]) -> Vec<i32> {
+    let mut res = vec![-1; queries.len()];
+    let mut pending = vec![vec![]; heights.len()];
+    for (idx, q) in queries.iter().enumerate() {
+        let x = q[0].min(q[1]) as usize;
+        let y = q[0].max(q[1]) as usize;
+        if x == y || heights[x] < heights[y] {
+            res[idx] = y as i32;
+        } else {
+            // heights[x] >= heights[y]
+            pending[y].push((idx, heights[x]));
+        }
+    }
+    // min heap
+    let mut heap = BinaryHeap::new();
+    for (hi, &num) in heights.iter().enumerate() {
+        while heap.peek().is_some_and(|&(Reverse(v), _)| v < num) {
+            let Some((_, i)) = heap.pop() else {
+                break;
+            };
+            res[i] = hi as i32;
+        }
+        for &(pi, height) in pending[hi].iter() {
+            heap.push((Reverse(height), pi));
+        }
+    }
+    res
 }
 
 #[cfg(test)]
@@ -53,17 +79,18 @@ mod tests {
     #[test]
     fn basics() {
         assert_eq!(
-            max_k_divisible_components(5, &[[0, 2], [1, 2], [1, 3], [2, 4]], &[1, 8, 1, 4, 4], 6),
-            2
+            with_pq(
+                &[6, 4, 8, 5, 2, 7],
+                &[[0, 1], [0, 3], [2, 4], [3, 4], [2, 2]]
+            ),
+            [2, 5, -1, 5, 2]
         );
         assert_eq!(
-            max_k_divisible_components(
-                7,
-                &[[0, 1], [0, 2], [1, 3], [1, 4], [2, 5], [2, 6]],
-                &[3, 0, 6, 1, 5, 2, 1],
-                3
+            with_pq(
+                &[5, 3, 8, 2, 6, 1, 4, 6],
+                &[[0, 7], [3, 5], [5, 2], [3, 0], [1, 6]]
             ),
-            3
+            [7, 6, -1, 4, 6]
         );
     }
 
