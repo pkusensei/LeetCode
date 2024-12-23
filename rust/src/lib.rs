@@ -2,71 +2,37 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::{cmp::Reverse, collections::BinaryHeap};
+use std::collections::HashMap;
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn leftmost_building_queries(heights: &[i32], queries: &[[i32; 2]]) -> Vec<i32> {
-    let mut res = vec![-1; queries.len()];
-    let mut pending = vec![vec![]; heights.len()];
-    for (idx, q) in queries.iter().enumerate() {
-        let x = q[0].min(q[1]) as usize;
-        let y = q[0].max(q[1]) as usize;
-        if x == y || heights[x] < heights[y] {
-            res[idx] = y as i32;
-        } else {
-            // heights[x] >= heights[y]
-            pending[y].push((idx, heights[x]));
-        }
-    }
-    let mut stack = vec![];
-    for (hi, &num) in heights.iter().enumerate().rev() {
-        for &(pi, height) in pending[hi].iter() {
-            let i = stack.partition_point(|&(_, v)| v > height);
-            if let Some(&(_i, _h)) = i.checked_sub(1).and_then(|i| stack.get(i)) {
-                res[pi] = _i as i32;
-            }
-        }
-        // Scan from right to left
-        // Maintain mono-increasing stack viewed from right
-        // When doing stack.partition_point(|v|v>height),
-        // the search result points to [i] <= height
-        // Thus reading [i-1]
-        while stack.last().is_some_and(|&(_, v)| v <= num) {
-            stack.pop();
-        }
-        stack.push((hi, num));
-    }
-    res
+pub fn palindrome_partition(s: &str, k: i32) -> i32 {
+    dfs(s, k as usize, &mut HashMap::new())
 }
 
-fn with_pq(heights: &[i32], queries: &[[i32; 2]]) -> Vec<i32> {
-    let mut res = vec![-1; queries.len()];
-    let mut pending = vec![vec![]; heights.len()];
-    for (idx, q) in queries.iter().enumerate() {
-        let x = q[0].min(q[1]) as usize;
-        let y = q[0].max(q[1]) as usize;
-        if x == y || heights[x] < heights[y] {
-            res[idx] = y as i32;
-        } else {
-            // heights[x] >= heights[y]
-            pending[y].push((idx, heights[x]));
-        }
+fn dfs<'a>(s: &'a str, k: usize, memo: &mut HashMap<(&'a str, usize), i32>) -> i32 {
+    let n = s.len();
+    if n == k {
+        return 0;
     }
-    // min heap
-    let mut heap = BinaryHeap::new();
-    for (hi, &num) in heights.iter().enumerate() {
-        while heap.peek().is_some_and(|&(Reverse(v), _)| v < num) {
-            let Some((_, i)) = heap.pop() else {
-                break;
-            };
-            res[i] = hi as i32;
-        }
-        for &(pi, height) in pending[hi].iter() {
-            heap.push((Reverse(height), pi));
-        }
+    if k <= 1 {
+        return s
+            .bytes()
+            .zip(s.bytes().rev())
+            .take(n / 2)
+            .filter(|&(a, b)| a != b)
+            .count() as _;
     }
+    if let Some(&v) = memo.get(&(s, k)) {
+        return v;
+    }
+    let mut res = i32::MAX;
+    for idx in 0..n - k + 1 {
+        let temp = dfs(&s[..1 + idx], 1, memo) + dfs(&s[1 + idx..], k - 1, memo);
+        res = res.min(temp);
+    }
+    memo.insert((s, k), res);
     res
 }
 
@@ -78,20 +44,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            with_pq(
-                &[6, 4, 8, 5, 2, 7],
-                &[[0, 1], [0, 3], [2, 4], [3, 4], [2, 2]]
-            ),
-            [2, 5, -1, 5, 2]
-        );
-        assert_eq!(
-            with_pq(
-                &[5, 3, 8, 2, 6, 1, 4, 6],
-                &[[0, 7], [3, 5], [5, 2], [3, 0], [1, 6]]
-            ),
-            [7, 6, -1, 4, 6]
-        );
+        assert_eq!(palindrome_partition("abc", 2), 1);
+        assert_eq!(palindrome_partition("aabbc", 3), 0);
+        assert_eq!(palindrome_partition("leetcode", 8), 0);
     }
 
     #[test]
