@@ -5,19 +5,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn group_the_people(group_sizes: &[i32]) -> Vec<Vec<i32>> {
-    let map = group_sizes.iter().enumerate().fold(
-        std::collections::HashMap::<_, Vec<_>>::new(),
-        |mut acc, (i, &size)| {
-            acc.entry(size).or_default().push(i as i32);
-            acc
-        },
-    );
-    let mut res = vec![];
-    for (k, v) in map {
-        res.extend(v.chunks_exact(k as usize).map(|ch| ch.to_vec()));
+pub fn smallest_divisor(nums: &[i32], threshold: i32) -> i32 {
+    let mut left = 1;
+    let mut right = nums.iter().copied().max().unwrap_or(i32::MAX);
+    while left < right {
+        let mid = left + (right - left) / 2;
+        let curr: i32 = nums
+            .iter()
+            .map(|num| num / mid + i32::from(num % mid > 0))
+            .sum();
+        if curr > threshold {
+            left = mid + 1
+        } else {
+            right = mid
+        }
     }
-    res
+    left
 }
 
 #[cfg(test)]
@@ -28,14 +31,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        sort_eq(
-            group_the_people(&[3, 3, 3, 3, 3, 1, 3]),
-            [vec![5], vec![0, 1, 2], vec![3, 4, 6]],
-        );
-        sort_eq(
-            group_the_people(&[2, 1, 3, 3, 3, 2]),
-            [vec![1], vec![0, 5], vec![2, 3, 4]],
-        );
+        assert_eq!(smallest_divisor(&[1, 2, 5, 9], 6), 5);
+        assert_eq!(smallest_divisor(&[44, 22, 33, 11, 1], 5), 44);
     }
 
     #[test]
