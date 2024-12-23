@@ -5,16 +5,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn subtract_product_and_sum(mut n: i32) -> i32 {
-    let mut prod = 1;
-    let mut sum = 0;
-    while n > 0 {
-        let d = n % 10;
-        n /= 10;
-        prod *= d;
-        sum += d;
+pub fn group_the_people(group_sizes: &[i32]) -> Vec<Vec<i32>> {
+    let map = group_sizes.iter().enumerate().fold(
+        std::collections::HashMap::<_, Vec<_>>::new(),
+        |mut acc, (i, &size)| {
+            acc.entry(size).or_default().push(i as i32);
+            acc
+        },
+    );
+    let mut res = vec![];
+    for (k, v) in map {
+        res.extend(v.chunks_exact(k as usize).map(|ch| ch.to_vec()));
     }
-    prod - sum
+    res
 }
 
 #[cfg(test)]
@@ -25,8 +28,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(subtract_product_and_sum(234), 15);
-        assert_eq!(subtract_product_and_sum(4421), 21);
+        sort_eq(
+            group_the_people(&[3, 3, 3, 3, 3, 1, 3]),
+            [vec![5], vec![0, 1, 2], vec![3, 4, 6]],
+        );
+        sort_eq(
+            group_the_people(&[2, 1, 3, 3, 3, 2]),
+            [vec![1], vec![0, 5], vec![2, 3, 4]],
+        );
     }
 
     #[test]
