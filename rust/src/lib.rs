@@ -2,38 +2,19 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn palindrome_partition(s: &str, k: i32) -> i32 {
-    dfs(s, k as usize, &mut HashMap::new())
-}
-
-fn dfs<'a>(s: &'a str, k: usize, memo: &mut HashMap<(&'a str, usize), i32>) -> i32 {
-    let n = s.len();
-    if n == k {
-        return 0;
+pub fn subtract_product_and_sum(mut n: i32) -> i32 {
+    let mut prod = 1;
+    let mut sum = 0;
+    while n > 0 {
+        let d = n % 10;
+        n /= 10;
+        prod *= d;
+        sum += d;
     }
-    if k <= 1 {
-        return s
-            .bytes()
-            .zip(s.bytes().rev())
-            .take(n / 2)
-            .filter(|&(a, b)| a != b)
-            .count() as _;
-    }
-    if let Some(&v) = memo.get(&(s, k)) {
-        return v;
-    }
-    let mut res = i32::MAX;
-    for idx in 0..n - k + 1 {
-        let temp = dfs(&s[..1 + idx], 1, memo) + dfs(&s[1 + idx..], k - 1, memo);
-        res = res.min(temp);
-    }
-    memo.insert((s, k), res);
-    res
+    prod - sum
 }
 
 #[cfg(test)]
@@ -44,9 +25,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(palindrome_partition("abc", 2), 1);
-        assert_eq!(palindrome_partition("aabbc", 3), 0);
-        assert_eq!(palindrome_partition("leetcode", 8), 0);
+        assert_eq!(subtract_product_and_sum(234), 15);
+        assert_eq!(subtract_product_and_sum(4421), 21);
     }
 
     #[test]
