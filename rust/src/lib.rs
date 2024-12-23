@@ -2,63 +2,53 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::{HashSet, VecDeque};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_flips(mat: Vec<Vec<i32>>) -> i32 {
-    let (rows, cols) = get_dimensions(&mat);
-    let mask = to_num(mat);
-    let mut queue = VecDeque::from([(mask, 0)]);
-    let mut seen = HashSet::from([mask]);
-    while let Some((mask, step)) = queue.pop_front() {
-        if mask.count_ones() == 0 {
-            return step;
-        }
-        for row in 0..rows {
-            for col in 0..cols {
-                let mut next = mask;
-                let idx = row * cols + col;
-                next ^= 1 << idx;
-                for (nr, nc) in neighbors((row, col)) {
-                    if (0..rows).contains(&nr) && (0..cols).contains(&nc) {
-                        let i = nr * cols + nc;
-                        next ^= 1 << i;
-                    }
-                }
-                if seen.insert(next) {
-                    queue.push_back((next, 1 + step));
+#[derive(Debug, Clone)]
+struct CombinationIterator {
+    queue: std::collections::VecDeque<String>,
+}
+
+impl CombinationIterator {
+    fn new(chs: String, length: i32) -> Self {
+        fn backtrack(chs: &[u8], curr: &mut Vec<u8>, length: usize, res: &mut Vec<String>) {
+            if curr.len() == length {
+                let mut temp = curr.clone();
+                temp.sort_unstable();
+                res.push(String::from_utf8(temp).unwrap());
+                return;
+            }
+            match chs {
+                [] => (),
+                [head, tail @ ..] => {
+                    backtrack(tail, curr, length, res);
+                    curr.push(*head);
+                    backtrack(tail, curr, length, res);
+                    curr.pop();
                 }
             }
         }
-    }
-    -1
-}
 
-fn to_num(grid: Vec<Vec<i32>>) -> i32 {
-    let mut res = 0;
-    for r in grid {
-        for num in r {
-            res <<= 1;
-            res |= num;
-        }
+        let mut res = vec![];
+        let length = length as usize;
+        backtrack(
+            chs.as_bytes(),
+            &mut Vec::with_capacity(length),
+            length,
+            &mut res,
+        );
+        res.sort_unstable();
+        Self { queue: res.into() }
     }
-    res
-}
 
-fn to_grid(mut num: i32, rows: usize, cols: usize) -> Vec<Vec<i32>> {
-    let mut res = vec![];
-    for _ in 0..rows {
-        let mut curr = Vec::with_capacity(cols);
-        for _ in 0..cols {
-            curr.push(num & 1);
-            num >>= 1;
-        }
-        curr.reverse();
-        res.push(curr);
+    fn next(&mut self) -> String {
+        self.queue.pop_front().unwrap()
     }
-    res
+
+    fn has_next(&self) -> bool {
+        !self.queue.is_empty()
+    }
 }
 
 #[cfg(test)]
@@ -69,9 +59,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_flips(vec![vec![0, 0], vec![0, 1]]), 3);
-        assert_eq!(min_flips(vec![vec![0]]), 0);
-        assert_eq!(min_flips(vec![vec![1, 0, 0], vec![1, 0, 0]]), -1);
+        let mut it = CombinationIterator::new("abc".into(), 2);
+        assert_eq!(it.next(), "ab"); // return "ab"
+        assert!(it.has_next()); // return True
+        assert_eq!(it.next(), "ac"); // return "ac"
+        assert!(it.has_next()); // return True
+        assert_eq!(it.next(), "bc"); // return "bc"
+        assert!(!it.has_next()); // return False
     }
 
     #[test]
