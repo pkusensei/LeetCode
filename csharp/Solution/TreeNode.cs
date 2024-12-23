@@ -119,7 +119,7 @@ public abstract class TreeNodeBase<T> where T : TreeNodeBase<T>, new()
         return root;
     }
 
-    public static T Make(IList<int> values)
+    public static T MakeInt(IList<int> values)
     {
         if (values.Count == 0) { return null; }
 

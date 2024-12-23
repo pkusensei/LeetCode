@@ -10,22 +10,24 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(new int[] { 2, 3, 5, 8, 13, 21, 34 }, "[2,5,3,8,13,21,34]")]
-    [DataRow(new int[] { 7, 13, 11 }, "[7,11,13]")]
-    public void TestMethod1(int[] nums, string exp)
+    public void TestMethod1()
     {
-        var a = TreeNode.Make(nums);
-        Assert.AreEqual(exp, sol.ReverseOddLevels(a).ToString());
+        var a = TreeNode.Make([1, 4, 3, 7, 6, 8, 5, null, null, null, null, 9, null, 10]);
+        Assert.AreEqual(3, sol.MinimumOperations(a));
     }
 
     [TestMethod]
     public void TestMethod2()
     {
+        var a = TreeNode.MakeInt([1, 3, 2, 7, 6, 5, 4]);
+        Assert.AreEqual(3, sol.MinimumOperations(a));
     }
 
     [TestMethod]
     public void TestMethod3()
     {
+        var a = TreeNode.Make([1, 2, 3, 4, 5, 6]);
+        Assert.AreEqual(0, sol.MinimumOperations(a));
     }
 
     [TestMethod]
