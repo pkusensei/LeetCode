@@ -5,18 +5,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_special_integer(arr: &[i32]) -> i32 {
-    let n = arr.len();
-    let cands = [n / 4, n / 2, 3 * n / 4].map(|i| arr[i]);
-    let target = n / 4;
-    for num in cands {
-        let left = arr.partition_point(|&v| v < num);
-        let right = arr.partition_point(|&v| v <= num);
-        if right - left > target {
-            return num;
+pub fn remove_covered_intervals(intervals: &mut [[i32; 2]]) -> i32 {
+    intervals.sort_unstable_by(|a, b| a[0].cmp(&b[0]).then(b[1].cmp(&a[1])));
+    let mut prev = [-1, -1];
+    let mut res = 0;
+    for int in intervals.iter() {
+        if prev[0] <= int[0] && int[1] <= prev[1] {
+            continue;
         }
+        prev = [int[0], int[1]];
+        res += 1;
     }
-    -1
+    res
 }
 
 #[cfg(test)]
@@ -27,8 +27,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(find_special_integer(&[1, 2, 2, 6, 6, 6, 6, 7, 10]), 6);
-        assert_eq!(find_special_integer(&[1, 1]), 1);
+        assert_eq!(remove_covered_intervals(&mut [[1, 4], [3, 6], [2, 8]]), 2);
+        assert_eq!(remove_covered_intervals(&mut [[1, 4], [2, 3]]), 1);
     }
 
     #[test]
