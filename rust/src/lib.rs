@@ -2,53 +2,122 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::VecDeque;
+
 #[allow(unused_imports)]
 use helper::*;
 
-#[derive(Debug, Clone)]
-struct CombinationIterator {
-    queue: std::collections::VecDeque<String>,
+pub fn minimum_diameter_after_merge(edges1: Vec<Vec<i32>>, edges2: Vec<Vec<i32>>) -> i32 {
+    let [n1, n2] = [&edges1, &edges2].map(|v| 1 + v.len());
+    let adj1 = build(n1, &edges1);
+    let adj2 = build(n2, &edges2);
+    let d1 = dfs(&adj1, 0, n1)[0];
+    let d2 = dfs(&adj2, 0, n2)[0];
+    let combined = 1 + [d1, d2]
+        .map(|v| v / 2 + i32::from(v & 1 > 0))
+        .into_iter()
+        .sum::<i32>();
+    d1.max(d2).max(combined)
 }
 
-impl CombinationIterator {
-    fn new(chs: String, length: i32) -> Self {
-        fn backtrack(chs: &[u8], curr: &mut Vec<u8>, length: usize, res: &mut Vec<String>) {
-            if curr.len() == length {
-                let mut temp = curr.clone();
-                temp.sort_unstable();
-                res.push(String::from_utf8(temp).unwrap());
-                return;
-            }
-            match chs {
-                [] => (),
-                [head, tail @ ..] => {
-                    backtrack(tail, curr, length, res);
-                    curr.push(*head);
-                    backtrack(tail, curr, length, res);
-                    curr.pop();
+fn topo_sort(n: usize, adj: &[Vec<usize>]) -> i32 {
+    let mut degrees: Vec<_> = adj.iter().map(|v| v.len()).collect();
+    // Collect leaves to be removed
+    let mut leaves: VecDeque<_> = degrees
+        .iter()
+        .enumerate()
+        .filter_map(|(node, &deg)| if deg == 1 { Some(node) } else { None })
+        .collect();
+    let mut remaining_nodes = n;
+    let mut removed_layers = 0;
+    while remaining_nodes > 2 {
+        let size = leaves.len();
+        remaining_nodes -= size;
+        // Remove one layer reduces diameter by 2
+        removed_layers += 1;
+        for _ in 0..size {
+            let Some(leaf) = leaves.pop_front() else {
+                continue;
+            };
+            for &neighbor in adj[leaf].iter() {
+                degrees[neighbor] -= 1;
+                if degrees[neighbor] == 1 {
+                    leaves.push_back(neighbor);
                 }
             }
         }
+    }
+    if remaining_nodes == 2 {
+        1 + 2 * removed_layers
+    } else {
+        2 * removed_layers
+    }
+}
 
-        let mut res = vec![];
-        let length = length as usize;
-        backtrack(
-            chs.as_bytes(),
-            &mut Vec::with_capacity(length),
-            length,
-            &mut res,
-        );
-        res.sort_unstable();
-        Self { queue: res.into() }
+fn bfs(n: usize, adj: &[Vec<usize>]) -> i32 {
+    fn farthest_node(n: usize, adj: &[Vec<usize>], node: usize) -> (usize, i32) {
+        let mut queue = VecDeque::from([node]);
+        let mut visited = vec![false; n];
+        visited[node] = true;
+        let mut farthest = 0;
+        let mut max_dist = 0;
+        while !queue.is_empty() {
+            let size = queue.len();
+            // Iterate thru all neighbors until depletion
+            // The last node is "farthest" leaf
+            for _ in 0..size {
+                let Some(curr) = queue.pop_front() else {
+                    continue;
+                };
+                farthest = curr;
+                for &neighbor in adj[curr].iter() {
+                    if !visited[neighbor] {
+                        visited[neighbor] = true;
+                        queue.push_back(neighbor);
+                    }
+                }
+            }
+            // diameter == from one "farthest" leaf to another
+            if !queue.is_empty() {
+                max_dist += 1;
+            }
+        }
+        (farthest, max_dist)
     }
 
-    fn next(&mut self) -> String {
-        self.queue.pop_front().unwrap()
-    }
+    let (farthest, _) = farthest_node(n, adj, 0);
+    farthest_node(n, adj, farthest).1
+}
 
-    fn has_next(&self) -> bool {
-        !self.queue.is_empty()
+fn dfs(adj: &[Vec<usize>], node: usize, parent: usize) -> [i32; 2] {
+    let [mut depth1, mut depth2] = [0; 2]; // record 2 biggest depths
+    let mut diameter = 0;
+    for &neighbor in adj[node].iter() {
+        if neighbor == parent {
+            continue;
+        }
+        let [dia, mut dep] = dfs(adj, neighbor, node);
+        diameter = diameter.max(dia);
+        dep += 1; // include neighbor-node edge
+        if dep > depth1 {
+            depth2 = depth1;
+            depth1 = dep;
+        } else if dep > depth2 {
+            depth2 = dep
+        }
     }
+    diameter = diameter.max(depth1 + depth2);
+    [diameter, depth1]
+}
+
+fn build(n: usize, edges: &[Vec<i32>]) -> Vec<Vec<usize>> {
+    let mut res = vec![vec![]; n];
+    for e in edges.iter() {
+        let [e1, e2] = [e[0], e[1]].map(|v| v as usize);
+        res[e1].push(e2);
+        res[e2].push(e1);
+    }
+    res
 }
 
 #[cfg(test)]
@@ -59,13 +128,36 @@ mod tests {
 
     #[test]
     fn basics() {
-        let mut it = CombinationIterator::new("abc".into(), 2);
-        assert_eq!(it.next(), "ab"); // return "ab"
-        assert!(it.has_next()); // return True
-        assert_eq!(it.next(), "ac"); // return "ac"
-        assert!(it.has_next()); // return True
-        assert_eq!(it.next(), "bc"); // return "bc"
-        assert!(!it.has_next()); // return False
+        assert_eq!(
+            minimum_diameter_after_merge(
+                vec![vec![0, 1], vec![0, 2], vec![0, 3]],
+                vec![vec![0, 1]]
+            ),
+            3
+        );
+        assert_eq!(
+            minimum_diameter_after_merge(
+                vec![
+                    vec![0, 1],
+                    vec![0, 2],
+                    vec![0, 3],
+                    vec![2, 4],
+                    vec![2, 5],
+                    vec![3, 6],
+                    vec![2, 7]
+                ],
+                vec![
+                    vec![0, 1],
+                    vec![0, 2],
+                    vec![0, 3],
+                    vec![2, 4],
+                    vec![2, 5],
+                    vec![3, 6],
+                    vec![2, 7]
+                ]
+            ),
+            5
+        );
     }
 
     #[test]
