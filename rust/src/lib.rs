@@ -5,40 +5,33 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_side_length(mat: &[&[i32]], threshold: i32) -> i32 {
-    let (rows, cols) = get_dimensions(mat);
-    let mut prefix = Vec::with_capacity(1 + rows);
-    prefix.push(vec![0; 1 + cols]);
-    for (r, row) in mat.iter().enumerate() {
-        let mut curr = Vec::with_capacity(1 + cols);
-        curr.push(0);
-        for num in row.iter() {
-            curr.push(num + curr.last().unwrap_or(&0));
+pub fn shortest_path(grid: &[&[i32]], k: i32) -> i32 {
+    let (rows, cols) = get_dimensions(grid);
+    let mut queue = std::collections::VecDeque::from([(0, 0, 0, k)]);
+    let mut visited = vec![vec![vec![false; 1 + k as usize]; cols]; rows];
+    visited[0][0][k as usize] = true;
+    while let Some((row, col, dist, k)) = queue.pop_front() {
+        if row == rows - 1 && col == cols - 1 {
+            return dist;
         }
-        for (i, v) in curr.iter_mut().enumerate() {
-            *v += prefix[r][i];
-        }
-        prefix.push(curr);
-    }
-    let mut res = 0;
-    for r in 0..rows {
-        for c in 0..cols {
-            let mut left = res;
-            let mut right = (rows - r).min(cols - c);
-            while left <= right {
-                let mid = left + (right - left) / 2;
-                let curr = prefix[r + mid][c + mid] - prefix[r][c + mid] - prefix[r + mid][c]
-                    + prefix[r][c];
-                if curr <= threshold {
-                    res = res.max(mid);
-                    left = 1 + mid;
-                } else {
-                    right = mid - 1;
+        for (nr, nc) in neighbors((row, col)) {
+            match grid.get(nr).and_then(|r| r.get(nc)) {
+                Some(0) if !visited[nr][nc][k as usize] => {
+                    visited[nr][nc][k as usize] = true;
+                    queue.push_back((nr, nc, 1 + dist, k));
                 }
+                Some(1) if k > 0 => {
+                    let nk = k - 1;
+                    if !visited[nr][nc][nk as usize] {
+                        visited[nr][nc][nk as usize] = true;
+                        queue.push_back((nr, nc, 1 + dist, nk));
+                    }
+                }
+                _ => (),
             }
         }
     }
-    res as _
+    -1
 }
 
 #[cfg(test)]
@@ -50,49 +43,17 @@ mod tests {
     #[test]
     fn basics() {
         assert_eq!(
-            max_side_length(
-                &[
-                    &[1, 1, 3, 2, 4, 3, 2],
-                    &[1, 1, 3, 2, 4, 3, 2],
-                    &[1, 1, 3, 2, 4, 3, 2]
-                ],
-                4
-            ),
-            2
-        );
-        assert_eq!(
-            max_side_length(
-                &[
-                    &[2, 2, 2, 2, 2],
-                    &[2, 2, 2, 2, 2],
-                    &[2, 2, 2, 2, 2],
-                    &[2, 2, 2, 2, 2],
-                    &[2, 2, 2, 2, 2]
-                ],
+            shortest_path(
+                &[&[0, 0, 0], &[1, 1, 0], &[0, 0, 0], &[0, 1, 1], &[0, 0, 0]],
                 1
             ),
-            0
+            6
         );
+        assert_eq!(shortest_path(&[&[0, 1, 1], &[1, 1, 1], &[1, 0, 0]], 1), -1);
     }
 
     #[test]
-    fn test() {
-        assert_eq!(
-            max_side_length(
-                &[
-                    &[18, 70],
-                    &[61, 1],
-                    &[25, 85],
-                    &[14, 40],
-                    &[11, 96],
-                    &[97, 96],
-                    &[63, 45]
-                ],
-                10000
-            ),
-            2
-        );
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
