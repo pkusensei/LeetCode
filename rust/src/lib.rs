@@ -5,21 +5,40 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn sequential_digits(low: i32, high: i32) -> Vec<i32> {
-    const SEQ: &str = "123456789";
-    let n1 = 1 + low.ilog10() as usize;
-    let n2 = (1 + high.ilog10() as usize).min(9);
-    let mut res = vec![];
-    for len in n1..=n2 {
-        for i in 0..=9 - len {
-            let v = SEQ[i..i + len].parse::<i32>().unwrap();
-            if (low..=high).contains(&v) {
-                res.push(v);
+pub fn max_side_length(mat: &[&[i32]], threshold: i32) -> i32 {
+    let (rows, cols) = get_dimensions(mat);
+    let mut prefix = Vec::with_capacity(1 + rows);
+    prefix.push(vec![0; 1 + cols]);
+    for (r, row) in mat.iter().enumerate() {
+        let mut curr = Vec::with_capacity(1 + cols);
+        curr.push(0);
+        for num in row.iter() {
+            curr.push(num + curr.last().unwrap_or(&0));
+        }
+        for (i, v) in curr.iter_mut().enumerate() {
+            *v += prefix[r][i];
+        }
+        prefix.push(curr);
+    }
+    let mut res = 0;
+    for r in 0..rows {
+        for c in 0..cols {
+            let mut left = res;
+            let mut right = (rows - r).min(cols - c);
+            while left <= right {
+                let mid = left + (right - left) / 2;
+                let curr = prefix[r + mid][c + mid] - prefix[r][c + mid] - prefix[r + mid][c]
+                    + prefix[r][c];
+                if curr <= threshold {
+                    res = res.max(mid);
+                    left = 1 + mid;
+                } else {
+                    right = mid - 1;
+                }
             }
         }
     }
-    res.sort_unstable();
-    res
+    res as _
 }
 
 #[cfg(test)]
@@ -30,23 +49,49 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(sequential_digits(100, 300), [123, 234]);
         assert_eq!(
-            sequential_digits(1000, 13000),
-            [1234, 2345, 3456, 4567, 5678, 6789, 12345]
+            max_side_length(
+                &[
+                    &[1, 1, 3, 2, 4, 3, 2],
+                    &[1, 1, 3, 2, 4, 3, 2],
+                    &[1, 1, 3, 2, 4, 3, 2]
+                ],
+                4
+            ),
+            2
+        );
+        assert_eq!(
+            max_side_length(
+                &[
+                    &[2, 2, 2, 2, 2],
+                    &[2, 2, 2, 2, 2],
+                    &[2, 2, 2, 2, 2],
+                    &[2, 2, 2, 2, 2],
+                    &[2, 2, 2, 2, 2]
+                ],
+                1
+            ),
+            0
         );
     }
 
     #[test]
     fn test() {
         assert_eq!(
-            sequential_digits(10, 1000000000),
-            [
-                12, 23, 34, 45, 56, 67, 78, 89, 123, 234, 345, 456, 567, 678, 789, 1234, 2345,
-                3456, 4567, 5678, 6789, 12345, 23456, 34567, 45678, 56789, 123456, 234567, 345678,
-                456789, 1234567, 2345678, 3456789, 12345678, 23456789, 123456789
-            ]
-        )
+            max_side_length(
+                &[
+                    &[18, 70],
+                    &[61, 1],
+                    &[25, 85],
+                    &[14, 40],
+                    &[11, 96],
+                    &[97, 96],
+                    &[63, 45]
+                ],
+                10000
+            ),
+            2
+        );
     }
 
     #[allow(dead_code)]
