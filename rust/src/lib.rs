@@ -5,33 +5,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn shortest_path(grid: &[&[i32]], k: i32) -> i32 {
-    let (rows, cols) = get_dimensions(grid);
-    let mut queue = std::collections::VecDeque::from([(0, 0, 0, k)]);
-    let mut visited = vec![vec![vec![false; 1 + k as usize]; cols]; rows];
-    visited[0][0][k as usize] = true;
-    while let Some((row, col, dist, k)) = queue.pop_front() {
-        if row == rows - 1 && col == cols - 1 {
-            return dist;
-        }
-        for (nr, nc) in neighbors((row, col)) {
-            match grid.get(nr).and_then(|r| r.get(nc)) {
-                Some(0) if !visited[nr][nc][k as usize] => {
-                    visited[nr][nc][k as usize] = true;
-                    queue.push_back((nr, nc, 1 + dist, k));
-                }
-                Some(1) if k > 0 => {
-                    let nk = k - 1;
-                    if !visited[nr][nc][nk as usize] {
-                        visited[nr][nc][nk as usize] = true;
-                        queue.push_back((nr, nc, 1 + dist, nk));
-                    }
-                }
-                _ => (),
-            }
+pub fn max_freq(s: &str, max_letters: i32, min_size: i32, _max_size: i32) -> i32 {
+    let n = min_size as usize;
+    if s.len() < n {
+        return 0;
+    }
+    let mut count = s[..n].bytes().fold([0; 26], |mut acc, b| {
+        acc[usize::from(b - b'a')] += 1;
+        acc
+    });
+    let mut map = std::collections::HashMap::new();
+    if count.iter().filter(|&&c| c > 0).count() <= max_letters as usize {
+        map.insert(&s[..n], 1);
+    }
+    for i in 1..=s.len() - n {
+        count[usize::from(s.as_bytes()[i - 1] - b'a')] -= 1;
+        count[usize::from(s.as_bytes()[i + n - 1] - b'a')] += 1;
+        if count.iter().filter(|&&c| c > 0).count() <= max_letters as usize {
+            *map.entry(&s[i..i + n]).or_insert(0) += 1;
         }
     }
-    -1
+    map.into_values().max().unwrap_or(0)
 }
 
 #[cfg(test)]
@@ -42,14 +36,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            shortest_path(
-                &[&[0, 0, 0], &[1, 1, 0], &[0, 0, 0], &[0, 1, 1], &[0, 0, 0]],
-                1
-            ),
-            6
-        );
-        assert_eq!(shortest_path(&[&[0, 1, 1], &[1, 1, 1], &[1, 0, 0]], 1), -1);
+        assert_eq!(max_freq("aababcaab", 2, 3, 4), 2);
+        assert_eq!(max_freq("aaaa", 1, 3, 3), 2);
     }
 
     #[test]
