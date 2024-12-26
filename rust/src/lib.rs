@@ -5,43 +5,14 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_candies(
-    status: &mut [i32],
-    candies: &[i32],
-    keys: &[&[i32]],
-    contained_boxes: &[&[i32]],
-    initial_boxes: &[i32],
-) -> i32 {
-    let n = status.len();
-    let mut has_box = vec![false; n];
-    let mut queue = std::collections::VecDeque::new();
-    for &b in initial_boxes.iter() {
-        if status[b as usize] == 1 {
-            queue.push_back(b as usize);
-        } else {
-            has_box[b as usize] = true;
-        }
+pub fn replace_elements(arr: &[i32]) -> Vec<i32> {
+    let mut res = Vec::with_capacity(arr.len());
+    let mut curr = -1;
+    for &num in arr.iter().rev() {
+        res.push(curr);
+        curr = curr.max(num);
     }
-    let mut res = 0;
-    while let Some(box_) = queue.pop_front() {
-        res += candies[box_];
-        for &k in keys[box_].iter() {
-            status[k as usize] = 1;
-        }
-        for &b in contained_boxes[box_].iter() {
-            has_box[b as usize] = true;
-        }
-        for b in has_box
-            .iter()
-            .zip(status.iter())
-            .enumerate()
-            .filter_map(|(b, (&has, &st))| if has && st == 1 { Some(b) } else { None })
-            .collect::<Vec<_>>()
-        {
-            has_box[b] = false;
-            queue.push_back(b);
-        }
-    }
+    res.reverse();
     res
 }
 
@@ -53,26 +24,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        // assert_eq!(
-        //     max_candies(
-        //         &mut [1, 0, 1, 0],
-        //         &[7, 5, 4, 100],
-        //         &[&[], &[], &[1], &[]],
-        //         &[&[1, 2], &[3], &[], &[]],
-        //         &[0]
-        //     ),
-        //     16
-        // );
         assert_eq!(
-            max_candies(
-                &mut [1, 0, 0, 0, 0, 0],
-                &[1, 1, 1, 1, 1, 1],
-                &[&[1, 2, 3, 4, 5], &[], &[], &[], &[], &[]],
-                &[&[1, 2, 3, 4, 5], &[], &[], &[], &[], &[]],
-                &[0]
-            ),
-            6
+            replace_elements(&[17, 18, 5, 4, 6, 1]),
+            [18, 6, 6, 6, 1, -1]
         );
+        assert_eq!(replace_elements(&[400]), [-1]);
     }
 
     #[test]
