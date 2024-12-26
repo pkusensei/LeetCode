@@ -7,29 +7,20 @@ namespace Solution;
 
 public class Solution
 {
-    public bool IsPossibleDivide(int[] nums, int k)
+    public int DeepestLeavesSum(TreeNode root)
     {
-        if (nums.Length % k > 0) { return false; }
-        SortedDictionary<int, int> count = [];
-        foreach (var item in nums)
+        var max_depth = 0;
+        var res = 0;
+        Dfs(root, 0);
+        return res;
+
+        void Dfs(TreeNode node, int depth)
         {
-            if (count.ContainsKey(item)) { count[item] += 1; }
-            else { count[item] = 1; }
+            if (node is null) { return; }
+            if (depth == max_depth) { res += node.val; }
+            if (depth > max_depth) { max_depth = depth; res = node.val; }
+            Dfs(node.left, 1 + depth);
+            Dfs(node.right, 1 + depth);
         }
-        while (count.Count > 0)
-        {
-            var first = count.Keys.First();
-            for (int i = 0; i < k; i++)
-            {
-                if (count.TryGetValue(first + i, out var val))
-                {
-                    val -= 1;
-                    if (val == 0) { count.Remove(first + i); }
-                    else { count[first + i] = val; }
-                }
-                else { return false; }
-            }
-        }
-        return true;
     }
 }

@@ -10,17 +10,17 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(new int[] { 1, 2, 3, 3, 4, 4, 5, 6 }, 4, true)]
-    [DataRow(new int[] { 3, 2, 1, 2, 3, 4, 3, 4, 5, 9, 10, 11 }, 3, true)]
-    [DataRow(new int[] { 1, 2, 3, 4 }, 3, false)]
-    public void TestMethod1(int[] nums, int k, bool exp)
+    public void TestMethod1()
     {
-        Assert.AreEqual(exp, sol.IsPossibleDivide(nums, k));
+        var a = TreeNode.Make([1, 2, 3, 4, 5, null, 6, 7, null, null, null, null, 8]);
+        Assert.AreEqual(15, sol.DeepestLeavesSum(a));
     }
 
     [TestMethod]
     public void TestMethod2()
     {
+        var a = TreeNode.Make([6, 7, 8, 2, 7, 1, 3, 9, null, 1, 4, null, null, null, 5]);
+        Assert.AreEqual(19, sol.DeepestLeavesSum(a));
     }
 
     [TestMethod]
