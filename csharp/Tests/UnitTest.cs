@@ -10,24 +10,25 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow(new int[] { 1, 1, 1, 1, 1 }, 3, 5)]
+    [DataRow(new int[] { 1 }, 1, 1)]
+    public void TestMethod1(int[] nums, int target, int exp)
     {
-        var a = TreeNode.Make([1, 4, 3, 7, 6, 8, 5, null, null, null, null, 9, null, 10]);
-        Assert.AreEqual(3, sol.MinimumOperations(a));
+        Assert.AreEqual(exp, sol.FindTargetSumWays(nums, target));
     }
 
     [TestMethod]
-    public void TestMethod2()
+    [DataRow(new int[] { 1, 1, 1, 1, 1 }, 3, 5)]
+    [DataRow(new int[] { 1 }, 1, 1)]
+
+    public void TestMethod2(int[] nums, int target, int exp)
     {
-        var a = TreeNode.MakeInt([1, 3, 2, 7, 6, 5, 4]);
-        Assert.AreEqual(3, sol.MinimumOperations(a));
+        Assert.AreEqual(exp, sol.WithDp(nums, target));
     }
 
     [TestMethod]
     public void TestMethod3()
     {
-        var a = TreeNode.Make([1, 2, 3, 4, 5, 6]);
-        Assert.AreEqual(0, sol.MinimumOperations(a));
     }
 
     [TestMethod]

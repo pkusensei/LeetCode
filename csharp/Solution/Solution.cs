@@ -6,117 +6,40 @@ namespace Solution;
 
 public class Solution
 {
-    public int MinimumOperations(TreeNode root)
+    public int FindTargetSumWays(int[] nums, int target)
     {
-        Queue<TreeNode> nodes = [];
-        nodes.Enqueue(root);
-        var res = 0;
-        while (nodes.Count > 0)
-        {
-            var nums = nodes.Select(n => n.val).ToList();
-            res += MinSwaps(nums);
-            var n = nodes.Count;
-            for (int i = 0; i < n; i++)
-            {
-                var node = nodes.Dequeue();
-                if (node.left is not null) { nodes.Enqueue(node.left); }
-                if (node.right is not null) { nodes.Enqueue(node.right); }
-            }
-        }
-        return res;
+        return Dfs(nums, 0, target, []);
 
-        static int MinSwaps(IList<int> nums)
+        static int Dfs(int[] nums, int idx, int target, Dictionary<(int, int), int> memo)
         {
-            if (nums.Count < 2) { return 0; }
-            var res = 0;
-            var arr_pos = nums.Select((num, idx) => (idx, num)).OrderBy(p => p.num).ToList();
-            var visisted = Enumerable.Range(0, nums.Count).Select(_ => false).ToList();
-            for (int i = 0; i < nums.Count; i++)
-            {
-                if (visisted[i] || arr_pos[i].idx == i) { continue; }
-                var cycle = 0;
-                var curr = i;
-                while (!visisted[curr])
-                {
-                    visisted[curr] = true;
-                    curr = arr_pos[curr].idx;
-                    cycle += 1;
-                }
-                res += Math.Max(0, cycle - 1); // only adds when cycle>1
-            }
+            if (idx == nums.Length) { return target == 0 ? 1 : 0; }
+            if (memo.TryGetValue((idx, target), out var v)) { return v; }
+            var curr = nums[idx];
+            var res = Dfs(nums, 1 + idx, target + curr, memo) + Dfs(nums, 1 + idx, target - curr, memo);
+            memo.Add((idx, target), res);
             return res;
         }
     }
 
-    public int WithDictionary(TreeNode root)
+    public int WithDp(int[] nums, int target)
     {
-        Queue<TreeNode> queue = [];
-        queue.Enqueue(root);
-        var res = 0;
-        while (queue.Count > 0)
+        var total = nums.Sum();
+        var dp = new int[1 + 2 * total];
+        dp[nums[0] + total] += 1;
+        dp[-nums[0] + total] += 1;
+        foreach (var (idx, num) in nums.Select((n, i) => (i, n)).Skip(1))
         {
-            var n = queue.Count;
-            List<int> nums = [];
-            for (int i = 0; i < n; i++)
+            var next = new int[1 + 2 * total];
+            for (int sum = -total; sum <= total; sum++)
             {
-                var node = queue.Dequeue();
-                nums.Add(node.val);
-                if (node.left is not null) { queue.Enqueue(node.left); }
-                if (node.right is not null) { queue.Enqueue(node.right); }
-            }
-            res += MinSwaps(nums);
-        }
-        return res;
-
-        static int MinSwaps(IList<int> nums)
-        {
-            var target = nums.Order().ToList();
-            var pos = nums.Select((n, i) => (n, i)).ToDictionary();
-            var res = 0;
-            for (int i = 0; i < nums.Count; i++)
-            {
-                if (nums[i] != target[i])
+                if (dp[sum + total] > 0)
                 {
-                    res += 1;
-                    var curr_pos = pos[target[i]];
-                    pos[nums[i]] = curr_pos;
-                    nums[curr_pos] = nums[i];
+                    next[sum + num + total] += dp[sum + total];
+                    next[sum - num + total] += dp[sum + total];
                 }
             }
-            return res;
+            dp = next;
         }
-    }
-
-    public int WithBits(TreeNode root)
-    {
-        const int SHIFT = 20;
-        const int MASK = 0xFFFFF;
-        Queue<TreeNode> queue = [];
-        queue.Enqueue(root);
-        var res = 0;
-        while (queue.Count > 0)
-        {
-            var n = queue.Count;
-            List<long> nums = [];
-            for (int i = 0; i < n; i++)
-            {
-                var node = queue.Dequeue();
-                nums.Add((node.val << SHIFT) + i); // value-index
-                if (node.left is not null) { queue.Enqueue(node.left); }
-                if (node.right is not null) { queue.Enqueue(node.right); }
-            }
-            nums.Sort();
-            for (int i = 0; i < n; i++)
-            {
-                var original_pos = (int)(nums[i] & MASK);
-                if (original_pos != i)
-                {
-                    (nums[i], nums[original_pos]) = (nums[original_pos], nums[i]);
-                    i -= 1;
-                    res += 1;
-                }
-            }
-        }
-        return res;
+        return Math.Abs(target) > total ? 0 : dp[target + total];
     }
 }
