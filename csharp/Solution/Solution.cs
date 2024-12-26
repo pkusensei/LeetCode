@@ -7,20 +7,34 @@ namespace Solution;
 
 public class Solution
 {
-    public int DeepestLeavesSum(TreeNode root)
+    public IList<int> GetAllElements(TreeNode root1, TreeNode root2)
     {
-        var max_depth = 0;
-        var res = 0;
-        Dfs(root, 0);
+        Stack<TreeNode> st1 = [];
+        Stack<TreeNode> st2 = [];
+        PushLeft(st1, root1);
+        PushLeft(st2, root2);
+        List<int> res = [];
+        while (st1.Count > 0 || st2.Count > 0)
+        {
+            var stack = (st1.TryPeek(out var v1), st2.TryPeek(out var v2)) switch
+            {
+                (false, true) => st2,
+                (true, false) => st1,
+                _ => v1.val < v2.val ? st1 : st2,
+            };
+            var curr = stack.Pop();
+            res.Add(curr.val);
+            PushLeft(stack, curr.right);
+        }
         return res;
 
-        void Dfs(TreeNode node, int depth)
+        static void PushLeft(Stack<TreeNode> st, TreeNode node)
         {
-            if (node is null) { return; }
-            if (depth == max_depth) { res += node.val; }
-            if (depth > max_depth) { max_depth = depth; res = node.val; }
-            Dfs(node.left, 1 + depth);
-            Dfs(node.right, 1 + depth);
+            while (node is not null)
+            {
+                st.Push(node);
+                node = node.left;
+            }
         }
     }
 }

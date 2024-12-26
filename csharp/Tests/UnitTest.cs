@@ -12,15 +12,17 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
-        var a = TreeNode.Make([1, 2, 3, 4, 5, null, 6, 7, null, null, null, null, 8]);
-        Assert.AreEqual(15, sol.DeepestLeavesSum(a));
+        var a = TreeNode.Make([2, 1, 4]);
+        var b = TreeNode.Make([1, 0, 3]);
+        Assert.AreEqual("[0,1,1,2,3,4]", sol.GetAllElements(a, b).Print());
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        var a = TreeNode.Make([6, 7, 8, 2, 7, 1, 3, 9, null, 1, 4, null, null, null, 5]);
-        Assert.AreEqual(19, sol.DeepestLeavesSum(a));
+        var a = TreeNode.Make([1, null, 8]);
+        var b = TreeNode.Make([8, 1]);
+        Assert.AreEqual("[1,1,8,8]", sol.GetAllElements(a, b).Print());
     }
 
     [TestMethod]
