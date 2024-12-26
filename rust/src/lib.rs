@@ -5,27 +5,44 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_freq(s: &str, max_letters: i32, min_size: i32, _max_size: i32) -> i32 {
-    let n = min_size as usize;
-    if s.len() < n {
-        return 0;
-    }
-    let mut count = s[..n].bytes().fold([0; 26], |mut acc, b| {
-        acc[usize::from(b - b'a')] += 1;
-        acc
-    });
-    let mut map = std::collections::HashMap::new();
-    if count.iter().filter(|&&c| c > 0).count() <= max_letters as usize {
-        map.insert(&s[..n], 1);
-    }
-    for i in 1..=s.len() - n {
-        count[usize::from(s.as_bytes()[i - 1] - b'a')] -= 1;
-        count[usize::from(s.as_bytes()[i + n - 1] - b'a')] += 1;
-        if count.iter().filter(|&&c| c > 0).count() <= max_letters as usize {
-            *map.entry(&s[i..i + n]).or_insert(0) += 1;
+pub fn max_candies(
+    status: &mut [i32],
+    candies: &[i32],
+    keys: &[&[i32]],
+    contained_boxes: &[&[i32]],
+    initial_boxes: &[i32],
+) -> i32 {
+    let n = status.len();
+    let mut has_box = vec![false; n];
+    let mut queue = std::collections::VecDeque::new();
+    for &b in initial_boxes.iter() {
+        if status[b as usize] == 1 {
+            queue.push_back(b as usize);
+        } else {
+            has_box[b as usize] = true;
         }
     }
-    map.into_values().max().unwrap_or(0)
+    let mut res = 0;
+    while let Some(box_) = queue.pop_front() {
+        res += candies[box_];
+        for &k in keys[box_].iter() {
+            status[k as usize] = 1;
+        }
+        for &b in contained_boxes[box_].iter() {
+            has_box[b as usize] = true;
+        }
+        for b in has_box
+            .iter()
+            .zip(status.iter())
+            .enumerate()
+            .filter_map(|(b, (&has, &st))| if has && st == 1 { Some(b) } else { None })
+            .collect::<Vec<_>>()
+        {
+            has_box[b] = false;
+            queue.push_back(b);
+        }
+    }
+    res
 }
 
 #[cfg(test)]
@@ -36,8 +53,26 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_freq("aababcaab", 2, 3, 4), 2);
-        assert_eq!(max_freq("aaaa", 1, 3, 3), 2);
+        // assert_eq!(
+        //     max_candies(
+        //         &mut [1, 0, 1, 0],
+        //         &[7, 5, 4, 100],
+        //         &[&[], &[], &[1], &[]],
+        //         &[&[1, 2], &[3], &[], &[]],
+        //         &[0]
+        //     ),
+        //     16
+        // );
+        assert_eq!(
+            max_candies(
+                &mut [1, 0, 0, 0, 0, 0],
+                &[1, 1, 1, 1, 1, 1],
+                &[&[1, 2, 3, 4, 5], &[], &[], &[], &[], &[]],
+                &[&[1, 2, 3, 4, 5], &[], &[], &[], &[], &[]],
+                &[0]
+            ),
+            6
+        );
     }
 
     #[test]
