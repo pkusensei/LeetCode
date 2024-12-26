@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Collections.Immutable;
+using System.Text;
 using Solution.LList;
 using Solution.Tree;
 
@@ -6,40 +7,29 @@ namespace Solution;
 
 public class Solution
 {
-    public int FindTargetSumWays(int[] nums, int target)
+    public bool IsPossibleDivide(int[] nums, int k)
     {
-        return Dfs(nums, 0, target, []);
-
-        static int Dfs(int[] nums, int idx, int target, Dictionary<(int, int), int> memo)
+        if (nums.Length % k > 0) { return false; }
+        SortedDictionary<int, int> count = [];
+        foreach (var item in nums)
         {
-            if (idx == nums.Length) { return target == 0 ? 1 : 0; }
-            if (memo.TryGetValue((idx, target), out var v)) { return v; }
-            var curr = nums[idx];
-            var res = Dfs(nums, 1 + idx, target + curr, memo) + Dfs(nums, 1 + idx, target - curr, memo);
-            memo.Add((idx, target), res);
-            return res;
+            if (count.ContainsKey(item)) { count[item] += 1; }
+            else { count[item] = 1; }
         }
-    }
-
-    public int WithDp(int[] nums, int target)
-    {
-        var total = nums.Sum();
-        var dp = new int[1 + 2 * total];
-        dp[nums[0] + total] += 1;
-        dp[-nums[0] + total] += 1;
-        foreach (var (idx, num) in nums.Select((n, i) => (i, n)).Skip(1))
+        while (count.Count > 0)
         {
-            var next = new int[1 + 2 * total];
-            for (int sum = -total; sum <= total; sum++)
+            var first = count.Keys.First();
+            for (int i = 0; i < k; i++)
             {
-                if (dp[sum + total] > 0)
+                if (count.TryGetValue(first + i, out var val))
                 {
-                    next[sum + num + total] += dp[sum + total];
-                    next[sum - num + total] += dp[sum + total];
+                    val -= 1;
+                    if (val == 0) { count.Remove(first + i); }
+                    else { count[first + i] = val; }
                 }
+                else { return false; }
             }
-            dp = next;
         }
-        return Math.Abs(target) > total ? 0 : dp[target + total];
+        return true;
     }
 }

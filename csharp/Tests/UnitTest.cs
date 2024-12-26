@@ -10,20 +10,17 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(new int[] { 1, 1, 1, 1, 1 }, 3, 5)]
-    [DataRow(new int[] { 1 }, 1, 1)]
-    public void TestMethod1(int[] nums, int target, int exp)
+    [DataRow(new int[] { 1, 2, 3, 3, 4, 4, 5, 6 }, 4, true)]
+    [DataRow(new int[] { 3, 2, 1, 2, 3, 4, 3, 4, 5, 9, 10, 11 }, 3, true)]
+    [DataRow(new int[] { 1, 2, 3, 4 }, 3, false)]
+    public void TestMethod1(int[] nums, int k, bool exp)
     {
-        Assert.AreEqual(exp, sol.FindTargetSumWays(nums, target));
+        Assert.AreEqual(exp, sol.IsPossibleDivide(nums, k));
     }
 
     [TestMethod]
-    [DataRow(new int[] { 1, 1, 1, 1, 1 }, 3, 5)]
-    [DataRow(new int[] { 1 }, 1, 1)]
-
-    public void TestMethod2(int[] nums, int target, int exp)
+    public void TestMethod2()
     {
-        Assert.AreEqual(exp, sol.WithDp(nums, target));
     }
 
     [TestMethod]
