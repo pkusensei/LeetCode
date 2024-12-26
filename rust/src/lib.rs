@@ -5,81 +5,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-const MOD: i32 = 1_000_000_007;
-
-pub fn paths_with_max_score(board: Vec<String>) -> Vec<i32> {
-    let n = board.len();
-    let mut board: Vec<_> = board.into_iter().map(|s| s.into_bytes()).collect();
-    // board[0][0] = b'0';
-    // dfs(&board, n, [0, 0], &mut vec![vec![None; n]; n])
-    //     .map(|v| v.to_vec())
-    //     .unwrap_or(vec![0; 2])
-    let mut dp = vec![vec![[i32::MIN, 0]; 1 + n]; 1 + n];
-    dp[n - 1][n - 1] = [0, 1];
-    for row in (0..n).rev() {
-        for col in (0..n).rev() {
-            if b"XS".contains(&board[row][col]) {
-                continue;
-            }
-            for (dr, dc) in [(1, 0), (1, 1), (0, 1)] {
-                let prev = dp[row + dr][col + dc][0];
-                if dp[row][col][0] < prev {
-                    dp[row][col] = [prev, 0];
-                }
-                if dp[row][col][0] == prev {
-                    dp[row][col][1] += dp[row + dr][col + dc][1];
-                }
-                dp[row][col][1] %= MOD;
-            }
-            if row > 0 || col > 0 {
-                dp[row][col][0] += (board[row][col] - b'0') as i32
-            }
-        }
+pub fn sum_zero(mut n: i32) -> Vec<i32> {
+    let mut res = Vec::with_capacity(n as usize);
+    while n > 1 {
+        res.push(n);
+        res.push(-n);
+        n -= 2
     }
-    if dp[0][0][1] > 0 {
-        dp[0][0].to_vec()
-    } else {
-        vec![0; 2]
+    if n == 1 {
+        res.push(0);
     }
-}
-
-// TLE's
-fn dfs(
-    board: &[Vec<u8>],
-    n: usize,
-    [row, col]: [usize; 2],
-    memo: &mut [Vec<Option<[i32; 2]>>],
-) -> Option<[i32; 2]> {
-    if row == n - 1 && col == n - 1 {
-        return Some([0, 1]);
-    }
-    if memo[row][col].is_some() {
-        return memo[row][col];
-    }
-    let mut curr_score = -1;
-    let mut curr_path = 0;
-    for [nr, nc] in [(1, 0), (1, 1), (0, 1)].map(|(dr, dc)| [row + dr, col + dc]) {
-        if let Some([score, path]) = match board.get(nr).and_then(|r| r.get(nc)) {
-            None | Some(b'X') => None,
-            Some(_) => dfs(board, n, [nr, nc], memo),
-        } {
-            match curr_score.cmp(&score) {
-                std::cmp::Ordering::Less => {
-                    curr_path = path;
-                    curr_score = score;
-                }
-                std::cmp::Ordering::Equal => curr_path = (curr_path + path) % MOD,
-                std::cmp::Ordering::Greater => (),
-            }
-        }
-    }
-    if curr_path > 0 {
-        let res = Some([curr_score + (board[row][col] - b'0') as i32, curr_path]);
-        memo[row][col] = res;
-        res
-    } else {
-        None
-    }
+    res
 }
 
 #[cfg(test)]
@@ -90,18 +26,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            paths_with_max_score(vec!["E23".into(), "2X2".into(), "12S".into()]),
-            [7, 1]
-        );
-        assert_eq!(
-            paths_with_max_score(vec!["E12".into(), "1X1".into(), "21S".into()]),
-            [4, 2]
-        );
-        assert_eq!(
-            paths_with_max_score(vec!["E11".into(), "XXX".into(), "11S".into()]),
-            [0, 0]
-        );
+        assert_eq!(sum_zero(5).into_iter().sum::<i32>(), 0);
+        assert_eq!(sum_zero(3).into_iter().sum::<i32>(), 0);
+        assert_eq!(sum_zero(1).into_iter().sum::<i32>(), 0);
     }
 
     #[test]
