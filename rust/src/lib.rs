@@ -5,24 +5,73 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn can_reach(arr: &[i32], start: i32) -> bool {
-    let n = arr.len();
-    let mut queue = std::collections::VecDeque::from([start]);
-    let mut seen = vec![false; n];
-    seen[start as usize] = true;
-    while let Some(curr) = queue.pop_front() {
-        let v = arr[curr as usize];
-        if v == 0 {
-            return true;
-        }
-        for next in [curr - v, curr + v] {
-            if next >= 0 && (next as usize) < n && !seen[next as usize] {
-                seen[next as usize] = true;
-                queue.push_back(next);
+pub fn is_solvable(words: &[&str], result: &str) -> bool {
+    let (coeffs, nonzeros) = build(words, result);
+    backtrack(&coeffs, &nonzeros, &mut [false; 10], &mut [0; 10], 0, 0)
+}
+
+fn backtrack(
+    coeffs: &[i32],
+    nonzeros: &[bool],
+    used: &mut [bool; 10],
+    values: &mut [i32; 10], // at most 10 unique chars
+    idx: usize,
+    curr: i32,
+) -> bool {
+    if idx == coeffs.len() {
+        return curr == 0;
+    }
+    // Pruning on potential result
+    let max: i32 = coeffs[idx..]
+        .iter()
+        .map(|&v| if v > 0 { 9 * v } else { 0 })
+        .sum();
+    let min: i32 = coeffs[idx..]
+        .iter()
+        .map(|&v| if v > 0 { 0 } else { 9 * v })
+        .sum();
+    // sum cannot ever reach 0 by current config
+    if curr + max < 0 || curr + min > 0 {
+        return false;
+    }
+    let temp = values[idx];
+    let start = if nonzeros[idx] { 1 } else { 0 };
+    for digit in start..=9 {
+        if !used[digit as usize] {
+            used[digit as usize] = true;
+            values[idx] = digit;
+            let next = curr + digit * coeffs[idx];
+            if backtrack(coeffs, nonzeros, used, values, 1 + idx, next) {
+                return true;
             }
+            used[digit as usize] = false;
         }
     }
+    values[idx] = temp;
     false
+}
+
+fn build(words: &[&str], result: &str) -> (Vec<i32>, Vec<bool>) {
+    let mut coeffs = [(0, false); 26];
+    for word in words.iter() {
+        process(word, 1, &mut coeffs);
+    }
+    process(result, -1, &mut coeffs);
+    // coeffs.sort_by_key(|(coeff, _)| std::cmp::Reverse(coeff.abs()));
+    coeffs.into_iter().filter(|(coeff, _)| *coeff != 0).unzip()
+}
+
+fn process(word: &str, sign: i32, coeffs: &mut [(i32, bool); 26]) {
+    let mut pow = 1;
+    for (idx, b) in word.bytes().enumerate().rev() {
+        let ch = usize::from(b - b'A');
+        coeffs[ch].0 += sign * pow;
+        pow *= 10;
+        // leading chars can't be zero
+        if word.len() > 1 && idx == 0 {
+            coeffs[ch].1 = true;
+        }
+    }
 }
 
 #[cfg(test)]
@@ -33,9 +82,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert!(can_reach(&[4, 2, 3, 0, 3, 1, 2], 5));
-        assert!(can_reach(&[4, 2, 3, 0, 3, 1, 2], 0));
-        assert!(!can_reach(&[3, 0, 2, 1, 2], 2));
+        assert!(is_solvable(&["SEND", "MORE"], "MONEY"));
+        assert!(is_solvable(&["SIX", "SEVEN", "SEVEN"], "TWENTY"));
+        assert!(!is_solvable(&["LEET", "CODE"], "POINT"));
     }
 
     #[test]
