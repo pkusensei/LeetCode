@@ -5,17 +5,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn sum_zero(mut n: i32) -> Vec<i32> {
-    let mut res = Vec::with_capacity(n as usize);
-    while n > 1 {
-        res.push(n);
-        res.push(-n);
-        n -= 2
+pub fn can_reach(arr: &[i32], start: i32) -> bool {
+    let n = arr.len();
+    let mut queue = std::collections::VecDeque::from([start]);
+    let mut seen = vec![false; n];
+    seen[start as usize] = true;
+    while let Some(curr) = queue.pop_front() {
+        let v = arr[curr as usize];
+        if v == 0 {
+            return true;
+        }
+        for next in [curr - v, curr + v] {
+            if next >= 0 && (next as usize) < n && !seen[next as usize] {
+                seen[next as usize] = true;
+                queue.push_back(next);
+            }
+        }
     }
-    if n == 1 {
-        res.push(0);
-    }
-    res
+    false
 }
 
 #[cfg(test)]
@@ -26,9 +33,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(sum_zero(5).into_iter().sum::<i32>(), 0);
-        assert_eq!(sum_zero(3).into_iter().sum::<i32>(), 0);
-        assert_eq!(sum_zero(1).into_iter().sum::<i32>(), 0);
+        assert!(can_reach(&[4, 2, 3, 0, 3, 1, 2], 5));
+        assert!(can_reach(&[4, 2, 3, 0, 3, 1, 2], 0));
+        assert!(!can_reach(&[3, 0, 2, 1, 2], 2));
     }
 
     #[test]
