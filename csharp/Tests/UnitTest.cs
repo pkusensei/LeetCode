@@ -10,11 +10,12 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(new int[] { 8, 1, 5, 2, 6 }, 11)]
-    [DataRow(new int[] { 1, 2 }, 2)]
-    public void TestMethod1(int[] nums, int exp)
+    [DataRow(new int[] { 1, 2, 1, 2, 6, 7, 5, 1 }, 2, "[0,3,5]")]
+    [DataRow(new int[] { 1, 2, 1, 2, 1, 2, 1, 2, 1 }, 2, "[0,2,4]")]
+    [DataRow(new int[] { 7, 13, 20, 19, 19, 2, 10, 1, 1, 19 }, 3, "[1,4,7]")]
+    public void TestMethod1(int[] nums, int k, string exp)
     {
-        Assert.AreEqual(exp, sol.MaxScoreSightseeingPair(nums));
+        Assert.AreEqual(exp, sol.MaxSumOfThreeSubarrays(nums, k).Print());
     }
 
     [TestMethod]
