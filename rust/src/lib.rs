@@ -5,42 +5,10 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_insertions(s: &str) -> i32 {
-    let (s, n) = (s.as_bytes(), s.len());
-    if n <= 1 {
-        return 0;
-    }
-    if n == 2 {
-        return i32::from(s[0] != s[1]);
-    }
-    let mut dp = vec![vec![0; n]; n];
-    for len in 2..=n {
-        for left in 0..=n - len {
-            let right = left + len - 1;
-            if s[left] == s[right] {
-                dp[left][right] = dp[left + 1][right - 1];
-            } else {
-                dp[left][right] = 1 + dp[left + 1][right].min(dp[left][right - 1]);
-            }
-        }
-    }
-    dp[0][n - 1]
-    // dfs(s, 0, n - 1, &mut vec![vec![-1; n]; n])
-}
-
-fn dfs(s: &[u8], left: usize, right: usize, memo: &mut [Vec<i32>]) -> i32 {
-    if left >= right {
-        return 0;
-    }
-    if s[left] == s[right] {
-        return dfs(s, left + 1, right - 1, memo);
-    }
-    if memo[left][right] > -1 {
-        return memo[left][right];
-    }
-    let res = 1 + dfs(s, left + 1, right, memo).min(dfs(s, left, right - 1, memo));
-    memo[left][right] = res;
-    res
+pub fn decompress_rl_elist(nums: &[i32]) -> Vec<i32> {
+    nums.chunks_exact(2)
+        .flat_map(|c| std::iter::repeat(c[1]).take(c[0] as usize))
+        .collect()
 }
 
 #[cfg(test)]
@@ -50,11 +18,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {
-        assert_eq!(min_insertions("zzazz"), 0);
-        assert_eq!(min_insertions("mbadm"), 2);
-        assert_eq!(min_insertions("leetcode"), 5);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
