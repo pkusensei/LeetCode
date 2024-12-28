@@ -2,42 +2,45 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::{HashMap, VecDeque};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn watched_videos_by_friends(
-    watched_videos: &[&[&str]],
-    friends: &[&[i32]],
-    id: i32,
-    level: i32,
-) -> Vec<String> {
-    let n = watched_videos.len();
-    let mut queue = VecDeque::from([(id as usize, 0)]);
-    let mut seen = vec![false; n];
-    seen[id as usize] = true;
-    let mut count = HashMap::new();
-    while let Some((curr, dist)) = queue.pop_front() {
-        if dist == level {
-            for &item in watched_videos[curr].iter() {
-                *count.entry(item).or_insert(0) += 1;
-            }
-        }
-        if dist > level {
-            break;
-        }
-        for &next in friends[curr].iter() {
-            let next = next as usize;
-            if !seen[next] {
-                seen[next] = true;
-                queue.push_back((next, 1 + dist));
+pub fn min_insertions(s: &str) -> i32 {
+    let (s, n) = (s.as_bytes(), s.len());
+    if n <= 1 {
+        return 0;
+    }
+    if n == 2 {
+        return i32::from(s[0] != s[1]);
+    }
+    let mut dp = vec![vec![0; n]; n];
+    for len in 2..=n {
+        for left in 0..=n - len {
+            let right = left + len - 1;
+            if s[left] == s[right] {
+                dp[left][right] = dp[left + 1][right - 1];
+            } else {
+                dp[left][right] = 1 + dp[left + 1][right].min(dp[left][right - 1]);
             }
         }
     }
-    let mut res: Vec<_> = count.into_iter().collect();
-    res.sort_unstable_by(|a, b| a.1.cmp(&b.1).then(a.0.cmp(b.0)));
-    res.into_iter().map(|(k, _)| k.to_string()).collect()
+    dp[0][n - 1]
+    // dfs(s, 0, n - 1, &mut vec![vec![-1; n]; n])
+}
+
+fn dfs(s: &[u8], left: usize, right: usize, memo: &mut [Vec<i32>]) -> i32 {
+    if left >= right {
+        return 0;
+    }
+    if s[left] == s[right] {
+        return dfs(s, left + 1, right - 1, memo);
+    }
+    if memo[left][right] > -1 {
+        return memo[left][right];
+    }
+    let res = 1 + dfs(s, left + 1, right, memo).min(dfs(s, left, right - 1, memo));
+    memo[left][right] = res;
+    res
 }
 
 #[cfg(test)]
@@ -48,24 +51,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            watched_videos_by_friends(
-                &[&["A", "B"], &["C"], &["B", "C"], &["D"]],
-                &[&[1, 2], &[0, 3], &[0, 3], &[1, 2]],
-                0,
-                1
-            ),
-            ["B", "C"]
-        );
-        assert_eq!(
-            watched_videos_by_friends(
-                &[&["A", "B"], &["C"], &["B", "C"], &["D"]],
-                &[&[1, 2], &[0, 3], &[0, 3], &[1, 2]],
-                0,
-                2
-            ),
-            ["D"]
-        );
+        assert_eq!(min_insertions("zzazz"), 0);
+        assert_eq!(min_insertions("mbadm"), 2);
+        assert_eq!(min_insertions("leetcode"), 5);
     }
 
     #[test]
