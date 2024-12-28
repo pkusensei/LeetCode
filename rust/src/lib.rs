@@ -5,24 +5,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn freq_alphabets(s: &str) -> String {
-    let (s, n) = (s.as_bytes(), s.len());
-    let mut res = vec![];
-    let mut i = n - 1;
-    loop {
-        let b = if s[i] == b'#' {
-            i -= 2;
-            10 * (s[i] - b'0') + s[i + 1] - b'0'
-        } else {
-            s[i] - b'0'
-        };
-        res.push(b + b'a' - 1);
-        if i == 0 {
-            break;
-        }
-        i -= 1
+pub fn xor_queries(arr: &[i32], queries: &[[i32; 2]]) -> Vec<i32> {
+    let mut prefix = Vec::with_capacity(arr.len());
+    prefix.push(arr[0]);
+    for &num in arr.iter().skip(1) {
+        prefix.push(num ^ prefix.last().unwrap());
     }
-    res.into_iter().rev().map(|b| b as char).collect()
+    let mut res = Vec::with_capacity(queries.len());
+    for q in queries.iter() {
+        let (a, b) = (q[0] as usize, q[1] as usize);
+        if a > 0 {
+            res.push(prefix[b] ^ prefix[a - 1]);
+        } else {
+            res.push(prefix[b]);
+        }
+    }
+    res
 }
 
 #[cfg(test)]
@@ -33,8 +31,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(freq_alphabets("10#11#12"), "jkab");
-        assert_eq!(freq_alphabets("1326#"), "acz");
+        assert_eq!(
+            xor_queries(&[1, 3, 4, 8], &[[0, 1], [1, 2], [0, 3], [3, 3]]),
+            [2, 7, 14, 8]
+        );
+        assert_eq!(
+            xor_queries(&[4, 8, 2, 10], &[[2, 3], [1, 3], [0, 0], [0, 3]]),
+            [8, 0, 4, 4]
+        );
     }
 
     #[test]
