@@ -2,25 +2,42 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::{HashMap, VecDeque};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn xor_queries(arr: &[i32], queries: &[[i32; 2]]) -> Vec<i32> {
-    let mut prefix = Vec::with_capacity(arr.len());
-    prefix.push(arr[0]);
-    for &num in arr.iter().skip(1) {
-        prefix.push(num ^ prefix.last().unwrap());
-    }
-    let mut res = Vec::with_capacity(queries.len());
-    for q in queries.iter() {
-        let (a, b) = (q[0] as usize, q[1] as usize);
-        if a > 0 {
-            res.push(prefix[b] ^ prefix[a - 1]);
-        } else {
-            res.push(prefix[b]);
+pub fn watched_videos_by_friends(
+    watched_videos: &[&[&str]],
+    friends: &[&[i32]],
+    id: i32,
+    level: i32,
+) -> Vec<String> {
+    let n = watched_videos.len();
+    let mut queue = VecDeque::from([(id as usize, 0)]);
+    let mut seen = vec![false; n];
+    seen[id as usize] = true;
+    let mut count = HashMap::new();
+    while let Some((curr, dist)) = queue.pop_front() {
+        if dist == level {
+            for &item in watched_videos[curr].iter() {
+                *count.entry(item).or_insert(0) += 1;
+            }
+        }
+        if dist > level {
+            break;
+        }
+        for &next in friends[curr].iter() {
+            let next = next as usize;
+            if !seen[next] {
+                seen[next] = true;
+                queue.push_back((next, 1 + dist));
+            }
         }
     }
-    res
+    let mut res: Vec<_> = count.into_iter().collect();
+    res.sort_unstable_by(|a, b| a.1.cmp(&b.1).then(a.0.cmp(b.0)));
+    res.into_iter().map(|(k, _)| k.to_string()).collect()
 }
 
 #[cfg(test)]
@@ -32,12 +49,22 @@ mod tests {
     #[test]
     fn basics() {
         assert_eq!(
-            xor_queries(&[1, 3, 4, 8], &[[0, 1], [1, 2], [0, 3], [3, 3]]),
-            [2, 7, 14, 8]
+            watched_videos_by_friends(
+                &[&["A", "B"], &["C"], &["B", "C"], &["D"]],
+                &[&[1, 2], &[0, 3], &[0, 3], &[1, 2]],
+                0,
+                1
+            ),
+            ["B", "C"]
         );
         assert_eq!(
-            xor_queries(&[4, 8, 2, 10], &[[2, 3], [1, 3], [0, 0], [0, 3]]),
-            [8, 0, 4, 4]
+            watched_videos_by_friends(
+                &[&["A", "B"], &["C"], &["B", "C"], &["D"]],
+                &[&[1, 2], &[0, 3], &[0, 3], &[1, 2]],
+                0,
+                2
+            ),
+            ["D"]
         );
     }
 
