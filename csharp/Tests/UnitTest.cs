@@ -10,17 +10,17 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(new int[] { 1, 2, 1, 2, 6, 7, 5, 1 }, 2, "[0,3,5]")]
-    [DataRow(new int[] { 1, 2, 1, 2, 1, 2, 1, 2, 1 }, 2, "[0,2,4]")]
-    [DataRow(new int[] { 7, 13, 20, 19, 19, 2, 10, 1, 1, 19 }, 3, "[1,4,7]")]
-    public void TestMethod1(int[] nums, int k, string exp)
+    public void TestMethod1()
     {
-        Assert.AreEqual(exp, sol.MaxSumOfThreeSubarrays(nums, k).Print());
+        var a = TreeNode.Make([6, 7, 8, 2, 7, 1, 3, 9, null, 1, 4, null, null, null, 5]);
+        Assert.AreEqual(18, sol.SumEvenGrandparent(a));
     }
 
     [TestMethod]
     public void TestMethod2()
     {
+        var a = TreeNode.Make([1]);
+        Assert.AreEqual(0, sol.SumEvenGrandparent(a));
     }
 
     [TestMethod]
