@@ -5,46 +5,34 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_ways(words: &[&str], target: &str) -> i32 {
-    let (wn, tn) = (words[0].len(), target.len());
-    let mut freq: Vec<_> = std::iter::repeat([0; 26]).take(wn).collect();
-    for word in words.iter() {
-        for (i, b) in word.bytes().enumerate() {
-            freq[i][usize::from(b - b'a')] += 1;
+pub fn matrix_block_sum(mat: &[&[i32]], k: i32) -> Vec<Vec<i32>> {
+    let (rows, cols) = get_dimensions(mat);
+    let mut prefix: Vec<Vec<i32>> = Vec::with_capacity(1 + rows);
+    prefix.push(vec![0; 1 + cols]);
+    for (row, r) in mat.iter().enumerate() {
+        let mut curr = Vec::with_capacity(1 + cols);
+        curr.push(0);
+        for &num in r.iter() {
+            curr.push(num + curr.last().unwrap_or(&0));
+        }
+        for (c, v) in curr.iter_mut().enumerate() {
+            *v += prefix[row][c];
+        }
+        prefix.push(curr);
+    }
+    let mut res = vec![vec![0; cols]; rows];
+    let k = k as usize;
+    for r in 0..rows {
+        for c in 0..cols {
+            let up = r.saturating_sub(k);
+            let down = (r + k).min(rows - 1);
+            let left = c.saturating_sub(k);
+            let right = (c + k).min(cols - 1);
+            res[r][c] =
+                prefix[1 + down][1 + right] - prefix[1 + down][left] - prefix[up][1 + right]
+                    + prefix[up][left];
         }
     }
-    let mut prev = vec![0; 1 + tn];
-    prev[0] = 1;
-    for fi in 1..=wn {
-        let mut curr = prev.clone();
-        for ti in 1..=tn {
-            let pos = usize::from(target.as_bytes()[ti - 1] - b'a');
-            curr[ti] += freq[fi - 1][pos] * prev[ti - 1];
-            curr[ti] %= MOD;
-        }
-        prev = curr;
-    }
-    prev[tn] as _
-    // dfs(&freq, target.as_bytes(), 0, 0, &mut vec![vec![-1; tn]; wn]) as _
-}
-
-const MOD: i64 = 1_000_000_007;
-
-fn dfs(freq: &[[i64; 26]], target: &[u8], fi: usize, ti: usize, memo: &mut [Vec<i64>]) -> i64 {
-    if ti == target.len() {
-        return 1;
-    }
-    if freq.len() - fi < target.len() - ti {
-        return 0;
-    }
-    if memo[fi][ti] > -1 {
-        return memo[fi][ti];
-    }
-    let byte = usize::from(target[ti] - b'a');
-    let mut res = dfs(freq, target, 1 + fi, ti, memo);
-    res += freq[fi][byte] * dfs(freq, target, 1 + fi, 1 + ti, memo);
-    res %= MOD;
-    memo[fi][ti] = res;
     res
 }
 
@@ -56,8 +44,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(num_ways(&["acca", "bbbb", "caca"], "aba"), 6);
-        assert_eq!(num_ways(&["abba", "baab"], "bab"), 4);
+        assert_eq!(
+            matrix_block_sum(&[&[1, 2, 3], &[4, 5, 6], &[7, 8, 9]], 1),
+            [[12, 21, 16], [27, 45, 33], [24, 39, 28]]
+        );
+        assert_eq!(
+            matrix_block_sum(&[&[1, 2, 3], &[4, 5, 6], &[7, 8, 9]], 2),
+            [[45, 45, 45], [45, 45, 45], [45, 45, 45]]
+        );
     }
 
     #[test]
