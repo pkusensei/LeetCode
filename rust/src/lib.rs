@@ -2,68 +2,18 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_distance(word: &str) -> i32 {
-    // let s = word.as_bytes();
-    // dfs(
-    //     &s[1..],
-    //     0,
-    //     s[0],
-    //     EMPTY,
-    //     &mut vec![vec![vec![-1; 27]; 27]; s.len()],
-    // )
-    let mut curr = HashMap::from([((26, 26), 0)]);
-    let dist = |a: i32, b: i32| {
-        if a == 26 {
-            0
-        } else {
-            ((a % 6).abs_diff(b % 6) + (a / 6).abs_diff(b / 6)) as i32
+pub fn maximum69_number(num: i32) -> i32 {
+    let mut v = num.to_string().into_bytes();
+    for i in v.iter_mut() {
+        if *i == b'6' {
+            *i = b'9';
+            break;
         }
-    };
-    for b in word.bytes().map(|b| i32::from(b - b'A')) {
-        let mut next: HashMap<(i32, i32), i32> = HashMap::new();
-        for ((x, y), count) in curr.into_iter() {
-            next.entry((b, y))
-                .and_modify(|v| *v = (*v).min(count + dist(x, b)))
-                .or_insert(count + dist(x, b));
-            next.entry((x, b))
-                .and_modify(|v| (*v) = (*v).min(count + dist(y, b)))
-                .or_insert(count + dist(y, b));
-        }
-        curr = next;
     }
-    curr.into_values().min().unwrap()
-}
-
-const EMPTY: u8 = 64;
-
-fn dfs(s: &[u8], idx: usize, b1: u8, b2: u8, memo: &mut [Vec<Vec<i32>>]) -> i32 {
-    if idx == s.len() {
-        return 0;
-    }
-    let [i1, i2] = [b1, b2].map(|v| usize::from(v - EMPTY));
-    if memo[idx][i1][i2] > -1 {
-        return memo[idx][i1][i2];
-    }
-
-    fn manhattan_dist(a: u8, b: u8) -> u32 {
-        if a == EMPTY || b == EMPTY {
-            return 0;
-        }
-        let [a, b] = [a, b].map(|v| i32::from(v - EMPTY - 1));
-        (a % 6).abs_diff(b % 6) + (a / 6).abs_diff(b / 6)
-    }
-
-    let curr = s[idx];
-    let dist1 = manhattan_dist(b1, curr) as i32 + dfs(s, 1 + idx, curr, b2, memo);
-    let dist2 = manhattan_dist(b2, curr) as i32 + dfs(s, 1 + idx, b1, curr, memo);
-    let res = dist1.min(dist2) as i32;
-    memo[idx][i1][i2] = res;
-    res
+    String::from_utf8(v).unwrap().parse().unwrap()
 }
 
 #[cfg(test)]
@@ -73,10 +23,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {
-        assert_eq!(minimum_distance("CAKE"), 3);
-        assert_eq!(minimum_distance("HAPPY"), 6);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
