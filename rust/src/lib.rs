@@ -5,42 +5,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_good_strings(low: i32, high: i32, zero: i32, one: i32) -> i32 {
-    // dfs(low, high, zero, one, 0, &mut vec![-1; 1 + high as usize])
-    let [low, high, zero, one] = [low, high, zero, one].map(|v| v as usize);
-    let mut dp = vec![0; 1 + high];
-    for v in dp.iter_mut().skip(low) {
-        *v = 1;
-    }
-    for i in (0..=high).rev() {
-        if let Some(a) = i.checked_sub(zero) {
-            dp[a] += dp[i];
-            dp[a] %= MOD;
+pub fn distinct_echo_substrings(text: &str) -> i32 {
+    let (s, n) = (text.as_bytes(), text.len());
+    let mut set = std::collections::HashSet::new();
+    for len in 1..=n / 2 {
+        let (mut left, mut right) = (0, len);
+        let mut count = 0;
+        while left < n - len {
+            if s[left] == s[right] {
+                count += 1;
+            } else {
+                count = 0;
+            }
+            if count == len {
+                set.insert(&s[left + 1 - len..1 + left]);
+                count -= 1;
+            }
+            left += 1;
+            right += 1;
         }
-        if let Some(b) = i.checked_sub(one) {
-            dp[b] += dp[i];
-            dp[b] %= MOD;
-        }
     }
-    dp[0]
-}
-
-const MOD: i32 = 1_000_000_007;
-
-fn dfs(low: i32, high: i32, zero: i32, one: i32, curr: i32, memo: &mut [i32]) -> i32 {
-    if curr > high {
-        return 0;
-    }
-    if memo[curr as usize] > -1 {
-        return memo[curr as usize];
-    }
-    let mut res = i32::from((low..=high).contains(&curr));
-    res += dfs(low, high, zero, one, curr + zero, memo);
-    res %= MOD;
-    res += dfs(low, high, zero, one, curr + one, memo);
-    res %= MOD;
-    memo[curr as usize] = res;
-    res
+    set.len() as _
 }
 
 #[cfg(test)]
@@ -51,8 +36,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(count_good_strings(3, 3, 1, 1), 8);
-        assert_eq!(count_good_strings(2, 3, 1, 2), 5);
+        assert_eq!(distinct_echo_substrings("abcabcabc"), 3);
+        assert_eq!(distinct_echo_substrings("leetcodeleetcode"), 2);
     }
 
     #[test]
