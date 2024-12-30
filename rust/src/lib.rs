@@ -2,59 +2,68 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn make_connected(n: i32, connections: &[[i32; 2]]) -> i32 {
-    let n = n as usize;
-    if connections.len() + 1 < n {
-        return -1;
+pub fn minimum_distance(word: &str) -> i32 {
+    // let s = word.as_bytes();
+    // dfs(
+    //     &s[1..],
+    //     0,
+    //     s[0],
+    //     EMPTY,
+    //     &mut vec![vec![vec![-1; 27]; 27]; s.len()],
+    // )
+    let mut curr = HashMap::from([((26, 26), 0)]);
+    let dist = |a: i32, b: i32| {
+        if a == 26 {
+            0
+        } else {
+            ((a % 6).abs_diff(b % 6) + (a / 6).abs_diff(b / 6)) as i32
+        }
+    };
+    for b in word.bytes().map(|b| i32::from(b - b'A')) {
+        let mut next: HashMap<(i32, i32), i32> = HashMap::new();
+        for ((x, y), count) in curr.into_iter() {
+            next.entry((b, y))
+                .and_modify(|v| *v = (*v).min(count + dist(x, b)))
+                .or_insert(count + dist(x, b));
+            next.entry((x, b))
+                .and_modify(|v| (*v) = (*v).min(count + dist(y, b)))
+                .or_insert(count + dist(y, b));
+        }
+        curr = next;
     }
-    let mut dsu = DSU::new(n);
-    for e in connections.iter() {
-        dsu.union(e[0] as usize, e[1] as usize);
-    }
-    dsu.count as i32 - 1
+    curr.into_values().min().unwrap()
 }
 
-#[derive(Debug, Clone)]
-struct DSU {
-    parent: Vec<usize>,
-    rank: Vec<i32>,
-    count: usize,
-}
+const EMPTY: u8 = 64;
 
-impl DSU {
-    pub fn new(n: usize) -> Self {
-        Self {
-            parent: (0..n).collect(),
-            rank: vec![1; n],
-            count: n,
-        }
+fn dfs(s: &[u8], idx: usize, b1: u8, b2: u8, memo: &mut [Vec<Vec<i32>>]) -> i32 {
+    if idx == s.len() {
+        return 0;
+    }
+    let [i1, i2] = [b1, b2].map(|v| usize::from(v - EMPTY));
+    if memo[idx][i1][i2] > -1 {
+        return memo[idx][i1][i2];
     }
 
-    pub fn find(&mut self, x: usize) -> usize {
-        if self.parent[x] != x {
-            self.parent[x] = self.find(self.parent[x])
+    fn manhattan_dist(a: u8, b: u8) -> u32 {
+        if a == EMPTY || b == EMPTY {
+            return 0;
         }
-        self.parent[x]
+        let [a, b] = [a, b].map(|v| i32::from(v - EMPTY - 1));
+        (a % 6).abs_diff(b % 6) + (a / 6).abs_diff(b / 6)
     }
 
-    pub fn union(&mut self, x: usize, y: usize) {
-        let [rx, ry] = [x, y].map(|v| self.find(v));
-        if rx == ry {
-            return;
-        }
-        match self.rank[rx].cmp(&self.rank[ry]) {
-            std::cmp::Ordering::Less => self.parent[rx] = ry,
-            std::cmp::Ordering::Equal => {
-                self.parent[ry] = rx;
-                self.rank[rx] += 1;
-            }
-            std::cmp::Ordering::Greater => self.parent[ry] = rx,
-        }
-        self.count -= 1;
-    }
+    let curr = s[idx];
+    let dist1 = manhattan_dist(b1, curr) as i32 + dfs(s, 1 + idx, curr, b2, memo);
+    let dist2 = manhattan_dist(b2, curr) as i32 + dfs(s, 1 + idx, b1, curr, memo);
+    let res = dist1.min(dist2) as i32;
+    memo[idx][i1][i2] = res;
+    res
 }
 
 #[cfg(test)]
@@ -65,12 +74,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(make_connected(4, &[[0, 1], [0, 2], [1, 2]]), 1);
-        assert_eq!(
-            make_connected(6, &[[0, 1], [0, 2], [0, 3], [1, 2], [1, 3]]),
-            2
-        );
-        assert_eq!(make_connected(6, &[[0, 1], [0, 2], [0, 3], [1, 2]]), -1);
+        assert_eq!(minimum_distance("CAKE"), 3);
+        assert_eq!(minimum_distance("HAPPY"), 6);
     }
 
     #[test]
