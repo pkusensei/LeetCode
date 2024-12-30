@@ -5,23 +5,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn get_no_zero_integers(n: i32) -> Vec<i32> {
-    for i in 1..=n / 2 {
-        if check(i) && check(n - i) {
-            return vec![i, n - i];
+pub fn min_flips(mut a: i32, mut b: i32, mut c: i32) -> i32 {
+    let mut res = 0;
+    while [a, b, c].iter().any(|&v| v > 0) {
+        if c & 1 == 0 {
+            res += (a & 1) + (b & 1);
+        } else {
+            res += match (a & 1, b & 1) {
+                (1, 0) | (0, 1) => 0,
+                (0, 0) => 1,
+                _ => 0,
+            };
         }
+        [a, b, c] = [a, b, c].map(|v| v >> 1);
     }
-    vec![]
-}
-
-const fn check(mut n: i32) -> bool {
-    while n > 0 {
-        if n % 10 == 0 {
-            return false;
-        }
-        n /= 10;
-    }
-    true
+    res
 }
 
 #[cfg(test)]
@@ -32,12 +30,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(get_no_zero_integers(2), [1, 1]);
-        assert_eq!(get_no_zero_integers(11), [2, 9]);
+        assert_eq!(min_flips(2, 6, 5), 3);
+        assert_eq!(min_flips(4, 2, 7), 1);
+        assert_eq!(min_flips(1, 2, 3), 0);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(min_flips(8, 3, 5), 3);
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
