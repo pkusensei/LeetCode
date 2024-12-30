@@ -5,27 +5,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn distinct_echo_substrings(text: &str) -> i32 {
-    let (s, n) = (text.as_bytes(), text.len());
-    let mut set = std::collections::HashSet::new();
-    for len in 1..=n / 2 {
-        let (mut left, mut right) = (0, len);
-        let mut count = 0;
-        while left < n - len {
-            if s[left] == s[right] {
-                count += 1;
-            } else {
-                count = 0;
-            }
-            if count == len {
-                set.insert(&s[left + 1 - len..1 + left]);
-                count -= 1;
-            }
-            left += 1;
-            right += 1;
+pub fn get_no_zero_integers(n: i32) -> Vec<i32> {
+    for i in 1..=n / 2 {
+        if check(i) && check(n - i) {
+            return vec![i, n - i];
         }
     }
-    set.len() as _
+    vec![]
+}
+
+const fn check(mut n: i32) -> bool {
+    while n > 0 {
+        if n % 10 == 0 {
+            return false;
+        }
+        n /= 10;
+    }
+    true
 }
 
 #[cfg(test)]
@@ -36,8 +32,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(distinct_echo_substrings("abcabcabc"), 3);
-        assert_eq!(distinct_echo_substrings("leetcodeleetcode"), 2);
+        assert_eq!(get_no_zero_integers(2), [1, 1]);
+        assert_eq!(get_no_zero_integers(11), [2, 9]);
     }
 
     #[test]
