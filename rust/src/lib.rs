@@ -5,34 +5,41 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn matrix_block_sum(mat: &[&[i32]], k: i32) -> Vec<Vec<i32>> {
-    let (rows, cols) = get_dimensions(mat);
-    let mut prefix: Vec<Vec<i32>> = Vec::with_capacity(1 + rows);
-    prefix.push(vec![0; 1 + cols]);
-    for (row, r) in mat.iter().enumerate() {
-        let mut curr = Vec::with_capacity(1 + cols);
-        curr.push(0);
-        for &num in r.iter() {
-            curr.push(num + curr.last().unwrap_or(&0));
-        }
-        for (c, v) in curr.iter_mut().enumerate() {
-            *v += prefix[row][c];
-        }
-        prefix.push(curr);
+pub fn count_good_strings(low: i32, high: i32, zero: i32, one: i32) -> i32 {
+    // dfs(low, high, zero, one, 0, &mut vec![-1; 1 + high as usize])
+    let [low, high, zero, one] = [low, high, zero, one].map(|v| v as usize);
+    let mut dp = vec![0; 1 + high];
+    for v in dp.iter_mut().skip(low) {
+        *v = 1;
     }
-    let mut res = vec![vec![0; cols]; rows];
-    let k = k as usize;
-    for r in 0..rows {
-        for c in 0..cols {
-            let up = r.saturating_sub(k);
-            let down = (r + k).min(rows - 1);
-            let left = c.saturating_sub(k);
-            let right = (c + k).min(cols - 1);
-            res[r][c] =
-                prefix[1 + down][1 + right] - prefix[1 + down][left] - prefix[up][1 + right]
-                    + prefix[up][left];
+    for i in (0..=high).rev() {
+        if let Some(a) = i.checked_sub(zero) {
+            dp[a] += dp[i];
+            dp[a] %= MOD;
+        }
+        if let Some(b) = i.checked_sub(one) {
+            dp[b] += dp[i];
+            dp[b] %= MOD;
         }
     }
+    dp[0]
+}
+
+const MOD: i32 = 1_000_000_007;
+
+fn dfs(low: i32, high: i32, zero: i32, one: i32, curr: i32, memo: &mut [i32]) -> i32 {
+    if curr > high {
+        return 0;
+    }
+    if memo[curr as usize] > -1 {
+        return memo[curr as usize];
+    }
+    let mut res = i32::from((low..=high).contains(&curr));
+    res += dfs(low, high, zero, one, curr + zero, memo);
+    res %= MOD;
+    res += dfs(low, high, zero, one, curr + one, memo);
+    res %= MOD;
+    memo[curr as usize] = res;
     res
 }
 
@@ -44,14 +51,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            matrix_block_sum(&[&[1, 2, 3], &[4, 5, 6], &[7, 8, 9]], 1),
-            [[12, 21, 16], [27, 45, 33], [24, 39, 28]]
-        );
-        assert_eq!(
-            matrix_block_sum(&[&[1, 2, 3], &[4, 5, 6], &[7, 8, 9]], 2),
-            [[45, 45, 45], [45, 45, 45], [45, 45, 45]]
-        );
+        assert_eq!(count_good_strings(3, 3, 1, 1), 8);
+        assert_eq!(count_good_strings(2, 3, 1, 2), 5);
     }
 
     #[test]
