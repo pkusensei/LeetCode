@@ -5,18 +5,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn print_vertically(s: &str) -> Vec<String> {
-    let words: Vec<_> = s.split_whitespace().map(|v| v.as_bytes()).collect();
-    let len = words.iter().map(|w| w.len()).max().unwrap_or(1);
-    let mut res = Vec::with_capacity(len);
-    for i in 0..len {
-        let mut curr: Vec<_> = words.iter().map(|w| *w.get(i).unwrap_or(&b' ')).collect();
-        while curr.last().is_some_and(|&v| v.is_ascii_whitespace()) {
-            curr.pop();
-        }
-        res.push(String::from_utf8(curr).unwrap());
+pub fn max_score(s: &str) -> i32 {
+    let n = s.len();
+    let [mut prefix, mut suffix] = [0, 1].map(|_| Vec::with_capacity(n - 1));
+    for b in s.bytes().take(n - 1) {
+        prefix.push(i32::from(b == b'0') + prefix.last().unwrap_or(&0));
     }
-    res
+    for b in s.bytes().rev().take(n - 1) {
+        suffix.push(i32::from(b == b'1') + suffix.last().unwrap_or(&0));
+    }
+    prefix
+        .into_iter()
+        .zip(suffix.into_iter().rev())
+        .map(|(a, b)| a + b)
+        .max()
+        .unwrap()
 }
 
 #[cfg(test)]
@@ -27,15 +30,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(print_vertically("HOW ARE YOU"), ["HAY", "ORO", "WEU"]);
-        assert_eq!(
-            print_vertically("TO BE OR NOT TO BE"),
-            ["TBONTB", "OEROOE", "   T"]
-        );
-        assert_eq!(
-            print_vertically("CONTEST IS COMING"),
-            ["CIC", "OSO", "N M", "T I", "E N", "S G", "T"]
-        );
+        assert_eq!(max_score("011101"), 5);
+        assert_eq!(max_score("00111"), 5);
+        assert_eq!(max_score("1111"), 3);
     }
 
     #[test]
