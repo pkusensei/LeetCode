@@ -5,24 +5,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn vowel_strings(words: &[&str], queries: &[[i32; 2]]) -> Vec<i32> {
-    const VOWELS: &[u8] = b"aeiou";
-    let mut prefix = Vec::with_capacity(words.len());
-    for word in words.iter() {
-        let s = word.as_bytes();
-        prefix.push(
-            i32::from(VOWELS.contains(&s[0]) && VOWELS.contains(s.last().unwrap()))
-                + prefix.last().unwrap_or(&0),
-        );
+pub fn ways_to_split_array(nums: &[i32]) -> i32 {
+    let n = nums.len();
+    let mut prefix = Vec::with_capacity(n);
+    for &num in nums.iter() {
+        prefix.push(i64::from(num) + prefix.last().unwrap_or(&0));
     }
-    let mut res = Vec::with_capacity(queries.len());
-    for q in queries {
-        let (left, right) = (q[0] as usize, q[1] as usize);
-        if left == 0 {
-            res.push(prefix[right]);
-        } else {
-            res.push(prefix[right] - prefix[left - 1]);
-        }
+    let mut res = 0;
+    for i in 0..n - 1 {
+        let a = prefix[i];
+        let b = prefix[n - 1] - prefix[i];
+        res += i32::from(a >= b);
     }
     res
 }
@@ -35,14 +28,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            vowel_strings(&["aba", "bcb", "ece", "aa", "e"], &[[0, 2], [1, 4], [1, 1]]),
-            [2, 3, 0]
-        );
-        assert_eq!(
-            vowel_strings(&["a", "e", "i"], &[[0, 2], [0, 1], [2, 2]]),
-            [3, 2, 1]
-        );
+        assert_eq!(ways_to_split_array(&[10, 4, -8, 7]), 2);
+        assert_eq!(ways_to_split_array(&[2, 3, 1, 0]), 2);
     }
 
     #[test]
