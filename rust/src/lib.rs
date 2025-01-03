@@ -5,19 +5,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn ways_to_split_array(nums: &[i32]) -> i32 {
-    let n = nums.len();
-    let mut prefix = Vec::with_capacity(n);
-    for &num in nums.iter() {
-        prefix.push(i64::from(num) + prefix.last().unwrap_or(&0));
+pub fn break_palindrome(palindrome: String) -> String {
+    if palindrome.len() <= 1 {
+        return String::new();
     }
-    let mut res = 0;
-    for i in 0..n - 1 {
-        let a = prefix[i];
-        let b = prefix[n - 1] - prefix[i];
-        res += i32::from(a >= b);
+    let mut s = palindrome.into_bytes();
+    if let Some(v) = s.iter_mut().find(|b| **b != b'a') {
+        *v = b'a';
+    } else {
+        s.last_mut().map(|b| *b = b'b');
     }
-    res
+    String::from_utf8(s).unwrap()
 }
 
 #[cfg(test)]
@@ -28,8 +26,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(ways_to_split_array(&[10, 4, -8, 7]), 2);
-        assert_eq!(ways_to_split_array(&[2, 3, 1, 0]), 2);
+        assert_eq!(break_palindrome("abccba".into()), "aaccba");
+        assert_eq!(break_palindrome("a".into()), "");
     }
 
     #[test]
