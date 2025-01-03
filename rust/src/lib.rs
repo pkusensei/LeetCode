@@ -5,17 +5,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn break_palindrome(palindrome: String) -> String {
-    if palindrome.len() <= 1 {
-        return String::new();
+pub fn diagonal_sort(mat: &[&[i32]]) -> Vec<Vec<i32>> {
+    let (rows, cols) = get_dimensions(mat);
+    let mut map = std::collections::HashMap::<i32, (Vec<_>, Vec<_>)>::new();
+    let mut res = vec![vec![0; cols]; rows];
+    for (y, row) in mat.iter().enumerate() {
+        for (x, &num) in row.iter().enumerate() {
+            let v = map.entry(y as i32 - x as i32).or_default();
+            v.0.push((y, x));
+            v.1.push(num);
+        }
     }
-    let mut s = palindrome.into_bytes();
-    if let Some(v) = s.iter_mut().find(|b| **b != b'a') {
-        *v = b'a';
-    } else {
-        s.last_mut().map(|b| *b = b'b');
+    for v in map.values_mut() {
+        v.1.sort_unstable();
     }
-    String::from_utf8(s).unwrap()
+    for ((y, x), num) in map
+        .into_values()
+        .flat_map(|(v1, v2)| v1.into_iter().zip(v2))
+    {
+        res[y][x] = num
+    }
+    res
 }
 
 #[cfg(test)]
@@ -26,8 +36,26 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(break_palindrome("abccba".into()), "aaccba");
-        assert_eq!(break_palindrome("a".into()), "");
+        assert_eq!(
+            diagonal_sort(&[&[3, 3, 1, 1], &[2, 2, 1, 2], &[1, 1, 1, 2]]),
+            [[1, 1, 1, 1], [1, 2, 2, 2], [1, 2, 3, 3]]
+        );
+        assert_eq!(
+            diagonal_sort(&[
+                &[11, 25, 66, 1, 69, 7],
+                &[23, 55, 17, 45, 15, 52],
+                &[75, 31, 36, 44, 58, 8],
+                &[22, 27, 33, 25, 68, 4],
+                &[84, 28, 14, 11, 5, 50]
+            ]),
+            [
+                [5, 17, 4, 1, 52, 7],
+                [11, 11, 25, 45, 8, 69],
+                [14, 23, 25, 44, 58, 15],
+                [22, 27, 31, 36, 50, 66],
+                [84, 28, 75, 33, 55, 68]
+            ]
+        );
     }
 
     #[test]
