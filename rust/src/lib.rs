@@ -5,27 +5,29 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn diagonal_sort(mat: &[&[i32]]) -> Vec<Vec<i32>> {
-    let (rows, cols) = get_dimensions(mat);
-    let mut map = std::collections::HashMap::<i32, (Vec<_>, Vec<_>)>::new();
-    let mut res = vec![vec![0; cols]; rows];
-    for (y, row) in mat.iter().enumerate() {
-        for (x, &num) in row.iter().enumerate() {
-            let v = map.entry(y as i32 - x as i32).or_default();
-            v.0.push((y, x));
-            v.1.push(num);
+pub fn count_palindromic_subsequence(s: &str) -> i32 {
+    let n = s.len();
+    let mut count = [0u16; 26];
+    let mut prefix = Vec::with_capacity(n);
+    let mut map = std::collections::HashMap::new();
+    for (i, b) in s.bytes().enumerate() {
+        count[usize::from(b - b'a')] += 1;
+        prefix.push(count);
+        map.entry(b).or_insert(i);
+    }
+    let mut res = 0;
+    for (i, b) in s.bytes().enumerate().rev() {
+        let Some(&left) = map.get(&b).filter(|&&v| v != i) else {
+            continue;
+        };
+        map.remove(&b);
+        let (left, mut right) = (prefix[left], prefix[i - 1]);
+        for (a, b) in right.iter_mut().zip(left) {
+            *a -= b;
         }
+        res += right.into_iter().filter(|&v| v > 0).count();
     }
-    for v in map.values_mut() {
-        v.1.sort_unstable();
-    }
-    for ((y, x), num) in map
-        .into_values()
-        .flat_map(|(v1, v2)| v1.into_iter().zip(v2))
-    {
-        res[y][x] = num
-    }
-    res
+    res as _
 }
 
 #[cfg(test)]
@@ -36,26 +38,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            diagonal_sort(&[&[3, 3, 1, 1], &[2, 2, 1, 2], &[1, 1, 1, 2]]),
-            [[1, 1, 1, 1], [1, 2, 2, 2], [1, 2, 3, 3]]
-        );
-        assert_eq!(
-            diagonal_sort(&[
-                &[11, 25, 66, 1, 69, 7],
-                &[23, 55, 17, 45, 15, 52],
-                &[75, 31, 36, 44, 58, 8],
-                &[22, 27, 33, 25, 68, 4],
-                &[84, 28, 14, 11, 5, 50]
-            ]),
-            [
-                [5, 17, 4, 1, 52, 7],
-                [11, 11, 25, 45, 8, 69],
-                [14, 23, 25, 44, 58, 15],
-                [22, 27, 31, 36, 50, 66],
-                [84, 28, 75, 33, 55, 68]
-            ]
-        );
+        assert_eq!(count_palindromic_subsequence("aabca"), 3);
+        assert_eq!(count_palindromic_subsequence("abc"), 0);
+        assert_eq!(count_palindromic_subsequence("bbcbaba"), 4);
     }
 
     #[test]
