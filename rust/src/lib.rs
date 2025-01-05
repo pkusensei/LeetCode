@@ -2,23 +2,32 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::{BinaryHeap, HashMap};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn k_weakest_rows(mat: &[&[i32]], k: i32) -> Vec<i32> {
-    let mut rows: Vec<_> = mat
+pub fn min_set_size(arr: &[i32]) -> i32 {
+    let n = arr.len();
+    let mut heap: BinaryHeap<_> = arr
         .iter()
-        .enumerate()
-        .map(|(idx, row)| {
-            let count = row.partition_point(|&v| v == 1);
-            [count, idx]
+        .fold(HashMap::new(), |mut acc, &num| {
+            *acc.entry(num).or_insert(0) += 1;
+            acc
         })
+        .into_iter()
+        .map(|(num, count)| (count, num))
         .collect();
-    rows.sort_unstable();
-    rows.into_iter()
-        .map(|v| v[1] as i32)
-        .take(k as usize)
-        .collect()
+    let mut count = 0;
+    let mut res = 0;
+    while count < n / 2 {
+        let Some((c, _v)) = heap.pop() else {
+            break;
+        };
+        count += c;
+        res += 1;
+    }
+    res
 }
 
 #[cfg(test)]
@@ -29,26 +38,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            k_weakest_rows(
-                &[
-                    &[1, 1, 0, 0, 0],
-                    &[1, 1, 1, 1, 0],
-                    &[1, 0, 0, 0, 0],
-                    &[1, 1, 0, 0, 0],
-                    &[1, 1, 1, 1, 1]
-                ],
-                3
-            ),
-            [2, 0, 3]
-        );
-        assert_eq!(
-            k_weakest_rows(
-                &[&[1, 0, 0, 0], &[1, 1, 1, 1], &[1, 0, 0, 0], &[1, 0, 0, 0]],
-                2
-            ),
-            [0, 2]
-        );
+        assert_eq!(min_set_size(&[3, 3, 3, 3, 5, 5, 5, 2, 2, 7]), 2);
+        assert_eq!(min_set_size(&[7, 7, 7, 7, 7, 7]), 1);
     }
 
     #[test]
