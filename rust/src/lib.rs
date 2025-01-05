@@ -5,29 +5,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_palindromic_subsequence(s: &str) -> i32 {
-    let n = s.len();
-    let mut count = [0u16; 26];
-    let mut prefix = Vec::with_capacity(n);
-    let mut map = std::collections::HashMap::new();
-    for (i, b) in s.bytes().enumerate() {
-        count[usize::from(b - b'a')] += 1;
-        prefix.push(count);
-        map.entry(b).or_insert(i);
-    }
-    let mut res = 0;
-    for (i, b) in s.bytes().enumerate().rev() {
-        let Some(&left) = map.get(&b).filter(|&&v| v != i) else {
-            continue;
-        };
-        map.remove(&b);
-        let (left, mut right) = (prefix[left], prefix[i - 1]);
-        for (a, b) in right.iter_mut().zip(left) {
-            *a -= b;
+pub fn shifting_letters(s: String, shifts: &[[i32; 3]]) -> String {
+    let (n, mut s) = (s.len(), s.into_bytes());
+    let mut prefix = vec![0; n];
+    for shift in shifts.iter() {
+        let [a, b] = [0, 1].map(|v| shift[v] as usize);
+        let c = if shift[2] == 1 { 1 } else { -1 };
+        for v in prefix[a..=b].iter_mut() {
+            *v += c;
         }
-        res += right.into_iter().filter(|&v| v > 0).count();
     }
-    res as _
+    for (byte, diff) in s.iter_mut().zip(prefix) {
+        let num = i32::from(*byte - b'a') + diff;
+        *byte = num.rem_euclid(26) as u8 + b'a';
+    }
+    String::from_utf8(s).unwrap()
 }
 
 #[cfg(test)]
@@ -38,9 +30,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(count_palindromic_subsequence("aabca"), 3);
-        assert_eq!(count_palindromic_subsequence("abc"), 0);
-        assert_eq!(count_palindromic_subsequence("bbcbaba"), 4);
+        assert_eq!(
+            shifting_letters("abc".into(), &[[0, 1, 0], [1, 2, 1], [0, 2, 1]]),
+            "ace",
+        );
+        assert_eq!(
+            shifting_letters("dztz".into(), &[[0, 0, 0], [1, 1, 1]]),
+            "catz"
+        );
     }
 
     #[test]
