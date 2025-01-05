@@ -5,50 +5,53 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_the_city(n: i32, edges: &[[i32; 3]], distance_threshold: i32) -> i32 {
-    let n = n as usize;
-    let mut mat = vec![vec![1 + distance_threshold; n]; n];
-    for i in 0..n {
-        mat[i][i] = 0;
+pub fn min_difficulty(job_difficulty: &[i32], d: i32) -> i32 {
+    let (n, d) = (job_difficulty.len(), d as usize);
+    // dfs(job_difficulty, 0, d, &mut vec![vec![-1; n]; 1 + d]).unwrap_or(-1)
+    if n < d {
+        return -1;
     }
-    for e in edges.iter() {
-        let [a, b] = [0, 1].map(|i| e[i] as usize);
-        mat[a][b] = e[2];
-        mat[b][a] = e[2];
+    let mut dp = vec![vec![i32::MAX; 1 + n]; 1 + d];
+    dp[0][0] = 0;
+    for i1 in 1..=d {
+        for i2 in i1..=n {
+            let mut curr_max = 0;
+            for i3 in (i1 - 1..i2).rev() {
+                curr_max = curr_max.max(job_difficulty[i3]);
+                if dp[i1 - 1][i3] != i32::MAX {
+                    dp[i1][i2] = dp[i1][i2].min(dp[i1 - 1][i3] + curr_max);
+                }
+            }
+        }
     }
-    floyd(&mut mat, n);
-    city_with_fewest_reachable(n, &mat, distance_threshold)
+    dp[d][n]
 }
 
-fn floyd(mat: &mut [Vec<i32>], n: usize) {
-    for inter in 0..n {
-        for i1 in 0..n {
-            for i2 in 0..n {
-                mat[i1][i2] = mat[i1][i2].min(mat[i1][inter] + mat[inter][i2]);
-            }
-        }
+fn dfs(nums: &[i32], idx: usize, d: usize, memo: &mut [Vec<i32>]) -> Option<i32> {
+    if nums[idx..].len() < d {
+        return None;
     }
-}
-
-fn city_with_fewest_reachable(n: usize, mat: &[Vec<i32>], distance_threshold: i32) -> i32 {
-    let mut city = -1;
-    let mut count = n;
-    for i1 in 0..n {
-        let mut curr = 0;
-        for i2 in 0..n {
-            if i1 == i2 {
-                continue;
-            }
-            if mat[i1][i2] <= distance_threshold {
-                curr += 1;
-            }
-        }
-        if curr <= count {
-            count = curr;
-            city = i1 as i32;
-        }
+    if memo[d][idx] > -1 {
+        return Some(memo[d][idx]);
     }
-    city
+    if 1 == d {
+        return Some(*nums[idx..].iter().max().unwrap());
+    }
+    let mut res = i32::MAX;
+    let mut curr_max = 0;
+    for (i, &num) in nums.iter().enumerate().skip(idx) {
+        let Some(right) = dfs(nums, 1 + i, d - 1, memo) else {
+            break;
+        };
+        curr_max = curr_max.max(num);
+        res = res.min(curr_max + right);
+    }
+    if res == i32::MAX {
+        None
+    } else {
+        memo[d][idx] = res;
+        Some(res)
+    }
 }
 
 #[cfg(test)]
@@ -59,29 +62,18 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            find_the_city(4, &[[0, 1, 3], [1, 2, 1], [1, 3, 4], [2, 3, 1]], 4),
-            3
-        );
-        assert_eq!(
-            find_the_city(
-                5,
-                &[
-                    [0, 1, 2],
-                    [0, 4, 8],
-                    [1, 2, 3],
-                    [1, 4, 2],
-                    [2, 3, 1],
-                    [3, 4, 1]
-                ],
-                2
-            ),
-            0
-        );
+        assert_eq!(min_difficulty(&[6, 5, 4, 3, 2, 1], 2), 7);
+        assert_eq!(min_difficulty(&[9, 9, 9], 4), -1);
+        assert_eq!(min_difficulty(&[1, 1, 1], 3), 3);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(
+            min_difficulty(&[11, 111, 22, 222, 33, 333, 44, 444], 6),
+            843
+        );
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
