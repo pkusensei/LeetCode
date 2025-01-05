@@ -5,25 +5,50 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn filter_restaurants(
-    restaurants: Vec<[i32; 5]>,
-    vegan_friendly: i32,
-    max_price: i32,
-    max_distance: i32,
-) -> Vec<i32> {
-    let mut res: Vec<_> = restaurants
-        .into_iter()
-        .filter_map(|v| {
-            let [id, rating, vf, price, dist] = v;
-            if vf >= vegan_friendly && price <= max_price && dist <= max_distance {
-                Some([id, rating])
-            } else {
-                None
+pub fn find_the_city(n: i32, edges: &[[i32; 3]], distance_threshold: i32) -> i32 {
+    let n = n as usize;
+    let mut mat = vec![vec![1 + distance_threshold; n]; n];
+    for i in 0..n {
+        mat[i][i] = 0;
+    }
+    for e in edges.iter() {
+        let [a, b] = [0, 1].map(|i| e[i] as usize);
+        mat[a][b] = e[2];
+        mat[b][a] = e[2];
+    }
+    floyd(&mut mat, n);
+    city_with_fewest_reachable(n, &mat, distance_threshold)
+}
+
+fn floyd(mat: &mut [Vec<i32>], n: usize) {
+    for inter in 0..n {
+        for i1 in 0..n {
+            for i2 in 0..n {
+                mat[i1][i2] = mat[i1][i2].min(mat[i1][inter] + mat[inter][i2]);
             }
-        })
-        .collect();
-    res.sort_unstable_by(|a, b| b[1].cmp(&a[1]).then(b[0].cmp(&a[0])));
-    res.into_iter().map(|[id, _]| id).collect()
+        }
+    }
+}
+
+fn city_with_fewest_reachable(n: usize, mat: &[Vec<i32>], distance_threshold: i32) -> i32 {
+    let mut city = -1;
+    let mut count = n;
+    for i1 in 0..n {
+        let mut curr = 0;
+        for i2 in 0..n {
+            if i1 == i2 {
+                continue;
+            }
+            if mat[i1][i2] <= distance_threshold {
+                curr += 1;
+            }
+        }
+        if curr <= count {
+            count = curr;
+            city = i1 as i32;
+        }
+    }
+    city
 }
 
 #[cfg(test)]
@@ -35,49 +60,23 @@ mod tests {
     #[test]
     fn basics() {
         assert_eq!(
-            filter_restaurants(
-                vec![
-                    [1, 4, 1, 40, 10],
-                    [2, 8, 0, 50, 5],
-                    [3, 8, 1, 30, 4],
-                    [4, 10, 0, 10, 3],
-                    [5, 1, 1, 15, 1]
-                ],
-                1,
-                50,
-                10
-            ),
-            [3, 1, 5]
+            find_the_city(4, &[[0, 1, 3], [1, 2, 1], [1, 3, 4], [2, 3, 1]], 4),
+            3
         );
         assert_eq!(
-            filter_restaurants(
-                vec![
-                    [1, 4, 1, 40, 10],
-                    [2, 8, 0, 50, 5],
-                    [3, 8, 1, 30, 4],
-                    [4, 10, 0, 10, 3],
-                    [5, 1, 1, 15, 1]
+            find_the_city(
+                5,
+                &[
+                    [0, 1, 2],
+                    [0, 4, 8],
+                    [1, 2, 3],
+                    [1, 4, 2],
+                    [2, 3, 1],
+                    [3, 4, 1]
                 ],
-                0,
-                50,
-                10
+                2
             ),
-            [4, 3, 2, 1, 5]
-        );
-        assert_eq!(
-            filter_restaurants(
-                vec![
-                    [1, 4, 1, 40, 10],
-                    [2, 8, 0, 50, 5],
-                    [3, 8, 1, 30, 4],
-                    [4, 10, 0, 10, 3],
-                    [5, 1, 1, 15, 1]
-                ],
-                0,
-                30,
-                3
-            ),
-            [4, 5]
+            0
         );
     }
 
