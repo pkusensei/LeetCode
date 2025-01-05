@@ -5,53 +5,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_difficulty(job_difficulty: &[i32], d: i32) -> i32 {
-    let (n, d) = (job_difficulty.len(), d as usize);
-    // dfs(job_difficulty, 0, d, &mut vec![vec![-1; n]; 1 + d]).unwrap_or(-1)
-    if n < d {
-        return -1;
-    }
-    let mut dp = vec![vec![i32::MAX; 1 + n]; 1 + d];
-    dp[0][0] = 0;
-    for i1 in 1..=d {
-        for i2 in i1..=n {
-            let mut curr_max = 0;
-            for i3 in (i1 - 1..i2).rev() {
-                curr_max = curr_max.max(job_difficulty[i3]);
-                if dp[i1 - 1][i3] != i32::MAX {
-                    dp[i1][i2] = dp[i1][i2].min(dp[i1 - 1][i3] + curr_max);
-                }
-            }
-        }
-    }
-    dp[d][n]
-}
-
-fn dfs(nums: &[i32], idx: usize, d: usize, memo: &mut [Vec<i32>]) -> Option<i32> {
-    if nums[idx..].len() < d {
-        return None;
-    }
-    if memo[d][idx] > -1 {
-        return Some(memo[d][idx]);
-    }
-    if 1 == d {
-        return Some(*nums[idx..].iter().max().unwrap());
-    }
-    let mut res = i32::MAX;
-    let mut curr_max = 0;
-    for (i, &num) in nums.iter().enumerate().skip(idx) {
-        let Some(right) = dfs(nums, 1 + i, d - 1, memo) else {
-            break;
-        };
-        curr_max = curr_max.max(num);
-        res = res.min(curr_max + right);
-    }
-    if res == i32::MAX {
-        None
-    } else {
-        memo[d][idx] = res;
-        Some(res)
-    }
+pub fn k_weakest_rows(mat: &[&[i32]], k: i32) -> Vec<i32> {
+    let mut rows: Vec<_> = mat
+        .iter()
+        .enumerate()
+        .map(|(idx, row)| {
+            let count = row.partition_point(|&v| v == 1);
+            [count, idx]
+        })
+        .collect();
+    rows.sort_unstable();
+    rows.into_iter()
+        .map(|v| v[1] as i32)
+        .take(k as usize)
+        .collect()
 }
 
 #[cfg(test)]
@@ -62,18 +29,30 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_difficulty(&[6, 5, 4, 3, 2, 1], 2), 7);
-        assert_eq!(min_difficulty(&[9, 9, 9], 4), -1);
-        assert_eq!(min_difficulty(&[1, 1, 1], 3), 3);
+        assert_eq!(
+            k_weakest_rows(
+                &[
+                    &[1, 1, 0, 0, 0],
+                    &[1, 1, 1, 1, 0],
+                    &[1, 0, 0, 0, 0],
+                    &[1, 1, 0, 0, 0],
+                    &[1, 1, 1, 1, 1]
+                ],
+                3
+            ),
+            [2, 0, 3]
+        );
+        assert_eq!(
+            k_weakest_rows(
+                &[&[1, 0, 0, 0], &[1, 1, 1, 1], &[1, 0, 0, 0], &[1, 0, 0, 0]],
+                2
+            ),
+            [0, 2]
+        );
     }
 
     #[test]
-    fn test() {
-        assert_eq!(
-            min_difficulty(&[11, 111, 22, 222, 33, 333, 44, 444], 6),
-            843
-        );
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
