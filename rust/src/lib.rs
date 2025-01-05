@@ -5,30 +5,12 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_value_after_reverse(nums: &[i32]) -> i32 {
-    let [mut total, mut inc] = [0; 2];
-    let [mut minmax, mut maxmin] = [i32::MAX, i32::MIN];
-    let n = nums.len();
-    for w in nums.windows(2) {
-        let [a, b] = [w[0], w[1]];
-        let curr = a.abs_diff(b) as i32;
-        total += curr;
-        minmax = minmax.min(a.max(b));
-        maxmin = maxmin.max(a.min(b));
-        // reverse left half or right half
-        inc = inc
-            .max(nums[0].abs_diff(b) as i32 - curr)
-            .max(nums[n - 1].abs_diff(a) as i32 - curr);
+pub fn remove_palindrome_sub(s: &str) -> i32 {
+    if s.bytes().zip(s.bytes().rev()).all(|(a, b)| a == b) {
+        1
+    } else {
+        2
     }
-    total + inc.max(2 * (maxmin - minmax))
-    // [..a, b.. c, d..] yields delta = max(a,b)-min(a,b) + max(c,d)-min(c,d)
-    // Reverse it to [..a, c.. b, d..]
-    // 1) max(a,b)>=min(c,d)
-    //    max(a,c)-min(a,c) + max(b,d)-min(b,d) <= delta
-    //    This reversal is not desired
-    // 2) max(a,b)<min(c,d)
-    //    A reversal is an increase of 2*(min(c,d)-max(a,b))+delta
-    //    Now keep track of max(min(c,d)) and min(max(a,b))
 }
 
 #[cfg(test)]
@@ -39,8 +21,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_value_after_reverse(&[2, 3, 1, 5, 4]), 10);
-        assert_eq!(max_value_after_reverse(&[2, 4, 9, 24, 2, 1, 10]), 68);
+        assert_eq!(remove_palindrome_sub("ababa"), 1);
+        assert_eq!(remove_palindrome_sub("abb"), 2);
+        assert_eq!(remove_palindrome_sub("baabb"), 2);
     }
 
     #[test]
