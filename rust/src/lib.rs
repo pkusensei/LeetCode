@@ -2,30 +2,48 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::{BinaryHeap, HashMap};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_set_size(arr: &[i32]) -> i32 {
-    let n = arr.len();
-    let mut heap: BinaryHeap<_> = arr
-        .iter()
-        .fold(HashMap::new(), |mut acc, &num| {
-            *acc.entry(num).or_insert(0) += 1;
-            acc
-        })
-        .into_iter()
-        .map(|(num, count)| (count, num))
-        .collect();
-    let mut count = 0;
-    let mut res = 0;
-    while count < n / 2 {
-        let Some((c, _v)) = heap.pop() else {
-            break;
-        };
-        count += c;
-        res += 1;
+pub fn min_operations(boxes: &str) -> Vec<i32> {
+    let n = boxes.len();
+    let mut prefix = Vec::with_capacity(n);
+    for b in boxes.bytes() {
+        prefix.push(i32::from(b - b'0') + prefix.last().unwrap_or(&0));
+    }
+    let ones = prefix[n - 1];
+    let mut res = Vec::with_capacity(n);
+    let mut curr: i32 = boxes
+        .bytes()
+        .enumerate()
+        .skip(1)
+        .filter_map(|(i, b)| if b == b'1' { Some(i as i32) } else { None })
+        .sum();
+    res.push(curr);
+    for (i, b) in boxes.bytes().enumerate().skip(1) {
+        curr += prefix[i - 1];
+        curr -= ones - prefix[i];
+        if b == b'1' {
+            curr -= 1;
+        }
+        res.push(curr);
+    }
+    res
+}
+
+fn single_pass(boxes: &str) -> Vec<i32> {
+    let n = boxes.len();
+    let mut res = vec![0; n];
+    let [mut balls_left, mut moves_to_left, mut balls_right, mut moves_to_right] = [0; 4];
+    for (i1, b) in boxes.bytes().enumerate() {
+        res[i1] += moves_to_left;
+        balls_left += i32::from(b - b'0');
+        moves_to_left += balls_left;
+
+        let i2 = n - 1 - i1;
+        res[i2] += moves_to_right;
+        balls_right += i32::from(boxes.as_bytes()[i2] - b'0');
+        moves_to_right += balls_right;
     }
     res
 }
@@ -38,8 +56,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_set_size(&[3, 3, 3, 3, 5, 5, 5, 2, 2, 7]), 2);
-        assert_eq!(min_set_size(&[7, 7, 7, 7, 7, 7]), 1);
+        assert_eq!(min_operations("110"), [1, 1, 3]);
+        assert_eq!(min_operations("001011"), [11, 8, 5, 4, 3, 4]);
+
+        assert_eq!(single_pass("110"), [1, 1, 3]);
+        assert_eq!(single_pass("001011"), [11, 8, 5, 4, 3, 4]);
     }
 
     #[test]
