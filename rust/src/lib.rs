@@ -5,13 +5,38 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_negatives(grid: &[&[i32]]) -> i32 {
-    grid.iter()
-        .map(|row| {
-            let i = row.partition_point(|&v| v >= 0);
-            (row.len() - i) as i32
-        })
-        .sum()
+#[derive(Debug, Clone, Default)]
+struct ProductOfNumbers {
+    nums: Vec<u64>,
+}
+
+impl ProductOfNumbers {
+    fn new() -> Self {
+        Default::default()
+    }
+
+    fn add(&mut self, num: i32) {
+        if num == 0 {
+            self.nums.clear();
+        } else {
+            match self.nums.last() {
+                None | Some(&0) => self.nums.push(num as u64),
+                Some(v) => self.nums.push(num as u64 * v),
+            };
+        }
+    }
+
+    fn get_product(&self, k: i32) -> i32 {
+        let (n, k) = (self.nums.len(), k as usize);
+        let Some(i) = n.checked_sub(k) else {
+            return 0;
+        };
+        if i == 0 {
+            self.nums[n - 1] as _
+        } else {
+            (self.nums[n - 1] / self.nums[i - 1]) as _
+        }
+    }
 }
 
 #[cfg(test)]
@@ -22,16 +47,17 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            count_negatives(&[
-                &[4, 3, 2, -1],
-                &[3, 2, 1, -1],
-                &[1, 1, -1, -2],
-                &[-1, -1, -2, -3]
-            ]),
-            8
-        );
-        assert_eq!(count_negatives(&[&[3, 2], &[1, 0]]), 0);
+        let mut pon = ProductOfNumbers::new();
+        pon.add(3); // [3]
+        pon.add(0); // [3,0]
+        pon.add(2); // [3,0,2]
+        pon.add(5); // [3,0,2,5]
+        pon.add(4); // [3,0,2,5,4]
+        assert_eq!(pon.get_product(2), 20); // return 20. The product of the last 2 numbers is 5 * 4 = 20
+        assert_eq!(pon.get_product(3), 40); // return 40. The product of the last 3 numbers is 2 * 5 * 4 = 40
+        assert_eq!(pon.get_product(4), 0); // return 0. The product of the last 4 numbers is 0 * 2 * 5 * 4 = 0
+        pon.add(8); // [3,0,2,5,4,8]
+        assert_eq!(pon.get_product(2), 32); // return 32. The product of the last 2 numbers is 4 * 8 = 32
     }
 
     #[test]
