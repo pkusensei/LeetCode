@@ -5,47 +5,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_operations(boxes: &str) -> Vec<i32> {
-    let n = boxes.len();
-    let mut prefix = Vec::with_capacity(n);
-    for b in boxes.bytes() {
-        prefix.push(i32::from(b - b'0') + prefix.last().unwrap_or(&0));
-    }
-    let ones = prefix[n - 1];
-    let mut res = Vec::with_capacity(n);
-    let mut curr: i32 = boxes
-        .bytes()
-        .enumerate()
-        .skip(1)
-        .filter_map(|(i, b)| if b == b'1' { Some(i as i32) } else { None })
-        .sum();
-    res.push(curr);
-    for (i, b) in boxes.bytes().enumerate().skip(1) {
-        curr += prefix[i - 1];
-        curr -= ones - prefix[i];
-        if b == b'1' {
-            curr -= 1;
+pub fn max_jumps(arr: &[i32], d: i32) -> i32 {
+    let mut nums: Vec<_> = arr.iter().enumerate().map(|(i, &v)| (i, v)).collect();
+    nums.sort_unstable_by_key(|(_i, v)| std::cmp::Reverse(*v));
+    let (n, d) = (arr.len(), d as usize);
+    let mut dp = vec![1; n];
+    for (i1, v) in nums {
+        for i2 in (i1.saturating_sub(d)..i1)
+            .rev()
+            .take_while(|i2| arr[*i2] < v)
+        {
+            dp[i2] = dp[i2].max(1 + dp[i1]);
         }
-        res.push(curr);
+        for i2 in (1 + i1..=(i1 + d).min(n - 1)).take_while(|i2| arr[*i2] < v) {
+            dp[i2] = dp[i2].max(1 + dp[i1]);
+        }
     }
-    res
-}
-
-fn single_pass(boxes: &str) -> Vec<i32> {
-    let n = boxes.len();
-    let mut res = vec![0; n];
-    let [mut balls_left, mut moves_to_left, mut balls_right, mut moves_to_right] = [0; 4];
-    for (i1, b) in boxes.bytes().enumerate() {
-        res[i1] += moves_to_left;
-        balls_left += i32::from(b - b'0');
-        moves_to_left += balls_left;
-
-        let i2 = n - 1 - i1;
-        res[i2] += moves_to_right;
-        balls_right += i32::from(boxes.as_bytes()[i2] - b'0');
-        moves_to_right += balls_right;
-    }
-    res
+    dp.into_iter().max().unwrap_or(1)
 }
 
 #[cfg(test)]
@@ -56,11 +32,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_operations("110"), [1, 1, 3]);
-        assert_eq!(min_operations("001011"), [11, 8, 5, 4, 3, 4]);
-
-        assert_eq!(single_pass("110"), [1, 1, 3]);
-        assert_eq!(single_pass("001011"), [11, 8, 5, 4, 3, 4]);
+        assert_eq!(max_jumps(&[6, 4, 14, 6, 8, 13, 9, 7, 10, 6, 12], 2), 4);
+        assert_eq!(max_jumps(&[3, 3, 3, 3, 3], 3), 1);
+        assert_eq!(max_jumps(&[7, 6, 5, 4, 3, 2, 1], 1), 7);
     }
 
     #[test]
