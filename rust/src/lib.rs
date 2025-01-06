@@ -5,23 +5,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_jumps(arr: &[i32], d: i32) -> i32 {
-    let mut nums: Vec<_> = arr.iter().enumerate().map(|(i, &v)| (i, v)).collect();
-    nums.sort_unstable_by_key(|(_i, v)| std::cmp::Reverse(*v));
-    let (n, d) = (arr.len(), d as usize);
-    let mut dp = vec![1; n];
-    for (i1, v) in nums {
-        for i2 in (i1.saturating_sub(d)..i1)
-            .rev()
-            .take_while(|i2| arr[*i2] < v)
-        {
-            dp[i2] = dp[i2].max(1 + dp[i1]);
-        }
-        for i2 in (1 + i1..=(i1 + d).min(n - 1)).take_while(|i2| arr[*i2] < v) {
-            dp[i2] = dp[i2].max(1 + dp[i1]);
-        }
+pub fn num_of_subarrays(arr: &[i32], k: i32, threshold: i32) -> i32 {
+    let sum = k * threshold;
+    let (n, k) = (arr.len(), k as usize);
+    let mut curr: i32 = arr[..k].iter().sum();
+    let mut res = i32::from(curr >= sum);
+    for i in 1..=n - k {
+        curr += arr[i + k - 1] - arr[i - 1];
+        res += i32::from(curr >= sum);
     }
-    dp.into_iter().max().unwrap_or(1)
+    res
 }
 
 #[cfg(test)]
@@ -32,9 +25,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_jumps(&[6, 4, 14, 6, 8, 13, 9, 7, 10, 6, 12], 2), 4);
-        assert_eq!(max_jumps(&[3, 3, 3, 3, 3], 3), 1);
-        assert_eq!(max_jumps(&[7, 6, 5, 4, 3, 2, 1], 1), 7);
+        assert_eq!(num_of_subarrays(&[2, 2, 2, 2, 5, 5, 5, 8], 3, 4), 3);
+        assert_eq!(
+            num_of_subarrays(&[11, 13, 17, 23, 29, 31, 7, 5, 2, 3], 3, 5),
+            6
+        );
     }
 
     #[test]
