@@ -5,18 +5,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn check_if_exist(arr: &[i32]) -> bool {
-    let mut seen = std::collections::HashSet::new();
-    for &num in arr.iter() {
-        if seen.contains(&(2 * num)) {
-            return true;
-        }
-        if num & 1 == 0 && seen.contains(&(num / 2)) {
-            return true;
-        }
-        seen.insert(num);
-    }
-    false
+pub fn min_steps(s: &str, t: &str) -> i32 {
+    let [a, b] = [s, t].map(|v| {
+        v.bytes().fold([0i32; 26], |mut acc, b| {
+            acc[usize::from(b - b'a')] += 1;
+            acc
+        })
+    });
+    (a.into_iter()
+        .zip(b)
+        .map(|(a, b)| a.abs_diff(b))
+        .sum::<u32>()
+        / 2) as i32
 }
 
 #[cfg(test)]
@@ -27,14 +27,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert!(check_if_exist(&[10, 2, 5, 3]));
-        assert!(!check_if_exist(&[3, 1, 7, 11]));
+        assert_eq!(min_steps("bab", "aba"), 1);
+        assert_eq!(min_steps("leetcode", "practice"), 5);
+        assert_eq!(min_steps("anagram", "mangaar"), 0);
     }
 
     #[test]
-    fn test() {
-        assert!(!check_if_exist(&[4, -7, 11, 4, 18]));
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
