@@ -10,18 +10,17 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(new int[] { 1, 4, 6, 7, 8, 20 }, new int[] { 2, 7, 15 }, 11)]
-    [DataRow(new int[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 30, 31 }, new int[] { 2, 7, 15 }, 17)]
-    [DataRow(new int[] { 1, 4, 6, 7, 8, 20 }, new int[] { 7, 2, 15 }, 6)]
-    public void TestMethod1(int[] days, int[] costs, int exp)
+    public void TestMethod1()
     {
-        Assert.AreEqual(exp, sol.MincostTickets(days, costs));
-        Assert.AreEqual(exp, sol.TopDown(days, costs));
+        var a = TreeNode.MakeInt([1, 2, 3, 4, 5, 6]);
+        Assert.AreEqual(110, sol.MaxProduct(a));
     }
 
     [TestMethod]
     public void TestMethod2()
     {
+        var a = TreeNode.Make([1,null,2,3,4,null,null,5,6]);
+        Assert.AreEqual(90, sol.MaxProduct(a));
     }
 
     [TestMethod]
