@@ -5,16 +5,15 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_of_subarrays(arr: &[i32], k: i32, threshold: i32) -> i32 {
-    let sum = k * threshold;
-    let (n, k) = (arr.len(), k as usize);
-    let mut curr: i32 = arr[..k].iter().sum();
-    let mut res = i32::from(curr >= sum);
-    for i in 1..=n - k {
-        curr += arr[i + k - 1] - arr[i - 1];
-        res += i32::from(curr >= sum);
+pub fn angle_clock(hour: i32, minutes: i32) -> f64 {
+    let h = f64::from(minutes) / 2.0 + f64::from(hour * 30);
+    let m = f64::from(minutes * 6);
+    let diff = (h - m).abs();
+    if diff <= 180.0 {
+        diff
+    } else {
+        360.0 - diff
     }
-    res
 }
 
 #[cfg(test)]
@@ -25,11 +24,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(num_of_subarrays(&[2, 2, 2, 2, 5, 5, 5, 8], 3, 4), 3);
-        assert_eq!(
-            num_of_subarrays(&[11, 13, 17, 23, 29, 31, 7, 5, 2, 3], 3, 5),
-            6
-        );
+        assert_eq!(angle_clock(12, 30), 165.0);
+        assert_eq!(angle_clock(3, 30), 75.0);
+        assert_eq!(angle_clock(3, 15), 7.5);
     }
 
     #[test]
