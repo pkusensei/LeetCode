@@ -2,18 +2,46 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::{HashMap, VecDeque};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn angle_clock(hour: i32, minutes: i32) -> f64 {
-    let h = f64::from(minutes) / 2.0 + f64::from(hour * 30);
-    let m = f64::from(minutes * 6);
-    let diff = (h - m).abs();
-    if diff <= 180.0 {
-        diff
-    } else {
-        360.0 - diff
+pub fn min_jumps(arr: &[i32]) -> i32 {
+    let n = arr.len();
+    let mut map = HashMap::<_, Vec<_>>::new();
+    for (i, w) in arr.windows(2).enumerate() {
+        if w[0] == w[1] {
+            continue;
+        }
+        map.entry(w[0]).or_default().push(i);
+        map.entry(w[1]).or_default().push(i + 1);
     }
+    map.entry(arr[n - 1]).or_default().push(n - 1);
+    let mut queue = VecDeque::from([(0, 0)]);
+    let mut seen = vec![false; n];
+    seen[0] = true;
+    while let Some((curr, dist)) = queue.pop_front() {
+        if curr == n - 1 {
+            return dist;
+        }
+        for &v in map[&arr[curr]].iter() {
+            if !seen[v] {
+                seen[v] = true;
+                queue.push_back((v, 1 + dist));
+            }
+        }
+        map.get_mut(&arr[curr]).map(|s| s.clear());
+        if let Some(left) = curr.checked_sub(1).filter(|&v| !seen[v]) {
+            seen[left] = true;
+            queue.push_back((left, 1 + dist));
+        }
+        if let Some(right) = curr.checked_add(1).filter(|&v| v < n && !seen[v]) {
+            seen[right] = true;
+            queue.push_back((right, 1 + dist));
+        }
+    }
+    -1
 }
 
 #[cfg(test)]
@@ -24,13 +52,16 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(angle_clock(12, 30), 165.0);
-        assert_eq!(angle_clock(3, 30), 75.0);
-        assert_eq!(angle_clock(3, 15), 7.5);
+        assert_eq!(min_jumps(&[100, -23, -23, 404, 100, 23, 23, 23, 3, 404]), 3);
+        assert_eq!(min_jumps(&[7]), 0);
+        assert_eq!(min_jumps(&[7, 6, 9, 6, 9, 6, 9, 7]), 1);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        // assert_eq!(min_jumps(&[7, 7, 2, 1, 7, 7, 7, 3, 4, 1]), 3);
+        assert_eq!(min_jumps(&[11, 7, 7, 7, 7, 7, 7]), 2);
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
