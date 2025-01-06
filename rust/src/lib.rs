@@ -2,46 +2,21 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::{HashMap, VecDeque};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_jumps(arr: &[i32]) -> i32 {
-    let n = arr.len();
-    let mut map = HashMap::<_, Vec<_>>::new();
-    for (i, w) in arr.windows(2).enumerate() {
-        if w[0] == w[1] {
-            continue;
+pub fn check_if_exist(arr: &[i32]) -> bool {
+    let mut seen = std::collections::HashSet::new();
+    for &num in arr.iter() {
+        if seen.contains(&(2 * num)) {
+            return true;
         }
-        map.entry(w[0]).or_default().push(i);
-        map.entry(w[1]).or_default().push(i + 1);
+        if num & 1 == 0 && seen.contains(&(num / 2)) {
+            return true;
+        }
+        seen.insert(num);
     }
-    map.entry(arr[n - 1]).or_default().push(n - 1);
-    let mut queue = VecDeque::from([(0, 0)]);
-    let mut seen = vec![false; n];
-    seen[0] = true;
-    while let Some((curr, dist)) = queue.pop_front() {
-        if curr == n - 1 {
-            return dist;
-        }
-        for &v in map[&arr[curr]].iter() {
-            if !seen[v] {
-                seen[v] = true;
-                queue.push_back((v, 1 + dist));
-            }
-        }
-        map.get_mut(&arr[curr]).map(|s| s.clear());
-        if let Some(left) = curr.checked_sub(1).filter(|&v| !seen[v]) {
-            seen[left] = true;
-            queue.push_back((left, 1 + dist));
-        }
-        if let Some(right) = curr.checked_add(1).filter(|&v| v < n && !seen[v]) {
-            seen[right] = true;
-            queue.push_back((right, 1 + dist));
-        }
-    }
-    -1
+    false
 }
 
 #[cfg(test)]
@@ -52,15 +27,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_jumps(&[100, -23, -23, 404, 100, 23, 23, 23, 3, 404]), 3);
-        assert_eq!(min_jumps(&[7]), 0);
-        assert_eq!(min_jumps(&[7, 6, 9, 6, 9, 6, 9, 7]), 1);
+        assert!(check_if_exist(&[10, 2, 5, 3]));
+        assert!(!check_if_exist(&[3, 1, 7, 11]));
     }
 
     #[test]
     fn test() {
-        // assert_eq!(min_jumps(&[7, 7, 2, 1, 7, 7, 7, 3, 4, 1]), 3);
-        assert_eq!(min_jumps(&[11, 7, 7, 7, 7, 7, 7]), 2);
+        assert!(!check_if_exist(&[4, -7, 11, 4, 18]));
     }
 
     #[allow(dead_code)]
