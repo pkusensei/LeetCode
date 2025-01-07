@@ -2,12 +2,42 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn sort_by_bits(mut arr: Vec<i32>) -> Vec<i32> {
-    arr.sort_unstable_by(|a, b| a.count_ones().cmp(&b.count_ones()).then(a.cmp(&b)));
-    arr
+struct Cashier {
+    n: i32,
+    count: i32,
+    discount: i32,
+    map: HashMap<i32, i32>,
+}
+
+impl Cashier {
+    fn new(n: i32, discount: i32, products: Vec<i32>, prices: Vec<i32>) -> Self {
+        Self {
+            n,
+            count: 0,
+            discount: 100 - discount,
+            map: products.into_iter().zip(prices).collect(),
+        }
+    }
+
+    fn get_bill(&mut self, product: Vec<i32>, amount: Vec<i32>) -> f64 {
+        self.count += 1;
+        let bill: f64 = product
+            .into_iter()
+            .zip(amount)
+            .map(|(id, a)| f64::from(self.map[&id] * a))
+            .sum();
+        if self.count == self.n {
+            self.count = 0;
+            bill * f64::from(self.discount) / 100.0
+        } else {
+            bill
+        }
+    }
 }
 
 #[cfg(test)]
