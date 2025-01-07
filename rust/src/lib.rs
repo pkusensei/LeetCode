@@ -5,25 +5,9 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_possible(target: Vec<i32>) -> bool {
-    let mut sum: i64 = target.iter().map(|&v| i64::from(v)).sum();
-    let mut heap: std::collections::BinaryHeap<_> = target.into_iter().map(i64::from).collect();
-    while let Some(max) = heap.pop() {
-        if max == 1 {
-            return true;
-        }
-        let mod_ = sum - max;
-        if max <= mod_ || mod_ == 0 {
-            return false;
-        }
-        let val = max % mod_;
-        if val == 0 && mod_ != 1 {
-            return false;
-        }
-        sum = sum - max + val;
-        heap.push(val);
-    }
-    false
+pub fn sort_by_bits(mut arr: Vec<i32>) -> Vec<i32> {
+    arr.sort_unstable_by(|a, b| a.count_ones().cmp(&b.count_ones()).then(a.cmp(&b)));
+    arr
 }
 
 #[cfg(test)]
@@ -33,16 +17,10 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {
-        assert!(is_possible(vec![9, 3, 5]));
-        assert!(!is_possible(vec![1, 1, 1, 2]));
-        assert!(is_possible(vec![8, 5]));
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert!(!is_possible(vec![2, 900000002]));
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
