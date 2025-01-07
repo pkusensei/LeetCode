@@ -2,42 +2,33 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-struct Cashier {
-    n: i32,
-    count: i32,
-    discount: i32,
-    map: HashMap<i32, i32>,
-}
-
-impl Cashier {
-    fn new(n: i32, discount: i32, products: Vec<i32>, prices: Vec<i32>) -> Self {
-        Self {
-            n,
-            count: 0,
-            discount: 100 - discount,
-            map: products.into_iter().zip(prices).collect(),
+pub fn number_of_substrings(s: &str) -> i32 {
+    let (s, n) = (s.as_bytes(), s.len());
+    let mut left = 0;
+    let mut res = 0;
+    let mut count = [0; 3];
+    for (right, &b) in s.iter().enumerate() {
+        match b {
+            b'a' => count[0] += 1,
+            b'b' => count[1] += 1,
+            b'c' => count[2] += 1,
+            _ => (),
+        }
+        while count.iter().all(|&v| v > 0) {
+            res += n - right;
+            match s[left] {
+                b'a' => count[0] -= 1,
+                b'b' => count[1] -= 1,
+                b'c' => count[2] -= 1,
+                _ => (),
+            }
+            left += 1;
         }
     }
-
-    fn get_bill(&mut self, product: Vec<i32>, amount: Vec<i32>) -> f64 {
-        self.count += 1;
-        let bill: f64 = product
-            .into_iter()
-            .zip(amount)
-            .map(|(id, a)| f64::from(self.map[&id] * a))
-            .sum();
-        if self.count == self.n {
-            self.count = 0;
-            bill * f64::from(self.discount) / 100.0
-        } else {
-            bill
-        }
-    }
+    res as _
 }
 
 #[cfg(test)]
@@ -47,7 +38,11 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(number_of_substrings("abcabc"), 10);
+        assert_eq!(number_of_substrings("aaacb"), 3);
+        assert_eq!(number_of_substrings("abc"), 1);
+    }
 
     #[test]
     fn test() {}
