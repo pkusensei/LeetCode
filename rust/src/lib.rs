@@ -5,14 +5,14 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_prefix_suffix_pairs(words: &[&str]) -> i32 {
-    let mut res = 0;
-    for (i, a) in words.iter().enumerate() {
-        for b in words.iter().skip(1 + i) {
-            res += i32::from(b.starts_with(a) && b.ends_with(a));
-        }
+pub fn count_orders(n: i32) -> i32 {
+    const MOD: usize = 1_000_000_007;
+    let n = n as usize;
+    let mut dp = 1;
+    for i in 2..=n {
+        dp = (2 * i - 1) * i * dp % MOD;
     }
-    res
+    dp as _
 }
 
 #[cfg(test)]
@@ -23,9 +23,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(count_prefix_suffix_pairs(&["a", "aba", "ababa", "aa"]), 4);
-        assert_eq!(count_prefix_suffix_pairs(&["pa", "papa", "ma", "mama"]), 2);
-        assert_eq!(count_prefix_suffix_pairs(&["abab", "ab"]), 0);
+        assert_eq!(count_orders(1), 1);
+        assert_eq!(count_orders(2), 6);
+        assert_eq!(count_orders(3), 90);
     }
 
     #[test]
