@@ -6,20 +6,31 @@ namespace Solution;
 
 public class Solution
 {
-    public int MaxProduct(TreeNode root)
+    public int FindTheLongestSubstring(string s)
     {
-        const long MOD = 1_000_000_007;
-
-        HashSet<long> vals = [];
-        var sum = Dfs(root);
-        return (int)(vals.Select(v => v * (sum - v)).Max() % MOD);
-
-        long Dfs(TreeNode node)
+        Dictionary<int, int> dict = new() { { 0, 0 } };
+        var mask = 0;
+        var res = 0;
+        foreach (var (idx, ch) in s.Select((v, i) => (i + 1, v)))
         {
-            if (node is null) { return 0; }
-            long curr = node.val + Dfs(node.left) + Dfs(node.right);
-            vals.Add(curr);
-            return curr;
+            switch (ch)
+            {
+                case 'a': mask ^= 1 << 0; break;
+                case 'e': mask ^= 1 << 1; break;
+                case 'i': mask ^= 1 << 2; break;
+                case 'o': mask ^= 1 << 3; break;
+                case 'u': mask ^= 1 << 4; break;
+                default: break;
+            }
+            if (dict.TryGetValue(mask, out var left))
+            {
+                res = Math.Max(res, idx - left);
+            }
+            else
+            {
+                dict.Add(mask, idx);
+            }
         }
+        return res;
     }
 }

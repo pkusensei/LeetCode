@@ -10,17 +10,17 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow("eleetminicoworoep", 13)]
+    [DataRow("leetcodeisgreat", 5)]
+    [DataRow("bcbcbc", 6)]
+    public void TestMethod1(string s, int exp)
     {
-        var a = TreeNode.MakeInt([1, 2, 3, 4, 5, 6]);
-        Assert.AreEqual(110, sol.MaxProduct(a));
+        Assert.AreEqual(exp, sol.FindTheLongestSubstring(s));
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        var a = TreeNode.Make([1,null,2,3,4,null,null,5,6]);
-        Assert.AreEqual(90, sol.MaxProduct(a));
     }
 
     [TestMethod]
