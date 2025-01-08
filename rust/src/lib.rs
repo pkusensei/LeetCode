@@ -5,30 +5,14 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn number_of_substrings(s: &str) -> i32 {
-    let (s, n) = (s.as_bytes(), s.len());
-    let mut left = 0;
+pub fn count_prefix_suffix_pairs(words: &[&str]) -> i32 {
     let mut res = 0;
-    let mut count = [0; 3];
-    for (right, &b) in s.iter().enumerate() {
-        match b {
-            b'a' => count[0] += 1,
-            b'b' => count[1] += 1,
-            b'c' => count[2] += 1,
-            _ => (),
-        }
-        while count.iter().all(|&v| v > 0) {
-            res += n - right;
-            match s[left] {
-                b'a' => count[0] -= 1,
-                b'b' => count[1] -= 1,
-                b'c' => count[2] -= 1,
-                _ => (),
-            }
-            left += 1;
+    for (i, a) in words.iter().enumerate() {
+        for b in words.iter().skip(1 + i) {
+            res += i32::from(b.starts_with(a) && b.ends_with(a));
         }
     }
-    res as _
+    res
 }
 
 #[cfg(test)]
@@ -39,9 +23,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(number_of_substrings("abcabc"), 10);
-        assert_eq!(number_of_substrings("aaacb"), 3);
-        assert_eq!(number_of_substrings("abc"), 1);
+        assert_eq!(count_prefix_suffix_pairs(&["a", "aba", "ababa", "aa"]), 4);
+        assert_eq!(count_prefix_suffix_pairs(&["pa", "papa", "ma", "mama"]), 2);
+        assert_eq!(count_prefix_suffix_pairs(&["abab", "ab"]), 0);
     }
 
     #[test]
