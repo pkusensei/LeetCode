@@ -5,26 +5,39 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn days_between_dates(date1: &str, date2: &str) -> i32 {
-    let [d1, d2] = [date1, date2].map(parse);
-    d1.abs_diff(d2) as _
-}
-
-const fn is_leap(y: i32) -> bool {
-    y % 400 == 0 || (y % 4 == 0 && y % 100 > 0)
-}
-
-fn parse(s: &str) -> i32 {
-    const DAYS: [i32; 12] = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-    let mut it = s.split('-');
-    let y: i32 = it.next().and_then(|s| s.parse().ok()).unwrap_or(1971);
-    let m: usize = it.next().and_then(|s| s.parse().ok()).unwrap_or(1);
-    let d: i32 = it.next().and_then(|s| s.parse().ok()).unwrap_or(1);
-    let mut res = (1971..y).map(|i| 365 + i32::from(is_leap(i))).sum();
-    res += DAYS.iter().take(m - 1).sum::<i32>();
-    res += i32::from(is_leap(y) && m > 2);
-    res += d;
-    res
+pub fn validate_binary_tree_nodes(n: i32, left_child: &[i32], right_child: &[i32]) -> bool {
+    let n = n as usize;
+    let mut indegs = vec![0; n];
+    for &node in left_child
+        .iter()
+        .chain(right_child.iter())
+        .filter(|&&v| v >= 0)
+    {
+        indegs[node as usize] += 1;
+    }
+    let mut it = indegs
+        .into_iter()
+        .enumerate()
+        .filter_map(|(i, v)| if v == 0 { Some(i) } else { None });
+    let (Some(root), None) = (it.next(), it.next()) else {
+        return false;
+    };
+    let mut seen = vec![false; n];
+    seen[root] = true;
+    let mut queue = std::collections::VecDeque::from([root]);
+    while let Some(curr) = queue.pop_front() {
+        for next in [left_child, right_child].map(|c| c[curr]) {
+            if next < 0 {
+                continue;
+            }
+            if seen[next as usize] {
+                return false;
+            }
+            seen[next as usize] = true;
+            queue.push_back(next as usize);
+        }
+    }
+    seen.into_iter().all(|b| b)
 }
 
 #[cfg(test)]
@@ -35,12 +48,27 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(days_between_dates("2019-06-29", "2019-06-30"), 1);
-        assert_eq!(days_between_dates("2020-01-15", "2019-12-31"), 15);
+        assert!(validate_binary_tree_nodes(
+            4,
+            &[1, -1, 3, -1],
+            &[2, -1, -1, -1]
+        ));
+        assert!(!validate_binary_tree_nodes(
+            4,
+            &[1, -1, 3, -1],
+            &[2, 3, -1, -1]
+        ));
+        assert!(!validate_binary_tree_nodes(2, &[1, 0], &[-1, -1]));
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert!(validate_binary_tree_nodes(
+            4,
+            &[3, -1, 1, -1],
+            &[-1, -1, 0, -1]
+        ));
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
