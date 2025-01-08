@@ -2,52 +2,29 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::{
-    cmp::Reverse,
-    collections::{BinaryHeap, HashMap},
-};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_cost(grid: &[&[i32]]) -> i32 {
-        let (rows, cols) = get_dimensions(grid);
-        let mut costs = HashMap::new();
-        for r in 0..rows {
-            for c in 0..cols {
-                costs.insert([r, c], i32::MAX);
-            }
+pub fn sort_string(s: &str) -> String {
+    let mut n = s.len();
+    let mut count = s.bytes().fold([0; 26], |mut acc, b| {
+        acc[usize::from(b - b'a')] += 1;
+        acc
+    });
+    let mut res = vec![];
+    for i in (0..26).chain((0..26).rev()).cycle() {
+        if count[i] > 0 {
+            res.push(i);
+            count[i] -= 1;
+            n -= 1;
         }
-        costs.insert([0, 0], 0);
-        let mut heap = BinaryHeap::from([(Reverse(0), [0, 0])]);
-        while let Some((Reverse(cost), [row, col])) = heap.pop() {
-            if row == rows - 1 && col == cols - 1 {
-                return cost;
-            }
-            if costs[&[row, col]] < cost {
-                continue;
-            }
-            let dir = grid[row][col];
-            for (nr, nc) in neighbors((row, col)).filter(|&(nr, nc)| nr < rows && nc < cols) {
-                let new_cost = cost
-                    + if row == nr {
-                        if nc > col {
-                            i32::from(dir != 1)
-                        } else {
-                            i32::from(dir != 2)
-                        }
-                    } else if nr > row {
-                        i32::from(dir != 3)
-                    } else {
-                        i32::from(dir != 4)
-                    };
-                if new_cost < costs[&[nr, nc]] {
-                    costs.insert([nr, nc], new_cost);
-                    heap.push((Reverse(new_cost), [nr, nc]));
-                }
-            }
+        if n == 0 {
+            break;
         }
-        -1
+    }
+    res.into_iter()
+        .map(|v| char::from(v as u8 + b'a'))
+        .collect()
 }
 
 #[cfg(test)]
@@ -58,12 +35,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            min_cost(&[&[1, 1, 1, 1], &[2, 2, 2, 2], &[1, 1, 1, 1], &[2, 2, 2, 2]]),
-            3
-        );
-        assert_eq!(min_cost(&[&[1, 1, 3], &[3, 2, 2], &[1, 1, 4]]), 0);
-        assert_eq!(min_cost(&[&[1, 2], &[4, 3]]), 1);
+        assert_eq!(sort_string("aaaabbbbcccc"), "abccbaabccba");
+        assert_eq!(sort_string("rat"), "art");
     }
 
     #[test]
