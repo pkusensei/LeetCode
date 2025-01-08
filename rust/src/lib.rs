@@ -5,17 +5,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn smaller_numbers_than_current(nums: &[i32]) -> Vec<i32> {
-    let mut arr = nums.to_vec();
-    arr.sort_unstable();
-    let map =
-        arr.into_iter()
-            .enumerate()
-            .fold(std::collections::HashMap::new(), |mut acc, (i, num)| {
-                acc.entry(num).or_insert(i as i32);
-                acc
-            });
-    nums.iter().map(|v| map[v]).collect()
+pub fn rank_teams(votes: &[&str]) -> String {
+    let n = votes[0].len();
+    let mut map = std::collections::HashMap::new();
+    for row in votes.iter() {
+        for (i, b) in row.bytes().enumerate() {
+            map.entry(b).or_insert(vec![0; n])[i] += 1;
+        }
+    }
+    let mut res: Vec<_> = map.keys().copied().collect();
+    res.sort_unstable_by(|a, b| map[b].cmp(&map[a]).then(a.cmp(b)));
+    String::from_utf8(res).unwrap()
 }
 
 #[cfg(test)]
@@ -26,16 +26,24 @@ mod tests {
 
     #[test]
     fn basics() {
+        assert_eq!(rank_teams(&["ABC", "ACB", "ABC", "ACB", "ACB"]), "ACB");
+        assert_eq!(rank_teams(&["WXYZ", "XYZW"]), "XWYZ");
         assert_eq!(
-            smaller_numbers_than_current(&[8, 1, 2, 2, 3]),
-            [4, 0, 1, 1, 3]
+            rank_teams(&["ZMNAGUEDSJYLBOPHRQICWFXTVK"]),
+            "ZMNAGUEDSJYLBOPHRQICWFXTVK"
         );
-        assert_eq!(smaller_numbers_than_current(&[6, 5, 4, 8]), [2, 1, 0, 3]);
-        assert_eq!(smaller_numbers_than_current(&[7, 7, 7, 7]), [0, 0, 0, 0]);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(
+            rank_teams(&[
+                "ABCDEFGH", "BACDEFGH", "GHABCDEF", "GHBACDEF", "EFGHABCD", "EFGHBACD", "CDEFGHBA",
+                "CDEFGHBA"
+            ]),
+            "CEGBADFH"
+        );
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
