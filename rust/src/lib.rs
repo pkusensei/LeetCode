@@ -5,24 +5,53 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn closest_divisors(num: i32) -> Vec<i32> {
-    let [a, b] = find(num + 1);
-    let [c, d] = find(num + 2);
-    if a.abs_diff(b) <= c.abs_diff(d) {
-        vec![a, b]
-    } else {
-        vec![c, d]
-    }
-}
-
-fn find(num: i32) -> [i32; 2] {
-    let sq = f64::from(num).sqrt().floor() as i32;
-    for a in (1..=sq).rev() {
-        if num % a == 0 {
-            return [a, num / a];
+pub fn largest_multiple_of_three(mut digits: Vec<i32>) -> String {
+    digits.sort_unstable_by_key(|&v| std::cmp::Reverse(v));
+    let sum: i32 = digits.iter().sum();
+    match sum % 3 {
+        1 => {
+            if let Some(i) = digits.iter().rposition(|&v| v % 3 == 1) {
+                digits.remove(i);
+            } else {
+                let temp: Vec<_> = digits
+                    .iter()
+                    .enumerate()
+                    .rev()
+                    .filter_map(|(i, &v)| if v % 3 == 2 { Some(i) } else { None })
+                    .take(2)
+                    .collect();
+                for i in temp {
+                    digits.remove(i);
+                }
+            }
         }
+        2 => {
+            if let Some(i) = digits.iter().rposition(|&v| v % 3 == 2) {
+                digits.remove(i);
+            } else {
+                let temp: Vec<_> = digits
+                    .iter()
+                    .enumerate()
+                    .rev()
+                    .filter_map(|(i, &v)| if v % 3 == 1 { Some(i) } else { None })
+                    .take(2)
+                    .collect();
+                for i in temp {
+                    digits.remove(i);
+                }
+            }
+        }
+        _ => (),
     }
-    [1, num]
+    let res: String = digits
+        .into_iter()
+        .map(|v| char::from(v as u8 + b'0'))
+        .collect();
+    if res.starts_with('0') {
+        "0".to_string()
+    } else {
+        res
+    }
 }
 
 #[cfg(test)]
@@ -33,13 +62,16 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(closest_divisors(8), [3, 3]);
-        assert_eq!(closest_divisors(123), [5, 25]);
-        assert_eq!(closest_divisors(999), [25, 40]);
+        assert_eq!(largest_multiple_of_three(vec![8, 1, 9]), "981");
+        assert_eq!(largest_multiple_of_three(vec![8, 6, 7, 1, 0]), "8760");
+        assert_eq!(largest_multiple_of_three(vec![1]), "");
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(largest_multiple_of_three(vec![1, 1, 1, 2]), "111");
+        assert_eq!(largest_multiple_of_three(vec![5, 8]), "");
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
