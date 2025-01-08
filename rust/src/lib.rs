@@ -2,20 +2,52 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::{
+    cmp::Reverse,
+    collections::{BinaryHeap, HashMap},
+};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn rank_teams(votes: &[&str]) -> String {
-    let n = votes[0].len();
-    let mut map = std::collections::HashMap::new();
-    for row in votes.iter() {
-        for (i, b) in row.bytes().enumerate() {
-            map.entry(b).or_insert(vec![0; n])[i] += 1;
+pub fn min_cost(grid: &[&[i32]]) -> i32 {
+        let (rows, cols) = get_dimensions(grid);
+        let mut costs = HashMap::new();
+        for r in 0..rows {
+            for c in 0..cols {
+                costs.insert([r, c], i32::MAX);
+            }
         }
-    }
-    let mut res: Vec<_> = map.keys().copied().collect();
-    res.sort_unstable_by(|a, b| map[b].cmp(&map[a]).then(a.cmp(b)));
-    String::from_utf8(res).unwrap()
+        costs.insert([0, 0], 0);
+        let mut heap = BinaryHeap::from([(Reverse(0), [0, 0])]);
+        while let Some((Reverse(cost), [row, col])) = heap.pop() {
+            if row == rows - 1 && col == cols - 1 {
+                return cost;
+            }
+            if costs[&[row, col]] < cost {
+                continue;
+            }
+            let dir = grid[row][col];
+            for (nr, nc) in neighbors((row, col)).filter(|&(nr, nc)| nr < rows && nc < cols) {
+                let new_cost = cost
+                    + if row == nr {
+                        if nc > col {
+                            i32::from(dir != 1)
+                        } else {
+                            i32::from(dir != 2)
+                        }
+                    } else if nr > row {
+                        i32::from(dir != 3)
+                    } else {
+                        i32::from(dir != 4)
+                    };
+                if new_cost < costs[&[nr, nc]] {
+                    costs.insert([nr, nc], new_cost);
+                    heap.push((Reverse(new_cost), [nr, nc]));
+                }
+            }
+        }
+        -1
 }
 
 #[cfg(test)]
@@ -26,24 +58,16 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(rank_teams(&["ABC", "ACB", "ABC", "ACB", "ACB"]), "ACB");
-        assert_eq!(rank_teams(&["WXYZ", "XYZW"]), "XWYZ");
         assert_eq!(
-            rank_teams(&["ZMNAGUEDSJYLBOPHRQICWFXTVK"]),
-            "ZMNAGUEDSJYLBOPHRQICWFXTVK"
+            min_cost(&[&[1, 1, 1, 1], &[2, 2, 2, 2], &[1, 1, 1, 1], &[2, 2, 2, 2]]),
+            3
         );
+        assert_eq!(min_cost(&[&[1, 1, 3], &[3, 2, 2], &[1, 1, 4]]), 0);
+        assert_eq!(min_cost(&[&[1, 2], &[4, 3]]), 1);
     }
 
     #[test]
-    fn test() {
-        assert_eq!(
-            rank_teams(&[
-                "ABCDEFGH", "BACDEFGH", "GHABCDEF", "GHBACDEF", "EFGHABCD", "EFGHBACD", "CDEFGHBA",
-                "CDEFGHBA"
-            ]),
-            "CEGBADFH"
-        );
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
