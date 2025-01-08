@@ -5,14 +5,26 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_orders(n: i32) -> i32 {
-    const MOD: usize = 1_000_000_007;
-    let n = n as usize;
-    let mut dp = 1;
-    for i in 2..=n {
-        dp = (2 * i - 1) * i * dp % MOD;
-    }
-    dp as _
+pub fn days_between_dates(date1: &str, date2: &str) -> i32 {
+    let [d1, d2] = [date1, date2].map(parse);
+    d1.abs_diff(d2) as _
+}
+
+const fn is_leap(y: i32) -> bool {
+    y % 400 == 0 || (y % 4 == 0 && y % 100 > 0)
+}
+
+fn parse(s: &str) -> i32 {
+    const DAYS: [i32; 12] = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    let mut it = s.split('-');
+    let y: i32 = it.next().and_then(|s| s.parse().ok()).unwrap_or(1971);
+    let m: usize = it.next().and_then(|s| s.parse().ok()).unwrap_or(1);
+    let d: i32 = it.next().and_then(|s| s.parse().ok()).unwrap_or(1);
+    let mut res = (1971..y).map(|i| 365 + i32::from(is_leap(i))).sum();
+    res += DAYS.iter().take(m - 1).sum::<i32>();
+    res += i32::from(is_leap(y) && m > 2);
+    res += d;
+    res
 }
 
 #[cfg(test)]
@@ -23,9 +35,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(count_orders(1), 1);
-        assert_eq!(count_orders(2), 6);
-        assert_eq!(count_orders(3), 90);
+        assert_eq!(days_between_dates("2019-06-29", "2019-06-30"), 1);
+        assert_eq!(days_between_dates("2020-01-15", "2019-12-31"), 15);
     }
 
     #[test]
