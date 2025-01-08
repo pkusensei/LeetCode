@@ -6,31 +6,26 @@ namespace Solution;
 
 public class Solution
 {
-    public int FindTheLongestSubstring(string s)
+    Dictionary<(TreeNode, int), int> memo = [];
+
+    public int LongestZigZag(TreeNode root)
     {
-        Dictionary<int, int> dict = new() { { 0, 0 } };
-        var mask = 0;
-        var res = 0;
-        foreach (var (idx, ch) in s.Select((v, i) => (i + 1, v)))
+        if (root is null) { return 0; }
+        int a = Dfs(root, 0, memo);
+        int b = Dfs(root, 1, memo);
+        int c = LongestZigZag(root.left);
+        int d = LongestZigZag(root.right);
+        return Math.Max(a, Math.Max(b, Math.Max(c, d)));
+
+        static int Dfs(TreeNode node, int dir, IDictionary<(TreeNode, int), int> memo)
         {
-            switch (ch)
-            {
-                case 'a': mask ^= 1 << 0; break;
-                case 'e': mask ^= 1 << 1; break;
-                case 'i': mask ^= 1 << 2; break;
-                case 'o': mask ^= 1 << 3; break;
-                case 'u': mask ^= 1 << 4; break;
-                default: break;
-            }
-            if (dict.TryGetValue(mask, out var left))
-            {
-                res = Math.Max(res, idx - left);
-            }
-            else
-            {
-                dict.Add(mask, idx);
-            }
+            if (node is null) { return -1; }
+            if (memo.TryGetValue((node, dir), out var val)) { return val; }
+            var res = 0;
+            if (dir == 0) { res = 1 + Dfs(node.left, 1 - dir, memo); }
+            else { res = 1 + Dfs(node.right, 1 - dir, memo); }
+            memo.Add((node, dir), res);
+            return res;
         }
-        return res;
     }
 }

@@ -10,22 +10,24 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow("eleetminicoworoep", 13)]
-    [DataRow("leetcodeisgreat", 5)]
-    [DataRow("bcbcbc", 6)]
-    public void TestMethod1(string s, int exp)
+    public void TestMethod1()
     {
-        Assert.AreEqual(exp, sol.FindTheLongestSubstring(s));
+        var a = TreeNode.Make([1, null, 1, 1, 1, null, null, 1, 1, null, 1, null, null, null, 1]);
+        Assert.AreEqual(3, sol.LongestZigZag(a));
     }
 
     [TestMethod]
     public void TestMethod2()
     {
+        var a = TreeNode.Make([1, 1, 1, null, 1, null, null, 1, 1, null, 1]);
+        Assert.AreEqual(4, sol.LongestZigZag(a));
     }
 
     [TestMethod]
     public void TestMethod3()
     {
+        var a = TreeNode.Make([1]);
+        Assert.AreEqual(0, sol.LongestZigZag(a));
     }
 
     [TestMethod]
