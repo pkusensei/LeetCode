@@ -5,53 +5,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn largest_multiple_of_three(mut digits: Vec<i32>) -> String {
-    digits.sort_unstable_by_key(|&v| std::cmp::Reverse(v));
-    let sum: i32 = digits.iter().sum();
-    match sum % 3 {
-        1 => {
-            if let Some(i) = digits.iter().rposition(|&v| v % 3 == 1) {
-                digits.remove(i);
-            } else {
-                let temp: Vec<_> = digits
-                    .iter()
-                    .enumerate()
-                    .rev()
-                    .filter_map(|(i, &v)| if v % 3 == 2 { Some(i) } else { None })
-                    .take(2)
-                    .collect();
-                for i in temp {
-                    digits.remove(i);
-                }
-            }
-        }
-        2 => {
-            if let Some(i) = digits.iter().rposition(|&v| v % 3 == 2) {
-                digits.remove(i);
-            } else {
-                let temp: Vec<_> = digits
-                    .iter()
-                    .enumerate()
-                    .rev()
-                    .filter_map(|(i, &v)| if v % 3 == 1 { Some(i) } else { None })
-                    .take(2)
-                    .collect();
-                for i in temp {
-                    digits.remove(i);
-                }
-            }
-        }
-        _ => (),
-    }
-    let res: String = digits
-        .into_iter()
-        .map(|v| char::from(v as u8 + b'0'))
-        .collect();
-    if res.starts_with('0') {
-        "0".to_string()
-    } else {
-        res
-    }
+pub fn smaller_numbers_than_current(nums: &[i32]) -> Vec<i32> {
+    let mut arr = nums.to_vec();
+    arr.sort_unstable();
+    let map =
+        arr.into_iter()
+            .enumerate()
+            .fold(std::collections::HashMap::new(), |mut acc, (i, num)| {
+                acc.entry(num).or_insert(i as i32);
+                acc
+            });
+    nums.iter().map(|v| map[v]).collect()
 }
 
 #[cfg(test)]
@@ -62,16 +26,16 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(largest_multiple_of_three(vec![8, 1, 9]), "981");
-        assert_eq!(largest_multiple_of_three(vec![8, 6, 7, 1, 0]), "8760");
-        assert_eq!(largest_multiple_of_three(vec![1]), "");
+        assert_eq!(
+            smaller_numbers_than_current(&[8, 1, 2, 2, 3]),
+            [4, 0, 1, 1, 3]
+        );
+        assert_eq!(smaller_numbers_than_current(&[6, 5, 4, 8]), [2, 1, 0, 3]);
+        assert_eq!(smaller_numbers_than_current(&[7, 7, 7, 7]), [0, 0, 0, 0]);
     }
 
     #[test]
-    fn test() {
-        assert_eq!(largest_multiple_of_three(vec![1, 1, 1, 2]), "111");
-        assert_eq!(largest_multiple_of_three(vec![5, 8]), "");
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
