@@ -5,39 +5,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn validate_binary_tree_nodes(n: i32, left_child: &[i32], right_child: &[i32]) -> bool {
-    let n = n as usize;
-    let mut indegs = vec![0; n];
-    for &node in left_child
-        .iter()
-        .chain(right_child.iter())
-        .filter(|&&v| v >= 0)
-    {
-        indegs[node as usize] += 1;
+pub fn closest_divisors(num: i32) -> Vec<i32> {
+    let [a, b] = find(num + 1);
+    let [c, d] = find(num + 2);
+    if a.abs_diff(b) <= c.abs_diff(d) {
+        vec![a, b]
+    } else {
+        vec![c, d]
     }
-    let mut it = indegs
-        .into_iter()
-        .enumerate()
-        .filter_map(|(i, v)| if v == 0 { Some(i) } else { None });
-    let (Some(root), None) = (it.next(), it.next()) else {
-        return false;
-    };
-    let mut seen = vec![false; n];
-    seen[root] = true;
-    let mut queue = std::collections::VecDeque::from([root]);
-    while let Some(curr) = queue.pop_front() {
-        for next in [left_child, right_child].map(|c| c[curr]) {
-            if next < 0 {
-                continue;
-            }
-            if seen[next as usize] {
-                return false;
-            }
-            seen[next as usize] = true;
-            queue.push_back(next as usize);
+}
+
+fn find(num: i32) -> [i32; 2] {
+    let sq = f64::from(num).sqrt().floor() as i32;
+    for a in (1..=sq).rev() {
+        if num % a == 0 {
+            return [a, num / a];
         }
     }
-    seen.into_iter().all(|b| b)
+    [1, num]
 }
 
 #[cfg(test)]
@@ -48,27 +33,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert!(validate_binary_tree_nodes(
-            4,
-            &[1, -1, 3, -1],
-            &[2, -1, -1, -1]
-        ));
-        assert!(!validate_binary_tree_nodes(
-            4,
-            &[1, -1, 3, -1],
-            &[2, 3, -1, -1]
-        ));
-        assert!(!validate_binary_tree_nodes(2, &[1, 0], &[-1, -1]));
+        assert_eq!(closest_divisors(8), [3, 3]);
+        assert_eq!(closest_divisors(123), [5, 25]);
+        assert_eq!(closest_divisors(999), [25, 40]);
     }
 
     #[test]
-    fn test() {
-        assert!(validate_binary_tree_nodes(
-            4,
-            &[3, -1, 1, -1],
-            &[-1, -1, 0, -1]
-        ));
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
