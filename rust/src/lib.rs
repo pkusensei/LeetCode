@@ -2,20 +2,28 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::{HashMap, VecDeque};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_times_all_blue(flips: &[i32]) -> i32 {
-    let mut right = 0;
+pub fn num_of_minutes(_n: i32, head_id: i32, manager: &[i32], inform_time: &[i32]) -> i32 {
+    let map = manager
+        .iter()
+        .enumerate()
+        .fold(HashMap::<_, Vec<_>>::new(), |mut acc, (i, &v)| {
+            acc.entry(v).or_default().push(i);
+            acc
+        });
+    let mut queue = VecDeque::from([(head_id, 0)]);
     let mut res = 0;
-    for (idx, &num) in flips.iter().enumerate() {
-        right = right.max(num);
-        if right == 1 + idx as i32 {
-            res += 1;
+    while let Some((curr, time)) = queue.pop_front() {
+        res = res.max(time);
+        if let Some(v) = map.get(&curr) {
+            for &next in v.iter() {
+                queue.push_back((next as i32, time + inform_time[curr as usize]));
+            }
         }
-        // flips is a permutation of [1..=n]
-        // right is the rightmost set bit
-        // right == 1+idx means all numbers in [1..right] are set
     }
     res
 }
@@ -28,12 +36,20 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(num_times_all_blue(&[3, 2, 4, 1, 5]), 2);
-        assert_eq!(num_times_all_blue(&[4, 1, 2, 3]), 1);
+        assert_eq!(num_of_minutes(1, 0, &[-1], &[0]), 0);
+        assert_eq!(
+            num_of_minutes(6, 2, &[2, 2, -1, 2, 2, 2], &[0, 0, 1, 0, 0, 0]),
+            1
+        );
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(
+            num_of_minutes(7, 6, &[1, 2, 3, 4, 5, 6, -1], &[0, 6, 5, 4, 3, 2, 1]),
+            21
+        );
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
