@@ -7,25 +7,41 @@ use std::collections::{HashMap, VecDeque};
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_of_minutes(_n: i32, head_id: i32, manager: &[i32], inform_time: &[i32]) -> i32 {
-    let map = manager
+pub fn frog_position(n: i32, edges: &[[i32; 2]], t: i32, target: i32) -> f64 {
+    let mut adj = edges
         .iter()
-        .enumerate()
-        .fold(HashMap::<_, Vec<_>>::new(), |mut acc, (i, &v)| {
-            acc.entry(v).or_default().push(i);
+        .fold(HashMap::<_, Vec<_>>::new(), |mut acc, e| {
+            acc.entry(e[0]).or_default().push(e[1]);
+            acc.entry(e[1]).or_default().push(e[0]);
             acc
         });
-    let mut queue = VecDeque::from([(head_id, 0)]);
-    let mut res = 0;
-    while let Some((curr, time)) = queue.pop_front() {
-        res = res.max(time);
-        if let Some(v) = map.get(&curr) {
-            for &next in v.iter() {
-                queue.push_back((next as i32, time + inform_time[curr as usize]));
+    adj.entry(1).or_default().push(0); // push 0 to node 1 to compensate len-1
+    let mut queue = VecDeque::from([(1, 0, 1.0)]);
+    let mut seen = vec![false; 1 + n as usize];
+    seen[0] = true;
+    seen[1] = true;
+    while let Some((node, time, prob)) = queue.pop_front() {
+        if time > t {
+            break;
+        }
+        if node == target {
+            if time < t && adj.get(&node).is_some_and(|v| v.len() > 1) {
+                break;
+            }
+            return prob; // time==t
+        }
+        let Some(v) = adj.get(&node) else {
+            continue;
+        };
+        let len = v.len() as f64 - 1.0;
+        for &next in v.iter() {
+            if !seen[next as usize] {
+                seen[next as usize] = true;
+                queue.push_back((next, 1 + time, prob / len));
             }
         }
     }
-    res
+    0.0
 }
 
 #[cfg(test)]
@@ -36,18 +52,21 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(num_of_minutes(1, 0, &[-1], &[0]), 0);
         assert_eq!(
-            num_of_minutes(6, 2, &[2, 2, -1, 2, 2, 2], &[0, 0, 1, 0, 0, 0]),
-            1
+            frog_position(7, &[[1, 2], [1, 3], [1, 7], [2, 4], [2, 6], [3, 5]], 2, 4),
+            0.16666666666666666
+        );
+        assert_eq!(
+            frog_position(7, &[[1, 2], [1, 3], [1, 7], [2, 4], [2, 6], [3, 5]], 1, 7),
+            0.3333333333333333
         );
     }
 
     #[test]
     fn test() {
-        assert_eq!(
-            num_of_minutes(7, 6, &[1, 2, 3, 4, 5, 6, -1], &[0, 6, 5, 4, 3, 2, 1]),
-            21
+        float_eq(
+            frog_position(7, &[[1, 2], [1, 3], [1, 7], [2, 4], [2, 6], [3, 5]], 20, 6),
+            0.16667,
         );
     }
 
