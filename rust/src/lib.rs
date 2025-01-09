@@ -5,16 +5,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn generate_the_string(n: i32) -> String {
-    use std::iter::{once, repeat};
-    if n & 1 == 1 {
-        repeat('a').take(n as usize).collect()
-    } else {
-        repeat('a')
-            .take((n - 1) as usize)
-            .chain(once('b'))
-            .collect()
+pub fn num_times_all_blue(flips: &[i32]) -> i32 {
+    let mut right = 0;
+    let mut res = 0;
+    for (idx, &num) in flips.iter().enumerate() {
+        right = right.max(num);
+        if right == 1 + idx as i32 {
+            res += 1;
+        }
+        // flips is a permutation of [1..=n]
+        // right is the rightmost set bit
+        // right == 1+idx means all numbers in [1..right] are set
     }
+    res
 }
 
 #[cfg(test)]
@@ -24,7 +27,10 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(num_times_all_blue(&[3, 2, 4, 1, 5]), 2);
+        assert_eq!(num_times_all_blue(&[4, 1, 2, 3]), 1);
+    }
 
     #[test]
     fn test() {}
