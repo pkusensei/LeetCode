@@ -5,26 +5,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn sort_string(s: &str) -> String {
-    let mut n = s.len();
-    let mut count = s.bytes().fold([0; 26], |mut acc, b| {
-        acc[usize::from(b - b'a')] += 1;
-        acc
-    });
-    let mut res = vec![];
-    for i in (0..26).chain((0..26).rev()).cycle() {
-        if count[i] > 0 {
-            res.push(i);
-            count[i] -= 1;
-            n -= 1;
-        }
-        if n == 0 {
-            break;
-        }
+pub fn generate_the_string(n: i32) -> String {
+    use std::iter::{once, repeat};
+    if n & 1 == 1 {
+        repeat('a').take(n as usize).collect()
+    } else {
+        repeat('a')
+            .take((n - 1) as usize)
+            .chain(once('b'))
+            .collect()
     }
-    res.into_iter()
-        .map(|v| char::from(v as u8 + b'a'))
-        .collect()
 }
 
 #[cfg(test)]
@@ -34,10 +24,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {
-        assert_eq!(sort_string("aaaabbbbcccc"), "abccbaabccba");
-        assert_eq!(sort_string("rat"), "art");
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
