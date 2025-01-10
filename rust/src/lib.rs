@@ -2,31 +2,18 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::{cmp::Reverse, collections::BinaryHeap};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_performance(_n: i32, speed: Vec<i32>, efficiency: Vec<i32>, k: i32) -> i32 {
-    let mut espairs: Vec<_> = efficiency
-        .into_iter()
-        .zip(speed)
-        .map(|(e, s)| [e, s].map(i64::from))
-        .collect();
-    espairs.sort_unstable_by_key(|p| Reverse(p[0]));
-    let mut sum = 0;
+pub fn find_the_distance_value(arr1: &[i32], arr2: &mut [i32], d: i32) -> i32 {
+    arr2.sort_unstable();
     let mut res = 0;
-    let mut heap = BinaryHeap::new();
-    for [ef, sp] in espairs {
-        heap.push(Reverse(sp));
-        sum += sp;
-        if heap.len() > k as usize {
-            let s = heap.pop().map(|r| r.0).unwrap_or(0);
-            sum -= s;
-        }
-        res = res.max(sum * ef);
+    for &num in arr1.iter() {
+        let a = arr2.partition_point(|&v| v < num - d);
+        let b = arr2.partition_point(|&v| v <= num + d);
+        res += i32::from(a == b);
     }
-    (res % 1_000_000_007) as i32
+    res
 }
 
 #[cfg(test)]
@@ -38,16 +25,16 @@ mod tests {
     #[test]
     fn basics() {
         assert_eq!(
-            max_performance(6, vec![2, 10, 3, 1, 5, 8], vec![5, 4, 3, 9, 7, 2], 2),
-            60
+            find_the_distance_value(&[4, 5, 8], &mut [10, 9, 1, 8], 2),
+            2
         );
         assert_eq!(
-            max_performance(6, vec![2, 10, 3, 1, 5, 8], vec![5, 4, 3, 9, 7, 2], 3),
-            68
+            find_the_distance_value(&[1, 4, 2, 3], &mut [-4, -3, 6, 10, 20, 30], 3),
+            2
         );
         assert_eq!(
-            max_performance(6, vec![2, 10, 3, 1, 5, 8], vec![5, 4, 3, 9, 7, 2], 4),
-            72
+            find_the_distance_value(&[2, 1, 100, 3], &mut [-5, -2, 10, -3, 7], 6),
+            1
         );
     }
 
