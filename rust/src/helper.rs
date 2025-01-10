@@ -57,12 +57,12 @@ pub fn around(x: i32, y: i32) -> impl Iterator<Item = Coord> {
     })
 }
 
-pub fn get_dimensions<T, U: AsRef<[T]>>(grid: &[U]) -> (usize, usize) {
+pub fn get_dimensions<T, U: AsRef<[T]>>(grid: &[U]) -> [usize; 2] {
     let (row, col) = (
         grid.len(),
         grid.first().map(|r| r.as_ref().len()).unwrap_or(0),
     );
-    (row, col)
+    [row, col]
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
