@@ -2,21 +2,37 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashSet;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn lucky_numbers(matrix: &[&[i32]]) -> Vec<i32> {
-    let mins: HashSet<_> = matrix
+pub fn word_subsets(words1: &[&str], words2: &[&str]) -> Vec<String> {
+    let freq = words2
         .iter()
-        .map(|row| row.iter().copied().min().unwrap())
-        .collect();
-    let cols = matrix[0].len();
-    let maxs: HashSet<_> = (0..cols)
-        .map(|col| matrix.iter().map(|r| r[col]).max().unwrap())
-        .collect();
-    mins.intersection(&maxs).copied().collect()
+        .map(|s| count(s))
+        .fold([0; 26], |mut acc, curr| {
+            for (v, c) in acc.iter_mut().zip(curr) {
+                (*v) = (*v).max(c);
+            }
+            acc
+        });
+    words1
+        .iter()
+        .filter_map(|s| {
+            let curr = count(s);
+            if curr.into_iter().zip(freq).all(|(c, f)| c >= f) {
+                Some(s.to_string())
+            } else {
+                None
+            }
+        })
+        .collect()
+}
+
+fn count(s: &str) -> [i16; 26] {
+    s.bytes().fold([0; 26], |mut acc, b| {
+        acc[usize::from(b - b'a')] += 1;
+        acc
+    })
 }
 
 #[cfg(test)]
@@ -28,14 +44,19 @@ mod tests {
     #[test]
     fn basics() {
         assert_eq!(
-            lucky_numbers(&[&[3, 7, 8], &[9, 11, 13], &[15, 16, 17]]),
-            [15]
+            word_subsets(
+                &["amazon", "apple", "facebook", "google", "leetcode"],
+                &["e", "o"]
+            ),
+            ["facebook", "google", "leetcode"]
         );
         assert_eq!(
-            lucky_numbers(&[&[1, 10, 4, 2], &[9, 3, 8, 7], &[15, 16, 17, 12]]),
-            [12]
+            word_subsets(
+                &["amazon", "apple", "facebook", "google", "leetcode"],
+                &["l", "e"]
+            ),
+            ["apple", "google", "leetcode"]
         );
-        assert_eq!(lucky_numbers(&[&[7, 8], &[1, 2]]), [7]);
     }
 
     #[test]
