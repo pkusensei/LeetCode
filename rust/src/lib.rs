@@ -2,25 +2,31 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_number_of_families(n: i32, reserved_seats: &mut [[i32; 2]]) -> i32 {
-    const TWO: i16 = 0b011_1111_110;
-    const ONE: i16 = 0b000_1111_000;
-    const LEFT: i16 = 0b011_1100_000;
-    const RIGHT: i16 = 0b000_0011_110;
-    reserved_seats.sort_unstable_by_key(|s| s[0]);
-    let mut res = 2 * n;
-    for row in reserved_seats.chunk_by(|a, b| a[0] == b[0]) {
-        let mask = row.iter().fold(0, |acc, s| acc | 1 << (s[1] - 1));
-        if mask & TWO == 0 {
-        } else if mask & ONE == 0 || mask & LEFT == 0 || mask & RIGHT == 0 {
-            res -= 1
-        } else {
-            res -= 2;
-        }
+pub fn get_kth(lo: i32, hi: i32, k: i32) -> i32 {
+    let mut memo = HashMap::new();
+    let mut nums: Vec<_> = (lo..=hi).map(|x| (x, dfs(x, &mut memo))).collect();
+    nums.sort_by_key(|v| v.1);
+    nums[k as usize - 1].0
+}
+
+fn dfs(x: i32, memo: &mut HashMap<i32, i32>) -> i32 {
+    if x == 1 {
+        return 0;
     }
+    if let Some(&v) = memo.get(&x) {
+        return v;
+    }
+    let res = if x & 1 == 1 {
+        1 + dfs(3 * x + 1, memo)
+    } else {
+        1 + dfs(x / 2, memo)
+    };
+    memo.insert(x, res);
     res
 }
 
@@ -32,15 +38,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            max_number_of_families(3, &mut [[1, 2], [1, 3], [1, 8], [2, 6], [3, 1], [3, 10]]),
-            4
-        );
-        assert_eq!(max_number_of_families(2, &mut [[2, 1], [1, 8], [2, 6]]), 2);
-        assert_eq!(
-            max_number_of_families(4, &mut [[4, 3], [1, 4], [4, 6], [1, 7]]),
-            4
-        );
+        assert_eq!(get_kth(12, 15, 2), 13);
+        assert_eq!(get_kth(7, 11, 4), 7);
     }
 
     #[test]
