@@ -2,32 +2,46 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn get_kth(lo: i32, hi: i32, k: i32) -> i32 {
-    let mut memo = HashMap::new();
-    let mut nums: Vec<_> = (lo..=hi).map(|x| (x, dfs(x, &mut memo))).collect();
-    nums.sort_by_key(|v| v.1);
-    nums[k as usize - 1].0
+pub fn max_size_slices(slices: &[i32]) -> i32 {
+    let k = slices.len();
+    let n = k / 3;
+    // let mut dp = vec![vec![-1; 1 + n]; k];
+    // dfs(&slices[1..], 0, n, &mut dp.clone()).max(dfs(&slices[..k - 1], 0, n, &mut dp))
+    tabulation(&slices[1..], n).max(tabulation(&slices[..k - 1], n))
 }
 
-fn dfs(x: i32, memo: &mut HashMap<i32, i32>) -> i32 {
-    if x == 1 {
+fn dfs(nums: &[i32], idx: usize, remains: usize, dp: &mut [Vec<i32>]) -> i32 {
+    if idx >= nums.len() || remains == 0 {
         return 0;
     }
-    if let Some(&v) = memo.get(&x) {
-        return v;
+    if dp[idx][remains] > 0 {
+        return dp[idx][remains];
     }
-    let res = if x & 1 == 1 {
-        1 + dfs(3 * x + 1, memo)
-    } else {
-        1 + dfs(x / 2, memo)
-    };
-    memo.insert(x, res);
+    let pick = nums[idx] + dfs(nums, 2 + idx, remains - 1, dp);
+    let skip = dfs(nums, 1 + idx, remains, dp);
+    let res = pick.max(skip);
+    dp[idx][remains] = res;
     res
+}
+
+fn tabulation(nums: &[i32], n: usize) -> i32 {
+    let len = nums.len();
+    let mut dp = vec![vec![0; 1 + n]; 1 + len];
+    for i1 in 1..=len {
+        for i2 in 1..=n {
+            if i1 == 1 {
+                dp[i1][i2] = nums[0]
+            } else {
+                let pick = dp[i1 - 2][i2 - 1] + nums[i1 - 1];
+                let skip = dp[i1 - 1][i2];
+                dp[i1][i2] = pick.max(skip);
+            }
+        }
+    }
+    dp[len][n]
 }
 
 #[cfg(test)]
@@ -38,8 +52,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(get_kth(12, 15, 2), 13);
-        assert_eq!(get_kth(7, 11, 4), 7);
+        assert_eq!(max_size_slices(&[1, 2, 3, 4, 5, 6]), 10);
+        assert_eq!(max_size_slices(&[8, 9, 8, 6, 1, 1]), 16);
     }
 
     #[test]
