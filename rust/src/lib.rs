@@ -2,37 +2,31 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::{cmp::Reverse, collections::BinaryHeap};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn word_subsets(words1: &[&str], words2: &[&str]) -> Vec<String> {
-    let freq = words2
-        .iter()
-        .map(|s| count(s))
-        .fold([0; 26], |mut acc, curr| {
-            for (v, c) in acc.iter_mut().zip(curr) {
-                (*v) = (*v).max(c);
-            }
-            acc
-        });
-    words1
-        .iter()
-        .filter_map(|s| {
-            let curr = count(s);
-            if curr.into_iter().zip(freq).all(|(c, f)| c >= f) {
-                Some(s.to_string())
-            } else {
-                None
-            }
-        })
-        .collect()
-}
-
-fn count(s: &str) -> [i16; 26] {
-    s.bytes().fold([0; 26], |mut acc, b| {
-        acc[usize::from(b - b'a')] += 1;
-        acc
-    })
+pub fn max_performance(_n: i32, speed: Vec<i32>, efficiency: Vec<i32>, k: i32) -> i32 {
+    let mut espairs: Vec<_> = efficiency
+        .into_iter()
+        .zip(speed)
+        .map(|(e, s)| [e, s].map(i64::from))
+        .collect();
+    espairs.sort_unstable_by_key(|p| Reverse(p[0]));
+    let mut sum = 0;
+    let mut res = 0;
+    let mut heap = BinaryHeap::new();
+    for [ef, sp] in espairs {
+        heap.push(Reverse(sp));
+        sum += sp;
+        if heap.len() > k as usize {
+            let s = heap.pop().map(|r| r.0).unwrap_or(0);
+            sum -= s;
+        }
+        res = res.max(sum * ef);
+    }
+    (res % 1_000_000_007) as i32
 }
 
 #[cfg(test)]
@@ -44,18 +38,16 @@ mod tests {
     #[test]
     fn basics() {
         assert_eq!(
-            word_subsets(
-                &["amazon", "apple", "facebook", "google", "leetcode"],
-                &["e", "o"]
-            ),
-            ["facebook", "google", "leetcode"]
+            max_performance(6, vec![2, 10, 3, 1, 5, 8], vec![5, 4, 3, 9, 7, 2], 2),
+            60
         );
         assert_eq!(
-            word_subsets(
-                &["amazon", "apple", "facebook", "google", "leetcode"],
-                &["l", "e"]
-            ),
-            ["apple", "google", "leetcode"]
+            max_performance(6, vec![2, 10, 3, 1, 5, 8], vec![5, 4, 3, 9, 7, 2], 3),
+            68
+        );
+        assert_eq!(
+            max_performance(6, vec![2, 10, 3, 1, 5, 8], vec![5, 4, 3, 9, 7, 2], 4),
+            72
         );
     }
 
