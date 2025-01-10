@@ -5,16 +5,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn create_target_array(nums: &[i32], index: &[i32]) -> Vec<i32> {
-    let mut res = Vec::with_capacity(nums.len());
-    for (&num, &idx) in nums.iter().zip(index.iter()) {
-        if idx as usize >= res.len() {
-            res.push(num);
-        } else {
-            res.insert(idx as _, num);
+pub fn sum_four_divisors(nums: &[i32]) -> i32 {
+    nums.iter().filter_map(|&num| solve(num)).sum()
+}
+
+fn solve(num: i32) -> Option<i32> {
+    let sq = f64::from(num).sqrt().floor() as i32;
+    let mut factors = Vec::with_capacity(2);
+    for v in 2..=sq {
+        if num % v == 0 {
+            if factors.is_empty() && v * v < num {
+                factors.extend([v, num / v]);
+            } else {
+                return None;
+            }
         }
     }
-    res
+    if factors.len() == 2 {
+        Some(factors.into_iter().sum::<i32>() + num + 1)
+    } else {
+        None
+    }
 }
 
 #[cfg(test)]
@@ -25,15 +36,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            create_target_array(&[0, 1, 2, 3, 4], &[0, 1, 2, 2, 1]),
-            [0, 4, 1, 3, 2]
-        );
-        assert_eq!(
-            create_target_array(&[1, 2, 3, 4, 0], &[0, 1, 2, 3, 0]),
-            [0, 1, 2, 3, 4]
-        );
-        assert_eq!(create_target_array(&[1], &[0]), [1]);
+        assert_eq!(sum_four_divisors(&[21, 4, 7]), 32);
+        assert_eq!(sum_four_divisors(&[21, 21]), 64);
+        assert_eq!(sum_four_divisors(&[1, 2, 3, 4, 5]), 0);
     }
 
     #[test]
