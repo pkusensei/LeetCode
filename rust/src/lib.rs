@@ -5,43 +5,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_size_slices(slices: &[i32]) -> i32 {
-    let k = slices.len();
-    let n = k / 3;
-    // let mut dp = vec![vec![-1; 1 + n]; k];
-    // dfs(&slices[1..], 0, n, &mut dp.clone()).max(dfs(&slices[..k - 1], 0, n, &mut dp))
-    tabulation(&slices[1..], n).max(tabulation(&slices[..k - 1], n))
-}
-
-fn dfs(nums: &[i32], idx: usize, remains: usize, dp: &mut [Vec<i32>]) -> i32 {
-    if idx >= nums.len() || remains == 0 {
-        return 0;
-    }
-    if dp[idx][remains] > 0 {
-        return dp[idx][remains];
-    }
-    let pick = nums[idx] + dfs(nums, 2 + idx, remains - 1, dp);
-    let skip = dfs(nums, 1 + idx, remains, dp);
-    let res = pick.max(skip);
-    dp[idx][remains] = res;
-    res
-}
-
-fn tabulation(nums: &[i32], n: usize) -> i32 {
-    let len = nums.len();
-    let mut dp = vec![vec![0; 1 + n]; 1 + len];
-    for i1 in 1..=len {
-        for i2 in 1..=n {
-            if i1 == 1 {
-                dp[i1][i2] = nums[0]
-            } else {
-                let pick = dp[i1 - 2][i2 - 1] + nums[i1 - 1];
-                let skip = dp[i1 - 1][i2];
-                dp[i1][i2] = pick.max(skip);
-            }
+pub fn create_target_array(nums: &[i32], index: &[i32]) -> Vec<i32> {
+    let mut res = Vec::with_capacity(nums.len());
+    for (&num, &idx) in nums.iter().zip(index.iter()) {
+        if idx as usize >= res.len() {
+            res.push(num);
+        } else {
+            res.insert(idx as _, num);
         }
     }
-    dp[len][n]
+    res
 }
 
 #[cfg(test)]
@@ -52,8 +25,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_size_slices(&[1, 2, 3, 4, 5, 6]), 10);
-        assert_eq!(max_size_slices(&[8, 9, 8, 6, 1, 1]), 16);
+        assert_eq!(
+            create_target_array(&[0, 1, 2, 3, 4], &[0, 1, 2, 2, 1]),
+            [0, 4, 1, 3, 2]
+        );
+        assert_eq!(
+            create_target_array(&[1, 2, 3, 4, 0], &[0, 1, 2, 3, 0]),
+            [0, 1, 2, 3, 4]
+        );
+        assert_eq!(create_target_array(&[1], &[0]), [1]);
     }
 
     #[test]
