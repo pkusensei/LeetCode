@@ -5,13 +5,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_the_distance_value(arr1: &[i32], arr2: &mut [i32], d: i32) -> i32 {
-    arr2.sort_unstable();
-    let mut res = 0;
-    for &num in arr1.iter() {
-        let a = arr2.partition_point(|&v| v < num - d);
-        let b = arr2.partition_point(|&v| v <= num + d);
-        res += i32::from(a == b);
+pub fn max_number_of_families(n: i32, reserved_seats: &mut [[i32; 2]]) -> i32 {
+    const TWO: i16 = 0b011_1111_110;
+    const ONE: i16 = 0b000_1111_000;
+    const LEFT: i16 = 0b011_1100_000;
+    const RIGHT: i16 = 0b000_0011_110;
+    reserved_seats.sort_unstable_by_key(|s| s[0]);
+    let mut res = 2 * n;
+    for row in reserved_seats.chunk_by(|a, b| a[0] == b[0]) {
+        let mask = row.iter().fold(0, |acc, s| acc | 1 << (s[1] - 1));
+        if mask & TWO == 0 {
+        } else if mask & ONE == 0 || mask & LEFT == 0 || mask & RIGHT == 0 {
+            res -= 1
+        } else {
+            res -= 2;
+        }
     }
     res
 }
@@ -25,16 +33,13 @@ mod tests {
     #[test]
     fn basics() {
         assert_eq!(
-            find_the_distance_value(&[4, 5, 8], &mut [10, 9, 1, 8], 2),
-            2
+            max_number_of_families(3, &mut [[1, 2], [1, 3], [1, 8], [2, 6], [3, 1], [3, 10]]),
+            4
         );
+        assert_eq!(max_number_of_families(2, &mut [[2, 1], [1, 8], [2, 6]]), 2);
         assert_eq!(
-            find_the_distance_value(&[1, 4, 2, 3], &mut [-4, -3, 6, 10, 20, 30], 3),
-            2
-        );
-        assert_eq!(
-            find_the_distance_value(&[2, 1, 100, 3], &mut [-5, -2, 10, -3, 7], 6),
-            1
+            max_number_of_families(4, &mut [[4, 3], [1, 4], [4, 6], [1, 7]]),
+            4
         );
     }
 
