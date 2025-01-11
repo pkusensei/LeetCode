@@ -5,19 +5,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn can_construct(s: &str, k: i32) -> bool {
-    if s.len() < k as usize {
-        return false;
+pub fn longest_prefix(s: &str) -> String {
+    let (t, n) = (s.as_bytes(), s.len());
+    let mut lps = vec![0; n];
+    let mut len = 0;
+    let mut idx = 1;
+    while idx < n {
+        if t[idx] == t[len] {
+            len += 1;
+            lps[idx] = len;
+            idx += 1
+        } else if len > 0 {
+            len = lps[len - 1];
+        } else {
+            idx += 1
+        }
     }
-    s.bytes()
-        .fold([0; 26], |mut acc, b| {
-            acc[usize::from(b - b'a')] += 1;
-            acc
-        })
-        .into_iter()
-        .map(|v| v & 1)
-        .sum::<i32>()
-        <= k
+    s[..lps[n - 1]].to_string()
 }
 
 #[cfg(test)]
@@ -28,9 +32,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert!(can_construct("annabelle", 2));
-        assert!(!can_construct("leetcode", 3));
-        assert!(can_construct("true", 4));
+        assert_eq!(longest_prefix("level"), "l");
+        assert_eq!(longest_prefix("ababab"), "abab");
     }
 
     #[test]
