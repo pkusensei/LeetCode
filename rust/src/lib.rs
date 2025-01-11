@@ -5,23 +5,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn longest_prefix(s: &str) -> String {
-    let (t, n) = (s.as_bytes(), s.len());
-    let mut lps = vec![0; n];
-    let mut len = 0;
-    let mut idx = 1;
-    while idx < n {
-        if t[idx] == t[len] {
-            len += 1;
-            lps[idx] = len;
-            idx += 1
-        } else if len > 0 {
-            len = lps[len - 1];
-        } else {
-            idx += 1
-        }
-    }
-    s[..lps[n - 1]].to_string()
+pub fn find_lucky(arr: Vec<i32>) -> i32 {
+    arr.into_iter()
+        .fold(std::collections::HashMap::new(), |mut acc, num| {
+            *acc.entry(num).or_insert(0) += 1;
+            acc
+        })
+        .into_iter()
+        .filter_map(|(k, v)| if k == v { Some(k) } else { None })
+        .max()
+        .unwrap_or(-1)
 }
 
 #[cfg(test)]
@@ -31,10 +24,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {
-        assert_eq!(longest_prefix("level"), "l");
-        assert_eq!(longest_prefix("ababab"), "abab");
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
