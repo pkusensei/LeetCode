@@ -5,16 +5,29 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_lucky(arr: Vec<i32>) -> i32 {
-    arr.into_iter()
-        .fold(std::collections::HashMap::new(), |mut acc, num| {
-            *acc.entry(num).or_insert(0) += 1;
-            acc
-        })
-        .into_iter()
-        .filter_map(|(k, v)| if k == v { Some(k) } else { None })
-        .max()
-        .unwrap_or(-1)
+pub fn can_be_valid(s: &str, locked: &str) -> bool {
+    if s.len() & 1 == 1 {
+        return false;
+    }
+    let mut locked_left = vec![];
+    let mut unlocked = vec![];
+    for (idx, (a, b)) in s.bytes().zip(locked.bytes()).enumerate() {
+        match (a, b) {
+            (b'(', b'1') => locked_left.push(idx),
+            (b')', b'1') => {
+                if locked_left.pop().is_none() && unlocked.pop().is_none() {
+                    return false;
+                }
+            }
+            _ => unlocked.push(idx),
+        }
+    }
+    while let Some(left) = locked_left.pop() {
+        if unlocked.pop().is_none_or(|v| v < left) {
+            return false;
+        }
+    }
+    unlocked.len() & 1 == 0
 }
 
 #[cfg(test)]
@@ -24,7 +37,11 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert!(can_be_valid("))()))", "010100"));
+        assert!(can_be_valid("()()", "0000"));
+        assert!(!can_be_valid(")", "0"));
+    }
 
     #[test]
     fn test() {}
