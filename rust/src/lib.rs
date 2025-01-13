@@ -5,27 +5,29 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub const fn find_min_fibonacci_numbers(mut k: i32) -> i32 {
-    let mut res = 0;
-    while k > 0 {
-        let temp = fib(k);
-        k -= temp;
-        res += 1;
-    }
-    res
+pub fn get_happy_string(n: i32, mut k: i32) -> String {
+    let n = n as usize;
+    let mut res = Vec::with_capacity(n);
+    backtrack(n, &mut k, &mut res);
+    String::from_utf8(res).unwrap()
 }
 
-const fn fib(n: i32) -> i32 {
-    let [mut a, mut b] = [1, 1];
-    loop {
-        let next = a + b;
-        if next > n {
-            break;
-        }
-        a = b;
-        b = next;
+fn backtrack(n: usize, k: &mut i32, res: &mut Vec<u8>) -> bool {
+    if res.len() == n {
+        *k -= 1;
+        return *k == 0;
     }
-    b
+    for &b in b"abc" {
+        if res.last().is_some_and(|&v| v == b) {
+            continue;
+        }
+        res.push(b);
+        if backtrack(n, k, res) {
+            return true;
+        }
+        res.pop();
+    }
+    false
 }
 
 #[cfg(test)]
@@ -36,9 +38,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(find_min_fibonacci_numbers(7), 2);
-        assert_eq!(find_min_fibonacci_numbers(10), 2);
-        assert_eq!(find_min_fibonacci_numbers(19), 3);
+        assert_eq!(get_happy_string(1, 3), "c");
+        assert_eq!(get_happy_string(1, 4), "");
+        assert_eq!(get_happy_string(3, 9), "cab");
     }
 
     #[test]
