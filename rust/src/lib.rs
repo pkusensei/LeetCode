@@ -5,24 +5,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_largest_group(n: i32) -> i32 {
-    let map = (1..=n)
-        .map(count)
-        .fold(std::collections::HashMap::new(), |mut acc, sum| {
-            *acc.entry(sum).or_insert(0) += 1;
+pub fn minimum_length(s: &str) -> i32 {
+    s.bytes()
+        .fold([0; 26], |mut acc, b| {
+            acc[usize::from(b - b'a')] += 1;
             acc
-        });
-    let max = map.values().copied().max().unwrap_or(1);
-    map.into_values().filter(|&v| v == max).count() as _
-}
-
-const fn count(mut n: i32) -> i32 {
-    let mut res = 0;
-    while n > 0 {
-        res += n % 10;
-        n /= 10;
-    }
-    res
+        })
+        .into_iter()
+        .map(|v| {
+            if v == 0 {
+                0
+            } else if v & 1 == 1 {
+                1
+            } else {
+                2
+            }
+        })
+        .sum()
 }
 
 #[cfg(test)]
@@ -32,7 +31,10 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(minimum_length("abaacbcbb"), 5);
+        assert_eq!(minimum_length("ss"), 2);
+    }
 
     #[test]
     fn test() {}
