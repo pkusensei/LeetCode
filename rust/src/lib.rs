@@ -5,18 +5,14 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_of_ways(n: i32) -> i32 {
-    const MOD: i64 = 1_000_000_007;
-    let mut p123 = 6;
-    let mut p121 = 6;
-    for _ in 1..n {
-        // 123 => 212 232 and 231 312
-        let next123 = (2 * p121 + 2 * p123) % MOD;
-        // 121 => 212 232 313 and 312 213
-        let next121 = (3 * p121 + 2 * p123) % MOD;
-        [p123, p121] = [next123, next121]
+pub fn min_start_value(nums: &[i32]) -> i32 {
+    let mut res = 1;
+    let mut prefix = 0;
+    for &num in nums {
+        prefix += num;
+        res = res.max(1 - prefix);
     }
-    ((p123 + p121) % MOD) as _
+    res
 }
 
 #[cfg(test)]
@@ -27,8 +23,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(num_of_ways(1), 12);
-        assert_eq!(num_of_ways(5000), 30228214);
+        assert_eq!(min_start_value(&[-3, 2, -3, 4, 2]), 5);
+        assert_eq!(min_start_value(&[1, 2]), 1);
+        assert_eq!(min_start_value(&[1, -2, -3]), 5);
     }
 
     #[test]
