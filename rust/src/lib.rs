@@ -5,14 +5,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_start_value(nums: &[i32]) -> i32 {
-    let mut res = 1;
-    let mut prefix = 0;
-    for &num in nums {
-        prefix += num;
-        res = res.max(1 - prefix);
+pub const fn find_min_fibonacci_numbers(mut k: i32) -> i32 {
+    let mut res = 0;
+    while k > 0 {
+        let temp = fib(k);
+        k -= temp;
+        res += 1;
     }
     res
+}
+
+const fn fib(n: i32) -> i32 {
+    let [mut a, mut b] = [1, 1];
+    loop {
+        let next = a + b;
+        if next > n {
+            break;
+        }
+        a = b;
+        b = next;
+    }
+    b
 }
 
 #[cfg(test)]
@@ -23,9 +36,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_start_value(&[-3, 2, -3, 4, 2]), 5);
-        assert_eq!(min_start_value(&[1, 2]), 1);
-        assert_eq!(min_start_value(&[1, -2, -3]), 5);
+        assert_eq!(find_min_fibonacci_numbers(7), 2);
+        assert_eq!(find_min_fibonacci_numbers(10), 2);
+        assert_eq!(find_min_fibonacci_numbers(19), 3);
     }
 
     #[test]
