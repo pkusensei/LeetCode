@@ -5,15 +5,25 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_subsequence(mut nums: Vec<i32>) -> Vec<i32> {
-    let sum: i32 = nums.iter().sum();
-    nums.sort_unstable();
-    let mut curr = 0;
-    let mut res = vec![];
-    while let Some(v) = nums.pop() {
-        curr += v;
-        res.push(v);
-        if 2 * curr > sum {
+pub fn num_steps(s: String) -> i32 {
+    let mut s = s.into_bytes();
+    let mut res = 0;
+    while s.len() > 1 {
+        while s.last().is_some_and(|&v| v == b'0') {
+            res += 1;
+            s.pop();
+        }
+        if s.len() == 1 {
+            break;
+        }
+        if let Some(i) = s.iter().rposition(|&v| v == b'0') {
+            for v in s.iter_mut().skip(i) {
+                (*v) = b'0'
+            }
+            s[i] = b'1';
+            res += 1;
+        } else {
+            res += 1 + s.len() as i32;
             break;
         }
     }
@@ -28,8 +38,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_subsequence(vec![4, 3, 10, 9, 8]), [10, 9]);
-        assert_eq!(min_subsequence(vec![4, 4, 7, 6, 7]), [7, 7, 6]);
+        assert_eq!(num_steps("1101".into()), 6);
+        assert_eq!(num_steps("10".into()), 1);
+        assert_eq!(num_steps("1".into()), 0);
     }
 
     #[test]
