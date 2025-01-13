@@ -5,51 +5,31 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn number_of_arrays(s: &str, k: i32) -> i32 {
-    let n = s.len();
-    // dfs(s, k, 0, &mut vec![-1; n])
-    let mut dp = vec![0; 1 + n];
-    dp[n] = 1;
-    for idx in (0..n).rev() {
-        let mut curr = 0;
-        for i in idx..n {
-            if s[idx..=i]
-                .parse::<i32>()
-                .is_ok_and(|v| (1..=k).contains(&v))
-            {
-                curr += dp[1 + i];
-                curr %= 1_000_000_007;
-            }
-        }
-        dp[idx] = curr;
-    }
-    dp[0]
-}
-
-fn dfs(s: &str, k: i32, idx: usize, memo: &mut [i32]) -> i32 {
-    if idx >= s.len() {
-        return 1;
-    }
-    // [1..=k]
-    if s[idx..].starts_with('0') {
-        return 0;
-    }
-    if memo[idx] > -1 {
-        return memo[idx];
-    }
-    let n = k.ilog10() as usize + 1;
-    let mut res = 0;
-    for len in 1..=n {
-        if idx + len > s.len() {
-            break;
-        }
-        if s[idx..idx + len].parse::<i32>().is_ok_and(|v| v <= k) {
-            res += dfs(s, k, idx + len, memo);
-            res %= 1_000_000_007;
+pub fn reformat(s: String) -> String {
+    let [mut letters, mut digits] = [0, 1].map(|_| vec![]);
+    for b in s.bytes() {
+        if b.is_ascii_alphabetic() {
+            letters.push(b);
+        } else {
+            digits.push(b);
         }
     }
-    memo[idx] = res;
-    res
+    let [a, b] = match (letters.len() as i16) - (digits.len() as i16) {
+        0 | 1 => [letters, digits],
+        -1 => [digits, letters],
+        _ => return "".to_string(),
+    };
+    let mut res = Vec::with_capacity(s.len());
+    let mut idx = 0;
+    while idx < b.len() {
+        res.push(a[idx]);
+        res.push(b[idx]);
+        idx += 1;
+    }
+    if let Some(&b) = a.get(idx) {
+        res.push(b);
+    }
+    String::from_utf8(res).unwrap()
 }
 
 #[cfg(test)]
@@ -59,11 +39,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {
-        assert_eq!(number_of_arrays("1000", 10000), 1);
-        assert_eq!(number_of_arrays("1000", 10), 0);
-        assert_eq!(number_of_arrays("1317", 2000), 8);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
