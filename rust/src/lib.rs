@@ -5,21 +5,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_satisfaction(satisfaction: &mut [i32]) -> i32 {
-    satisfaction.sort_unstable();
-    let i = satisfaction.partition_point(|&v| v < 0);
-    if i == satisfaction.len() {
-        return 0;
-    }
-    let mut delta: i32 = satisfaction[i..].iter().sum();
-    let mut res: i32 = satisfaction[i..]
-        .iter()
-        .enumerate()
-        .map(|(i, v)| (1 + i as i32) * v)
-        .sum();
-    for &num in satisfaction[..i].iter().rev() {
-        delta += num;
-        res = res.max(res + delta);
+pub fn min_subsequence(mut nums: Vec<i32>) -> Vec<i32> {
+    let sum: i32 = nums.iter().sum();
+    nums.sort_unstable();
+    let mut curr = 0;
+    let mut res = vec![];
+    while let Some(v) = nums.pop() {
+        curr += v;
+        res.push(v);
+        if 2 * curr > sum {
+            break;
+        }
     }
     res
 }
@@ -32,9 +28,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_satisfaction(&mut [-1, -8, 0, 5, -9]), 14);
-        assert_eq!(max_satisfaction(&mut [4, 3, 2]), 20);
-        assert_eq!(max_satisfaction(&mut [-1, -4, -5]), 0);
+        assert_eq!(min_subsequence(vec![4, 3, 10, 9, 8]), [10, 9]);
+        assert_eq!(min_subsequence(vec![4, 4, 7, 6, 7]), [7, 7, 6]);
     }
 
     #[test]
