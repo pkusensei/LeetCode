@@ -5,84 +5,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_good_strings(n: i32, s1: &str, s2: &str, evil: &str) -> i32 {
-    let lps = compute_lps(evil);
-    dfs(
-        s1.as_bytes(),
-        s2.as_bytes(),
-        evil.as_bytes(),
-        &lps,
-        &mut vec![vec![vec![vec![-1; 2]; 2]; 1 + evil.len()]; 1 + n as usize],
-        0,
-        0,
-        true,
-        true,
-    )
+pub fn count_largest_group(n: i32) -> i32 {
+    let map = (1..=n)
+        .map(count)
+        .fold(std::collections::HashMap::new(), |mut acc, sum| {
+            *acc.entry(sum).or_insert(0) += 1;
+            acc
+        });
+    let max = map.values().copied().max().unwrap_or(1);
+    map.into_values().filter(|&v| v == max).count() as _
 }
 
-fn dfs(
-    s1: &[u8],
-    s2: &[u8],
-    evil: &[u8],
-    lps: &[usize],
-    memo: &mut [Vec<Vec<Vec<i32>>>],
-    idx: usize,
-    matched: usize,
-    left_bound: bool,
-    right_bound: bool,
-) -> i32 {
-    if matched == evil.len() {
-        return 0;
-    }
-    if idx >= s1.len() {
-        return 1;
-    }
-    if memo[idx][matched][usize::from(left_bound)][usize::from(right_bound)] > 0 {
-        return memo[idx][matched][usize::from(left_bound)][usize::from(right_bound)];
-    }
-    let left = if left_bound { s1[idx] } else { b'a' };
-    let right = if right_bound { s2[idx] } else { b'z' };
+const fn count(mut n: i32) -> i32 {
     let mut res = 0;
-    for byte in left..=right {
-        let mut next_matched = matched;
-        while evil[next_matched] != byte && next_matched > 0 {
-            next_matched = lps[next_matched - 1];
-        }
-        next_matched += usize::from(byte == evil[next_matched]);
-        res += dfs(
-            s1,
-            s2,
-            evil,
-            lps,
-            memo,
-            1 + idx,
-            next_matched,
-            left_bound && byte == left,
-            right_bound && byte == right,
-        );
-        res %= 1_000_000_007;
+    while n > 0 {
+        res += n % 10;
+        n /= 10;
     }
-    memo[idx][matched][usize::from(left_bound)][usize::from(right_bound)] = res;
     res
-}
-
-fn compute_lps(s: &str) -> Vec<usize> {
-    let (t, n) = (s.as_bytes(), s.len());
-    let mut lps = vec![0; n];
-    let mut len = 0;
-    let mut idx = 1;
-    while idx < n {
-        if t[idx] == t[len] {
-            len += 1;
-            lps[idx] = len;
-            idx += 1
-        } else if len > 0 {
-            len = lps[len - 1];
-        } else {
-            idx += 1
-        }
-    }
-    lps
 }
 
 #[cfg(test)]
@@ -92,11 +32,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {
-        assert_eq!(find_good_strings(2, "aa", "da", "b"), 51);
-        assert_eq!(find_good_strings(8, "leetcode", "leetgoes", "leet"), 0);
-        assert_eq!(find_good_strings(2, "gx", "gz", "x"), 2);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
