@@ -2,34 +2,35 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::{BTreeMap, BTreeSet, HashMap};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn reformat(s: String) -> String {
-    let [mut letters, mut digits] = [0, 1].map(|_| vec![]);
-    for b in s.bytes() {
-        if b.is_ascii_alphabetic() {
-            letters.push(b);
-        } else {
-            digits.push(b);
+pub fn display_table(orders: &[[&str; 3]]) -> Vec<Vec<String>> {
+    let mut table_food = BTreeMap::<u16, HashMap<_, _>>::new();
+    let mut foods = BTreeSet::new();
+    for ord in orders.iter() {
+        *table_food
+            .entry(ord[1].parse().unwrap_or(0))
+            .or_default()
+            .entry(ord[2])
+            .or_insert(0) += 1;
+        foods.insert(ord[2]);
+    }
+    let mut res = vec![];
+    let mut row = vec!["Table".to_string()];
+    row.extend(foods.iter().map(|s| s.to_string()));
+    res.push(row);
+    for (k, v) in table_food.into_iter() {
+        row = vec![k.to_string()];
+        for food in foods.iter() {
+            let num = v.get(food).copied().unwrap_or(0).to_string();
+            row.push(num);
         }
+        res.push(row);
     }
-    let [a, b] = match (letters.len() as i16) - (digits.len() as i16) {
-        0 | 1 => [letters, digits],
-        -1 => [digits, letters],
-        _ => return "".to_string(),
-    };
-    let mut res = Vec::with_capacity(s.len());
-    let mut idx = 0;
-    while idx < b.len() {
-        res.push(a[idx]);
-        res.push(b[idx]);
-        idx += 1;
-    }
-    if let Some(&b) = a.get(idx) {
-        res.push(b);
-    }
-    String::from_utf8(res).unwrap()
+    res
 }
 
 #[cfg(test)]
@@ -39,7 +40,49 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(
+            display_table(&[
+                ["David", "3", "Ceviche"],
+                ["Corina", "10", "Beef Burrito"],
+                ["David", "3", "Fried Chicken"],
+                ["Carla", "5", "Water"],
+                ["Carla", "5", "Ceviche"],
+                ["Rous", "3", "Ceviche"]
+            ]),
+            [
+                ["Table", "Beef Burrito", "Ceviche", "Fried Chicken", "Water"],
+                ["3", "0", "2", "1", "0"],
+                ["5", "0", "1", "0", "1"],
+                ["10", "1", "0", "0", "0"]
+            ]
+        );
+        assert_eq!(
+            display_table(&[
+                ["James", "12", "Fried Chicken"],
+                ["Ratesh", "12", "Fried Chicken"],
+                ["Amadeus", "12", "Fried Chicken"],
+                ["Adam", "1", "Canadian Waffles"],
+                ["Brianna", "1", "Canadian Waffles"]
+            ]),
+            [
+                ["Table", "Canadian Waffles", "Fried Chicken"],
+                ["1", "2", "0"],
+                ["12", "0", "3"]
+            ]
+        );
+        assert_eq!(
+            display_table(&[
+                ["Laura", "2", "Bean Burrito"],
+                ["Jhon", "2", "Beef Burrito"],
+                ["Melissa", "2", "Soda"]
+            ]),
+            [
+                ["Table", "Bean Burrito", "Beef Burrito", "Soda"],
+                ["2", "1", "1", "1"]
+            ]
+        );
+    }
 
     #[test]
     fn test() {}
