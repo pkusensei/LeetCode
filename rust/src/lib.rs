@@ -5,23 +5,25 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_length(s: &str) -> i32 {
-    s.bytes()
-        .fold([0; 26], |mut acc, b| {
-            acc[usize::from(b - b'a')] += 1;
-            acc
-        })
-        .into_iter()
-        .map(|v| {
-            if v == 0 {
-                0
-            } else if v & 1 == 1 {
-                1
-            } else {
-                2
-            }
-        })
-        .sum()
+pub fn check_overlap(
+    radius: i32,
+    x_center: i32,
+    y_center: i32,
+    x1: i32,
+    y1: i32,
+    x2: i32,
+    y2: i32,
+) -> bool {
+    const fn dist(center: i32, a: i32, b: i32) -> i32 {
+        if center < a {
+            return a - center;
+        }
+        if b < center {
+            return center - b;
+        }
+        0
+    }
+    dist(x_center, x1, x2).pow(2) + dist(y_center, y1, y2).pow(2) <= radius.pow(2)
 }
 
 #[cfg(test)]
@@ -32,8 +34,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(minimum_length("abaacbcbb"), 5);
-        assert_eq!(minimum_length("ss"), 2);
+        assert!(check_overlap(1, 0, 0, 1, -1, 3, 1));
+        assert!(!check_overlap(1, 1, 1, 1, -3, 2, -1));
+        assert!(check_overlap(1, 0, 0, -1, 0, 0, 1))
     }
 
     #[test]
