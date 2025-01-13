@@ -5,29 +5,51 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn get_happy_string(n: i32, mut k: i32) -> String {
-    let n = n as usize;
-    let mut res = Vec::with_capacity(n);
-    backtrack(n, &mut k, &mut res);
-    String::from_utf8(res).unwrap()
+pub fn number_of_arrays(s: &str, k: i32) -> i32 {
+    let n = s.len();
+    // dfs(s, k, 0, &mut vec![-1; n])
+    let mut dp = vec![0; 1 + n];
+    dp[n] = 1;
+    for idx in (0..n).rev() {
+        let mut curr = 0;
+        for i in idx..n {
+            if s[idx..=i]
+                .parse::<i32>()
+                .is_ok_and(|v| (1..=k).contains(&v))
+            {
+                curr += dp[1 + i];
+                curr %= 1_000_000_007;
+            }
+        }
+        dp[idx] = curr;
+    }
+    dp[0]
 }
 
-fn backtrack(n: usize, k: &mut i32, res: &mut Vec<u8>) -> bool {
-    if res.len() == n {
-        *k -= 1;
-        return *k == 0;
+fn dfs(s: &str, k: i32, idx: usize, memo: &mut [i32]) -> i32 {
+    if idx >= s.len() {
+        return 1;
     }
-    for &b in b"abc" {
-        if res.last().is_some_and(|&v| v == b) {
-            continue;
-        }
-        res.push(b);
-        if backtrack(n, k, res) {
-            return true;
-        }
-        res.pop();
+    // [1..=k]
+    if s[idx..].starts_with('0') {
+        return 0;
     }
-    false
+    if memo[idx] > -1 {
+        return memo[idx];
+    }
+    let n = k.ilog10() as usize + 1;
+    let mut res = 0;
+    for len in 1..=n {
+        if idx + len > s.len() {
+            break;
+        }
+        if s[idx..idx + len].parse::<i32>().is_ok_and(|v| v <= k) {
+            res += dfs(s, k, idx + len, memo);
+            res %= 1_000_000_007;
+        }
+    }
+    memo[idx] = res;
+    res
 }
 
 #[cfg(test)]
@@ -38,9 +60,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(get_happy_string(1, 3), "c");
-        assert_eq!(get_happy_string(1, 4), "");
-        assert_eq!(get_happy_string(3, 9), "cab");
+        assert_eq!(number_of_arrays("1000", 10000), 1);
+        assert_eq!(number_of_arrays("1000", 10), 0);
+        assert_eq!(number_of_arrays("1317", 2000), 8);
     }
 
     #[test]
