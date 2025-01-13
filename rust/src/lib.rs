@@ -5,25 +5,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn check_overlap(
-    radius: i32,
-    x_center: i32,
-    y_center: i32,
-    x1: i32,
-    y1: i32,
-    x2: i32,
-    y2: i32,
-) -> bool {
-    const fn dist(center: i32, a: i32, b: i32) -> i32 {
-        if center < a {
-            return a - center;
-        }
-        if b < center {
-            return center - b;
-        }
-        0
+pub fn max_satisfaction(satisfaction: &mut [i32]) -> i32 {
+    satisfaction.sort_unstable();
+    let i = satisfaction.partition_point(|&v| v < 0);
+    if i == satisfaction.len() {
+        return 0;
     }
-    dist(x_center, x1, x2).pow(2) + dist(y_center, y1, y2).pow(2) <= radius.pow(2)
+    let mut delta: i32 = satisfaction[i..].iter().sum();
+    let mut res: i32 = satisfaction[i..]
+        .iter()
+        .enumerate()
+        .map(|(i, v)| (1 + i as i32) * v)
+        .sum();
+    for &num in satisfaction[..i].iter().rev() {
+        delta += num;
+        res = res.max(res + delta);
+    }
+    res
 }
 
 #[cfg(test)]
@@ -34,9 +32,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert!(check_overlap(1, 0, 0, 1, -1, 3, 1));
-        assert!(!check_overlap(1, 1, 1, 1, -3, 2, -1));
-        assert!(check_overlap(1, 0, 0, -1, 0, 0, 1))
+        assert_eq!(max_satisfaction(&mut [-1, -8, 0, 5, -9]), 14);
+        assert_eq!(max_satisfaction(&mut [4, 3, 2]), 20);
+        assert_eq!(max_satisfaction(&mut [-1, -4, -5]), 0);
     }
 
     #[test]
