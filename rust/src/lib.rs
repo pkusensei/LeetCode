@@ -5,48 +5,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn stone_game_iii(stone_value: &[i32]) -> String {
-    let n = stone_value.len();
-    let mut dp = [0; 4];
-    for i in (0..n).rev() {
-        dp[i % 4] = stone_value[i] - dp[(1 + i) % 4];
-        if i + 2 <= n {
-            let take_two = stone_value[i] + stone_value[i + 1] - dp[(2 + i) % 4];
-            dp[i % 4] = dp[i % 4].max(take_two);
-        }
-        if i + 3 <= n {
-            let take_three = (0..3).map(|k| stone_value[i + k]).sum::<i32>() - dp[(3 + i) % 4];
-            dp[i % 4] = dp[i % 4].max(take_three);
-        }
+pub fn process_queries(queries: &[i32], m: i32) -> Vec<i32> {
+    let mut perm: Vec<_> = (1..=m).collect();
+    let mut res = Vec::with_capacity(queries.len());
+    for &q in queries.iter() {
+        let Some(i) = perm.iter().position(|&v| v == q) else {
+            continue;
+        };
+        res.push(i as i32);
+        perm[0..=i].rotate_right(1);
     }
-    match dp[0].cmp(&0) {
-        // match dfs(stone_value, 0, 0, &mut vec![[None; 2]; n]).cmp(&0) {
-        std::cmp::Ordering::Less => "Bob".into(),
-        std::cmp::Ordering::Equal => "Tie".into(),
-        std::cmp::Ordering::Greater => "Alice".into(),
-    }
-}
-
-fn dfs(nums: &[i32], idx: usize, turn: usize, memo: &mut [[Option<i32>; 2]]) -> i32 {
-    if idx >= nums.len() {
-        return 0;
-    }
-    if let Some(v) = memo[idx][turn] {
-        return v;
-    }
-    let mut curr = nums[idx];
-    let mut res = dfs(nums, 1 + idx, 1 - turn, memo) + if turn == 0 { curr } else { -curr };
-    for i in [idx + 1, idx + 2] {
-        if let Some(&v) = nums.get(i) {
-            curr += v;
-            if turn == 0 {
-                res = res.max(curr + dfs(nums, 1 + i, 1 - turn, memo));
-            } else {
-                res = res.min(-curr + dfs(nums, 1 + i, 1 - turn, memo));
-            }
-        }
-    }
-    memo[idx][turn] = Some(res);
     res
 }
 
@@ -58,9 +26,7 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(stone_game_iii(&[1, 2, 3, 7]), "Bob");
-        assert_eq!(stone_game_iii(&[1, 2, 3, -9]), "Alice");
-        assert_eq!(stone_game_iii(&[1, 2, 3, 6]), "Tie");
+        assert_eq!(process_queries(&[3, 1, 2, 1], 5), [2, 1, 2, 1])
     }
 
     #[test]
