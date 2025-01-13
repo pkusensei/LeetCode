@@ -5,32 +5,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn entity_parser(text: &str) -> String {
-    let entities = std::collections::HashMap::from([
-        ("&quot;", "\""),
-        ("&apos;", "'"),
-        ("&amp;", "&"),
-        ("&gt;", ">"),
-        ("&lt;", "<"),
-        ("&frasl;", "/"),
-    ]);
-    let mut res = String::new();
-    let mut idx = 0;
-    while idx < text.len() {
-        let mut flag = false;
-        for (k, v) in entities.iter() {
-            if text[idx..].starts_with(k) {
-                res.push_str(v);
-                idx += k.len();
-                flag = true;
-            }
-        }
-        if !flag && idx < text.len() {
-            res.push_str(&text[idx..1 + idx]);
-            idx += 1;
-        }
+pub fn num_of_ways(n: i32) -> i32 {
+    const MOD: i64 = 1_000_000_007;
+    let mut p123 = 6;
+    let mut p121 = 6;
+    for _ in 1..n {
+        // 123 => 212 232 and 231 312
+        let next123 = (2 * p121 + 2 * p123) % MOD;
+        // 121 => 212 232 313 and 312 213
+        let next121 = (3 * p121 + 2 * p123) % MOD;
+        [p123, p121] = [next123, next121]
     }
-    res
+    ((p123 + p121) % MOD) as _
 }
 
 #[cfg(test)]
@@ -41,28 +27,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            entity_parser("&amp; is an HTML entity but &ambassador; is not.".into()),
-            "& is an HTML entity but &ambassador; is not."
-        );
-        assert_eq!(
-            entity_parser("and I quote: &quot;...&quot;".into()),
-            "and I quote: \"...\""
-        );
+        assert_eq!(num_of_ways(1), 12);
+        assert_eq!(num_of_ways(5000), 30228214);
     }
 
     #[test]
-    fn test() {
-        assert_eq!(
-            entity_parser("&amp;quot;&amp;apos;&amp;amp;&amp;gt;&amp;lt;&amp;frasl;".into()),
-            "&quot;&apos;&amp;&gt;&lt;&frasl;"
-        );
-        assert_eq!(entity_parser("&&gt;"), "&>");
-        assert_eq!(
-            entity_parser("x &gt; y &amp;&amp; x &lt; y is always false"),
-            "x > y && x < y is always false"
-        );
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
