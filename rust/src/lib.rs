@@ -5,15 +5,30 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn process_queries(queries: &[i32], m: i32) -> Vec<i32> {
-    let mut perm: Vec<_> = (1..=m).collect();
-    let mut res = Vec::with_capacity(queries.len());
-    for &q in queries.iter() {
-        let Some(i) = perm.iter().position(|&v| v == q) else {
-            continue;
-        };
-        res.push(i as i32);
-        perm[0..=i].rotate_right(1);
+pub fn entity_parser(text: &str) -> String {
+    let entities = std::collections::HashMap::from([
+        ("&quot;", "\""),
+        ("&apos;", "'"),
+        ("&amp;", "&"),
+        ("&gt;", ">"),
+        ("&lt;", "<"),
+        ("&frasl;", "/"),
+    ]);
+    let mut res = String::new();
+    let mut idx = 0;
+    while idx < text.len() {
+        let mut flag = false;
+        for (k, v) in entities.iter() {
+            if text[idx..].starts_with(k) {
+                res.push_str(v);
+                idx += k.len();
+                flag = true;
+            }
+        }
+        if !flag && idx < text.len() {
+            res.push_str(&text[idx..1 + idx]);
+            idx += 1;
+        }
     }
     res
 }
@@ -26,11 +41,28 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(process_queries(&[3, 1, 2, 1], 5), [2, 1, 2, 1])
+        assert_eq!(
+            entity_parser("&amp; is an HTML entity but &ambassador; is not.".into()),
+            "& is an HTML entity but &ambassador; is not."
+        );
+        assert_eq!(
+            entity_parser("and I quote: &quot;...&quot;".into()),
+            "and I quote: \"...\""
+        );
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(
+            entity_parser("&amp;quot;&amp;apos;&amp;amp;&amp;gt;&amp;lt;&amp;frasl;".into()),
+            "&quot;&apos;&amp;&gt;&lt;&frasl;"
+        );
+        assert_eq!(entity_parser("&&gt;"), "&>");
+        assert_eq!(
+            entity_parser("x &gt; y &amp;&amp; x &lt; y is always false"),
+            "x > y && x < y is always false"
+        );
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
