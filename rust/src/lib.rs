@@ -5,45 +5,12 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_diff(num: i32) -> i32 {
-    let mut digits = vec![];
-    let mut x = num;
-    while x > 0 {
-        digits.push(x % 10);
-        x /= 10;
-    }
-    digits.reverse();
-    if digits.len() == 1 {
-        8
-    } else {
-        let a = to_big(&digits);
-        let b = to_small(digits);
-        a - b
-    }
-}
-
-fn to_small(digits: Vec<i32>) -> i32 {
-    let (x, y) = if digits[0] > 1 {
-        (digits[0], 1)
-    } else {
-        // digits[0] == 1
-        let Some(&v) = digits.iter().find(|&&v| v > 1) else {
-            return digits.iter().fold(0, |acc, d| acc * 10 + d);
-        };
-        (v, 0)
-    };
-    digits
-        .into_iter()
-        .fold(0, |acc, d| acc * 10 + if d == x { y } else { d })
-}
-
-fn to_big(digits: &[i32]) -> i32 {
-    let Some(&v) = digits.iter().find(|&&v| v < 9) else {
-        return digits.iter().fold(0, |acc, d| acc * 10 + d);
-    };
-    digits
-        .iter()
-        .fold(0, |acc, &d| acc * 10 + if d == v { 9 } else { d })
+pub fn check_if_can_break(s1: String, s2: String) -> bool {
+    let [mut s1, mut s2] = [s1, s2].map(|v| v.into_bytes());
+    s1.sort_unstable();
+    s2.sort_unstable();
+    let mut it = s1.iter().zip(s2.iter());
+    it.clone().all(|(a, b)| a >= b) || it.all(|(a, b)| a <= b)
 }
 
 #[cfg(test)]
@@ -54,17 +21,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_diff(555), 888);
-        assert_eq!(max_diff(9), 8);
-
-        assert_eq!(max_diff(10000), 80000);
-        assert_eq!(max_diff(9288), 8700);
-        assert_eq!(max_diff(111), 888);
+        assert!(check_if_can_break("abc".into(), "xya".into()));
+        assert!(!check_if_can_break("abe".into(), "acd".into()));
+        assert!(check_if_can_break("leetcodee".into(), "interview".into()));
     }
 
     #[test]
     fn test() {
-        assert_eq!(max_diff(123456), 820000);
+        assert!(!check_if_can_break("qvgjjsp".into(), "qmsbphx".into()));
     }
 
     #[allow(dead_code)]
