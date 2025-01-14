@@ -5,21 +5,25 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_score(card_points: &[i32], k: i32) -> i32 {
-    let (n, k) = (card_points.len(), k as usize);
-    let sum: i32 = card_points.iter().sum();
-    if n <= k {
-        return sum;
+pub fn find_diagonal_order(nums: &[&[i32]]) -> Vec<i32> {
+    #[derive(Clone, Copy)]
+    struct Coord {
+        row: usize,
+        col: usize,
+        val: i32,
     }
-    let len = n - k;
-    let mut window: i32 = card_points[..len].iter().sum();
-    let mut res = sum - window;
-    for idx in 1..=n - len {
-        window -= card_points[idx - 1];
-        window += card_points[idx + len - 1];
-        res = res.max(sum - window);
+    let mut coords = vec![];
+    for (row, r) in nums.iter().enumerate() {
+        for (col, &val) in r.iter().enumerate() {
+            coords.push(Coord { row, col, val });
+        }
     }
-    res
+    coords.sort_unstable_by(|a, b| {
+        (a.row + a.col)
+            .cmp(&(b.row + b.col))
+            .then(b.row.cmp(&a.row))
+    });
+    coords.into_iter().map(|c| c.val).collect()
 }
 
 #[cfg(test)]
@@ -30,15 +34,24 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_score(&[1, 2, 3, 4, 5, 6, 1], 3), 12);
-        assert_eq!(max_score(&[2, 2, 2], 2), 4);
-        assert_eq!(max_score(&[9, 7, 7, 9, 7, 7, 9], 7), 55);
+        assert_eq!(
+            find_diagonal_order(&[&[1, 2, 3], &[4, 5, 6], &[7, 8, 9]]),
+            [1, 4, 2, 7, 5, 3, 8, 6, 9]
+        );
+        assert_eq!(
+            find_diagonal_order(&[
+                &[1, 2, 3, 4, 5],
+                &[6, 7],
+                &[8],
+                &[9, 10, 11],
+                &[12, 13, 14, 15, 16]
+            ]),
+            [1, 6, 2, 8, 7, 3, 9, 4, 12, 10, 5, 13, 11, 14, 15, 16]
+        )
     }
 
     #[test]
-    fn test() {
-        assert_eq!(max_score(&[100, 40, 17, 9, 73, 75], 3), 248);
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
