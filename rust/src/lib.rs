@@ -5,19 +5,49 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_the_prefix_common_array(a: &[i32], b: &[i32]) -> Vec<i32> {
-    let mut res = Vec::with_capacity(a.len());
-    let [mut mask1, mut mask2] = [0u64; 2];
-    // let mut map = std::collections::HashMap::with_capacity(a.len());
-    for (&x, &y) in a.iter().zip(b.iter()) {
-        mask1 |= 1 << x;
-        mask2 |= 1 << y;
-        res.push((mask1 & mask2).count_ones() as i32);
-        //     *map.entry(x).or_insert(0) += 1;
-        //     *map.entry(y).or_insert(0) += 1;
-        //     res.push(map.values().filter(|&&v| v > 1).count() as i32);
+pub fn min_number_of_frogs(croak_of_frogs: &str) -> i32 {
+    let mut count = [0; 4];
+    let mut res = 0;
+    for b in croak_of_frogs.bytes() {
+        match b {
+            b'c' => count[0] += 1,
+            b'r' => {
+                if count[0] > count[1] {
+                    count[1] += 1
+                } else {
+                    return -1;
+                }
+            }
+            b'o' => {
+                if count[1] > count[2] {
+                    count[2] += 1
+                } else {
+                    return -1;
+                }
+            }
+            b'a' => {
+                if count[2] > count[3] {
+                    count[3] += 1
+                } else {
+                    return -1;
+                }
+            }
+            _ => {
+                for v in count.iter_mut() {
+                    (*v) -= 1
+                }
+                if count.iter().any(|&v| v < 0) {
+                    return -1;
+                }
+                res = res.max(count.iter().copied().max().unwrap_or(0));
+            }
+        }
     }
-    res
+    if count.into_iter().any(|v| v != 0) {
+        -1
+    } else {
+        1 + res
+    }
 }
 
 #[cfg(test)]
@@ -28,14 +58,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            find_the_prefix_common_array(&[1, 3, 2, 4], &[3, 1, 2, 4]),
-            [0, 2, 3, 4]
-        );
-        assert_eq!(
-            find_the_prefix_common_array(&[2, 3, 1], &[3, 1, 2]),
-            [0, 1, 3]
-        );
+        assert_eq!(min_number_of_frogs("croakcroak"), 1);
+        assert_eq!(min_number_of_frogs("crcoakroak"), 2);
+        assert_eq!(min_number_of_frogs("croakcrook"), -1);
     }
 
     #[test]
