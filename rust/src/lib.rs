@@ -5,17 +5,58 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn k_length_apart(nums: Vec<i32>, k: i32) -> bool {
-    let mut prev = None;
-    for (idx, &num) in nums.iter().enumerate() {
-        if num == 1 {
-            if prev.is_some_and(|p| idx - p < k as usize) {
-                return false;
+pub fn longest_subarray(nums: &[i32], limit: i32) -> i32 {
+    let mut map = std::collections::BTreeMap::new();
+    let mut left = 0;
+    let mut res = 0;
+    for (right, &num) in nums.iter().enumerate() {
+        *map.entry(num).or_insert(0) += 1;
+        while map
+            .keys()
+            .last()
+            .zip(map.keys().next())
+            .is_some_and(|(a, b)| a - b > limit)
+        {
+            *map.entry(nums[left]).or_insert(0) -= 1;
+            if 0 == map[&nums[left]] {
+                map.remove(&nums[left]);
             }
-            prev = Some(idx)
+            left += 1;
         }
+        res = res.max(right + 1 - left);
     }
-    true
+    res as _
+}
+
+fn with_deque(nums: &[i32], limit: i32) -> i32 {
+    let [mut max_queue, mut min_queue] = [0, 1].map(|_| std::collections::VecDeque::new());
+    let mut left = 0;
+    let mut res = 0;
+    for (right, &num) in nums.iter().enumerate() {
+        while max_queue.back().is_some_and(|&v| v < num) {
+            max_queue.pop_back();
+        }
+        max_queue.push_back(num);
+        while min_queue.back().is_some_and(|&v| v > num) {
+            min_queue.pop_back();
+        }
+        min_queue.push_back(num);
+        while max_queue
+            .front()
+            .zip(min_queue.front())
+            .is_some_and(|(a, b)| a - b > limit)
+        {
+            if max_queue.front().is_some_and(|&v| v == nums[left]) {
+                max_queue.pop_front();
+            }
+            if min_queue.front().is_some_and(|&v| v == nums[left]) {
+                min_queue.pop_front();
+            }
+            left += 1;
+        }
+        res = res.max(right + 1 - left);
+    }
+    res as _
 }
 
 #[cfg(test)]
@@ -25,7 +66,15 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(longest_subarray(&[8, 2, 4, 7], 4), 2);
+        assert_eq!(longest_subarray(&[10, 1, 2, 4, 7, 2], 5), 4);
+        assert_eq!(longest_subarray(&[4, 2, 2, 2, 4, 4, 2, 2], 0), 3);
+
+        assert_eq!(with_deque(&[8, 2, 4, 7], 4), 2);
+        assert_eq!(with_deque(&[10, 1, 2, 4, 7, 2], 5), 4);
+        assert_eq!(with_deque(&[4, 2, 2, 2, 4, 4, 2, 2], 0), 3);
+    }
 
     #[test]
     fn test() {}
