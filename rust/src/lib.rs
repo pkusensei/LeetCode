@@ -5,49 +5,55 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_number_of_frogs(croak_of_frogs: &str) -> i32 {
-    let mut count = [0; 4];
-    let mut res = 0;
-    for b in croak_of_frogs.bytes() {
-        match b {
-            b'c' => count[0] += 1,
-            b'r' => {
-                if count[0] > count[1] {
-                    count[1] += 1
-                } else {
-                    return -1;
+pub fn num_of_arrays(n: i32, m: i32, k: i32) -> i32 {
+    let [n, m] = [n, m].map(|v| v as usize);
+    // dfs(
+    //     n,
+    //     m,
+    //     k,
+    //     0,
+    //     &mut vec![vec![vec![-1; 1 + m]; 1 + k as usize]; 1 + n],
+    // )
+    let k = k as usize;
+    let mut dp = vec![vec![vec![0i64; 1 + k]; 1 + m]; 1 + n];
+    for max in 1..=m {
+        dp[1][max][1] = 1;
+    }
+    for len in 2..=n {
+        for max in 1..=m {
+            for cost in 1..=k {
+                dp[len][max][cost] += dp[len - 1][max][cost] * (max as i64);
+                for prev_max in 1..max {
+                    dp[len][max][cost] += dp[len - 1][prev_max][cost - 1];
                 }
-            }
-            b'o' => {
-                if count[1] > count[2] {
-                    count[2] += 1
-                } else {
-                    return -1;
-                }
-            }
-            b'a' => {
-                if count[2] > count[3] {
-                    count[3] += 1
-                } else {
-                    return -1;
-                }
-            }
-            _ => {
-                for v in count.iter_mut() {
-                    (*v) -= 1
-                }
-                if count.iter().any(|&v| v < 0) {
-                    return -1;
-                }
-                res = res.max(count.iter().copied().max().unwrap_or(0));
+                dp[len][max][cost] %= 1_000_000_007;
             }
         }
     }
-    if count.into_iter().any(|v| v != 0) {
-        -1
-    } else {
-        1 + res
+    (1..=m).fold(0, |acc, max| (acc + dp[n][max][k]) % 1_000_000_007) as i32
+}
+
+fn dfs(n: usize, m: usize, k: i32, prev: usize, memo: &mut [Vec<Vec<i32>>]) -> i32 {
+    if n == 0 {
+        return i32::from(0 == k);
     }
+    if k < 0 {
+        return 0;
+    }
+    if memo[n][k as usize][prev] > -1 {
+        return memo[n][k as usize][prev];
+    }
+    let mut res = 0;
+    for curr in 1..=m {
+        if prev < curr {
+            res += dfs(n - 1, m, k - 1, curr, memo);
+        } else {
+            res += dfs(n - 1, m, k, prev, memo);
+        }
+        res %= 1_000_000_007;
+    }
+    memo[n][k as usize][prev] = res;
+    res
 }
 
 #[cfg(test)]
@@ -58,9 +64,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_number_of_frogs("croakcroak"), 1);
-        assert_eq!(min_number_of_frogs("crcoakroak"), 2);
-        assert_eq!(min_number_of_frogs("croakcrook"), -1);
+        assert_eq!(num_of_arrays(2, 3, 1), 6);
+        assert_eq!(num_of_arrays(5, 2, 3), 0);
+        assert_eq!(num_of_arrays(9, 1, 1), 1);
     }
 
     #[test]
