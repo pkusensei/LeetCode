@@ -2,22 +2,20 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn dest_city(paths: &[[&str; 2]]) -> String {
-    paths
-        .iter()
-        .fold(HashMap::new(), |mut acc, v| {
-            *acc.entry(v[0]).or_insert(0) += 1;
-            acc.entry(v[1]).or_insert(0);
-            acc
-        })
-        .into_iter()
-        .find_map(|(k, v)| if v == 0 { Some(k.to_string()) } else { None })
-        .unwrap_or_default()
+pub fn k_length_apart(nums: Vec<i32>, k: i32) -> bool {
+    let mut prev = None;
+    for (idx, &num) in nums.iter().enumerate() {
+        if num == 1 {
+            if prev.is_some_and(|p| idx - p < k as usize) {
+                return false;
+            }
+            prev = Some(idx)
+        }
+    }
+    true
 }
 
 #[cfg(test)]
