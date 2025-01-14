@@ -5,25 +5,38 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_diagonal_order(nums: &[&[i32]]) -> Vec<i32> {
-    #[derive(Clone, Copy)]
-    struct Coord {
-        row: usize,
-        col: usize,
-        val: i32,
+pub fn constrained_subset_sum(nums: &[i32], k: i32) -> i32 {
+    let k = k as usize;
+    let mut heap = std::collections::BinaryHeap::from([(nums[0], 0)]);
+    let mut res = nums[0];
+    for (idx, &num) in nums.iter().enumerate().skip(1) {
+        while heap.peek().is_some_and(|v| idx - v.1 > k) {
+            heap.pop();
+        }
+        let curr = num + heap.peek().map(|v| v.0.max(0)).unwrap_or(0);
+        res = res.max(curr);
+        heap.push((curr, idx));
     }
-    let mut coords = vec![];
-    for (row, r) in nums.iter().enumerate() {
-        for (col, &val) in r.iter().enumerate() {
-            coords.push(Coord { row, col, val });
+    res
+}
+
+fn with_deque(nums: &[i32], k: i32) -> i32 {
+    let (n, k) = (nums.len(), k as usize);
+    let mut dp = vec![0; n];
+    let mut queue = std::collections::VecDeque::new();
+    for (idx, &num) in nums.iter().enumerate() {
+        while queue.front().is_some_and(|v| idx - v > k) {
+            queue.pop_front();
+        }
+        dp[idx] = num + queue.front().map(|&i| dp[i]).unwrap_or(0);
+        while queue.back().is_some_and(|&v| dp[v] < dp[idx]) {
+            queue.pop_back();
+        }
+        if dp[idx] > 0 {
+            queue.push_back(idx);
         }
     }
-    coords.sort_unstable_by(|a, b| {
-        (a.row + a.col)
-            .cmp(&(b.row + b.col))
-            .then(b.row.cmp(&a.row))
-    });
-    coords.into_iter().map(|c| c.val).collect()
+    dp.into_iter().max().unwrap()
 }
 
 #[cfg(test)]
@@ -34,20 +47,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            find_diagonal_order(&[&[1, 2, 3], &[4, 5, 6], &[7, 8, 9]]),
-            [1, 4, 2, 7, 5, 3, 8, 6, 9]
-        );
-        assert_eq!(
-            find_diagonal_order(&[
-                &[1, 2, 3, 4, 5],
-                &[6, 7],
-                &[8],
-                &[9, 10, 11],
-                &[12, 13, 14, 15, 16]
-            ]),
-            [1, 6, 2, 8, 7, 3, 9, 4, 12, 10, 5, 13, 11, 14, 15, 16]
-        )
+        assert_eq!(constrained_subset_sum(&[10, 2, -10, 5, 20], 2), 37);
+        assert_eq!(constrained_subset_sum(&[-1, -2, -3], 1), -1);
+        assert_eq!(constrained_subset_sum(&[10, -2, -10, -5, 20], 2), 23);
+
+        assert_eq!(with_deque(&[10, 2, -10, 5, 20], 2), 37);
+        assert_eq!(with_deque(&[-1, -2, -3], 1), -1);
+        assert_eq!(with_deque(&[10, -2, -10, -5, 20], 2), 23);
     }
 
     #[test]
