@@ -5,38 +5,9 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn constrained_subset_sum(nums: &[i32], k: i32) -> i32 {
-    let k = k as usize;
-    let mut heap = std::collections::BinaryHeap::from([(nums[0], 0)]);
-    let mut res = nums[0];
-    for (idx, &num) in nums.iter().enumerate().skip(1) {
-        while heap.peek().is_some_and(|v| idx - v.1 > k) {
-            heap.pop();
-        }
-        let curr = num + heap.peek().map(|v| v.0.max(0)).unwrap_or(0);
-        res = res.max(curr);
-        heap.push((curr, idx));
-    }
-    res
-}
-
-fn with_deque(nums: &[i32], k: i32) -> i32 {
-    let (n, k) = (nums.len(), k as usize);
-    let mut dp = vec![0; n];
-    let mut queue = std::collections::VecDeque::new();
-    for (idx, &num) in nums.iter().enumerate() {
-        while queue.front().is_some_and(|v| idx - v > k) {
-            queue.pop_front();
-        }
-        dp[idx] = num + queue.front().map(|&i| dp[i]).unwrap_or(0);
-        while queue.back().is_some_and(|&v| dp[v] < dp[idx]) {
-            queue.pop_back();
-        }
-        if dp[idx] > 0 {
-            queue.push_back(idx);
-        }
-    }
-    dp.into_iter().max().unwrap()
+pub fn kids_with_candies(candies: &[i32], extra_candies: i32) -> Vec<bool> {
+    let max = candies.iter().copied().max().unwrap();
+    candies.iter().map(|v| v + extra_candies >= max).collect()
 }
 
 #[cfg(test)]
@@ -47,13 +18,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(constrained_subset_sum(&[10, 2, -10, 5, 20], 2), 37);
-        assert_eq!(constrained_subset_sum(&[-1, -2, -3], 1), -1);
-        assert_eq!(constrained_subset_sum(&[10, -2, -10, -5, 20], 2), 23);
-
-        assert_eq!(with_deque(&[10, 2, -10, 5, 20], 2), 37);
-        assert_eq!(with_deque(&[-1, -2, -3], 1), -1);
-        assert_eq!(with_deque(&[10, -2, -10, -5, 20], 2), 23);
+        assert_eq!(
+            kids_with_candies(&[2, 3, 5, 1, 3], 3),
+            [true, true, true, false, true]
+        );
+        assert_eq!(
+            kids_with_candies(&[4, 2, 1, 1, 2], 1),
+            [true, false, false, false, false]
+        );
+        assert_eq!(kids_with_candies(&[12, 1, 12], 10), [true, false, true]);
     }
 
     #[test]
