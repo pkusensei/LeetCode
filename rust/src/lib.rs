@@ -5,22 +5,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_score(s: String) -> i32 {
-    let [mut zeros, mut ones] = [0, 0];
-    let mut best = i32::MIN;
-    let n = s.len();
-    for b in s.bytes().take(n - 1) {
-        if b == b'1' {
-            ones += 1
-        } else {
-            zeros += 1
-        };
-        best = best.max(zeros - ones);
+pub fn max_score(card_points: &[i32], k: i32) -> i32 {
+    let (n, k) = (card_points.len(), k as usize);
+    let sum: i32 = card_points.iter().sum();
+    if n <= k {
+        return sum;
     }
-    if s.bytes().last() == Some(b'1') {
-        ones += 1;
+    let len = n - k;
+    let mut window: i32 = card_points[..len].iter().sum();
+    let mut res = sum - window;
+    for idx in 1..=n - len {
+        window -= card_points[idx - 1];
+        window += card_points[idx + len - 1];
+        res = res.max(sum - window);
     }
-    best + ones
+    res
 }
 
 #[cfg(test)]
@@ -30,10 +29,16 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(max_score(&[1, 2, 3, 4, 5, 6, 1], 3), 12);
+        assert_eq!(max_score(&[2, 2, 2], 2), 4);
+        assert_eq!(max_score(&[9, 7, 7, 9, 7, 7, 9], 7), 55);
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(max_score(&[100, 40, 17, 9, 73, 75], 3), 248);
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
