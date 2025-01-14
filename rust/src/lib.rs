@@ -2,15 +2,76 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn check_if_can_break(s1: String, s2: String) -> bool {
-    let [mut s1, mut s2] = [s1, s2].map(|v| v.into_bytes());
-    s1.sort_unstable();
-    s2.sort_unstable();
-    let mut it = s1.iter().zip(s2.iter());
-    it.clone().all(|(a, b)| a >= b) || it.all(|(a, b)| a <= b)
+pub fn number_ways(hats: &[&[i32]]) -> i32 {
+    let n = hats.len();
+    let hat_people =
+        hats.iter()
+            .enumerate()
+            .fold(HashMap::<_, Vec<_>>::new(), |mut acc, (i, v)| {
+                for &h in v.iter() {
+                    acc.entry(h as usize).or_default().push(i);
+                }
+                acc
+            });
+    // dfs(&hat_people, n, 0, 0, &mut vec![vec![-1; 1 << n]; 41])
+    let done = (1 << n) - 1;
+    let mut dp = vec![vec![0; 1 + done]; 42];
+    for v in dp.iter_mut() {
+        v[done] = 1;
+    }
+    for hat in (1..=40).rev() {
+        for mask in (0..=done).rev() {
+            let mut res = dp[1 + hat][mask];
+            if let Some(v) = hat_people.get(&hat) {
+                for &p in v.iter() {
+                    if (mask >> p) & 1 == 0 {
+                        res += dp[1 + hat][mask | (1 << p)];
+                        res %= MOD;
+                    }
+                }
+            }
+            dp[hat][mask] = res;
+        }
+    }
+    dp[1][0]
+}
+
+const MOD: i32 = 1_000_000_007;
+
+fn dfs(
+    hats: &HashMap<usize, Vec<usize>>,
+    n: usize,
+    hat: usize,
+    mask: usize,
+    memo: &mut [Vec<i32>],
+) -> i32 {
+    if mask.count_ones() as usize == n {
+        return 1;
+    }
+    if hat > 40 {
+        return 0;
+    }
+    if memo[hat][mask] > -1 {
+        return memo[hat][mask];
+    }
+    // skip current hat
+    let mut res = dfs(hats, n, 1 + hat, mask, memo);
+    if let Some(v) = hats.get(&hat) {
+        for &i in v.iter() {
+            if (mask >> i) & 1 == 0 {
+                let next = mask | (1 << i);
+                res += dfs(hats, n, 1 + hat, next, memo);
+                res %= MOD;
+            }
+        }
+    }
+    memo[hat][mask] = res;
+    res
 }
 
 #[cfg(test)]
@@ -21,15 +82,16 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert!(check_if_can_break("abc".into(), "xya".into()));
-        assert!(!check_if_can_break("abe".into(), "acd".into()));
-        assert!(check_if_can_break("leetcodee".into(), "interview".into()));
+        assert_eq!(number_ways(&[&[3, 4], &[4, 5], &[5]]), 1);
+        assert_eq!(number_ways(&[&[3, 5, 1], &[3, 5]]), 4);
+        assert_eq!(
+            number_ways(&[&[1, 2, 3, 4], &[1, 2, 3, 4], &[1, 2, 3, 4], &[1, 2, 3, 4]]),
+            24
+        );
     }
 
     #[test]
-    fn test() {
-        assert!(!check_if_can_break("qvgjjsp".into(), "qmsbphx".into()));
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
