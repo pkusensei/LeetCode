@@ -2,36 +2,19 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::{cmp::Reverse, collections::BinaryHeap};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn kth_smallest(mat: &[&[i32]], k: i32) -> i32 {
-    let mut heap: BinaryHeap<_> = mat[0].iter().map(|&v| Reverse(v)).collect();
-    for row in mat.iter().skip(1) {
-        let mut next: BinaryHeap<_> = heap
-            .into_iter()
-            .flat_map(|Reverse(prev)| row.iter().map(move |v| Reverse(prev + v)))
-            .collect();
-        heap = BinaryHeap::with_capacity(k as usize);
-        let mut k = k;
-        while let Some(v) = next.pop() {
-            heap.push(v);
-            k -= 1;
-            if 0 == k {
-                break;
-            }
+pub fn build_array(target: &[i32], _n: i32) -> Vec<String> {
+    let mut res = vec![];
+    let mut curr = 1;
+    for &num in target.iter() {
+        while curr < num {
+            res.extend(["Push", "Pop"].map(|s| s.to_string()));
+            curr += 1;
         }
-    }
-    let mut res = 0;
-    let mut k = k;
-    while k > 0 {
-        let Some(Reverse(v)) = heap.pop() else {
-            return res;
-        };
-        res = v;
-        k -= 1;
+        res.push("Push".to_string());
+        curr += 1;
     }
     res
 }
@@ -44,30 +27,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(kth_smallest(&[&[1, 10, 10], &[1, 4, 5], &[2, 3, 6]], 7), 9);
-        assert_eq!(kth_smallest(&[&[1, 3, 11], &[2, 4, 6]], 5), 7);
-        assert_eq!(kth_smallest(&[&[1, 3, 11], &[2, 4, 6]], 9), 17);
+        assert_eq!(build_array(&[1, 3], 3), ["Push", "Push", "Pop", "Push"]);
+        assert_eq!(build_array(&[1, 2, 3], 3), ["Push", "Push", "Push"]);
+        assert_eq!(build_array(&[1, 2], 4), ["Push", "Push"]);
     }
 
     #[test]
-    fn test() {
-        assert_eq!(
-            kth_smallest(
-                &[
-                    &[6, 9, 32, 34, 43, 45],
-                    &[5, 10, 18, 21, 40, 42],
-                    &[15, 16, 22, 33, 50, 50],
-                    &[14, 27, 29, 31, 33, 39],
-                    &[1, 11, 19, 25, 45, 50],
-                    &[3, 9, 17, 19, 26, 30],
-                    &[3, 14, 26, 29, 41, 43],
-                    &[12, 23, 25, 26, 40, 46]
-                ],
-                47
-            ),
-            75
-        );
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
