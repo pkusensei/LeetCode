@@ -5,25 +5,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_power(s: String) -> i32 {
-    // s.into_bytes()
-    //     .chunk_by(|a, b| a == b)
-    //     .map(|c| c.len())
-    //     .max()
-    //     .unwrap_or(1) as _
-    let mut byte = b'#';
-    let mut res = 1;
-    let mut curr = 1;
-    for b in s.bytes() {
-        if byte == b {
-            curr += 1
-        } else {
-            curr = 1;
-            byte = b;
-        }
-        res = res.max(curr);
+pub fn simplified_fractions(n: i32) -> Vec<String> {
+    if n == 1 {
+        vec![]
+    } else if n == 2 {
+        vec!["1/2".to_string()]
+    } else {
+        (1..n)
+            .filter_map(|v| {
+                if gcd(v, n) == 1 {
+                    Some(format!("{}/{}", v, n))
+                } else {
+                    None
+                }
+            })
+            .chain(simplified_fractions(n - 1))
+            .collect()
     }
-    res
 }
 
 #[cfg(test)]
