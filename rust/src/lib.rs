@@ -5,16 +5,38 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn build_array(target: &[i32], _n: i32) -> Vec<String> {
-    let mut res = vec![];
-    let mut curr = 1;
-    for &num in target.iter() {
-        while curr < num {
-            res.extend(["Push", "Pop"].map(|s| s.to_string()));
-            curr += 1;
+pub fn count_triplets(arr: &[i32]) -> i32 {
+    let n = arr.len();
+    let mut prefix = Vec::with_capacity(n);
+    for &num in arr.iter() {
+        prefix.push(num ^ prefix.last().unwrap_or(&0));
+    }
+    let mut res = 0;
+    for left in 0..n - 1 {
+        for right in 1 + left..n {
+            let p = if left > 0 {
+                prefix[right] ^ prefix[left - 1]
+            } else {
+                prefix[right]
+            };
+            if p == 0 {
+                res += right - left;
+            }
         }
-        res.push("Push".to_string());
-        curr += 1;
+    }
+    res as _
+}
+
+fn with_map(arr: &[i32]) -> i32 {
+    let mut map = std::collections::HashMap::from([(0, vec![-1])]);
+    let mut curr = 0;
+    let mut res = 0;
+    for (idx, &num) in arr.iter().enumerate() {
+        curr ^= num;
+        if let Some(prev) = map.get(&curr) {
+            res += prev.iter().map(|p| idx as i32 - p - 1).sum::<i32>();
+        }
+        map.entry(curr).or_default().push(idx as i32);
     }
     res
 }
@@ -27,9 +49,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(build_array(&[1, 3], 3), ["Push", "Push", "Pop", "Push"]);
-        assert_eq!(build_array(&[1, 2, 3], 3), ["Push", "Push", "Push"]);
-        assert_eq!(build_array(&[1, 2], 4), ["Push", "Push"]);
+        assert_eq!(count_triplets(&[2, 3, 1, 6, 7]), 4);
+        assert_eq!(count_triplets(&[1, 1, 1, 1, 1]), 10);
+
+        assert_eq!(with_map(&[2, 3, 1, 6, 7]), 4);
+        assert_eq!(with_map(&[1, 1, 1, 1, 1]), 10);
     }
 
     #[test]
