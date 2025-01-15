@@ -5,58 +5,59 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn longest_subarray(nums: &[i32], limit: i32) -> i32 {
-    let mut map = std::collections::BTreeMap::new();
-    let mut left = 0;
-    let mut res = 0;
-    for (right, &num) in nums.iter().enumerate() {
-        *map.entry(num).or_insert(0) += 1;
-        while map
-            .keys()
-            .last()
-            .zip(map.keys().next())
-            .is_some_and(|(a, b)| a - b > limit)
-        {
-            *map.entry(nums[left]).or_insert(0) -= 1;
-            if 0 == map[&nums[left]] {
-                map.remove(&nums[left]);
-            }
-            left += 1;
-        }
-        res = res.max(right + 1 - left);
+pub fn minimize_xor(num1: i32, num2: i32) -> i32 {
+    let mut count = num2.count_ones();
+    let mut bits = vec![];
+    let mut x = num1;
+    while x > 0 {
+        bits.push(x & 1);
+        x >>= 1;
     }
-    res as _
+    bits.reverse();
+    for bit in bits.iter_mut() {
+        if (*bit) == 1 && count > 0 {
+            (*bit) = -1;
+            count -= 1;
+        }
+    }
+    for bit in bits.iter_mut().rev() {
+        if *bit == 0 && count > 0 {
+            (*bit) = 1;
+            count -= 1;
+        }
+    }
+    while count > 0 {
+        bits.insert(0, 1);
+        count -= 1;
+    }
+    let num = bits
+        .into_iter()
+        .fold(0, |acc, bit| (acc << 1) | i32::from(bit == 1));
+    num ^ num1
 }
 
-fn with_deque(nums: &[i32], limit: i32) -> i32 {
-    let [mut max_queue, mut min_queue] = [0, 1].map(|_| std::collections::VecDeque::new());
-    let mut left = 0;
+fn solve(num1: i32, num2: i32) -> i32 {
+    // build res as close to num1 as possible
     let mut res = 0;
-    for (right, &num) in nums.iter().enumerate() {
-        while max_queue.back().is_some_and(|&v| v < num) {
-            max_queue.pop_back();
-        }
-        max_queue.push_back(num);
-        while min_queue.back().is_some_and(|&v| v > num) {
-            min_queue.pop_back();
-        }
-        min_queue.push_back(num);
-        while max_queue
-            .front()
-            .zip(min_queue.front())
-            .is_some_and(|(a, b)| a - b > limit)
-        {
-            if max_queue.front().is_some_and(|&v| v == nums[left]) {
-                max_queue.pop_front();
-            }
-            if min_queue.front().is_some_and(|&v| v == nums[left]) {
-                min_queue.pop_front();
-            }
-            left += 1;
-        }
-        res = res.max(right + 1 - left);
+    let count = num2.count_ones();
+    let mut set_bits = 0;
+    let mut curr_bit = 31;
+    fn is_set(x: i32, bit: i32) -> bool {
+        (x & (1 << bit)) != 0
     }
-    res as _
+    fn set(x: i32, bit: i32) -> i32 {
+        x | (1 << bit)
+    }
+    while set_bits < count {
+        // case 1) curr_bit is set in num1
+        // case 2) all remaining bits must be set
+        if is_set(num1, curr_bit) || count - set_bits > curr_bit as u32 {
+            res = set(res, curr_bit);
+            set_bits += 1;
+        }
+        curr_bit -= 1;
+    }
+    res
 }
 
 #[cfg(test)]
@@ -67,17 +68,17 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(longest_subarray(&[8, 2, 4, 7], 4), 2);
-        assert_eq!(longest_subarray(&[10, 1, 2, 4, 7, 2], 5), 4);
-        assert_eq!(longest_subarray(&[4, 2, 2, 2, 4, 4, 2, 2], 0), 3);
+        assert_eq!(minimize_xor(3, 5), 3);
+        assert_eq!(minimize_xor(1, 12), 3);
 
-        assert_eq!(with_deque(&[8, 2, 4, 7], 4), 2);
-        assert_eq!(with_deque(&[10, 1, 2, 4, 7, 2], 5), 4);
-        assert_eq!(with_deque(&[4, 2, 2, 2, 4, 4, 2, 2], 0), 3);
+        assert_eq!(solve(3, 5), 3);
+        assert_eq!(solve(1, 12), 3);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(minimize_xor(65, 84), 67);
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
