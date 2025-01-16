@@ -5,12 +5,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn busy_student(start_time: Vec<i32>, end_time: Vec<i32>, query_time: i32) -> i32 {
-    start_time
+pub fn arrange_words(text: &str) -> String {
+    let mut words: Vec<_> = text.split_whitespace().collect();
+    words.sort_by_key(|w| w.len());
+    let mut res = words
         .into_iter()
-        .zip(end_time)
-        .filter(|&(a, b)| (a..=b).contains(&query_time))
-        .count() as _
+        .map(|w| w.to_ascii_lowercase())
+        .collect::<Vec<_>>()
+        .join(" ")
+        .into_bytes();
+    res[0] = res[0].to_ascii_uppercase();
+    String::from_utf8(res).unwrap()
 }
 
 #[cfg(test)]
@@ -20,7 +25,14 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(arrange_words("Leetcode is cool"), "Is cool leetcode");
+        assert_eq!(
+            arrange_words("Keep calm and code on"),
+            "On and keep calm code"
+        );
+        assert_eq!(arrange_words("To be or not to be"), "To be or to be not");
+    }
 
     #[test]
     fn test() {}
