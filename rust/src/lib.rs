@@ -5,59 +5,15 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn largest_number(cost: &[i32], target: i32) -> String {
-    // dfs(cost, target, &mut vec![None; 1 + target as usize])
-    let target = target as usize;
-    let mut dp = vec![-10000; 1 + target];
-    dp[0] = 0;
-    for t in 1..=target {
-        for i in 0..9 {
-            dp[t] = dp[t].max(if t >= cost[i] as usize {
-                1 + dp[t - cost[i] as usize]
-            } else {
-                -10000
-            });
-        }
+pub fn xor_all_nums(nums1: &[i32], nums2: &[i32]) -> i32 {
+    let [n1, n2] = [nums1, nums2].map(|v| v.len());
+    let f = |acc, v| acc ^ v;
+    match [n1 & 1, n2 & 1] {
+        [0, 0] => 0,
+        [1, 0] => nums2.iter().fold(0, f),
+        [0, 1] => nums1.iter().fold(0, f),
+        _ => nums1.iter().chain(nums2.iter()).fold(0, f),
     }
-    if dp[target] < 0 {
-        return "0".to_string();
-    }
-    let mut temp = target;
-    let mut res = "".to_string();
-    for i in (0..=8).rev() {
-        while temp >= cost[i] as usize && dp[temp] == 1 + dp[temp - cost[i] as usize] {
-            res.push(char::from(i as u8 + b'1'));
-            temp -= cost[i] as usize;
-        }
-    }
-    res
-}
-
-// smh memo my own dfs code leads to wrong answer
-// had to take this code
-fn dfs(cost: &[i32], target: i32, memo: &mut [Option<String>]) -> String {
-    if target == 0 {
-        return "".to_string();
-    }
-    if target < 0 {
-        return "0".to_string();
-    }
-    if let Some(ref v) = memo[target as usize] {
-        return v.to_string();
-    }
-    let mut res = "0".to_string();
-    for digit in (1..=9).rev() {
-        let mut curr = dfs(cost, target - cost[digit - 1], memo);
-        if curr == "0" {
-            continue;
-        }
-        curr = format!("{}{}", digit, curr);
-        if res == "0" || curr.len() > res.len() {
-            res = curr;
-        }
-    }
-    memo[target as usize] = Some(res.clone());
-    res
 }
 
 #[cfg(test)]
@@ -68,9 +24,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(largest_number(&[4, 3, 2, 5, 6, 7, 2, 5, 5], 9), "7772");
-        assert_eq!(largest_number(&[7, 6, 5, 5, 5, 6, 8, 7, 8], 12), "85");
-        assert_eq!(largest_number(&[2, 4, 6, 2, 4, 6, 4, 4, 4], 5), "0");
+        assert_eq!(xor_all_nums(&[2, 1, 3], &[10, 2, 5, 0]), 13);
+        assert_eq!(xor_all_nums(&[1, 2], &[3, 4]), 0);
     }
 
     #[test]
