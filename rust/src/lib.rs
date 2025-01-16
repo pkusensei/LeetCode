@@ -5,40 +5,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_points(darts: &[[i32; 2]], r: i32) -> i32 {
-    let mut res = 1;
-    let r = f64::from(r);
-    for (i1, p1) in darts.iter().enumerate() {
-        let [x1, y1] = [0, 1].map(|i| f64::from(p1[i]));
-        for p2 in darts.iter().skip(1 + i1) {
-            let [x2, y2] = [0, 1].map(|i| f64::from(p2[i]));
-            let dist = ((x1 - x2).powi(2) + (y1 - y2).powi(2)) / 4.0;
-            if dist > r.powi(2) {
-                continue;
-            }
-            let x0 = (x1 + x2) / 2.0 + (y2 - y1) * (r.powi(2) - dist).sqrt() / (dist * 4.0).sqrt();
-            let y0 = (y1 + y2) / 2.0 - (x2 - x1) * (r.powi(2) - dist).sqrt() / (dist * 4.0).sqrt();
-            let curr: i32 = darts
-                .iter()
-                .map(|p| {
-                    let [a, b] = [0, 1].map(|i| f64::from(p[i]));
-                    i32::from((a - x0).powi(2) + (b - y0).powi(2) <= r.powi(2) + 1e-5)
-                })
-                .sum();
-            res = res.max(curr);
-            let x0 = (x1 + x2) / 2.0 - (y2 - y1) * (r.powi(2) - dist).sqrt() / (dist * 4.0).sqrt();
-            let y0 = (y1 + y2) / 2.0 + (x2 - x1) * (r.powi(2) - dist).sqrt() / (dist * 4.0).sqrt();
-            let curr: i32 = darts
-                .iter()
-                .map(|p| {
-                    let [a, b] = [0, 1].map(|i| f64::from(p[i]));
-                    i32::from((a - x0).powi(2) + (b - y0).powi(2) <= r.powi(2) + 1e-5)
-                })
-                .sum();
-            res = res.max(curr);
-        }
+pub fn max_vowels(s: String, k: i32) -> i32 {
+    const VOWELS: &[u8] = b"aeiou";
+    let (n, k) = (s.len(), k as usize);
+    let s = s.into_bytes();
+    let mut curr = s[..k].iter().filter(|&b| VOWELS.contains(b)).count();
+    let mut res = curr;
+    for i in 1..=n - k {
+        curr -= usize::from(VOWELS.contains(&s[i - 1]));
+        curr += usize::from(VOWELS.contains(&s[i + k - 1]));
+        res = res.max(curr);
     }
-    res
+    res as _
 }
 
 #[cfg(test)]
@@ -48,13 +26,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {
-        assert_eq!(num_points(&[[-2, 0], [2, 0], [0, 2], [0, -2]], 2), 4);
-        assert_eq!(
-            num_points(&[[-3, 0], [3, 0], [2, 6], [5, 4], [0, 9], [7, 8]], 5),
-            5
-        );
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
