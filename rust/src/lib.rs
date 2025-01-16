@@ -5,11 +5,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_product(mut nums: Vec<i32>) -> i32 {
-    if nums.len() > 2 {
-        nums.select_nth_unstable_by(2, |a, b| b.cmp(&a));
-    }
-    (nums[0] - 1) * (nums[1] - 1)
+pub fn max_area(h: i32, w: i32, mut horizontal_cuts: Vec<i32>, mut vertical_cuts: Vec<i32>) -> i32 {
+    horizontal_cuts.extend([0, h]);
+    vertical_cuts.extend([0, w]);
+    horizontal_cuts.sort_unstable();
+    vertical_cuts.sort_unstable();
+    let res = horizontal_cuts
+        .windows(2)
+        .map(|w| i64::from(w[1] - w[0]))
+        .max()
+        .unwrap_or(1)
+        * vertical_cuts
+            .windows(2)
+            .map(|w| i64::from(w[1] - w[0]))
+            .max()
+            .unwrap_or(1)
+        % 1_000_000_007;
+    res as _
 }
 
 #[cfg(test)]
