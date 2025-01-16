@@ -5,15 +5,12 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn xor_all_nums(nums1: &[i32], nums2: &[i32]) -> i32 {
-    let [n1, n2] = [nums1, nums2].map(|v| v.len());
-    let f = |acc, v| acc ^ v;
-    match [n1 & 1, n2 & 1] {
-        [0, 0] => 0,
-        [1, 0] => nums2.iter().fold(0, f),
-        [0, 1] => nums1.iter().fold(0, f),
-        _ => nums1.iter().chain(nums2.iter()).fold(0, f),
-    }
+pub fn busy_student(start_time: Vec<i32>, end_time: Vec<i32>, query_time: i32) -> i32 {
+    start_time
+        .into_iter()
+        .zip(end_time)
+        .filter(|&(a, b)| (a..=b).contains(&query_time))
+        .count() as _
 }
 
 #[cfg(test)]
@@ -23,10 +20,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {
-        assert_eq!(xor_all_nums(&[2, 1, 3], &[10, 2, 5, 0]), 13);
-        assert_eq!(xor_all_nums(&[1, 2], &[3, 4]), 0);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
