@@ -12,22 +12,22 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
-        var a = TreeNode.Make([3, 1, 4, 3, null, 1, 5]);
-        Assert.AreEqual(4, sol.GoodNodes(a));
+        var a = TreeNode.Make([2, 3, 1, 3, 1, null, 1]);
+        Assert.AreEqual(2, sol.PseudoPalindromicPaths(a));
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        var a = TreeNode.Make([3, 3, null, 4, 2]);
-        Assert.AreEqual(3, sol.GoodNodes(a));
+        var a = TreeNode.Make([2, 1, 1, 1, 3, null, null, null, null, null, 1]);
+        Assert.AreEqual(1, sol.PseudoPalindromicPaths(a));
     }
 
     [TestMethod]
     public void TestMethod3()
     {
-        var a = TreeNode.Make([1]);
-        Assert.AreEqual(1, sol.GoodNodes(a));
+        var a = TreeNode.Make([9]);
+        Assert.AreEqual(1, sol.PseudoPalindromicPaths(a));
     }
 
     [TestMethod]
