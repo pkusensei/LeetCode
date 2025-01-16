@@ -2,36 +2,41 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::{HashMap, HashSet};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn people_indexes(favorite_companies: &[&[&str]]) -> Vec<i32> {
-    let map = favorite_companies
-        .iter()
-        .fold(HashMap::new(), |mut acc, row| {
-            for c in row.iter() {
-                let len = acc.len();
-                acc.entry(c).or_insert(len);
-            }
-            acc
-        });
-    let list: Vec<_> = favorite_companies
-        .iter()
-        .map(|row| row.iter().map(|c| map[c]).collect::<HashSet<_>>())
-        .collect();
-    let mut res = vec![];
-    'outer: for (i1, a) in list.iter().enumerate() {
-        for (i2, b) in list.iter().enumerate() {
-            if i1 == i2 {
+pub fn num_points(darts: &[[i32; 2]], r: i32) -> i32 {
+    let mut res = 1;
+    let r = f64::from(r);
+    for (i1, p1) in darts.iter().enumerate() {
+        let [x1, y1] = [0, 1].map(|i| f64::from(p1[i]));
+        for p2 in darts.iter().skip(1 + i1) {
+            let [x2, y2] = [0, 1].map(|i| f64::from(p2[i]));
+            let dist = ((x1 - x2).powi(2) + (y1 - y2).powi(2)) / 4.0;
+            if dist > r.powi(2) {
                 continue;
             }
-            if a.is_subset(b) {
-                continue 'outer;
-            }
+            let x0 = (x1 + x2) / 2.0 + (y2 - y1) * (r.powi(2) - dist).sqrt() / (dist * 4.0).sqrt();
+            let y0 = (y1 + y2) / 2.0 - (x2 - x1) * (r.powi(2) - dist).sqrt() / (dist * 4.0).sqrt();
+            let curr: i32 = darts
+                .iter()
+                .map(|p| {
+                    let [a, b] = [0, 1].map(|i| f64::from(p[i]));
+                    i32::from((a - x0).powi(2) + (b - y0).powi(2) <= r.powi(2) + 1e-5)
+                })
+                .sum();
+            res = res.max(curr);
+            let x0 = (x1 + x2) / 2.0 - (y2 - y1) * (r.powi(2) - dist).sqrt() / (dist * 4.0).sqrt();
+            let y0 = (y1 + y2) / 2.0 + (x2 - x1) * (r.powi(2) - dist).sqrt() / (dist * 4.0).sqrt();
+            let curr: i32 = darts
+                .iter()
+                .map(|p| {
+                    let [a, b] = [0, 1].map(|i| f64::from(p[i]));
+                    i32::from((a - x0).powi(2) + (b - y0).powi(2) <= r.powi(2) + 1e-5)
+                })
+                .sum();
+            res = res.max(curr);
         }
-        res.push(i1 as i32);
     }
     res
 }
@@ -44,27 +49,10 @@ mod tests {
 
     #[test]
     fn basics() {
+        assert_eq!(num_points(&[[-2, 0], [2, 0], [0, 2], [0, -2]], 2), 4);
         assert_eq!(
-            people_indexes(&[
-                &["leetcode", "google", "facebook"],
-                &["google", "microsoft"],
-                &["google", "facebook"],
-                &["google"],
-                &["amazon"]
-            ]),
-            [0, 1, 4]
-        );
-        assert_eq!(
-            people_indexes(&[
-                &["leetcode", "google", "facebook"],
-                &["leetcode", "amazon"],
-                &["facebook", "google"]
-            ]),
-            [0, 1]
-        );
-        assert_eq!(
-            people_indexes(&[&["leetcode"], &["google"], &["facebook"], &["amazon"]]),
-            [0, 1, 2, 3]
+            num_points(&[[-3, 0], [3, 0], [2, 6], [5, 4], [0, 9], [7, 8]], 5),
+            5
         );
     }
 
