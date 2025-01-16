@@ -5,51 +5,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_dot_product(nums1: &[i32], nums2: &[i32]) -> i32 {
-    let [n1, n2] = [nums1, nums2].map(|v| v.len());
-    // dfs(nums1, nums2, 0, 0, &mut vec![vec![None; n2]; n1]).unwrap()
-    let mut dp = vec![vec![0; 1 + n2]; 1 + n1];
-    let mut res = i32::MIN;
-    for (i1, v1) in nums1.iter().enumerate() {
-        for (i2, v2) in nums2.iter().enumerate() {
-            res = res.max(v1 * v2);
-            dp[1 + i1][1 + i2] = dp[1 + i1][1 + i2]
-                .max(dp[i1][1 + i2])
-                .max(dp[1 + i1][i2])
-                .max(dp[i1][i2] + v1 * v2);
-        }
+pub fn has_all_codes(s: &str, k: i32) -> bool {
+    let (n, k) = (s.len(), k as usize);
+    if n <= k {
+        return false;
     }
-    if res >= 0 {
-        // initial value in dp is set to 0
-        // max res is max (v1*v2)
-        // this check ensures that init 0 does not offset negative max values
-        res.max(dp[n1][n2])
-    } else {
-        res
+    let mask = (1 << k) - 1;
+    let mut window = i32::from_str_radix(&s[..k], 2).unwrap_or(0);
+    let mut set = std::collections::HashSet::from([window]);
+    for i in 1..=n - k {
+        window = (window << 1) & mask;
+        window |= i32::from(s.as_bytes()[i + k - 1] == b'1');
+        set.insert(window);
     }
-}
-
-fn dfs(
-    nums1: &[i32],
-    nums2: &[i32],
-    i1: usize,
-    i2: usize,
-    memo: &mut [Vec<Option<i32>>],
-) -> Option<i32> {
-    if i1 >= nums1.len() || i2 >= nums2.len() {
-        return None;
-    }
-    if let Some(v) = memo[i1][i2] {
-        return Some(v);
-    }
-    let mut res = Some(nums1[i1] * nums2[i2]);
-    let pick = nums1[i1] * nums2[i2] + dfs(nums1, nums2, 1 + i1, 1 + i2, memo).unwrap_or(0);
-    let skip_i2 = dfs(nums1, nums2, i1, 1 + i2, memo);
-    let skip_i1 = dfs(nums1, nums2, 1 + i1, i2, memo);
-    let skip = dfs(nums1, nums2, 1 + i1, 1 + i2, memo);
-    res = res.max(Some(pick)).max(skip_i1).max(skip_i2).max(skip);
-    memo[i1][i2] = res;
-    res
+    set.len() == 2usize.pow(k as u32)
 }
 
 #[cfg(test)]
@@ -60,15 +29,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_dot_product(&[2, 1, -2, 5], &[3, 0, -6]), 18);
-        assert_eq!(max_dot_product(&[3, -2], &[2, -6, 7]), 21);
-        assert_eq!(max_dot_product(&[-1, -1], &[1, 1]), -1);
+        assert!(has_all_codes("00110110", 2));
+        assert!(has_all_codes("0110", 1));
+        assert!(!has_all_codes("0110", 2));
     }
 
     #[test]
-    fn test() {
-        assert_eq!(max_dot_product(&[-5, -1, -2], &[3, 3, 5, 5]), -3);
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
