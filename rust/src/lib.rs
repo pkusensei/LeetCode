@@ -2,20 +2,38 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::{HashMap, HashSet};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn arrange_words(text: &str) -> String {
-    let mut words: Vec<_> = text.split_whitespace().collect();
-    words.sort_by_key(|w| w.len());
-    let mut res = words
-        .into_iter()
-        .map(|w| w.to_ascii_lowercase())
-        .collect::<Vec<_>>()
-        .join(" ")
-        .into_bytes();
-    res[0] = res[0].to_ascii_uppercase();
-    String::from_utf8(res).unwrap()
+pub fn people_indexes(favorite_companies: &[&[&str]]) -> Vec<i32> {
+    let map = favorite_companies
+        .iter()
+        .fold(HashMap::new(), |mut acc, row| {
+            for c in row.iter() {
+                let len = acc.len();
+                acc.entry(c).or_insert(len);
+            }
+            acc
+        });
+    let list: Vec<_> = favorite_companies
+        .iter()
+        .map(|row| row.iter().map(|c| map[c]).collect::<HashSet<_>>())
+        .collect();
+    let mut res = vec![];
+    'outer: for (i1, a) in list.iter().enumerate() {
+        for (i2, b) in list.iter().enumerate() {
+            if i1 == i2 {
+                continue;
+            }
+            if a.is_subset(b) {
+                continue 'outer;
+            }
+        }
+        res.push(i1 as i32);
+    }
+    res
 }
 
 #[cfg(test)]
@@ -26,12 +44,28 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(arrange_words("Leetcode is cool"), "Is cool leetcode");
         assert_eq!(
-            arrange_words("Keep calm and code on"),
-            "On and keep calm code"
+            people_indexes(&[
+                &["leetcode", "google", "facebook"],
+                &["google", "microsoft"],
+                &["google", "facebook"],
+                &["google"],
+                &["amazon"]
+            ]),
+            [0, 1, 4]
         );
-        assert_eq!(arrange_words("To be or not to be"), "To be or to be not");
+        assert_eq!(
+            people_indexes(&[
+                &["leetcode", "google", "facebook"],
+                &["leetcode", "amazon"],
+                &["facebook", "google"]
+            ]),
+            [0, 1]
+        );
+        assert_eq!(
+            people_indexes(&[&["leetcode"], &["google"], &["facebook"], &["amazon"]]),
+            [0, 1, 2, 3]
+        );
     }
 
     #[test]
