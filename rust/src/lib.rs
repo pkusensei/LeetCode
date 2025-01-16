@@ -5,20 +5,29 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn has_all_codes(s: &str, k: i32) -> bool {
-    let (n, k) = (s.len(), k as usize);
-    if n <= k {
-        return false;
+pub fn check_if_prerequisite(
+    num_courses: i32,
+    prerequisites: &[[i32; 2]],
+    queries: &[[i32; 2]],
+) -> Vec<bool> {
+    let n = num_courses as usize;
+    let mut graph = prerequisites
+        .iter()
+        .fold(vec![vec![false; n]; n], |mut acc, p| {
+            acc[p[0] as usize][p[1] as usize] = true;
+            acc
+        });
+    for mid in 0..n {
+        for src in 0..n {
+            for target in 0..n {
+                graph[src][target] = graph[src][target] || (graph[src][mid] && graph[mid][target]);
+            }
+        }
     }
-    let mask = (1 << k) - 1;
-    let mut window = i32::from_str_radix(&s[..k], 2).unwrap_or(0);
-    let mut set = std::collections::HashSet::from([window]);
-    for i in 1..=n - k {
-        window = (window << 1) & mask;
-        window |= i32::from(s.as_bytes()[i + k - 1] == b'1');
-        set.insert(window);
-    }
-    set.len() == 2usize.pow(k as u32)
+    queries
+        .iter()
+        .map(|q| graph[q[0] as usize][q[1] as usize])
+        .collect()
 }
 
 #[cfg(test)]
@@ -29,13 +38,31 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert!(has_all_codes("00110110", 2));
-        assert!(has_all_codes("0110", 1));
-        assert!(!has_all_codes("0110", 2));
+        assert_eq!(
+            check_if_prerequisite(2, &[[1, 0]], &[[0, 1], [1, 0]]),
+            [false, true]
+        );
+        assert_eq!(
+            check_if_prerequisite(2, &[], &[[1, 0], [0, 1]]),
+            [false, false]
+        );
+        assert_eq!(
+            check_if_prerequisite(3, &[[1, 2], [1, 0], [2, 0]], &[[1, 0], [1, 2]]),
+            [true, true]
+        );
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(
+            check_if_prerequisite(
+                5,
+                &[[0, 1], [1, 2], [2, 3], [3, 4]],
+                &[[0, 4], [4, 0], [1, 3], [3, 0]]
+            ),
+            [true, false, true, false]
+        );
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
