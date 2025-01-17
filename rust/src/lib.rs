@@ -5,16 +5,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-// 1 2 3 4
-// 5 6 7 8
-// 1 5 2 6 3 7 4 8
-pub fn shuffle(nums: Vec<i32>, n: i32) -> Vec<i32> {
-    let n = n as usize;
-    nums[..n]
-        .iter()
-        .zip(nums[n..].iter())
-        .flat_map(|(a, b)| [*a, *b])
-        .collect()
+pub fn get_strongest(arr: &mut [i32], mut k: i32) -> Vec<i32> {
+    arr.sort_unstable();
+    let n = arr.len();
+    let median = arr[(n - 1) / 2];
+    let [mut left, mut right] = [0, n - 1];
+    let mut res = Vec::with_capacity(k as usize);
+    while k > 0 {
+        if arr[right].abs_diff(median) >= arr[left].abs_diff(median) {
+            res.push(arr[right]);
+            right -= 1;
+        } else {
+            res.push(arr[left]);
+            left += 1;
+        }
+        k -= 1;
+    }
+    res
 }
 
 #[cfg(test)]
@@ -24,7 +31,11 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(get_strongest(&mut [1, 2, 3, 4, 5], 2), [5, 1]);
+        assert_eq!(get_strongest(&mut [1, 1, 3, 5, 5], 2), [5, 5]);
+        assert_eq!(get_strongest(&mut [6, 7, 11, 7, 6, 8], 5), [11, 8, 6, 6, 7]);
+    }
 
     #[test]
     fn test() {}
