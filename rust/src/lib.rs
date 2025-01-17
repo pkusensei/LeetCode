@@ -5,34 +5,64 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-#[derive(Debug, Clone)]
-struct BrowserHistory {
-    data: Vec<String>,
-    idx: usize,
+pub fn min_cost(houses: &[i32], cost: &[&[i32]], m: i32, n: i32, target: i32) -> i32 {
+    let [m, n] = [m, n].map(|v| v as usize);
+    // m, n, target
+    let mut memo = vec![vec![vec![None; 1 + target as usize]; 1 + n]; m];
+    dfs(houses, cost, m, target, 0, 0, &mut memo).unwrap_or(-1)
 }
 
-impl BrowserHistory {
-    fn new(homepage: String) -> Self {
-        Self {
-            data: vec![homepage],
-            idx: 0,
+fn dfs(
+    houses: &[i32],
+    cost: &[&[i32]],
+    m: usize,
+    target: i32,
+    idx: usize,
+    prev: usize, // color of previous house
+    memo: &mut [Vec<Vec<Option<i32>>>],
+) -> Option<i32> {
+    if target < 0 {
+        return None;
+    }
+    if idx >= m {
+        return if target == 0 { Some(0) } else { None };
+    }
+    if let Some(v) = memo[idx][prev][target as usize] {
+        return if v == -1 { None } else { Some(v) };
+    }
+    if houses[idx] > 0 {
+        return dfs(
+            houses,
+            cost,
+            m,
+            target - i32::from(houses[idx] as usize != prev),
+            1 + idx,
+            houses[idx] as usize,
+            memo,
+        );
+    }
+    let mut res = i32::MAX;
+    // 1+cidx=>color
+    // c=>cost
+    for (cidx, &c) in cost[idx].iter().enumerate() {
+        if let Some(v) = dfs(
+            houses,
+            cost,
+            m,
+            target - i32::from(1 + cidx != prev),
+            1 + idx,
+            1 + cidx,
+            memo,
+        ) {
+            res = res.min(c + v);
         }
     }
-
-    fn visit(&mut self, url: String) {
-        self.data.truncate(1 + self.idx);
-        self.data.push(url);
-        self.idx = self.data.len() - 1;
-    }
-
-    fn back(&mut self, steps: i32) -> String {
-        self.idx = self.idx.saturating_sub(steps as usize);
-        self.data[self.idx].to_string()
-    }
-
-    fn forward(&mut self, steps: i32) -> String {
-        self.idx = (self.idx + steps as usize).min(self.data.len() - 1);
-        self.data[self.idx].to_string()
+    if res == i32::MAX {
+        memo[idx][prev][target as usize] = Some(-1);
+        None
+    } else {
+        memo[idx][prev][target as usize] = Some(res);
+        Some(res)
     }
 }
 
@@ -43,7 +73,38 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(
+            min_cost(
+                &[0, 0, 0, 0, 0],
+                &[&[1, 10], &[10, 1], &[10, 1], &[1, 10], &[5, 1]],
+                5,
+                2,
+                3
+            ),
+            9
+        );
+        assert_eq!(
+            min_cost(
+                &[0, 2, 1, 2, 0],
+                &[&[1, 10], &[10, 1], &[10, 1], &[1, 10], &[5, 1]],
+                5,
+                2,
+                3
+            ),
+            11
+        );
+        assert_eq!(
+            min_cost(
+                &[3, 1, 2, 3],
+                &[&[1, 1, 1], &[1, 1, 1], &[1, 1, 1], &[1, 1, 1]],
+                4,
+                3,
+                3
+            ),
+            -1
+        )
+    }
 
     #[test]
     fn test() {}
