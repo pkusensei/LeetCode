@@ -5,23 +5,35 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn get_strongest(arr: &mut [i32], mut k: i32) -> Vec<i32> {
-    arr.sort_unstable();
-    let n = arr.len();
-    let median = arr[(n - 1) / 2];
-    let [mut left, mut right] = [0, n - 1];
-    let mut res = Vec::with_capacity(k as usize);
-    while k > 0 {
-        if arr[right].abs_diff(median) >= arr[left].abs_diff(median) {
-            res.push(arr[right]);
-            right -= 1;
-        } else {
-            res.push(arr[left]);
-            left += 1;
+#[derive(Debug, Clone)]
+struct BrowserHistory {
+    data: Vec<String>,
+    idx: usize,
+}
+
+impl BrowserHistory {
+    fn new(homepage: String) -> Self {
+        Self {
+            data: vec![homepage],
+            idx: 0,
         }
-        k -= 1;
     }
-    res
+
+    fn visit(&mut self, url: String) {
+        self.data.truncate(1 + self.idx);
+        self.data.push(url);
+        self.idx = self.data.len() - 1;
+    }
+
+    fn back(&mut self, steps: i32) -> String {
+        self.idx = self.idx.saturating_sub(steps as usize);
+        self.data[self.idx].to_string()
+    }
+
+    fn forward(&mut self, steps: i32) -> String {
+        self.idx = (self.idx + steps as usize).min(self.data.len() - 1);
+        self.data[self.idx].to_string()
+    }
 }
 
 #[cfg(test)]
@@ -31,11 +43,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {
-        assert_eq!(get_strongest(&mut [1, 2, 3, 4, 5], 2), [5, 1]);
-        assert_eq!(get_strongest(&mut [1, 1, 3, 5, 5], 2), [5, 5]);
-        assert_eq!(get_strongest(&mut [6, 7, 11, 7, 6, 8], 5), [11, 8, 6, 6, 7]);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
