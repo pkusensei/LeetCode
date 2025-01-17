@@ -5,28 +5,42 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_days(bloom_day: Vec<i32>, m: i32, k: i32) -> i32 {
-    let n = bloom_day.len();
-    if (m as usize) * (k as usize) > n {
-        return -1;
-    }
-    let mut left = bloom_day.iter().copied().min().unwrap_or(1);
-    let mut right = bloom_day.iter().copied().max().unwrap_or(10i32.pow(9));
-    while left < right {
-        let mid = (right - left) / 2 + left;
-        if count(&bloom_day, mid, k) >= m {
-            right = mid;
-        } else {
-            left = 1 + mid;
-        }
-    }
-    left
+struct TreeAncestor {
+    jump: Vec<Vec<i32>>,
+    max_pow: usize,
 }
 
-fn count(nums: &[i32], mid: i32, k: i32) -> i32 {
-    nums.split(|&num| num > mid)
-        .map(|v| v.len() as i32 / k)
-        .sum()
+impl TreeAncestor {
+    fn new(n: i32, parent: Vec<i32>) -> Self {
+        let n = n as usize;
+        let max_pow = 1 + n.ilog2() as usize;
+        let mut jump = vec![vec![0; n]; max_pow];
+        jump[0] = parent;
+        for p in 1..max_pow {
+            for idx in 0..n {
+                let pre = jump[p - 1][idx];
+                jump[p][idx] = if pre == -1 {
+                    -1
+                } else {
+                    jump[p - 1][pre as usize]
+                };
+            }
+        }
+        Self { jump, max_pow }
+    }
+
+    fn get_kth_ancestor(&self, mut node: i32, mut k: i32) -> i32 {
+        let mut max_pow = self.max_pow;
+        while k > 0 && node > -1 {
+            if k >= (1 << max_pow) {
+                node = self.jump[max_pow][node as usize];
+                k -= 1 << max_pow;
+            } else {
+                max_pow -= 1;
+            }
+        }
+        node
+    }
 }
 
 #[cfg(test)]
@@ -37,9 +51,10 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_days(vec![1, 10, 3, 10, 2], 3, 1), 3);
-        assert_eq!(min_days(vec![1, 10, 3, 10, 2], 3, 2), -1);
-        assert_eq!(min_days(vec![7, 7, 7, 7, 12, 7, 7], 2, 3), 12);
+        let ta = TreeAncestor::new(7, vec![-1, 0, 0, 1, 1, 2, 2]);
+        assert_eq!(ta.get_kth_ancestor(3, 1), 1); // returns 1 which is the parent of 3
+        assert_eq!(ta.get_kth_ancestor(5, 2), 0); // returns 0 which is the grandparent of 5
+        assert_eq!(ta.get_kth_ancestor(6, 3), -1); // returns -1 because there is no such ancestor
     }
 
     #[test]
