@@ -2,56 +2,31 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::{
+    cmp::Reverse,
+    collections::{BinaryHeap, HashMap},
+};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_distance(houses: &mut [i32], k: i32) -> i32 {
-    houses.sort_unstable();
-    let n = houses.len();
-    dfs(houses, k, 0, &mut vec![vec![None; n]; 1 + k as usize]).unwrap_or(cost(houses))
-}
-
-fn dfs(houses: &[i32], k: i32, idx: usize, memo: &mut [Vec<Option<i32>>]) -> Option<i32> {
-    let n = houses.len();
-    if k == 0 && idx >= n {
-        return Some(0);
+pub fn find_least_num_of_unique_ints(arr: Vec<i32>, mut k: i32) -> i32 {
+    let mut heap: BinaryHeap<_> = arr
+        .into_iter()
+        .fold(HashMap::new(), |mut acc, num| {
+            *acc.entry(num).or_insert(0) += 1;
+            acc
+        })
+        .into_values()
+        .map(Reverse)
+        .collect();
+    while k > 0 {
+        let Some(Reverse(count)) = heap.pop() else {
+            break;
+        };
+        k -= count;
     }
-    if k == 0 || idx >= n {
-        return None;
-    }
-    if let Some(v) = memo[k as usize][idx] {
-        return if v == -1 { None } else { Some(v) };
-    }
-    let mut res = i32::MAX;
-    for end in idx..n {
-        if let Some(v) = dfs(houses, k - 1, 1 + end, memo) {
-            let c = cost(&houses[idx..=end]);
-            res = res.min(v + c);
-        }
-    }
-    if res == i32::MAX {
-        memo[k as usize][idx] = Some(-1);
-        None
-    } else {
-        memo[k as usize][idx] = Some(res);
-        Some(res)
-    }
-}
-
-fn cost(vals: &[i32]) -> i32 {
-    let n = vals.len();
-    if n <= 1 {
-        0
-    } else {
-        let [mut left, mut right] = [0, n - 1];
-        let mut res = 0;
-        while left < right {
-            res += vals[right] - vals[left];
-            left += 1;
-            right -= 1;
-        }
-        res
-    }
+    heap.len() as i32 + i32::from(k < 0)
 }
 
 #[cfg(test)]
@@ -61,10 +36,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {
-        assert_eq!(min_distance(&mut [1, 4, 8, 10, 20], 3), 5);
-        assert_eq!(min_distance(&mut [2, 3, 5, 12, 18], 2), 9);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
