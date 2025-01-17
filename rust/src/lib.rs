@@ -2,31 +2,31 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::{
-    cmp::Reverse,
-    collections::{BinaryHeap, HashMap},
-};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_least_num_of_unique_ints(arr: Vec<i32>, mut k: i32) -> i32 {
-    let mut heap: BinaryHeap<_> = arr
-        .into_iter()
-        .fold(HashMap::new(), |mut acc, num| {
-            *acc.entry(num).or_insert(0) += 1;
-            acc
-        })
-        .into_values()
-        .map(Reverse)
-        .collect();
-    while k > 0 {
-        let Some(Reverse(count)) = heap.pop() else {
-            break;
-        };
-        k -= count;
+pub fn min_days(bloom_day: Vec<i32>, m: i32, k: i32) -> i32 {
+    let n = bloom_day.len();
+    if (m as usize) * (k as usize) > n {
+        return -1;
     }
-    heap.len() as i32 + i32::from(k < 0)
+    let mut left = bloom_day.iter().copied().min().unwrap_or(1);
+    let mut right = bloom_day.iter().copied().max().unwrap_or(10i32.pow(9));
+    while left < right {
+        let mid = (right - left) / 2 + left;
+        if count(&bloom_day, mid, k) >= m {
+            right = mid;
+        } else {
+            left = 1 + mid;
+        }
+    }
+    left
+}
+
+fn count(nums: &[i32], mid: i32, k: i32) -> i32 {
+    nums.split(|&num| num > mid)
+        .map(|v| v.len() as i32 / k)
+        .sum()
 }
 
 #[cfg(test)]
@@ -36,7 +36,11 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(min_days(vec![1, 10, 3, 10, 2], 3, 1), 3);
+        assert_eq!(min_days(vec![1, 10, 3, 10, 2], 3, 2), -1);
+        assert_eq!(min_days(vec![7, 7, 7, 7, 12, 7, 7], 2, 3), 12);
+    }
 
     #[test]
     fn test() {}
