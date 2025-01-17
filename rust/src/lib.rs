@@ -2,35 +2,60 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::{HashMap, VecDeque};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_reorder(n: i32, connections: &[[i32; 2]]) -> i32 {
-    let adj = connections
-        .iter()
-        .fold(HashMap::<_, Vec<_>>::new(), |mut acc, e| {
-            acc.entry(e[0]).or_default().push(e[1]);
-            acc.entry(e[1]).or_default().push(-e[0]);
-            acc
-        });
-    let mut queue = VecDeque::from([0]);
-    let mut seen = vec![false; n as usize];
-    seen[0] = true;
-    let mut res = 0;
-    while let Some(curr) = queue.pop_front() {
-        let Some(v) = adj.get(&curr) else {
-            continue;
+pub fn get_probability(balls: &[i32]) -> f64 {
+    let n = balls.len();
+    let sum = balls.iter().sum();
+    let [mut box1, mut box2] = [0, 1].map(|_| vec![0; n]);
+    dfs(balls, sum, &mut box1, &mut box2, 0, 0, 0) / perm(balls)
+}
+
+fn dfs(
+    balls: &[i32],
+    sum: i32,
+    box1: &mut [i32],
+    box2: &mut [i32],
+    idx: usize,
+    sum1: i32,
+    sum2: i32,
+) -> f64 {
+    if sum1 > sum / 2 || sum2 > sum / 2 {
+        return 0.0;
+    }
+    if idx >= balls.len() {
+        let [c1, c2] = [&box1, &box2].map(|v| v.iter().filter(|&&v| v > 0).count());
+        return if c1 == c2 {
+            perm(box1) * perm(box2)
+        } else {
+            0.0
         };
-        for &next in v.iter() {
-            if !seen[next.unsigned_abs() as usize] {
-                if next > 0 {
-                    res += 1
-                }
-                seen[next.unsigned_abs() as usize] = true;
-                queue.push_back(next.abs());
-            }
+    }
+    let mut res = 0.0;
+    for curr in 0..=balls[idx] {
+        box1[idx] = curr;
+        box2[idx] = balls[idx] - curr;
+        res += dfs(
+            balls,
+            sum,
+            box1,
+            box2,
+            1 + idx,
+            curr + sum1,
+            balls[idx] - curr + sum2,
+        )
+    }
+    res
+}
+
+fn perm(vals: &[i32]) -> f64 {
+    let mut res = 1.0;
+    let mut i = 1;
+    for &v in vals.iter() {
+        for curr in 1..=v {
+            res = res * f64::from(i) / f64::from(curr);
+            i += 1;
         }
     }
     res
@@ -44,13 +69,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_reorder(6, &[[0, 1], [1, 3], [2, 3], [4, 0], [4, 5]]), 3);
-        assert_eq!(min_reorder(5, &[[1, 0], [1, 2], [3, 2], [3, 4]]), 2);
-        assert_eq!(min_reorder(3, &[[1, 0], [2, 0]]), 0);
+        float_eq(get_probability(&[1, 1]), 1.0);
+        float_eq(get_probability(&[2, 1, 1]), 0.66667);
+        float_eq(get_probability(&[1, 2, 1, 2]), 0.60000);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        float_eq(get_probability(&[6, 6, 6, 6, 6, 6]), 0.5);
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
