@@ -5,30 +5,51 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_sum_of_lengths(arr: &[i32], target: i32) -> i32 {
-    let n = arr.len();
-    let mut best = vec![i32::MAX; n];
-    let mut sum = 0;
-    let mut left = 0;
-    let [mut res, mut min_len] = [i32::MAX; 2];
-    for (right, &num) in arr.iter().enumerate() {
-        sum += num;
-        while sum > target {
-            sum -= arr[left];
-            left += 1;
+pub fn min_distance(houses: &mut [i32], k: i32) -> i32 {
+    houses.sort_unstable();
+    let n = houses.len();
+    dfs(houses, k, 0, &mut vec![vec![None; n]; 1 + k as usize]).unwrap_or(cost(houses))
+}
+
+fn dfs(houses: &[i32], k: i32, idx: usize, memo: &mut [Vec<Option<i32>>]) -> Option<i32> {
+    let n = houses.len();
+    if k == 0 && idx >= n {
+        return Some(0);
+    }
+    if k == 0 || idx >= n {
+        return None;
+    }
+    if let Some(v) = memo[k as usize][idx] {
+        return if v == -1 { None } else { Some(v) };
+    }
+    let mut res = i32::MAX;
+    for end in idx..n {
+        if let Some(v) = dfs(houses, k - 1, 1 + end, memo) {
+            let c = cost(&houses[idx..=end]);
+            res = res.min(v + c);
         }
-        if sum == target {
-            let curr = (right + 1 - left) as i32;
-            min_len = min_len.min(curr);
-            if left > 0 && best[left - 1] != i32::MAX {
-                res = res.min(best[left - 1] + curr);
-            }
-        }
-        best[right] = min_len;
     }
     if res == i32::MAX {
-        -1
+        memo[k as usize][idx] = Some(-1);
+        None
     } else {
+        memo[k as usize][idx] = Some(res);
+        Some(res)
+    }
+}
+
+fn cost(vals: &[i32]) -> i32 {
+    let n = vals.len();
+    if n <= 1 {
+        0
+    } else {
+        let [mut left, mut right] = [0, n - 1];
+        let mut res = 0;
+        while left < right {
+            res += vals[right] - vals[left];
+            left += 1;
+            right -= 1;
+        }
         res
     }
 }
@@ -41,15 +62,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_sum_of_lengths(&[3, 2, 2, 4, 3], 3), 2);
-        assert_eq!(min_sum_of_lengths(&[7, 3, 4, 7], 7), 2);
-        assert_eq!(min_sum_of_lengths(&[4, 3, 2, 6, 2, 3, 4], 6), -1);
+        assert_eq!(min_distance(&mut [1, 4, 8, 10, 20], 3), 5);
+        assert_eq!(min_distance(&mut [2, 3, 5, 12, 18], 2), 9);
     }
 
     #[test]
-    fn test() {
-        assert_eq!(min_sum_of_lengths(&[1, 6, 1], 7), -1);
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
