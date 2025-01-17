@@ -2,11 +2,38 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::{HashMap, VecDeque};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn does_valid_array_exist(derived: Vec<i32>) -> bool {
-    derived.into_iter().fold(0, |acc, v| acc ^ v) == 0
+pub fn min_reorder(n: i32, connections: &[[i32; 2]]) -> i32 {
+    let adj = connections
+        .iter()
+        .fold(HashMap::<_, Vec<_>>::new(), |mut acc, e| {
+            acc.entry(e[0]).or_default().push(e[1]);
+            acc.entry(e[1]).or_default().push(-e[0]);
+            acc
+        });
+    let mut queue = VecDeque::from([0]);
+    let mut seen = vec![false; n as usize];
+    seen[0] = true;
+    let mut res = 0;
+    while let Some(curr) = queue.pop_front() {
+        let Some(v) = adj.get(&curr) else {
+            continue;
+        };
+        for &next in v.iter() {
+            if !seen[next.unsigned_abs() as usize] {
+                if next > 0 {
+                    res += 1
+                }
+                seen[next.unsigned_abs() as usize] = true;
+                queue.push_back(next.abs());
+            }
+        }
+    }
+    res
 }
 
 #[cfg(test)]
@@ -16,7 +43,11 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(min_reorder(6, &[[0, 1], [1, 3], [2, 3], [4, 0], [4, 5]]), 3);
+        assert_eq!(min_reorder(5, &[[1, 0], [1, 2], [3, 2], [3, 4]]), 2);
+        assert_eq!(min_reorder(3, &[[1, 0], [2, 0]]), 0);
+    }
 
     #[test]
     fn test() {}
