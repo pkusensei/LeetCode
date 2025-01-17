@@ -51,11 +51,11 @@ fn dfs(
 
 fn perm(vals: &[i32]) -> f64 {
     let mut res = 1.0;
-    let mut i = 1;
+    let mut count = 0;
     for &v in vals.iter() {
         for curr in 1..=v {
-            res = res * f64::from(i) / f64::from(curr);
-            i += 1;
+            count += 1;
+            res *= f64::from(count) / f64::from(curr);
         }
     }
     res
@@ -76,7 +76,7 @@ mod tests {
 
     #[test]
     fn test() {
-        float_eq(get_probability(&[6, 6, 6, 6, 6, 6]), 0.5);
+        float_eq(get_probability(&[6, 6, 6, 6, 6, 6]), 0.90327);
     }
 
     #[allow(dead_code)]
