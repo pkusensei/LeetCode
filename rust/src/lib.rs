@@ -5,25 +5,31 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-struct SubrectangleQueries {
-    data: Vec<Vec<i32>>,
-}
-
-impl SubrectangleQueries {
-    fn new(rectangle: Vec<Vec<i32>>) -> Self {
-        Self { data: rectangle }
-    }
-
-    fn update_subrectangle(&mut self, row1: i32, col1: i32, row2: i32, col2: i32, new_value: i32) {
-        for r in row1..=row2 {
-            for c in col1..=col2 {
-                self.data[r as usize][c as usize] = new_value;
+pub fn min_sum_of_lengths(arr: &[i32], target: i32) -> i32 {
+    let n = arr.len();
+    let mut best = vec![i32::MAX; n];
+    let mut sum = 0;
+    let mut left = 0;
+    let [mut res, mut min_len] = [i32::MAX; 2];
+    for (right, &num) in arr.iter().enumerate() {
+        sum += num;
+        while sum > target {
+            sum -= arr[left];
+            left += 1;
+        }
+        if sum == target {
+            let curr = (right + 1 - left) as i32;
+            min_len = min_len.min(curr);
+            if left > 0 && best[left - 1] != i32::MAX {
+                res = res.min(best[left - 1] + curr);
             }
         }
+        best[right] = min_len;
     }
-
-    fn get_value(&self, row: i32, col: i32) -> i32 {
-        self.data[row as usize][col as usize]
+    if res == i32::MAX {
+        -1
+    } else {
+        res
     }
 }
 
@@ -34,10 +40,16 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(min_sum_of_lengths(&[3, 2, 2, 4, 3], 3), 2);
+        assert_eq!(min_sum_of_lengths(&[7, 3, 4, 7], 7), 2);
+        assert_eq!(min_sum_of_lengths(&[4, 3, 2, 6, 2, 3, 4], 6), -1);
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(min_sum_of_lengths(&[1, 6, 1], 7), -1);
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
