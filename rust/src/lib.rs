@@ -5,11 +5,15 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn can_make_arithmetic_progression(mut arr: Vec<i32>) -> bool {
-    arr.sort_unstable();
-    let mut it = arr.windows(2).map(|w| w[1] - w[0]);
-    let curr = it.next().unwrap_or(0);
-    it.all(|v| v == curr)
+pub fn get_last_moment(n: i32, left: Vec<i32>, right: Vec<i32>) -> i32 {
+    let mut res = 0;
+    for v in left {
+        res = res.max(v);
+    }
+    for v in right {
+        res = res.max(n - v);
+    }
+    res
 }
 
 #[cfg(test)]
