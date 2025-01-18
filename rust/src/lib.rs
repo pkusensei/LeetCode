@@ -5,19 +5,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn kth_factor(n: i32, k: i32) -> i32 {
-    let mid = f64::from(n).sqrt().floor() as i32;
-    let mut queue = std::collections::VecDeque::new();
-    for v in (1..=mid).rev() {
-        if v == mid && mid.pow(2) == n {
-            queue.push_back(mid);
+pub fn longest_subarray(nums: &[i32]) -> i32 {
+    let mut count = 0;
+    let mut left = 0;
+    let mut res = 0;
+    for (right, &num) in nums.iter().enumerate() {
+        count += i32::from(num == 0);
+        while count > 1 {
+            count -= i32::from(nums[left] == 0);
+            left += 1;
         }
-        if n % v == 0 {
-            queue.push_front(v);
-            queue.push_back(n / v);
-        }
+        res = res.max(right + 1 - left);
     }
-    queue.into_iter().nth(k as usize - 1).unwrap_or(-1)
+    res as i32 - 1
 }
 
 #[cfg(test)]
