@@ -5,17 +5,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn average(salary: Vec<i32>) -> f64 {
-    let mut sum = 0;
-    let mut min = i32::MAX;
-    let mut max = i32::MIN;
-    let n = salary.len();
-    for num in salary {
-        sum += num;
-        min = min.min(num);
-        max = max.max(num);
+pub fn kth_factor(n: i32, k: i32) -> i32 {
+    let mid = f64::from(n).sqrt().floor() as i32;
+    let mut queue = std::collections::VecDeque::new();
+    for v in (1..=mid).rev() {
+        if v == mid && mid.pow(2) == n {
+            queue.push_back(mid);
+        }
+        if n % v == 0 {
+            queue.push_front(v);
+            queue.push_back(n / v);
+        }
     }
-    f64::from(sum - min - max) / (n - 2) as f64
+    queue.into_iter().nth(k as usize - 1).unwrap_or(-1)
 }
 
 #[cfg(test)]
