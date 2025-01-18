@@ -10,24 +10,23 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow(new[] { 1, 2, 3, 4, 5, 10, 6, 7, 8, 9 }, 5, true)]
+    [DataRow(new[] { 1, 2, 3, 4, 5, 6 }, 7, true)]
+    [DataRow(new[] { 1, 2, 3, 4, 5, 6 }, 10, false)]
+    [DataRow(new[] { 2, 2, 2, 4 }, 4, false)]
+    public void TestMethod1(int[] arr, int k, bool exp)
     {
-        var a = TreeNode.Make([2, 3, 1, 3, 1, null, 1]);
-        Assert.AreEqual(2, sol.PseudoPalindromicPaths(a));
+        Assert.AreEqual(exp, sol.CanArrange(arr, k));
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        var a = TreeNode.Make([2, 1, 1, 1, 3, null, null, null, null, null, 1]);
-        Assert.AreEqual(1, sol.PseudoPalindromicPaths(a));
     }
 
     [TestMethod]
     public void TestMethod3()
     {
-        var a = TreeNode.Make([9]);
-        Assert.AreEqual(1, sol.PseudoPalindromicPaths(a));
     }
 
     [TestMethod]
