@@ -5,36 +5,26 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_cost(grid: Vec<Vec<i32>>) -> i32 {
-    let [rows, cols] = get_dimensions(&grid);
-    let mut costs = vec![vec![i32::MAX; cols]; rows];
-    let mut queue = std::collections::VecDeque::from([[0, 0]]);
-    costs[0][0] = 0;
-    while let Some([row, col]) = queue.pop_front() {
-        let dir = grid[row][col];
-        for (nr, nc) in neighbors((row, col)).filter(|&(nr, nc)| nr < rows && nc < cols) {
-            let cost = if row == nr {
-                if nc > col {
-                    i32::from(dir != 1)
-                } else {
-                    i32::from(dir != 2)
-                }
-            } else if nr > row {
-                i32::from(dir != 3)
-            } else {
-                i32::from(dir != 4)
-            };
-            if costs[row][col] + cost < costs[nr][nc] {
-                costs[nr][nc] = costs[row][col] + cost;
-                if cost == 1 {
-                    queue.push_back([nr, nc]);
-                } else {
-                    queue.push_front([nr, nc]);
-                }
+pub fn get_folder_names(names: Vec<String>) -> Vec<String> {
+    let mut map = std::collections::HashMap::new();
+    let mut res = Vec::with_capacity(names.len());
+    for name in names {
+        if let Some(v) = map.get(&name) {
+            let mut v = *v;
+            let mut curr = format!("{name}({v})");
+            while map.contains_key(&curr) {
+                v += 1;
+                curr = format!("{name}({v})")
             }
+            res.push(curr.clone());
+            map.insert(name, 1 + v); // update this count to skip while loop
+            map.insert(curr, 1); // register this name
+        } else {
+            res.push(name.clone());
+            map.insert(name, 1);
         }
     }
-    costs[rows - 1][cols - 1]
+    res
 }
 
 #[cfg(test)]
