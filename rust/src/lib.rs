@@ -5,8 +5,36 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn xor_operation(n: i32, start: i32) -> i32 {
-    (0..n).map(|i| start + 2 * i).fold(0, |acc, v| acc ^ v)
+pub fn min_cost(grid: Vec<Vec<i32>>) -> i32 {
+    let [rows, cols] = get_dimensions(&grid);
+    let mut costs = vec![vec![i32::MAX; cols]; rows];
+    let mut queue = std::collections::VecDeque::from([[0, 0]]);
+    costs[0][0] = 0;
+    while let Some([row, col]) = queue.pop_front() {
+        let dir = grid[row][col];
+        for (nr, nc) in neighbors((row, col)).filter(|&(nr, nc)| nr < rows && nc < cols) {
+            let cost = if row == nr {
+                if nc > col {
+                    i32::from(dir != 1)
+                } else {
+                    i32::from(dir != 2)
+                }
+            } else if nr > row {
+                i32::from(dir != 3)
+            } else {
+                i32::from(dir != 4)
+            };
+            if costs[row][col] + cost < costs[nr][nc] {
+                costs[nr][nc] = costs[row][col] + cost;
+                if cost == 1 {
+                    queue.push_back([nr, nc]);
+                } else {
+                    queue.push_front([nr, nc]);
+                }
+            }
+        }
+    }
+    costs[rows - 1][cols - 1]
 }
 
 #[cfg(test)]
