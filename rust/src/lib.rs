@@ -2,27 +2,31 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::{BTreeSet, HashMap};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn get_folder_names(names: Vec<String>) -> Vec<String> {
-    let mut map = std::collections::HashMap::new();
-    let mut res = Vec::with_capacity(names.len());
-    for name in names {
-        if let Some(v) = map.get(&name) {
-            let mut v = *v;
-            let mut curr = format!("{name}({v})");
-            while map.contains_key(&curr) {
-                v += 1;
-                curr = format!("{name}({v})")
-            }
-            res.push(curr.clone());
-            map.insert(name, 1 + v); // update this count to skip while loop
-            map.insert(curr, 1); // register this name
+pub fn avoid_flood(rains: &[i32]) -> Vec<i32> {
+    let mut res = vec![-1; rains.len()];
+    let mut dry = BTreeSet::new();
+    let mut wet = HashMap::new();
+    for (idx, &num) in rains.iter().enumerate() {
+        if num == 0 {
+            dry.insert(idx);
+        } else if let Some(prev) = wet.get_mut(&num) {
+            let Some(&i) = dry.range(1 + *prev..).next() else {
+                return vec![];
+            };
+            res[i] = num;
+            dry.remove(&i);
+            *prev = idx;
         } else {
-            res.push(name.clone());
-            map.insert(name, 1);
+            wet.insert(num, idx);
         }
+    }
+    for d in dry {
+        res[d] = 1;
     }
     res
 }
@@ -34,10 +38,20 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(avoid_flood(&[1, 2, 3, 4]), [-1; 4]);
+        assert_eq!(avoid_flood(&[1, 2, 0, 0, 2, 1]), [-1, -1, 2, 1, -1, -1]);
+        assert!(avoid_flood(&[1, 2, 0, 1, 2]).is_empty());
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(
+            avoid_flood(&[1, 0, 2, 0, 3, 0, 2, 0, 0, 0, 1, 2, 3]),
+            [-1, 1, -1, 2, -1, 3, -1, 2, 1, 1, -1, -1, -1]
+        );
+        assert!(avoid_flood(&[0, 1, 1]).is_empty());
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
