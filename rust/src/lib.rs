@@ -5,13 +5,31 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn get_last_moment(n: i32, left: Vec<i32>, right: Vec<i32>) -> i32 {
+// For matrix like this
+// 0 0 0 1   transforms  0 0 0 1
+// 0 0 1 1    into =>    0 0 1 2
+// 0 1 1 1               0 1 2 3
+// ............................^.
+// Stand on [r=2, c=3] and look up
+// [r=2] num==3, the current submat [1 2 3] counts as 3
+// [r=1] min(3,2)==2, it forms 2 submats with height==2
+// [r=0] simiarly, only vertical [1 2 3] counts
+pub fn num_submat(mat: &[&[i32]]) -> i32 {
+    let [rows, cols] = get_dimensions(mat);
+    let mut dp = vec![vec![0; cols]; rows];
     let mut res = 0;
-    for v in left {
-        res = res.max(v);
-    }
-    for v in right {
-        res = res.max(n - v);
+    for (r, row) in mat.iter().enumerate() {
+        for (c, &val) in row.iter().enumerate() {
+            if val == 0 {
+                continue;
+            }
+            dp[r][c] = 1 + if c == 0 { 0 } else { dp[r][c - 1] };
+            let mut curr = dp[r][c];
+            for i in (0..=r).rev() {
+                curr = curr.min(dp[i][c]);
+                res += curr;
+            }
+        }
     }
     res
 }
@@ -23,7 +41,13 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(num_submat(&[&[1, 0, 1], &[1, 1, 0], &[1, 1, 0]]), 13);
+        assert_eq!(
+            num_submat(&[&[0, 1, 1, 0], &[0, 1, 1, 1], &[1, 1, 1, 0]]),
+            24
+        );
+    }
 
     #[test]
     fn test() {}
