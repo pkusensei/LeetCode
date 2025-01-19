@@ -5,15 +5,14 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_identical_pairs(nums: Vec<i32>) -> i32 {
-    nums.into_iter()
-        .fold(std::collections::HashMap::new(), |mut acc, num| {
-            *acc.entry(num).or_insert(0) += 1;
-            acc
-        })
-        .into_values()
-        .map(|v| v * (v - 1) / 2)
-        .sum()
+pub fn num_sub(s: &str) -> i32 {
+    const MOD: usize = 1_000_000_007;
+    let res = s
+        .split('0')
+        .map(|v| v.len() * (v.len() + 1) / 2 % MOD)
+        .sum::<usize>()
+        % MOD;
+    res as i32
 }
 
 #[cfg(test)]
@@ -23,7 +22,11 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(num_sub("0110111"), 9);
+        assert_eq!(num_sub("101"), 2);
+        assert_eq!(num_sub("111111"), 21);
+    }
 
     #[test]
     fn test() {}
