@@ -5,13 +5,44 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_difference(mut nums: Vec<i32>) -> i32 {
-    let n = nums.len();
-    if n <= 3 {
-        return 0;
+pub fn winner_square_game(n: i32) -> bool {
+    let n = n as usize;
+    let mut dp = vec![false; 1 + n];
+    for i in 1..=n {
+        let mut sqrt = 1usize;
+        while sqrt.pow(2) <= i {
+            if !dp[i - sqrt.pow(2)] {
+                dp[i] = true;
+                break;
+            }
+            sqrt += 1;
+        }
     }
-    nums.sort_unstable();
-        (0..4).map(|i| nums[n - 4 + i] - nums[i]).min().unwrap_or(0)
+    dp[n]
+    // dfs(n, &mut vec![-1; 1 + n])
+}
+
+fn dfs(n: usize, memo: &mut [i8]) -> bool {
+    if is_square(n) {
+        return true;
+    }
+    if memo[n] > -1 {
+        return memo[n] == 1;
+    }
+    let mut res = false;
+    for i in (1..n).rev().filter(|&i| is_square(i)) {
+        if !dfs(n - i, memo) {
+            res = true;
+            break;
+        }
+    }
+    memo[n] = if res { 1 } else { 0 };
+    res
+}
+
+fn is_square(n: usize) -> bool {
+    let sqrt = (n as f64).sqrt().floor() as usize;
+    sqrt.pow(2) == n
 }
 
 #[cfg(test)]
@@ -22,16 +53,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_difference(vec![5, 3, 2, 4]), 0);
-        assert_eq!(min_difference(vec![1, 5, 0, 10, 14]), 1);
-        assert_eq!(min_difference(vec![3, 100, 20]), 0);
+        assert!(winner_square_game(1));
+        assert!(!winner_square_game(2));
+        assert!(winner_square_game(4));
     }
 
     #[test]
-    fn test() {
-        assert_eq!(min_difference(vec![90, 35, 67, 53, 61]), 6);
-        assert_eq!(min_difference(vec![6, 6, 0, 1, 1, 4, 6]), 2);
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
