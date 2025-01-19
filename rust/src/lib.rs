@@ -5,44 +5,15 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn winner_square_game(n: i32) -> bool {
-    let n = n as usize;
-    let mut dp = vec![false; 1 + n];
-    for i in 1..=n {
-        let mut sqrt = 1usize;
-        while sqrt.pow(2) <= i {
-            if !dp[i - sqrt.pow(2)] {
-                dp[i] = true;
-                break;
-            }
-            sqrt += 1;
-        }
-    }
-    dp[n]
-    // dfs(n, &mut vec![-1; 1 + n])
-}
-
-fn dfs(n: usize, memo: &mut [i8]) -> bool {
-    if is_square(n) {
-        return true;
-    }
-    if memo[n] > -1 {
-        return memo[n] == 1;
-    }
-    let mut res = false;
-    for i in (1..n).rev().filter(|&i| is_square(i)) {
-        if !dfs(n - i, memo) {
-            res = true;
-            break;
-        }
-    }
-    memo[n] = if res { 1 } else { 0 };
-    res
-}
-
-fn is_square(n: usize) -> bool {
-    let sqrt = (n as f64).sqrt().floor() as usize;
-    sqrt.pow(2) == n
+pub fn num_identical_pairs(nums: Vec<i32>) -> i32 {
+    nums.into_iter()
+        .fold(std::collections::HashMap::new(), |mut acc, num| {
+            *acc.entry(num).or_insert(0) += 1;
+            acc
+        })
+        .into_values()
+        .map(|v| v * (v - 1) / 2)
+        .sum()
 }
 
 #[cfg(test)]
@@ -52,11 +23,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {
-        assert!(winner_square_game(1));
-        assert!(!winner_square_game(2));
-        assert!(winner_square_game(4));
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
