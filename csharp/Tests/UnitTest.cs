@@ -10,18 +10,17 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(new[] { 1, 2, 3, 4, 5, 10, 6, 7, 8, 9 }, 5, true)]
-    [DataRow(new[] { 1, 2, 3, 4, 5, 6 }, 7, true)]
-    [DataRow(new[] { 1, 2, 3, 4, 5, 6 }, 10, false)]
-    [DataRow(new[] { 2, 2, 2, 4 }, 4, false)]
-    public void TestMethod1(int[] arr, int k, bool exp)
+    public void TestMethod1()
     {
-        Assert.AreEqual(exp, sol.CanArrange(arr, k));
+        var arr = new[] { new[] { 1, 4, 3, 1, 3, 2 }, [3, 2, 1, 3, 2, 4], [2, 3, 3, 2, 3, 1] };
+        Assert.AreEqual(4, sol.TrapRainWater(arr));
     }
 
     [TestMethod]
     public void TestMethod2()
     {
+        var arr = new[] { new[] { 3, 3, 3, 3, 3 }, [3, 2, 2, 2, 3], [3, 2, 1, 2, 3], [3, 2, 2, 2, 3], [3, 3, 3, 3, 3] };
+        Assert.AreEqual(10, sol.TrapRainWater(arr));
     }
 
     [TestMethod]
