@@ -5,29 +5,13 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn reformat_date(date: String) -> String {
-    let m = std::collections::HashMap::from([
-        ("Jan", "01"),
-        ("Feb", "02"),
-        ("Mar", "03"),
-        ("Apr", "04"),
-        ("May", "05"),
-        ("Jun", "06"),
-        ("Jul", "07"),
-        ("Aug", "08"),
-        ("Sep", "09"),
-        ("Oct", "10"),
-        ("Nov", "11"),
-        ("Dec", "12"),
-    ]);
-    let mut it = date.split_ascii_whitespace();
-    let d = it
-        .next()
-        .and_then(|s| s[..s.len() - 2].parse().ok())
-        .unwrap_or(1);
-    let m = it.next().and_then(|s| m.get(s)).unwrap_or(&"01");
-    let y = it.next().unwrap_or("1900");
-    format!("{y}-{m}-{d:02}")
+pub fn min_difference(mut nums: Vec<i32>) -> i32 {
+    let n = nums.len();
+    if n <= 3 {
+        return 0;
+    }
+    nums.sort_unstable();
+        (0..4).map(|i| nums[n - 4 + i] - nums[i]).min().unwrap_or(0)
 }
 
 #[cfg(test)]
@@ -37,10 +21,17 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(min_difference(vec![5, 3, 2, 4]), 0);
+        assert_eq!(min_difference(vec![1, 5, 0, 10, 14]), 1);
+        assert_eq!(min_difference(vec![3, 100, 20]), 0);
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(min_difference(vec![90, 35, 67, 53, 61]), 6);
+        assert_eq!(min_difference(vec![6, 6, 0, 1, 1, 4, 6]), 2);
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
