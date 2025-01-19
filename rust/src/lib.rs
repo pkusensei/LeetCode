@@ -5,17 +5,38 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_water_bottles(num_bottles: i32, num_exchange: i32) -> i32 {
-    let mut res = 0;
-    let mut full = num_bottles;
-    let mut empty = 0;
-    while full > 0 {
-        res += full;
-        empty = full + empty;
-        full = empty / num_exchange;
-        empty = empty % num_exchange;
-    }
+pub fn count_sub_trees(n: i32, edges: &[[i32; 2]], labels: &str) -> Vec<i32> {
+    let n = n as usize;
+    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
+        acc[e[0] as usize].push(e[1] as usize);
+        acc[e[1] as usize].push(e[0] as usize);
+        acc
+    });
+    let mut res = vec![0; n];
+    dfs(&adj, labels.as_bytes(), 0, None, &mut res);
     res
+}
+
+fn dfs(
+    adj: &[Vec<usize>],
+    labels: &[u8],
+    node: usize,
+    parent: Option<usize>,
+    res: &mut [i32],
+) -> [i32; 26] {
+    let mut arr = [0; 26];
+    let idx = (labels[node] - b'a') as usize;
+    arr[idx] += 1;
+    for &ch in adj[node].iter() {
+        if parent.is_some_and(|p| p == ch) {
+            continue;
+        }
+        for (v1, v2) in arr.iter_mut().zip(dfs(adj, labels, ch, Some(node), res)) {
+            *v1 += v2;
+        }
+    }
+    res[node] += arr[idx];
+    arr
 }
 
 #[cfg(test)]
@@ -26,8 +47,22 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(num_water_bottles(9, 3), 13);
-        assert_eq!(num_water_bottles(15, 4), 19);
+        assert_eq!(
+            count_sub_trees(
+                7,
+                &[[0, 1], [0, 2], [1, 4], [1, 5], [2, 3], [2, 6]],
+                "abaedcd"
+            ),
+            [2, 1, 1, 1, 1, 1, 1]
+        );
+        assert_eq!(
+            count_sub_trees(4, &[[0, 1], [1, 2], [0, 3]], "bbbb"),
+            [4, 2, 1, 1]
+        );
+        assert_eq!(
+            count_sub_trees(5, &[[0, 1], [0, 2], [1, 3], [0, 4]], "aabab"),
+            [3, 2, 1, 1, 1]
+        );
     }
 
     #[test]
