@@ -5,14 +5,38 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_sub(s: &str) -> i32 {
-    const MOD: usize = 1_000_000_007;
-    let res = s
-        .split('0')
-        .map(|v| v.len() * (v.len() + 1) / 2 % MOD)
-        .sum::<usize>()
-        % MOD;
-    res as i32
+pub fn get_min_dist_sum(positions: &[[i32; 2]]) -> f64 {
+    let n = positions.len() as f64;
+    let [mut xc, mut yc] = positions
+        .iter()
+        .fold([0, 0], |acc, p| [acc[0] + p[0], acc[1] + p[1]])
+        .map(|v| f64::from(v) / n);
+    let mut res = f64::MAX;
+    let mut step = 100.0;
+    while step > 1e-6 {
+        let mut zoom = true;
+        for [dx, dy] in [[-1, 0], [1, 0], [0, -1], [0, 1]] {
+            let nx = xc + step * f64::from(dx);
+            let ny = yc + step * f64::from(dy);
+            let dist = positions
+                .iter()
+                .map(|p| {
+                    let [x, y] = [p[0], p[1]].map(f64::from);
+                    ((x - nx).powi(2) + (y - ny).powi(2)).sqrt()
+                })
+                .sum::<f64>();
+            if dist < res {
+                res = dist;
+                [xc, yc] = [nx, ny];
+                zoom = false;
+                break;
+            }
+        }
+        if zoom {
+            step /= 2.0;
+        }
+    }
+    res
 }
 
 #[cfg(test)]
@@ -23,13 +47,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(num_sub("0110111"), 9);
-        assert_eq!(num_sub("101"), 2);
-        assert_eq!(num_sub("111111"), 21);
+        float_eq(get_min_dist_sum(&[[0, 1], [1, 0], [1, 2], [2, 1]]), 4.0);
+        float_eq(get_min_dist_sum(&[[1, 1], [3, 3]]), 2.82843);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        float_eq(get_min_dist_sum(&[[1, 1], [0, 0], [2, 0]]), 2.73205);
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
