@@ -2,26 +2,16 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashSet;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn closest_to_target(arr: &[i32], target: i32) -> i32 {
-    let mut set = HashSet::new();
-    let mut res = i32::MAX;
-    for &num in arr.iter() {
-        // Generate bitand values on the fly
-        // In each loop, the new num is plugged in
-        // Plus its bitand-ed with all previous bitand results
-        let mut next = HashSet::from([num]);
-        next.extend(set.into_iter().map(|v| v & num));
-        set = next;
-        for v in set.iter() {
-            res = res.min((v - target).abs());
-        }
+pub fn count_odds(low: i32, high: i32) -> i32 {
+    let n = high + 1 - low;
+    if n & 1 == 0 || low & 1 == 0 {
+        n / 2
+    } else {
+        1 + n / 2
     }
-    res
 }
 
 #[cfg(test)]
@@ -31,11 +21,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {
-        assert_eq!(closest_to_target(&[9, 12, 3, 7, 15], 5), 2);
-        assert_eq!(closest_to_target(&[1000000, 1000000, 1000000], 1), 999999);
-        assert_eq!(closest_to_target(&[1, 2, 4, 8, 16], 0), 0);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
