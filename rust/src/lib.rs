@@ -5,9 +5,47 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_flips(target: &str) -> i32 {
-    let s = target.as_bytes();
-    s.chunk_by(|a, b| a == b).count() as i32 - i32::from(s[0] == b'0')
+pub fn get_length_of_optimal_compression(s: &str, k: i32) -> i32 {
+    let (n, k) = (s.len(), k as usize);
+    let mut memo = vec![vec![None; 1 + k]; n];
+    dfs(s, 0, Some(k), &mut memo).unwrap_or(n as _)
+}
+
+fn dfs(s: &str, idx: usize, k: Option<usize>, memo: &mut [Vec<Option<i32>>]) -> Option<i32> {
+    let (n, k) = (s.len(), k?);
+    if idx >= n || k >= n - idx {
+        return Some(0);
+    }
+    if let Some(v) = memo[idx][k] {
+        return if v == -1 { None } else { Some(v) };
+    }
+    let mut count = [0; 26];
+    let mut freq = 0;
+    let mut res = i32::MAX;
+    for (i, b) in s.bytes().enumerate().skip(idx) {
+        // For each substr [idx..=i]
+        let ci = usize::from(b - b'a');
+        count[ci] += 1;
+        // Try find the most frequent letter
+        freq = freq.max(count[ci]);
+        let range = 1 + i - idx;
+        // Delete all else
+        let del = range - freq as usize;
+        if let Some(v) = dfs(s, 1 + i, k.checked_sub(del), memo) {
+            res = res.min(v + len_of(freq));
+        }
+    }
+    memo[idx][k] = if res == i32::MAX { Some(-1) } else { Some(res) };
+    memo[idx][k]
+}
+
+const fn len_of(val: i32) -> i32 {
+    1 + match val {
+        1 => 0,
+        2..=9 => 1,
+        10..=99 => 2,
+        _ => 3,
+    }
 }
 
 #[cfg(test)]
@@ -18,9 +56,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_flips("10111"), 3);
-        assert_eq!(min_flips("101"), 3);
-        assert_eq!(min_flips("00000"), 0);
+        assert_eq!(get_length_of_optimal_compression("aaabcccd", 2), 4);
+        assert_eq!(get_length_of_optimal_compression("aabbaa", 2), 2);
+        assert_eq!(get_length_of_optimal_compression("aaaaaaaaaaa", 0), 3);
     }
 
     #[test]
