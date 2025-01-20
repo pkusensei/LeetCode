@@ -2,62 +2,26 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashSet;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_num_of_substrings(s: &str) -> Vec<String> {
-    let n = s.len();
-    let mut intervals = [[n, n]; 26];
-    for (i, b) in s.bytes().enumerate() {
-        let idx = usize::from(b - b'a');
-        intervals[idx][0] = intervals[idx][0].min(i);
-        intervals[idx][1] = i;
-    }
-    let mut stack: Vec<[usize; 2]> = vec![];
-    let mut res = vec![];
-    for (i, b) in s.bytes().enumerate() {
-        let idx = usize::from(b - b'a');
-        // For valid substring, its leftmost idx must be the specific char.
-        // Hence int[idx][0]==i => a possible valid substring
-        if intervals[idx][0] != i {
-            continue;
+pub fn closest_to_target(arr: &[i32], target: i32) -> i32 {
+    let mut set = HashSet::new();
+    let mut res = i32::MAX;
+    for &num in arr.iter() {
+        // Generate bitand values on the fly
+        // In each loop, the new num is plugged in
+        // Plus its bitand-ed with all previous bitand results
+        let mut next = HashSet::from([num]);
+        next.extend(set.into_iter().map(|v| v & num));
+        set = next;
+        for v in set.iter() {
+            res = res.min((v - target).abs());
         }
-        let left = intervals[idx][0];
-        let tail = intervals[idx][1];
-        // Find potential expansion
-        let Some(right) = right_most(&intervals, s.as_bytes(), left, tail) else {
-            continue;
-        };
-        // Pop potential "enclosing" interval
-        while stack.last().is_some_and(|v| v[0] <= left && right <= v[1]) {
-            stack.pop();
-        }
-        stack.push([left, right]);
-    }
-    while let Some(v) = stack.pop() {
-        res.push(s[v[0]..=v[1]].to_string());
     }
     res
-}
-
-fn right_most(
-    intervals: &[[usize; 2]; 26],
-    s: &[u8],
-    left: usize,
-    mut right: usize,
-) -> Option<usize> {
-    let mut i = 1 + left;
-    // For each i inside [1+left..right]
-    // If a valid substring starts within, expand right-ward
-    while i < right {
-        let idx = usize::from(s[i] - b'a');
-        if intervals[idx][0] < left {
-            return None;
-        }
-        right = right.max(intervals[idx][1]);
-        i += 1;
-    }
-    Some(right)
 }
 
 #[cfg(test)]
@@ -68,8 +32,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        sort_eq(max_num_of_substrings("adefaddaccc"), ["e", "f", "ccc"]);
-        sort_eq(max_num_of_substrings("abbaccd"), ["d", "bb", "cc"]);
+        assert_eq!(closest_to_target(&[9, 12, 3, 7, 15], 5), 2);
+        assert_eq!(closest_to_target(&[1000000, 1000000, 1000000], 1), 999999);
+        assert_eq!(closest_to_target(&[1, 2, 4, 8, 16], 0), 0);
     }
 
     #[test]
