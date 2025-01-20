@@ -5,13 +5,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_odds(low: i32, high: i32) -> i32 {
-    let n = high + 1 - low;
-    if n & 1 == 0 || low & 1 == 0 {
-        n / 2
-    } else {
-        1 + n / 2
+pub fn num_of_subarrays(arr: &[i32]) -> i32 {
+    let [mut odd, mut even] = [0, 1]; // zero is even
+    let mut sum = 0;
+    let mut res = 0;
+    for num in arr.iter() {
+        sum += num;
+        if sum & 1 == 1 {
+            res += even;
+            odd += 1;
+        } else {
+            res += odd;
+            even += 1;
+        }
+        res %= 1_000_000_007;
     }
+    res
 }
 
 #[cfg(test)]
@@ -21,7 +30,11 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(num_of_subarrays(&[1, 3, 5]), 4);
+        assert_eq!(num_of_subarrays(&[2, 4, 6]), 0);
+        assert_eq!(num_of_subarrays(&[1, 2, 3, 4, 5, 6, 7]), 16);
+    }
 
     #[test]
     fn test() {}
