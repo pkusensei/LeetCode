@@ -5,22 +5,8 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_splits(s: &str) -> i32 {
-    let mut left = [0; 26];
-    let mut right = s.bytes().fold([0; 26], |mut acc, b| {
-        acc[usize::from(b - b'a')] += 1;
-        acc
-    });
-    let n = s.len();
-    let mut res = 0;
-    for b in s.bytes().take(n - 1) {
-        left[usize::from(b - b'a')] += 1;
-        right[usize::from(b - b'a')] -= 1;
-        if left.iter().filter(|&&v| v > 0).count() == right.iter().filter(|&&v| v > 0).count() {
-            res += 1;
-        }
-    }
-    res
+pub fn min_number_operations(target: &[i32]) -> i32 {
+    target[0] + target.windows(2).map(|w| 0.max(w[1] - w[0])).sum::<i32>()
 }
 
 #[cfg(test)]
@@ -31,8 +17,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(num_splits("aacaba"), 2);
-        assert_eq!(num_splits("abcd"), 1);
+        assert_eq!(min_number_operations(&[1, 2, 3, 2, 1]), 3);
+        assert_eq!(min_number_operations(&[3, 1, 1, 2]), 4);
+        assert_eq!(min_number_operations(&[3, 1, 5, 4, 2]), 7);
     }
 
     #[test]
