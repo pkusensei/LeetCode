@@ -5,20 +5,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_of_subarrays(arr: &[i32]) -> i32 {
-    let [mut odd, mut even] = [0, 1]; // zero is even
-    let mut sum = 0;
+pub fn num_splits(s: &str) -> i32 {
+    let mut left = [0; 26];
+    let mut right = s.bytes().fold([0; 26], |mut acc, b| {
+        acc[usize::from(b - b'a')] += 1;
+        acc
+    });
+    let n = s.len();
     let mut res = 0;
-    for num in arr.iter() {
-        sum += num;
-        if sum & 1 == 1 {
-            res += even;
-            odd += 1;
-        } else {
-            res += odd;
-            even += 1;
+    for b in s.bytes().take(n - 1) {
+        left[usize::from(b - b'a')] += 1;
+        right[usize::from(b - b'a')] -= 1;
+        if left.iter().filter(|&&v| v > 0).count() == right.iter().filter(|&&v| v > 0).count() {
+            res += 1;
         }
-        res %= 1_000_000_007;
     }
     res
 }
@@ -31,9 +31,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(num_of_subarrays(&[1, 3, 5]), 4);
-        assert_eq!(num_of_subarrays(&[2, 4, 6]), 0);
-        assert_eq!(num_of_subarrays(&[1, 2, 3, 4, 5, 6, 7]), 16);
+        assert_eq!(num_splits("aacaba"), 2);
+        assert_eq!(num_splits("abcd"), 1);
     }
 
     #[test]
