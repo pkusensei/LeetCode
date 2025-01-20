@@ -5,38 +5,25 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_sub_trees(n: i32, edges: &[[i32; 2]], labels: &str) -> Vec<i32> {
-    let n = n as usize;
-    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
-        acc[e[0] as usize].push(e[1] as usize);
-        acc[e[1] as usize].push(e[0] as usize);
-        acc
-    });
-    let mut res = vec![0; n];
-    dfs(&adj, labels.as_bytes(), 0, None, &mut res);
-    res
-}
-
-fn dfs(
-    adj: &[Vec<usize>],
-    labels: &[u8],
-    node: usize,
-    parent: Option<usize>,
-    res: &mut [i32],
-) -> [i32; 26] {
-    let mut arr = [0; 26];
-    let idx = (labels[node] - b'a') as usize;
-    arr[idx] += 1;
-    for &ch in adj[node].iter() {
-        if parent.is_some_and(|p| p == ch) {
-            continue;
-        }
-        for (v1, v2) in arr.iter_mut().zip(dfs(adj, labels, ch, Some(node), res)) {
-            *v1 += v2;
+pub fn first_complete_index(arr: &[i32], mat: &[&[i32]]) -> i32 {
+    let [rows, cols] = get_dimensions(mat);
+    let mut grid = std::collections::HashMap::new();
+    for (r, row) in mat.iter().enumerate() {
+        for (c, &v) in row.iter().enumerate() {
+            grid.insert(v, [r, c]);
         }
     }
-    res[node] += arr[idx];
-    arr
+    let mut rcount = vec![0; rows];
+    let mut ccount = vec![0; cols];
+    for (i, num) in arr.iter().enumerate() {
+        let [r, c] = grid[num];
+        rcount[r] += 1;
+        ccount[c] += 1;
+        if rcount[r] == cols || ccount[c] == rows {
+            return i as i32;
+        }
+    }
+    -1
 }
 
 #[cfg(test)]
@@ -47,21 +34,13 @@ mod tests {
 
     #[test]
     fn basics() {
+        assert_eq!(first_complete_index(&[1, 3, 4, 2], &[&[1, 4], &[2, 3]]), 2);
         assert_eq!(
-            count_sub_trees(
-                7,
-                &[[0, 1], [0, 2], [1, 4], [1, 5], [2, 3], [2, 6]],
-                "abaedcd"
+            first_complete_index(
+                &[2, 8, 7, 4, 1, 3, 5, 6, 9],
+                &[&[3, 2, 5], &[1, 4, 6], &[8, 7, 9]]
             ),
-            [2, 1, 1, 1, 1, 1, 1]
-        );
-        assert_eq!(
-            count_sub_trees(4, &[[0, 1], [1, 2], [0, 3]], "bbbb"),
-            [4, 2, 1, 1]
-        );
-        assert_eq!(
-            count_sub_trees(5, &[[0, 1], [0, 2], [1, 3], [0, 4]], "aabab"),
-            [3, 2, 1, 1, 1]
+            3
         );
     }
 
