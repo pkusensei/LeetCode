@@ -5,12 +5,9 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn restore_string(s: String, indices: Vec<i32>) -> String {
-    let mut res = vec![0; s.len()];
-    for (b, i) in s.bytes().zip(indices) {
-        res[i as usize] = b;
-    }
-    String::from_utf8(res).unwrap()
+pub fn min_flips(target: &str) -> i32 {
+    let s = target.as_bytes();
+    s.chunk_by(|a, b| a == b).count() as i32 - i32::from(s[0] == b'0')
 }
 
 #[cfg(test)]
@@ -20,7 +17,11 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(min_flips("10111"), 3);
+        assert_eq!(min_flips("101"), 3);
+        assert_eq!(min_flips("00000"), 0);
+    }
 
     #[test]
     fn test() {}
