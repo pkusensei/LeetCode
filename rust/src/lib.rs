@@ -5,25 +5,59 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn first_complete_index(arr: &[i32], mat: &[&[i32]]) -> i32 {
-    let [rows, cols] = get_dimensions(mat);
-    let mut grid = std::collections::HashMap::new();
-    for (r, row) in mat.iter().enumerate() {
-        for (c, &v) in row.iter().enumerate() {
-            grid.insert(v, [r, c]);
-        }
+pub fn max_num_of_substrings(s: &str) -> Vec<String> {
+    let n = s.len();
+    let mut intervals = [[n, n]; 26];
+    for (i, b) in s.bytes().enumerate() {
+        let idx = usize::from(b - b'a');
+        intervals[idx][0] = intervals[idx][0].min(i);
+        intervals[idx][1] = i;
     }
-    let mut rcount = vec![0; rows];
-    let mut ccount = vec![0; cols];
-    for (i, num) in arr.iter().enumerate() {
-        let [r, c] = grid[num];
-        rcount[r] += 1;
-        ccount[c] += 1;
-        if rcount[r] == cols || ccount[c] == rows {
-            return i as i32;
+    let mut stack: Vec<[usize; 2]> = vec![];
+    let mut res = vec![];
+    for (i, b) in s.bytes().enumerate() {
+        let idx = usize::from(b - b'a');
+        // For valid substring, its leftmost idx must be the specific char.
+        // Hence int[idx][0]==i => a possible valid substring
+        if intervals[idx][0] != i {
+            continue;
         }
+        let left = intervals[idx][0];
+        let tail = intervals[idx][1];
+        // Find potential expansion
+        let Some(right) = right_most(&intervals, s.as_bytes(), left, tail) else {
+            continue;
+        };
+        // Pop potential "enclosing" interval
+        while stack.last().is_some_and(|v| v[0] <= left && right <= v[1]) {
+            stack.pop();
+        }
+        stack.push([left, right]);
     }
-    -1
+    while let Some(v) = stack.pop() {
+        res.push(s[v[0]..=v[1]].to_string());
+    }
+    res
+}
+
+fn right_most(
+    intervals: &[[usize; 2]; 26],
+    s: &[u8],
+    left: usize,
+    mut right: usize,
+) -> Option<usize> {
+    let mut i = 1 + left;
+    // For each i inside [1+left..right]
+    // If a valid substring starts within, expand right-ward
+    while i < right {
+        let idx = usize::from(s[i] - b'a');
+        if intervals[idx][0] < left {
+            return None;
+        }
+        right = right.max(intervals[idx][1]);
+        i += 1;
+    }
+    Some(right)
 }
 
 #[cfg(test)]
@@ -34,14 +68,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(first_complete_index(&[1, 3, 4, 2], &[&[1, 4], &[2, 3]]), 2);
-        assert_eq!(
-            first_complete_index(
-                &[2, 8, 7, 4, 1, 3, 5, 6, 9],
-                &[&[3, 2, 5], &[1, 4, 6], &[8, 7, 9]]
-            ),
-            3
-        );
+        sort_eq(max_num_of_substrings("adefaddaccc"), ["e", "f", "ccc"]);
+        sort_eq(max_num_of_substrings("abbaccd"), ["d", "bb", "cc"]);
     }
 
     #[test]
