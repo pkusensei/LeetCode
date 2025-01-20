@@ -5,25 +5,40 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn get_winner(arr: Vec<i32>, k: i32) -> i32 {
-    if k as usize >= arr.len() {
-        arr.into_iter().max().unwrap()
-    } else {
-        let mut count = 0;
-        let mut curr = arr[0];
-        for num in arr.into_iter().skip(1) {
-            if num > curr {
-                curr = num;
-                count = 1;
-            } else {
-                count += 1
-            }
-            if count == k {
-                return curr;
-            }
-        }
-        curr
+pub fn min_swaps(grid: &[&[i32]]) -> i32 {
+    let n = grid.len();
+    let mut nums: Vec<_> = grid
+        .iter()
+        .map(|row| {
+            row.iter()
+                .rposition(|&v| v != 0)
+                .map(|v| v as i16)
+                .unwrap_or(-1)
+        })
+        .collect();
+    let mut temp = nums.clone();
+    temp.sort_unstable();
+    if temp.iter().enumerate().any(|(r, &pos)| pos > r as i16) {
+        return -1;
     }
+    let mut res = 0;
+    for r in 0..n {
+        if nums[r] <= r as i16 {
+            continue;
+        }
+        let Some(i) = nums.iter().enumerate().skip(1 + r).find_map(|(i, &v)| {
+            if v <= r as i16 {
+                Some(i)
+            } else {
+                None
+            }
+        }) else {
+            break;
+        };
+        res += (i - r) as i32;
+        nums[r..=i].rotate_right(1);
+    }
+    res
 }
 
 #[cfg(test)]
@@ -33,10 +48,30 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(min_swaps(&[&[0, 0, 1], &[1, 1, 0], &[1, 0, 0]]), 3);
+        assert_eq!(
+            min_swaps(&[&[0, 1, 1, 0], &[0, 1, 1, 0], &[0, 1, 1, 0], &[0, 1, 1, 0]]),
+            -1
+        );
+        assert_eq!(min_swaps(&[&[1, 0, 0], &[1, 1, 0], &[1, 1, 1]]), 0);
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(min_swaps(&[&[0, 0], &[0, 1]]), 0);
+        assert_eq!(
+            min_swaps(&[
+                &[1, 0, 0, 0, 0, 0],
+                &[0, 1, 0, 1, 0, 0],
+                &[1, 0, 0, 0, 0, 0],
+                &[1, 1, 1, 0, 0, 0],
+                &[1, 1, 0, 1, 0, 0],
+                &[1, 0, 0, 0, 0, 0]
+            ]),
+            2
+        );
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
