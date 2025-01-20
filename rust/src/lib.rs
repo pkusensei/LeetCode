@@ -5,20 +5,25 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_good_triplets(arr: Vec<i32>, a: i32, b: i32, c: i32) -> i32 {
-    let mut res = 0;
-    for (i1, &i) in arr.iter().enumerate() {
-        for (i2, &j) in arr.iter().enumerate().into_iter().skip(1 + i1) {
-            for &k in arr.iter().into_iter().skip(1 + i2) {
-                res += i32::from(
-                    i.abs_diff(j) <= a as u32
-                        && j.abs_diff(k) <= b as u32
-                        && i.abs_diff(k) <= c as u32,
-                );
+pub fn get_winner(arr: Vec<i32>, k: i32) -> i32 {
+    if k as usize >= arr.len() {
+        arr.into_iter().max().unwrap()
+    } else {
+        let mut count = 0;
+        let mut curr = arr[0];
+        for num in arr.into_iter().skip(1) {
+            if num > curr {
+                curr = num;
+                count = 1;
+            } else {
+                count += 1
+            }
+            if count == k {
+                return curr;
             }
         }
+        curr
     }
-    res
 }
 
 #[cfg(test)]
