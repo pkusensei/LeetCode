@@ -2,35 +2,24 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_distance(position: &mut [i32], m: i32) -> i32 {
-    let n = position.len();
-    position.sort_unstable();
-    let mut right = position[n - 1] - position[0];
-    let mut left = position.windows(2).map(|w| w[1] - w[0]).min().unwrap_or(1);
-    let mut res = 0;
-    while left <= right {
-        let mid = (right - left) / 2 + left;
-        if count(position, mid) >= m {
-            res = mid;
-            left = mid + 1;
-        } else {
-            right = mid - 1;
-        }
-    }
-    res
+pub fn min_days(n: i32) -> i32 {
+    dfs(n, &mut HashMap::new())
 }
 
-fn count(pos: &[i32], mid: i32) -> i32 {
-    let mut idx = 0;
-    let mut res = 0;
-    while idx < pos.len() {
-        res += 1;
-        let curr = pos[idx];
-        idx = pos.partition_point(|&v| v < curr + mid);
+fn dfs(n: i32, memo: &mut HashMap<i32, i32>) -> i32 {
+    if n <= 1 {
+        return n;
     }
+    if let Some(&v) = memo.get(&n) {
+        return v;
+    }
+    let res = 1 + (n % 2 + dfs(n / 2, memo)).min(n % 3 + dfs(n / 3, memo));
+    memo.insert(n, res);
     res
 }
 
@@ -42,14 +31,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_distance(&mut [1, 2, 3, 4, 7], 3), 3);
-        assert_eq!(max_distance(&mut [5, 4, 3, 2, 1, 1000000000], 2), 999999999);
+        assert_eq!(min_days(10), 4);
+        assert_eq!(min_days(6), 3);
     }
 
     #[test]
-    fn test() {
-        assert_eq!(max_distance(&mut [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 4), 3);
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
