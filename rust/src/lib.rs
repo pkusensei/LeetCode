@@ -5,27 +5,45 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_operations(nums: &mut [i32]) -> i32 {
-    let n = nums.len();
-    let mut zeros = nums.iter().filter(|&&v| v == 0).count();
-    let mut res = 0;
-    while zeros < n {
-        for v in nums.iter_mut() {
-            if *v & 1 == 1 {
-                *v ^= 1;
-                res += 1;
-                zeros += usize::from(*v == 0);
+pub fn contains_cycle(grid: &[&[char]]) -> bool {
+    let [rows, cols] = get_dimensions(grid);
+    let mut seen = vec![vec![false; cols]; rows];
+    for row in 0..rows {
+        for col in 0..cols {
+            if !seen[row][col] {
+                if dfs(grid, [row, col], None, &mut seen) {
+                    return true;
+                }
             }
         }
-        if zeros == n {
-            break;
-        }
-        for v in nums.iter_mut() {
-            *v >>= 1;
-        }
-        res += 1;
     }
-    res
+    false
+}
+
+fn dfs(
+    grid: &[&[char]],
+    [row, col]: [usize; 2],
+    prev: Option<[usize; 2]>,
+    seen: &mut [Vec<bool>],
+) -> bool {
+    if seen[row][col] {
+        return true;
+    }
+    seen[row][col] = true;
+    for (nr, nc) in neighbors((row, col)) {
+        if prev.is_some_and(|v| v == [nr, nc]) {
+            continue;
+        }
+        if grid
+            .get(nr)
+            .is_some_and(|r| r.get(nc).is_some_and(|&v| v == grid[row][col]))
+        {
+            if dfs(grid, [nr, nc], Some([row, col]), seen) {
+                return true;
+            }
+        }
+    }
+    false
 }
 
 #[cfg(test)]
@@ -36,9 +54,23 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_operations(&mut [1, 5]), 5);
-        assert_eq!(min_operations(&mut [2, 2]), 3);
-        assert_eq!(min_operations(&mut [4, 2, 5]), 6);
+        assert!(contains_cycle(&[
+            &['a', 'a', 'a', 'a'],
+            &['a', 'b', 'b', 'a'],
+            &['a', 'b', 'b', 'a'],
+            &['a', 'a', 'a', 'a']
+        ]));
+        assert!(contains_cycle(&[
+            &['c', 'c', 'c', 'a'],
+            &['c', 'd', 'c', 'c'],
+            &['c', 'c', 'e', 'c'],
+            &['f', 'c', 'c', 'c']
+        ]));
+        assert!(!contains_cycle(&[
+            &['a', 'b', 'b'],
+            &['b', 'z', 'b'],
+            &['b', 'b', 'a']
+        ]));
     }
 
     #[test]
