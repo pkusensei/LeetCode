@@ -5,33 +5,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_insertions(s: &str) -> i32 {
+pub fn longest_awesome(s: &str) -> i32 {
+    let mut prefix: u16 = 0;
+    let mut seen = [i32::MAX; 1 << 10];
+    seen[0] = -1;
     let mut res = 0;
-    let [mut open, mut close] = [0, 0];
-    for b in s.bytes() {
-        match b {
-            b'(' => {
-                if open > 0 && close == 1 {
-                    res += 1;
-                    close = 0; // add one ) to balance ())
-                } else {
-                    open += 1
-                }
-            }
-            _ => {
-                close += 1;
-                if open == 0 {
-                    res += 1;
-                    open += 1;
-                }
-                if close == 2 {
-                    open -= 1;
-                    close = 0;
-                }
-            }
+    for (i, b) in s.bytes().map(|b| b - b'0').enumerate() {
+        prefix ^= 1 << b;
+        res = res.max(i as i32 - seen[usize::from(prefix)]);
+        for d in 0..=9 {
+            res = res.max(i as i32 - seen[usize::from(prefix ^ (1 << d))]);
         }
+        seen[usize::from(prefix)] = seen[usize::from(prefix)].min(i as i32);
     }
-    res + 2 * open - close
+    res
 }
 
 #[cfg(test)]
@@ -42,14 +29,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_insertions("(()))"), 1);
-        assert_eq!(min_insertions("())"), 0);
-        assert_eq!(min_insertions("))())("), 3);
+        assert_eq!(longest_awesome("3242415"), 5);
+        assert_eq!(longest_awesome("12345678"), 1);
+        assert_eq!(longest_awesome("213123"), 6);
     }
 
     #[test]
     fn test() {
-        assert_eq!(min_insertions(")))))))"), 5);
+        assert_eq!(longest_awesome("51224"), 3);
     }
 
     #[allow(dead_code)]
