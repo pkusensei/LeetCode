@@ -2,47 +2,22 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_cost(n: i32, cuts: &mut [i32]) -> i32 {
-    cuts.sort_unstable();
-    let mut cuts = cuts.to_vec();
-    cuts.insert(0, 0);
-    cuts.push(n);
-    let n1 = cuts.len();
-    let mut dp = vec![vec![0; n1]; n1];
-    for len in 2..n1 {
-        for left in 0..n1 - len {
-            let right = left + len;
-            let mut curr = i32::MAX;
-            dp[left][right] = cuts[right] - cuts[left];
-            for c in 1 + left..right {
-                curr = curr.min(dp[left][c] + dp[c][right]);
+pub fn three_consecutive_odds(arr: Vec<i32>) -> bool {
+    let mut odd = 0;
+    for num in arr {
+        if num & 1 == 1 {
+            odd += 1;
+            if odd >= 3 {
+                return true;
             }
-            dp[left][right] += curr;
+        } else {
+            odd = 0
         }
     }
-    dp[0][n1 - 1]
-    // dfs(cuts, 0, n, &mut HashMap::new())
-}
-
-fn dfs(cuts: &[i32], left: i32, right: i32, dp: &mut HashMap<[i32; 2], i32>) -> i32 {
-    if cuts.is_empty() {
-        return 0;
-    }
-    if let Some(&v) = dp.get(&[left, right]) {
-        return v;
-    }
-    let mut res = i32::MAX;
-    for (i, &c) in cuts.iter().enumerate() {
-        let curr = dfs(&cuts[..i], left, c, dp) + dfs(&cuts[1 + i..], c, right, dp);
-        res = res.min(right - left + curr);
-    }
-    dp.insert([left, right], res);
-    res
+    false
 }
 
 #[cfg(test)]
@@ -52,10 +27,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {
-        assert_eq!(min_cost(7, &mut [1, 3, 4, 5]), 16);
-        assert_eq!(min_cost(9, &mut [5, 6, 1, 4, 2]), 22);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
