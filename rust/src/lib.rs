@@ -5,45 +5,14 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn contains_cycle(grid: &[&[char]]) -> bool {
-    let [rows, cols] = get_dimensions(grid);
-    let mut seen = vec![vec![false; cols]; rows];
-    for row in 0..rows {
-        for col in 0..cols {
-            if !seen[row][col] {
-                if dfs(grid, [row, col], None, &mut seen) {
-                    return true;
-                }
-            }
-        }
+pub fn most_visited(n: i32, rounds: Vec<i32>) -> Vec<i32> {
+    let start = rounds[0];
+    let end = *rounds.last().unwrap();
+    if start <= end {
+        (start..=end).collect()
+    } else {
+        (1..=end).chain(start..=n).collect()
     }
-    false
-}
-
-fn dfs(
-    grid: &[&[char]],
-    [row, col]: [usize; 2],
-    prev: Option<[usize; 2]>,
-    seen: &mut [Vec<bool>],
-) -> bool {
-    if seen[row][col] {
-        return true;
-    }
-    seen[row][col] = true;
-    for (nr, nc) in neighbors((row, col)) {
-        if prev.is_some_and(|v| v == [nr, nc]) {
-            continue;
-        }
-        if grid
-            .get(nr)
-            .is_some_and(|r| r.get(nc).is_some_and(|&v| v == grid[row][col]))
-        {
-            if dfs(grid, [nr, nc], Some([row, col]), seen) {
-                return true;
-            }
-        }
-    }
-    false
 }
 
 #[cfg(test)]
@@ -53,25 +22,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {
-        assert!(contains_cycle(&[
-            &['a', 'a', 'a', 'a'],
-            &['a', 'b', 'b', 'a'],
-            &['a', 'b', 'b', 'a'],
-            &['a', 'a', 'a', 'a']
-        ]));
-        assert!(contains_cycle(&[
-            &['c', 'c', 'c', 'a'],
-            &['c', 'd', 'c', 'c'],
-            &['c', 'c', 'e', 'c'],
-            &['f', 'c', 'c', 'c']
-        ]));
-        assert!(!contains_cycle(&[
-            &['a', 'b', 'b'],
-            &['b', 'z', 'b'],
-            &['b', 'b', 'a']
-        ]));
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
