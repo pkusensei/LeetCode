@@ -5,26 +5,12 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn thousand_separator(mut n: i32) -> String {
-    let mut res = vec![];
-    let mut count = 0;
-    while n > 0 {
-        res.push((n % 10) as u8 + b'0');
-        n /= 10;
-        count += 1;
-        if count == 3 {
-            count = 0;
-            res.push(b'.');
-        }
-    }
-    if res.last().is_some_and(|&v| v == b'.') {
-        res.pop();
-    }
-    if res.is_empty() {
-        return "0".into();
-    }
-    res.reverse();
-    String::from_utf8(res).unwrap()
+pub fn find_smallest_set_of_vertices(n: i32, edges: &[[i32; 2]]) -> Vec<i32> {
+    let indegs = edges.iter().fold(vec![true; n as usize], |mut acc, e| {
+        acc[e[1] as usize] = false;
+        acc
+    });
+    (0..n).filter(|&v| indegs[v as usize]).collect()
 }
 
 #[cfg(test)]
