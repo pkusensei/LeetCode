@@ -5,14 +5,10 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn most_visited(n: i32, rounds: Vec<i32>) -> Vec<i32> {
-    let start = rounds[0];
-    let end = *rounds.last().unwrap();
-    if start <= end {
-        (start..=end).collect()
-    } else {
-        (1..=end).chain(start..=n).collect()
-    }
+pub fn max_coins(mut piles: Vec<i32>) -> i32 {
+    let n = piles.len() / 3;
+    piles.sort_unstable();
+    piles[n..].iter().step_by(2).sum()
 }
 
 #[cfg(test)]
