@@ -5,18 +5,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_kth_positive(arr: &[i32], k: i32) -> i32 {
-    let n = arr.len();
-    let [mut left, mut right] = [0, n];
-    while left < right {
-        let mid = left + (right - left) / 2;
-        if arr[mid] - mid as i32 - 1 < k {
-            left = mid + 1;
-        } else {
-            right = mid
-        }
+// 0 0 0 0 # # #
+// # # # 0 0 0 0
+// Robot2 can take either all #'s on top row or all on bottom row
+// Thus for each i, curr = max(top_prefix[1+i..n], down_prefix[i])
+// Then min(all curr)
+pub fn grid_game(grid: [&[i32]; 2]) -> i64 {
+    let n = grid[0].len();
+    let [mut top, mut down] = [0, 1].map(|_| Vec::with_capacity(n));
+    for idx in 0..n {
+        top.push(i64::from(grid[0][idx]) + top.last().unwrap_or(&0));
+        down.push(i64::from(grid[1][idx]) + down.last().unwrap_or(&0));
     }
-    k + left as i32
+    let mut res = i64::MAX;
+    for idx in 0..n {
+        let curr = (top[n - 1] - top[idx]).max(if idx > 0 { down[idx - 1] } else { 0 });
+        res = res.min(curr);
+    }
+    res
 }
 
 #[cfg(test)]
@@ -27,14 +33,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(find_kth_positive(&[2, 3, 4, 7, 11], 5), 9);
-        assert_eq!(find_kth_positive(&[1, 2, 3, 4], 2), 6);
+        assert_eq!(grid_game([&[2, 5, 4], &[1, 5, 1]]), 4);
+        assert_eq!(grid_game([&[3, 3, 1], &[8, 5, 2]]), 4);
+        assert_eq!(grid_game([&[1, 3, 1, 15], &[1, 3, 3, 1]]), 7);
     }
 
     #[test]
-    fn test() {
-        assert_eq!(find_kth_positive(&[3, 10], 2), 2);
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
