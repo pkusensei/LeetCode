@@ -5,10 +5,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_coins(mut piles: Vec<i32>) -> i32 {
-    let n = piles.len() / 3;
-    piles.sort_unstable();
-    piles[n..].iter().step_by(2).sum()
+pub fn find_latest_step(arr: &[i32], m: i32) -> i32 {
+    let n = arr.len() as i32;
+    if n == m {
+        return n;
+    }
+    let mut set = std::collections::BTreeSet::from([0, 1 + n]);
+    for (i, &num) in arr.iter().enumerate().rev() {
+        let lower = num - m - 1;
+        let upper = num + m + 1;
+        if set.range(..num).next_back().is_some_and(|&v| v == lower)
+            || set.range(1 + num..).next().is_some_and(|&v| v == upper)
+        {
+            return i as i32;
+        }
+        set.insert(num);
+    }
+    -1
 }
 
 #[cfg(test)]
@@ -18,10 +31,15 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(find_latest_step(&[3, 5, 1, 2, 4], 1), 4);
+        assert_eq!(find_latest_step(&[3, 1, 5, 4, 2], 2), -1);
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(find_latest_step(&[1, 2], 1), 1);
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
