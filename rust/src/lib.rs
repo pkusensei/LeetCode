@@ -5,12 +5,33 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_operations(n: i32) -> i32 {
-    if n & 1 == 1 {
-        (n - 1) * (n + 1) / 4
-    } else {
-        n.pow(2) / 4 // n*n/4 is enough
+pub fn max_distance(position: &mut [i32], m: i32) -> i32 {
+    let n = position.len();
+    position.sort_unstable();
+    let mut right = position[n - 1] - position[0];
+    let mut left = position.windows(2).map(|w| w[1] - w[0]).min().unwrap_or(1);
+    let mut res = 0;
+    while left <= right {
+        let mid = (right - left) / 2 + left;
+        if count(position, mid) >= m {
+            res = mid;
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
     }
+    res
+}
+
+fn count(pos: &[i32], mid: i32) -> i32 {
+    let mut idx = 0;
+    let mut res = 0;
+    while idx < pos.len() {
+        res += 1;
+        let curr = pos[idx];
+        idx = pos.partition_point(|&v| v < curr + mid);
+    }
+    res
 }
 
 #[cfg(test)]
@@ -21,12 +42,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_operations(3), 2);
-        assert_eq!(min_operations(6), 9);
+        assert_eq!(max_distance(&mut [1, 2, 3, 4, 7], 3), 3);
+        assert_eq!(max_distance(&mut [5, 4, 3, 2, 1, 1000000000], 2), 999999999);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(max_distance(&mut [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 4), 3);
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
