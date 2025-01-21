@@ -5,16 +5,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn make_good(s: &str) -> String {
-    let mut res: Vec<u8> = vec![];
-    for b in s.bytes() {
-        if res.last().is_some_and(|v| v.abs_diff(b) == (b'a' - b'A')) {
-            res.pop();
-        } else {
-            res.push(b);
+pub fn max_non_overlapping(nums: &[i32], target: i32) -> i32 {
+    let mut prefix = 0;
+    let mut seen = std::collections::HashSet::from([0]);
+    let mut res = 0;
+    for &num in nums.iter() {
+        prefix += num;
+        if seen.contains(&(prefix - target)) {
+            res += 1;
+            // As soon as one subarr is found, discard all previous numbers
+            // So that further subarrs cannot extend lefthand => no overlap
+            seen.clear();
         }
+        seen.insert(prefix);
     }
-    String::from_utf8(res).unwrap()
+    res
 }
 
 #[cfg(test)]
@@ -24,7 +29,10 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(max_non_overlapping(&[1, 1, 1, 1, 1], 2), 2);
+        assert_eq!(max_non_overlapping(&[-1, 3, 5, 1, 4, 2, -9], 6), 2);
+    }
 
     #[test]
     fn test() {}
