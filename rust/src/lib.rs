@@ -5,19 +5,12 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn three_consecutive_odds(arr: Vec<i32>) -> bool {
-    let mut odd = 0;
-    for num in arr {
-        if num & 1 == 1 {
-            odd += 1;
-            if odd >= 3 {
-                return true;
-            }
-        } else {
-            odd = 0
-        }
+pub fn min_operations(n: i32) -> i32 {
+    if n & 1 == 1 {
+        (n - 1) * (n + 1) / 4
+    } else {
+        n.pow(2) / 4 // n*n/4 is enough
     }
-    false
 }
 
 #[cfg(test)]
@@ -27,7 +20,10 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(min_operations(3), 2);
+        assert_eq!(min_operations(6), 9);
+    }
 
     #[test]
     fn test() {}
