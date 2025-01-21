@@ -5,12 +5,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_smallest_set_of_vertices(n: i32, edges: &[[i32; 2]]) -> Vec<i32> {
-    let indegs = edges.iter().fold(vec![true; n as usize], |mut acc, e| {
-        acc[e[1] as usize] = false;
-        acc
-    });
-    (0..n).filter(|&v| indegs[v as usize]).collect()
+pub fn min_operations(nums: &mut [i32]) -> i32 {
+    let n = nums.len();
+    let mut zeros = nums.iter().filter(|&&v| v == 0).count();
+    let mut res = 0;
+    while zeros < n {
+        for v in nums.iter_mut() {
+            if *v & 1 == 1 {
+                *v ^= 1;
+                res += 1;
+                zeros += usize::from(*v == 0);
+            }
+        }
+        if zeros == n {
+            break;
+        }
+        for v in nums.iter_mut() {
+            *v >>= 1;
+        }
+        res += 1;
+    }
+    res
 }
 
 #[cfg(test)]
@@ -20,7 +35,11 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(min_operations(&mut [1, 5]), 5);
+        assert_eq!(min_operations(&mut [2, 2]), 3);
+        assert_eq!(min_operations(&mut [4, 2, 5]), 6);
+    }
 
     #[test]
     fn test() {}
