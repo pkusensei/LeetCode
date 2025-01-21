@@ -5,21 +5,33 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn can_convert_string(s: &str, t: &str, k: i32) -> bool {
-    s.len() == t.len()
-        && s.bytes()
-            .zip(t.bytes())
-            .filter_map(|(a, b)| match a.cmp(&b) {
-                std::cmp::Ordering::Less => Some(i32::from(b - a)),
-                std::cmp::Ordering::Equal => None,
-                std::cmp::Ordering::Greater => Some(i32::from(b + 26 - a)),
-            })
-            .fold(std::collections::HashMap::new(), |mut acc, diff| {
-                acc.entry(diff).and_modify(|v| *v += 26).or_insert(diff);
-                acc
-            })
-            .into_values()
-            .all(|v| v <= k)
+pub fn min_insertions(s: &str) -> i32 {
+    let mut res = 0;
+    let [mut open, mut close] = [0, 0];
+    for b in s.bytes() {
+        match b {
+            b'(' => {
+                if open > 0 && close == 1 {
+                    res += 1;
+                    close = 0; // add one ) to balance ())
+                } else {
+                    open += 1
+                }
+            }
+            _ => {
+                close += 1;
+                if open == 0 {
+                    res += 1;
+                    open += 1;
+                }
+                if close == 2 {
+                    open -= 1;
+                    close = 0;
+                }
+            }
+        }
+    }
+    res + 2 * open - close
 }
 
 #[cfg(test)]
@@ -30,16 +42,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert!(can_convert_string("input", "ouput", 9));
-        assert!(!can_convert_string("abc", "bcd", 10));
-        assert!(can_convert_string("aab", "bbb", 27));
+        assert_eq!(min_insertions("(()))"), 1);
+        assert_eq!(min_insertions("())"), 0);
+        assert_eq!(min_insertions("))())("), 3);
     }
 
     #[test]
     fn test() {
-        assert!(!can_convert_string("jicfxaa", "ocxltbp", 15));
-        assert!(!can_convert_string("atmtxzjkz", "tvbtjhvjd", 35));
-        assert!(can_convert_string("iqssxdlb", "dyuqrwyr", 40));
+        assert_eq!(min_insertions(")))))))"), 5);
     }
 
     #[allow(dead_code)]
