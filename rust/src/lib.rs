@@ -2,25 +2,29 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_days(n: i32) -> i32 {
-    dfs(n, &mut HashMap::new())
-}
-
-fn dfs(n: i32, memo: &mut HashMap<i32, i32>) -> i32 {
-    if n <= 1 {
-        return n;
+pub fn thousand_separator(mut n: i32) -> String {
+    let mut res = vec![];
+    let mut count = 0;
+    while n > 0 {
+        res.push((n % 10) as u8 + b'0');
+        n /= 10;
+        count += 1;
+        if count == 3 {
+            count = 0;
+            res.push(b'.');
+        }
     }
-    if let Some(&v) = memo.get(&n) {
-        return v;
+    if res.last().is_some_and(|&v| v == b'.') {
+        res.pop();
     }
-    let res = 1 + (n % 2 + dfs(n / 2, memo)).min(n % 3 + dfs(n / 3, memo));
-    memo.insert(n, res);
-    res
+    if res.is_empty() {
+        return "0".into();
+    }
+    res.reverse();
+    String::from_utf8(res).unwrap()
 }
 
 #[cfg(test)]
@@ -30,10 +34,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {
-        assert_eq!(min_days(10), 4);
-        assert_eq!(min_days(6), 3);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
