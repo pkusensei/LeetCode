@@ -5,28 +5,34 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_ways(s: &str) -> i32 {
-    const MOD: i64 = 1_000_000_007;
-    let sum: i32 = s.bytes().map(|b| i32::from(b == b'1')).sum();
-    if sum % 3 > 0 {
+pub fn count_routes(locations: &[i32], start: i32, finish: i32, fuel: i32) -> i32 {
+    let n = locations.len();
+    dfs(
+        locations,
+        finish as _,
+        start as _,
+        fuel,
+        &mut vec![vec![-1; 1 + fuel as usize]; n],
+    )
+}
+
+fn dfs(nums: &[i32], finish: usize, curr: usize, fuel: i32, memo: &mut [Vec<i32>]) -> i32 {
+    if fuel < 0 {
         return 0;
     }
-    if sum == 0 {
-        let n = s.len() as i64;
-        return ((n - 1) * (n - 2) / 2 % MOD) as _; // (n-1) choose 2
+    if memo[curr][fuel as usize] > -1 {
+        return memo[curr][fuel as usize];
     }
-    let mut prefix = 0;
-    let [mut left, mut right] = [0, 0];
-    for b in s.bytes() {
-        prefix += i32::from(b == b'1');
-        if sum / 3 == prefix {
-            left += 1;
+    let mut res = i32::from(curr == finish);
+    for (idx, num) in nums.iter().enumerate() {
+        if idx == curr {
+            continue;
         }
-        if 2 * sum / 3 == prefix {
-            right += 1;
-        }
+        res += dfs(nums, finish, idx, fuel - (nums[curr] - num).abs(), memo);
+        res %= 1_000_000_007;
     }
-    (left * right % MOD) as _
+    memo[curr][fuel as usize] = res;
+    res
 }
 
 #[cfg(test)]
@@ -37,9 +43,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(num_ways("10101"), 4);
-        assert_eq!(num_ways("1001"), 0);
-        assert_eq!(num_ways("0000"), 3);
+        assert_eq!(count_routes(&[2, 3, 6, 8, 4], 1, 3, 5), 4);
+        assert_eq!(count_routes(&[4, 3, 1], 1, 0, 6), 5);
+        assert_eq!(count_routes(&[5, 2, 1], 0, 2, 3), 0);
     }
 
     #[test]
