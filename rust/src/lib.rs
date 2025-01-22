@@ -5,37 +5,68 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn highest_peak(is_water: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
-    let [rows, cols] = get_dimensions(&is_water);
-    let mut res = vec![vec![0; cols]; rows];
-    let mut queue = std::collections::VecDeque::new();
-    for (row, r) in is_water.iter().enumerate() {
-        for (col, &v) in r.iter().enumerate() {
-            if v == 1 {
-                queue.push_back([row, col]);
-            }
-        }
+pub fn stone_game_v(stone_value: &[i32]) -> i32 {
+    let n = stone_value.len();
+    // Cannot even reason about this...
+    // dfs+memo is the way to go I guess
+    let mut dp = vec![vec![0; n]; n];
+    let mut max = vec![vec![0; n]; n];
+    for (i, &v) in stone_value.iter().enumerate() {
+        max[i][i] = v;
     }
-    let mut curr = 0;
-    while !queue.is_empty() {
-        curr += 1;
-        let n = queue.len();
-        for _ in 0..n {
-            let Some([row, col]) = queue.pop_front() else {
-                break;
+    for right in 1..n {
+        let mut mid = right;
+        let mut sum = stone_value[right];
+        let mut right_half = 0;
+        for left in (0..right).rev() {
+            sum += stone_value[left];
+            while 2 * (right_half + stone_value[mid]) <= sum {
+                right_half += stone_value[mid];
+                mid -= 1;
+            }
+            dp[left][right] = if 2 * right_half == sum {
+                max[left][mid]
+            } else if mid == left {
+                0
+            } else {
+                max[left][mid - 1]
             };
-            for [nr, nc] in neighbors([row, col]).filter(|&[nr, nc]| {
-                is_water
-                    .get(nr)
-                    .is_some_and(|r| r.get(nc).is_some_and(|&v| v == 0))
-            }) {
-                if res[nr][nc] == 0 {
-                    res[nr][nc] = curr;
-                    queue.push_back([nr, nc]);
-                }
-            }
+            dp[left][right] =
+                dp[left][right].max(if mid == right { 0 } else { max[right][mid + 1] });
+            max[left][right] = max[left][right - 1].max(dp[left][right] + sum);
+            max[right][left] = max[right][left + 1].max(dp[left][right] + sum);
         }
     }
+    dp[0][n - 1]
+    // let mut prefix = Vec::with_capacity(n);
+    // for &num in stone_value.iter() {
+    //     prefix.push(num + prefix.last().unwrap_or(&0));
+    // }
+    // dfs(&prefix, 0, n - 1, &mut vec![vec![-1; n]; n])
+}
+
+fn dfs(prefix: &[i32], start: usize, end: usize, memo: &mut [Vec<i32>]) -> i32 {
+    if start == end {
+        return 0;
+    }
+    if memo[start][end] > -1 {
+        return memo[start][end];
+    }
+    let mut res = 0;
+    for i in 1 + start..=end {
+        let left = prefix[i - 1] - if start > 0 { prefix[start - 1] } else { 0 };
+        let right = prefix[end] - prefix[i - 1];
+        match left.cmp(&right) {
+            std::cmp::Ordering::Less => res = res.max(left + dfs(prefix, start, i - 1, memo)),
+            std::cmp::Ordering::Equal => {
+                res = res
+                    .max(left + dfs(prefix, start, i - 1, memo))
+                    .max(right + dfs(prefix, i, end, memo))
+            }
+            std::cmp::Ordering::Greater => res = res.max(right + dfs(prefix, i, end, memo)),
+        }
+    }
+    memo[start][end] = res;
     res
 }
 
@@ -46,7 +77,11 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(stone_game_v(&[6, 2, 3, 4, 5, 5]), 18);
+        assert_eq!(stone_game_v(&[7, 7, 7, 7, 7, 7, 7]), 28);
+        assert_eq!(stone_game_v(&[4]), 0);
+    }
 
     #[test]
     fn test() {}
