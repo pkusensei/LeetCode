@@ -5,23 +5,38 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_latest_step(arr: &[i32], m: i32) -> i32 {
-    let n = arr.len() as i32;
-    if n == m {
-        return n;
-    }
-    let mut set = std::collections::BTreeSet::from([0, 1 + n]);
-    for (i, &num) in arr.iter().enumerate().rev() {
-        let lower = num - m - 1;
-        let upper = num + m + 1;
-        if set.range(..num).next_back().is_some_and(|&v| v == lower)
-            || set.range(1 + num..).next().is_some_and(|&v| v == upper)
-        {
-            return i as i32;
+pub fn highest_peak(is_water: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
+    let [rows, cols] = get_dimensions(&is_water);
+    let mut res = vec![vec![0; cols]; rows];
+    let mut queue = std::collections::VecDeque::new();
+    for (row, r) in is_water.iter().enumerate() {
+        for (col, &v) in r.iter().enumerate() {
+            if v == 1 {
+                queue.push_back([row, col]);
+            }
         }
-        set.insert(num);
     }
-    -1
+    let mut curr = 0;
+    while !queue.is_empty() {
+        curr += 1;
+        let n = queue.len();
+        for _ in 0..n {
+            let Some([row, col]) = queue.pop_front() else {
+                break;
+            };
+            for [nr, nc] in neighbors([row, col]).filter(|&[nr, nc]| {
+                is_water
+                    .get(nr)
+                    .is_some_and(|r| r.get(nc).is_some_and(|&v| v == 0))
+            }) {
+                if res[nr][nc] == 0 {
+                    res[nr][nc] = curr;
+                    queue.push_back([nr, nc]);
+                }
+            }
+        }
+    }
+    res
 }
 
 #[cfg(test)]
@@ -31,15 +46,10 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {
-        assert_eq!(find_latest_step(&[3, 5, 1, 2, 4], 1), 4);
-        assert_eq!(find_latest_step(&[3, 1, 5, 4, 2], 2), -1);
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(find_latest_step(&[1, 2], 1), 1);
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)

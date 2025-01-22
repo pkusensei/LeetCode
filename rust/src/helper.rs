@@ -12,17 +12,25 @@ where
         .all(|(a, b)| a == b)
 }
 
-pub type Coord = (usize, usize);
+pub fn get_dimensions<T, U: AsRef<[T]>>(grid: &[U]) -> [usize; 2] {
+    let (row, col) = (
+        grid.len(),
+        grid.first().map(|r| r.as_ref().len()).unwrap_or(0),
+    );
+    [row, col]
+}
 
-pub fn neighbors((a, b): Coord) -> impl Iterator<Item = Coord> {
+pub type Coord = [usize; 2];
+
+pub fn neighbors([a, b]: Coord) -> impl Iterator<Item = Coord> {
     [
-        (a.saturating_sub(1), b),
-        (a + 1, b),
-        (a, b.saturating_sub(1)),
-        (a, b + 1),
+        [a.saturating_sub(1), b],
+        [a + 1, b],
+        [a, b.saturating_sub(1)],
+        [a, b + 1],
     ]
     .into_iter()
-    .filter(move |&p| p != (a, b))
+    .filter(move |&p| p != [a, b])
 }
 
 pub const ALL_DIRS: [[i32; 2]; 8] = [
@@ -38,31 +46,23 @@ pub const ALL_DIRS: [[i32; 2]; 8] = [
 
 pub fn around(x: i32, y: i32) -> impl Iterator<Item = Coord> {
     [
-        (x - 1, y - 1),
-        (x, y - 1),
-        (x + 1, y - 1),
-        (x - 1, y),
-        (x + 1, y),
-        (x - 1, y + 1),
-        (x, y + 1),
-        (x + 1, y + 1),
+        [x - 1, y - 1],
+        [x, y - 1],
+        [x + 1, y - 1],
+        [x - 1, y],
+        [x + 1, y],
+        [x - 1, y + 1],
+        [x, y + 1],
+        [x + 1, y + 1],
     ]
     .into_iter()
-    .filter_map(|(x, y)| {
+    .filter_map(|[x, y]| {
         if x >= 0 && y >= 0 {
-            Some((x as usize, y as usize))
+            Some([x as usize, y as usize])
         } else {
             None
         }
     })
-}
-
-pub fn get_dimensions<T, U: AsRef<[T]>>(grid: &[U]) -> [usize; 2] {
-    let (row, col) = (
-        grid.len(),
-        grid.first().map(|r| r.as_ref().len()).unwrap_or(0),
-    );
-    [row, col]
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
