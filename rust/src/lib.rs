@@ -5,29 +5,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_triplets(nums1: &[i32], nums2: &[i32]) -> i32 {
+pub fn min_cost(colors: String, needed_time: Vec<i32>) -> i32 {
+    let s = colors.as_bytes();
+    let n = colors.len();
+    let [mut left, mut right] = [0, 0];
     let mut res = 0;
-    for &num in nums1.iter() {
-        res += find(nums2, i64::from(num).pow(2));
-    }
-    for &num in nums2.iter() {
-        res += find(nums1, i64::from(num).pow(2));
-    }
-    res
-}
-
-fn find(nums: &[i32], target: i64) -> i32 {
-    let mut res = 0;
-    let mut seen = std::collections::HashMap::new();
-    for &num in nums {
-        let v = i64::from(num);
-        if target % v > 0 {
-            continue;
+    while right < n {
+        while right < n && s[left] == s[right] {
+            right += 1;
         }
-        if let Some(v) = seen.get(&(target / v)) {
-            res += v;
+        if right - left > 1 {
+            let [sum, max] = needed_time[left..right]
+                .iter()
+                .fold([0, 0], |[sum, max], &num| [sum + num, max.max(num)]);
+            res += sum - max;
         }
-        *seen.entry(v).or_insert(0) += 1;
+        left = right;
     }
     res
 }
