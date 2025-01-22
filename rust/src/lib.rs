@@ -5,24 +5,78 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_cost(colors: String, needed_time: Vec<i32>) -> i32 {
-    let s = colors.as_bytes();
-    let n = colors.len();
-    let [mut left, mut right] = [0, 0];
-    let mut res = 0;
-    while right < n {
-        while right < n && s[left] == s[right] {
-            right += 1;
-        }
-        if right - left > 1 {
-            let [sum, max] = needed_time[left..right]
-                .iter()
-                .fold([0, 0], |[sum, max], &num| [sum + num, max.max(num)]);
-            res += sum - max;
-        }
-        left = right;
+pub fn max_num_edges_to_remove(n: i32, edges: &[[i32; 3]]) -> i32 {
+    let [type1, type2, type3] =
+        edges
+            .iter()
+            .fold([const { vec![] }; 3], |[mut t1, mut t2, mut t3], e| {
+                match e[0] {
+                    1 => t1.push([e[1], e[2]]),
+                    2 => t2.push([e[1], e[2]]),
+                    _ => t3.push([e[1], e[2]]),
+                };
+                [t1, t2, t3]
+            });
+    let dsu = DSU::new(n as usize);
+    let (dsu, v3) = connect(dsu, type3);
+    let (d1, v1) = connect(dsu.clone(), type1);
+    let (d2, v2) = connect(dsu, type2);
+    if d1.n > 1 || d2.n > 1 {
+        -1
+    } else {
+        v1 + v2 + v3
     }
-    res
+}
+
+fn connect(mut dsu: DSU, edges: Vec<[i32; 2]>) -> (DSU, i32) {
+    let mut res = 0;
+    for [x, y] in edges {
+        if !dsu.union(x as usize - 1, y as usize - 1) {
+            res += 1;
+        }
+    }
+    (dsu, res)
+}
+
+#[derive(Debug, Clone)]
+struct DSU {
+    parent: Vec<usize>,
+    rank: Vec<i32>,
+    n: usize,
+}
+
+impl DSU {
+    fn new(n: usize) -> Self {
+        Self {
+            parent: (0..n).collect(),
+            rank: vec![1; n],
+            n,
+        }
+    }
+
+    fn find(&mut self, x: usize) -> usize {
+        if self.parent[x] != x {
+            self.parent[x] = self.find(self.parent[x]);
+        }
+        self.parent[x]
+    }
+
+    fn union(&mut self, x: usize, y: usize) -> bool {
+        let [rx, ry] = [x, y].map(|v| self.find(v));
+        if rx == ry {
+            return false;
+        }
+        match self.rank[rx].cmp(&self.rank[ry]) {
+            std::cmp::Ordering::Less => self.parent[rx] = ry,
+            std::cmp::Ordering::Equal => {
+                self.rank[rx] += 1;
+                self.parent[ry] = rx;
+            }
+            std::cmp::Ordering::Greater => self.parent[ry] = rx,
+        }
+        self.n -= 1;
+        true
+    }
 }
 
 #[cfg(test)]
