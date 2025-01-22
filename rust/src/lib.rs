@@ -5,16 +5,28 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn diagonal_sum(mat: Vec<Vec<i32>>) -> i32 {
-    let n = mat.len();
-    let mut res = 0;
-    for (i, row) in mat.iter().enumerate() {
-        res += row[i] + row[n - 1 - i];
-        if i == n - 1 - i {
-            res -= row[i];
+pub fn num_ways(s: &str) -> i32 {
+    const MOD: i64 = 1_000_000_007;
+    let sum: i32 = s.bytes().map(|b| i32::from(b == b'1')).sum();
+    if sum % 3 > 0 {
+        return 0;
+    }
+    if sum == 0 {
+        let n = s.len() as i64;
+        return ((n - 1) * (n - 2) / 2 % MOD) as _; // (n-1) choose 2
+    }
+    let mut prefix = 0;
+    let [mut left, mut right] = [0, 0];
+    for b in s.bytes() {
+        prefix += i32::from(b == b'1');
+        if sum / 3 == prefix {
+            left += 1;
+        }
+        if 2 * sum / 3 == prefix {
+            right += 1;
         }
     }
-    res
+    (left * right % MOD) as _
 }
 
 #[cfg(test)]
@@ -24,7 +36,11 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(num_ways("10101"), 4);
+        assert_eq!(num_ways("1001"), 0);
+        assert_eq!(num_ways("0000"), 3);
+    }
 
     #[test]
     fn test() {}
