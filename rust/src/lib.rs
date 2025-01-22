@@ -5,12 +5,42 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn contains_pattern(arr: Vec<i32>, m: i32, k: i32) -> bool {
-    arr.windows((m * k) as usize).any(|w| {
-        let mut it = w.chunks_exact(m as usize);
-        let Some(first) = it.next() else { return false };
-        it.all(|v| v == first)
-    })
+pub fn get_max_len(nums: &[i32]) -> i32 {
+    let mut zero = 0;
+    let [mut first_neg, mut last_neg] = [None; 2];
+    let mut neg_count = 0;
+    let mut res = 0;
+    for (idx, num) in (0..).zip(
+        std::iter::once(0)
+            .chain(nums.iter().copied())
+            .chain(std::iter::once(0)),
+    ) {
+        match num.cmp(&0) {
+            std::cmp::Ordering::Less => {
+                first_neg.get_or_insert(idx);
+                _ = last_neg.insert(idx);
+                neg_count += 1;
+            }
+            std::cmp::Ordering::Equal => {
+                if zero + 1 >= idx {
+                    zero = idx;
+                    continue;
+                }
+                if neg_count & 1 == 0 {
+                    res = res.max(idx - zero - 1);
+                } else {
+                    let a = first_neg.map(|i| idx - i - 1).unwrap_or(0);
+                    let b = last_neg.map(|i| i - zero - 1).unwrap_or(0);
+                    res = res.max(a.max(b));
+                }
+                [first_neg, last_neg] = [None; 2];
+                neg_count = 0;
+                zero = idx;
+            }
+            std::cmp::Ordering::Greater => (),
+        }
+    }
+    res
 }
 
 #[cfg(test)]
@@ -20,10 +50,16 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(get_max_len(&[1, -2, -3, 4]), 4);
+        assert_eq!(get_max_len(&[0, 1, -2, -3, -4]), 3);
+        assert_eq!(get_max_len(&[-1, -2, -3, 0, 1]), 2);
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(get_max_len(&[-1, 2]), 1);
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
