@@ -5,24 +5,31 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn modify_string(s: String) -> String {
-    let mut s = s.into_bytes();
-    let n = s.len();
-    for i in 0..n {
-        if s[i] == b'?' {
-            for b in b'a'..=b'z' {
-                if !s.get(1 + i).is_some_and(|&v| v == b) {
-                    if i == 0 {
-                        s[i] = b;
-                    } else if s[i - 1] != b {
-                        s[i] = b;
-                    }
-                    break;
-                }
-            }
-        }
+pub fn num_triplets(nums1: &[i32], nums2: &[i32]) -> i32 {
+    let mut res = 0;
+    for &num in nums1.iter() {
+        res += find(nums2, i64::from(num).pow(2));
     }
-    String::from_utf8(s).unwrap()
+    for &num in nums2.iter() {
+        res += find(nums1, i64::from(num).pow(2));
+    }
+    res
+}
+
+fn find(nums: &[i32], target: i64) -> i32 {
+    let mut res = 0;
+    let mut seen = std::collections::HashMap::new();
+    for &num in nums {
+        let v = i64::from(num);
+        if target % v > 0 {
+            continue;
+        }
+        if let Some(v) = seen.get(&(target / v)) {
+            res += v;
+        }
+        *seen.entry(v).or_insert(0) += 1;
+    }
+    res
 }
 
 #[cfg(test)]
