@@ -5,34 +5,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_routes(locations: &[i32], start: i32, finish: i32, fuel: i32) -> i32 {
-    let n = locations.len();
-    dfs(
-        locations,
-        finish as _,
-        start as _,
-        fuel,
-        &mut vec![vec![-1; 1 + fuel as usize]; n],
-    )
-}
-
-fn dfs(nums: &[i32], finish: usize, curr: usize, fuel: i32, memo: &mut [Vec<i32>]) -> i32 {
-    if fuel < 0 {
-        return 0;
-    }
-    if memo[curr][fuel as usize] > -1 {
-        return memo[curr][fuel as usize];
-    }
-    let mut res = i32::from(curr == finish);
-    for (idx, num) in nums.iter().enumerate() {
-        if idx == curr {
-            continue;
+pub fn modify_string(s: String) -> String {
+    let mut s = s.into_bytes();
+    let n = s.len();
+    for i in 0..n {
+        if s[i] == b'?' {
+            for b in b'a'..=b'z' {
+                if !s.get(1 + i).is_some_and(|&v| v == b) {
+                    if i == 0 {
+                        s[i] = b;
+                    } else if s[i - 1] != b {
+                        s[i] = b;
+                    }
+                    break;
+                }
+            }
         }
-        res += dfs(nums, finish, idx, fuel - (nums[curr] - num).abs(), memo);
-        res %= 1_000_000_007;
     }
-    memo[curr][fuel as usize] = res;
-    res
+    String::from_utf8(s).unwrap()
 }
 
 #[cfg(test)]
@@ -42,11 +32,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {
-        assert_eq!(count_routes(&[2, 3, 6, 8, 4], 1, 3, 5), 4);
-        assert_eq!(count_routes(&[4, 3, 1], 1, 0, 6), 5);
-        assert_eq!(count_routes(&[5, 2, 1], 0, 2, 3), 0);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
