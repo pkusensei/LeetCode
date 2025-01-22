@@ -6,42 +6,24 @@ namespace Solution;
 
 public class Solution
 {
-    public int CountPairs(TreeNode root, int distance)
+    public int FindLengthOfShortestSubarray(int[] arr)
     {
-        var res = 0;
-        Dfs(root);
-        return res;
-
-        Dictionary<int, int> Dfs(TreeNode node)
+        var right = arr.Length - 1;
+        for (int i = arr.Length - 1; i > 0; i -= 1)
         {
-            if (node is null) { return null; }
-            var left = Dfs(node.left);
-            var right = Dfs(node.right);
-            if (left is null && right is null)
-            {
-                return new() { { 1, 1 } };
-            }
-            if (left is null && right is not null)
-            {
-                return right.Select(item => (1 + item.Key, item.Value)).ToDictionary();
-            }
-            if (left is not null && right is null)
-            {
-                return left.Select(item => (1 + item.Key, item.Value)).ToDictionary();
-            }
-            foreach (var (k1, v1) in left)
-            {
-                foreach (var (k2, v2) in right)
-                {
-                    if (k1 + k2 <= distance) { res += v1 * v2; }
-                }
-            }
-            foreach (var (k2, v2) in right)
-            {
-                if (!left.TryAdd(k2, v2)) { left[k2] += v2; }
-            }
-            return left.Select(item => (1 + item.Key, item.Value)).ToDictionary();
+            if (arr[i] >= arr[i - 1]) { right = i - 1; } else { break; }
         }
+        var res = right;
+        var left = 0;
+        while (left < right && (left == 0 || arr[left - 1] <= arr[left]))
+        {
+            while (right < arr.Length && arr[left] > arr[right])
+            {
+                right += 1;
+            }
+            res = Math.Min(res, right - left - 1);
+            left += 1;
+        }
+        return res;
     }
-
 }
