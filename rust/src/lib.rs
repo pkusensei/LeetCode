@@ -5,19 +5,40 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn reorder_spaces(text: &str) -> String {
-    let count = text.bytes().filter(|&b| b == b' ').count();
-    let words: Vec<_> = text.split_whitespace().collect();
-    let n = words.len();
-    let mut res = String::with_capacity(text.len());
-    if n <= 1 {
-        res.push_str(words[0]);
-        res.extend(std::iter::repeat(' ').take(count));
-    } else {
-        res = words.join(&" ".repeat(count / (n - 1)));
-        res.extend(std::iter::repeat(' ').take(count % (n - 1)));
+pub fn max_product_path(grid: &[&[i32]]) -> i32 {
+    let [rows, cols] = get_dimensions(grid);
+    let mut dp = vec![vec![[i64::MAX, i64::MIN]; cols]; rows];
+    dp[0][0] = [0, 1].map(|_| i64::from(grid[0][0]));
+    for (r, row) in grid.iter().enumerate() {
+        for (c, &v) in row.iter().enumerate() {
+            if let Some(pr) = r.checked_sub(1) {
+                let [pmin, pmax] = dp[pr][c];
+                let [min, max] = if v < 0 {
+                    [pmax, pmin].map(|x| x * i64::from(v))
+                } else {
+                    [pmin, pmax].map(|x| x * i64::from(v))
+                };
+                dp[r][c][0] = dp[r][c][0].min(min);
+                dp[r][c][1] = dp[r][c][1].max(max);
+            }
+            if let Some(pc) = c.checked_sub(1) {
+                let [pmin, pmax] = dp[r][pc];
+                let [min, max] = if v < 0 {
+                    [pmax, pmin].map(|x| x * i64::from(v))
+                } else {
+                    [pmin, pmax].map(|x| x * i64::from(v))
+                };
+                dp[r][c][0] = dp[r][c][0].min(min);
+                dp[r][c][1] = dp[r][c][1].max(max);
+            }
+        }
     }
-    res
+    let max = dp[rows - 1][cols - 1][1];
+    if max < 0 {
+        -1
+    } else {
+        (max % 1_000_000_007) as i32
+    }
 }
 
 #[cfg(test)]
@@ -29,9 +50,14 @@ mod tests {
     #[test]
     fn basics() {
         assert_eq!(
-            reorder_spaces("  this   is  a sentence "),
-            "this   is   a   sentence"
+            max_product_path(&[&[-1, -2, -3], &[-2, -3, -3], &[-3, -3, -2]]),
+            -1
         );
+        assert_eq!(
+            max_product_path(&[&[1, -2, 1], &[1, -2, 1], &[3, -4, 1]]),
+            8
+        );
+        assert_eq!(max_product_path(&[&[1, 3], &[0, -4]]), 0);
     }
 
     #[test]
