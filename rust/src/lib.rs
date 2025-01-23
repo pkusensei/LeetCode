@@ -5,29 +5,40 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_transformable(s: &str, t: &str) -> bool {
-    // digits' indices in s
-    let mut map = s
-        .bytes()
-        .enumerate()
-        .rev()
-        .fold([const { vec![] }; 10], |mut acc, (i, b)| {
-            acc[usize::from(b - b'0')].push(i);
-            acc
-        });
-    for b in t.bytes() {
-        let digit = usize::from(b - b'0');
-        let Some(idx) = map[digit].pop() else {
-            return false;
-        };
-        for d in map.iter().take(digit) {
-            // There is d < digit with its pos left to digit(idx)
-            if d.last().is_some_and(|&v| v < idx) {
-                return false;
-            }
+pub fn sum_odd_length_subarrays(arr: &[i32]) -> i32 {
+    let n = arr.len();
+    let mut prefix = Vec::with_capacity(n);
+    for num in arr.iter() {
+        prefix.push(num + prefix.last().unwrap_or(&0));
+    }
+    let mut res = 0;
+    for len in (1..=n).step_by(2) {
+        let mut left = 0;
+        let mut win: i32 = prefix[left + len - 1];
+        res += win;
+        left += 1;
+        while left + len <= n {
+            win -= arr[left - 1];
+            win += arr[left + len - 1];
+            res += win;
+            left += 1;
         }
     }
-    true
+    res
+}
+
+pub fn with_math(arr: &[i32]) -> i32 {
+    let n = arr.len();
+    let mut res = 0;
+    for (left, num) in arr.iter().enumerate() {
+        let right = n - left - 1;
+        let odd_left = left as i32 / 2 + 1;
+        let odd_right = right as i32 / 2 + 1;
+        let even_left = (left as i32 + 1) / 2;
+        let even_right = (right as i32 + 1) / 2;
+        res += num * (odd_left * odd_right + even_left * even_right);
+    }
+    res
 }
 
 #[cfg(test)]
@@ -38,9 +49,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert!(is_transformable("84532", "34852"));
-        assert!(is_transformable("34521", "23415"));
-        assert!(!is_transformable("12345", "12435"));
+        assert_eq!(sum_odd_length_subarrays(&[1, 4, 2, 5, 3]), 58);
+        assert_eq!(sum_odd_length_subarrays(&[1, 2]), 3);
+        assert_eq!(sum_odd_length_subarrays(&[10, 11, 12]), 66);
+
+        assert_eq!(with_math(&[1, 4, 2, 5, 3]), 58);
+        assert_eq!(with_math(&[1, 2]), 3);
+        assert_eq!(with_math(&[10, 11, 12]), 66);
     }
 
     #[test]
