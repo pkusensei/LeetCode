@@ -5,28 +5,32 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_requests(n: i32, requests: &[[i32; 2]]) -> i32 {
-    let mut res = 0;
-    backtrack(&mut vec![0; n as usize], requests, 0, &mut res);
-    res
+struct ParkingSystem {
+    big: i32,
+    medium: i32,
+    small: i32,
 }
 
-fn backtrack(nums: &mut [i32], requests: &[[i32; 2]], curr: i32, res: &mut i32) {
-    match requests {
-        [] => {
-            if nums.iter().all(|&v| v == 0) {
-                *res = (*res).max(curr);
+impl ParkingSystem {
+    fn new(big: i32, medium: i32, small: i32) -> Self {
+        Self { big, medium, small }
+    }
+
+    fn add_car(&mut self, car_type: i32) -> bool {
+        match car_type {
+            1 if self.big > 0 => {
+                self.big -= 1;
+                true
             }
-        }
-        [head, tail @ ..] => {
-            backtrack(nums, tail, curr, res);
-            let a = head[0] as usize;
-            let b = head[1] as usize;
-            nums[a] -= 1;
-            nums[b] += 1;
-            backtrack(nums, tail, 1 + curr, res);
-            nums[a] += 1;
-            nums[b] -= 1;
+            2 if self.medium > 0 => {
+                self.medium -= 1;
+                true
+            }
+            3 if self.small > 0 => {
+                self.small -= 1;
+                true
+            }
+            _ => false,
         }
     }
 }
@@ -38,14 +42,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {
-        assert_eq!(
-            maximum_requests(5, &[[0, 1], [1, 0], [0, 1], [1, 2], [2, 0], [3, 4]]),
-            5
-        );
-        assert_eq!(maximum_requests(3, &[[0, 0], [1, 2], [2, 1]]), 3);
-        assert_eq!(maximum_requests(4, &[[0, 3], [3, 1], [1, 2], [2, 0]]), 4);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
