@@ -5,23 +5,82 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_special(mat: Vec<Vec<i32>>) -> i32 {
-    use std::collections::HashMap;
-    let mut rmap = HashMap::new();
-    let mut cmap = HashMap::new();
-    let mut ps = vec![];
-    for (r, row) in mat.iter().enumerate() {
+// OR for point[r][c], rowcount[r]>1||colcount[c]>1
+pub fn count_servers(grid: Vec<Vec<i32>>) -> i32 {
+    let [rows, cols] = get_dimensions(&grid);
+    let mut rmap = vec![vec![]; rows];
+    let mut cmap = vec![vec![]; cols];
+    let mut id = 0;
+    for (r, row) in grid.iter().enumerate() {
         for (c, &v) in row.iter().enumerate() {
             if v == 1 {
-                *rmap.entry(r).or_insert(0) += 1;
-                *cmap.entry(c).or_insert(0) += 1;
-                ps.push([r, c]);
+                rmap[r].push(id);
+                cmap[c].push(id);
+                id += 1;
             }
         }
     }
-    ps.into_iter()
-        .filter(|[r, c]| rmap[r] == 1 && cmap[c] == 1)
+    let mut dsu = DSU::new(id);
+    for row in rmap {
+        for w in row.windows(2) {
+            dsu.union(w[0], w[1]);
+        }
+    }
+    for col in cmap {
+        for w in col.windows(2) {
+            dsu.union(w[0], w[1]);
+        }
+    }
+    (0..id)
+        .filter(|&v| {
+            let x = dsu.find(v);
+            dsu.size[x] > 1
+        })
         .count() as _
+}
+
+#[derive(Debug, Clone)]
+struct DSU {
+    parent: Vec<usize>,
+    size: Vec<i32>,
+}
+
+impl DSU {
+    fn new(n: usize) -> Self {
+        Self {
+            parent: (0..n).collect(),
+            size: vec![1; n],
+        }
+    }
+
+    fn find(&mut self, x: usize) -> usize {
+        if self.parent[x] != x {
+            self.parent[x] = self.find(self.parent[x]);
+        }
+        self.parent[x]
+    }
+
+    fn union(&mut self, x: usize, y: usize) {
+        let [rx, ry] = [x, y].map(|v| self.find(v));
+        if rx == ry {
+            return;
+        }
+        match self.size[rx].cmp(&self.size[ry]) {
+            std::cmp::Ordering::Less => {
+                self.parent[rx] = ry;
+                self.size[ry] += self.size[rx];
+            }
+            std::cmp::Ordering::Equal => {
+                self.size[rx] += 1;
+                self.parent[ry] = rx;
+                self.size[rx] += self.size[ry];
+            }
+            std::cmp::Ordering::Greater => {
+                self.parent[ry] = rx;
+                self.size[rx] += self.size[ry];
+            }
+        }
+    }
 }
 
 #[cfg(test)]
