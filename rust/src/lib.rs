@@ -2,55 +2,32 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-struct ThroneInheritance {
-    ids: HashMap<String, usize>,
-    children: HashMap<usize, Vec<usize>>,
-    states: Vec<(String, bool)>,
+pub fn maximum_requests(n: i32, requests: &[[i32; 2]]) -> i32 {
+    let mut res = 0;
+    backtrack(&mut vec![0; n as usize], requests, 0, &mut res);
+    res
 }
 
-impl ThroneInheritance {
-    fn new(name: String) -> Self {
-        Self {
-            ids: HashMap::from([(name.clone(), 0)]),
-            children: HashMap::new(),
-            states: vec![(name, true)],
-        }
-    }
-
-    fn birth(&mut self, parent_name: String, child_name: String) {
-        let cid = self.states.len();
-        let pid = *self.ids.get(&parent_name).unwrap_or(&0);
-        self.states.push((child_name.clone(), true));
-        self.children.entry(pid).or_default().push(cid);
-        self.ids.insert(child_name, cid);
-    }
-
-    fn death(&mut self, name: String) {
-        let id = *self.ids.get(&name).unwrap_or(&0);
-        self.states[id] = (name, false);
-    }
-
-    fn get_inheritance_order(&self) -> Vec<String> {
-        fn dfs(ti: &ThroneInheritance, id: usize, curr: &mut Vec<String>) {
-            if ti.states[id].1 {
-                curr.push(ti.states[id].0.to_owned());
-            }
-            let Some(children) = ti.children.get(&id) else {
-                return;
-            };
-            for &c in children {
-                dfs(ti, c, curr);
+fn backtrack(nums: &mut [i32], requests: &[[i32; 2]], curr: i32, res: &mut i32) {
+    match requests {
+        [] => {
+            if nums.iter().all(|&v| v == 0) {
+                *res = (*res).max(curr);
             }
         }
-
-        let mut res = vec![];
-        dfs(self, 0, &mut res);
-        res
+        [head, tail @ ..] => {
+            backtrack(nums, tail, curr, res);
+            let a = head[0] as usize;
+            let b = head[1] as usize;
+            nums[a] -= 1;
+            nums[b] += 1;
+            backtrack(nums, tail, 1 + curr, res);
+            nums[a] += 1;
+            nums[b] -= 1;
+        }
     }
 }
 
@@ -62,30 +39,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        let mut t = ThroneInheritance::new("king".into()); // order: king
-        t.birth("king".into(), "andy".into()); // order: king > andy
-        t.birth("king".into(), "bob".into()); // order: king > andy > bob
-        t.birth("king".into(), "catherine".into()); // order: king > andy > bob > catherine
-        t.birth("andy".into(), "matthew".into()); // order: king > andy > matthew > bob > catherine
-        t.birth("bob".into(), "alex".into()); // order: king > andy > matthew > bob > alex > catherine
-        t.birth("bob".into(), "asha".into()); // order: king > andy > matthew > bob > alex > asha > catherine
         assert_eq!(
-            t.get_inheritance_order(),
-            [
-                "king",
-                "andy",
-                "matthew",
-                "bob",
-                "alex",
-                "asha",
-                "catherine"
-            ]
-        ); // return ["king", "andy", "matthew", "bob", "alex", "asha", "catherine"]
-        t.death("bob".into()); // order: king > andy > matthew > bob > alex > asha > catherine
-        assert_eq!(
-            t.get_inheritance_order(),
-            ["king", "andy", "matthew", "alex", "asha", "catherine"]
-        ); // return ["king", "andy", "matthew", "alex", "asha", "catherine"]
+            maximum_requests(5, &[[0, 1], [1, 0], [0, 1], [1, 2], [2, 0], [3, 4]]),
+            5
+        );
+        assert_eq!(maximum_requests(3, &[[0, 0], [1, 2], [2, 1]]), 3);
+        assert_eq!(maximum_requests(4, &[[0, 3], [3, 1], [1, 2], [2, 0]]), 4);
     }
 
     #[test]
