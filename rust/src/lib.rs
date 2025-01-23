@@ -5,82 +5,29 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-// OR for point[r][c], rowcount[r]>1||colcount[c]>1
-pub fn count_servers(grid: Vec<Vec<i32>>) -> i32 {
-    let [rows, cols] = get_dimensions(&grid);
-    let mut rmap = vec![vec![]; rows];
-    let mut cmap = vec![vec![]; cols];
-    let mut id = 0;
-    for (r, row) in grid.iter().enumerate() {
-        for (c, &v) in row.iter().enumerate() {
-            if v == 1 {
-                rmap[r].push(id);
-                cmap[c].push(id);
-                id += 1;
+pub fn unhappy_friends(n: i32, preferences: Vec<Vec<i32>>, pairs: Vec<Vec<i32>>) -> i32 {
+    let mut rank = vec![vec![0; n as usize]; n as usize];
+    for (r, pref) in preferences.iter().enumerate() {
+        for (c, &p) in pref.iter().enumerate() {
+            rank[r][p as usize] = n - c as i32;
+        }
+    }
+    let mut res = 0;
+    let pairs = pairs.into_iter().fold(vec![0; n as usize], |mut acc, p| {
+        acc[p[0] as usize] = p[1] as usize;
+        acc[p[1] as usize] = p[0] as usize;
+        acc
+    });
+    for (x, &y) in pairs.iter().enumerate() {
+        for (u, &r) in rank[x].iter().enumerate() {
+            let v = pairs[u];
+            if r > rank[x][y] && rank[u][x] > rank[u][v] {
+                res += 1;
+                break;
             }
         }
     }
-    let mut dsu = DSU::new(id);
-    for row in rmap {
-        for w in row.windows(2) {
-            dsu.union(w[0], w[1]);
-        }
-    }
-    for col in cmap {
-        for w in col.windows(2) {
-            dsu.union(w[0], w[1]);
-        }
-    }
-    (0..id)
-        .filter(|&v| {
-            let x = dsu.find(v);
-            dsu.size[x] > 1
-        })
-        .count() as _
-}
-
-#[derive(Debug, Clone)]
-struct DSU {
-    parent: Vec<usize>,
-    size: Vec<i32>,
-}
-
-impl DSU {
-    fn new(n: usize) -> Self {
-        Self {
-            parent: (0..n).collect(),
-            size: vec![1; n],
-        }
-    }
-
-    fn find(&mut self, x: usize) -> usize {
-        if self.parent[x] != x {
-            self.parent[x] = self.find(self.parent[x]);
-        }
-        self.parent[x]
-    }
-
-    fn union(&mut self, x: usize, y: usize) {
-        let [rx, ry] = [x, y].map(|v| self.find(v));
-        if rx == ry {
-            return;
-        }
-        match self.size[rx].cmp(&self.size[ry]) {
-            std::cmp::Ordering::Less => {
-                self.parent[rx] = ry;
-                self.size[ry] += self.size[rx];
-            }
-            std::cmp::Ordering::Equal => {
-                self.size[rx] += 1;
-                self.parent[ry] = rx;
-                self.size[rx] += self.size[ry];
-            }
-            std::cmp::Ordering::Greater => {
-                self.parent[ry] = rx;
-                self.size[rx] += self.size[ry];
-            }
-        }
-    }
+    res
 }
 
 #[cfg(test)]
