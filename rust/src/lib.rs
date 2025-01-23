@@ -2,39 +2,54 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_operations_max_profit(customers: &[i32], boarding_cost: i32, running_cost: i32) -> i32 {
-    let mut wait = 0;
-    let mut profit = 0;
-    let mut res = i32::MIN;
-    let mut max = i32::MIN;
-    let mut count = 0;
-    for num in customers {
-        wait += num;
-        let temp = (wait - 4).max(0);
-        profit += (wait - temp) * boarding_cost - running_cost;
-        wait = temp;
-        count += 1;
-        if profit > max {
-            max = profit;
-            res = count
+struct ThroneInheritance {
+    ids: HashMap<String, usize>,
+    children: HashMap<usize, Vec<usize>>,
+    states: Vec<(String, bool)>,
+}
+
+impl ThroneInheritance {
+    fn new(name: String) -> Self {
+        Self {
+            ids: HashMap::from([(name.clone(), 0)]),
+            children: HashMap::new(),
+            states: vec![(name, true)],
         }
     }
-    while wait > 0 {
-        let temp = (wait - 4).max(0);
-        profit += (wait - temp) * boarding_cost - running_cost;
-        wait = temp;
-        count += 1;
-        if profit > max {
-            max = profit;
-            res = count
-        }
+
+    fn birth(&mut self, parent_name: String, child_name: String) {
+        let cid = self.states.len();
+        let pid = *self.ids.get(&parent_name).unwrap_or(&0);
+        self.states.push((child_name.clone(), true));
+        self.children.entry(pid).or_default().push(cid);
+        self.ids.insert(child_name, cid);
     }
-    if max <= 0 {
-        -1
-    } else {
+
+    fn death(&mut self, name: String) {
+        let id = *self.ids.get(&name).unwrap_or(&0);
+        self.states[id] = (name, false);
+    }
+
+    fn get_inheritance_order(&self) -> Vec<String> {
+        fn dfs(ti: &ThroneInheritance, id: usize, curr: &mut Vec<String>) {
+            if ti.states[id].1 {
+                curr.push(ti.states[id].0.to_owned());
+            }
+            let Some(children) = ti.children.get(&id) else {
+                return;
+            };
+            for &c in children {
+                dfs(ti, c, curr);
+            }
+        }
+
+        let mut res = vec![];
+        dfs(self, 0, &mut res);
         res
     }
 }
@@ -47,7 +62,30 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_operations_max_profit(&[8, 3], 5, 6), 3);
+        let mut t = ThroneInheritance::new("king".into()); // order: king
+        t.birth("king".into(), "andy".into()); // order: king > andy
+        t.birth("king".into(), "bob".into()); // order: king > andy > bob
+        t.birth("king".into(), "catherine".into()); // order: king > andy > bob > catherine
+        t.birth("andy".into(), "matthew".into()); // order: king > andy > matthew > bob > catherine
+        t.birth("bob".into(), "alex".into()); // order: king > andy > matthew > bob > alex > catherine
+        t.birth("bob".into(), "asha".into()); // order: king > andy > matthew > bob > alex > asha > catherine
+        assert_eq!(
+            t.get_inheritance_order(),
+            [
+                "king",
+                "andy",
+                "matthew",
+                "bob",
+                "alex",
+                "asha",
+                "catherine"
+            ]
+        ); // return ["king", "andy", "matthew", "bob", "alex", "asha", "catherine"]
+        t.death("bob".into()); // order: king > andy > matthew > bob > alex > asha > catherine
+        assert_eq!(
+            t.get_inheritance_order(),
+            ["king", "andy", "matthew", "alex", "asha", "catherine"]
+        ); // return ["king", "andy", "matthew", "alex", "asha", "catherine"]
     }
 
     #[test]
