@@ -5,39 +5,38 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn connect_two_groups(cost: &[&[i32]]) -> i32 {
-    let [rows, cols] = get_dimensions(cost);
-    dfs(cost, 0, 0, &mut vec![vec![-1; 1 << cols]; rows])
-}
-
-// count/id of left group
-// mask of right group
-// size(left)>=size(right)
-// Try connect every node on left with min cost first
-// Then connect any right node left
-fn dfs(cost: &[&[i32]], left: usize, mask: usize, memo: &mut [Vec<i32>]) -> i32 {
-    let [rows, cols] = get_dimensions(cost);
-    if left >= rows {
-        let mut res = 0;
-        for c in 0..cols {
-            let val = (0..rows)
-                .map(|r| cost[r][c])
-                .min()
-                .map(|val| val * i32::from((mask & (1 << c)) == 0))
-                .unwrap_or(0);
-            res += val;
+pub fn min_operations_max_profit(customers: &[i32], boarding_cost: i32, running_cost: i32) -> i32 {
+    let mut wait = 0;
+    let mut profit = 0;
+    let mut res = i32::MIN;
+    let mut max = i32::MIN;
+    let mut count = 0;
+    for num in customers {
+        wait += num;
+        let temp = (wait - 4).max(0);
+        profit += (wait - temp) * boarding_cost - running_cost;
+        wait = temp;
+        count += 1;
+        if profit > max {
+            max = profit;
+            res = count
         }
-        return res;
     }
-    if memo[left][mask] > -1 {
-        return memo[left][mask];
+    while wait > 0 {
+        let temp = (wait - 4).max(0);
+        profit += (wait - temp) * boarding_cost - running_cost;
+        wait = temp;
+        count += 1;
+        if profit > max {
+            max = profit;
+            res = count
+        }
     }
-    let mut res = i32::MAX;
-    for c in 0..cols {
-        res = res.min(cost[left][c] + dfs(cost, 1 + left, mask | (1 << c), memo));
+    if max <= 0 {
+        -1
+    } else {
+        res
     }
-    memo[left][mask] = res;
-    res
 }
 
 #[cfg(test)]
@@ -48,12 +47,7 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(connect_two_groups(&[&[15, 96], &[36, 2]]), 17);
-        assert_eq!(connect_two_groups(&[&[1, 3, 5], &[4, 1, 1], &[1, 5, 3]]), 4);
-        assert_eq!(
-            connect_two_groups(&[&[2, 5, 1], &[3, 4, 7], &[8, 1, 2], &[6, 2, 4], &[3, 8, 8]]),
-            10
-        );
+        assert_eq!(min_operations_max_profit(&[8, 3], 5, 6), 3);
     }
 
     #[test]
