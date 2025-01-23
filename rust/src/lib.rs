@@ -5,40 +5,39 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_product_path(grid: &[&[i32]]) -> i32 {
-    let [rows, cols] = get_dimensions(grid);
-    let mut dp = vec![vec![[i64::MAX, i64::MIN]; cols]; rows];
-    dp[0][0] = [0, 1].map(|_| i64::from(grid[0][0]));
-    for (r, row) in grid.iter().enumerate() {
-        for (c, &v) in row.iter().enumerate() {
-            if let Some(pr) = r.checked_sub(1) {
-                let [pmin, pmax] = dp[pr][c];
-                let [min, max] = if v < 0 {
-                    [pmax, pmin].map(|x| x * i64::from(v))
-                } else {
-                    [pmin, pmax].map(|x| x * i64::from(v))
-                };
-                dp[r][c][0] = dp[r][c][0].min(min);
-                dp[r][c][1] = dp[r][c][1].max(max);
-            }
-            if let Some(pc) = c.checked_sub(1) {
-                let [pmin, pmax] = dp[r][pc];
-                let [min, max] = if v < 0 {
-                    [pmax, pmin].map(|x| x * i64::from(v))
-                } else {
-                    [pmin, pmax].map(|x| x * i64::from(v))
-                };
-                dp[r][c][0] = dp[r][c][0].min(min);
-                dp[r][c][1] = dp[r][c][1].max(max);
-            }
+pub fn connect_two_groups(cost: &[&[i32]]) -> i32 {
+    let [rows, cols] = get_dimensions(cost);
+    dfs(cost, 0, 0, &mut vec![vec![-1; 1 << cols]; rows])
+}
+
+// count/id of left group
+// mask of right group
+// size(left)>=size(right)
+// Try connect every node on left with min cost first
+// Then connect any right node left
+fn dfs(cost: &[&[i32]], left: usize, mask: usize, memo: &mut [Vec<i32>]) -> i32 {
+    let [rows, cols] = get_dimensions(cost);
+    if left >= rows {
+        let mut res = 0;
+        for c in 0..cols {
+            let val = (0..rows)
+                .map(|r| cost[r][c])
+                .min()
+                .map(|val| val * i32::from((mask & (1 << c)) == 0))
+                .unwrap_or(0);
+            res += val;
         }
+        return res;
     }
-    let max = dp[rows - 1][cols - 1][1];
-    if max < 0 {
-        -1
-    } else {
-        (max % 1_000_000_007) as i32
+    if memo[left][mask] > -1 {
+        return memo[left][mask];
     }
+    let mut res = i32::MAX;
+    for c in 0..cols {
+        res = res.min(cost[left][c] + dfs(cost, 1 + left, mask | (1 << c), memo));
+    }
+    memo[left][mask] = res;
+    res
 }
 
 #[cfg(test)]
@@ -49,15 +48,12 @@ mod tests {
 
     #[test]
     fn basics() {
+        assert_eq!(connect_two_groups(&[&[15, 96], &[36, 2]]), 17);
+        assert_eq!(connect_two_groups(&[&[1, 3, 5], &[4, 1, 1], &[1, 5, 3]]), 4);
         assert_eq!(
-            max_product_path(&[&[-1, -2, -3], &[-2, -3, -3], &[-3, -3, -2]]),
-            -1
+            connect_two_groups(&[&[2, 5, 1], &[3, 4, 7], &[8, 1, 2], &[6, 2, 4], &[3, 8, 8]]),
+            10
         );
-        assert_eq!(
-            max_product_path(&[&[1, -2, 1], &[1, -2, 1], &[3, -4, 1]]),
-            8
-        );
-        assert_eq!(max_product_path(&[&[1, 3], &[0, -4]]), 0);
     }
 
     #[test]
