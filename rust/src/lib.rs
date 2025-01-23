@@ -5,40 +5,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn sum_odd_length_subarrays(arr: &[i32]) -> i32 {
-    let n = arr.len();
-    let mut prefix = Vec::with_capacity(n);
-    for num in arr.iter() {
-        prefix.push(num + prefix.last().unwrap_or(&0));
+pub fn max_sum_range_query(nums: &mut [i32], requests: &[[i32; 2]]) -> i32 {
+    let n = nums.len();
+    let mut freq = requests.iter().fold(vec![0; 1 + n], |mut acc, req| {
+        acc[req[0] as usize] += 1;
+        acc[req[1] as usize + 1] -= 1;
+        acc
+    });
+    for i in 1..n {
+        freq[i] += freq[i - 1];
     }
-    let mut res = 0;
-    for len in (1..=n).step_by(2) {
-        let mut left = 0;
-        let mut win: i32 = prefix[left + len - 1];
-        res += win;
-        left += 1;
-        while left + len <= n {
-            win -= arr[left - 1];
-            win += arr[left + len - 1];
-            res += win;
-            left += 1;
-        }
-    }
-    res
-}
-
-pub fn with_math(arr: &[i32]) -> i32 {
-    let n = arr.len();
-    let mut res = 0;
-    for (left, num) in arr.iter().enumerate() {
-        let right = n - left - 1;
-        let odd_left = left as i32 / 2 + 1;
-        let odd_right = right as i32 / 2 + 1;
-        let even_left = (left as i32 + 1) / 2;
-        let even_right = (right as i32 + 1) / 2;
-        res += num * (odd_left * odd_right + even_left * even_right);
-    }
-    res
+    nums.sort_unstable();
+    freq[..n].sort_unstable();
+    nums.iter().zip(freq).fold(0, |acc, (&num, f)| {
+        (acc + i64::from(num) * f) % 1_000_000_007
+    }) as _
 }
 
 #[cfg(test)]
@@ -49,13 +30,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(sum_odd_length_subarrays(&[1, 4, 2, 5, 3]), 58);
-        assert_eq!(sum_odd_length_subarrays(&[1, 2]), 3);
-        assert_eq!(sum_odd_length_subarrays(&[10, 11, 12]), 66);
-
-        assert_eq!(with_math(&[1, 4, 2, 5, 3]), 58);
-        assert_eq!(with_math(&[1, 2]), 3);
-        assert_eq!(with_math(&[10, 11, 12]), 66);
+        assert_eq!(
+            max_sum_range_query(&mut [1, 2, 3, 4, 5], &[[1, 3], [0, 1]]),
+            19
+        );
+        assert_eq!(max_sum_range_query(&mut [1, 2, 3, 4, 5, 6], &[[0, 1]]), 11);
+        assert_eq!(
+            max_sum_range_query(&mut [1, 2, 3, 4, 5, 10], &[[0, 2], [1, 3], [1, 1]]),
+            47
+        );
     }
 
     #[test]
