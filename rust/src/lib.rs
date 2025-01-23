@@ -2,24 +2,58 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::{HashMap, HashSet};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_sum_range_query(nums: &mut [i32], requests: &[[i32; 2]]) -> i32 {
-    let n = nums.len();
-    let mut freq = requests.iter().fold(vec![0; 1 + n], |mut acc, req| {
-        acc[req[0] as usize] += 1;
-        acc[req[1] as usize + 1] -= 1;
-        acc
-    });
-    for i in 1..n {
-        freq[i] += freq[i - 1];
+pub fn is_printable(target_grid: &[&[i32]]) -> bool {
+    let mut bounds: HashMap<i32, [usize; 4]> = HashMap::new();
+    for (r, row) in target_grid.iter().enumerate() {
+        for (c, &color) in row.iter().enumerate() {
+            if let Some(v) = bounds.get_mut(&color) {
+                let min_row = v[0].min(r);
+                let min_col = v[1].min(c);
+                let max_row = v[2].max(r);
+                let max_col = v[3].max(c);
+                *v = [min_row, min_col, max_row, max_col];
+            } else {
+                bounds.insert(color, [r, c, r, c]);
+            }
+        }
     }
-    nums.sort_unstable();
-    freq[..n].sort_unstable();
-    nums.iter().zip(freq).fold(0, |acc, (&num, f)| {
-        (acc + i64::from(num) * f) % 1_000_000_007
-    }) as _
+    let mut empty = HashSet::new();
+    while let Some(color) = find_rect(target_grid, &bounds, &empty) {
+        let Some([minr, minc, maxr, maxc]) = bounds.remove(&color) else {
+            return false;
+        };
+        // remove this color from board
+        for r in minr..=maxr {
+            for c in minc..=maxc {
+                empty.insert([r, c]);
+            }
+        }
+    }
+    let [rows, cols] = get_dimensions(target_grid);
+    rows * cols == empty.len()
+}
+
+fn find_rect(
+    grid: &[&[i32]],
+    bounds: &HashMap<i32, [usize; 4]>,
+    empty: &HashSet<[usize; 2]>,
+) -> Option<i32> {
+    'outer: for (&color, &[minr, minc, maxr, maxc]) in bounds.iter() {
+        for r in minr..=maxr {
+            for c in minc..=maxc {
+                if grid[r][c] != color && !empty.contains(&[r, c]) {
+                    continue 'outer; // current color is not rectangle yet
+                }
+            }
+        }
+        return Some(color);
+    }
+    None
 }
 
 #[cfg(test)]
@@ -30,19 +64,31 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            max_sum_range_query(&mut [1, 2, 3, 4, 5], &[[1, 3], [0, 1]]),
-            19
-        );
-        assert_eq!(max_sum_range_query(&mut [1, 2, 3, 4, 5, 6], &[[0, 1]]), 11);
-        assert_eq!(
-            max_sum_range_query(&mut [1, 2, 3, 4, 5, 10], &[[0, 2], [1, 3], [1, 1]]),
-            47
-        );
+        assert!(is_printable(&[
+            &[1, 1, 1, 1],
+            &[1, 2, 2, 1],
+            &[1, 2, 2, 1],
+            &[1, 1, 1, 1]
+        ]));
+        assert!(is_printable(&[
+            &[1, 1, 1, 1],
+            &[1, 1, 3, 3],
+            &[1, 1, 3, 4],
+            &[5, 5, 1, 4]
+        ]));
+        assert!(!is_printable(&[&[1, 2, 1], &[2, 1, 2], &[1, 2, 1]]));
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert!(!is_printable(&[
+            &[5, 1, 5, 3, 5],
+            &[4, 4, 4, 3, 4],
+            &[5, 1, 5, 3, 5],
+            &[2, 1, 2, 2, 2],
+            &[5, 1, 5, 3, 5]
+        ]));
+    }
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
