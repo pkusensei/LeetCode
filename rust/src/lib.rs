@@ -5,29 +5,66 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn unhappy_friends(n: i32, preferences: Vec<Vec<i32>>, pairs: Vec<Vec<i32>>) -> i32 {
-    let mut rank = vec![vec![0; n as usize]; n as usize];
-    for (r, pref) in preferences.iter().enumerate() {
-        for (c, &p) in pref.iter().enumerate() {
-            rank[r][p as usize] = n - c as i32;
+pub fn min_cost_connect_points(points: Vec<Vec<i32>>) -> i32 {
+    let n = points.len();
+    if n <= 1 {
+        return 0;
+    }
+    let mut edges = Vec::with_capacity(n * (n - 1) / 2);
+    for (i1, p1) in points.iter().enumerate() {
+        for (i2, p2) in points.iter().enumerate().skip(1 + i1) {
+            let [x1, y1] = [p1[0], p1[1]];
+            let [x2, y2] = [p2[0], p2[1]];
+            edges.push((i1, i2, x1.abs_diff(x2) + y1.abs_diff(y2)));
         }
     }
+    edges.sort_unstable_by_key(|e| e.2);
+    let mut dsu = DSU::new(n);
     let mut res = 0;
-    let pairs = pairs.into_iter().fold(vec![0; n as usize], |mut acc, p| {
-        acc[p[0] as usize] = p[1] as usize;
-        acc[p[1] as usize] = p[0] as usize;
-        acc
-    });
-    for (x, &y) in pairs.iter().enumerate() {
-        for (u, &r) in rank[x].iter().enumerate() {
-            let v = pairs[u];
-            if r > rank[x][y] && rank[u][x] > rank[u][v] {
-                res += 1;
-                break;
-            }
+    for e in edges {
+        if dsu.union(e.0, e.1) {
+            res += e.2;
         }
     }
-    res
+    res as _
+}
+
+#[derive(Debug, Clone)]
+struct DSU {
+    parent: Vec<usize>,
+    rank: Vec<i32>,
+}
+
+impl DSU {
+    fn new(n: usize) -> Self {
+        Self {
+            parent: (0..n).collect(),
+            rank: vec![1; n],
+        }
+    }
+
+    fn find(&mut self, x: usize) -> usize {
+        if self.parent[x] != x {
+            self.parent[x] = self.find(self.parent[x])
+        }
+        self.parent[x]
+    }
+
+    fn union(&mut self, x: usize, y: usize) -> bool {
+        let [rx, ry] = [x, y].map(|v| self.find(v));
+        if rx == ry {
+            return false;
+        }
+        match self.rank[rx].cmp(&self.rank[ry]) {
+            std::cmp::Ordering::Less => self.parent[rx] = ry,
+            std::cmp::Ordering::Equal => {
+                self.rank[rx] += 1;
+                self.parent[ry] = rx;
+            }
+            std::cmp::Ordering::Greater => self.parent[ry] = rx,
+        }
+        true
+    }
 }
 
 #[cfg(test)]
