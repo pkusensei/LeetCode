@@ -2,58 +2,22 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::{HashMap, HashSet};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_printable(target_grid: &[&[i32]]) -> bool {
-    let mut bounds: HashMap<i32, [usize; 4]> = HashMap::new();
-    for (r, row) in target_grid.iter().enumerate() {
-        for (c, &color) in row.iter().enumerate() {
-            if let Some(v) = bounds.get_mut(&color) {
-                let min_row = v[0].min(r);
-                let min_col = v[1].min(c);
-                let max_row = v[2].max(r);
-                let max_col = v[3].max(c);
-                *v = [min_row, min_col, max_row, max_col];
-            } else {
-                bounds.insert(color, [r, c, r, c]);
-            }
-        }
+pub fn reorder_spaces(text: &str) -> String {
+    let count = text.bytes().filter(|&b| b == b' ').count();
+    let words: Vec<_> = text.split_whitespace().collect();
+    let n = words.len();
+    let mut res = String::with_capacity(text.len());
+    if n <= 1 {
+        res.push_str(words[0]);
+        res.extend(std::iter::repeat(' ').take(count));
+    } else {
+        res = words.join(&" ".repeat(count / (n - 1)));
+        res.extend(std::iter::repeat(' ').take(count % (n - 1)));
     }
-    let mut empty = HashSet::new();
-    while let Some(color) = find_rect(target_grid, &bounds, &empty) {
-        let Some([minr, minc, maxr, maxc]) = bounds.remove(&color) else {
-            return false;
-        };
-        // remove this color from board
-        for r in minr..=maxr {
-            for c in minc..=maxc {
-                empty.insert([r, c]);
-            }
-        }
-    }
-    let [rows, cols] = get_dimensions(target_grid);
-    rows * cols == empty.len()
-}
-
-fn find_rect(
-    grid: &[&[i32]],
-    bounds: &HashMap<i32, [usize; 4]>,
-    empty: &HashSet<[usize; 2]>,
-) -> Option<i32> {
-    'outer: for (&color, &[minr, minc, maxr, maxc]) in bounds.iter() {
-        for r in minr..=maxr {
-            for c in minc..=maxc {
-                if grid[r][c] != color && !empty.contains(&[r, c]) {
-                    continue 'outer; // current color is not rectangle yet
-                }
-            }
-        }
-        return Some(color);
-    }
-    None
+    res
 }
 
 #[cfg(test)]
@@ -64,31 +28,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert!(is_printable(&[
-            &[1, 1, 1, 1],
-            &[1, 2, 2, 1],
-            &[1, 2, 2, 1],
-            &[1, 1, 1, 1]
-        ]));
-        assert!(is_printable(&[
-            &[1, 1, 1, 1],
-            &[1, 1, 3, 3],
-            &[1, 1, 3, 4],
-            &[5, 5, 1, 4]
-        ]));
-        assert!(!is_printable(&[&[1, 2, 1], &[2, 1, 2], &[1, 2, 1]]));
+        assert_eq!(
+            reorder_spaces("  this   is  a sentence "),
+            "this   is   a   sentence"
+        );
     }
 
     #[test]
-    fn test() {
-        assert!(!is_printable(&[
-            &[5, 1, 5, 3, 5],
-            &[4, 4, 4, 3, 4],
-            &[5, 1, 5, 3, 5],
-            &[2, 1, 2, 2, 2],
-            &[5, 1, 5, 3, 5]
-        ]));
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
