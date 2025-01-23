@@ -5,66 +5,29 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_cost_connect_points(points: Vec<Vec<i32>>) -> i32 {
-    let n = points.len();
-    if n <= 1 {
-        return 0;
-    }
-    let mut edges = Vec::with_capacity(n * (n - 1) / 2);
-    for (i1, p1) in points.iter().enumerate() {
-        for (i2, p2) in points.iter().enumerate().skip(1 + i1) {
-            let [x1, y1] = [p1[0], p1[1]];
-            let [x2, y2] = [p2[0], p2[1]];
-            edges.push((i1, i2, x1.abs_diff(x2) + y1.abs_diff(y2)));
-        }
-    }
-    edges.sort_unstable_by_key(|e| e.2);
-    let mut dsu = DSU::new(n);
-    let mut res = 0;
-    for e in edges {
-        if dsu.union(e.0, e.1) {
-            res += e.2;
-        }
-    }
-    res as _
-}
-
-#[derive(Debug, Clone)]
-struct DSU {
-    parent: Vec<usize>,
-    rank: Vec<i32>,
-}
-
-impl DSU {
-    fn new(n: usize) -> Self {
-        Self {
-            parent: (0..n).collect(),
-            rank: vec![1; n],
-        }
-    }
-
-    fn find(&mut self, x: usize) -> usize {
-        if self.parent[x] != x {
-            self.parent[x] = self.find(self.parent[x])
-        }
-        self.parent[x]
-    }
-
-    fn union(&mut self, x: usize, y: usize) -> bool {
-        let [rx, ry] = [x, y].map(|v| self.find(v));
-        if rx == ry {
+pub fn is_transformable(s: &str, t: &str) -> bool {
+    // digits' indices in s
+    let mut map = s
+        .bytes()
+        .enumerate()
+        .rev()
+        .fold([const { vec![] }; 10], |mut acc, (i, b)| {
+            acc[usize::from(b - b'0')].push(i);
+            acc
+        });
+    for b in t.bytes() {
+        let digit = usize::from(b - b'0');
+        let Some(idx) = map[digit].pop() else {
             return false;
-        }
-        match self.rank[rx].cmp(&self.rank[ry]) {
-            std::cmp::Ordering::Less => self.parent[rx] = ry,
-            std::cmp::Ordering::Equal => {
-                self.rank[rx] += 1;
-                self.parent[ry] = rx;
+        };
+        for d in map.iter().take(digit) {
+            // There is d < digit with its pos left to digit(idx)
+            if d.last().is_some_and(|&v| v < idx) {
+                return false;
             }
-            std::cmp::Ordering::Greater => self.parent[ry] = rx,
         }
-        true
     }
+    true
 }
 
 #[cfg(test)]
@@ -74,7 +37,11 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert!(is_transformable("84532", "34852"));
+        assert!(is_transformable("34521", "23415"));
+        assert!(!is_transformable("12345", "12435"));
+    }
 
     #[test]
     fn test() {}
