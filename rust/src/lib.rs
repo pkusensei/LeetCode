@@ -2,52 +2,20 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_one_bit_operations(n: i32) -> i32 {
-    let mut map: HashMap<_, _> = (0..30)
-        .map(|p| (2i32.pow(p), 2i32.pow(1 + p) - 1))
-        .collect();
-    dfs(n, &mut map)
-}
-
-fn dfs(n: i32, memo: &mut HashMap<i32, i32>) -> i32 {
-    if n <= 1 {
-        return n;
-    }
-    if let Some(&v) = memo.get(&n) {
-        return v;
-    }
-    let p = n.ilog2();
-    let res = dfs(2i32.pow(p), memo) - dfs(n - 2i32.pow(p), memo);
-    memo.insert(n, res);
-    res
-}
-
-pub fn iteration(n: i32) -> i32 {
+pub fn max_depth(s: String) -> i32 {
+    let mut open = 0;
     let mut res = 0;
-    let mut k = 0;
-    let mut mask = 1;
-    while mask <= n {
-        if (n & mask) > 0 {
-            res = (1 << (1 + k)) - 1 - res;
+    for b in s.bytes() {
+        if b == b'(' {
+            open += 1;
+        } else if b == b')' {
+            open -= 1;
         }
-        mask <<= 1;
-        k += 1;
+        res = res.max(open);
     }
-    res
-}
-
-pub fn gray_code(n: i32) -> i32 {
-    let mut res = n;
-    res ^= res >> 16;
-    res ^= res >> 8;
-    res ^= res >> 4;
-    res ^= res >> 2;
-    res ^= res >> 1;
     res
 }
 
@@ -68,16 +36,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(minimum_one_bit_operations(3), 2);
-        assert_eq!(minimum_one_bit_operations(6), 4);
-
-        assert_eq!(iteration(3), 2);
-        assert_eq!(iteration(6), 4);
-
-        assert_eq!(gray_code(3), 2);
-        assert_eq!(gray_code(6), 4);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
