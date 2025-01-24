@@ -10,17 +10,17 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow("ababccc", 5)]
-    [DataRow("aba", 2)]
-    [DataRow("aa", 1)]
-    public void TestMethod1(string s, int exp)
+    public void TestMethod1()
     {
-        Assert.AreEqual(exp, sol.MaxUniqueSplit(s));
+        int[][] a = [[1, 2], [2, 3], [5], [0], [5], [], []];
+        Assert.AreEqual("[2,4,5,6]", sol.EventualSafeNodes(a).Print());
     }
 
     [TestMethod]
     public void TestMethod2()
     {
+        int[][] a = [[1, 2, 3, 4], [1, 2], [3, 4], [0, 4], []];
+        Assert.AreEqual("[4]", sol.EventualSafeNodes(a).Print());
     }
 
     [TestMethod]

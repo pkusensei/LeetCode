@@ -6,25 +6,35 @@ namespace Solution;
 
 public class Solution
 {
-    public int MaxUniqueSplit(string s)
+    public IList<int> EventualSafeNodes(int[][] graph)
     {
-        HashSet<string> set = [];
-        var res = 0;
-        Backtrack(s);
-        return res;
-
-        void Backtrack(string s)
+        var n = graph.Length;
+        var outdegs = new int[n];
+        var prevs = new List<int>[n];
+        for (int i = 0; i < n; i++)
         {
-            if (set.Count + s.Length <= res) { return; }
-            if (s.Length == 0) { res = Math.Max(res, set.Count); }
-            for (int i = 1; i <= s.Length; i++)
+            // This is annoying
+            // Array.Fill() would copy the same ref to all indices
+            prevs[i] = [];
+        }
+        var queue = new Queue<int>();
+        foreach (var (i, item) in graph.Select((v, i) => (i, v)))
+        {
+            outdegs[i] = item.Length;
+            foreach (var target in item) { prevs[target].Add(i); }
+            if (item.Length == 0) { queue.Enqueue(i); }
+        }
+        List<int> res = [];
+        while (queue.TryDequeue(out var node))
+        {
+            res.Add(node);
+            foreach (var prev in prevs[node])
             {
-                if (set.Add(s[..i]))
-                {
-                    Backtrack(s[i..]);
-                    set.Remove(s[..i]);
-                }
+                outdegs[prev] -= 1;
+                if (outdegs[prev] == 0) { queue.Enqueue(prev); }
             }
         }
+        res.Sort();
+        return res;
     }
 }
