@@ -43,10 +43,11 @@ mod tests {
     use super::*;
 
     macro_rules! sort_eq {
-        ($left:expr, $right:expr) => {
-            $left.sort_unstable();
-            $right.sort_unstable();
-            assert_eq!($left, $right);
+        ($a:expr, $b:expr) => {
+            let (mut left, mut right) = ($a, $b);
+            left.sort_unstable();
+            right.sort_unstable();
+            assert_eq!(left, right);
         };
     }
 
@@ -54,24 +55,11 @@ mod tests {
     fn basics() {
         sort_eq!(busiest_servers(3, &[1, 2, 3, 4, 5], &[5, 2, 3, 3, 3]), [1]);
         sort_eq!(busiest_servers(3, &[1, 2, 3, 4], &[1, 2, 1, 2]), [0]);
-        sort_eq!(busiest_servers(3, &[1, 2, 3], &[12, 11, 10]), [0, 1, 2]);
+        sort_eq!(busiest_servers(3, &[1, 2, 3], &[12, 11, 10]), [1, 0, 2]);
     }
 
     #[test]
     fn test() {}
-
-    // #[allow(dead_code)]
-    // fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
-    // where
-    //     T1: Ord + Debug + PartialEq<T2>,
-    //     T2: Ord + Debug + PartialEq<T1>,
-    //     I1: AsMut<[T1]>,
-    //     I2: AsMut<[T2]>,
-    // {
-    //     i1.as_mut().sort_unstable();
-    //     i2.as_mut().sort_unstable();
-    //     debug_assert_eq!(i1.as_mut(), i2.as_mut());
-    // }
 
     #[allow(dead_code)]
     fn float_eq<T1, T2>(a: T1, b: T2)
