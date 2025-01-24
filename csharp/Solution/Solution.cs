@@ -6,35 +6,30 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<int> EventualSafeNodes(int[][] graph)
+    public bool IsEvenOddTree(TreeNode root)
     {
-        var n = graph.Length;
-        var outdegs = new int[n];
-        var prevs = new List<int>[n];
-        for (int i = 0; i < n; i++)
+        if (root is null) { return true; }
+        Queue<TreeNode> queue = [];
+        queue.Enqueue(root);
+        var is_even = true;
+        while (queue.Count > 0)
         {
-            // This is annoying
-            // Array.Fill() would copy the same ref to all indices
-            prevs[i] = [];
-        }
-        var queue = new Queue<int>();
-        foreach (var (i, item) in graph.Select((v, i) => (i, v)))
-        {
-            outdegs[i] = item.Length;
-            foreach (var target in item) { prevs[target].Add(i); }
-            if (item.Length == 0) { queue.Enqueue(i); }
-        }
-        List<int> res = [];
-        while (queue.TryDequeue(out var node))
-        {
-            res.Add(node);
-            foreach (var prev in prevs[node])
+            var n = queue.Count;
+            TreeNode prev = null;
+            for (int _ = 0; _ < n; _++)
             {
-                outdegs[prev] -= 1;
-                if (outdegs[prev] == 0) { queue.Enqueue(prev); }
+                var node = queue.Dequeue();
+                if (is_even != ((node.val & 1) == 1)) { return false; }
+                if (prev is null || (is_even && prev.val < node.val) || (!is_even && prev.val > node.val))
+                {
+                    prev = node;
+                }
+                else { return false; }
+                if (node.left is not null) { queue.Enqueue(node.left); }
+                if (node.right is not null) { queue.Enqueue(node.right); }
             }
+            is_even = !is_even;
         }
-        res.Sort();
-        return res;
+        return true;
     }
 }
