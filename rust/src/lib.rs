@@ -5,32 +5,30 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn alert_names(key_name: Vec<String>, key_time: Vec<String>) -> Vec<String> {
-    let mut res: Vec<_> = key_name
-        .into_iter()
-        .zip(key_time)
-        .fold(
-            std::collections::HashMap::<String, Vec<_>>::new(),
-            |mut acc, (name, time)| {
-                let mut it = time.split(':');
-                let minutes = it.next().and_then(|s| s.parse::<i32>().ok()).unwrap() * 60
-                    + it.next().and_then(|s| s.parse::<i32>().ok()).unwrap();
-                acc.entry(name).or_default().push(minutes);
-                acc
-            },
-        )
-        .into_iter()
-        .filter_map(|(k, mut v)| {
-            v.sort_unstable();
-            for w in v.windows(3) {
-                if w[2] - w[0] <= 60 {
-                    return Some(k.to_string());
-                }
-            }
-            None
-        })
-        .collect();
-    res.sort_unstable();
+pub fn restore_matrix(mut row_sum: Vec<i32>, mut col_sum: Vec<i32>) -> Vec<Vec<i32>> {
+    let rows = row_sum.len();
+    let cols = col_sum.len();
+    let mut res = vec![vec![0; cols]; rows];
+    // for r in 0..rows {
+    //     for c in 0..cols {
+    //         let curr = row_sum[r].min(col_sum[c]);
+    //         res[r][c] = curr;
+    //         row_sum[r] -= curr;
+    //         col_sum[c] -= curr;
+    //     }
+    // }
+    let [mut r, mut c] = [0, 0];
+    while r < rows && c < cols {
+        let curr = row_sum[r].min(col_sum[c]);
+        res[r][c] = curr;
+        row_sum[r] -= curr;
+        col_sum[c] -= curr;
+        if row_sum[r] == 0 {
+            r += 1
+        } else {
+            c += 1;
+        }
+    }
     res
 }
 
@@ -41,7 +39,12 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(
+            restore_matrix(vec![5, 7, 10], vec![8, 6, 8]),
+            [[5, 0, 0], [3, 4, 0], [0, 2, 8]]
+        );
+    }
 
     #[test]
     fn test() {}
