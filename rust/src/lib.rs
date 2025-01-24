@@ -2,37 +2,53 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn visible_points(points: &[[i32; 2]], angle: i32, location: [i32; 2]) -> i32 {
-    let mut polars = vec![];
-    let mut count: i32 = 0;
-    for p in points.iter() {
-        if p == &location {
-            count += 1;
-        } else {
-            let dx = f64::from(p[0] - location[0]);
-            let dy = f64::from(p[1] - location[1]);
-            polars.push(dy.atan2(dx).to_degrees());
-        }
+pub fn minimum_one_bit_operations(n: i32) -> i32 {
+    let mut map: HashMap<_, _> = (0..30)
+        .map(|p| (2i32.pow(p), 2i32.pow(1 + p) - 1))
+        .collect();
+    dfs(n, &mut map)
+}
+
+fn dfs(n: i32, memo: &mut HashMap<i32, i32>) -> i32 {
+    if n <= 1 {
+        return n;
     }
-    polars.sort_unstable_by(|a, b| a.total_cmp(b));
-    let n = polars.len();
-    polars.extend_from_within(..);
-    for v in polars[n..].iter_mut() {
-        *v += 360.0;
+    if let Some(&v) = memo.get(&n) {
+        return v;
     }
-    let angle = f64::from(angle);
-    let mut left = 0;
+    let p = n.ilog2();
+    let res = dfs(2i32.pow(p), memo) - dfs(n - 2i32.pow(p), memo);
+    memo.insert(n, res);
+    res
+}
+
+pub fn iteration(n: i32) -> i32 {
     let mut res = 0;
-    for (right, &val) in polars.iter().enumerate() {
-        while val - polars[left] > angle {
-            left += 1;
+    let mut k = 0;
+    let mut mask = 1;
+    while mask <= n {
+        if (n & mask) > 0 {
+            res = (1 << (1 + k)) - 1 - res;
         }
-        res = res.max(right + 1 - left);
+        mask <<= 1;
+        k += 1;
     }
-    res as i32 + count
+    res
+}
+
+pub fn gray_code(n: i32) -> i32 {
+    let mut res = n;
+    res ^= res >> 16;
+    res ^= res >> 8;
+    res ^= res >> 4;
+    res ^= res >> 2;
+    res ^= res >> 1;
+    res
 }
 
 #[cfg(test)]
@@ -53,12 +69,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(visible_points(&[[2, 1], [2, 2], [3, 3]], 90, [1, 1]), 3);
-        assert_eq!(
-            visible_points(&[[2, 1], [2, 2], [3, 4], [1, 1]], 90, [1, 1]),
-            4
-        );
-        assert_eq!(visible_points(&[[1, 0], [2, 1]], 13, [1, 1]), 1);
+        assert_eq!(minimum_one_bit_operations(3), 2);
+        assert_eq!(minimum_one_bit_operations(6), 4);
+
+        assert_eq!(iteration(3), 2);
+        assert_eq!(iteration(6), 4);
+
+        assert_eq!(gray_code(3), 2);
+        assert_eq!(gray_code(6), 4);
     }
 
     #[test]
