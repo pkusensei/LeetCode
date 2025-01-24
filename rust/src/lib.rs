@@ -5,12 +5,41 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn trim_mean(mut arr: Vec<i32>) -> f64 {
-    let n = arr.len();
-    let del = n / 20;
-    let len = (del * 18) as f64;
-    arr.sort_unstable();
-    f64::from(arr[del..n - del].iter().sum::<i32>()) / len
+pub fn best_coordinate(towers: Vec<Vec<i32>>, radius: i32) -> Vec<i32> {
+    let [xmin, ymin, xmax, ymax] =
+        towers
+            .iter()
+            .fold([i32::MAX, i32::MAX, i32::MIN, i32::MIN], |mut acc, t| {
+                let x = t[0];
+                let y = t[1];
+                acc[0] = acc[0].min(x);
+                acc[1] = acc[1].min(y);
+                acc[2] = acc[2].max(x);
+                acc[3] = acc[3].max(y);
+                acc
+            });
+    let radius = f64::from(radius);
+    let mut maxq = 0;
+    let [mut resx, mut resy] = [0, 0];
+    for x in xmin..=xmax {
+        for y in ymin..=ymax {
+            let mut quality = 0;
+            for t in towers.iter() {
+                let [tx, ty, tq] = [0, 1, 2].map(|i| t[i]);
+                let d = f64::from((tx - x).pow(2) + (ty - y).pow(2)).sqrt();
+                if d > radius {
+                    continue;
+                }
+                quality += (f64::from(tq) / (1.0 + d)).floor() as i32;
+            }
+            if quality > maxq {
+                maxq = quality;
+                resx = x;
+                resy = y;
+            }
+        }
+    }
+    vec![resx, resy]
 }
 
 #[cfg(test)]
