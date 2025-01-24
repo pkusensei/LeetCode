@@ -2,34 +2,38 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::{
+    cmp::Reverse,
+    collections::{BTreeMap, BinaryHeap},
+};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn restore_matrix(mut row_sum: Vec<i32>, mut col_sum: Vec<i32>) -> Vec<Vec<i32>> {
-    let rows = row_sum.len();
-    let cols = col_sum.len();
-    let mut res = vec![vec![0; cols]; rows];
-    // for r in 0..rows {
-    //     for c in 0..cols {
-    //         let curr = row_sum[r].min(col_sum[c]);
-    //         res[r][c] = curr;
-    //         row_sum[r] -= curr;
-    //         col_sum[c] -= curr;
-    //     }
-    // }
-    let [mut r, mut c] = [0, 0];
-    while r < rows && c < cols {
-        let curr = row_sum[r].min(col_sum[c]);
-        res[r][c] = curr;
-        row_sum[r] -= curr;
-        col_sum[c] -= curr;
-        if row_sum[r] == 0 {
-            r += 1
-        } else {
-            c += 1;
+pub fn busiest_servers(k: i32, arrival: &[i32], load: &[i32]) -> Vec<i32> {
+    // server <-> count, endtime
+    let mut empty: BTreeMap<_, _> = (0..k).map(|i| (i, (0, 0))).collect();
+    let mut heap = BinaryHeap::new();
+    for (i, (&arr, &load)) in (0..).zip(arrival.iter().zip(load.iter())) {
+        while heap.peek().is_some_and(|&Reverse((t, _, _))| t <= arr) {
+            let Reverse((time, id, count)) = heap.pop().unwrap();
+            empty.insert(id, (count, time));
         }
+        if empty.is_empty() {
+            continue;
+        }
+        let (&k, &(count, _)) = empty.range(i % k..).next().or(empty.iter().next()).unwrap();
+        empty.remove(&k);
+        heap.push(Reverse((arr + load, k, 1 + count)));
     }
-    res
+    while let Some(Reverse((time, id, count))) = heap.pop() {
+        empty.insert(id, (count, time));
+    }
+    let max = empty.values().map(|&(count, _)| count).max().unwrap_or(0);
+    empty
+        .into_iter()
+        .filter_map(|(k, (count, _))| if count == max { Some(k) } else { None })
+        .collect()
 }
 
 #[cfg(test)]
@@ -38,29 +42,36 @@ mod tests {
 
     use super::*;
 
+    macro_rules! sort_eq {
+        ($left:expr, $right:expr) => {
+            $left.sort_unstable();
+            $right.sort_unstable();
+            assert_eq!($left, $right);
+        };
+    }
+
     #[test]
     fn basics() {
-        assert_eq!(
-            restore_matrix(vec![5, 7, 10], vec![8, 6, 8]),
-            [[5, 0, 0], [3, 4, 0], [0, 2, 8]]
-        );
+        sort_eq!(busiest_servers(3, &[1, 2, 3, 4, 5], &[5, 2, 3, 3, 3]), [1]);
+        sort_eq!(busiest_servers(3, &[1, 2, 3, 4], &[1, 2, 1, 2]), [0]);
+        sort_eq!(busiest_servers(3, &[1, 2, 3], &[12, 11, 10]), [0, 1, 2]);
     }
 
     #[test]
     fn test() {}
 
-    #[allow(dead_code)]
-    fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
-    where
-        T1: Ord + Debug + PartialEq<T2>,
-        T2: Ord + Debug + PartialEq<T1>,
-        I1: AsMut<[T1]>,
-        I2: AsMut<[T2]>,
-    {
-        i1.as_mut().sort_unstable();
-        i2.as_mut().sort_unstable();
-        debug_assert_eq!(i1.as_mut(), i2.as_mut());
-    }
+    // #[allow(dead_code)]
+    // fn sort_eq<T1, T2, I1, I2>(mut i1: I1, mut i2: I2)
+    // where
+    //     T1: Ord + Debug + PartialEq<T2>,
+    //     T2: Ord + Debug + PartialEq<T1>,
+    //     I1: AsMut<[T1]>,
+    //     I2: AsMut<[T2]>,
+    // {
+    //     i1.as_mut().sort_unstable();
+    //     i2.as_mut().sort_unstable();
+    //     debug_assert_eq!(i1.as_mut(), i2.as_mut());
+    // }
 
     #[allow(dead_code)]
     fn float_eq<T1, T2>(a: T1, b: T2)
