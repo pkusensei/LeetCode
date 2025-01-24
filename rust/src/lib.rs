@@ -2,38 +2,23 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::{
-    cmp::Reverse,
-    collections::{BTreeMap, BinaryHeap},
-};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn busiest_servers(k: i32, arrival: &[i32], load: &[i32]) -> Vec<i32> {
-    // server <-> count, endtime
-    let mut empty: BTreeMap<_, _> = (0..k).map(|i| (i, (0, 0))).collect();
-    let mut heap = BinaryHeap::new();
-    for (i, (&arr, &load)) in (0..).zip(arrival.iter().zip(load.iter())) {
-        while heap.peek().is_some_and(|&Reverse((t, _, _))| t <= arr) {
-            let Reverse((time, id, count)) = heap.pop().unwrap();
-            empty.insert(id, (count, time));
+pub fn special_array(mut nums: Vec<i32>) -> i32 {
+    nums.sort_unstable_by_key(|&v| std::cmp::Reverse(v));
+    let mut left = 0;
+    let mut right = nums.len() as i32;
+    while left <= right {
+        let mid = left + (right - left) / 2;
+        let i = nums.partition_point(|&v| v >= mid) as i32;
+        match i.cmp(&mid) {
+            std::cmp::Ordering::Less => right = mid - 1,
+            std::cmp::Ordering::Equal => return mid,
+            std::cmp::Ordering::Greater => left = 1 + mid,
         }
-        if empty.is_empty() {
-            continue;
-        }
-        let (&k, &(count, _)) = empty.range(i % k..).next().or(empty.iter().next()).unwrap();
-        empty.remove(&k);
-        heap.push(Reverse((arr + load, k, 1 + count)));
     }
-    while let Some(Reverse((time, id, count))) = heap.pop() {
-        empty.insert(id, (count, time));
-    }
-    let max = empty.values().map(|&(count, _)| count).max().unwrap_or(0);
-    empty
-        .into_iter()
-        .filter_map(|(k, (count, _))| if count == max { Some(k) } else { None })
-        .collect()
+    -1
 }
 
 #[cfg(test)]
@@ -42,6 +27,7 @@ mod tests {
 
     use super::*;
 
+    #[allow(unused_macros)]
     macro_rules! sort_eq {
         ($a:expr, $b:expr) => {
             let (mut left, mut right) = ($a, $b);
@@ -53,9 +39,7 @@ mod tests {
 
     #[test]
     fn basics() {
-        sort_eq!(busiest_servers(3, &[1, 2, 3, 4, 5], &[5, 2, 3, 3, 3]), [1]);
-        sort_eq!(busiest_servers(3, &[1, 2, 3, 4], &[1, 2, 1, 2]), [0]);
-        sort_eq!(busiest_servers(3, &[1, 2, 3], &[12, 11, 10]), [1, 0, 2]);
+        assert_eq!(special_array(vec![0, 4, 3, 0, 4]), 3);
     }
 
     #[test]
