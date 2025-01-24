@@ -5,34 +5,33 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-struct ParkingSystem {
-    big: i32,
-    medium: i32,
-    small: i32,
-}
-
-impl ParkingSystem {
-    fn new(big: i32, medium: i32, small: i32) -> Self {
-        Self { big, medium, small }
-    }
-
-    fn add_car(&mut self, car_type: i32) -> bool {
-        match car_type {
-            1 if self.big > 0 => {
-                self.big -= 1;
-                true
+pub fn alert_names(key_name: Vec<String>, key_time: Vec<String>) -> Vec<String> {
+    let mut res: Vec<_> = key_name
+        .into_iter()
+        .zip(key_time)
+        .fold(
+            std::collections::HashMap::<String, Vec<_>>::new(),
+            |mut acc, (name, time)| {
+                let mut it = time.split(':');
+                let minutes = it.next().and_then(|s| s.parse::<i32>().ok()).unwrap() * 60
+                    + it.next().and_then(|s| s.parse::<i32>().ok()).unwrap();
+                acc.entry(name).or_default().push(minutes);
+                acc
+            },
+        )
+        .into_iter()
+        .filter_map(|(k, mut v)| {
+            v.sort_unstable();
+            for w in v.windows(3) {
+                if w[2] - w[0] <= 60 {
+                    return Some(k.to_string());
+                }
             }
-            2 if self.medium > 0 => {
-                self.medium -= 1;
-                true
-            }
-            3 if self.small > 0 => {
-                self.small -= 1;
-                true
-            }
-            _ => false,
-        }
-    }
+            None
+        })
+        .collect();
+    res.sort_unstable();
+    res
 }
 
 #[cfg(test)]
