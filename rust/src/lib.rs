@@ -5,26 +5,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximal_network_rank(n: i32, roads: Vec<Vec<i32>>) -> i32 {
-    let n = n as usize;
-    let mut degs = vec![0; n];
-    let mut adj = vec![vec![false; n]; n];
-    for r in roads.iter() {
-        let a = r[0] as usize;
-        let b = r[1] as usize;
-        degs[a] += 1;
-        degs[b] += 1;
-        adj[a][b] = true;
-        adj[b][a] = true;
+pub fn check_palindrome_formation(a: &str, b: &str) -> bool {
+    if is_palindrome(a.bytes()) || is_palindrome(b.bytes()) {
+        return true;
     }
-    let mut res = 0;
-    for (a, deg1) in degs.iter().enumerate() {
-        for (b, deg2) in degs.iter().enumerate().skip(1 + a) {
-            let curr = deg1 + deg2 - i32::from(adj[a][b]);
-            res = res.max(curr);
-        }
+    solve(a.as_bytes(), b.as_bytes()) || solve(b.as_bytes(), a.as_bytes())
+}
+
+fn solve(a: &[u8], b: &[u8]) -> bool {
+    let n = a.len();
+    let [mut left, mut right] = [0, n - 1];
+    while left < right && a[left] == b[right] {
+        left += 1;
+        right -= 1;
     }
-    res
+    is_palindrome(&a[left..=right]) || is_palindrome(&b[left..=right])
 }
 
 #[cfg(test)]
