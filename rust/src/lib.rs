@@ -5,20 +5,34 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn special_array(mut nums: Vec<i32>) -> i32 {
-    nums.sort_unstable_by_key(|&v| std::cmp::Reverse(v));
-    let mut left = 0;
-    let mut right = nums.len() as i32;
-    while left <= right {
-        let mid = left + (right - left) / 2;
-        let i = nums.partition_point(|&v| v >= mid) as i32;
-        match i.cmp(&mid) {
-            std::cmp::Ordering::Less => right = mid - 1,
-            std::cmp::Ordering::Equal => return mid,
-            std::cmp::Ordering::Greater => left = 1 + mid,
+pub fn visible_points(points: &[[i32; 2]], angle: i32, location: [i32; 2]) -> i32 {
+    let mut polars = vec![];
+    let mut count: i32 = 0;
+    for p in points.iter() {
+        if p == &location {
+            count += 1;
+        } else {
+            let dx = f64::from(p[0] - location[0]);
+            let dy = f64::from(p[1] - location[1]);
+            polars.push(dy.atan2(dx).to_degrees());
         }
     }
-    -1
+    polars.sort_unstable_by(|a, b| a.total_cmp(b));
+    let n = polars.len();
+    polars.extend_from_within(..);
+    for v in polars[n..].iter_mut() {
+        *v += 360.0;
+    }
+    let angle = f64::from(angle);
+    let mut left = 0;
+    let mut res = 0;
+    for (right, &val) in polars.iter().enumerate() {
+        while val - polars[left] > angle {
+            left += 1;
+        }
+        res = res.max(right + 1 - left);
+    }
+    res as i32 + count
 }
 
 #[cfg(test)]
@@ -39,7 +53,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(special_array(vec![0, 4, 3, 0, 4]), 3);
+        assert_eq!(visible_points(&[[2, 1], [2, 2], [3, 3]], 90, [1, 1]), 3);
+        assert_eq!(
+            visible_points(&[[2, 1], [2, 2], [3, 4], [1, 1]], 90, [1, 1]),
+            4
+        );
+        assert_eq!(visible_points(&[[1, 0], [2, 1]], 13, [1, 1]), 1);
     }
 
     #[test]
