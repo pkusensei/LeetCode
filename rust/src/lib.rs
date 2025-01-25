@@ -2,71 +2,52 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn lexicographically_smallest_array(nums: &[i32], limit: i32) -> Vec<i32> {
-    let n = nums.len();
-    let mut nums: Vec<_> = nums.iter().enumerate().map(|(i, &v)| (i, v)).collect();
-    nums.sort_unstable_by_key(|&(_, v)| v);
-    let mut dsu = DSU::new(n);
-    for w in nums.windows(2) {
-        let (x, v1) = w[0];
-        let (y, v2) = w[1];
-        if v2 - v1 <= limit {
-            dsu.union(x, y);
-        }
-    }
-    let mut groups = nums.into_iter().map(|(i, v)| (i, v)).rev().fold(
-        HashMap::<_, Vec<_>>::new(),
-        |mut acc, (i, v)| {
-            acc.entry(dsu.find(i)).or_default().push(v);
-            acc
-        },
-    );
-    let mut res = Vec::with_capacity(n);
-    for i in 0..n {
-        let curr = groups.get_mut(&dsu.find(i)).unwrap();
-        res.push(curr.pop().unwrap());
-    }
-    res
+// combination: choose 2k from (n+k-1)
+pub fn number_of_sets(n: i32, k: i32) -> i32 {
+    let [n, k] = [n, k].map(|v| v as usize);
+    dfs(n, 0, 0, k, &mut vec![vec![vec![None; 1 + k]; 1 + n]; 2]).unwrap()
 }
 
-struct DSU {
-    parent: Vec<usize>,
-    rank: Vec<i16>,
-}
+const MOD: i32 = 1_000_000_007;
 
-impl DSU {
-    fn new(n: usize) -> Self {
-        Self {
-            parent: (0..n).collect(),
-            rank: vec![0; n],
+fn dfs(
+    n: usize,
+    inline: usize,
+    curr: usize,
+    k: usize,
+    memo: &mut [Vec<Vec<Option<i32>>>],
+) -> Option<i32> {
+    if k == 0 {
+        return if curr <= n { Some(1) } else { None };
+    }
+    if curr >= n {
+        return None;
+    }
+    if let Some(v) = memo[inline][curr][k] {
+        return if v == -1 { None } else { Some(v) };
+    }
+    // skip this point
+    let mut res = dfs(n, inline, 1 + curr, k, memo).unwrap_or(0);
+    if inline == 0 {
+        // start new segment
+        if let Some(v) = dfs(n, 1, 1 + curr, k, memo) {
+            res = (res + v) % MOD;
+        }
+    } else {
+        // end current segment
+        if let Some(v) = dfs(n, 0, curr, k - 1, memo) {
+            res = (res + v) % MOD;
         }
     }
-
-    fn find(&mut self, x: usize) -> usize {
-        if self.parent[x] != x {
-            self.parent[x] = self.find(self.parent[x]);
-        }
-        self.parent[x]
-    }
-
-    fn union(&mut self, x: usize, y: usize) {
-        let [rx, ry] = [x, y].map(|v| self.find(v));
-        if rx == ry {
-            return;
-        }
-        match self.rank[rx].cmp(&self.rank[ry]) {
-            std::cmp::Ordering::Less => self.parent[rx] = ry,
-            std::cmp::Ordering::Equal => {
-                self.rank[rx] += 1;
-                self.parent[ry] = rx;
-            }
-            std::cmp::Ordering::Greater => self.parent[ry] = rx,
-        }
+    if res == 0 {
+        memo[inline][curr][k] = Some(-1);
+        None
+    } else {
+        memo[inline][curr][k] = Some(res);
+        Some(res)
     }
 }
 
@@ -88,18 +69,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            lexicographically_smallest_array(&[1, 5, 3, 9, 8], 2),
-            [1, 3, 5, 8, 9]
-        );
-        assert_eq!(
-            lexicographically_smallest_array(&[1, 7, 6, 18, 2, 1], 3),
-            [1, 6, 7, 18, 1, 2]
-        );
-        assert_eq!(
-            lexicographically_smallest_array(&[1, 7, 28, 19, 10], 3),
-            [1, 7, 28, 19, 10]
-        );
+        assert_eq!(number_of_sets(4, 2), 5);
+        assert_eq!(number_of_sets(3, 1), 3);
+        assert_eq!(number_of_sets(30, 7), 796297179);
     }
 
     #[test]
