@@ -5,50 +5,60 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-// combination: choose 2k from (n+k-1)
-pub fn number_of_sets(n: i32, k: i32) -> i32 {
-    let [n, k] = [n, k].map(|v| v as usize);
-    dfs(n, 0, 0, k, &mut vec![vec![vec![None; 1 + k]; 1 + n]; 2]).unwrap()
+#[derive(Debug, Clone)]
+struct Fancy {
+    data: Vec<i64>,
+    inc: i64,
+    mul: i64,
 }
 
-const MOD: i32 = 1_000_000_007;
+const MOD: i64 = 1_000_000_007;
 
-fn dfs(
-    n: usize,
-    inline: usize,
-    curr: usize,
-    k: usize,
-    memo: &mut [Vec<Vec<Option<i32>>>],
-) -> Option<i32> {
-    if k == 0 {
-        return if curr <= n { Some(1) } else { None };
-    }
-    if curr >= n {
-        return None;
-    }
-    if let Some(v) = memo[inline][curr][k] {
-        return if v == -1 { None } else { Some(v) };
-    }
-    // skip this point
-    let mut res = dfs(n, inline, 1 + curr, k, memo).unwrap_or(0);
-    if inline == 0 {
-        // start new segment
-        if let Some(v) = dfs(n, 1, 1 + curr, k, memo) {
-            res = (res + v) % MOD;
-        }
-    } else {
-        // end current segment
-        if let Some(v) = dfs(n, 0, curr, k - 1, memo) {
-            res = (res + v) % MOD;
+impl Fancy {
+    fn new() -> Self {
+        Self {
+            data: vec![],
+            inc: 0,
+            mul: 1,
         }
     }
-    if res == 0 {
-        memo[inline][curr][k] = Some(-1);
-        None
-    } else {
-        memo[inline][curr][k] = Some(res);
-        Some(res)
+
+    fn append(&mut self, val: i32) {
+        let num = (i64::from(val) - self.inc).rem_euclid(MOD) * mod_pow(self.mul, MOD - 2) % MOD;
+        self.data.push(num);
     }
+
+    fn add_all(&mut self, inc: i32) {
+        self.inc = (self.inc + i64::from(inc)) % MOD
+    }
+
+    fn mult_all(&mut self, m: i32) {
+        let m = i64::from(m);
+        self.mul = (self.mul * m) % MOD;
+        self.inc = (self.inc * m) % MOD;
+    }
+
+    fn get_index(&self, idx: i32) -> i32 {
+        let Some(&num) = self.data.get(idx as usize) else {
+            return -1;
+        };
+        let res = (num * self.mul + self.inc) % MOD;
+        res as _
+    }
+}
+
+const fn mod_pow(x: i64, y: i64) -> i64 {
+    let mut res = 1;
+    let mut p = x;
+    let mut y = y;
+    while y > 0 {
+        if y & 1 == 1 {
+            res = res * p % MOD;
+        }
+        p = p.pow(2) % MOD;
+        y >>= 1;
+    }
+    res
 }
 
 #[cfg(test)]
@@ -69,9 +79,18 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(number_of_sets(4, 2), 5);
-        assert_eq!(number_of_sets(3, 1), 3);
-        assert_eq!(number_of_sets(30, 7), 796297179);
+        let mut fancy = Fancy::new();
+        fancy.append(2); // fancy sequence: [2]
+        fancy.add_all(3); // fancy sequence: [2+3] -> [5]
+        fancy.append(7); // fancy sequence: [5, 7]
+        fancy.mult_all(2); // fancy sequence: [5*2, 7*2] -> [10, 14]
+        assert_eq!(fancy.get_index(0), 10); // return 10
+        fancy.add_all(3); // fancy sequence: [10+3, 14+3] -> [13, 17]
+        fancy.append(10); // fancy sequence: [13, 17, 10]
+        fancy.mult_all(2); // fancy sequence: [13*2, 17*2, 10*2] -> [26, 34, 20]
+        assert_eq!(fancy.get_index(0), 26); // return 26
+        assert_eq!(fancy.get_index(1), 34); // return 34
+        assert_eq!(fancy.get_index(2), 20); // return 20
     }
 
     #[test]
