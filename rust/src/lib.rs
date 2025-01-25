@@ -5,26 +5,37 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn slowest_key(release_times: Vec<i32>, keys_pressed: String) -> char {
-    let mut res = 'a';
-    let mut time = 0;
-    for (i, ch) in keys_pressed.char_indices() {
-        if i == 0 {
-            res = ch;
-            time = release_times[0];
-        } else {
-            let t = release_times[i] - release_times[i - 1];
-            match t.cmp(&time) {
-                std::cmp::Ordering::Less => (),
-                std::cmp::Ordering::Equal => res = res.max(ch),
-                std::cmp::Ordering::Greater => {
-                    time = t;
-                    res = ch;
-                }
-            }
-        }
+pub fn check_arithmetic_subarrays(nums: Vec<i32>, l: Vec<i32>, r: Vec<i32>) -> Vec<bool> {
+    l.into_iter()
+        .zip(r)
+        .map(|(a, b)| check(&nums[a as usize..=b as usize]))
+        .collect()
+}
+
+fn check(nums: &[i32]) -> bool {
+    let n = nums.len() as i32;
+    if n < 2 {
+        return true;
     }
-    res
+    let (min, max, set) = nums.iter().fold(
+        (i32::MAX, i32::MIN, std::collections::HashSet::new()),
+        |(min, max, mut set), &num| {
+            set.insert(num);
+            (min.min(num), max.max(num), set)
+        },
+    );
+    if (max - min) % (n - 1) > 0 {
+        return false;
+    }
+    let d = (max - min) / (n - 1);
+    let mut curr = min + d;
+    while curr < max {
+        if !set.contains(&curr) {
+            return false;
+        }
+        curr += d;
+    }
+    true
 }
 
 #[cfg(test)]
