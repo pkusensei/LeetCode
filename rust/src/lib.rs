@@ -5,60 +5,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-#[derive(Debug, Clone)]
-struct Fancy {
-    data: Vec<i64>,
-    inc: i64,
-    mul: i64,
-}
-
-const MOD: i64 = 1_000_000_007;
-
-impl Fancy {
-    fn new() -> Self {
-        Self {
-            data: vec![],
-            inc: 0,
-            mul: 1,
+pub fn max_length_between_equal_characters(s: String) -> i32 {
+        let mut seen = std::collections::HashMap::new();
+        let mut res = -1;
+        for (idx, b) in s.bytes().enumerate() {
+            if let Some(prev) = seen.get(&b) {
+                res = res.max(idx as i32 - prev - 1);
+            }
+            seen.entry(b).or_insert(idx as i32);
         }
-    }
-
-    fn append(&mut self, val: i32) {
-        let num = (i64::from(val) - self.inc).rem_euclid(MOD) * mod_pow(self.mul, MOD - 2) % MOD;
-        self.data.push(num);
-    }
-
-    fn add_all(&mut self, inc: i32) {
-        self.inc = (self.inc + i64::from(inc)) % MOD
-    }
-
-    fn mult_all(&mut self, m: i32) {
-        let m = i64::from(m);
-        self.mul = (self.mul * m) % MOD;
-        self.inc = (self.inc * m) % MOD;
-    }
-
-    fn get_index(&self, idx: i32) -> i32 {
-        let Some(&num) = self.data.get(idx as usize) else {
-            return -1;
-        };
-        let res = (num * self.mul + self.inc) % MOD;
         res as _
-    }
-}
-
-const fn mod_pow(x: i64, y: i64) -> i64 {
-    let mut res = 1;
-    let mut p = x;
-    let mut y = y;
-    while y > 0 {
-        if y & 1 == 1 {
-            res = res * p % MOD;
-        }
-        p = p.pow(2) % MOD;
-        y >>= 1;
-    }
-    res
 }
 
 #[cfg(test)]
