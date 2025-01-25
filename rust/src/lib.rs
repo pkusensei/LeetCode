@@ -2,35 +2,58 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::{HashSet, VecDeque};
+use std::collections::HashMap;
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_lex_smallest_string(s: String, a: i32, b: i32) -> String {
-    let n = s.len();
-    let mut seen = HashSet::from([s.clone().into_bytes()]);
-    let mut queue = VecDeque::from([s.clone().into_bytes()]);
-    let mut res = s.into_bytes();
-    while let Some(curr) = queue.pop_front() {
-        if res > curr {
-            res = curr.clone();
+pub fn best_team_score(scores: &[i32], ages: &[i32]) -> i32 {
+    let mut nums: Vec<_> = scores
+        .iter()
+        .zip(ages.iter())
+        .map(|(&s, &a)| [s, a])
+        .collect();
+    nums.sort_unstable_by(|a, b| a[1].cmp(&b[1]).then(a[0].cmp(&b[0])));
+    let mut dp = vec![0; nums.len()];
+    let mut res = 0;
+    for i1 in 0..nums.len() {
+        dp[i1] = nums[i1][0];
+        for i2 in 0..i1 {
+            if nums[i2][0] <= nums[i1][0] {
+                dp[i1] = dp[i1].max(dp[i2] + nums[i1][0]);
+            }
         }
-        // rotate
-        let mut temp = curr.clone();
-        temp.rotate_right(b as usize);
-        if seen.insert(temp.clone()) {
-            queue.push_back(temp);
-        }
-        temp = curr;
-        for i in (0..n).filter(|i| i & 1 == 1) {
-            temp[i] = (temp[i] - b'0' + a as u8) % 10 + b'0';
-        }
-        if seen.insert(temp.clone()) {
-            queue.push_front(temp.clone());
-        }
+        res = res.max(dp[i1]);
     }
-    String::from_utf8(res).unwrap()
+    res
+    // dfs(&nums, 0, 0, 0, &mut HashMap::new())
+}
+
+// [score, age]
+fn dfs(
+    nums: &[[i32; 2]],
+    idx: usize,
+    cs: i32,
+    ca: i32,
+    memo: &mut HashMap<(usize, i32, i32), i32>,
+) -> i32 {
+    if idx >= nums.len() {
+        return 0;
+    }
+    let key = (idx, cs, ca);
+    if let Some(&v) = memo.get(&key) {
+        return v;
+    }
+    let skip = dfs(nums, 1 + idx, cs, ca, memo);
+    let [score, age] = nums[idx];
+    let take = if cs <= score {
+        score + dfs(nums, 1 + idx, score, age, memo)
+    } else {
+        0
+    };
+    let res = skip.max(take);
+    memo.insert(key, res);
+    res
 }
 
 #[cfg(test)]
@@ -50,7 +73,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(best_team_score(&[1, 3, 5, 10, 15], &[1, 2, 3, 4, 5]), 34);
+        assert_eq!(best_team_score(&[4, 5, 6, 5], &[2, 1, 2, 1]), 16);
+        assert_eq!(best_team_score(&[1, 2, 3, 5], &[8, 9, 10, 1]), 6);
+    }
 
     #[test]
     fn test() {}
