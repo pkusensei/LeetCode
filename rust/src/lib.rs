@@ -2,40 +2,32 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::{cmp::Reverse, collections::BinaryHeap};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn check_arithmetic_subarrays(nums: Vec<i32>, l: Vec<i32>, r: Vec<i32>) -> Vec<bool> {
-    l.into_iter()
-        .zip(r)
-        .map(|(a, b)| check(&nums[a as usize..=b as usize]))
-        .collect()
-}
-
-fn check(nums: &[i32]) -> bool {
-    let n = nums.len() as i32;
-    if n < 2 {
-        return true;
-    }
-    let (min, max, set) = nums.iter().fold(
-        (i32::MAX, i32::MIN, std::collections::HashSet::new()),
-        |(min, max, mut set), &num| {
-            set.insert(num);
-            (min.min(num), max.max(num), set)
-        },
-    );
-    if (max - min) % (n - 1) > 0 {
-        return false;
-    }
-    let d = (max - min) / (n - 1);
-    let mut curr = min + d;
-    while curr < max {
-        if !set.contains(&curr) {
-            return false;
+pub fn minimum_effort_path(heights: Vec<Vec<i32>>) -> i32 {
+    let [rows, cols] = get_dimensions(&heights);
+    let mut dists = vec![vec![i32::MAX; cols]; rows];
+    dists[0][0] = 0;
+    let mut heap = BinaryHeap::from([(Reverse(0), [0, 0])]);
+    while let Some((Reverse(cost), [r, c])) = heap.pop() {
+        if r == rows - 1 && c == cols - 1 {
+            return cost;
         }
-        curr += d;
+        if cost > dists[r][c] {
+            continue;
+        }
+        for [nr, nc] in neighbors([r, c]).filter(|&[nr, nc]| nr < rows && nc < cols) {
+            let next_cost = (heights[r][c] - heights[nr][nc]).abs().max(cost);
+            if next_cost < dists[nr][nc] {
+                dists[nr][nc] = next_cost;
+                heap.push((Reverse(next_cost), [nr, nc]));
+            }
+        }
     }
-    true
+    -1
 }
 
 #[cfg(test)]
