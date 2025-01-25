@@ -5,59 +5,26 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn are_connected(n: i32, threshold: i32, queries: &[[i32; 2]]) -> Vec<bool> {
-    let mut dsu = DSU::new(1 + n as usize);
-    for div in 1 + threshold..n {
-        let mut curr = div;
-        while curr <= n {
-            dsu.union(div as usize, curr as usize);
-            curr += div;
-        }
-    }
-    queries
-        .iter()
-        .map(|v| dsu.is_connected(v[0] as _, v[1] as _))
-        .collect()
-}
-
-struct DSU {
-    parent: Vec<usize>,
-    rank: Vec<i32>,
-}
-
-impl DSU {
-    fn new(n: usize) -> Self {
-        Self {
-            parent: (0..n).collect(),
-            rank: vec![0; n],
-        }
-    }
-
-    fn find(&mut self, x: usize) -> usize {
-        if self.parent[x] != x {
-            self.parent[x] = self.find(self.parent[x]);
-        }
-        self.parent[x]
-    }
-
-    fn union(&mut self, x: usize, y: usize) {
-        let [rx, ry] = [x, y].map(|v| self.find(v));
-        if rx == ry {
-            return;
-        }
-        match self.rank[rx].cmp(&self.rank[ry]) {
-            std::cmp::Ordering::Less => self.parent[rx] = ry,
-            std::cmp::Ordering::Equal => {
-                self.rank[rx] += 1;
-                self.parent[ry] = rx;
+pub fn slowest_key(release_times: Vec<i32>, keys_pressed: String) -> char {
+    let mut res = 'a';
+    let mut time = 0;
+    for (i, ch) in keys_pressed.char_indices() {
+        if i == 0 {
+            res = ch;
+            time = release_times[0];
+        } else {
+            let t = release_times[i] - release_times[i - 1];
+            match t.cmp(&time) {
+                std::cmp::Ordering::Less => (),
+                std::cmp::Ordering::Equal => res = res.max(ch),
+                std::cmp::Ordering::Greater => {
+                    time = t;
+                    res = ch;
+                }
             }
-            std::cmp::Ordering::Greater => self.parent[ry] = rx,
         }
     }
-
-    fn is_connected(&mut self, x: usize, y: usize) -> bool {
-        self.find(x) == self.find(y)
-    }
+    res
 }
 
 #[cfg(test)]
