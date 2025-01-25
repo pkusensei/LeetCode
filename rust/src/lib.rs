@@ -2,44 +2,72 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn best_coordinate(towers: Vec<Vec<i32>>, radius: i32) -> Vec<i32> {
-    let [xmin, ymin, xmax, ymax] =
-        towers
-            .iter()
-            .fold([i32::MAX, i32::MAX, i32::MIN, i32::MIN], |mut acc, t| {
-                let x = t[0];
-                let y = t[1];
-                acc[0] = acc[0].min(x);
-                acc[1] = acc[1].min(y);
-                acc[2] = acc[2].max(x);
-                acc[3] = acc[3].max(y);
-                acc
-            });
-    let radius = f64::from(radius);
-    let mut maxq = 0;
-    let [mut resx, mut resy] = [0, 0];
-    for x in xmin..=xmax {
-        for y in ymin..=ymax {
-            let mut quality = 0;
-            for t in towers.iter() {
-                let [tx, ty, tq] = [0, 1, 2].map(|i| t[i]);
-                let d = f64::from((tx - x).pow(2) + (ty - y).pow(2)).sqrt();
-                if d > radius {
-                    continue;
-                }
-                quality += (f64::from(tq) / (1.0 + d)).floor() as i32;
-            }
-            if quality > maxq {
-                maxq = quality;
-                resx = x;
-                resy = y;
-            }
+pub fn lexicographically_smallest_array(nums: &[i32], limit: i32) -> Vec<i32> {
+    let n = nums.len();
+    let mut nums: Vec<_> = nums.iter().enumerate().map(|(i, &v)| (i, v)).collect();
+    nums.sort_unstable_by_key(|&(_, v)| v);
+    let mut dsu = DSU::new(n);
+    for w in nums.windows(2) {
+        let (x, v1) = w[0];
+        let (y, v2) = w[1];
+        if v2 - v1 <= limit {
+            dsu.union(x, y);
         }
     }
-    vec![resx, resy]
+    let mut groups = nums.into_iter().map(|(i, v)| (i, v)).rev().fold(
+        HashMap::<_, Vec<_>>::new(),
+        |mut acc, (i, v)| {
+            acc.entry(dsu.find(i)).or_default().push(v);
+            acc
+        },
+    );
+    let mut res = Vec::with_capacity(n);
+    for i in 0..n {
+        let curr = groups.get_mut(&dsu.find(i)).unwrap();
+        res.push(curr.pop().unwrap());
+    }
+    res
+}
+
+struct DSU {
+    parent: Vec<usize>,
+    rank: Vec<i16>,
+}
+
+impl DSU {
+    fn new(n: usize) -> Self {
+        Self {
+            parent: (0..n).collect(),
+            rank: vec![0; n],
+        }
+    }
+
+    fn find(&mut self, x: usize) -> usize {
+        if self.parent[x] != x {
+            self.parent[x] = self.find(self.parent[x]);
+        }
+        self.parent[x]
+    }
+
+    fn union(&mut self, x: usize, y: usize) {
+        let [rx, ry] = [x, y].map(|v| self.find(v));
+        if rx == ry {
+            return;
+        }
+        match self.rank[rx].cmp(&self.rank[ry]) {
+            std::cmp::Ordering::Less => self.parent[rx] = ry,
+            std::cmp::Ordering::Equal => {
+                self.rank[rx] += 1;
+                self.parent[ry] = rx;
+            }
+            std::cmp::Ordering::Greater => self.parent[ry] = rx,
+        }
+    }
 }
 
 #[cfg(test)]
@@ -59,7 +87,20 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(
+            lexicographically_smallest_array(&[1, 5, 3, 9, 8], 2),
+            [1, 3, 5, 8, 9]
+        );
+        assert_eq!(
+            lexicographically_smallest_array(&[1, 7, 6, 18, 2, 1], 3),
+            [1, 6, 7, 18, 1, 2]
+        );
+        assert_eq!(
+            lexicographically_smallest_array(&[1, 7, 28, 19, 10], 3),
+            [1, 7, 28, 19, 10]
+        );
+    }
 
     #[test]
     fn test() {}
