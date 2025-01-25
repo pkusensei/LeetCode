@@ -2,19 +2,35 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::{HashSet, VecDeque};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_length_between_equal_characters(s: String) -> i32 {
-        let mut seen = std::collections::HashMap::new();
-        let mut res = -1;
-        for (idx, b) in s.bytes().enumerate() {
-            if let Some(prev) = seen.get(&b) {
-                res = res.max(idx as i32 - prev - 1);
-            }
-            seen.entry(b).or_insert(idx as i32);
+pub fn find_lex_smallest_string(s: String, a: i32, b: i32) -> String {
+    let n = s.len();
+    let mut seen = HashSet::from([s.clone().into_bytes()]);
+    let mut queue = VecDeque::from([s.clone().into_bytes()]);
+    let mut res = s.into_bytes();
+    while let Some(curr) = queue.pop_front() {
+        if res > curr {
+            res = curr.clone();
         }
-        res as _
+        // rotate
+        let mut temp = curr.clone();
+        temp.rotate_right(b as usize);
+        if seen.insert(temp.clone()) {
+            queue.push_back(temp);
+        }
+        temp = curr;
+        for i in (0..n).filter(|i| i & 1 == 1) {
+            temp[i] = (temp[i] - b'0' + a as u8) % 10 + b'0';
+        }
+        if seen.insert(temp.clone()) {
+            queue.push_front(temp.clone());
+        }
+    }
+    String::from_utf8(res).unwrap()
 }
 
 #[cfg(test)]
@@ -34,20 +50,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        let mut fancy = Fancy::new();
-        fancy.append(2); // fancy sequence: [2]
-        fancy.add_all(3); // fancy sequence: [2+3] -> [5]
-        fancy.append(7); // fancy sequence: [5, 7]
-        fancy.mult_all(2); // fancy sequence: [5*2, 7*2] -> [10, 14]
-        assert_eq!(fancy.get_index(0), 10); // return 10
-        fancy.add_all(3); // fancy sequence: [10+3, 14+3] -> [13, 17]
-        fancy.append(10); // fancy sequence: [13, 17, 10]
-        fancy.mult_all(2); // fancy sequence: [13*2, 17*2, 10*2] -> [26, 34, 20]
-        assert_eq!(fancy.get_index(0), 26); // return 26
-        assert_eq!(fancy.get_index(1), 34); // return 34
-        assert_eq!(fancy.get_index(2), 20); // return 20
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
