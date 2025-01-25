@@ -2,58 +2,62 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn best_team_score(scores: &[i32], ages: &[i32]) -> i32 {
-    let mut nums: Vec<_> = scores
-        .iter()
-        .zip(ages.iter())
-        .map(|(&s, &a)| [s, a])
-        .collect();
-    nums.sort_unstable_by(|a, b| a[1].cmp(&b[1]).then(a[0].cmp(&b[0])));
-    let mut dp = vec![0; nums.len()];
-    let mut res = 0;
-    for i1 in 0..nums.len() {
-        dp[i1] = nums[i1][0];
-        for i2 in 0..i1 {
-            if nums[i2][0] <= nums[i1][0] {
-                dp[i1] = dp[i1].max(dp[i2] + nums[i1][0]);
-            }
+pub fn are_connected(n: i32, threshold: i32, queries: &[[i32; 2]]) -> Vec<bool> {
+    let mut dsu = DSU::new(1 + n as usize);
+    for div in 1 + threshold..n {
+        let mut curr = div;
+        while curr <= n {
+            dsu.union(div as usize, curr as usize);
+            curr += div;
         }
-        res = res.max(dp[i1]);
     }
-    res
-    // dfs(&nums, 0, 0, 0, &mut HashMap::new())
+    queries
+        .iter()
+        .map(|v| dsu.is_connected(v[0] as _, v[1] as _))
+        .collect()
 }
 
-// [score, age]
-fn dfs(
-    nums: &[[i32; 2]],
-    idx: usize,
-    cs: i32,
-    ca: i32,
-    memo: &mut HashMap<(usize, i32, i32), i32>,
-) -> i32 {
-    if idx >= nums.len() {
-        return 0;
+struct DSU {
+    parent: Vec<usize>,
+    rank: Vec<i32>,
+}
+
+impl DSU {
+    fn new(n: usize) -> Self {
+        Self {
+            parent: (0..n).collect(),
+            rank: vec![0; n],
+        }
     }
-    let key = (idx, cs, ca);
-    if let Some(&v) = memo.get(&key) {
-        return v;
+
+    fn find(&mut self, x: usize) -> usize {
+        if self.parent[x] != x {
+            self.parent[x] = self.find(self.parent[x]);
+        }
+        self.parent[x]
     }
-    let skip = dfs(nums, 1 + idx, cs, ca, memo);
-    let [score, age] = nums[idx];
-    let take = if cs <= score {
-        score + dfs(nums, 1 + idx, score, age, memo)
-    } else {
-        0
-    };
-    let res = skip.max(take);
-    memo.insert(key, res);
-    res
+
+    fn union(&mut self, x: usize, y: usize) {
+        let [rx, ry] = [x, y].map(|v| self.find(v));
+        if rx == ry {
+            return;
+        }
+        match self.rank[rx].cmp(&self.rank[ry]) {
+            std::cmp::Ordering::Less => self.parent[rx] = ry,
+            std::cmp::Ordering::Equal => {
+                self.rank[rx] += 1;
+                self.parent[ry] = rx;
+            }
+            std::cmp::Ordering::Greater => self.parent[ry] = rx,
+        }
+    }
+
+    fn is_connected(&mut self, x: usize, y: usize) -> bool {
+        self.find(x) == self.find(y)
+    }
 }
 
 #[cfg(test)]
@@ -73,11 +77,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(best_team_score(&[1, 3, 5, 10, 15], &[1, 2, 3, 4, 5]), 34);
-        assert_eq!(best_team_score(&[4, 5, 6, 5], &[2, 1, 2, 1]), 16);
-        assert_eq!(best_team_score(&[1, 2, 3, 5], &[8, 9, 10, 1]), 6);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
