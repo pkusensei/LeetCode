@@ -5,17 +5,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn can_form_array(arr: Vec<i32>, pieces: Vec<Vec<i32>>) -> bool {
-    let mut map: std::collections::HashMap<_, _> =
-        pieces.iter().map(|p| (p[0], p.as_slice())).collect();
-    let mut slice = &arr[..];
-    while !slice.is_empty() {
-        let Some(v) = map.remove(&slice[0]).and_then(|v| slice.strip_prefix(v)) else {
-            return false;
-        };
-        slice = v
+pub fn count_vowel_strings(n: i32) -> i32 {
+    (n + 1..=n + 4).product::<i32>() / 24
+    // dfs(n, 0, 0)
+}
+
+// aeiou => max is 5
+fn dfs(n: i32, pos: i32, prev: i32) -> i32 {
+    if pos >= n {
+        return 1;
     }
-    slice.is_empty()
+    let mut res = 0;
+    for i in prev..5 {
+        res += dfs(n, 1 + pos, i);
+    }
+    res
 }
 
 #[cfg(test)]
@@ -35,7 +39,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(count_vowel_strings(1), 5);
+        assert_eq!(count_vowel_strings(2), 15);
+        assert_eq!(count_vowel_strings(33), 66045);
+    }
 
     #[test]
     fn test() {}
