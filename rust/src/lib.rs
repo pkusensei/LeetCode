@@ -2,48 +2,25 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::BTreeMap;
+use std::{collections::HashMap, iter};
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn matrix_rank_transform(matrix: &[&[i32]]) -> Vec<Vec<i32>> {
-    let [rows, cols] = get_dimensions(matrix);
-    let mut map = BTreeMap::<_, Vec<_>>::new();
-    for (r, row) in matrix.iter().enumerate() {
-        for (c, &v) in row.iter().enumerate() {
-            map.entry(v).or_default().push([r, c]);
-        }
-    }
-    let mut res = vec![vec![0; cols]; rows];
-    let mut rank = vec![0; rows + cols];
-    for pos in map.into_values() {
-        let mut parent: Vec<_> = (0..rows + cols).collect();
-        for &[row, col] in pos.iter() {
-            let r1 = find(&mut parent, row);
-            let r2 = find(&mut parent, col + rows);
-            parent[r1] = r2; // Union row and col
-                             // Root points to highest rank
-            rank[r2] = rank[r1].max(rank[r2]);
-        }
-        let mut rank2 = rank.clone();
-        for [row, col] in pos {
-            let r = find(&mut parent, row);
-            res[row][col] = 1 + rank[r];
-            // Writes this rank onto row and col
-            rank2[row] = 1 + rank[r];
-            rank2[col + rows] = 1 + rank[r];
-        }
-        rank = rank2;
-    }
-    res
-}
-
-fn find(parent: &mut [usize], x: usize) -> usize {
-    if parent[x] != x {
-        parent[x] = find(parent, parent[x]);
-    }
-    parent[x]
+pub fn frequency_sort(nums: Vec<i32>) -> Vec<i32> {
+    let mut pairs: Vec<_> = nums
+        .into_iter()
+        .fold(HashMap::new(), |mut acc, num| {
+            *acc.entry(num).or_insert(0) += 1;
+            acc
+        })
+        .into_iter()
+        .collect();
+    pairs.sort_unstable_by(|a, b| a.1.cmp(&b.1).then(b.0.cmp(&a.0)));
+    pairs
+        .into_iter()
+        .flat_map(|(num, count)| iter::repeat(num).take(count))
+        .collect()
 }
 
 #[cfg(test)]
