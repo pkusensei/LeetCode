@@ -2,25 +2,16 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::{collections::HashMap, iter};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn frequency_sort(nums: Vec<i32>) -> Vec<i32> {
-    let mut pairs: Vec<_> = nums
-        .into_iter()
-        .fold(HashMap::new(), |mut acc, num| {
-            *acc.entry(num).or_insert(0) += 1;
-            acc
-        })
-        .into_iter()
-        .collect();
-    pairs.sort_unstable_by(|a, b| a.1.cmp(&b.1).then(b.0.cmp(&a.0)));
-    pairs
-        .into_iter()
-        .flat_map(|(num, count)| iter::repeat(num).take(count))
-        .collect()
+pub fn max_width_of_vertical_area(mut points: Vec<Vec<i32>>) -> i32 {
+    points.sort_unstable_by_key(|p| p[0]);
+    points
+        .windows(2)
+        .map(|w| w[1][0] - w[0][0])
+        .max()
+        .unwrap_or(0)
 }
 
 #[cfg(test)]
