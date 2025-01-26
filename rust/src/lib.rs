@@ -2,109 +2,48 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::{HashMap, VecDeque};
+use std::collections::BTreeMap;
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_invitations(favorite: Vec<i32>) -> i32 {
-    let n = favorite.len();
-    let innodes = favorite
-        .iter()
-        .enumerate()
-        .fold(vec![vec![]; n], |mut acc, (i, &v)| {
-            acc[v as usize].push(i);
-            acc
-        });
-    let mut seen = vec![false; n];
-    // Cycle a->b->c->d->e->a
-    // Chains a->b->c<->f<-g<-h
-    // Multiple 2-chain groups can be all fit in
-    // a->b->c<->d<-e + f->g<->h<-i<-j + ...
-    let [mut cycle_len, mut chain_len] = [0, 0];
-    for node in 0..n {
-        if seen[node] {
-            continue;
-        }
-        let mut curr = node;
-        let mut dist = 0;
-        let mut dists = HashMap::new();
-        while !seen[curr] {
-            seen[curr] = true;
-            dists.insert(curr, dist);
-            dist += 1;
-            let next = favorite[curr] as usize;
-            if let Some(prev) = dists.get(&next) {
-                let d = dist - prev;
-                cycle_len = cycle_len.max(d);
-                if d == 2 {
-                    let mut inchain = vec![false; n];
-                    inchain[curr] = true;
-                    inchain[next] = true;
-                    chain_len +=
-                        bfs(&innodes, &mut inchain, curr) + bfs(&innodes, &mut inchain, next);
-                }
-            }
-            curr = next;
+pub fn matrix_rank_transform(matrix: &[&[i32]]) -> Vec<Vec<i32>> {
+    let [rows, cols] = get_dimensions(matrix);
+    let mut map = BTreeMap::<_, Vec<_>>::new();
+    for (r, row) in matrix.iter().enumerate() {
+        for (c, &v) in row.iter().enumerate() {
+            map.entry(v).or_default().push([r, c]);
         }
     }
-    cycle_len.max(chain_len)
+    let mut res = vec![vec![0; cols]; rows];
+    let mut rank = vec![0; rows + cols];
+    for pos in map.into_values() {
+        let mut parent: Vec<_> = (0..rows + cols).collect();
+        for &[row, col] in pos.iter() {
+            let r1 = find(&mut parent, row);
+            let r2 = find(&mut parent, col + rows);
+            parent[r1] = r2; // Union row and col
+                             // Root points to highest rank
+            rank[r2] = rank[r1].max(rank[r2]);
+        }
+        let mut rank2 = rank.clone();
+        for [row, col] in pos {
+            let r = find(&mut parent, row);
+            res[row][col] = 1 + rank[r];
+            // Writes this rank onto row and col
+            rank2[row] = 1 + rank[r];
+            rank2[col + rows] = 1 + rank[r];
+        }
+        rank = rank2;
+    }
+    res
 }
 
-fn bfs(innodes: &[Vec<usize>], inchain: &mut [bool], start: usize) -> i32 {
-    let mut queue = VecDeque::from([(start, 0)]);
-    let mut res = 0;
-    while let Some((curr, dist)) = queue.pop_front() {
-        res = res.max(dist);
-        for &next in innodes[curr].iter() {
-            if !inchain[next] {
-                inchain[next] = true;
-                queue.push_back((next, 1 + dist));
-            }
-        }
+fn find(parent: &mut [usize], x: usize) -> usize {
+    if parent[x] != x {
+        parent[x] = find(parent, parent[x]);
     }
-    1 + res
-}
-
-pub fn with_topo_sort(favorite: Vec<i32>) -> i32 {
-    let n = favorite.len();
-    let mut indegs = favorite.iter().fold(vec![0; n], |mut acc, &fav| {
-        acc[fav as usize] += 1;
-        acc
-    });
-    let mut queue: VecDeque<_> = indegs
-        .iter()
-        .enumerate()
-        .filter_map(|(i, &v)| if v == 0 { Some(i) } else { None })
-        .collect();
-    let mut depth = vec![1; n];
-    while let Some(node) = queue.pop_front() {
-        let fav = favorite[node] as usize;
-        depth[fav] = depth[fav].max(1 + depth[node]);
-        indegs[fav] -= 1;
-        if indegs[fav] == 0 {
-            queue.push_back(fav);
-        }
-    }
-    let [mut cycle_len, mut chain_len] = [0, 0];
-    for node in 0..n {
-        if indegs[node] == 0 {
-            continue;
-        }
-        let mut curr = node;
-        let mut curr_len = 0;
-        while indegs[curr] > 0 {
-            indegs[curr] = 0;
-            curr_len += 1;
-            curr = favorite[curr] as usize;
-        }
-        if curr_len == 2 {
-            chain_len += depth[node] + depth[favorite[node] as usize];
-        } else {
-            cycle_len = cycle_len.max(curr_len);
-        }
-    }
-    cycle_len.max(chain_len)
+    parent[x]
 }
 
 #[cfg(test)]
@@ -125,25 +64,24 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(maximum_invitations(vec![2, 2, 1, 2]), 3);
-        assert_eq!(maximum_invitations(vec![1, 2, 0]), 3);
-        assert_eq!(maximum_invitations(vec![3, 0, 1, 4, 1]), 4);
-
-        assert_eq!(with_topo_sort(vec![2, 2, 1, 2]), 3);
-        assert_eq!(with_topo_sort(vec![1, 2, 0]), 3);
-        assert_eq!(with_topo_sort(vec![3, 0, 1, 4, 1]), 4);
+        assert_eq!(matrix_rank_transform(&[&[1, 2], &[3, 4]]), [[1, 2], [2, 3]]);
+        assert_eq!(matrix_rank_transform(&[&[7, 7], &[7, 7]]), [[1, 1], [1, 1]]);
+        assert_eq!(
+            matrix_rank_transform(&[&[20, -21, 14], &[-19, 4, 19], &[22, -47, 24], &[-19, 4, 19]]),
+            [[4, 2, 3], [1, 3, 4], [5, 1, 6], [1, 3, 4]]
+        );
     }
 
     #[test]
     fn test() {
         assert_eq!(
-            maximum_invitations(vec![1, 0, 3, 2, 5, 6, 7, 4, 9, 8, 11, 10, 11, 12, 10]),
-            11
-        );
-
-        assert_eq!(
-            with_topo_sort(vec![1, 0, 3, 2, 5, 6, 7, 4, 9, 8, 11, 10, 11, 12, 10]),
-            11
+            matrix_rank_transform(&[
+                &[-37, -50, -3, 44],
+                &[-37, 46, 13, -32],
+                &[47, -42, -3, -40],
+                &[-17, -22, -39, 24]
+            ]),
+            [[2, 1, 4, 6], [2, 6, 5, 4], [5, 2, 4, 3], [4, 3, 1, 5]]
         );
     }
 
