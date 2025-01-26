@@ -5,26 +5,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_substrings(s: &str, t: &str) -> i32 {
-    let n1 = s.len();
-    let n2 = t.len();
-    // all equal matches
-    let mut dp = vec![vec![0; 1 + n2]; 1 + n1];
-    // all matches with one miss
-    let mut dp1 = vec![vec![0; 1 + n2]; 1 + n1];
-    let mut res = 0;
-    for i1 in 1..=n1 {
-        for i2 in 1..=n2 {
-            if s.as_bytes()[i1 - 1] == t.as_bytes()[i2 - 1] {
-                dp[i1][i2] = 1 + dp[i1 - 1][i2 - 1]; // a new match!
-                dp1[i1][i2] = dp1[i1 - 1][i2 - 1]; // one miss is still one miss
-            } else {
-                dp1[i1][i2] = 1 + dp[i1 - 1][i2 - 1]; // a new miss!
-            }
-            res += dp1[i1][i2];
-        }
+pub fn can_form_array(arr: Vec<i32>, pieces: Vec<Vec<i32>>) -> bool {
+    let mut map: std::collections::HashMap<_, _> =
+        pieces.iter().map(|p| (p[0], p.as_slice())).collect();
+    let mut slice = &arr[..];
+    while !slice.is_empty() {
+        let Some(v) = map.remove(&slice[0]).and_then(|v| slice.strip_prefix(v)) else {
+            return false;
+        };
+        slice = v
     }
-    res
+    slice.is_empty()
 }
 
 #[cfg(test)]
@@ -44,10 +35,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(count_substrings("aba", "baba"), 6);
-        assert_eq!(count_substrings("ab", "bb"), 3);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
