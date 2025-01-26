@@ -6,30 +6,39 @@ namespace Solution;
 
 public class Solution
 {
-    public bool IsEvenOddTree(TreeNode root)
+    public int NumWays(string[] words, string target)
     {
-        if (root is null) { return true; }
-        Queue<TreeNode> queue = [];
-        queue.Enqueue(root);
-        var is_even = true;
-        while (queue.Count > 0)
+        var wn = words[0].Length;
+        var tn = target.Length;
+        int[,] freq = new int[wn, 26];
+        for (int i = 0; i < wn; i++)
         {
-            var n = queue.Count;
-            TreeNode prev = null;
-            for (int _ = 0; _ < n; _++)
+            foreach (var item in words)
             {
-                var node = queue.Dequeue();
-                if (is_even != ((node.val & 1) == 1)) { return false; }
-                if (prev is null || (is_even && prev.val < node.val) || (!is_even && prev.val > node.val))
-                {
-                    prev = node;
-                }
-                else { return false; }
-                if (node.left is not null) { queue.Enqueue(node.left); }
-                if (node.right is not null) { queue.Enqueue(node.right); }
+                freq[i, item[i] - 'a'] += 1;
             }
-            is_even = !is_even;
         }
-        return true;
+        var memo = new long[wn, tn];
+        for (int i = 0; i < wn; i++)
+        {
+            for (int j = 0; j < tn; j++)
+            {
+                memo[i, j] = -1;
+            }
+        }
+        return (int)Dfs(0, 0);
+
+        long Dfs(int fi, int ti)
+        {
+            long mod = 1_000_000_007;
+            if (ti >= tn) { return 1; }
+            if (wn - fi < tn - ti) { return 0; }
+            if (memo[fi, ti] > -1) { return memo[fi, ti]; }
+            var res = Dfs(1 + fi, ti);
+            res += freq[fi, target[ti] - 'a'] * Dfs(1 + fi, 1 + ti);
+            res %= mod;
+            memo[fi, ti] = res;
+            return res;
+        }
     }
 }

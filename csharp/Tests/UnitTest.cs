@@ -12,17 +12,14 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
-        var a = TreeNode.Make([1, 10, 4, 3, null, 7, 9, 12, 8, 6, null, null, 2]);
-        Assert.IsTrue(sol.IsEvenOddTree(a));
     }
 
     [TestMethod]
-    [DataRow(new[] { 5, 4, 2, 3, 3, 7 }, false)]
-    [DataRow(new[] { 5, 9, 1, 3, 5, 7 }, false)]
-    public void TestMethod2(int[] nums, bool exp)
+    [DataRow(new[] { "acca", "bbbb", "caca" }, "aba", 6)]
+    [DataRow(new[] { "abba", "baab" }, "bab", 4)]
+    public void TestMethod2(string[] words, string target, int exp)
     {
-        var a = TreeNode.MakeInt(nums);
-        Assert.IsFalse(sol.IsEvenOddTree(a));
+        Assert.AreEqual(exp, sol.NumWays(words, target));
     }
 
     [TestMethod]
