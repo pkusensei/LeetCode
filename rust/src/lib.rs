@@ -5,13 +5,26 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_width_of_vertical_area(mut points: Vec<Vec<i32>>) -> i32 {
-    points.sort_unstable_by_key(|p| p[0]);
-    points
-        .windows(2)
-        .map(|w| w[1][0] - w[0][0])
-        .max()
-        .unwrap_or(0)
+pub fn count_substrings(s: &str, t: &str) -> i32 {
+    let n1 = s.len();
+    let n2 = t.len();
+    // all equal matches
+    let mut dp = vec![vec![0; 1 + n2]; 1 + n1];
+    // all matches with one miss
+    let mut dp1 = vec![vec![0; 1 + n2]; 1 + n1];
+    let mut res = 0;
+    for i1 in 1..=n1 {
+        for i2 in 1..=n2 {
+            if s.as_bytes()[i1 - 1] == t.as_bytes()[i2 - 1] {
+                dp[i1][i2] = 1 + dp[i1 - 1][i2 - 1]; // a new match!
+                dp1[i1][i2] = dp1[i1 - 1][i2 - 1]; // one miss is still one miss
+            } else {
+                dp1[i1][i2] = 1 + dp[i1 - 1][i2 - 1]; // a new miss!
+            }
+            res += dp1[i1][i2];
+        }
+    }
+    res
 }
 
 #[cfg(test)]
@@ -32,26 +45,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(matrix_rank_transform(&[&[1, 2], &[3, 4]]), [[1, 2], [2, 3]]);
-        assert_eq!(matrix_rank_transform(&[&[7, 7], &[7, 7]]), [[1, 1], [1, 1]]);
-        assert_eq!(
-            matrix_rank_transform(&[&[20, -21, 14], &[-19, 4, 19], &[22, -47, 24], &[-19, 4, 19]]),
-            [[4, 2, 3], [1, 3, 4], [5, 1, 6], [1, 3, 4]]
-        );
+        assert_eq!(count_substrings("aba", "baba"), 6);
+        assert_eq!(count_substrings("ab", "bb"), 3);
     }
 
     #[test]
-    fn test() {
-        assert_eq!(
-            matrix_rank_transform(&[
-                &[-37, -50, -3, 44],
-                &[-37, 46, 13, -32],
-                &[47, -42, -3, -40],
-                &[-17, -22, -39, 24]
-            ]),
-            [[2, 1, 4, 6], [2, 6, 5, 4], [5, 2, 4, 3], [4, 3, 1, 5]]
-        );
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn float_eq<T1, T2>(a: T1, b: T2)
