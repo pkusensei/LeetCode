@@ -2,23 +2,31 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::{cmp::Reverse, collections::HashSet};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn get_maximum_generated(n: i32) -> i32 {
-    if n <= 1 {
-        return n;
-    }
-    let mut v = vec![0; 1 + n as usize];
-    v[1] = 1;
-    for i in 2..=n as usize {
-        if i & 1 == 1 {
-            v[i] = v[i / 2] + v[1 + i / 2]
-        } else {
-            v[i] = v[i / 2]
+pub fn min_deletions(s: &str) -> i32 {
+    let mut nums: Vec<_> = s
+        .bytes()
+        .fold([0i16; 26], |mut acc, b| {
+            acc[usize::from(b - b'a')] += 1;
+            acc
+        })
+        .into_iter()
+        .filter(|&v| v > 0)
+        .collect();
+    nums.sort_unstable_by_key(|&v| Reverse(v));
+    let mut seen = HashSet::new();
+    let mut res = 0;
+    for mut num in nums {
+        while num > 0 && !seen.insert(num) {
+            num -= 1;
+            res += 1;
         }
     }
-    v.into_iter().max().unwrap_or(0)
+    res
 }
 
 #[cfg(test)]
@@ -38,7 +46,9 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(min_deletions("bbcebab"), 2)
+    }
 
     #[test]
     fn test() {}
