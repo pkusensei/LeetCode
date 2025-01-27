@@ -2,31 +2,40 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::{cmp::Reverse, collections::BinaryHeap};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn furthest_building(heights: &[i32], mut bricks: i32, ladders: i32) -> i32 {
-    let mut heap = BinaryHeap::new();
-    let mut prev_height = heights[0];
-    for (i, &height) in heights.iter().enumerate().skip(1) {
-        let diff = height - prev_height;
-        if diff > 0 {
-            heap.push(Reverse(diff)); // greedy; use ladder
-            if heap.len() > ladders as usize {
-                // out of ladders
-                // find smallest gap and swap to bricks
-                let Reverse(d) = heap.pop().unwrap();
-                bricks -= d;
-                if bricks < 0 {
-                    return i as i32 - 1;
-                }
-            }
-        }
-        prev_height = height;
+pub fn kth_smallest_path(destination: [i32; 2], k: i32) -> String {
+    let [rows, cols] = [0, 1].map(|v| destination[v]);
+    let mut res = dfs(cols, rows, k);
+    res.reverse();
+    String::from_utf8(res).unwrap()
+}
+
+fn dfs(hs: i32, vs: i32, k: i32) -> Vec<u8> {
+    if hs == 0 {
+        return vec![b'V'; vs as usize];
     }
-    heights.len() as i32 - 1
+    if vs == 0 {
+        return vec![b'H'; hs as usize];
+    }
+    // Put 'H' here => it's possible to generate this many combos
+    // Otherwise, pick 'V'
+    let comb = n_choose_k(hs + vs - 1, hs - 1);
+    if k <= comb {
+        let mut res = dfs(hs - 1, vs, k);
+        res.push(b'H');
+        res
+    } else {
+        let mut res = dfs(hs, vs - 1, k - comb);
+        res.push(b'V');
+        res
+    }
+}
+
+fn n_choose_k(n: i32, k: i32) -> i32 {
+    let k = k.min(n - k);
+    (0..k).fold(1, |acc, i| acc * (n - i) / (1 + i))
 }
 
 #[cfg(test)]
@@ -47,18 +56,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(furthest_building(&[4, 2, 7, 6, 9, 14, 12], 5, 1), 4);
-        assert_eq!(
-            furthest_building(&[4, 12, 2, 7, 3, 18, 20, 3, 19], 10, 2),
-            7
-        );
-        assert_eq!(furthest_building(&[14, 3, 19, 3], 17, 0), 3);
+        assert_eq!(kth_smallest_path([2, 3], 1), "HHHVV");
+        assert_eq!(kth_smallest_path([2, 3], 2), "HHVHV");
+        assert_eq!(kth_smallest_path([2, 3], 3), "HHVVH");
     }
 
     #[test]
-    fn test() {
-        assert_eq!(furthest_building(&[1, 5, 1, 2, 3, 4, 10000], 4, 1), 5);
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn float_eq<T1, T2>(a: T1, b: T2)
