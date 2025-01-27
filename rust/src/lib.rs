@@ -5,37 +5,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn kth_smallest_path(destination: [i32; 2], k: i32) -> String {
-    let [rows, cols] = [0, 1].map(|v| destination[v]);
-    let mut res = dfs(cols, rows, k);
-    res.reverse();
-    String::from_utf8(res).unwrap()
-}
-
-fn dfs(hs: i32, vs: i32, k: i32) -> Vec<u8> {
-    if hs == 0 {
-        return vec![b'V'; vs as usize];
+pub fn get_maximum_generated(n: i32) -> i32 {
+    if n <= 1 {
+        return n;
     }
-    if vs == 0 {
-        return vec![b'H'; hs as usize];
+    let mut v = vec![0; 1 + n as usize];
+    v[1] = 1;
+    for i in 2..=n as usize {
+        if i & 1 == 1 {
+            v[i] = v[i / 2] + v[1 + i / 2]
+        } else {
+            v[i] = v[i / 2]
+        }
     }
-    // Put 'H' here => it's possible to generate this many combos
-    // Otherwise, pick 'V'
-    let comb = n_choose_k(hs + vs - 1, hs - 1);
-    if k <= comb {
-        let mut res = dfs(hs - 1, vs, k);
-        res.push(b'H');
-        res
-    } else {
-        let mut res = dfs(hs, vs - 1, k - comb);
-        res.push(b'V');
-        res
-    }
-}
-
-fn n_choose_k(n: i32, k: i32) -> i32 {
-    let k = k.min(n - k);
-    (0..k).fold(1, |acc, i| acc * (n - i) / (1 + i))
+    v.into_iter().max().unwrap_or(0)
 }
 
 #[cfg(test)]
@@ -55,11 +38,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(kth_smallest_path([2, 3], 1), "HHHVV");
-        assert_eq!(kth_smallest_path([2, 3], 2), "HHVHV");
-        assert_eq!(kth_smallest_path([2, 3], 3), "HHVVH");
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
