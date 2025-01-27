@@ -2,31 +2,40 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::{cmp::Reverse, collections::HashSet};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_deletions(s: &str) -> i32 {
-    let mut nums: Vec<_> = s
-        .bytes()
-        .fold([0i16; 26], |mut acc, b| {
-            acc[usize::from(b - b'a')] += 1;
-            acc
-        })
-        .into_iter()
-        .filter(|&v| v > 0)
-        .collect();
-    nums.sort_unstable_by_key(|&v| Reverse(v));
-    let mut seen = HashSet::new();
+pub fn max_profit(inventory: &mut [i32], orders: i32) -> i32 {
+    const MOD: i64 = 1_000_000_007;
+    inventory.sort_unstable_by_key(|&v| std::cmp::Reverse(v));
+    let n = inventory.len();
+    let mut orders = i64::from(orders);
+    let mut idx = 0; // width
+    let mut curr = i64::from(inventory[0]);
     let mut res = 0;
-    for mut num in nums {
-        while num > 0 && !seen.insert(num) {
-            num -= 1;
-            res += 1;
+    while orders > 0 {
+        while idx < n && i64::from(inventory[idx]) == curr {
+            idx += 1;
         }
+        let next = if idx == n {
+            0
+        } else {
+            i64::from(inventory[idx])
+        };
+        let mut diff = curr - next;
+        let mut rem = 0;
+        let count = orders.min(idx as i64 * diff);
+        if orders < diff * idx as i64 {
+            diff = orders / idx as i64;
+            rem = orders % idx as i64;
+        }
+        let val = curr - diff;
+        res += (curr + val + 1) * diff / 2 * idx as i64 + val * rem;
+        res %= MOD;
+        orders -= count;
+        curr = next;
     }
-    res
+    res as _
 }
 
 #[cfg(test)]
@@ -47,11 +56,18 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_deletions("bbcebab"), 2)
+        assert_eq!(max_profit(&mut [2, 5], 4), 14);
+        assert_eq!(max_profit(&mut [3, 5], 6), 19);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(
+            max_profit(&mut [497978859, 167261111, 483575207, 591815159], 836556809),
+            373219333
+        );
+        assert_eq!(max_profit(&mut [1000000000], 1000000000), 21);
+    }
 
     #[allow(dead_code)]
     fn float_eq<T1, T2>(a: T1, b: T2)
