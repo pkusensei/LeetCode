@@ -5,37 +5,32 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_profit(inventory: &mut [i32], orders: i32) -> i32 {
-    const MOD: i64 = 1_000_000_007;
-    inventory.sort_unstable_by_key(|&v| std::cmp::Reverse(v));
-    let n = inventory.len();
-    let mut orders = i64::from(orders);
-    let mut idx = 0; // width
-    let mut curr = i64::from(inventory[0]);
+pub fn create_sorted_array(instructions: &[i32]) -> i32 {
+    let max = instructions.iter().copied().max().unwrap() as usize;
+    let mut ft = vec![0; 1 + max];
     let mut res = 0;
-    while orders > 0 {
-        while idx < n && i64::from(inventory[idx]) == curr {
-            idx += 1;
-        }
-        let next = if idx == n {
-            0
-        } else {
-            i64::from(inventory[idx])
-        };
-        let mut diff = curr - next;
-        let mut rem = 0;
-        let count = orders.min(idx as i64 * diff);
-        if orders < diff * idx as i64 {
-            diff = orders / idx as i64;
-            rem = orders % idx as i64;
-        }
-        let val = curr - diff;
-        res += (curr + val + 1) * diff / 2 * idx as i64 + val * rem;
-        res %= MOD;
-        orders -= count;
-        curr = next;
+    for (i, &num) in instructions.iter().enumerate() {
+        res += query(&mut ft, num as usize - 1).min(i as i32 - query(&mut ft, num as usize));
+        res %= 1_000_000_007;
+        update(&mut ft, num as _, max);
     }
-    res as _
+    res
+}
+
+fn update(ft: &mut [i32], mut x: usize, max: usize) {
+    while x <= max {
+        ft[x] += 1;
+        x += x & x.wrapping_neg();
+    }
+}
+
+fn query(ft: &[i32], mut x: usize) -> i32 {
+    let mut res = 0;
+    while x > 0 {
+        res += ft[x];
+        x -= x & x.wrapping_neg()
+    }
+    res
 }
 
 #[cfg(test)]
@@ -56,18 +51,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_profit(&mut [2, 5], 4), 14);
-        assert_eq!(max_profit(&mut [3, 5], 6), 19);
+        assert_eq!(create_sorted_array(&[1, 5, 6, 2]), 1);
+        assert_eq!(create_sorted_array(&[1, 2, 3, 6, 5, 4]), 3);
+        assert_eq!(create_sorted_array(&[1, 3, 3, 3, 2, 4, 2, 1, 2]), 4);
     }
 
     #[test]
-    fn test() {
-        assert_eq!(
-            max_profit(&mut [497978859, 167261111, 483575207, 591815159], 836556809),
-            373219333
-        );
-        assert_eq!(max_profit(&mut [1000000000], 1000000000), 21);
-    }
+    fn test() {}
 
     #[allow(dead_code)]
     fn float_eq<T1, T2>(a: T1, b: T2)
