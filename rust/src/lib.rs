@@ -2,23 +2,33 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::{HashSet, VecDeque};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_deletions(s: String) -> i32 {
-    let mut bs = 0;
-    let mut res = 0;
-    for b in s.bytes() {
-        match b {
-            b'a' if bs > 0 => {
-                bs -= 1;
-                res += 1;
-            }
-            b'b' => bs += 1,
-            _ => (),
+pub fn minimum_jumps(forbidden: &[i32], a: i32, b: i32, x: i32) -> i32 {
+    let forbids: HashSet<_> = forbidden.iter().copied().collect();
+    let max = a + b + forbidden.iter().copied().max().unwrap_or(x).max(x);
+    // pos, backwards, step
+    let mut queue = VecDeque::from([(0, false, 0)]);
+    let mut seen = vec![vec![false; 1 + max as usize]; 2];
+    while let Some((pos, backward, step)) = queue.pop_front() {
+        if pos == x {
+            return step;
+        }
+        let forepos = pos + a;
+        if forepos <= max && !seen[0][forepos as usize] && !forbids.contains(&pos) {
+            seen[0][forepos as usize] = true;
+            queue.push_back((forepos, false, 1 + step));
+        }
+        let backpos = pos - b;
+        if backpos >= 0 && !forbids.contains(&pos) && !backward && !seen[1][backpos as usize] {
+            seen[1][backpos as usize] = true;
+            queue.push_back((backpos, true, 1 + step));
         }
     }
-    res
+    -1
 }
 
 #[cfg(test)]
@@ -38,7 +48,9 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(minimum_jumps(&[1, 6, 2, 14, 5, 17, 4], 16, 9, 7), 2);
+    }
 
     #[test]
     fn test() {}
