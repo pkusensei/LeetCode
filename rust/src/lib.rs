@@ -2,33 +2,39 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::{HashSet, VecDeque};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_jumps(forbidden: &[i32], a: i32, b: i32, x: i32) -> i32 {
-    let forbids: HashSet<_> = forbidden.iter().copied().collect();
-    let max = a + b + forbidden.iter().copied().max().unwrap_or(x).max(x);
-    // pos, backwards, step
-    let mut queue = VecDeque::from([(0, false, 0)]);
-    let mut seen = vec![vec![false; 1 + max as usize]; 2];
-    while let Some((pos, backward, step)) = queue.pop_front() {
-        if pos == x {
-            return step;
-        }
-        let forepos = pos + a;
-        if forepos <= max && !seen[0][forepos as usize] && !forbids.contains(&pos) {
-            seen[0][forepos as usize] = true;
-            queue.push_back((forepos, false, 1 + step));
-        }
-        let backpos = pos - b;
-        if backpos >= 0 && !forbids.contains(&pos) && !backward && !seen[1][backpos as usize] {
-            seen[1][backpos as usize] = true;
-            queue.push_back((backpos, true, 1 + step));
+pub fn can_distribute(nums: &[i32], quantity: &mut [i32]) -> bool {
+    let mut counts: Vec<_> = nums
+        .iter()
+        .fold(std::collections::HashMap::new(), |mut acc, &num| {
+            *acc.entry(num).or_insert(0) += 1;
+            acc
+        })
+        .into_values()
+        .collect();
+    quantity.sort_unstable_by_key(|&v| std::cmp::Reverse(v)); // WHAT??!!
+    backtrack(&mut counts, quantity)
+}
+
+fn backtrack(counts: &mut [i32], quantity: &[i32]) -> bool {
+    match quantity {
+        [] => true,
+        [head, tail @ ..] => {
+            let n = counts.len();
+            for i in 0..n {
+                if counts[i] >= *head {
+                    counts[i] -= head;
+                    if backtrack(counts, tail) {
+                        return true;
+                    }
+                    counts[i] += head;
+                }
+            }
+            false
         }
     }
-    -1
 }
 
 #[cfg(test)]
@@ -49,11 +55,28 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(minimum_jumps(&[1, 6, 2, 14, 5, 17, 4], 16, 9, 7), 2);
+        assert!(!can_distribute(&[1, 2, 3, 4], &mut [2]));
+        assert!(can_distribute(&[1, 2, 3, 3], &mut [2]));
+        assert!(can_distribute(&[1, 1, 2, 2], &mut [2, 2]));
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert!(can_distribute(
+            &[1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2],
+            &mut [3, 3, 3, 4]
+        ));
+        assert!(!can_distribute(
+            &[
+                1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13,
+                13, 14, 14, 15, 15, 16, 16, 17, 17, 18, 18, 19, 19, 20, 20, 21, 21, 22, 22, 23, 23,
+                24, 24, 25, 25, 26, 26, 27, 27, 28, 28, 29, 29, 30, 30, 31, 31, 32, 32, 33, 33, 34,
+                34, 35, 35, 36, 36, 37, 37, 38, 38, 39, 39, 40, 40, 41, 41, 42, 42, 43, 43, 44, 44,
+                45, 45, 46, 46, 47, 47, 48, 48, 49, 49, 50, 50
+            ],
+            &mut [2, 2, 2, 2, 2, 2, 2, 2, 2, 3]
+        ));
+    }
 
     #[allow(dead_code)]
     fn float_eq<T1, T2>(a: T1, b: T2)
