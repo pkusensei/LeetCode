@@ -5,30 +5,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn create_sorted_array(instructions: &[i32]) -> i32 {
-    let max = instructions.iter().copied().max().unwrap() as usize;
-    let mut ft = vec![0; 1 + max];
+pub fn minimum_deletions(s: String) -> i32 {
+    let mut bs = 0;
     let mut res = 0;
-    for (i, &num) in instructions.iter().enumerate() {
-        res += query(&mut ft, num as usize - 1).min(i as i32 - query(&mut ft, num as usize));
-        res %= 1_000_000_007;
-        update(&mut ft, num as _, max);
-    }
-    res
-}
-
-fn update(ft: &mut [i32], mut x: usize, max: usize) {
-    while x <= max {
-        ft[x] += 1;
-        x += x & x.wrapping_neg();
-    }
-}
-
-fn query(ft: &[i32], mut x: usize) -> i32 {
-    let mut res = 0;
-    while x > 0 {
-        res += ft[x];
-        x -= x & x.wrapping_neg()
+    for b in s.bytes() {
+        match b {
+            b'a' if bs > 0 => {
+                bs -= 1;
+                res += 1;
+            }
+            b'b' => bs += 1,
+            _ => (),
+        }
     }
     res
 }
@@ -50,11 +38,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(create_sorted_array(&[1, 5, 6, 2]), 1);
-        assert_eq!(create_sorted_array(&[1, 2, 3, 6, 5, 4]), 3);
-        assert_eq!(create_sorted_array(&[1, 3, 3, 3, 2, 4, 2, 1, 2]), 4);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
