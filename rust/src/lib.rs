@@ -5,14 +5,14 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_effort(tasks: &mut [[i32; 2]]) -> i32 {
-        tasks.sort_unstable_by_key(|t| t[1] - t[0]);
-        let mut res = 0;
-        for t in tasks {
-            res += t[0];
-            res = res.max(t[1]);
-        }
-        res
+pub fn max_repeating(sequence: String, word: String) -> i32 {
+    let mut res = 0;
+    let mut curr = word.clone();
+    while sequence.contains(&curr) {
+        curr.push_str(&word);
+        res += 1;
+    }
+    res
 }
 
 #[cfg(test)]
@@ -32,17 +32,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(minimum_effort(&mut [[1, 2], [2, 4], [4, 8]]), 8);
-        assert_eq!(
-            minimum_effort(&mut [[1, 3], [2, 4], [10, 11], [10, 12], [8, 9]]),
-            32
-        );
-        assert_eq!(
-            minimum_effort(&mut [[1, 7], [2, 8], [3, 9], [4, 10], [5, 11], [6, 12]]),
-            27
-        )
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
