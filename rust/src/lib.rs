@@ -5,17 +5,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn most_competitive(nums: Vec<i32>, k: i32) -> Vec<i32> {
-    let k = k as usize;
+pub fn min_moves(nums: &[i32], limit: i32) -> i32 {
+    let mut delta = vec![0; 2 + 2 * limit as usize];
     let n = nums.len();
-    let mut res = Vec::with_capacity(k);
-    for (idx, &num) in nums.iter().enumerate() {
-        while res.last().is_some_and(|&v| v > num) && res.len() + (n - idx - 1) >= k {
-            res.pop();
-        }
-        res.push(num);
+    for (&a, &b) in nums.iter().zip(nums.iter().rev()).take(n / 2) {
+        delta[a.min(b) as usize + 1] -= 1;
+        delta[(a + b) as usize] -= 1;
+        delta[(a + b + 1) as usize] += 1;
+        delta[(a.max(b) + limit) as usize + 1] += 1;
     }
-    res.truncate(k);
+    let mut res = i32::MAX;
+    let mut curr = n as i32;
+    for v in delta[2..].iter() {
+        curr += v;
+        res = res.min(curr);
+    }
     res
 }
 
@@ -36,7 +40,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(min_moves(&[1, 2, 4, 3], 4), 1);
+        assert_eq!(min_moves(&[1, 2, 2, 1], 2), 2);
+        assert_eq!(min_moves(&[1, 2, 1, 2], 2), 0);
+    }
 
     #[test]
     fn test() {}
