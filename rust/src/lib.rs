@@ -5,20 +5,26 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_moves(nums: &[i32], limit: i32) -> i32 {
-    let mut delta = vec![0; 2 + 2 * limit as usize];
-    let n = nums.len();
-    for (&a, &b) in nums.iter().zip(nums.iter().rev()).take(n / 2) {
-        delta[a.min(b) as usize + 1] -= 1;
-        delta[(a + b) as usize] -= 1;
-        delta[(a + b + 1) as usize] += 1;
-        delta[(a.max(b) + limit) as usize + 1] += 1;
+pub fn minimum_deviation(nums: &[i32]) -> i32 {
+    let mut heap = std::collections::BinaryHeap::new();
+    let mut min = i32::MAX;
+    // all odd=>even and keep track of mins
+    for &num in nums.iter() {
+        let v = if num & 1 == 1 { 2 * num } else { num };
+        min = min.min(v);
+        heap.push(v);
     }
     let mut res = i32::MAX;
-    let mut curr = n as i32;
-    for v in delta[2..].iter() {
-        curr += v;
-        res = res.min(curr);
+    while let Some(num) = heap.pop() {
+        // track current delta
+        res = res.min(num - min);
+        if num & 1 == 0 {
+            // update min if possible
+            min = min.min(num / 2);
+            heap.push(num / 2);
+        } else {
+            break;
+        }
     }
     res
 }
@@ -41,9 +47,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_moves(&[1, 2, 4, 3], 4), 1);
-        assert_eq!(min_moves(&[1, 2, 2, 1], 2), 2);
-        assert_eq!(min_moves(&[1, 2, 1, 2], 2), 0);
+        assert_eq!(minimum_deviation(&[1, 2, 3, 4]), 1);
+        assert_eq!(minimum_deviation(&[4, 1, 5, 20, 3]), 3);
+        assert_eq!(minimum_deviation(&[2, 10, 8]), 3);
     }
 
     #[test]
