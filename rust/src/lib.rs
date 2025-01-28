@@ -5,32 +5,14 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn ways_to_make_fair(nums: &[i32]) -> i32 {
-    let n = nums.len();
-    let [mut odd_prefix, mut even_prefix] = [0, 1].map(|_| Vec::with_capacity(n));
-    for (idx, &num) in nums.iter().enumerate() {
-        odd_prefix.push(if idx & 1 == 1 { num } else { 0 } + odd_prefix.last().unwrap_or(&0));
-        even_prefix.push(if idx & 1 == 0 { num } else { 0 } + even_prefix.last().unwrap_or(&0));
-    }
-    let mut res = 0;
-    for idx in 0..n {
-        let odd = if idx & 1 == 1 {
-            odd_prefix[idx - 1]
-        } else {
-            odd_prefix[idx]
-        };
-        let even = if idx == 0 {
-            0
-        } else if idx & 1 == 0 {
-            even_prefix[idx - 1]
-        } else {
-            even_prefix[idx]
-        };
-        let odd_suffix = odd_prefix[n - 1] - odd_prefix[idx];
-        let even_suffix = even_prefix[n - 1] - even_prefix[idx];
-        res += i32::from(odd + even_suffix == even + odd_suffix);
-    }
-    res
+pub fn minimum_effort(tasks: &mut [[i32; 2]]) -> i32 {
+        tasks.sort_unstable_by_key(|t| t[1] - t[0]);
+        let mut res = 0;
+        for t in tasks {
+            res += t[0];
+            res = res.max(t[1]);
+        }
+        res
 }
 
 #[cfg(test)]
@@ -51,9 +33,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(ways_to_make_fair(&[2, 1, 6, 4]), 1);
-        assert_eq!(ways_to_make_fair(&[1, 1, 1]), 3);
-        assert_eq!(ways_to_make_fair(&[1, 2, 3]), 0);
+        assert_eq!(minimum_effort(&mut [[1, 2], [2, 4], [4, 8]]), 8);
+        assert_eq!(
+            minimum_effort(&mut [[1, 3], [2, 4], [10, 11], [10, 12], [8, 9]]),
+            32
+        );
+        assert_eq!(
+            minimum_effort(&mut [[1, 7], [2, 8], [3, 9], [4, 10], [5, 11], [6, 12]]),
+            27
+        )
     }
 
     #[test]
