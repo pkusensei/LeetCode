@@ -2,24 +2,41 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::VecDeque;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn close_strings(word1: String, word2: String) -> bool {
-    let [(bytes1, count1), (bytes2, count2)] = [&word1, &word2].map(|s| {
-        let (mut bytes, mut count): (Vec<_>, Vec<_>) = s
-            .bytes()
-            .fold(std::collections::HashMap::new(), |mut acc, b| {
-                *acc.entry(b).or_insert(0) += 1;
-                acc
-            })
-            .into_iter()
-            .unzip();
-        bytes.sort_unstable();
-        count.sort_unstable();
-        (bytes, count)
-    });
-    bytes1 == bytes2 && count1 == count2
+pub fn find_max_fish(grid: Vec<Vec<i32>>) -> i32 {
+    let [rows, cols] = get_dimensions(&grid);
+    let mut seen = vec![vec![false; cols]; rows];
+    let mut res = 0;
+    for (r, row) in grid.iter().enumerate() {
+        for (c, &v) in row.iter().enumerate() {
+            if v > 0 && !seen[r][c] {
+                res = res.max(bfs(&grid, &mut seen, [r, c]));
+            }
+        }
+    }
+    res
+}
+
+fn bfs(grid: &[Vec<i32>], seen: &mut [Vec<bool>], start: [usize; 2]) -> i32 {
+    let mut res = 0;
+    let mut queue = VecDeque::from([(start, grid[start[0]][start[1]])]);
+    seen[start[0]][start[1]] = true;
+    while let Some(([r, c], count)) = queue.pop_front() {
+        res += count;
+        for [nr, nc] in neighbors([r, c]) {
+            if let Some(&v) = grid.get(nr).and_then(|row| row.get(nc)) {
+                if v > 0 && !seen[nr][nc] {
+                    seen[nr][nc] = true;
+                    queue.push_back(([nr, nc], v));
+                }
+            }
+        }
+    }
+    res
 }
 
 #[cfg(test)]
