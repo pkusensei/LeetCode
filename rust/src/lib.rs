@@ -5,17 +5,32 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn get_smallest_string(mut n: i32, mut k: i32) -> String {
-    let mut res = Vec::with_capacity(n as usize);
-    while n < k {
-        let curr = (k - n + 1).min(26);
-        res.push(b'a' + curr as u8 - 1);
-        n -= 1;
-        k -= curr;
+pub fn ways_to_make_fair(nums: &[i32]) -> i32 {
+    let n = nums.len();
+    let [mut odd_prefix, mut even_prefix] = [0, 1].map(|_| Vec::with_capacity(n));
+    for (idx, &num) in nums.iter().enumerate() {
+        odd_prefix.push(if idx & 1 == 1 { num } else { 0 } + odd_prefix.last().unwrap_or(&0));
+        even_prefix.push(if idx & 1 == 0 { num } else { 0 } + even_prefix.last().unwrap_or(&0));
     }
-    res.extend(std::iter::repeat(b'a').take(n as usize));
-    res.reverse();
-    String::from_utf8(res).unwrap()
+    let mut res = 0;
+    for idx in 0..n {
+        let odd = if idx & 1 == 1 {
+            odd_prefix[idx - 1]
+        } else {
+            odd_prefix[idx]
+        };
+        let even = if idx == 0 {
+            0
+        } else if idx & 1 == 0 {
+            even_prefix[idx - 1]
+        } else {
+            even_prefix[idx]
+        };
+        let odd_suffix = odd_prefix[n - 1] - odd_prefix[idx];
+        let even_suffix = even_prefix[n - 1] - even_prefix[idx];
+        res += i32::from(odd + even_suffix == even + odd_suffix);
+    }
+    res
 }
 
 #[cfg(test)]
@@ -35,7 +50,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(ways_to_make_fair(&[2, 1, 6, 4]), 1);
+        assert_eq!(ways_to_make_fair(&[1, 1, 1]), 3);
+        assert_eq!(ways_to_make_fair(&[1, 2, 3]), 0);
+    }
 
     #[test]
     fn test() {}
