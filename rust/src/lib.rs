@@ -2,41 +2,30 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::VecDeque;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_max_fish(grid: Vec<Vec<i32>>) -> i32 {
-    let [rows, cols] = get_dimensions(&grid);
-    let mut seen = vec![vec![false; cols]; rows];
-    let mut res = 0;
-    for (r, row) in grid.iter().enumerate() {
-        for (c, &v) in row.iter().enumerate() {
-            if v > 0 && !seen[r][c] {
-                res = res.max(bfs(&grid, &mut seen, [r, c]));
-            }
-        }
+pub fn min_operations(nums: &[i32], x: i32) -> i32 {
+    let sum: i32 = nums.iter().sum();
+    if sum == x {
+        return nums.len() as _;
     }
-    res
-}
-
-fn bfs(grid: &[Vec<i32>], seen: &mut [Vec<bool>], start: [usize; 2]) -> i32 {
+    let target = sum - x;
+    let mut seen = std::collections::HashMap::from([(0, -1)]);
     let mut res = 0;
-    let mut queue = VecDeque::from([(start, grid[start[0]][start[1]])]);
-    seen[start[0]][start[1]] = true;
-    while let Some(([r, c], count)) = queue.pop_front() {
-        res += count;
-        for [nr, nc] in neighbors([r, c]) {
-            if let Some(&v) = grid.get(nr).and_then(|row| row.get(nc)) {
-                if v > 0 && !seen[nr][nc] {
-                    seen[nr][nc] = true;
-                    queue.push_back(([nr, nc], v));
-                }
-            }
+    let mut curr = 0;
+    for (idx, &num) in nums.iter().enumerate() {
+        curr += num;
+        if let Some(prev) = seen.get(&(curr - target)) {
+            res = res.max(idx as i32 - prev);
         }
+        seen.entry(curr).or_insert(idx as i32);
     }
-    res
+    if res == 0 {
+        -1
+    } else {
+        nums.len() as i32 - res
+    }
 }
 
 #[cfg(test)]
@@ -56,7 +45,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(min_operations(&[1, 1, 4, 2, 3], 5), 2);
+        assert_eq!(min_operations(&[5, 6, 7, 8, 9], 4), -1);
+        assert_eq!(min_operations(&[3, 2, 20, 1, 1, 3], 10), 5);
+    }
 
     #[test]
     fn test() {}
