@@ -5,19 +5,45 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn get_sum_absolute_differences(nums: &[i32]) -> Vec<i32> {
-    let n = nums.len();
-    let mut prefix = Vec::with_capacity(n);
-    for num in nums.iter() {
-        prefix.push(num + prefix.last().unwrap_or(&0));
+pub fn stone_game_vi(alice_values: Vec<i32>, bob_values: Vec<i32>) -> i32 {
+    let mut heap: std::collections::BinaryHeap<_> = alice_values
+        .into_iter()
+        .zip(bob_values)
+        .map(|(a, b)| Pair { a, b })
+        .collect();
+    let [mut s1, mut s2] = [0, 0];
+    let mut turn = true;
+    while let Some(Pair { a, b }) = heap.pop() {
+        if turn {
+            s1 += a;
+        } else {
+            s2 += b;
+        }
+        turn = !turn;
     }
-    let mut res = Vec::with_capacity(n);
-    for (idx, num) in nums.iter().enumerate() {
-        let mut curr = num * (1 + idx as i32) - prefix[idx];
-        curr += prefix[n - 1] - prefix[idx] - num * (n - idx - 1) as i32;
-        res.push(curr);
+    match s1.cmp(&s2) {
+        std::cmp::Ordering::Less => -1,
+        std::cmp::Ordering::Equal => 0,
+        std::cmp::Ordering::Greater => 1,
     }
-    res
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct Pair {
+    a: i32,
+    b: i32,
+}
+
+impl PartialOrd for Pair {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Pair {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        (self.a + self.b).cmp(&(other.a + other.b))
+    }
 }
 
 #[cfg(test)]
@@ -37,9 +63,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(get_sum_absolute_differences(&[2, 3, 5]), [4, 3, 5]);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
