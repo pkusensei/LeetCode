@@ -5,23 +5,54 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn interpret(command: String) -> String {
-    let mut s = command.as_str();
-    let mut res = vec![];
-    while !s.is_empty() {
-        if let Some(v) = s.strip_prefix("G") {
-            s = v;
-            res.push(b'G');
-        } else if let Some(v) = s.strip_prefix("()") {
-            s = v;
-            res.push(b'o');
-        } else {
-            s = &s[4..];
-            res.extend_from_slice(b"al");
+pub fn find_redundant_connection(edges: Vec<Vec<i32>>) -> Vec<i32> {
+    let n = edges.len();
+    let mut dsu = DSU::new(1 + n);
+    for e in edges {
+        if !dsu.union(e[0] as _, e[1] as _) {
+            return e;
         }
     }
-    String::from_utf8(res).unwrap()
+    vec![]
 }
+
+struct DSU {
+    parent: Vec<usize>,
+    rank: Vec<i32>,
+}
+
+impl DSU {
+    fn new(n: usize) -> Self {
+        Self {
+            parent: (0..n).collect(),
+            rank: vec![0; n],
+        }
+    }
+
+    fn find(&mut self, v: usize) -> usize {
+        if self.parent[v] != v {
+            self.parent[v] = self.find(self.parent[v]);
+        }
+        self.parent[v]
+    }
+
+    fn union(&mut self, x: usize, y: usize) -> bool {
+        let [rx, ry] = [x, y].map(|v| self.find(v));
+        if rx == ry {
+            return false;
+        }
+        match self.rank[rx].cmp(&self.rank[ry]) {
+            std::cmp::Ordering::Less => self.parent[rx] = ry,
+            std::cmp::Ordering::Equal => {
+                self.rank[rx] += 1;
+                self.parent[ry] = rx
+            }
+            std::cmp::Ordering::Greater => self.parent[ry] = rx,
+        }
+        true
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::fmt::Debug;
