@@ -103,3 +103,16 @@ where
         gcd(b % a, a)
     }
 }
+
+pub const fn mod_pow(mut base: i64, mut exp: u32, modu: i64) -> i64 {
+    let mut res = 1;
+    base %= modu;
+    while exp > 0 {
+        if exp & 1 == 1 {
+            res = (res * base) % modu;
+        }
+        exp /= 2;
+        base = base.pow(2) % modu;
+    }
+    res
+}

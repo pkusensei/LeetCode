@@ -5,22 +5,40 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_operations(nums: Vec<i32>, k: i32) -> i32 {
-    let mut seen = std::collections::HashMap::new();
-    let mut res = 0;
-    for num in nums {
-        let diff = k - num;
-        if let Some(v) = seen.get_mut(&diff) {
-            if *v > 0 {
-                res += 1;
-                *v -= 1
+pub fn concatenated_binary(n: i32) -> i32 {
+    (1..=i64::from(n))
+        .fold((0, 0), |(res, mut digits), i| {
+            if i & (i - 1) == 0 {
+                digits += 1;
             }
-            if *v == 0 {
-                seen.remove(&diff);
-            }
-        } else {
-            *seen.entry(num).or_insert(0) += 1;
+            (((res << digits) + i) % MOD, digits)
+        })
+        .0 as _
+    // dfs(i64::from(n), 1).0 as i32
+}
+
+// (current val, len of binary)
+fn dfs(n: i64, curr: i64) -> (i64, u32) {
+    if curr == n {
+        return (curr, 1 + curr.ilog2());
+    }
+    let (prev_val, prev_len) = dfs(n, 1 + curr);
+    let pow = mod_pow(2, prev_len);
+    let res = prev_val + curr * pow % MOD;
+    (res % MOD, prev_len + 1 + curr.ilog2())
+}
+
+const MOD: i64 = 1_000_000_007;
+
+pub const fn mod_pow(mut base: i64, mut exp: u32) -> i64 {
+    let mut res = 1;
+    base %= MOD;
+    while exp > 0 {
+        if exp & 1 == 1 {
+            res = (res * base) % MOD;
         }
+        exp /= 2;
+        base = base.pow(2) % MOD;
     }
     res
 }
@@ -42,7 +60,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(concatenated_binary(1), 1);
+        assert_eq!(concatenated_binary(3), 27);
+        assert_eq!(concatenated_binary(12), 505379714);
+    }
 
     #[test]
     fn test() {}
