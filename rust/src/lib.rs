@@ -5,30 +5,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_deviation(nums: &[i32]) -> i32 {
-    let mut heap = std::collections::BinaryHeap::new();
-    let mut min = i32::MAX;
-    // all odd=>even and keep track of mins
-    for &num in nums.iter() {
-        let v = if num & 1 == 1 { 2 * num } else { num };
-        min = min.min(v);
-        heap.push(v);
-    }
-    let mut res = i32::MAX;
-    while let Some(num) = heap.pop() {
-        // track current delta
-        res = res.min(num - min);
-        if num & 1 == 0 {
-            // update min if possible
-            min = min.min(num / 2);
-            heap.push(num / 2);
+pub fn interpret(command: String) -> String {
+    let mut s = command.as_str();
+    let mut res = vec![];
+    while !s.is_empty() {
+        if let Some(v) = s.strip_prefix("G") {
+            s = v;
+            res.push(b'G');
+        } else if let Some(v) = s.strip_prefix("()") {
+            s = v;
+            res.push(b'o');
         } else {
-            break;
+            s = &s[4..];
+            res.extend_from_slice(b"al");
         }
     }
-    res
+    String::from_utf8(res).unwrap()
 }
-
 #[cfg(test)]
 mod tests {
     use std::fmt::Debug;
@@ -46,11 +39,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(minimum_deviation(&[1, 2, 3, 4]), 1);
-        assert_eq!(minimum_deviation(&[4, 1, 5, 20, 3]), 3);
-        assert_eq!(minimum_deviation(&[2, 10, 8]), 3);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
