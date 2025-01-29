@@ -5,52 +5,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_redundant_connection(edges: Vec<Vec<i32>>) -> Vec<i32> {
-    let n = edges.len();
-    let mut dsu = DSU::new(1 + n);
-    for e in edges {
-        if !dsu.union(e[0] as _, e[1] as _) {
-            return e;
-        }
-    }
-    vec![]
-}
-
-struct DSU {
-    parent: Vec<usize>,
-    rank: Vec<i32>,
-}
-
-impl DSU {
-    fn new(n: usize) -> Self {
-        Self {
-            parent: (0..n).collect(),
-            rank: vec![0; n],
-        }
-    }
-
-    fn find(&mut self, v: usize) -> usize {
-        if self.parent[v] != v {
-            self.parent[v] = self.find(self.parent[v]);
-        }
-        self.parent[v]
-    }
-
-    fn union(&mut self, x: usize, y: usize) -> bool {
-        let [rx, ry] = [x, y].map(|v| self.find(v));
-        if rx == ry {
-            return false;
-        }
-        match self.rank[rx].cmp(&self.rank[ry]) {
-            std::cmp::Ordering::Less => self.parent[rx] = ry,
-            std::cmp::Ordering::Equal => {
-                self.rank[rx] += 1;
-                self.parent[ry] = rx
+pub fn max_operations(nums: Vec<i32>, k: i32) -> i32 {
+    let mut seen = std::collections::HashMap::new();
+    let mut res = 0;
+    for num in nums {
+        let diff = k - num;
+        if let Some(v) = seen.get_mut(&diff) {
+            if *v > 0 {
+                res += 1;
+                *v -= 1
             }
-            std::cmp::Ordering::Greater => self.parent[ry] = rx,
+            if *v == 0 {
+                seen.remove(&diff);
+            }
+        } else {
+            *seen.entry(num).or_insert(0) += 1;
         }
-        true
     }
+    res
 }
 
 #[cfg(test)]
