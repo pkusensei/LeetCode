@@ -5,42 +5,44 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn concatenated_binary(n: i32) -> i32 {
-    (1..=i64::from(n))
-        .fold((0, 0), |(res, mut digits), i| {
-            if i & (i - 1) == 0 {
-                digits += 1;
+pub fn minimum_incompatibility(nums: &mut [i32], k: i32) -> i32 {
+    let (n, k) = (nums.len(), k as usize);
+    let mut groups = vec![Vec::with_capacity(n / k); k];
+    nums.sort_unstable();
+    let mut res = i32::MAX;
+    dfs(nums, 0, 0, &mut groups, n / k, 0, &mut res);
+    if res == i32::MAX {
+        -1
+    } else {
+        res
+    }
+}
+
+fn dfs(
+    nums: &[i32],
+    k: usize,
+    idx: usize,
+    groups: &mut [Vec<i32>],
+    group_len: usize,
+    curr: i32,
+    res: &mut i32,
+) {
+    let n = nums.len();
+    if idx >= n {
+        *res = (*res).min(curr);
+        return;
+    }
+    let val = nums[idx];
+    for i in 0..groups.len().min(1 + k) {
+        if groups[i].len() < group_len && groups[i].last().is_none_or(|&v| v < val) {
+            let temp = val - groups[i].last().copied().unwrap_or(val) + curr;
+            if curr < *res {
+                groups[i].push(val);
+                dfs(nums, k.max(1 + i), 1 + idx, groups, group_len, temp, res);
+                groups[i].pop();
             }
-            (((res << digits) + i) % MOD, digits)
-        })
-        .0 as _
-    // dfs(i64::from(n), 1).0 as i32
-}
-
-// (current val, len of binary)
-fn dfs(n: i64, curr: i64) -> (i64, u32) {
-    if curr == n {
-        return (curr, 1 + curr.ilog2());
-    }
-    let (prev_val, prev_len) = dfs(n, 1 + curr);
-    let pow = mod_pow(2, prev_len);
-    let res = prev_val + curr * pow % MOD;
-    (res % MOD, prev_len + 1 + curr.ilog2())
-}
-
-const MOD: i64 = 1_000_000_007;
-
-pub const fn mod_pow(mut base: i64, mut exp: u32) -> i64 {
-    let mut res = 1;
-    base %= MOD;
-    while exp > 0 {
-        if exp & 1 == 1 {
-            res = (res * base) % MOD;
         }
-        exp /= 2;
-        base = base.pow(2) % MOD;
     }
-    res
 }
 
 #[cfg(test)]
@@ -61,9 +63,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(concatenated_binary(1), 1);
-        assert_eq!(concatenated_binary(3), 27);
-        assert_eq!(concatenated_binary(12), 505379714);
+        assert_eq!(minimum_incompatibility(&mut [1, 2, 1, 4], 2), 4);
+        assert_eq!(minimum_incompatibility(&mut [6, 3, 8, 1, 3, 1, 2, 2], 4), 6);
+        assert_eq!(minimum_incompatibility(&mut [5, 3, 3, 6, 3, 3], 3), -1);
     }
 
     #[test]
