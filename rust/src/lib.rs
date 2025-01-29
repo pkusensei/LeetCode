@@ -5,12 +5,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_consistent_strings(allowed: String, words: Vec<String>) -> i32 {
-    let allowed: std::collections::HashSet<_> = allowed.into_bytes().into_iter().collect();
-    words
-        .into_iter()
-        .map(|s| i32::from(s.into_bytes().into_iter().all(|b| allowed.contains(&b))))
-        .sum()
+pub fn get_sum_absolute_differences(nums: &[i32]) -> Vec<i32> {
+    let n = nums.len();
+    let mut prefix = Vec::with_capacity(n);
+    for num in nums.iter() {
+        prefix.push(num + prefix.last().unwrap_or(&0));
+    }
+    let mut res = Vec::with_capacity(n);
+    for (idx, num) in nums.iter().enumerate() {
+        let mut curr = num * (1 + idx as i32) - prefix[idx];
+        curr += prefix[n - 1] - prefix[idx] - num * (n - idx - 1) as i32;
+        res.push(curr);
+    }
+    res
 }
 
 #[cfg(test)]
@@ -30,7 +37,9 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(get_sum_absolute_differences(&[2, 3, 5]), [4, 3, 5]);
+    }
 
     #[test]
     fn test() {}
