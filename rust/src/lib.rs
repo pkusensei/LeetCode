@@ -5,25 +5,29 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_height(cuboids: &mut [[i32; 3]]) -> i32 {
-    let n = cuboids.len();
-    for c in cuboids.iter_mut() {
-        c.sort_unstable();
+pub fn reformat_number(number: String) -> String {
+    let mut s = number.into_bytes();
+    s.retain(|b| b.is_ascii_digit());
+    let mut curr = s.as_slice();
+    let mut res = vec![];
+    while curr.len() > 4 {
+        let (left, right) = curr.split_at(3);
+        res.extend_from_slice(left);
+        res.push(b'-');
+        curr = right;
     }
-    cuboids.sort_unstable();
-    let mut dp: Vec<i32> = cuboids.iter().map(|c| c[2]).collect();
-    for i1 in 1..n {
-        for i2 in 0..i1 {
-            if cuboids[i2]
-                .iter()
-                .zip(cuboids[i1].iter())
-                .all(|(a, b)| a <= b)
-            {
-                dp[i1] = dp[i1].max(cuboids[i1][2] + dp[i2])
-            }
+    match curr.len() {
+        0 => (),
+        4 => {
+            res.extend_from_slice(&curr[..2]);
+            res.push(b'-');
+            res.extend_from_slice(&curr[2..]);
+        }
+        _ => {
+            res.extend_from_slice(curr);
         }
     }
-    dp.into_iter().max().unwrap_or(cuboids[n - 1][2])
+    String::from_utf8(res).unwrap()
 }
 
 #[cfg(test)]
@@ -43,24 +47,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(
-            max_height(&mut [[50, 45, 20], [95, 37, 53], [45, 23, 12]]),
-            190
-        );
-        assert_eq!(max_height(&mut [[38, 25, 45], [76, 35, 3]]), 76);
-        assert_eq!(
-            max_height(&mut [
-                [7, 11, 17],
-                [7, 17, 11],
-                [11, 7, 17],
-                [11, 17, 7],
-                [17, 7, 11],
-                [17, 11, 7]
-            ]),
-            102
-        );
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
