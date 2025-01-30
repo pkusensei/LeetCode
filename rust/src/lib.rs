@@ -2,95 +2,99 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::{HashMap, VecDeque};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn box_delivering(
-    boxes: &[[i32; 2]],
-    _ports_count: i32,
-    mut max_boxes: i32,
-    mut max_weight: i32,
-) -> i32 {
-    let n = boxes.len();
-    let [mut right, mut last_right] = [0, 0];
-    let mut need = 0; // trips needed to do [left..=right]
-    let mut dp = vec![200_000; 1 + n];
-    dp[0] = 0;
-    for (left, b) in boxes.iter().enumerate() {
-        while right < n && max_boxes > 0 && max_weight >= boxes[right][1] {
-            max_boxes -= 1;
-            max_weight -= boxes[right][1];
-            if right == 0 || boxes[right][0] != boxes[right - 1][0] {
-                last_right = right; // [last_right..=right] of same port
-                need += 1; // new port adds one trip
-            }
-            right += 1;
-        }
-        // take as many as possible
-        dp[right] = dp[right].min(dp[left] + 1 + need);
-        // save one trip/need, but carry less weight
-        dp[last_right] = dp[last_right].min(dp[left] + need);
-        // move left ptr forward; this box was shipped during previous trip
-        max_boxes += 1;
-        max_weight += b[1];
-        // this box is of a different port
-        if left == n - 1 || b[0] != boxes[left + 1][0] {
-            need -= 1;
-        }
+pub fn magnificent_sets(n: i32, edges: &[[i32; 2]]) -> i32 {
+    let n = n as usize;
+    // Thought there's some smart tricks on using DSU
+    // Instead it's just here to partition the graph into sub-graphs
+    let mut dsu = DSU::new(n);
+    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
+        let [a, b] = [0, 1].map(|v| e[v] as usize - 1);
+        dsu.union(a, b);
+        acc[a].push(b);
+        acc[b].push(a);
+        acc
+    });
+    let mut component_groups = HashMap::new();
+    // Was scratching my head to find the correct start node for BFS
+    // Instead every node was used to do BFS from
+    for node in 0..n {
+        let Some(num) = bfs(&adj, node) else {
+            return -1;
+        };
+        let root = dsu.find(node);
+        let v = component_groups.entry(root).or_insert(0);
+        *v = (*v).max(num);
     }
-    dp[n]
-
-    // let prefix = boxes.iter().fold(Vec::with_capacity(n), |mut acc, b| {
-    //     acc.push(b[1] + acc.last().unwrap_or(&0));
-    //     acc
-    // });
-    // dfs(
-    //     boxes,
-    //     &prefix,
-    //     max_boxes as _,
-    //     max_weight,
-    //     0,
-    //     &mut vec![-1; n],
-    // )
+    component_groups.into_values().sum()
 }
 
-// TLEs
-fn dfs(
-    boxes: &[[i32; 2]],
-    prefix: &[i32],
-    max_boxes: usize,
-    max_weight: i32,
-    idx: usize,
-    memo: &mut [i32],
-) -> i32 {
-    let n = boxes.len();
-    if idx >= n {
-        return 0;
-    }
-    if memo[idx] > -1 {
-        return memo[idx];
-    }
-    let mut res = i32::MAX;
-    let mut port_count = 1;
-    let mut curr_port = boxes[idx][0];
-    let mut end = 0;
-    for (i, b) in boxes.iter().enumerate().skip(idx).take(max_boxes) {
-        let curr_weight = prefix[i] - if idx > 0 { prefix[idx - 1] } else { 0 };
-        if curr_weight > max_weight {
-            break;
+fn bfs(adj: &[Vec<usize>], start: usize) -> Option<i32> {
+    let n = adj.len();
+    let mut queue = VecDeque::from([start]);
+    let mut seen = vec![-1; n];
+    let mut layer_count = 0;
+    seen[start] = layer_count;
+    while !queue.is_empty() {
+        let size = queue.len();
+        for _ in 0..size {
+            let curr = queue.pop_front().unwrap();
+            for &next in adj[curr].iter() {
+                if seen[next] == -1 {
+                    seen[next] = 1 + layer_count;
+                    queue.push_back(next);
+                } else {
+                    // curr node is of this count
+                    // which cannot be shared with its neighbor
+                    if seen[next] == layer_count {
+                        return None;
+                    }
+                }
+            }
         }
-        if b[0] != curr_port {
-            // new port
-            curr_port = b[0];
-            res = res.min(2 + port_count - 1 + dfs(boxes, prefix, max_boxes, max_weight, i, memo));
-            port_count += 1;
-        }
-        end = i;
+        layer_count += 1;
     }
-    // take as many as possible
-    res = res.min(2 + port_count - 1 + dfs(boxes, prefix, max_boxes, max_weight, 1 + end, memo));
-    memo[idx] = res;
-    res
+    Some(layer_count)
+}
+
+struct DSU {
+    parent: Vec<usize>,
+    rank: Vec<i32>,
+}
+
+impl DSU {
+    fn new(n: usize) -> Self {
+        Self {
+            parent: (0..n).collect(),
+            rank: vec![0; n],
+        }
+    }
+
+    fn find(&mut self, v: usize) -> usize {
+        if self.parent[v] != v {
+            self.parent[v] = self.find(self.parent[v]);
+        }
+        self.parent[v]
+    }
+
+    fn union(&mut self, x: usize, y: usize) {
+        let [rx, ry] = [x, y].map(|v| self.find(v));
+        if rx == ry {
+            return;
+        }
+        match self.rank[rx].cmp(&self.rank[ry]) {
+            std::cmp::Ordering::Less => self.parent[rx] = ry,
+            std::cmp::Ordering::Equal => {
+                self.rank[rx] += 1;
+                self.parent[ry] = rx;
+            }
+            std::cmp::Ordering::Greater => self.parent[ry] = rx,
+        }
+    }
 }
 
 #[cfg(test)]
@@ -111,15 +115,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(box_delivering(&[[1, 1], [2, 1], [1, 1]], 2, 3, 3), 4);
         assert_eq!(
-            box_delivering(&[[1, 2], [3, 3], [3, 1], [3, 1], [2, 4]], 3, 3, 6),
-            6
+            magnificent_sets(6, &[[1, 2], [1, 4], [1, 5], [2, 6], [2, 3], [4, 6]]),
+            4
         );
-        assert_eq!(
-            box_delivering(&[[1, 4], [1, 2], [2, 1], [2, 1], [3, 2], [3, 4]], 3, 6, 7),
-            6
-        );
+        assert_eq!(magnificent_sets(3, &[[1, 2], [2, 3], [3, 1]]), -1);
     }
 
     #[test]
