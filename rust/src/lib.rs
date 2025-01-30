@@ -2,45 +2,72 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::{BinaryHeap, VecDeque};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_result(nums: &[i32], k: i32) -> i32 {
-    let (n, k) = (nums.len(), k as usize);
-    let mut dp = vec![i32::MIN; n];
-    dp[n - 1] = nums[n - 1];
-    let mut heap = BinaryHeap::from([(dp[n - 1], n - 1)]);
-    for (idx, &num) in nums.iter().enumerate().take(n - 1).rev() {
-        while heap.peek().is_some_and(|&(_val, i)| idx + k < i) {
-            heap.pop();
+pub fn distance_limited_paths_exist(
+    n: i32,
+    edge_list: &mut [[i32; 3]],
+    queries: &[[i32; 3]],
+) -> Vec<bool> {
+    let n = n as usize;
+    edge_list.sort_unstable_by_key(|e| e[2]);
+    let mut query_indices: Vec<_> = (0..queries.len()).collect();
+    query_indices.sort_unstable_by_key(|&i| queries[i][2]);
+    let mut res = vec![false; queries.len()];
+    let mut dsu = DSU::new(n);
+    let mut ei = 0;
+    for qi in query_indices {
+        let [a, b, limit] = [0, 1, 2].map(|i| queries[qi][i]);
+        while edge_list.get(ei).is_some_and(|e| e[2] < limit) {
+            let [x, y] = [0, 1].map(|i| edge_list[ei][i] as usize);
+            dsu.union(x, y);
+            ei += 1;
         }
-        dp[idx] = num + heap.peek().map(|(val, _i)| val).unwrap_or(&0);
-        heap.push((dp[idx], idx));
+        res[qi] = dsu.is_connected(a as _, b as _);
     }
-    dp[0]
+    res
 }
 
-pub fn with_deque(nums: &[i32], k: i32) -> i32 {
-    let (n, k) = (nums.len(), k as usize);
-    let mut dp = vec![i32::MIN; n];
-    dp[0] = nums[0];
-    let mut queue = VecDeque::from([0]);
-    for (idx, &num) in nums.iter().enumerate().skip(1) {
-        // queue.front() is the max, but is potentially out of reach
-        while queue.front().is_some_and(|i| i + k < idx) {
-            queue.pop_front();
+struct DSU {
+    parent: Vec<usize>,
+    rank: Vec<i32>,
+}
+
+impl DSU {
+    fn new(n: usize) -> Self {
+        Self {
+            parent: (0..n).collect(),
+            rank: vec![0; n],
         }
-        dp[idx] = num + queue.front().map(|&i| dp[i]).unwrap_or(0);
-        // Maintaining a decreasing queue
-        // i.e for queue [5,4,2], before pushing 3 in, pop 2 first
-        while queue.back().is_some_and(|&i| dp[i] <= dp[idx]) {
-            queue.pop_back();
-        }
-        queue.push_back(idx);
     }
-    dp[n - 1]
+
+    fn find(&mut self, v: usize) -> usize {
+        if self.parent[v] != v {
+            self.parent[v] = self.find(self.parent[v])
+        }
+        self.parent[v]
+    }
+
+    fn union(&mut self, x: usize, y: usize) -> bool {
+        let [rx, ry] = [x, y].map(|v| self.find(v));
+        if rx == ry {
+            return false;
+        }
+        match self.rank[rx].cmp(&self.rank[ry]) {
+            std::cmp::Ordering::Less => self.parent[rx] = ry,
+            std::cmp::Ordering::Equal => {
+                self.rank[rx] += 1;
+                self.parent[ry] = rx
+            }
+            std::cmp::Ordering::Greater => self.parent[ry] = rx,
+        }
+        true
+    }
+
+    fn is_connected(&mut self, x: usize, y: usize) -> bool {
+        self.find(x) == self.find(y)
+    }
 }
 
 #[cfg(test)]
@@ -61,13 +88,22 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_result(&[1, -1, -2, 4, -7, 3], 2), 7);
-        assert_eq!(max_result(&[10, -5, -2, 4, 0, 3], 3), 17);
-        assert_eq!(max_result(&[1, -5, -20, 4, -1, 3, -6, -3], 2), 0);
-
-        assert_eq!(with_deque(&[1, -1, -2, 4, -7, 3], 2), 7);
-        assert_eq!(with_deque(&[10, -5, -2, 4, 0, 3], 3), 17);
-        assert_eq!(with_deque(&[1, -5, -20, 4, -1, 3, -6, -3], 2), 0);
+        assert_eq!(
+            distance_limited_paths_exist(
+                3,
+                &mut [[0, 1, 2], [1, 2, 4], [2, 0, 8], [1, 0, 16]],
+                &[[0, 1, 2], [0, 2, 5]]
+            ),
+            [false, true]
+        );
+        assert_eq!(
+            distance_limited_paths_exist(
+                5,
+                &mut [[0, 1, 10], [1, 2, 5], [2, 3, 9], [3, 4, 13]],
+                &[[0, 4, 14], [1, 4, 13]]
+            ),
+            [true, false]
+        )
     }
 
     #[test]
