@@ -5,20 +5,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn average_waiting_time(customers: &[[i32; 2]]) -> f64 {
-    let mut chef = 0;
-    let mut wait = 0;
-    for c in customers.iter() {
-        let [a, t] = [0, 1].map(|i| i64::from(c[i]));
-        if a >= chef {
-            chef = a + t;
-            wait += t
-        } else {
-            chef += t;
-            wait += chef - a;
+pub fn maximum_binary_string(binary: String) -> String {
+    let n = binary.len();
+    let mut s = binary.into_bytes();
+    let [mut ones, mut zeros] = [0, 0];
+    // Given "111..11001010.."
+    // Skip leading 1's and push zeros to the middle
+    // Get "111...100..001111"
+    for b in s.iter_mut() {
+        if *b == b'0' {
+            zeros += 1
+        } else if zeros == 0 {
+            ones += 1 // skip leading ones
         }
+        *b = b'1'; // Try set all to 1's
     }
-    wait as f64 / customers.len() as f64
+    // All 0's are pushed to the middle
+    // All of them turned to 1's except last zero remains
+    if ones < n {
+        s[ones + zeros - 1] = b'0'
+    }
+    String::from_utf8(s).unwrap()
 }
 
 #[cfg(test)]
@@ -36,13 +43,13 @@ mod tests {
         };
     }
 
-    const EP: f64 = 1e-5;
+    const _EP: f64 = 1e-5;
     #[allow(unused_macros)]
     macro_rules! float_eq {
         ($a:expr, $b:expr) => {
             let (left, right) = ($a, $b);
             assert!(
-                (left - right).abs() <= EP,
+                (left - right).abs() <= _EP,
                 "left = {:?}, right = {:?}",
                 left,
                 right
@@ -52,11 +59,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        float_eq!(average_waiting_time(&[[1, 2], [2, 5], [4, 3]]), 5.0);
-        float_eq!(
-            average_waiting_time(&[[5, 2], [5, 4], [10, 3], [20, 1]]),
-            3.25
-        );
+        assert_eq!(maximum_binary_string("000110".into()), "111011");
+        assert_eq!(maximum_binary_string("01".into()), "01");
     }
 
     #[test]
