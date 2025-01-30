@@ -2,29 +2,45 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::{BinaryHeap, VecDeque};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_unique_subarray(nums: &[i32]) -> i32 {
-    let mut left = 0;
-    let mut curr_sum = 0;
-    let mut window = std::collections::HashMap::new();
-    let mut res = 0;
-    for (right, &num) in nums.iter().enumerate() {
-        *window.entry(num).or_insert(0) += 1;
-        curr_sum += num;
-        while window.len() < right + 1 - left {
-            let v = window.entry(nums[left]).or_insert(0);
-            *v -= 1;
-            curr_sum -= nums[left];
-            if *v == 0 {
-                window.remove(&nums[left]);
-            }
-            left += 1;
+pub fn max_result(nums: &[i32], k: i32) -> i32 {
+    let (n, k) = (nums.len(), k as usize);
+    let mut dp = vec![i32::MIN; n];
+    dp[n - 1] = nums[n - 1];
+    let mut heap = BinaryHeap::from([(dp[n - 1], n - 1)]);
+    for (idx, &num) in nums.iter().enumerate().take(n - 1).rev() {
+        while heap.peek().is_some_and(|&(_val, i)| idx + k < i) {
+            heap.pop();
         }
-        res = res.max(curr_sum);
+        dp[idx] = num + heap.peek().map(|(val, _i)| val).unwrap_or(&0);
+        heap.push((dp[idx], idx));
     }
-    res
+    dp[0]
+}
+
+pub fn with_deque(nums: &[i32], k: i32) -> i32 {
+    let (n, k) = (nums.len(), k as usize);
+    let mut dp = vec![i32::MIN; n];
+    dp[0] = nums[0];
+    let mut queue = VecDeque::from([0]);
+    for (idx, &num) in nums.iter().enumerate().skip(1) {
+        // queue.front() is the max, but is potentially out of reach
+        while queue.front().is_some_and(|i| i + k < idx) {
+            queue.pop_front();
+        }
+        dp[idx] = num + queue.front().map(|&i| dp[i]).unwrap_or(0);
+        // Maintaining a decreasing queue
+        // i.e for queue [5,4,2], before pushing 3 in, pop 2 first
+        while queue.back().is_some_and(|&i| dp[i] <= dp[idx]) {
+            queue.pop_back();
+        }
+        queue.push_back(idx);
+    }
+    dp[n - 1]
 }
 
 #[cfg(test)]
@@ -45,8 +61,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(maximum_unique_subarray(&[4, 2, 4, 5, 6]), 17);
-        assert_eq!(maximum_unique_subarray(&[5, 2, 1, 2, 5, 2, 1, 2, 5]), 8);
+        assert_eq!(max_result(&[1, -1, -2, 4, -7, 3], 2), 7);
+        assert_eq!(max_result(&[10, -5, -2, 4, 0, 3], 3), 17);
+        assert_eq!(max_result(&[1, -5, -20, 4, -1, 3, -6, -3], 2), 0);
+
+        assert_eq!(with_deque(&[1, -1, -2, 4, -7, 3], 2), 7);
+        assert_eq!(with_deque(&[10, -5, -2, 4, 0, 3], 3), 17);
+        assert_eq!(with_deque(&[1, -5, -20, 4, -1, 3, -6, -3], 2), 0);
     }
 
     #[test]
