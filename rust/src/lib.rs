@@ -5,29 +5,26 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn reformat_number(number: String) -> String {
-    let mut s = number.into_bytes();
-    s.retain(|b| b.is_ascii_digit());
-    let mut curr = s.as_slice();
-    let mut res = vec![];
-    while curr.len() > 4 {
-        let (left, right) = curr.split_at(3);
-        res.extend_from_slice(left);
-        res.push(b'-');
-        curr = right;
-    }
-    match curr.len() {
-        0 => (),
-        4 => {
-            res.extend_from_slice(&curr[..2]);
-            res.push(b'-');
-            res.extend_from_slice(&curr[2..]);
+pub fn maximum_unique_subarray(nums: &[i32]) -> i32 {
+    let mut left = 0;
+    let mut curr_sum = 0;
+    let mut window = std::collections::HashMap::new();
+    let mut res = 0;
+    for (right, &num) in nums.iter().enumerate() {
+        *window.entry(num).or_insert(0) += 1;
+        curr_sum += num;
+        while window.len() < right + 1 - left {
+            let v = window.entry(nums[left]).or_insert(0);
+            *v -= 1;
+            curr_sum -= nums[left];
+            if *v == 0 {
+                window.remove(&nums[left]);
+            }
+            left += 1;
         }
-        _ => {
-            res.extend_from_slice(curr);
-        }
+        res = res.max(curr_sum);
     }
-    String::from_utf8(res).unwrap()
+    res
 }
 
 #[cfg(test)]
@@ -47,7 +44,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(maximum_unique_subarray(&[4, 2, 4, 5, 6]), 17);
+        assert_eq!(maximum_unique_subarray(&[5, 2, 1, 2, 5, 2, 1, 2, 5]), 8);
+    }
 
     #[test]
     fn test() {}
