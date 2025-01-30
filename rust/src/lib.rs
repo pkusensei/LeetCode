@@ -2,99 +2,42 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::{HashMap, VecDeque};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn magnificent_sets(n: i32, edges: &[[i32; 2]]) -> i32 {
-    let n = n as usize;
-    // Thought there's some smart tricks on using DSU
-    // Instead it's just here to partition the graph into sub-graphs
-    let mut dsu = DSU::new(n);
-    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
-        let [a, b] = [0, 1].map(|v| e[v] as usize - 1);
-        dsu.union(a, b);
-        acc[a].push(b);
-        acc[b].push(a);
+pub fn stone_game_vii(stones: &[i32]) -> i32 {
+    let n = stones.len();
+    let prefix = stones.iter().fold(Vec::with_capacity(n), |mut acc, &num| {
+        acc.push(num + acc.last().unwrap_or(&0));
         acc
     });
-    let mut component_groups = HashMap::new();
-    // Was scratching my head to find the correct start node for BFS
-    // Instead every node was used to do BFS from
-    for node in 0..n {
-        let Some(num) = bfs(&adj, node) else {
-            return -1;
-        };
-        let root = dsu.find(node);
-        let v = component_groups.entry(root).or_insert(0);
-        *v = (*v).max(num);
+    let mut dp = vec![vec![0; n]; n];
+    for left in (0..n).rev() {
+        for right in 1 + left..n {
+            let remove_left = prefix[right] - prefix[left];
+            let remove_right = prefix[right - 1] - if left > 0 { prefix[left - 1] } else { 0 };
+            dp[left][right] =
+                (remove_left - dp[1 + left][right]).max(remove_right - dp[left][right - 1]);
+        }
     }
-    component_groups.into_values().sum()
+    dp[0][n - 1]
+    // dfs(&prefix, 0, n - 1, &mut vec![vec![-1; n]; n])
 }
 
-fn bfs(adj: &[Vec<usize>], start: usize) -> Option<i32> {
-    let n = adj.len();
-    let mut queue = VecDeque::from([start]);
-    let mut seen = vec![-1; n];
-    let mut layer_count = 0;
-    seen[start] = layer_count;
-    while !queue.is_empty() {
-        let size = queue.len();
-        for _ in 0..size {
-            let curr = queue.pop_front().unwrap();
-            for &next in adj[curr].iter() {
-                if seen[next] == -1 {
-                    seen[next] = 1 + layer_count;
-                    queue.push_back(next);
-                } else {
-                    // curr node is of this count
-                    // which cannot be shared with its neighbor
-                    if seen[next] == layer_count {
-                        return None;
-                    }
-                }
-            }
-        }
-        layer_count += 1;
+fn dfs(prefix: &[i32], left: usize, right: usize, memo: &mut [Vec<i32>]) -> i32 {
+    if left == right {
+        return 0;
     }
-    Some(layer_count)
-}
-
-struct DSU {
-    parent: Vec<usize>,
-    rank: Vec<i32>,
-}
-
-impl DSU {
-    fn new(n: usize) -> Self {
-        Self {
-            parent: (0..n).collect(),
-            rank: vec![0; n],
-        }
+    if memo[left][right] > -1 {
+        return memo[left][right];
     }
-
-    fn find(&mut self, v: usize) -> usize {
-        if self.parent[v] != v {
-            self.parent[v] = self.find(self.parent[v]);
-        }
-        self.parent[v]
-    }
-
-    fn union(&mut self, x: usize, y: usize) {
-        let [rx, ry] = [x, y].map(|v| self.find(v));
-        if rx == ry {
-            return;
-        }
-        match self.rank[rx].cmp(&self.rank[ry]) {
-            std::cmp::Ordering::Less => self.parent[rx] = ry,
-            std::cmp::Ordering::Equal => {
-                self.rank[rx] += 1;
-                self.parent[ry] = rx;
-            }
-            std::cmp::Ordering::Greater => self.parent[ry] = rx,
-        }
-    }
+    let remove_left = prefix[right] - prefix[left];
+    let remove_right = prefix[right - 1] - if left > 0 { prefix[left - 1] } else { 0 };
+    // max (curr_score - opponent_score)
+    let res = (remove_left - dfs(prefix, 1 + left, right, memo))
+        .max(remove_right - dfs(prefix, left, right - 1, memo));
+    memo[left][right] = res;
+    res
 }
 
 #[cfg(test)]
@@ -115,11 +58,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            magnificent_sets(6, &[[1, 2], [1, 4], [1, 5], [2, 6], [2, 3], [4, 6]]),
-            4
-        );
-        assert_eq!(magnificent_sets(3, &[[1, 2], [2, 3], [3, 1]]), -1);
+        assert_eq!(stone_game_vii(&[5, 3, 1, 4, 2]), 6);
+        assert_eq!(stone_game_vii(&[7, 90, 5, 1, 100, 10, 10, 2]), 122);
     }
 
     #[test]
