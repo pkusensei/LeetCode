@@ -2,28 +2,43 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::{cmp::Reverse, collections::BinaryHeap};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_moves(nums: &[i32], k: i32) -> i32 {
-    let ones: Vec<_> = nums
-        .iter()
-        .enumerate()
-        .filter_map(|(i, &v)| if v == 1 { Some(i) } else { None })
-        .collect();
-    let prefix = ones.iter().fold(vec![1], |mut acc, &val| {
-        acc.push(val + acc.last().unwrap_or(&1));
-        acc
-    });
-    let (n, k) = (ones.len(), k as usize);
-    (0..=n - k)
-        .map(|i| {
-            (prefix[i + k] - prefix[i + (k + 1) / 2])
-                - (prefix[i + k / 2] - prefix[i])
-                - (k / 2) * ((1 + k) / 2)
-        })
-        .min()
-        .unwrap_or(0) as _
+pub fn eaten_apples(apples: &[i32], days: &[i32]) -> i32 {
+    let mut heap: BinaryHeap<(Reverse<i32>, i32)> = BinaryHeap::new();
+    let mut res = 0;
+    for (i, (&count, &day)) in (0..).zip(apples.iter().zip(days.iter())) {
+        if count > 0 {
+            heap.push((Reverse(i + day), count));
+        }
+        while heap.peek().is_some_and(|&(Reverse(d), _)| d <= i) {
+            heap.pop();
+        }
+        if let Some((Reverse(d), c)) = heap.pop() {
+            res += 1;
+            if c > 1 {
+                heap.push((Reverse(d), c - 1));
+            }
+        } else {
+            continue;
+        };
+    }
+    let mut curr = apples.len() as i32;
+    while !heap.is_empty() {
+        while heap.peek().is_some_and(|&(Reverse(d), _)| d <= curr) {
+            heap.pop();
+        }
+        let Some((Reverse(d), c)) = heap.pop() else {
+            break;
+        };
+        let delta = (d - curr).min(c);
+        res += delta;
+        curr += delta;
+    }
+    res
 }
 
 #[cfg(test)]
@@ -57,9 +72,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_moves(&[1, 0, 0, 1, 0, 1], 2), 1);
-        assert_eq!(min_moves(&[1, 0, 0, 0, 0, 0, 1, 1], 3), 5);
-        assert_eq!(min_moves(&[1, 1, 0, 1], 2), 0);
+        assert_eq!(eaten_apples(&[1, 2, 3, 5, 2], &[3, 2, 1, 4, 2]), 7);
+        assert_eq!(eaten_apples(&[3, 0, 0, 0, 0, 2], &[3, 0, 0, 0, 0, 2]), 5);
     }
 
     #[test]
