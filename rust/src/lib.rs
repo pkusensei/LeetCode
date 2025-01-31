@@ -5,22 +5,60 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_ball(grid: &[&[i32]]) -> Vec<i32> {
-    let cols = grid[0].len();
-    (0..cols).map(|col| dfs(grid, 0, col)).collect()
+pub fn maximize_xor(nums: &mut [i32], queries: &[[i32; 2]]) -> Vec<i32> {
+    nums.sort_unstable();
+    let n = queries.len();
+    let mut query_indices: Vec<_> = (0..n).collect();
+    query_indices.sort_unstable_by_key(|&i| queries[i][1]);
+    let mut res = vec![-1; n];
+    let mut numi = 0;
+    let mut trie = Trie::new();
+    for qi in query_indices {
+        let [x, m] = [0, 1].map(|i| queries[qi][i]);
+        while nums.get(numi).is_some_and(|&v| v <= m) {
+            trie.insert(nums[numi]);
+            numi += 1;
+        }
+        res[qi] = trie.find(x);
+    }
+    res
 }
 
-fn dfs(grid: &[&[i32]], row: usize, col: usize) -> i32 {
-    let rows = grid.len();
-    if row == rows {
-        return col as _;
+struct Trie {
+    nodes: [Option<Box<Trie>>; 2],
+}
+
+impl Trie {
+    fn new() -> Self {
+        Self {
+            nodes: [None, None],
+        }
     }
-    if grid[row][col] == 1 && grid[row].get(1 + col).is_some_and(|&v| v == 1) {
-        dfs(grid, 1 + row, 1 + col)
-    } else if grid[row][col] == -1 && col.checked_sub(1).is_some_and(|c| grid[row][c] == -1) {
-        dfs(grid, 1 + row, col - 1)
-    } else {
-        -1
+
+    fn insert(&mut self, num: i32) {
+        let mut curr = self;
+        for bit in (0..32).rev() {
+            let idx = ((num >> bit) & 1) as usize;
+            curr = curr.nodes[idx].get_or_insert(Box::new(Trie::new()));
+        }
+    }
+
+    fn find(&self, x: i32) -> i32 {
+        let mut curr = self;
+        let mut res = 0;
+        for bit in (0..32).rev() {
+            let idx = ((x >> bit) & 1) as usize;
+            if let Some(ref v) = curr.nodes[1 - idx] {
+                // There is number at current bit different from x => xor this bit is 1
+                res |= 1 << bit;
+                curr = v
+            } else if let Some(ref v) = curr.nodes[idx] {
+                curr = v
+            } else {
+                return -1;
+            }
+        }
+        res
     }
 }
 
@@ -56,24 +94,12 @@ mod tests {
     #[test]
     fn basics() {
         assert_eq!(
-            find_ball(&[
-                &[1, 1, 1, -1, -1],
-                &[1, 1, 1, -1, -1],
-                &[-1, -1, -1, 1, 1],
-                &[1, 1, 1, 1, -1],
-                &[-1, -1, -1, -1, -1]
-            ]),
-            [1, -1, -1, -1, -1]
+            maximize_xor(&mut [0, 1, 2, 3, 4], &[[3, 1], [1, 3], [5, 6]]),
+            [3, 3, 7]
         );
-        assert_eq!(find_ball(&[&[-1]]), [-1]);
         assert_eq!(
-            find_ball(&[
-                &[1, 1, 1, 1, 1, 1],
-                &[-1, -1, -1, -1, -1, -1],
-                &[1, 1, 1, 1, 1, 1],
-                &[-1, -1, -1, -1, -1, -1]
-            ]),
-            [0, 1, 2, 3, 4, -1]
+            maximize_xor(&mut [5, 2, 4, 6, 6, 3], &[[12, 4], [8, 1], [6, 3]]),
+            [15, -1, 5]
         );
     }
 
