@@ -10,23 +10,24 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(new[] { 10, 1, 13, 6, 9, 5 }, 3, 4, new[] { 1000000, 1000001, 1000002 }, "[10,1,13,1000000,1000001,1000002,5]")]
-    [DataRow(new[] { 0, 1, 2, 3, 4, 5, 6 }, 2, 5, new[] { 1000000, 1000001, 1000002, 1000003, 1000004 }, "[0,1,1000000,1000001,1000002,1000003,1000004,6]")]
-    public void TestMethod1(int[] n1, int a, int b, int[] n2, string exp)
+    public void TestMethod1()
     {
-        var list1 = ListNode.Make(n1);
-        var list2 = ListNode.Make(n2);
-        Assert.AreEqual(exp, sol.MergeInBetween(list1, a, b, list2).ToString());
+        var grid = new[] { new[] { 1, 0 }, [0, 1] };
+        Assert.AreEqual(3, sol.LargestIsland(grid));
     }
 
     [TestMethod]
     public void TestMethod2()
     {
+        var grid = new[] { new[] { 1, 1 }, [0, 1] };
+        Assert.AreEqual(4, sol.LargestIsland(grid));
     }
 
     [TestMethod]
     public void TestMethod3()
     {
+        var grid = new[] { new[] { 1, 1 }, [1, 1] };
+        Assert.AreEqual(4, sol.LargestIsland(grid));
     }
 
     [TestMethod]
