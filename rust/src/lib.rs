@@ -5,27 +5,25 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_binary_string(binary: String) -> String {
-    let n = binary.len();
-    let mut s = binary.into_bytes();
-    let [mut ones, mut zeros] = [0, 0];
-    // Given "111..11001010.."
-    // Skip leading 1's and push zeros to the middle
-    // Get "111...100..001111"
-    for b in s.iter_mut() {
-        if *b == b'0' {
-            zeros += 1
-        } else if zeros == 0 {
-            ones += 1 // skip leading ones
-        }
-        *b = b'1'; // Try set all to 1's
-    }
-    // All 0's are pushed to the middle
-    // All of them turned to 1's except last zero remains
-    if ones < n {
-        s[ones + zeros - 1] = b'0'
-    }
-    String::from_utf8(s).unwrap()
+pub fn min_moves(nums: &[i32], k: i32) -> i32 {
+    let ones: Vec<_> = nums
+        .iter()
+        .enumerate()
+        .filter_map(|(i, &v)| if v == 1 { Some(i) } else { None })
+        .collect();
+    let prefix = ones.iter().fold(vec![1], |mut acc, &val| {
+        acc.push(val + acc.last().unwrap_or(&1));
+        acc
+    });
+    let (n, k) = (ones.len(), k as usize);
+    (0..=n - k)
+        .map(|i| {
+            (prefix[i + k] - prefix[i + (k + 1) / 2])
+                - (prefix[i + k / 2] - prefix[i])
+                - (k / 2) * ((1 + k) / 2)
+        })
+        .min()
+        .unwrap_or(0) as _
 }
 
 #[cfg(test)]
@@ -59,8 +57,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(maximum_binary_string("000110".into()), "111011");
-        assert_eq!(maximum_binary_string("01".into()), "01");
+        assert_eq!(min_moves(&[1, 0, 0, 1, 0, 1], 2), 1);
+        assert_eq!(min_moves(&[1, 0, 0, 0, 0, 0, 1, 1], 3), 5);
+        assert_eq!(min_moves(&[1, 1, 0, 1], 2), 0);
     }
 
     #[test]
