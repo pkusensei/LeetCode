@@ -2,43 +2,26 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::{cmp::Reverse, collections::BinaryHeap};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn eaten_apples(apples: &[i32], days: &[i32]) -> i32 {
-    let mut heap: BinaryHeap<(Reverse<i32>, i32)> = BinaryHeap::new();
-    let mut res = 0;
-    for (i, (&count, &day)) in (0..).zip(apples.iter().zip(days.iter())) {
-        if count > 0 {
-            heap.push((Reverse(i + day), count));
-        }
-        while heap.peek().is_some_and(|&(Reverse(d), _)| d <= i) {
-            heap.pop();
-        }
-        if let Some((Reverse(d), c)) = heap.pop() {
-            res += 1;
-            if c > 1 {
-                heap.push((Reverse(d), c - 1));
-            }
-        } else {
-            continue;
-        };
+pub fn find_ball(grid: &[&[i32]]) -> Vec<i32> {
+    let cols = grid[0].len();
+    (0..cols).map(|col| dfs(grid, 0, col)).collect()
+}
+
+fn dfs(grid: &[&[i32]], row: usize, col: usize) -> i32 {
+    let rows = grid.len();
+    if row == rows {
+        return col as _;
     }
-    let mut curr = apples.len() as i32;
-    while !heap.is_empty() {
-        while heap.peek().is_some_and(|&(Reverse(d), _)| d <= curr) {
-            heap.pop();
-        }
-        let Some((Reverse(d), c)) = heap.pop() else {
-            break;
-        };
-        let delta = (d - curr).min(c);
-        res += delta;
-        curr += delta;
+    if grid[row][col] == 1 && grid[row].get(1 + col).is_some_and(|&v| v == 1) {
+        dfs(grid, 1 + row, 1 + col)
+    } else if grid[row][col] == -1 && col.checked_sub(1).is_some_and(|c| grid[row][c] == -1) {
+        dfs(grid, 1 + row, col - 1)
+    } else {
+        -1
     }
-    res
 }
 
 #[cfg(test)]
@@ -72,8 +55,26 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(eaten_apples(&[1, 2, 3, 5, 2], &[3, 2, 1, 4, 2]), 7);
-        assert_eq!(eaten_apples(&[3, 0, 0, 0, 0, 2], &[3, 0, 0, 0, 0, 2]), 5);
+        assert_eq!(
+            find_ball(&[
+                &[1, 1, 1, -1, -1],
+                &[1, 1, 1, -1, -1],
+                &[-1, -1, -1, 1, 1],
+                &[1, 1, 1, 1, -1],
+                &[-1, -1, -1, -1, -1]
+            ]),
+            [1, -1, -1, -1, -1]
+        );
+        assert_eq!(find_ball(&[&[-1]]), [-1]);
+        assert_eq!(
+            find_ball(&[
+                &[1, 1, 1, 1, 1, 1],
+                &[-1, -1, -1, -1, -1, -1],
+                &[1, 1, 1, 1, 1, 1],
+                &[-1, -1, -1, -1, -1, -1]
+            ]),
+            [0, 1, 2, 3, 4, -1]
+        );
     }
 
     #[test]
