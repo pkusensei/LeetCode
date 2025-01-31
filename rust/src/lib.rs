@@ -5,18 +5,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_units(mut box_types: Vec<Vec<i32>>, mut truck_size: i32) -> i32 {
-    box_types.sort_unstable_by_key(|b| std::cmp::Reverse(b[1]));
+pub fn count_pairs(deliciousness: Vec<i32>) -> i32 {
+    let mut seen = std::collections::HashMap::new();
+    let p2s: Vec<_> = (0..=21).map(|p| 2i32.pow(p)).collect();
     let mut res = 0;
-    for bt in box_types {
-        if truck_size <= 0 {
-            break;
+    for num in deliciousness {
+        for p in p2s.iter() {
+            if let Some(v) = seen.get(&(p - num)) {
+                res += v;
+                res %= 1_000_000_007;
+            }
         }
-        let [b, u] = bt[..] else {
-            continue;
-        };
-        res += b.min(truck_size) * u;
-        truck_size -= b.min(truck_size);
+        *seen.entry(num).or_insert(0) += 1;
     }
     res
 }
