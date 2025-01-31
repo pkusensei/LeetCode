@@ -5,20 +5,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_pairs(deliciousness: Vec<i32>) -> i32 {
-    let mut seen = std::collections::HashMap::new();
-    let p2s: Vec<_> = (0..=21).map(|p| 2i32.pow(p)).collect();
+pub fn ways_to_split(nums: &[i32]) -> i32 {
+    let n = nums.len();
+    let prefix = nums.iter().fold(Vec::with_capacity(n), |mut acc, &num| {
+        acc.push(num + acc.last().unwrap_or(&0));
+        acc
+    });
+    let [mut right1, mut right2] = [0, 0];
     let mut res = 0;
-    for num in deliciousness {
-        for p in p2s.iter() {
-            if let Some(v) = seen.get(&(p - num)) {
-                res += v;
-                res %= 1_000_000_007;
-            }
+    for left in 0..n - 2 {
+        right1 = (1 + left).max(right1);
+        while right1 < n - 1 && prefix[right1] < 2 * prefix[left] {
+            right1 += 1;
         }
-        *seen.entry(num).or_insert(0) += 1;
+        right2 = right2.max(right1);
+        while right2 < n - 1 && prefix[n - 1] - prefix[right2] >= prefix[right2] - prefix[left] {
+            right2 += 1;
+        }
+        res += right2 - right1;
+        res %= 1_000_000_007;
     }
-    res
+    res as _
 }
 
 #[cfg(test)]
@@ -51,7 +58,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(ways_to_split(&[1, 1, 1]), 1);
+        assert_eq!(ways_to_split(&[1, 2, 2, 2, 5, 0]), 3);
+        assert_eq!(ways_to_split(&[3, 2, 1]), 0);
+    }
 
     #[test]
     fn test() {}
