@@ -5,29 +5,42 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_gain(s: &str, x: i32, y: i32) -> i32 {
-    let mut st1 = vec![];
-    let &[mut left, mut right] = if x > y { b"ab" } else { b"ba" };
-    let mut res = 0;
-    for b in s.bytes() {
-        if b == right && st1.last().is_some_and(|&v| v == left) {
-            st1.pop();
-            res += x.max(y);
-        } else {
-            st1.push(b);
-        }
-    }
-    std::mem::swap(&mut left, &mut right);
-    let mut st2 = vec![];
-    for b in st1 {
-        if b == right && st2.last().is_some_and(|&v| v == left) {
-            st2.pop();
-            res += x.min(y)
-        } else {
-            st2.push(b);
-        }
-    }
+pub fn construct_distanced_sequence(n: i32) -> Vec<i32> {
+    let mut res = vec![0; 2 * n as usize - 1];
+    let mut seen = vec![false; 1 + n as usize];
+    backtrack(n, &mut res, &mut seen, 0);
     res
+}
+
+fn backtrack(n: i32, res: &mut Vec<i32>, seen: &mut [bool], idx: usize) -> bool {
+    if idx >= res.len() {
+        return true;
+    }
+    if res[idx] > 0 {
+        backtrack(n, res, seen, 1 + idx)
+    } else {
+        for num in (1..=n).rev() {
+            if seen[num as usize] {
+                continue;
+            }
+            seen[num as usize] = true;
+            res[idx] = num;
+            if num == 1 {
+                if backtrack(n, res, seen, 1 + idx) {
+                    return true;
+                }
+            } else if res.get(idx + num as usize).is_some_and(|&v| v == 0) {
+                res[idx + num as usize] = num;
+                if backtrack(n, res, seen, 1 + idx) {
+                    return true;
+                }
+                res[idx + num as usize] = 0;
+            }
+            res[idx] = 0;
+            seen[num as usize] = false;
+        }
+        false
+    }
 }
 
 #[cfg(test)]
@@ -61,8 +74,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(maximum_gain("cdbcbbaaabab", 4, 5), 19);
-        assert_eq!(maximum_gain("aabbaaxybbaabb", 5, 4), 20);
+        assert_eq!(construct_distanced_sequence(5), [5, 3, 1, 4, 3, 5, 2, 4, 2]);
+        assert_eq!(construct_distanced_sequence(3), [3, 1, 2, 3, 2]);
     }
 
     #[test]
