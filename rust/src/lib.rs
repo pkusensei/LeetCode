@@ -2,85 +2,69 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_hamming_distance(
-    source: Vec<i32>,
-    target: Vec<i32>,
-    allowed_swaps: Vec<Vec<i32>>,
-) -> i32 {
-    let n = source.len();
-    let mut dsu = DSU::new(n);
-    for e in allowed_swaps.iter() {
-        dsu.union(e[0] as _, e[1] as _);
-    }
-    let mut s_groups = HashMap::<_, HashMap<_, _>>::new();
-    for (i, &num) in source.iter().enumerate() {
-        *s_groups
-            .entry(dsu.find(i))
-            .or_default()
-            .entry(num)
-            .or_insert(0) += 1;
-    }
-    let mut t_groups = HashMap::<_, HashMap<_, _>>::new();
-    for (i, &num) in target.iter().enumerate() {
-        *t_groups
-            .entry(dsu.find(i))
-            .or_default()
-            .entry(num)
-            .or_insert(0) += 1;
-    }
-    let mut common = 0;
-    for (group, s_counts) in s_groups.into_iter() {
-        let Some(t_counts) = t_groups.remove(&group) else {
-            break;
-        };
-        for (num, count) in s_counts {
-            if let Some(&v) = t_counts.get(&num) {
-                common += count.min(v);
-            }
-        }
-    }
-    n as i32 - common
+pub fn minimum_time_required(jobs: &mut [i32], k: i32) -> i32 {
+    jobs.sort_unstable_by_key(|&v| std::cmp::Reverse(v));
+    let mut res = jobs.iter().sum::<i32>();
+    let mut times = vec![0; k as usize];
+    dfs(jobs, k as _, 0, &mut times, &mut res);
+    res
 }
 
-struct DSU {
-    parent: Vec<usize>,
-    rank: Vec<i32>,
+fn dfs(jobs: &[i32], k: usize, idx: usize, times: &mut [i32], res: &mut i32) {
+    if idx >= jobs.len() {
+        let max = times.iter().copied().max().unwrap_or(i32::MAX);
+        *res = (*res).min(max);
+        return;
+    }
+    for i in 0..k {
+        if times[i] + jobs[idx] < *res {
+            times[i] += jobs[idx];
+            dfs(jobs, k, 1 + idx, times, res);
+            times[i] -= jobs[idx];
+        }
+        if times[i] == 0 {
+            break; // Assign job to time==0 only once
+        }
+    }
 }
 
-impl DSU {
-    fn new(n: usize) -> Self {
-        Self {
-            parent: (0..n).collect(),
-            rank: vec![0; n],
+pub fn with_binary_search(jobs: &mut [i32], k: i32) -> i32 {
+    fn dfs(jobs: &[i32], times: &mut [i32], k: usize, max: i32, idx: usize) -> bool {
+        if idx == jobs.len() {
+            return true;
         }
-    }
-
-    fn find(&mut self, v: usize) -> usize {
-        if self.parent[v] != v {
-            self.parent[v] = self.find(self.parent[v]);
-        }
-        self.parent[v]
-    }
-
-    fn union(&mut self, x: usize, y: usize) {
-        let [rx, ry] = [x, y].map(|v| self.find(v));
-        if rx == ry {
-            return;
-        }
-        match self.rank[rx].cmp(&self.rank[ry]) {
-            std::cmp::Ordering::Less => self.parent[rx] = ry,
-            std::cmp::Ordering::Equal => {
-                self.rank[rx] += 1;
-                self.parent[ry] = rx;
+        for i in 0..k {
+            if times[i] + jobs[idx] <= max {
+                times[i] += jobs[idx];
+                if dfs(jobs, times, k, max, 1 + idx) {
+                    return true;
+                }
+                times[i] -= jobs[idx];
+                if times[i] == 0 {
+                    break;
+                }
             }
-            std::cmp::Ordering::Greater => self.parent[ry] = rx,
+        }
+        false
+    }
+
+    let k = k as usize;
+    jobs.sort_unstable_by_key(|&v| std::cmp::Reverse(v));
+    let mut left = jobs[0];
+    let mut right = jobs.iter().sum::<i32>();
+    while left < right {
+        let mid = left + (right - left) / 2;
+        let mut times = vec![0; k];
+        if dfs(jobs, &mut times, k, mid, 0) {
+            right = mid
+        } else {
+            left = 1 + mid;
         }
     }
+    left
 }
 
 #[cfg(test)]
@@ -113,7 +97,13 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(minimum_time_required(&mut [3, 2, 3], 3), 3);
+        assert_eq!(minimum_time_required(&mut [1, 2, 4, 7, 8], 2), 11);
+
+        assert_eq!(with_binary_search(&mut [3, 2, 3], 3), 3);
+        assert_eq!(with_binary_search(&mut [1, 2, 4, 7, 8], 2), 11);
+    }
 
     #[test]
     fn test() {}
