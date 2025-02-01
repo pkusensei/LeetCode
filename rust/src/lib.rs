@@ -5,22 +5,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn tuple_same_product(nums: Vec<i32>) -> i32 {
-    let mut map = std::collections::HashMap::new();
-    for (i, a) in nums.iter().enumerate() {
-        for b in nums.iter().skip(1 + i) {
-            *map.entry(a * b).or_insert(0) += 1;
+pub fn largest_submatrix(matrix: &[&[i32]]) -> i32 {
+    let [rows, cols] = get_dimensions(matrix);
+    let mut prefix = vec![vec![0; cols]; rows];
+    for c in 0..cols {
+        for r in 0..rows {
+            if matrix[r][c] == 1 {
+                prefix[r][c] = 1 + if r > 0 { prefix[r - 1][c] } else { 0 };
+            }
         }
     }
-    map.into_values()
-        .filter_map(|count| {
-            if count > 1 {
-                Some(count * (count - 1) / 2 * 8)
-            } else {
-                None
+    let mut res = 0;
+    for row in prefix.iter_mut() {
+        row.sort_unstable_by_key(|&v| std::cmp::Reverse(v));
+        for (c, &v) in row.iter().enumerate() {
+            if v == 0 {
+                break;
             }
-        })
-        .sum()
+            res = res.max(v * (1 + c as i32));
+        }
+    }
+    res
 }
 
 #[cfg(test)]
@@ -53,7 +58,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(largest_submatrix(&[&[0, 0, 1], &[1, 1, 1], &[1, 0, 1]]), 4);
+        assert_eq!(largest_submatrix(&[&[1, 0, 1, 0, 1]]), 3);
+        assert_eq!(largest_submatrix(&[&[1, 1, 0], &[1, 0, 1]]), 2);
+    }
 
     #[test]
     fn test() {}
