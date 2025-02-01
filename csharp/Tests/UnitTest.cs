@@ -10,24 +10,22 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow(new[] { 1, 2, 3, 4, 5 }, 2, "[1,4,3,2,5]")]
+    [DataRow(new[] { 7, 9, 6, 6, 7, 8, 3, 0, 9, 5 }, 5, "[7,9,6,6,8,7,3,0,9,5]")]
+    public void TestMethod1(int[] nums, int k, string exp)
     {
-        var grid = new[] { new[] { 1, 0 }, [0, 1] };
-        Assert.AreEqual(3, sol.LargestIsland(grid));
+        var a = ListNode.Make(nums);
+        Assert.AreEqual(exp, sol.SwapNodes(a, k).ToString());
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        var grid = new[] { new[] { 1, 1 }, [0, 1] };
-        Assert.AreEqual(4, sol.LargestIsland(grid));
     }
 
     [TestMethod]
     public void TestMethod3()
     {
-        var grid = new[] { new[] { 1, 1 }, [1, 1] };
-        Assert.AreEqual(4, sol.LargestIsland(grid));
     }
 
     [TestMethod]
