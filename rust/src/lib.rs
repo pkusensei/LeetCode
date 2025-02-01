@@ -5,12 +5,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_good_rectangles(rectangles: Vec<Vec<i32>>) -> i32 {
-    let len = rectangles.iter().map(|v| v[0].min(v[1])).max().unwrap();
-    rectangles
-        .iter()
-        .filter(|v| v[0] >= len && v[1] >= len)
-        .count() as _
+pub fn tuple_same_product(nums: Vec<i32>) -> i32 {
+    let mut map = std::collections::HashMap::new();
+    for (i, a) in nums.iter().enumerate() {
+        for b in nums.iter().skip(1 + i) {
+            *map.entry(a * b).or_insert(0) += 1;
+        }
+    }
+    map.into_values()
+        .filter_map(|count| {
+            if count > 1 {
+                Some(count * (count - 1) / 2 * 8)
+            } else {
+                None
+            }
+        })
+        .sum()
 }
 
 #[cfg(test)]
