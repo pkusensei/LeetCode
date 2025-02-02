@@ -2,36 +2,26 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::{HashMap, HashSet};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_teachings(_n: i32, languages: &[&[i32]], friendships: &[[i32; 2]]) -> i32 {
-    let languages: Vec<HashSet<_>> = languages
+pub fn decode(encoded: &[i32]) -> Vec<i32> {
+    // encoded: [a^b, b^c, c^d, d^e...]
+    // all odds: [b^c, d^e..]
+    // xor ^ b^c ^ d^e
+    let n = encoded.len() as i32 + 1;
+    let xor = (1..=n).fold(0, |acc, num| acc ^ num);
+    let mut curr = encoded
         .iter()
-        .map(|v| v.iter().copied().collect())
-        .collect();
-    let nums: HashSet<_> = friendships
-        .iter()
-        .filter_map(|fr| {
-            let [a, b] = [0, 1].map(|i| fr[i] as usize - 1);
-            if languages[a].intersection(&languages[b]).count() == 0 {
-                Some([a, b])
-            } else {
-                None
-            }
-        })
-        .flatten()
-        .collect();
-    let mut freq = HashMap::new();
-    for &num in nums.iter() {
-        for &s in languages[num].iter() {
-            *freq.entry(s).or_insert(0) += 1;
-        }
+        .skip(1)
+        .step_by(2)
+        .fold(xor, |acc, &num| acc ^ num);
+    let mut res = vec![curr];
+    for num in encoded.iter() {
+        curr ^= num;
+        res.push(curr);
     }
-    let max = freq.into_values().max().unwrap_or(0);
-    nums.len() as i32 - max
+    res
 }
 
 #[cfg(test)]
@@ -65,10 +55,7 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            minimum_teachings(2, &[&[1], &[2], &[1, 2]], &[[1, 2], [1, 3], [2, 3]]),
-            1
-        )
+        assert_eq!(decode(&[3, 1]), [1, 2, 3]);
     }
 
     #[test]
