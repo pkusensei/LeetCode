@@ -5,27 +5,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn largest_submatrix(matrix: &[&[i32]]) -> i32 {
-    let [rows, cols] = get_dimensions(matrix);
-    let mut prefix = vec![vec![0; cols]; rows];
-    for c in 0..cols {
-        for r in 0..rows {
-            if matrix[r][c] == 1 {
-                prefix[r][c] = 1 + if r > 0 { prefix[r - 1][c] } else { 0 };
-            }
+pub fn check(mut nums: Vec<i32>) -> bool {
+    let mut it = nums
+        .windows(2)
+        .enumerate()
+        .filter_map(|(i, w)| if w[0] > w[1] { Some(i) } else { None });
+    match (it.next(), it.next()) {
+        (None, None) => true,
+        (Some(idx), None) => {
+            nums.rotate_left(1 + idx);
+            nums.windows(2).all(|w| w[0] <= w[1])
         }
+        _ => false,
     }
-    let mut res = 0;
-    for row in prefix.iter_mut() {
-        row.sort_unstable_by_key(|&v| std::cmp::Reverse(v));
-        for (c, &v) in row.iter().enumerate() {
-            if v == 0 {
-                break;
-            }
-            res = res.max(v * (1 + c as i32));
-        }
-    }
-    res
 }
 
 #[cfg(test)]
@@ -59,9 +51,7 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(largest_submatrix(&[&[0, 0, 1], &[1, 1, 1], &[1, 0, 1]]), 4);
-        assert_eq!(largest_submatrix(&[&[1, 0, 1, 0, 1]]), 3);
-        assert_eq!(largest_submatrix(&[&[1, 1, 0], &[1, 0, 1]]), 2);
+        assert!(check(vec![3, 4, 5, 1, 2]));
     }
 
     #[test]
