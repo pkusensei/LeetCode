@@ -5,32 +5,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_characters(a: &str, b: &str) -> i32 {
-    let (n1, n2) = (a.len(), b.len());
-    let mut res = n1 + n2;
-    let [mut count1, mut count2] = [a, b].map(|s| {
-        s.bytes().fold([0; 26], |mut acc, b| {
-            acc[usize::from(b - b'a')] += 1;
+pub fn kth_largest_value(matrix: Vec<Vec<i32>>, k: i32) -> i32 {
+    let k = k as usize;
+    let [rows, cols] = get_dimensions(&matrix);
+    let mut nums = Vec::with_capacity(rows * cols);
+    let mut prev = vec![];
+    for row in matrix.iter() {
+        let mut curr = row.iter().fold(vec![], |mut acc, num| {
+            acc.push(num ^ acc.last().unwrap_or(&0));
             acc
-        })
-    });
-    for idx in 0..26 {
-        // change all letters to idx
-        res = res.min(n1 + n2 - count1[idx] - count2[idx]);
-        if idx > 0 {
-            // Prefix/accumulate all letters smaller than idx
-            count1[idx] += count1[idx - 1];
-            count2[idx] += count2[idx - 1];
+        });
+        for (i, v) in curr.iter_mut().enumerate() {
+            *v = (*v) ^ prev.get(i).unwrap_or(&0);
         }
-        if idx < 25 {
-            // Change all letters in a to idx
-            // And letters in b to (1+idx) => idx<25
-            res = res.min(n1 - count1[idx] + count2[idx]);
-            // Now change all in b to idx
-            res = res.min(n2 - count2[idx] + count1[idx]);
-        }
+        nums.extend_from_slice(&curr);
+        prev = curr;
     }
-    res as _
+    let (_, v, _) = nums.select_nth_unstable(rows * cols - k);
+    *v
 }
 
 #[cfg(test)]
@@ -64,8 +56,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_characters("aba", "caa"), 2);
-        assert_eq!(min_characters("dabadd", "cda"), 3);
+        assert_eq!(kth_largest_value(vec![vec![5, 2], vec![1, 6]], 1), 7);
+        assert_eq!(kth_largest_value(vec![vec![5, 2], vec![1, 6]], 2), 5);
+        assert_eq!(kth_largest_value(vec![vec![5, 2], vec![1, 6]], 3), 4);
     }
 
     #[test]
