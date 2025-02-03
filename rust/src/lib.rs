@@ -5,27 +5,29 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_time(time: String) -> String {
-    let (h, m) = time.split_once(':').unwrap();
-    let h = h.as_bytes();
-    let mut res = vec![];
-    match (h[0], h[1]) {
-        (b'?', b'?') => res.extend_from_slice(b"23"),
-        (b'?', b'0'..b'4') => res.extend([b'2', h[1]]),
-        (b'?', b'4'..=b'9') => res.extend([b'1', h[1]]),
-        (b'2', b'?') => res.extend_from_slice(b"23"),
-        (_, b'?') => res.extend([h[0], b'9']),
-        _ => res.extend_from_slice(h),
+pub fn longest_monotonic_subarray(nums: &[i32]) -> i32 {
+    let mut res = 1;
+    let [mut curr_inc, mut curr_dec] = [1, 1];
+    let mut prev = nums[0];
+    for &num in nums.iter() {
+        match prev.cmp(&num) {
+            std::cmp::Ordering::Less => {
+                curr_inc += 1;
+                curr_dec = 1;
+            }
+            std::cmp::Ordering::Equal => {
+                curr_inc = 1;
+                curr_dec = 1;
+            }
+            std::cmp::Ordering::Greater => {
+                curr_inc = 1;
+                curr_dec += 1
+            }
+        }
+        prev = num;
+        res = res.max(curr_inc).max(curr_dec);
     }
-    res.push(b':');
-    let m = m.as_bytes();
-    match (m[0], m[1]) {
-        (b'?', b'?') => res.extend_from_slice(b"59"),
-        (b'?', b'0'..=b'9') => res.extend([b'5', m[1]]),
-        (_, b'?') => res.extend([m[0], b'9']),
-        _ => res.extend_from_slice(m),
-    }
-    String::from_utf8(res).unwrap()
+    res
 }
 
 #[cfg(test)]
@@ -58,7 +60,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(longest_monotonic_subarray(&[1, 4, 3, 3, 2]), 2);
+        assert_eq!(longest_monotonic_subarray(&[3, 3, 3, 3]), 1);
+        assert_eq!(longest_monotonic_subarray(&[3, 2, 1]), 3);
+    }
 
     #[test]
     fn test() {}
