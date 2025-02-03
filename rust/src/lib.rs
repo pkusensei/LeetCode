@@ -5,15 +5,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_absolute_sum(nums: &[i32]) -> i32 {
-    let mut res = i32::MIN;
-    let [mut curr_max, mut curr_min] = [0, 0];
-    for &num in nums.iter() {
-        curr_max = num.max(curr_max + num);
-        curr_min = num.min(curr_min + num);
-        res = res.max(curr_max.abs()).max(curr_min.abs())
+pub fn minimum_length(s: String) -> i32 {
+    let mut s = s.as_str();
+    let mut right = s.len() - 1;
+    while right > 0 && s.as_bytes()[0] == s.as_bytes()[right] {
+        let b = s.as_bytes()[0];
+        s = s.trim_matches(char::from(b));
+        if s.is_empty() {
+            break;
+        }
+        right = s.len() - 1
     }
-    res
+    s.len() as _
 }
 
 #[cfg(test)]
@@ -46,10 +49,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(max_absolute_sum(&[1, -3, 2, 3, -4]), 5);
-        assert_eq!(max_absolute_sum(&[2, -5, 1, -4, 3, -2]), 8);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
