@@ -5,24 +5,26 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn kth_largest_value(matrix: Vec<Vec<i32>>, k: i32) -> i32 {
-    let k = k as usize;
-    let [rows, cols] = get_dimensions(&matrix);
-    let mut nums = Vec::with_capacity(rows * cols);
-    let mut prev = vec![];
-    for row in matrix.iter() {
-        let mut curr = row.iter().fold(vec![], |mut acc, num| {
-            acc.push(num ^ acc.last().unwrap_or(&0));
-            acc
-        });
-        for (i, v) in curr.iter_mut().enumerate() {
-            *v = (*v) ^ prev.get(i).unwrap_or(&0);
-        }
-        nums.extend_from_slice(&curr);
-        prev = curr;
+pub fn minimum_boxes(n: i32) -> i32 {
+    let mut curr = 0;
+    let mut level = 0;
+    let mut area = 0;
+    while curr < n {
+        level += 1;
+        area += level;
+        curr += area;
     }
-    let (_, v, _) = nums.select_nth_unstable(rows * cols - k);
-    *v
+    if curr == n {
+        return area;
+    }
+    curr -= area;
+    area -= level;
+    level = 0;
+    while curr < n {
+        level += 1;
+        curr += level;
+    }
+    area + level
 }
 
 #[cfg(test)]
@@ -56,11 +58,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(kth_largest_value(vec![vec![5, 2], vec![1, 6]], 1), 7);
-        assert_eq!(kth_largest_value(vec![vec![5, 2], vec![1, 6]], 2), 5);
-        assert_eq!(kth_largest_value(vec![vec![5, 2], vec![1, 6]], 3), 4);
+        assert_eq!(minimum_boxes(3), 3);
+        assert_eq!(minimum_boxes(4), 3);
+        assert_eq!(minimum_boxes(10), 6);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(minimum_boxes(15), 9);
+    }
 }
