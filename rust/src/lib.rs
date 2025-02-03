@@ -5,15 +5,15 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn sum_of_unique(nums: Vec<i32>) -> i32 {
-    nums.into_iter()
-        .fold(std::collections::HashMap::new(), |mut acc, num| {
-            *acc.entry(num).or_insert(0) += 1;
-            acc
-        })
-        .into_iter()
-        .filter_map(|(k, v)| if v == 1 { Some(k) } else { None })
-        .sum()
+pub fn max_absolute_sum(nums: &[i32]) -> i32 {
+    let mut res = i32::MIN;
+    let [mut curr_max, mut curr_min] = [0, 0];
+    for &num in nums.iter() {
+        curr_max = num.max(curr_max + num);
+        curr_min = num.min(curr_min + num);
+        res = res.max(curr_max.abs()).max(curr_min.abs())
+    }
+    res
 }
 
 #[cfg(test)]
@@ -46,7 +46,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(max_absolute_sum(&[1, -3, 2, 3, -4]), 5);
+        assert_eq!(max_absolute_sum(&[2, -5, 1, -4, 3, -2]), 8);
+    }
 
     #[test]
     fn test() {}
