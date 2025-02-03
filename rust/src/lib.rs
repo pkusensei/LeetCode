@@ -5,26 +5,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_boxes(n: i32) -> i32 {
-    let mut curr = 0;
-    let mut level = 0;
-    let mut area = 0;
-    while curr < n {
-        level += 1;
-        area += level;
-        curr += area;
-    }
-    if curr == n {
-        return area;
-    }
-    curr -= area;
-    area -= level;
-    level = 0;
-    while curr < n {
-        level += 1;
-        curr += level;
-    }
-    area + level
+pub fn count_balls(low_limit: i32, high_limit: i32) -> i32 {
+    (low_limit..=high_limit)
+        .fold(std::collections::HashMap::new(), |mut acc, mut num| {
+            let mut curr = 0;
+            while num > 0 {
+                curr += num % 10;
+                num /= 10;
+            }
+            *acc.entry(curr).or_insert(0) += 1;
+            acc
+        })
+        .into_values()
+        .max()
+        .unwrap()
 }
 
 #[cfg(test)]
@@ -57,14 +51,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(minimum_boxes(3), 3);
-        assert_eq!(minimum_boxes(4), 3);
-        assert_eq!(minimum_boxes(10), 6);
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(minimum_boxes(15), 9);
-    }
+    fn test() {}
 }
