@@ -5,21 +5,54 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn can_eat(candies_count: &[i32], queries: &[[i32; 3]]) -> Vec<bool> {
-    let prefix = candies_count.iter().fold(vec![0], |mut acc, &num| {
-        acc.push(i64::from(num) + acc.last().unwrap_or(&0));
-        acc
-    });
-    let mut res = vec![];
-    for q in queries.iter() {
-        let favt = q[0];
-        let favd = q[1];
-        let cap = q[2];
-        let early = prefix[favt as usize] / i64::from(cap);
-        let late = prefix[favt as usize + 1] - 1;
-        res.push((early..=late).contains(&i64::from(favd)));
+pub fn check_partitioning(s: &str) -> bool {
+    let n = s.len();
+    dfs(s, 0, 2, &mut vec![vec![None; n]; 3])
+}
+
+fn dfs(s: &str, idx: usize, count: usize, memo: &mut [Vec<Option<bool>>]) -> bool {
+    if count == 0 {
+        return idx < s.len() && is_palindrome(s[idx..].bytes());
     }
+    if let Some(v) = memo[count][idx] {
+        return v;
+    }
+    let mut res = false;
+    for i in 1 + idx..s.len() {
+        if is_palindrome(s[idx..i].bytes()) && dfs(s, i, count - 1, memo) {
+            res = true;
+            break;
+        }
+    }
+    memo[count][idx] = Some(res);
     res
+}
+
+pub fn bottom_up(s: &str) -> bool {
+    let (s, n) = (s.as_bytes(), s.len());
+    let mut dp = vec![vec![false; n]; n];
+    for i in 0..n {
+        dp[i][i] = true;
+    }
+    for i in 0..n - 1 {
+        dp[i][i + 1] = s[i] == s[i + 1];
+    }
+    for len in 3..=n {
+        for left in 0..n - len {
+            let right = left + len - 1;
+            dp[left][right] = s[left] == s[right] && dp[1 + left][right - 1];
+        }
+    }
+    for left in 1..n - 1 {
+        if dp[0][left - 1] {
+            for right in 1 + left..n {
+                if dp[left][right - 1] && dp[right][n - 1] {
+                    return true;
+                }
+            }
+        }
+    }
+    false
 }
 
 #[cfg(test)]
@@ -53,22 +86,16 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            can_eat(
-                &[7, 4, 5, 3, 8],
-                &[[0, 2, 2], [4, 2, 4], [2, 13, 1000000000]]
-            ),
-            [true, false, true]
-        );
-        assert_eq!(
-            can_eat(
-                &[5, 2, 6, 4, 1],
-                &[[3, 1, 2], [4, 10, 3], [3, 10, 100], [4, 100, 30], [1, 3, 1]]
-            ),
-            [false, true, true, false, false]
-        );
+        assert!(check_partitioning("abcbdd"));
+        assert!(!check_partitioning("bcbddxy"));
+
+        assert!(bottom_up("abcbdd"));
+        assert!(!bottom_up("bcbddxy"));
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert!(!check_partitioning("acab"));
+        assert!(!bottom_up("acab"));
+    }
 }
