@@ -2,42 +2,28 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashSet;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_abs_difference(nums: &[i32], goal: i32) -> i32 {
-    let n = nums.len();
-    let [mut left, mut right] = [0, 1].map(|_| HashSet::new());
-    find_sums(&nums[..n / 2], 0, &mut left);
-    find_sums(&nums[n / 2..], 0, &mut right);
-    let mut right: Vec<_> = right.into_iter().collect();
-    right.sort_unstable();
-    let mut res = u32::MAX;
-    for num in left {
-        let target = goal - num;
-        let i = right.partition_point(|&v| v < target);
-        if let Some(&v) = right.get(i) {
-            res = res.min((num + v).abs_diff(goal));
+pub fn min_operations(s: String) -> i32 {
+        let n = s.len();
+        let [mut a, mut b] = [vec![], vec![]];
+        while a.len() < n {
+            a.extend_from_slice(b"01");
+            b.extend_from_slice(b"10");
         }
-        if let Some(_i) = i.checked_sub(1) {
-            res = res.min((num + right[_i]).abs_diff(goal));
+        if a.len() > n {
+            a.pop();
+            b.pop();
         }
-    }
-    res as _
-}
-
-fn find_sums(nums: &[i32], curr: i32, sums: &mut HashSet<i32>) {
-    match nums {
-        [] => {
-            sums.insert(curr);
-        }
-        [head, tail @ ..] => {
-            find_sums(tail, curr, sums);
-            find_sums(tail, curr + head, sums);
-        }
-    }
+        s.bytes()
+            .zip(a.into_iter().zip(b))
+            .fold([0, 0], |[diffa, diffb], (bs, (ba, bb))| {
+                [diffa + i32::from(bs != ba), diffb + i32::from(bs != bb)]
+            })
+            .into_iter()
+            .min()
+            .unwrap()
 }
 
 #[cfg(test)]
@@ -70,11 +56,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(min_abs_difference(&[5, -7, 3, 5], 6), 0);
-        assert_eq!(min_abs_difference(&[7, -9, 15, -2], -5), 1);
-        assert_eq!(min_abs_difference(&[1, 2, 3], -7), 7);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
