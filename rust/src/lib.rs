@@ -2,23 +2,42 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashSet;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_ascending_sum(nums: Vec<i32>) -> i32 {
-    let mut res = 0;
-    let mut curr_sum = 0;
-    let mut prev = 0;
-    for num in nums {
-        if prev < num {
-            curr_sum += num;
-        } else {
-            curr_sum = num;
+pub fn min_abs_difference(nums: &[i32], goal: i32) -> i32 {
+    let n = nums.len();
+    let [mut left, mut right] = [0, 1].map(|_| HashSet::new());
+    find_sums(&nums[..n / 2], 0, &mut left);
+    find_sums(&nums[n / 2..], 0, &mut right);
+    let mut right: Vec<_> = right.into_iter().collect();
+    right.sort_unstable();
+    let mut res = u32::MAX;
+    for num in left {
+        let target = goal - num;
+        let i = right.partition_point(|&v| v < target);
+        if let Some(&v) = right.get(i) {
+            res = res.min((num + v).abs_diff(goal));
         }
-        prev = num;
-        res = res.max(curr_sum);
+        if let Some(_i) = i.checked_sub(1) {
+            res = res.min((num + right[_i]).abs_diff(goal));
+        }
     }
-    res
+    res as _
+}
+
+fn find_sums(nums: &[i32], curr: i32, sums: &mut HashSet<i32>) {
+    match nums {
+        [] => {
+            sums.insert(curr);
+        }
+        [head, tail @ ..] => {
+            find_sums(tail, curr, sums);
+            find_sums(tail, curr + head, sums);
+        }
+    }
 }
 
 #[cfg(test)]
@@ -51,7 +70,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(min_abs_difference(&[5, -7, 3, 5], 6), 0);
+        assert_eq!(min_abs_difference(&[7, -9, 15, -2], -5), 1);
+        assert_eq!(min_abs_difference(&[1, 2, 3], -7), 7);
+    }
 
     #[test]
     fn test() {}
