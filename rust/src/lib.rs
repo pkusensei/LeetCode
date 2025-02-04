@@ -5,40 +5,40 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_value(events: &mut [[i32; 3]], k: i32) -> i32 {
-    let (n, k) = (events.len(), k as usize);
-    events.sort_unstable_by_key(|e| e[0]); // sort by start
-    let nexts: Vec<_> = (0..n)
-        .map(|idx| events.partition_point(|e| e[0] <= events[idx][1]))
-        .collect();
-    let mut dp = vec![vec![0; 1 + n]; 1 + k];
-    for idx in (0..n).rev() {
-        for count in 1..=k {
-            let next = nexts[idx];
-            let pick = events[idx][2] + dp[count - 1][next];
-            let skip = dp[count][1 + idx];
-            dp[count][idx] = pick.max(skip)
+pub fn maximum_score(a: i32, b: i32, c: i32) -> i32 {
+    let mut heap = std::collections::BinaryHeap::from([a, b, c]);
+    let mut res = 0;
+    while heap.len() > 1 {
+        res += 1;
+        let a = heap.pop().unwrap();
+        let b = heap.pop().unwrap();
+        if a > 1 {
+            heap.push(a - 1);
+        }
+        if b > 1 {
+            heap.push(b - 1);
         }
     }
-    dp[k][0]
-    // dfs(events, 0, k, &mut vec![vec![-1; 1 + k]; n])
+    res
 }
 
-fn dfs(events: &[[i32; 3]], idx: usize, k: usize, memo: &mut [Vec<i32>]) -> i32 {
-    let n = events.len();
-    if k == 0 || idx >= n {
-        return 0;
+pub fn with_sort(a: i32, b: i32, c: i32) -> i32 {
+    let mut nums = [a, b, c];
+    nums.sort_unstable();
+    let val = nums[0] + nums[1];
+    // Suppose after sorting a<b<c
+    if val < nums[2] {
+        // a+b<c
+        // Each turn take one from c and one from a or b
+        // It takes (a+b) turns
+        val
+    } else {
+        // c<a+b
+        // Keep taking from thr two bigger piles
+        // Reduce them all down to 0 or 1
+        // And reduce their diff to at most 1
+        (val + nums[2]) / 2
     }
-    if memo[idx][k] > -1 {
-        return memo[idx][k];
-    }
-    let mut res = dfs(events, 1 + idx, k, memo); // skip
-    let end = events[idx][1];
-    let val = events[idx][2];
-    let next = events.partition_point(|v| v[0] <= end);
-    res = res.max(val + dfs(events, next, k - 1, memo));
-    memo[idx][k] = res;
-    res
 }
 
 #[cfg(test)]
@@ -71,29 +71,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(max_value(&mut [[1, 2, 4], [3, 4, 3], [2, 3, 1]], 2), 7);
-        assert_eq!(max_value(&mut [[1, 2, 4], [3, 4, 3], [2, 3, 10]], 2), 10);
-        assert_eq!(
-            max_value(&mut [[1, 1, 1], [2, 2, 2], [3, 3, 3], [4, 4, 4]], 3),
-            9
-        );
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(
-            max_value(
-                &mut [
-                    [11, 17, 56],
-                    [24, 40, 53],
-                    [5, 62, 67],
-                    [66, 69, 84],
-                    [56, 89, 15]
-                ],
-                2
-            ),
-            151
-        );
-    }
+    fn test() {}
 }
