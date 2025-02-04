@@ -5,33 +5,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn longest_nice_substring(s: &str) -> String {
-    dfs(s).to_string()
-}
-
-fn dfs(s: &str) -> &str {
-    if s.len() < 2 {
-        return "";
+pub fn can_choose(groups: &[&[i32]], nums: &[i32]) -> bool {
+    let mut arr = nums;
+    for group in groups.iter() {
+        let n = group.len();
+        let Some(i) = arr
+            .windows(n)
+            .enumerate()
+            .find_map(|(i, w)| if w == *group { Some(i) } else { None })
+        else {
+            return false;
+        };
+        arr = &arr[i + n..];
     }
-    let [upper, lower] = s.bytes().fold([[false; 26]; 2], |[mut up, mut low], b| {
-        if b.is_ascii_uppercase() {
-            up[usize::from(b - b'A')] = true;
-        } else {
-            low[usize::from(b - b'a')] = true;
-        }
-        [up, low]
-    });
-    for (idx, b) in s.bytes().enumerate() {
-        if upper[usize::from(b.to_ascii_uppercase() - b'A')]
-            && lower[usize::from(b.to_ascii_lowercase() - b'a')]
-        {
-            continue;
-        }
-        let s1 = dfs(&s[..idx]);
-        let s2 = dfs(&s[1 + idx..]);
-        return if s1.len() >= s2.len() { s1 } else { s2 };
-    }
-    s
+    true
 }
 
 #[cfg(test)]
@@ -65,9 +52,18 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(longest_nice_substring("YazaAay"), "aAa");
-        assert_eq!(longest_nice_substring("bB"), "bB");
-        assert_eq!(longest_nice_substring("c"), "");
+        assert!(can_choose(
+            &[&[1, -1, -1], &[3, -2, 0]],
+            &[1, -1, 0, 1, -1, -1, 3, -2, 0]
+        ));
+        assert!(!can_choose(
+            &[&[10, -2], &[1, 2, 3, 4]],
+            &[1, 2, 3, 4, 10, -2]
+        ));
+        assert!(!can_choose(
+            &[&[1, 2, 3], &[3, 4]],
+            &[7, 7, 1, 2, 3, 4, 7, 7]
+        ));
     }
 
     #[test]
