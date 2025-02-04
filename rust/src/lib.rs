@@ -5,14 +5,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_homogenous(s: &str) -> i32 {
-    s.as_bytes()
-        .chunk_by(|a, b| a == b)
-        .map(|w| {
-            let n = w.len() as i64;
-            (n + 1) * n / 2 % 1_000_000_007
-        })
-        .fold(0, |acc, num| (acc + num) % 1_000_000_007) as _
+pub fn minimum_size(nums: &[i32], max_operations: i32) -> i32 {
+    let n = nums.len() as i32;
+    let mut left = 1;
+    let mut right = *nums.iter().max().unwrap();
+    while left < right {
+        let mid = left + (right - left) / 2;
+        if count(nums, mid) <= n + max_operations {
+            right = mid;
+        } else {
+            left = 1 + mid;
+        }
+    }
+    left
+}
+
+fn count(nums: &[i32], mid: i32) -> i32 {
+    nums.iter().map(|v| v / mid + i32::from(v % mid > 0)).sum()
 }
 
 #[cfg(test)]
@@ -46,9 +55,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(count_homogenous("abbcccaa"), 13);
-        assert_eq!(count_homogenous("xy"), 2);
-        assert_eq!(count_homogenous("zzzzz"), 15);
+        assert_eq!(minimum_size(&[9], 2), 3);
+        assert_eq!(minimum_size(&[2, 4, 8, 2], 4), 2);
     }
 
     #[test]
