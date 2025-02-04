@@ -5,40 +5,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_score(a: i32, b: i32, c: i32) -> i32 {
-    let mut heap = std::collections::BinaryHeap::from([a, b, c]);
+pub fn max_ascending_sum(nums: Vec<i32>) -> i32 {
     let mut res = 0;
-    while heap.len() > 1 {
-        res += 1;
-        let a = heap.pop().unwrap();
-        let b = heap.pop().unwrap();
-        if a > 1 {
-            heap.push(a - 1);
+    let mut curr_sum = 0;
+    let mut prev = 0;
+    for num in nums {
+        if prev < num {
+            curr_sum += num;
+        } else {
+            curr_sum = num;
         }
-        if b > 1 {
-            heap.push(b - 1);
-        }
+        prev = num;
+        res = res.max(curr_sum);
     }
     res
-}
-
-pub fn with_sort(a: i32, b: i32, c: i32) -> i32 {
-    let mut nums = [a, b, c];
-    nums.sort_unstable();
-    let val = nums[0] + nums[1];
-    // Suppose after sorting a<b<c
-    if val < nums[2] {
-        // a+b<c
-        // Each turn take one from c and one from a or b
-        // It takes (a+b) turns
-        val
-    } else {
-        // c<a+b
-        // Keep taking from thr two bigger piles
-        // Reduce them all down to 0 or 1
-        // And reduce their diff to at most 1
-        (val + nums[2]) / 2
-    }
 }
 
 #[cfg(test)]
