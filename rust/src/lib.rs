@@ -5,25 +5,14 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_operations(s: String) -> i32 {
-        let n = s.len();
-        let [mut a, mut b] = [vec![], vec![]];
-        while a.len() < n {
-            a.extend_from_slice(b"01");
-            b.extend_from_slice(b"10");
-        }
-        if a.len() > n {
-            a.pop();
-            b.pop();
-        }
-        s.bytes()
-            .zip(a.into_iter().zip(b))
-            .fold([0, 0], |[diffa, diffb], (bs, (ba, bb))| {
-                [diffa + i32::from(bs != ba), diffb + i32::from(bs != bb)]
-            })
-            .into_iter()
-            .min()
-            .unwrap()
+pub fn count_homogenous(s: &str) -> i32 {
+    s.as_bytes()
+        .chunk_by(|a, b| a == b)
+        .map(|w| {
+            let n = w.len() as i64;
+            (n + 1) * n / 2 % 1_000_000_007
+        })
+        .fold(0, |acc, num| (acc + num) % 1_000_000_007) as _
 }
 
 #[cfg(test)]
@@ -56,7 +45,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(count_homogenous("abbcccaa"), 13);
+        assert_eq!(count_homogenous("xy"), 2);
+        assert_eq!(count_homogenous("zzzzz"), 15);
+    }
 
     #[test]
     fn test() {}
