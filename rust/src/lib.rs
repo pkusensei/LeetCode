@@ -5,48 +5,14 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn get_coprimes(nums: &[i32], edges: &[[i32; 2]]) -> Vec<i32> {
-    let n = nums.len();
-    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
-        acc[e[0] as usize].push(e[1]);
-        acc[e[1] as usize].push(e[0]);
-        acc
-    });
-    let mut res = vec![-1; n];
-    let mut path = vec![vec![]; 51];
-    dfs(nums, &adj, 0, -1, 0, &mut path, &mut res);
-    res
-}
-
-fn dfs(
-    nums: &[i32],
-    adj: &[Vec<i32>],
-    node: i32,
-    prev: i32,
-    depth: i32,
-    path: &mut [Vec<[i32; 2]>],
-    res: &mut [i32],
-) {
-    let mut closest = -1;
-    let mut max_depth = -1;
-    for num in 1..=50 {
-        let Some(&[idx, depth]) = path[num as usize].last() else {
-            continue;
-        };
-        if gcd(num, nums[node as usize]) == 1 && depth > max_depth {
-            closest = idx;
-            max_depth = depth;
-        }
+pub fn are_almost_equal(s1: String, s2: String) -> bool {
+    if s1.len() != s2.len() {
+        return false;
     }
-    res[node as usize] = closest;
-    path[nums[node as usize] as usize].push([node as i32, depth]);
-    for &next in adj[node as usize].iter() {
-        if next == prev {
-            continue;
-        }
-        dfs(nums, adj, next, node, 1 + depth, path, res);
-    }
-    path[nums[node as usize] as usize].pop();
+    let (left, right): (Vec<_>, Vec<_>) =
+        s1.bytes().zip(s2.bytes()).filter(|(a, b)| a != b).unzip();
+    left.len() == right.len()
+        && (left.len() == 0 || left.len() == 2 && left[0] == right[1] && right[0] == left[1])
 }
 
 #[cfg(test)]
@@ -79,19 +45,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(
-            get_coprimes(&[2, 3, 3, 2], &[[0, 1], [1, 2], [1, 3]]),
-            [-1, 0, 0, 1]
-        );
-        assert_eq!(
-            get_coprimes(
-                &[5, 6, 10, 2, 3, 6, 15],
-                &[[0, 1], [0, 2], [1, 3], [1, 4], [2, 5], [2, 6]]
-            ),
-            [-1, 0, -1, 0, 0, 0, -1]
-        );
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
