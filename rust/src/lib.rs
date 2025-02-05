@@ -5,14 +5,11 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn nearest_valid_point(x: i32, y: i32, points: Vec<Vec<i32>>) -> i32 {
-    points
-        .iter()
-        .enumerate()
-        .filter(|(_, p)| p[0] == x || p[1] == y)
-        .min_by_key(|(_i, p)| x.abs_diff(p[0]) + y.abs_diff(p[1]))
-        .map(|(i, _)| i as i32)
-        .unwrap_or(-1)
+pub const fn check_powers_of_three(mut n: i32) -> bool {
+    while n % 3 != 2 && n > 0 {
+        n /= 3
+    }
+    n == 0
 }
 
 #[cfg(test)]
@@ -45,7 +42,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert!(check_powers_of_three(12));
+        assert!(check_powers_of_three(91));
+        assert!(!check_powers_of_three(21));
+    }
 
     #[test]
     fn test() {}
