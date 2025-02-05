@@ -2,32 +2,53 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::{cmp::Reverse, collections::BinaryHeap};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn closest_cost(base_costs: &[i32], topping_costs: &[i32], target: i32) -> i32 {
-    let mut res: i32 = -10_000;
-    for &base in base_costs.iter() {
-        backtrack(topping_costs, target, base, &mut res);
-    }
-    res
-}
-
-fn backtrack(tops: &[i32], target: i32, curr: i32, res: &mut i32) {
-    if curr - target > (target - *res).abs() {
-        return;
-    }
-    match tops {
-        [] => match curr.abs_diff(target).cmp(&res.abs_diff(target)) {
-            std::cmp::Ordering::Less => *res = curr,
-            std::cmp::Ordering::Equal => *res = (*res).min(curr),
-            std::cmp::Ordering::Greater => (),
-        },
-        [head, tail @ ..] => {
-            backtrack(tail, target, curr, res); // skip
-            backtrack(tail, target, curr + head, res); // 1 take
-            backtrack(tail, target, curr + 2 * head, res); // 2 takes
+pub fn min_operations(nums1: Vec<i32>, nums2: Vec<i32>) -> i32 {
+    let sum1: i32 = nums1.iter().sum();
+    let sum2: i32 = nums2.iter().sum();
+    let (mut heap1, mut heap2) = match sum1.cmp(&sum2) {
+        std::cmp::Ordering::Less => (
+            BinaryHeap::from(nums2),
+            BinaryHeap::from_iter(nums1.into_iter().map(Reverse)),
+        ),
+        std::cmp::Ordering::Equal => return 0,
+        std::cmp::Ordering::Greater => (
+            BinaryHeap::from(nums1),
+            BinaryHeap::from_iter(nums2.into_iter().map(Reverse)),
+        ),
+    };
+    let mut delta = (sum1 - sum2).abs();
+    let mut res = 0;
+    while delta > 0 {
+        match (heap1.pop(), heap2.pop()) {
+            (Some(a), Some(Reverse(b))) if a > 1 || b < 6 => {
+                let trya = a - 1;
+                let tryb = 6 - b;
+                match trya.cmp(&tryb) {
+                    std::cmp::Ordering::Less | std::cmp::Ordering::Equal => {
+                        delta -= tryb;
+                        heap1.push(a);
+                    }
+                    std::cmp::Ordering::Greater => {
+                        delta -= trya;
+                        heap2.push(Reverse(b));
+                    }
+                }
+            }
+            (Some(a), None) if a > 1 => delta -= a - 1,
+            (None, Some(Reverse(b))) if b < 6 => delta -= 6 - b,
+            _ => break,
         }
+        res += 1
+    }
+    if delta <= 0 {
+        res
+    } else {
+        -1
     }
 }
 
@@ -61,7 +82,15 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(
+            min_operations(
+                vec![5, 6, 4, 3, 1, 2],
+                vec![6, 3, 3, 1, 4, 5, 3, 4, 1, 3, 4]
+            ),
+            4
+        );
+    }
 
     #[test]
     fn test() {}
