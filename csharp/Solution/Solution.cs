@@ -6,16 +6,25 @@ namespace Solution;
 
 public class Solution
 {
-    public ListNode SwapNodes(ListNode head, int k)
+    public int[] MinOperations(string boxes)
     {
-        var curr = head;
-        List<ListNode> nodes = [];
-        while (curr is not null)
+        var res = new int[boxes.Length];
+        var balls = 0;
+        var moves = 0;
+        foreach (var (i, b) in boxes.Select((v, i) => (i, v)))
         {
-            nodes.Add(curr); curr = curr.next;
+            moves += balls;
+            res[i] += moves;
+            balls += b == '1' ? 1 : 0;
         }
-        var n = nodes.Count;
-        (nodes[k - 1].val, nodes[n - k].val) = (nodes[n - k].val, nodes[k - 1].val);
-        return head;
+        balls = 0;
+        moves = 0;
+        foreach (var (i, b) in boxes.Select((v, i) => (i, v)).Reverse())
+        {
+            moves += balls;
+            res[i] += moves;
+            balls += b == '1' ? 1 : 0;
+        }
+        return res;
     }
 }
