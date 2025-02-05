@@ -5,18 +5,30 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_matches(items: Vec<Vec<String>>, rule_key: String, rule_value: String) -> i32 {
-    items
-        .into_iter()
-        .map(|row| {
-            let v = match rule_key.as_str() {
-                "type" => &row[0] == &rule_value,
-                "color" => &row[1] == &rule_value,
-                _ => &row[2] == &rule_value,
-            };
-            i32::from(v)
-        })
-        .sum()
+pub fn closest_cost(base_costs: &[i32], topping_costs: &[i32], target: i32) -> i32 {
+    let mut res: i32 = -10_000;
+    for &base in base_costs.iter() {
+        backtrack(topping_costs, target, base, &mut res);
+    }
+    res
+}
+
+fn backtrack(tops: &[i32], target: i32, curr: i32, res: &mut i32) {
+    if curr - target > (target - *res).abs() {
+        return;
+    }
+    match tops {
+        [] => match curr.abs_diff(target).cmp(&res.abs_diff(target)) {
+            std::cmp::Ordering::Less => *res = curr,
+            std::cmp::Ordering::Equal => *res = (*res).min(curr),
+            std::cmp::Ordering::Greater => (),
+        },
+        [head, tail @ ..] => {
+            backtrack(tail, target, curr, res); // skip
+            backtrack(tail, target, curr + head, res); // 1 take
+            backtrack(tail, target, curr + 2 * head, res); // 2 takes
+        }
+    }
 }
 
 #[cfg(test)]
