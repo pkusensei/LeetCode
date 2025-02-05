@@ -2,41 +2,58 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_score(nums: &[i32], multipliers: &[i32]) -> i32 {
-    let n = nums.len();
-    let m = multipliers.len();
-    let mut dp = vec![vec![0; 1 + m]; 1 + m];
-    for idx in (0..m).rev() {
-        for left in (0..=idx).rev() {
-            let right = n - 1 - (idx - left);
-            let a = multipliers[idx] * nums[left] + dp[1 + idx][1 + left];
-            let b = multipliers[idx] * nums[right] + dp[1 + idx][left];
-            dp[idx][left] = a.max(b);
+pub fn longest_palindrome(word1: &str, word2: &str) -> i32 {
+    let n1 = word1.len();
+    let s = format!("{}{}", word1, word2).into_bytes();
+    let n = s.len();
+    let mut dp = vec![vec![0; n]; n];
+    for (i, v) in dp.iter_mut().enumerate() {
+        v[i] = 1;
+    }
+    let mut res = 0;
+    for left in (0..n - 1).rev() {
+        for right in 1 + left..n {
+            if s[left] == s[right] {
+                dp[left][right] = 2 + dp[1 + left][right - 1];
+                if left < n1 && right >= n1 {
+                    res = res.max(dp[left][right]);
+                }
+            } else {
+                dp[left][right] = dp[1 + left][right].max(dp[left][right - 1]);
+            }
         }
     }
-    dp[0][0]
-    // dfs(nums, multipliers, 0, 0, &mut vec![vec![i32::MIN; m]; m])
+    res
+    // dfs(&s, n1, 0, s.len() - 1, false, &mut HashMap::new())
 }
 
-fn dfs(nums: &[i32], multipliers: &[i32], idx: usize, left: usize, memo: &mut [Vec<i32>]) -> i32 {
-    if idx >= multipliers.len() {
-        return 0;
+fn dfs(
+    s: &[u8],
+    n1: usize,
+    left: usize,
+    right: usize,
+    matched: bool,
+    memo: &mut HashMap<(usize, usize, bool), i32>,
+) -> i32 {
+    let k = (left, right, matched);
+    if let Some(&v) = memo.get(&k) {
+        return v;
     }
-    // the moves of left and right sum up to m
-    // i.e right moves in range [n-1-m..=n-1] => end - (moves-left)
-    let right = nums.len() - 1 - (idx - left);
-    if left == right {
-        return multipliers[idx] * nums[left];
-    }
-    if memo[idx][left] > i32::MIN {
-        return memo[idx][left];
-    }
-    let mut res = multipliers[idx] * nums[left] + dfs(nums, multipliers, 1 + idx, 1 + left, memo);
-    res = res.max(multipliers[idx] * nums[right] + dfs(nums, multipliers, 1 + idx, left, memo));
-    memo[idx][left] = res;
+    let res = if !matched && (left >= n1 || right < n1) {
+        0
+    } else if left >= right {
+        i32::from(left == right && matched)
+    } else if s[left] == s[right] && (matched || (left..=right).contains(&n1)) {
+        2 + dfs(s, n1, 1 + left, right - 1, true, memo)
+    } else {
+        dfs(s, n1, 1 + left, right, matched, memo).max(dfs(s, n1, left, right - 1, matched, memo))
+    };
+    memo.insert(k, res);
     res
 }
 
@@ -71,13 +88,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(maximum_score(&[1, 2, 3], &[3, 2, 1]), 14);
-        assert_eq!(
-            maximum_score(&[-5, -3, -3, -2, 7, 1], &[-10, -5, 3, 4, 6]),
-            102
-        );
+        assert_eq!(longest_palindrome("cacb".into(), "cbba".into()), 5);
+        assert_eq!(longest_palindrome("ab".into(), "ab".into()), 3);
+        assert_eq!(longest_palindrome("aa".into(), "bb".into()), 0);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(longest_palindrome("afaaadacb", "ca"), 6);
+    }
 }
