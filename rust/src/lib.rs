@@ -5,11 +5,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub const fn check_powers_of_three(mut n: i32) -> bool {
-    while n % 3 != 2 && n > 0 {
-        n /= 3
+pub fn beauty_sum(s: &str) -> i32 {
+    let mut res = 0;
+    for i1 in 0..s.len() {
+        let mut count = [0; 26];
+        for b in s.bytes().skip(i1) {
+            count[usize::from(b - b'a')] += 1;
+            let max = *count.iter().max().unwrap_or(&0);
+            let min = count.iter().filter(|&&v| v > 0).min();
+            if let Some(&v) = min {
+                res += max - v
+            }
+        }
     }
-    n == 0
+    res
 }
 
 #[cfg(test)]
@@ -43,11 +52,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert!(check_powers_of_three(12));
-        assert!(check_powers_of_three(91));
-        assert!(!check_powers_of_three(21));
+        assert_eq!(beauty_sum("aabcb"), 5);
+        assert_eq!(beauty_sum("aabcbaa"), 17);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(beauty_sum("yanmbgztcccnknsdaaeiafnobjhxxnjrzbrldvcgwfdowfxhdoosxgfauwvdgxbjmqbtqafzdkzyyinuiqreawksafsepksdixauxzjozxyfxgbauaetlbagujhttzgouzhqplyc"),34401);
+    }
 }
