@@ -5,14 +5,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn are_almost_equal(s1: String, s2: String) -> bool {
-    if s1.len() != s2.len() {
-        return false;
+pub fn merge_alternately(word1: String, word2: String) -> String {
+    let (s1, s2) = (word1.as_bytes(), word2.as_bytes());
+    let mut res = vec![];
+    let [mut i1, mut i2] = [0, 0];
+    while let (Some(&b1), Some(&b2)) = (s1.get(i1), s2.get(i2)) {
+        res.push(b1);
+        res.push(b2);
+        i1 += 1;
+        i2 += 1;
     }
-    let (left, right): (Vec<_>, Vec<_>) =
-        s1.bytes().zip(s2.bytes()).filter(|(a, b)| a != b).unzip();
-    left.len() == right.len()
-        && (left.len() == 0 || left.len() == 2 && left[0] == right[1] && right[0] == left[1])
+    res.extend_from_slice(&s1[i1..]);
+    res.extend_from_slice(&s2[i2..]);
+    String::from_utf8(res).unwrap()
 }
 
 #[cfg(test)]
