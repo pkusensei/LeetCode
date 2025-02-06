@@ -2,71 +2,44 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::{cmp::Reverse, collections::BinaryHeap};
+use std::collections::HashSet;
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_restricted_paths(n: i32, edges: &[[i32; 3]]) -> i32 {
-    let n = n as usize;
-    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
-        let [a, b] = [0, 1].map(|i| e[i] as usize - 1);
-        let w = e[2];
-        acc[a].push((b, w));
-        acc[b].push((a, w));
-        acc
-    });
-    let dists = dijkstra(&adj);
-    dfs(&adj, &dists, 0, None, &mut vec![-1; n])
-}
-
-fn dfs(
-    adj: &[Vec<(usize, i32)>],
-    dists: &[i32],
-    node: usize,
-    prev: Option<usize>,
-    memo: &mut [i32],
-) -> i32 {
-    if prev.is_some_and(|p| dists[p] <= dists[node]) {
-        return 0;
+pub fn min_changes(nums: &[i32], k: i32) -> i32 {
+    let (n, k) = (nums.len(), k as usize);
+    let mut freq = vec![vec![0; 1024]; k];
+    let mut nums_at_pos = vec![HashSet::new(); k];
+    for (idx, &num) in nums.iter().enumerate() {
+        let pos = idx % k;
+        freq[pos][num as usize] += 1;
+        nums_at_pos[pos].insert(num);
     }
-    let n = adj.len();
-    if memo[node] > -1 {
-        return memo[node];
-    }
-    if node == n - 1 {
-        return 1;
-    }
-    let mut res = 0;
-    for &(next, _) in adj[node].iter() {
-        if prev.is_some_and(|p| p == next) {
-            continue;
-        }
-        res += dfs(adj, dists, next, Some(node), memo);
-        res %= 1_000_000_007;
-    }
-    memo[node] = res;
-    res
-}
-
-fn dijkstra(adj: &[Vec<(usize, i32)>]) -> Vec<i32> {
-    let n = adj.len();
-    let mut res = vec![i32::MAX; n];
-    let mut heap = BinaryHeap::from([(Reverse(0), n - 1)]);
-    res[n - 1] = 0;
-    while let Some((Reverse(cost), node)) = heap.pop() {
-        if cost < res[node] {
-            continue;
-        }
-        for &(next, weight) in adj[node].iter() {
-            let nw = cost + weight;
-            if nw < res[next] {
-                res[next] = nw;
-                heap.push((Reverse(nw), next));
+    let mut dp = vec![vec![1 + n as i32; 1024]; k];
+    let mut prev_best = 0;
+    for pos in 0..k {
+        let count = (n / k) as i32 + i32::from(n % k > pos);
+        let mut curr_best = 1 + n as i32;
+        // iterate all possible end vals of xor
+        for val in 0..1024 {
+            if pos == 0 {
+                dp[pos][val] = count - freq[pos][val];
+            } else {
+                // To make all nums on this pos to num
+                for &num in nums_at_pos[pos].iter() {
+                    // previous dp res + count of changes needed
+                    dp[pos][val] = dp[pos][val]
+                        .min(dp[pos - 1][val ^ num as usize] + count - freq[pos][num as usize]);
+                }
+                // For val absent in nums_at_pos[pos]
+                dp[pos][val] = dp[pos][val].min(prev_best + count);
             }
+            curr_best = curr_best.min(dp[pos][val]);
         }
+        prev_best = curr_best;
     }
-    res
+    dp[k - 1][0]
 }
 
 #[cfg(test)]
@@ -100,37 +73,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            count_restricted_paths(
-                5,
-                &[
-                    [1, 2, 3],
-                    [1, 3, 3],
-                    [2, 3, 1],
-                    [1, 4, 2],
-                    [5, 2, 2],
-                    [3, 5, 1],
-                    [5, 4, 10]
-                ]
-            ),
-            3
-        );
-        assert_eq!(
-            count_restricted_paths(
-                7,
-                &[
-                    [1, 3, 1],
-                    [4, 1, 2],
-                    [7, 3, 4],
-                    [2, 5, 3],
-                    [5, 6, 1],
-                    [6, 7, 2],
-                    [7, 5, 3],
-                    [2, 6, 4]
-                ]
-            ),
-            1
-        );
+        assert_eq!(min_changes(&[1, 2, 0, 3, 0], 1), 3);
+        assert_eq!(min_changes(&[3, 4, 5, 2, 1, 7, 3, 4, 7], 3), 3);
+        assert_eq!(min_changes(&[1, 2, 4, 1, 2, 5, 1, 2, 6], 3), 3);
     }
 
     #[test]
