@@ -5,13 +5,37 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_center(edges: Vec<Vec<i32>>) -> i32 {
-    let [a, b] = edges[0][..] else { unreachable!() };
-    if edges[1].contains(&a) {
-        a
-    } else {
-        b
+pub fn maximum_score(nums: &[i32], k: i32) -> i32 {
+    let (n, k) = (nums.len(), k as usize);
+    let mut res = nums[k];
+    let mut curr_min = nums[k];
+    let [mut left, mut right] = [k, k];
+    while left > 0 || right < n {
+        let peek_left = left.checked_sub(1).map(|i| nums[i]);
+        let peek_right = nums.get(1 + right).copied();
+        match (peek_left, peek_right) {
+            (Some(a), None) => {
+                curr_min = curr_min.min(a);
+                left -= 1;
+            }
+            (None, Some(b)) => {
+                curr_min = curr_min.min(b);
+                right += 1;
+            }
+            (Some(a), Some(b)) => {
+                if a <= b {
+                    curr_min = curr_min.min(b);
+                    right += 1;
+                } else {
+                    curr_min = curr_min.min(a);
+                    left -= 1;
+                }
+            }
+            _ => break,
+        }
+        res = res.max(curr_min * (right - left + 1) as i32);
     }
+    res
 }
 
 #[cfg(test)]
@@ -44,8 +68,20 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(maximum_score(&[1, 4, 3, 7, 4, 5], 3), 15);
+        assert_eq!(maximum_score(&[5, 5, 4, 5, 4, 1, 1, 1], 0), 20);
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        // 1622 * 6
+        assert_eq!(
+            maximum_score(
+                &[6569, 9667, 3148, 7698, 1622, 2194, 793, 9041, 1670, 1872],
+                5
+            ),
+            9732
+        );
+    }
 }
