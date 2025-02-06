@@ -2,54 +2,59 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
+use std::{cmp::Reverse, collections::BinaryHeap};
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_score(nums: &[i32]) -> i32 {
-        let n = nums.len();
-        let mut gcdm = HashMap::new();
-        backtrack(nums, 0, &mut gcdm, &mut vec![-1; 1 << n])
-}
-
-fn backtrack(
-    nums: &[i32],
-    mask: usize,
-    gcdm: &mut HashMap<[i32; 2], i32>,
-    memo: &mut [i32],
-) -> i32 {
-    let n = nums.len();
-    if mask.count_ones() as usize == n {
-        return 0;
-    }
-    if memo[mask] > -1 {
-        return memo[mask];
-    }
-    let mut res = 0;
-    let coeff = (n as i32 - mask.count_ones() as i32) / 2;
-    for i1 in 0..n {
-        for i2 in 1 + i1..n {
-            if (mask >> i1) & 1 == 1 || (mask >> i2) & 1 == 1 {
-                continue;
+pub fn get_number_of_backlog_orders(orders: &[[i32; 3]]) -> i32 {
+    let mut sell_heap: BinaryHeap<(Reverse<i32>, i32)> = BinaryHeap::new();
+    let mut buy_heap = BinaryHeap::new();
+    for o in orders.iter() {
+        let [price, mut amount, t] = o[..] else {
+            unreachable!()
+        };
+        if t == 0 {
+            // buy
+            while amount > 0
+                && sell_heap
+                    .peek()
+                    .is_some_and(|&(Reverse(p), _count)| p <= price)
+            {
+                let (Reverse(p), count) = sell_heap.pop().unwrap();
+                if count > amount {
+                    sell_heap.push((Reverse(p), count - amount));
+                    amount = 0;
+                    break;
+                } else {
+                    amount -= count;
+                }
             }
-            let [a, b] = [i1, i2].map(|v| nums[v]);
-            res = res.max(
-                coeff * gcd(a, b, gcdm) + backtrack(nums, mask | (1 << i1) | (1 << i2), gcdm, memo),
-            )
+            if amount > 0 {
+                buy_heap.push((price, amount));
+            }
+        } else {
+            // sell
+            while amount > 0 && buy_heap.peek().is_some_and(|&(p, _count)| p >= price) {
+                let (p, count) = buy_heap.pop().unwrap();
+                if count > amount {
+                    buy_heap.push((p, count - amount));
+                    amount = 0;
+                    break;
+                } else {
+                    amount -= count
+                }
+            }
+            if amount > 0 {
+                sell_heap.push((Reverse(price), amount));
+            }
         }
     }
-    memo[mask] = res;
-    res
-}
-
-fn gcd(a: i32, b: i32, memo: &mut HashMap<[i32; 2], i32>) -> i32 {
-    if let Some(&v) = memo.get(&[a, b]) {
-        return v;
-    }
-    let res = if a == 0 { b } else { gcd(b % a, a, memo) };
-    memo.insert([a, b], res);
-    res
+    sell_heap
+        .into_iter()
+        .map(|(_, c)| c)
+        .chain(buy_heap.into_iter().map(|(_, c)| c))
+        .fold(0, |acc, v| (acc + v) % 1_000_000_007)
 }
 
 #[cfg(test)]
@@ -83,9 +88,19 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_score(&[1, 2]), 1);
-        assert_eq!(max_score(&[3, 4, 6, 8]), 11);
-        assert_eq!(max_score(&[1, 2, 3, 4, 5, 6]), 14);
+        assert_eq!(
+            get_number_of_backlog_orders(&[[10, 5, 0], [15, 2, 1], [25, 1, 1], [30, 4, 0]]),
+            6
+        );
+        assert_eq!(
+            get_number_of_backlog_orders(&[
+                [7, 1000000000, 1],
+                [15, 3, 0],
+                [5, 999999995, 0],
+                [5, 1, 1]
+            ]),
+            999999984
+        );
     }
 
     #[test]
