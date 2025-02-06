@@ -2,44 +2,16 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashSet;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_changes(nums: &[i32], k: i32) -> i32 {
-    let (n, k) = (nums.len(), k as usize);
-    let mut freq = vec![vec![0; 1024]; k];
-    let mut nums_at_pos = vec![HashSet::new(); k];
-    for (idx, &num) in nums.iter().enumerate() {
-        let pos = idx % k;
-        freq[pos][num as usize] += 1;
-        nums_at_pos[pos].insert(num);
+pub fn find_center(edges: Vec<Vec<i32>>) -> i32 {
+    let [a, b] = edges[0][..] else { unreachable!() };
+    if edges[1].contains(&a) {
+        a
+    } else {
+        b
     }
-    let mut dp = vec![vec![1 + n as i32; 1024]; k];
-    let mut prev_best = 0;
-    for pos in 0..k {
-        let count = (n / k) as i32 + i32::from(n % k > pos);
-        let mut curr_best = 1 + n as i32;
-        // iterate all possible end vals of xor
-        for val in 0..1024 {
-            if pos == 0 {
-                dp[pos][val] = count - freq[pos][val];
-            } else {
-                // To make all nums on this pos to num
-                for &num in nums_at_pos[pos].iter() {
-                    // previous dp res + count of changes needed
-                    dp[pos][val] = dp[pos][val]
-                        .min(dp[pos - 1][val ^ num as usize] + count - freq[pos][num as usize]);
-                }
-                // For val absent in nums_at_pos[pos]
-                dp[pos][val] = dp[pos][val].min(prev_best + count);
-            }
-            curr_best = curr_best.min(dp[pos][val]);
-        }
-        prev_best = curr_best;
-    }
-    dp[k - 1][0]
 }
 
 #[cfg(test)]
@@ -72,11 +44,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(min_changes(&[1, 2, 0, 3, 0], 1), 3);
-        assert_eq!(min_changes(&[3, 4, 5, 2, 1, 7, 3, 4, 7], 3), 3);
-        assert_eq!(min_changes(&[1, 2, 4, 1, 2, 5, 1, 2, 6], 3), 3);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
