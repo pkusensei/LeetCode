@@ -2,27 +2,51 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn second_highest(s: String) -> i32 {
-    let mut digits: Vec<_> = s
-        .bytes()
-        .fold([false; 10], |mut acc, b| {
-            if b.is_ascii_digit() {
-                acc[usize::from(b - b'0')] = true;
-            }
-            acc
-        })
-        .into_iter()
-        .enumerate()
-        .filter_map(|(digit, v)| if v { Some(digit as i32) } else { None })
-        .collect();
-    if digits.len() < 2 {
-        return -1;
+struct AuthenticationManager {
+    tokens: HashMap<String, i32>,
+    limit: i32,
+}
+
+impl AuthenticationManager {
+    fn new(limit: i32) -> Self {
+        Self {
+            tokens: HashMap::new(),
+            limit,
+        }
     }
-    let (_, res, _) = digits.select_nth_unstable_by_key(1, |&v| std::cmp::Reverse(v));
-    *res
+
+    fn generate(&mut self, token_id: String, current_time: i32) {
+        self.tokens.insert(token_id, current_time);
+    }
+
+    fn renew(&mut self, token_id: String, current_time: i32) {
+        self.expire(current_time);
+        if let Some(v) = self.tokens.get_mut(&token_id) {
+            *v = current_time;
+        }
+    }
+
+    fn expire(&mut self, current_time: i32) {
+        let mut dels = vec![];
+        for (k, v) in self.tokens.iter() {
+            if v + self.limit < current_time {
+                dels.push(k.clone());
+            }
+        }
+        for k in dels {
+            self.tokens.remove(&k);
+        }
+    }
+
+    fn count_unexpired_tokens(&mut self, current_time: i32) -> i32 {
+        self.expire(current_time);
+        self.tokens.len() as _
+    }
 }
 
 #[cfg(test)]
