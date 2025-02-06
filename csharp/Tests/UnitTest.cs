@@ -10,11 +10,11 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow("110", "[1,1,3]")]
-    [DataRow("001011", "[11,8,5,4,3,4]")]
-    public void TestMethod1(string boxes, string exp)
+    [DataRow(new[] { 2, 3, 4, 6 }, 8)]
+    [DataRow(new[] { 1, 2, 4, 5, 10 }, 16)]
+    public void TestMethod1(int[] nums, int exp)
     {
-        Assert.AreEqual(exp, sol.MinOperations(boxes).Print());
+        Assert.AreEqual(exp, sol.TupleSameProduct(nums));
     }
 
     [TestMethod]

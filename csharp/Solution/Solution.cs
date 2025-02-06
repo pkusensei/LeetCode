@@ -6,25 +6,16 @@ namespace Solution;
 
 public class Solution
 {
-    public int[] MinOperations(string boxes)
+    public int TupleSameProduct(int[] nums)
     {
-        var res = new int[boxes.Length];
-        var balls = 0;
-        var moves = 0;
-        foreach (var (i, b) in boxes.Select((v, i) => (i, v)))
+        Dictionary<int, int> counts = [];
+        foreach (var (i, a) in nums.Select((v, i) => (i, v)))
         {
-            moves += balls;
-            res[i] += moves;
-            balls += b == '1' ? 1 : 0;
+            foreach (var b in nums.Skip(1 + i))
+            {
+                if (!counts.TryAdd(a * b, 1)) { counts[a * b] += 1; }
+            }
         }
-        balls = 0;
-        moves = 0;
-        foreach (var (i, b) in boxes.Select((v, i) => (i, v)).Reverse())
-        {
-            moves += balls;
-            res[i] += moves;
-            balls += b == '1' ? 1 : 0;
-        }
-        return res;
+        return counts.Values.Where(v => v > 1).Select(v => v * (v - 1) * 4).Sum();
     }
 }
