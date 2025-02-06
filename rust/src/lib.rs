@@ -5,8 +5,11 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn check_ones_segment(s: String) -> bool {
-    s.trim_start_matches('1').contains('1')
+pub fn min_elements(nums: Vec<i32>, limit: i32, goal: i32) -> i32 {
+    let sum: i64 = nums.iter().fold(0i64, |acc, &num| acc + i64::from(num));
+    let delta = (i64::from(goal) - sum).abs();
+    let limit = i64::from(limit);
+    (delta / limit) as i32 + i32::from(delta % limit > 0)
 }
 
 #[cfg(test)]
