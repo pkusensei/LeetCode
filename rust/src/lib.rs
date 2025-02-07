@@ -5,17 +5,39 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_different_integers(word: String) -> i32 {
-    word.split(char::is_alphabetic)
-        .filter_map(|s| {
-            if !s.is_empty() {
-                Some(s.trim_start_matches('0'))
+pub fn reinitialize_permutation(n: i32) -> i32 {
+    let perm: Vec<_> = (0..n).collect();
+    let mut curr = perm.clone();
+    for count in 0..n {
+        let mut next = Vec::with_capacity(n as usize);
+        for i in 0..n as usize {
+            if i & 1 == 0 {
+                next.push(curr[i / 2]);
             } else {
-                None
+                next.push(curr[n as usize / 2 + (i - 1) / 2]);
             }
-        })
-        .collect::<std::collections::HashSet<_>>()
-        .len() as _
+        }
+        curr = next;
+        if curr == perm {
+            return count;
+        }
+    }
+    -1
+}
+
+pub const fn track_idx(n: i32) -> i32 {
+    let mut res = 0;
+    let mut idx = 1;
+    while res == 0 || idx > 1 {
+        // if idx < n / 2 {
+        //     idx *= 2;
+        // } else {
+        //     idx = 2 * idx - (n - 1);
+        // }
+        idx = 2 * idx % (n - 1);
+        res += 1;
+    }
+    res
 }
 
 #[cfg(test)]
@@ -48,7 +70,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(track_idx(2), 1);
+        assert_eq!(track_idx(4), 2);
+        assert_eq!(track_idx(6), 4);
+    }
 
     #[test]
     fn test() {}
