@@ -2,30 +2,46 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn query_results(_limit: i32, queries: &[[i32; 2]]) -> Vec<i32> {
-    let mut ball_color: HashMap<i32, i32> = HashMap::new();
-    let mut color_count: HashMap<i32, i32> = HashMap::new();
-    let mut res = vec![];
-    for q in queries.iter() {
-        let [ball, color] = q[..] else { unreachable!() };
-        if let Some(c) = ball_color.get_mut(&ball) {
-            color_count.entry(*c).and_modify(|v| *v -= 1);
-            if color_count[c] == 0 {
-                color_count.remove(c);
-            }
-            *c = color;
+pub fn max_value(n: i32, index: i32, max_sum: i32) -> i32 {
+    let [n, index, max_sum] = [n, index, max_sum].map(i64::from);
+    let mut left = 1;
+    let mut right = max_sum;
+    while left < right {
+        // The +1 here is to avoid infinite loops with left=mid;
+        let mid = i64::from(1 + left + right) / 2;
+        if min_sum(n, index, mid) > max_sum {
+            right = mid - 1;
         } else {
-            ball_color.insert(ball, color);
+            left = mid;
         }
-        *color_count.entry(color).or_insert(0) += 1;
-        res.push(color_count.len() as i32);
     }
-    res
+    left as _
+}
+
+const fn min_sum(n: i64, index: i64, num: i64) -> i64 {
+    let left = if index < num {
+        // 0 1 2
+        // 2 3 4
+        (num - index + num) * (1 + index) / 2
+    } else {
+        // 0 1 2 3
+        // 1 1 1 2
+        num * (num + 1) / 2 + (index - num + 1)
+    };
+    let len = n - index;
+    let right = if len <= num {
+        // 2 3 4 => 5-2
+        // 3 2 1
+        (num + num - len + 1) * len / 2
+    } else {
+        // 2 3 4
+        // 2 1 1
+        (num + 1) * (num) / 2 + len - num
+    };
+    left + right - num
 }
 
 #[cfg(test)]
@@ -59,16 +75,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            query_results(4, &[[1, 4], [2, 5], [1, 3], [3, 4]]),
-            [1, 2, 2, 3]
-        );
-        assert_eq!(
-            query_results(4, &[[0, 1], [1, 2], [2, 2], [3, 4], [4, 5]]),
-            [1, 2, 2, 3, 4]
-        );
+        assert_eq!(max_value(4, 2, 6), 2);
+        assert_eq!(max_value(6, 1, 10), 3);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        // 7 6 5 4 3
+        assert_eq!(max_value(5, 0, 28), 7);
+    }
 }
