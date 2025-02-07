@@ -5,32 +5,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn evaluate(s: String, knowledge: Vec<Vec<String>>) -> String {
-    let map = knowledge
-        .iter()
-        .fold(std::collections::HashMap::new(), |mut acc, v| {
-            acc.insert(v[0].as_bytes(), v[1].as_bytes());
-            acc
-        });
-    let mut res = Vec::with_capacity(s.len());
-    let mut left = None;
-    for (idx, b) in s.bytes().enumerate() {
-        match b {
-            b'(' => left = Some(idx),
-            b')' => {
-                let Some(prev) = left.take() else {
-                    unreachable!()
-                };
-                res.extend_from_slice(
-                    map.get(&s.as_bytes()[1 + prev..idx])
-                        .unwrap_or(&"?".as_bytes()),
-                );
-            }
-            _ if left.is_none() => res.push(b),
-            _ => (),
-        }
+pub fn max_nice_divisors(prime_factors: i32) -> i32 {
+    const MOD: i64 = 1_000_000_007;
+    if prime_factors <= 3 {
+        return prime_factors;
     }
-    String::from_utf8(res).unwrap()
+    let div = prime_factors / 3;
+    let res = match prime_factors % 3 {
+        0 => mod_pow(3, div as _, MOD),
+        1 => mod_pow(3, div as u32 - 1, MOD) * 4,
+        _ => mod_pow(3, div as _, MOD) * 2,
+    };
+    (res % MOD) as _
 }
 
 #[cfg(test)]
