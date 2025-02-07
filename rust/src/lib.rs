@@ -2,59 +2,30 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::{cmp::Reverse, collections::BinaryHeap};
+use std::collections::HashMap;
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn get_number_of_backlog_orders(orders: &[[i32; 3]]) -> i32 {
-    let mut sell_heap: BinaryHeap<(Reverse<i32>, i32)> = BinaryHeap::new();
-    let mut buy_heap = BinaryHeap::new();
-    for o in orders.iter() {
-        let [price, mut amount, t] = o[..] else {
-            unreachable!()
-        };
-        if t == 0 {
-            // buy
-            while amount > 0
-                && sell_heap
-                    .peek()
-                    .is_some_and(|&(Reverse(p), _count)| p <= price)
-            {
-                let (Reverse(p), count) = sell_heap.pop().unwrap();
-                if count > amount {
-                    sell_heap.push((Reverse(p), count - amount));
-                    amount = 0;
-                    break;
-                } else {
-                    amount -= count;
-                }
+pub fn query_results(_limit: i32, queries: &[[i32; 2]]) -> Vec<i32> {
+    let mut ball_color: HashMap<i32, i32> = HashMap::new();
+    let mut color_count: HashMap<i32, i32> = HashMap::new();
+    let mut res = vec![];
+    for q in queries.iter() {
+        let [ball, color] = q[..] else { unreachable!() };
+        if let Some(c) = ball_color.get_mut(&ball) {
+            color_count.entry(*c).and_modify(|v| *v -= 1);
+            if color_count[c] == 0 {
+                color_count.remove(c);
             }
-            if amount > 0 {
-                buy_heap.push((price, amount));
-            }
+            *c = color;
         } else {
-            // sell
-            while amount > 0 && buy_heap.peek().is_some_and(|&(p, _count)| p >= price) {
-                let (p, count) = buy_heap.pop().unwrap();
-                if count > amount {
-                    buy_heap.push((p, count - amount));
-                    amount = 0;
-                    break;
-                } else {
-                    amount -= count
-                }
-            }
-            if amount > 0 {
-                sell_heap.push((Reverse(price), amount));
-            }
+            ball_color.insert(ball, color);
         }
+        *color_count.entry(color).or_insert(0) += 1;
+        res.push(color_count.len() as i32);
     }
-    sell_heap
-        .into_iter()
-        .map(|(_, c)| c)
-        .chain(buy_heap.into_iter().map(|(_, c)| c))
-        .fold(0, |acc, v| (acc + v) % 1_000_000_007)
+    res
 }
 
 #[cfg(test)]
@@ -89,17 +60,12 @@ mod tests {
     #[test]
     fn basics() {
         assert_eq!(
-            get_number_of_backlog_orders(&[[10, 5, 0], [15, 2, 1], [25, 1, 1], [30, 4, 0]]),
-            6
+            query_results(4, &[[1, 4], [2, 5], [1, 3], [3, 4]]),
+            [1, 2, 2, 3]
         );
         assert_eq!(
-            get_number_of_backlog_orders(&[
-                [7, 1000000000, 1],
-                [15, 3, 0],
-                [5, 999999995, 0],
-                [5, 1, 1]
-            ]),
-            999999984
+            query_results(4, &[[0, 1], [1, 2], [2, 2], [3, 4], [4, 5]]),
+            [1, 2, 2, 3, 4]
         );
     }
 
