@@ -2,46 +2,101 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_value(n: i32, index: i32, max_sum: i32) -> i32 {
-    let [n, index, max_sum] = [n, index, max_sum].map(i64::from);
-    let mut left = 1;
-    let mut right = max_sum;
-    while left < right {
-        // The +1 here is to avoid infinite loops with left=mid;
-        let mid = i64::from(1 + left + right) / 2;
-        if min_sum(n, index, mid) > max_sum {
-            right = mid - 1;
-        } else {
-            left = mid;
+pub fn count_pairs(nums: &[i32], low: i32, high: i32) -> i32 {
+    let mut res = 0;
+    for (i, a) in nums.iter().enumerate() {
+        for b in nums.iter().skip(1 + i) {
+            res += i32::from((low..=high).contains(&(a ^ b)));
         }
     }
-    left as _
+    res
 }
 
-const fn min_sum(n: i64, index: i64, num: i64) -> i64 {
-    let left = if index < num {
-        // 0 1 2
-        // 2 3 4
-        (num - index + num) * (1 + index) / 2
-    } else {
-        // 0 1 2 3
-        // 1 1 1 2
-        num * (num + 1) / 2 + (index - num + 1)
-    };
-    let len = n - index;
-    let right = if len <= num {
-        // 2 3 4 => 5-2
-        // 3 2 1
-        (num + num - len + 1) * len / 2
-    } else {
-        // 2 3 4
-        // 2 1 1
-        (num + 1) * (num) / 2 + len - num
-    };
-    left + right - num
+pub fn with_trie(nums: &[i32], low: i32, high: i32) -> i32 {
+    #[derive(Debug, Clone, Default)]
+    struct Trie {
+        nodes: [Option<Box<Trie>>; 2],
+        count: i32,
+    }
+
+    impl Trie {
+        fn insert(&mut self, num: i32) {
+            let mut curr = self;
+            for i in (0..15).rev() {
+                let bit = ((num >> i) & 1) as usize;
+                curr = curr.nodes[bit].get_or_insert(Box::new(Trie::default()));
+                curr.count += 1;
+            }
+        }
+
+        fn count(&self, num: i32, high: i32) -> i32 {
+            let mut res = 0;
+            let mut curr = self;
+            for i in (0..15).rev() {
+                if curr.nodes.iter().all(|v| v.is_none()) {
+                    break;
+                }
+                let [bit_num, bit_high] = [num, high].map(|v| ((v >> i) & 1) as usize);
+                if bit_high == 1 {
+                    if let Some(ref v) = curr.nodes[bit_num] {
+                        // xor results in 0 on this bit => smaller value
+                        res += v.count;
+                    }
+                    // Now count the other branch
+                    curr = match curr.nodes[1 - bit_num] {
+                        Some(ref v) => v,
+                        _ => break,
+                    }
+                } else {
+                    // The other branch certainly yields 1 => bigger value
+                    // ignore those
+                    curr = match curr.nodes[bit_num] {
+                        Some(ref v) => v,
+                        _ => break,
+                    }
+                }
+            }
+            res
+        }
+    }
+
+    let mut trie = Trie::default();
+    let mut res = 0;
+    for &num in nums.iter() {
+        res += trie.count(num, 1 + high) - trie.count(num, low);
+        trie.insert(num);
+    }
+    res
+}
+
+pub fn with_sorcery(nums: &[i32], low: i32, high: i32) -> i32 {
+    let mut freqs = nums.iter().fold(HashMap::new(), |mut acc, &num| {
+        *acc.entry(num).or_insert(0) += 1;
+        acc
+    });
+    let [mut low, mut high] = [low, 1 + high];
+    let [mut count1, mut count2] = [0, 0];
+    while low > 0 || high > 0 {
+        let mut freqs2 = HashMap::new();
+        for (&k, &v) in freqs.iter() {
+            *freqs2.entry(k >> 1).or_insert(0) += v;
+            if (low & 1) == 1 {
+                count1 += v * freqs.get(&((low ^ 1) ^ k)).unwrap_or(&0);
+            }
+            if (high & 1) == 1 {
+                count2 += v * freqs.get(&((high ^ 1) ^ k)).unwrap_or(&0);
+            }
+        }
+        freqs = freqs2;
+        low >>= 1;
+        high >>= 1;
+    }
+    (count2 >> 1) - (count1 >> 1)
 }
 
 #[cfg(test)]
@@ -75,13 +130,16 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_value(4, 2, 6), 2);
-        assert_eq!(max_value(6, 1, 10), 3);
+        assert_eq!(count_pairs(&[1, 4, 2, 7], 2, 6), 6);
+        assert_eq!(count_pairs(&[9, 8, 4, 2, 1], 5, 14), 8);
+
+        assert_eq!(with_trie(&[1, 4, 2, 7], 2, 6), 6);
+        assert_eq!(with_trie(&[9, 8, 4, 2, 1], 5, 14), 8);
+
+        assert_eq!(with_sorcery(&[1, 4, 2, 7], 2, 6), 6);
+        assert_eq!(with_sorcery(&[9, 8, 4, 2, 1], 5, 14), 8);
     }
 
     #[test]
-    fn test() {
-        // 7 6 5 4 3
-        assert_eq!(max_value(5, 0, 28), 7);
-    }
+    fn test() {}
 }
