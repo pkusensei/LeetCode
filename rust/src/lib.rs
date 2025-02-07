@@ -5,39 +5,32 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn reinitialize_permutation(n: i32) -> i32 {
-    let perm: Vec<_> = (0..n).collect();
-    let mut curr = perm.clone();
-    for count in 0..n {
-        let mut next = Vec::with_capacity(n as usize);
-        for i in 0..n as usize {
-            if i & 1 == 0 {
-                next.push(curr[i / 2]);
-            } else {
-                next.push(curr[n as usize / 2 + (i - 1) / 2]);
+pub fn evaluate(s: String, knowledge: Vec<Vec<String>>) -> String {
+    let map = knowledge
+        .iter()
+        .fold(std::collections::HashMap::new(), |mut acc, v| {
+            acc.insert(v[0].as_bytes(), v[1].as_bytes());
+            acc
+        });
+    let mut res = Vec::with_capacity(s.len());
+    let mut left = None;
+    for (idx, b) in s.bytes().enumerate() {
+        match b {
+            b'(' => left = Some(idx),
+            b')' => {
+                let Some(prev) = left.take() else {
+                    unreachable!()
+                };
+                res.extend_from_slice(
+                    map.get(&s.as_bytes()[1 + prev..idx])
+                        .unwrap_or(&"?".as_bytes()),
+                );
             }
-        }
-        curr = next;
-        if curr == perm {
-            return count;
+            _ if left.is_none() => res.push(b),
+            _ => (),
         }
     }
-    -1
-}
-
-pub const fn track_idx(n: i32) -> i32 {
-    let mut res = 0;
-    let mut idx = 1;
-    while res == 0 || idx > 1 {
-        // if idx < n / 2 {
-        //     idx *= 2;
-        // } else {
-        //     idx = 2 * idx - (n - 1);
-        // }
-        idx = 2 * idx % (n - 1);
-        res += 1;
-    }
-    res
+    String::from_utf8(res).unwrap()
 }
 
 #[cfg(test)]
@@ -70,11 +63,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(track_idx(2), 1);
-        assert_eq!(track_idx(4), 2);
-        assert_eq!(track_idx(6), 4);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
