@@ -5,18 +5,9 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_nice_divisors(prime_factors: i32) -> i32 {
-    const MOD: i64 = 1_000_000_007;
-    if prime_factors <= 3 {
-        return prime_factors;
-    }
-    let div = prime_factors / 3;
-    let res = match prime_factors % 3 {
-        0 => mod_pow(3, div as _, MOD),
-        1 => mod_pow(3, div as u32 - 1, MOD) * 4,
-        _ => mod_pow(3, div as _, MOD) * 2,
-    };
-    (res % MOD) as _
+pub fn square_is_white(coordinates: String) -> bool {
+    let s = coordinates.as_bytes();
+    (s[0] - b'a') & 1 == (s[1] - b'0') & 1
 }
 
 #[cfg(test)]
