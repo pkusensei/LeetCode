@@ -2,37 +2,44 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::{BTreeSet, HashMap};
+use std::collections::HashMap;
 
 #[allow(unused_imports)]
 use helper::*;
 
-#[derive(Debug, Default)]
-struct NumberContainers {
-    num_indices: HashMap<i32, BTreeSet<i32>>,
-    index_num: HashMap<i32, i32>,
+pub fn max_happy_groups(batch_size: i32, groups: &[i32]) -> i32 {
+    let batch = batch_size as usize;
+    let mut res = 0;
+    let mut freqs = vec![0; batch];
+    for g in groups.iter() {
+        let rem = g % batch_size;
+        if rem == 0 {
+            res += 1;
+        } else if freqs[batch - rem as usize] > 0 {
+            freqs[batch - rem as usize] -= 1; // greedy
+            res += 1;
+        } else {
+            freqs[rem as usize] += 1;
+        }
+    }
+    res + dfs(&mut freqs, 0, &mut HashMap::new())
 }
 
-impl NumberContainers {
-    fn new() -> Self {
-        Default::default()
+fn dfs(freqs: &mut [i32], last: usize, memo: &mut HashMap<Vec<i32>, i32>) -> i32 {
+    if let Some(&v) = memo.get(freqs) {
+        return v;
     }
-
-    fn change(&mut self, index: i32, number: i32) {
-        if let Some(&prev) = self.index_num.get(&index) {
-            self.num_indices.entry(prev).or_default().remove(&index);
+    let batch = freqs.len();
+    let mut res = 0;
+    for sz in 1..batch {
+        if freqs[sz] > 0 {
+            freqs[sz] -= 1;
+            res = res.max(i32::from(last == 0) + dfs(freqs, (last + sz) % batch, memo));
+            freqs[sz] += 1;
         }
-        self.index_num.insert(index, number);
-        self.num_indices.entry(number).or_default().insert(index);
     }
-
-    fn find(&self, number: i32) -> i32 {
-        self.num_indices
-            .get(&number)
-            .and_then(|set| set.first())
-            .copied()
-            .unwrap_or(-1)
-    }
+    memo.insert(freqs.to_vec(), res);
+    res
 }
 
 #[cfg(test)]
@@ -65,7 +72,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(max_happy_groups(3, &[1, 2, 3, 4, 5, 6]), 4);
+        assert_eq!(max_happy_groups(4, &[1, 3, 2, 5, 2, 2, 1, 6]), 4);
+    }
 
     #[test]
     fn test() {}
