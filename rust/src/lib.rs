@@ -2,26 +2,37 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::{BTreeSet, HashMap};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_nice_pairs(nums: &[i32]) -> i32 {
-    nums.iter()
-        .fold(std::collections::HashMap::new(), |mut acc, &num| {
-            *acc.entry(num - reverse(num)).or_insert(0i64) += 1;
-            acc
-        })
-        .into_values()
-        .fold(0, |acc, v| (acc + v * (v - 1) / 2) % 1_000_000_007) as _
+#[derive(Debug, Default)]
+struct NumberContainers {
+    num_indices: HashMap<i32, BTreeSet<i32>>,
+    index_num: HashMap<i32, i32>,
 }
 
-const fn reverse(mut num: i32) -> i32 {
-    let mut res = 0;
-    while num > 0 {
-        res = 10 * res + num % 10;
-        num /= 10;
+impl NumberContainers {
+    fn new() -> Self {
+        Default::default()
     }
-    res
+
+    fn change(&mut self, index: i32, number: i32) {
+        if let Some(&prev) = self.index_num.get(&index) {
+            self.num_indices.entry(prev).or_default().remove(&index);
+        }
+        self.index_num.insert(index, number);
+        self.num_indices.entry(number).or_default().insert(index);
+    }
+
+    fn find(&self, number: i32) -> i32 {
+        self.num_indices
+            .get(&number)
+            .and_then(|set| set.first())
+            .copied()
+            .unwrap_or(-1)
+    }
 }
 
 #[cfg(test)]
