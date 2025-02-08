@@ -5,20 +5,29 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_points(points: Vec<Vec<i32>>, queries: Vec<Vec<i32>>) -> Vec<i32> {
-    queries
-        .iter()
-        .map(|q| {
-            let [xc, yc, r] = q[..] else { unreachable!() };
-            let mut count = 0;
-            for p in points.iter() {
-                let [x, y] = p[..] else { unreachable!() };
-                let dist = (xc - x).pow(2) + (yc - y).pow(2);
-                count += i32::from(dist <= r.pow(2));
-            }
-            count
-        })
-        .collect()
+pub fn make_string_sorted(s: &str) -> i32 {
+    const MOD: i64 = 1_000_000_007;
+
+    let n = s.len();
+    let mut facts = Vec::with_capacity(1 + n);
+    facts.push(1);
+    for i in 1..=n {
+        facts.push(i as i64 * facts.last().unwrap_or(&1) % MOD);
+    }
+    let mut res = 0;
+    let mut freqs = [0; 26];
+    for (idx, b) in s.bytes().enumerate().rev() {
+        let pos = usize::from(b - b'a');
+        freqs[pos] += 1;
+        let mut curr = freqs[..pos].iter().sum::<i64>() * facts[n - idx - 1] % MOD;
+        for &freq in freqs.iter() {
+            let fact = facts[freq as usize];
+            curr *= mod_pow(fact, MOD - 2, MOD);
+            curr %= MOD;
+        }
+        res += curr;
+    }
+    (res % MOD) as _
 }
 
 #[cfg(test)]
@@ -51,8 +60,18 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(make_string_sorted("cba".into()), 5);
+        assert_eq!(make_string_sorted("aabaa".into()), 2);
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(
+            make_string_sorted(
+                "fbefskzvhfdclkwavtmejwmxavhrhidpiwdjjyrxqvjjkalqqjbmklwlmhjmuzrlbsyn"
+            ),
+            857325869
+        );
+    }
 }

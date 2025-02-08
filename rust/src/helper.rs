@@ -104,7 +104,7 @@ where
     }
 }
 
-pub const fn mod_pow(mut base: i64, mut exp: u32, modu: i64) -> i64 {
+pub const fn mod_pow(mut base: i64, mut exp: i64, modu: i64) -> i64 {
     let mut res = 1;
     base %= modu;
     while exp > 0 {
