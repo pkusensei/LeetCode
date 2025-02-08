@@ -2,31 +2,39 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::BTreeSet;
+use std::collections::HashSet;
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_absolute_sum_diff(nums1: &[i32], nums2: &[i32]) -> i32 {
-    let set: BTreeSet<_> = nums1.iter().copied().collect();
-    let sum: u64 = nums1
-        .iter()
-        .zip(nums2.iter())
-        .map(|(a, b)| u64::from(a.abs_diff(*b)))
-        .sum();
-    let mut res = sum;
-    for (&a, &b) in nums1.iter().zip(nums2.iter()) {
-        if a == b {
-            continue;
-        }
-        if let Some(&upper) = set.range(b..).next() {
-            res = res.min(sum + u64::from(upper.abs_diff(b)) - u64::from(a.abs_diff(b)));
-        }
-        if let Some(&lower) = set.range(..b).next_back() {
-            res = res.min(sum + u64::from(lower.abs_diff(b)) - u64::from(a.abs_diff(b)));
+pub fn count_different_subsequence_gc_ds(nums: &[i32]) -> i32 {
+    const fn gcd(a: i32, b: i32) -> i32 {
+        if a == 0 {
+            b
+        } else {
+            gcd(b % a, a)
         }
     }
-    (res % 1_000_000_007) as _
+
+    let set: HashSet<_> = nums.iter().copied().collect();
+    let max = nums.iter().copied().max().unwrap();
+    let mut res = 0;
+    // candidate gcd x
+    for x in 1..=max {
+        let mut curr = 0;
+        // scan thru seq of multiples of x
+        // test whether the seq's intersection with nums has gcd==x
+        for num in (x..=max).step_by(x as usize) {
+            if set.contains(&num) {
+                curr = gcd(curr, num);
+                if x == curr {
+                    break;
+                }
+            }
+        }
+        res += i32::from(curr == x);
+    }
+    res
 }
 
 #[cfg(test)]
@@ -59,7 +67,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(count_different_subsequence_gc_ds(&[6, 10, 3]), 5);
+        assert_eq!(count_different_subsequence_gc_ds(&[5, 15, 40, 5, 6]), 7);
+    }
 
     #[test]
     fn test() {}
