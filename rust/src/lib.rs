@@ -5,27 +5,11 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_the_winner(n: i32, k: i32) -> i32 {
-    let mut nums: Vec<_> = (1..=n).collect();
-    let mut start = 0;
-    let k = k as usize;
-    while nums.len() > 1 {
-        let idx = (start + k - 1) % nums.len();
-        nums.remove(idx);
-        start = idx;
-    }
-    nums[0]
-}
-
-pub fn with_recursion(n: i32, k: i32) -> i32 {
-    fn solve(n: i32, k: i32) -> i32 {
-        if n == 1 {
-            0
-        } else {
-            (solve(n - 1, k) + k) % n
-        }
-    }
-    solve(n, k) + 1
+pub fn truncate_sentence(s: String, k: i32) -> String {
+    s.split_whitespace()
+        .take(k as _)
+        .collect::<Vec<_>>()
+        .join(" ")
 }
 
 #[cfg(test)]
@@ -58,13 +42,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(find_the_winner(5, 2), 3);
-        assert_eq!(find_the_winner(6, 5), 1);
-
-        assert_eq!(with_recursion(5, 2), 3);
-        assert_eq!(with_recursion(6, 5), 1);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
