@@ -2,44 +2,22 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_happy_groups(batch_size: i32, groups: &[i32]) -> i32 {
-    let batch = batch_size as usize;
-    let mut res = 0;
-    let mut freqs = vec![0; batch];
-    for g in groups.iter() {
-        let rem = g % batch_size;
-        if rem == 0 {
-            res += 1;
-        } else if freqs[batch - rem as usize] > 0 {
-            freqs[batch - rem as usize] -= 1; // greedy
-            res += 1;
-        } else {
-            freqs[rem as usize] += 1;
-        }
-    }
-    res + dfs(&mut freqs, 0, &mut HashMap::new())
-}
-
-fn dfs(freqs: &mut [i32], last: usize, memo: &mut HashMap<Vec<i32>, i32>) -> i32 {
-    if let Some(&v) = memo.get(freqs) {
-        return v;
-    }
-    let batch = freqs.len();
-    let mut res = 0;
-    for sz in 1..batch {
-        if freqs[sz] > 0 {
-            freqs[sz] -= 1;
-            res = res.max(i32::from(last == 0) + dfs(freqs, (last + sz) % batch, memo));
-            freqs[sz] += 1;
-        }
-    }
-    memo.insert(freqs.to_vec(), res);
-    res
+pub fn finding_users_active_minutes(logs: Vec<Vec<i32>>, k: i32) -> Vec<i32> {
+    logs.iter()
+        .fold(HashMap::<i32, HashSet<i32>>::new(), |mut acc, log| {
+            acc.entry(log[0]).or_default().insert(log[1]);
+            acc
+        })
+        .into_values()
+        .fold(vec![0; k as usize], |mut acc, val| {
+            acc[val.len() - 1] += 1;
+            acc
+        })
 }
 
 #[cfg(test)]
@@ -72,10 +50,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(max_happy_groups(3, &[1, 2, 3, 4, 5, 6]), 4);
-        assert_eq!(max_happy_groups(4, &[1, 3, 2, 5, 2, 2, 1, 6]), 4);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
