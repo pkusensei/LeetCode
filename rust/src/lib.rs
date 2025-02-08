@@ -5,15 +5,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_operations(nums: Vec<i32>) -> i32 {
-    let mut res = 0;
-    let mut prev = nums[0];
-    for &num in nums.iter().skip(1) {
-        let target = (prev + 1).max(num);
-        res += target - num;
-        prev = target
-    }
-    res
+pub fn count_points(points: Vec<Vec<i32>>, queries: Vec<Vec<i32>>) -> Vec<i32> {
+    queries
+        .iter()
+        .map(|q| {
+            let [xc, yc, r] = q[..] else { unreachable!() };
+            let mut count = 0;
+            for p in points.iter() {
+                let [x, y] = p[..] else { unreachable!() };
+                let dist = (xc - x).pow(2) + (yc - y).pow(2);
+                count += i32::from(dist <= r.pow(2));
+            }
+            count
+        })
+        .collect()
 }
 
 #[cfg(test)]
