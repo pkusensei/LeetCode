@@ -5,29 +5,15 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn make_string_sorted(s: &str) -> i32 {
-    const MOD: i64 = 1_000_000_007;
-
-    let n = s.len();
-    let mut facts = Vec::with_capacity(1 + n);
-    facts.push(1);
-    for i in 1..=n {
-        facts.push(i as i64 * facts.last().unwrap_or(&1) % MOD);
-    }
-    let mut res = 0;
-    let mut freqs = [0; 26];
-    for (idx, b) in s.bytes().enumerate().rev() {
-        let pos = usize::from(b - b'a');
-        freqs[pos] += 1;
-        let mut curr = freqs[..pos].iter().sum::<i64>() * facts[n - idx - 1] % MOD;
-        for &freq in freqs.iter() {
-            let fact = facts[freq as usize];
-            curr *= mod_pow(fact, MOD - 2, MOD);
-            curr %= MOD;
-        }
-        res += curr;
-    }
-    (res % MOD) as _
+pub fn check_if_pangram(sentence: String) -> bool {
+    sentence
+        .bytes()
+        .fold([false; 26], |mut acc, b| {
+            acc[usize::from(b - b'a')] = true;
+            acc
+        })
+        .into_iter()
+        .all(|b| b)
 }
 
 #[cfg(test)]
@@ -60,18 +46,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(make_string_sorted("cba".into()), 5);
-        assert_eq!(make_string_sorted("aabaa".into()), 2);
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(
-            make_string_sorted(
-                "fbefskzvhfdclkwavtmejwmxavhrhidpiwdjjyrxqvjjkalqqjbmklwlmhjmuzrlbsyn"
-            ),
-            857325869
-        );
-    }
+    fn test() {}
 }
