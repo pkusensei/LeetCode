@@ -6,16 +6,16 @@ namespace Solution;
 
 public class Solution
 {
-    public int TupleSameProduct(int[] nums)
+    public int[] GetMaximumXor(int[] nums, int maximumBit)
     {
-        Dictionary<int, int> counts = [];
-        foreach (var (i, a) in nums.Select((v, i) => (i, v)))
+        List<int> prefix = [];
+        foreach (var item in nums)
         {
-            foreach (var b in nums.Skip(1 + i))
-            {
-                if (!counts.TryAdd(a * b, 1)) { counts[a * b] += 1; }
-            }
+            prefix.Add(item ^ prefix.LastOrDefault());
         }
-        return counts.Values.Where(v => v > 1).Select(v => v * (v - 1) * 4).Sum();
+        var max = (1 << maximumBit) - 1;
+        var res = prefix.Select(p => p ^ max).ToArray();
+        Array.Reverse(res);
+        return res;
     }
 }
