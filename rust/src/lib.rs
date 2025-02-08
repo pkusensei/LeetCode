@@ -2,22 +2,31 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::{HashMap, HashSet};
+use std::collections::BTreeSet;
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn finding_users_active_minutes(logs: Vec<Vec<i32>>, k: i32) -> Vec<i32> {
-    logs.iter()
-        .fold(HashMap::<i32, HashSet<i32>>::new(), |mut acc, log| {
-            acc.entry(log[0]).or_default().insert(log[1]);
-            acc
-        })
-        .into_values()
-        .fold(vec![0; k as usize], |mut acc, val| {
-            acc[val.len() - 1] += 1;
-            acc
-        })
+pub fn min_absolute_sum_diff(nums1: &[i32], nums2: &[i32]) -> i32 {
+    let set: BTreeSet<_> = nums1.iter().copied().collect();
+    let sum: u64 = nums1
+        .iter()
+        .zip(nums2.iter())
+        .map(|(a, b)| u64::from(a.abs_diff(*b)))
+        .sum();
+    let mut res = sum;
+    for (&a, &b) in nums1.iter().zip(nums2.iter()) {
+        if a == b {
+            continue;
+        }
+        if let Some(&upper) = set.range(b..).next() {
+            res = res.min(sum + u64::from(upper.abs_diff(b)) - u64::from(a.abs_diff(b)));
+        }
+        if let Some(&lower) = set.range(..b).next_back() {
+            res = res.min(sum + u64::from(lower.abs_diff(b)) - u64::from(a.abs_diff(b)));
+        }
+    }
+    (res % 1_000_000_007) as _
 }
 
 #[cfg(test)]
