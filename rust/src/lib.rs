@@ -5,15 +5,25 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn check_if_pangram(sentence: String) -> bool {
-    sentence
-        .bytes()
-        .fold([false; 26], |mut acc, b| {
-            acc[usize::from(b - b'a')] = true;
-            acc
-        })
-        .into_iter()
-        .all(|b| b)
+pub fn max_ice_cream(costs: Vec<i32>, coins: i32) -> i32 {
+    let max = *costs.iter().max().unwrap();
+    let mut buckets = vec![0; 1 + max as usize];
+    for &c in costs.iter() {
+        buckets[c as usize] += 1;
+    }
+    let mut num = coins;
+    let mut res = 0;
+    for (c, &count) in buckets.iter().enumerate() {
+        let c = c as i32;
+        if num > c * count {
+            res += count;
+            num -= c * count;
+        } else {
+            res += num / c;
+            break;
+        }
+    }
+    res
 }
 
 #[cfg(test)]
