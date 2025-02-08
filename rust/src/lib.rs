@@ -5,10 +5,13 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-// (a1^a2) & (b1^b2) = (a1&b1) ^ (a1&b2) ^ (a2&b1) ^ (a2&b2)
-// (a1+a2) * (b1+b2)
-pub fn get_xor_sum(arr1: Vec<i32>, arr2: Vec<i32>) -> i32 {
-    arr1.iter().fold(0, |acc, &num| acc ^ num) & arr2.iter().fold(0, |acc, &num| acc ^ num)
+pub const fn sum_base(mut n: i32, k: i32) -> i32 {
+    let mut res = 0;
+    while n > 0 {
+        res += n % k;
+        n /= k;
+    }
+    res
 }
 
 #[cfg(test)]
