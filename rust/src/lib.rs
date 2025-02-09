@@ -5,25 +5,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn longest_beautiful_substring(word: String) -> i32 {
+pub fn max_building(n: i32, mut rests: Vec<[i32; 2]>) -> i32 {
+    rests.extend([[1, 0], [n, n - 1]]);
+    rests.sort_unstable();
+    let len = rests.len();
+    for idx in 0..len - 1 {
+        let dist = rests[idx + 1][0] - rests[idx][0];
+        rests[idx + 1][1] = rests[idx + 1][1].min(rests[idx][1] + dist);
+    }
+    for idx in (0..len - 1).rev() {
+        let dist = rests[idx + 1][0] - rests[idx][0];
+        rests[idx][1] = rests[idx][1].min(rests[idx + 1][1] + dist);
+    }
     let mut res = 0;
-    let mut curr = 1;
-    let mut count = 1;
-    for (idx, b) in word.bytes().enumerate().skip(1) {
-        match word.as_bytes()[idx - 1].cmp(&b) {
-            std::cmp::Ordering::Less => {
-                curr += 1;
-                count += 1
-            }
-            std::cmp::Ordering::Equal => curr += 1,
-            std::cmp::Ordering::Greater => {
-                curr = 1;
-                count = 1
-            }
-        }
-        if count == 5 {
-            res = res.max(curr)
-        }
+    for idx in 0..len - 1 {
+        let dist = rests[idx + 1][0] - rests[idx][0];
+        let h1 = rests[idx][1];
+        let h2 = rests[idx + 1][1];
+        res = res.max(h1.max(h2) + (dist - (h1 - h2).abs()) / 2);
     }
     res
 }
@@ -58,7 +57,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(max_building(5, vec![[2, 1], [4, 1]]), 2);
+        assert_eq!(max_building(6, vec![]), 5);
+        assert_eq!(max_building(10, vec![[5, 3], [2, 5], [7, 4], [10, 3]]), 5);
+    }
 
     #[test]
     fn test() {}
