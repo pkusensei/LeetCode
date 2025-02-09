@@ -2,17 +2,29 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::{cmp::Reverse, collections::BinaryHeap};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn replace_digits(s: String) -> String {
-    let mut s = s.into_bytes();
-    let n = s.len();
-    for idx in (1..n).step_by(2) {
-        let b = s[idx - 1];
-        s[idx] = b + (s[idx] - b'0');
+struct SeatManager {
+    heap: BinaryHeap<Reverse<i32>>,
+}
+
+impl SeatManager {
+    fn new(n: i32) -> Self {
+        Self {
+            heap: (1..=n).map(Reverse).collect(),
+        }
     }
-    String::from_utf8(s).unwrap()
+
+    fn reserve(&mut self) -> i32 {
+        self.heap.pop().unwrap().0
+    }
+
+    fn unreserve(&mut self, seat_number: i32) {
+        self.heap.push(Reverse(seat_number));
+    }
 }
 
 #[cfg(test)]
