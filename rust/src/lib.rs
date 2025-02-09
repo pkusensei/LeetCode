@@ -5,11 +5,31 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn get_min_distance(nums: Vec<i32>, target: i32, start: i32) -> i32 {
-    let mut res = i32::MAX;
-    for (i, &num) in (0..).zip(nums.iter()) {
-        if num == target {
-            res = res.min((i - start).abs());
+pub fn split_string(s: &str) -> bool {
+    dfs(s, 0, None)
+}
+
+fn dfs(s: &str, start: usize, prev: Option<u64>) -> bool {
+    let n = s.len();
+    if start >= n {
+        return prev.is_some();
+    }
+    let mut end = start;
+    while s.bytes().nth(end).is_some_and(|b| b == b'0') {
+        end += 1;
+    }
+    let mut res = false;
+    for i in end..=n {
+        let Ok(num) = s[start..i].parse() else {
+            continue;
+        };
+        if let Some(prev) = prev {
+            res |= prev == 1 + num && dfs(s, i, Some(num));
+        } else {
+            res |= i <= n - 1 && dfs(s, i, Some(num))
+        }
+        if res {
+            break;
         }
     }
     res
@@ -45,8 +65,14 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert!(split_string("050043"));
+        assert!(!split_string("1234"));
+        assert!(!split_string("9080701"));
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert!(split_string("10"));
+    }
 }
