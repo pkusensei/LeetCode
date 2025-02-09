@@ -2,20 +2,23 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-// j - i != nums[j] - nums[i]
-// j - nums[j] != i - nums[i]
-pub fn count_bad_pairs(nums: Vec<i32>) -> i64 {
-    let mut seen = HashMap::new();
-    for (i, &num) in (0..).zip(nums.iter()) {
-        *seen.entry(i - num).or_insert(0) += 1;
+pub fn max_frequency(nums: &mut [i32], k: i32) -> i32 {
+    nums.sort_unstable();
+    let mut res = 0;
+    let mut left = 0;
+    let mut sum = 0;
+    for (right, &num) in nums.iter().enumerate() {
+        sum += num as usize;
+        while num as usize * (right + 1 - left) > sum + k as usize {
+            sum -= nums[left] as usize;
+            left += 1;
+        }
+        res = res.max(right + 1 - left);
     }
-    let n = nums.len() as i64;
-    n * (n - 1) / 2 - seen.into_values().map(|v| v * (v - 1) / 2).sum::<i64>()
+    res as _
 }
 
 #[cfg(test)]
@@ -48,7 +51,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(max_frequency(&mut [1, 2, 4], 5), 3);
+        assert_eq!(max_frequency(&mut [1, 4, 8, 13], 5), 2);
+        assert_eq!(max_frequency(&mut [3, 9, 6], 2), 1);
+    }
 
     #[test]
     fn test() {}
