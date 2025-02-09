@@ -2,29 +2,19 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::{cmp::Reverse, collections::BinaryHeap};
-
 #[allow(unused_imports)]
 use helper::*;
 
-struct SeatManager {
-    heap: BinaryHeap<Reverse<i32>>,
-}
-
-impl SeatManager {
-    fn new(n: i32) -> Self {
-        Self {
-            heap: (1..=n).map(Reverse).collect(),
+pub fn maximum_element_after_decrementing_and_rearranging(arr: &mut [i32]) -> i32 {
+    arr.sort_unstable();
+    let mut prev = 0;
+    for num in arr.iter_mut() {
+        if *num > prev + 1 {
+            *num = prev + 1
         }
+        prev = *num;
     }
-
-    fn reserve(&mut self) -> i32 {
-        self.heap.pop().unwrap().0
-    }
-
-    fn unreserve(&mut self, seat_number: i32) {
-        self.heap.push(Reverse(seat_number));
-    }
+    prev
 }
 
 #[cfg(test)]
