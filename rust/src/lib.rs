@@ -5,20 +5,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_frequency(nums: &mut [i32], k: i32) -> i32 {
-    nums.sort_unstable();
+pub fn longest_beautiful_substring(word: String) -> i32 {
     let mut res = 0;
-    let mut left = 0;
-    let mut sum = 0;
-    for (right, &num) in nums.iter().enumerate() {
-        sum += num as usize;
-        while num as usize * (right + 1 - left) > sum + k as usize {
-            sum -= nums[left] as usize;
-            left += 1;
+    let mut curr = 1;
+    let mut count = 1;
+    for (idx, b) in word.bytes().enumerate().skip(1) {
+        match word.as_bytes()[idx - 1].cmp(&b) {
+            std::cmp::Ordering::Less => {
+                curr += 1;
+                count += 1
+            }
+            std::cmp::Ordering::Equal => curr += 1,
+            std::cmp::Ordering::Greater => {
+                curr = 1;
+                count = 1
+            }
         }
-        res = res.max(right + 1 - left);
+        if count == 5 {
+            res = res.max(curr)
+        }
     }
-    res as _
+    res
 }
 
 #[cfg(test)]
@@ -51,11 +58,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(max_frequency(&mut [1, 2, 4], 5), 3);
-        assert_eq!(max_frequency(&mut [1, 4, 8, 13], 5), 2);
-        assert_eq!(max_frequency(&mut [3, 9, 6], 2), 1);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
