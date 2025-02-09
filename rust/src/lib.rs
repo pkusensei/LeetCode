@@ -2,16 +2,20 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub const fn sum_base(mut n: i32, k: i32) -> i32 {
-    let mut res = 0;
-    while n > 0 {
-        res += n % k;
-        n /= k;
+// j - i != nums[j] - nums[i]
+// j - nums[j] != i - nums[i]
+pub fn count_bad_pairs(nums: Vec<i32>) -> i64 {
+    let mut seen = HashMap::new();
+    for (i, &num) in (0..).zip(nums.iter()) {
+        *seen.entry(i - num).or_insert(0) += 1;
     }
-    res
+    let n = nums.len() as i64;
+    n * (n - 1) / 2 - seen.into_values().map(|v| v * (v - 1) / 2).sum::<i64>()
 }
 
 #[cfg(test)]
