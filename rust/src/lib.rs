@@ -5,20 +5,31 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn subset_xor_sum(nums: &[i32]) -> i32 {
-    nums.iter().fold(0, |acc, num| acc | num) << (nums.len() - 1)
-    // let mut res = 0;
-    // dfs(nums, 0, &mut res);
-    // res
-}
-
-fn dfs(nums: &[i32], curr: i32, res: &mut i32) {
-    match nums {
-        [] => *res += curr,
-        [head, tail @ ..] => {
-            dfs(tail, curr, res);
-            dfs(tail, curr ^ *head, res);
+pub fn min_swaps(s: &str) -> i32 {
+    let (s, n) = (s.as_bytes(), s.len());
+    let ones = s.iter().filter(|&&b| b == b'1').count();
+    let zeros = n - ones;
+    if ones.abs_diff(zeros) > 1 {
+        return -1;
+    }
+    let mut temp = vec![];
+    if n & 1 == 0 {
+        while temp.len() < n {
+            temp.extend_from_slice(b"01");
         }
+        let count1 = temp.iter().zip(s).filter(|&(&a, &b)| a != b).count();
+        temp.clear();
+        while temp.len() < n {
+            temp.extend_from_slice(b"10");
+        }
+        let count2 = temp.iter().zip(s).filter(|&(&a, &b)| a != b).count();
+        count1.min(count2) as i32 / 2
+    } else {
+        while temp.len() < n {
+            temp.extend_from_slice(if ones > zeros { b"10" } else { b"01" });
+        }
+        temp.pop();
+        temp.iter().zip(s).filter(|&(&a, &b)| a != b).count() as i32 / 2
     }
 }
 
@@ -53,11 +64,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(subset_xor_sum(&[1, 3]), 6);
-        assert_eq!(subset_xor_sum(&[5, 1, 6]), 28);
-        assert_eq!(subset_xor_sum(&[3, 4, 5, 6, 7, 8]), 480);
+        assert_eq!(min_swaps("111000"), 1);
+        assert_eq!(min_swaps("010"), 0);
+        assert_eq!(min_swaps("1110"), -1);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(min_swaps("100"), 1);
+    }
 }
