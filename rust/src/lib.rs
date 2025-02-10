@@ -5,18 +5,31 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn mem_leak(mut memory1: i32, mut memory2: i32) -> Vec<i32> {
-    let mut n = 1;
-    loop {
-        if memory1 >= memory2 && memory1 >= n {
-            memory1 -= n;
-        } else if memory2 >= n {
-            memory2 -= n
-        } else {
-            return vec![n, memory1, memory2];
+pub fn sum_of_floored_pairs(nums: &[i32]) -> i32 {
+    const MOD: usize = 1_000_000_007;
+    let max = *nums.iter().max().unwrap() as usize;
+    let count = nums.iter().fold(vec![0; 1 + max], |mut acc, &num| {
+        acc[num as usize] += 1;
+        acc
+    });
+    let prefix = count.iter().fold(vec![], |mut acc, &c| {
+        acc.push(c + acc.last().unwrap_or(&0));
+        acc
+    });
+    let mut res = 0;
+    for num in 1..=max {
+        if count[num] == 0 {
+            continue;
         }
-        n += 1;
+        for mul in (num..=max).step_by(num) {
+            let low = mul;
+            let high = max.min(mul + num - 1);
+            let c = prefix[high] - prefix[low - 1];
+            res += count[num] * c * (mul / num);
+            res %= MOD;
+        }
     }
+    res as _
 }
 
 #[cfg(test)]
@@ -49,7 +62,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(sum_of_floored_pairs(&[2, 5, 9]), 10);
+        assert_eq!(sum_of_floored_pairs(&[7, 7, 7, 7, 7, 7, 7]), 49);
+    }
 
     #[test]
     fn test() {}
