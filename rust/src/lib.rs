@@ -5,16 +5,31 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn check_zero_ones(s: String) -> bool {
-    let [mut ones, mut zeros] = [0, 0];
-    for w in s.as_bytes().chunk_by(|a, b| a == b) {
-        if w[0] == b'1' {
-            ones = ones.max(w.len());
+pub fn min_speed_on_time(dist: &[i32], hour: f64) -> i32 {
+    let mut left = 1;
+    let mut right = 10_000_000;
+    if count(dist, right) > hour {
+        return -1;
+    }
+    while left < right {
+        let mid = left + (right - left) / 2;
+        if count(dist, mid) <= hour {
+            right = mid;
         } else {
-            zeros = zeros.max(w.len());
+            left = 1 + mid;
         }
     }
-    ones > zeros
+    left
+}
+
+fn count(dist: &[i32], mid: i32) -> f64 {
+    let n = dist.len();
+    let mut res = 0.0;
+    let v = f64::from(mid);
+    for d in dist.iter().take(n - 1) {
+        res += (f64::from(*d) / v).ceil();
+    }
+    res + f64::from(dist[n - 1]) / v
 }
 
 #[cfg(test)]
@@ -47,7 +62,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(min_speed_on_time(&[1, 3, 2], 6.0), 1);
+        assert_eq!(min_speed_on_time(&[1, 3, 2], 2.7), 3);
+        assert_eq!(min_speed_on_time(&[1, 3, 2], 1.9), -1);
+    }
 
     #[test]
     fn test() {}
