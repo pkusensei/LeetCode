@@ -5,23 +5,30 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_population(logs: &[[i32; 2]]) -> i32 {
-    let mut map = std::collections::BTreeMap::new();
-    for log in logs.iter() {
-        *map.entry(log[0]).or_insert(0) += 1;
-        *map.entry(log[1]).or_insert(0) -= 1;
-    }
-    let mut curr = 0;
-    let mut max = 0;
+pub fn max_distance(nums1: &[i32], nums2: &[i32]) -> i32 {
     let mut res = 0;
-    for (k, v) in map.iter() {
-        curr += v;
-        if curr > max {
-            max = curr;
-            res = *k;
+    for (i, &n1) in nums1.iter().enumerate() {
+        let j = nums2.partition_point(|&v| v >= n1);
+        if j.checked_sub(1).is_some_and(|j| j >= i) {
+            res = res.max(j - 1 - i);
         }
     }
-    res
+    res as _
+}
+
+pub fn with_two_ptrs(nums1: &[i32], nums2: &[i32]) -> i32 {
+    let mut res = 0;
+    let (n1, n2) = (nums1.len(), nums2.len());
+    let [mut i, mut j] = [0, 0];
+    while i < n1 && j < n2 {
+        if nums1[i] > nums2[j] {
+            i += 1;
+        } else {
+            res = res.max(j.saturating_sub(i));
+            j += 1;
+        }
+    }
+    res as _
 }
 
 #[cfg(test)]
@@ -55,11 +62,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(maximum_population(&[[1993, 1999], [2000, 2010]]), 1993);
-        assert_eq!(
-            maximum_population(&[[1950, 1961], [1960, 1971], [1970, 1981]]),
-            1960
-        );
+        assert_eq!(max_distance(&[55, 30, 5, 4, 2], &[100, 20, 10, 10, 5]), 2);
+        assert_eq!(max_distance(&[2, 2, 2], &[10, 10, 1]), 1);
+        assert_eq!(max_distance(&[30, 29, 19, 5], &[25, 25, 25, 25, 25]), 2);
+
+        assert_eq!(with_two_ptrs(&[55, 30, 5, 4, 2], &[100, 20, 10, 10, 5]), 2);
+        assert_eq!(with_two_ptrs(&[2, 2, 2], &[10, 10, 1]), 1);
+        assert_eq!(with_two_ptrs(&[30, 29, 19, 5], &[25, 25, 25, 25, 25]), 2);
     }
 
     #[test]
