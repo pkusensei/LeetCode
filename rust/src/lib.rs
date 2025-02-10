@@ -5,30 +5,41 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_distance(nums1: &[i32], nums2: &[i32]) -> i32 {
+pub fn max_sum_min_product(nums: &[i32]) -> i32 {
+    let n = nums.len();
+    let it = nums.iter().copied().enumerate();
+    let left_smallers = smallers(nums, it.clone());
+    let mut right_smallers = smallers(nums, it.rev());
+    right_smallers.reverse();
+    let prefix = nums.iter().fold(vec![0], |mut acc, &num| {
+        acc.push(i64::from(num) + acc.last().unwrap_or(&0));
+        acc
+    });
     let mut res = 0;
-    for (i, &n1) in nums1.iter().enumerate() {
-        let j = nums2.partition_point(|&v| v >= n1);
-        if j.checked_sub(1).is_some_and(|j| j >= i) {
-            res = res.max(j - 1 - i);
-        }
+    for (i, (left, right)) in left_smallers.into_iter().zip(right_smallers).enumerate() {
+        let left = left.map(|v| v + 1).unwrap_or(0);
+        let right = right.unwrap_or(n);
+        res = res.max(i64::from(nums[i]) * (prefix[right] - prefix[left]));
     }
-    res as _
+    (res % 1_000_000_007) as _
 }
 
-pub fn with_two_ptrs(nums1: &[i32], nums2: &[i32]) -> i32 {
-    let mut res = 0;
-    let (n1, n2) = (nums1.len(), nums2.len());
-    let [mut i, mut j] = [0, 0];
-    while i < n1 && j < n2 {
-        if nums1[i] > nums2[j] {
-            i += 1;
-        } else {
-            res = res.max(j.saturating_sub(i));
-            j += 1;
+fn smallers(nums: &[i32], it: impl Iterator<Item = (usize, i32)>) -> Vec<Option<usize>> {
+    let n = nums.len();
+    let mut stack = vec![];
+    let mut res = Vec::with_capacity(n);
+    for (idx, num) in it {
+        // Suppose it's scanning from right to left
+        // For current (idx, num) pair, pop everything that's bigger from stack
+        // Top of stack is the next smaller element
+        while stack.last().is_some_and(|&i| nums[i] >= num) {
+            stack.pop();
         }
+        // None means this num is the min in [idx..]
+        res.push(stack.last().copied());
+        stack.push(idx);
     }
-    res as _
+    res
 }
 
 #[cfg(test)]
@@ -62,13 +73,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_distance(&[55, 30, 5, 4, 2], &[100, 20, 10, 10, 5]), 2);
-        assert_eq!(max_distance(&[2, 2, 2], &[10, 10, 1]), 1);
-        assert_eq!(max_distance(&[30, 29, 19, 5], &[25, 25, 25, 25, 25]), 2);
-
-        assert_eq!(with_two_ptrs(&[55, 30, 5, 4, 2], &[100, 20, 10, 10, 5]), 2);
-        assert_eq!(with_two_ptrs(&[2, 2, 2], &[10, 10, 1]), 1);
-        assert_eq!(with_two_ptrs(&[30, 29, 19, 5], &[25, 25, 25, 25, 25]), 2);
+        assert_eq!(max_sum_min_product(&[1, 2, 3, 2]), 14);
+        assert_eq!(max_sum_min_product(&[2, 3, 3, 1, 2]), 18);
+        assert_eq!(max_sum_min_product(&[3, 1, 5, 6, 4, 2]), 60);
     }
 
     #[test]
