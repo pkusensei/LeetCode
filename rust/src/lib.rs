@@ -5,31 +5,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn sum_of_floored_pairs(nums: &[i32]) -> i32 {
-    const MOD: usize = 1_000_000_007;
-    let max = *nums.iter().max().unwrap() as usize;
-    let count = nums.iter().fold(vec![0; 1 + max], |mut acc, &num| {
-        acc[num as usize] += 1;
-        acc
-    });
-    let prefix = count.iter().fold(vec![], |mut acc, &c| {
-        acc.push(c + acc.last().unwrap_or(&0));
-        acc
-    });
-    let mut res = 0;
-    for num in 1..=max {
-        if count[num] == 0 {
-            continue;
-        }
-        for mul in (num..=max).step_by(num) {
-            let low = mul;
-            let high = max.min(mul + num - 1);
-            let c = prefix[high] - prefix[low - 1];
-            res += count[num] * c * (mul / num);
-            res %= MOD;
+pub fn subset_xor_sum(nums: &[i32]) -> i32 {
+    nums.iter().fold(0, |acc, num| acc | num) << (nums.len() - 1)
+    // let mut res = 0;
+    // dfs(nums, 0, &mut res);
+    // res
+}
+
+fn dfs(nums: &[i32], curr: i32, res: &mut i32) {
+    match nums {
+        [] => *res += curr,
+        [head, tail @ ..] => {
+            dfs(tail, curr, res);
+            dfs(tail, curr ^ *head, res);
         }
     }
-    res as _
 }
 
 #[cfg(test)]
@@ -63,8 +53,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(sum_of_floored_pairs(&[2, 5, 9]), 10);
-        assert_eq!(sum_of_floored_pairs(&[7, 7, 7, 7, 7, 7, 7]), 49);
+        assert_eq!(subset_xor_sum(&[1, 3]), 6);
+        assert_eq!(subset_xor_sum(&[5, 1, 6]), 28);
+        assert_eq!(subset_xor_sum(&[3, 4, 5, 6, 7, 8]), 480);
     }
 
     #[test]
