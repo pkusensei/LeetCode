@@ -2,42 +2,54 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::VecDeque;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_sum_min_product(nums: &[i32]) -> i32 {
-    let n = nums.len();
-    let it = nums.iter().copied().enumerate();
-    let left_smallers = smallers(nums, it.clone());
-    let mut right_smallers = smallers(nums, it.rev());
-    right_smallers.reverse();
-    let prefix = nums.iter().fold(vec![0], |mut acc, &num| {
-        acc.push(i64::from(num) + acc.last().unwrap_or(&0));
-        acc
-    });
-    let mut res = 0;
-    for (i, (left, right)) in left_smallers.into_iter().zip(right_smallers).enumerate() {
-        let left = left.map(|v| v + 1).unwrap_or(0);
-        let right = right.unwrap_or(n);
-        res = res.max(i64::from(nums[i]) * (prefix[right] - prefix[left]));
+// O(V+E)
+pub fn largest_path_value(colors: &str, edges: &[[i32; 2]]) -> i32 {
+    let n = colors.len();
+    let mut adj = vec![vec![]; n]; // [a -> b]
+    let mut prevs = vec![vec![]; n]; // record parent node(s)
+    let mut indegs = vec![0; n];
+    for e in edges.iter() {
+        let [a, b] = [0, 1].map(|i| e[i] as usize);
+        adj[a].push(b);
+        prevs[b].push(a);
+        indegs[b] += 1;
     }
-    (res % 1_000_000_007) as _
-}
-
-fn smallers(nums: &[i32], it: impl Iterator<Item = (usize, i32)>) -> Vec<Option<usize>> {
-    let n = nums.len();
-    let mut stack = vec![];
-    let mut res = Vec::with_capacity(n);
-    for (idx, num) in it {
-        // Suppose it's scanning from right to left
-        // For current (idx, num) pair, pop everything that's bigger from stack
-        // Top of stack is the next smaller element
-        while stack.last().is_some_and(|&i| nums[i] >= num) {
-            stack.pop();
+    let mut dp = vec![[0; 26]; n];
+    let mut queue: VecDeque<_> = indegs
+        .iter()
+        .enumerate()
+        .filter_map(|(i, &v)| if v == 0 { Some(i) } else { None })
+        .collect();
+    if queue.is_empty() {
+        return -1;
+    }
+    let mut res = 0;
+    while let Some(curr) = queue.pop_front() {
+        let color = usize::from(colors.as_bytes()[curr] - b'a');
+        if prevs[curr].is_empty() {
+            dp[curr][color] = 1; // root node
+        } else {
+            for &prev in prevs[curr].iter() {
+                for c in 0..26 {
+                    dp[curr][c] = dp[curr][c].max(dp[prev][c] + i32::from(c == color));
+                }
+            }
         }
-        // None means this num is the min in [idx..]
-        res.push(stack.last().copied());
-        stack.push(idx);
+        res = res.max(dp[curr][color]);
+        for &next in adj[curr].iter() {
+            indegs[next] -= 1;
+            if indegs[next] <= 0 {
+                queue.push_back(next);
+            }
+        }
+    }
+    if indegs.iter().any(|&v| v > 0) {
+        return -1; // cycle
     }
     res
 }
@@ -73,11 +85,32 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_sum_min_product(&[1, 2, 3, 2]), 14);
-        assert_eq!(max_sum_min_product(&[2, 3, 3, 1, 2]), 18);
-        assert_eq!(max_sum_min_product(&[3, 1, 5, 6, 4, 2]), 60);
+        assert_eq!(
+            largest_path_value("abaca", &[[0, 1], [0, 2], [2, 3], [3, 4]]),
+            3
+        );
+        assert_eq!(largest_path_value("a", &[[0, 0]]), -1);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(
+            largest_path_value(
+                "nnllnzznn",
+                &[
+                    [0, 1],
+                    [1, 2],
+                    [2, 3],
+                    [2, 4],
+                    [3, 5],
+                    [4, 6],
+                    [3, 6],
+                    [5, 6],
+                    [6, 7],
+                    [7, 8]
+                ]
+            ),
+            5
+        );
+    }
 }
