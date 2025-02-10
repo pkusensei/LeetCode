@@ -2,34 +2,41 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_swaps(s: &str) -> i32 {
-    let (s, n) = (s.as_bytes(), s.len());
-    let ones = s.iter().filter(|&&b| b == b'1').count();
-    let zeros = n - ones;
-    if ones.abs_diff(zeros) > 1 {
-        return -1;
+struct FindSumPairs {
+    nums1: Vec<i32>,
+    nums2: Vec<i32>,
+    map: HashMap<i32, i32>,
+}
+
+impl FindSumPairs {
+    fn new(nums1: Vec<i32>, nums2: Vec<i32>) -> Self {
+        let map = nums2.iter().fold(HashMap::new(), |mut acc, &num| {
+            *acc.entry(num).or_insert(0) += 1;
+            acc
+        });
+        Self { nums1, nums2, map }
     }
-    let mut temp = vec![];
-    if n & 1 == 0 {
-        while temp.len() < n {
-            temp.extend_from_slice(b"01");
+
+    fn add(&mut self, index: i32, val: i32) {
+        let idx = index as usize;
+        self.map.entry(self.nums2[idx]).and_modify(|v| *v -= 1);
+        self.nums2[idx] += val;
+        *self.map.entry(self.nums2[idx]).or_insert(0) += 1;
+    }
+
+    fn count(&self, tot: i32) -> i32 {
+        let mut res = 0;
+        for &n1 in self.nums1.iter() {
+            if let Some(v) = self.map.get(&(tot - n1)) {
+                res += v;
+            }
         }
-        let count1 = temp.iter().zip(s).filter(|&(&a, &b)| a != b).count();
-        temp.clear();
-        while temp.len() < n {
-            temp.extend_from_slice(b"10");
-        }
-        let count2 = temp.iter().zip(s).filter(|&(&a, &b)| a != b).count();
-        count1.min(count2) as i32 / 2
-    } else {
-        while temp.len() < n {
-            temp.extend_from_slice(if ones > zeros { b"10" } else { b"01" });
-        }
-        temp.pop();
-        temp.iter().zip(s).filter(|&(&a, &b)| a != b).count() as i32 / 2
+        res
     }
 }
 
@@ -63,14 +70,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(min_swaps("111000"), 1);
-        assert_eq!(min_swaps("010"), 0);
-        assert_eq!(min_swaps("1110"), -1);
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(min_swaps("100"), 1);
-    }
+    fn test() {}
 }
