@@ -5,11 +5,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_sum_equal(first_word: String, second_word: String, target_word: String) -> bool {
-    fn parse(s: &str) -> i32 {
-        s.bytes().fold(0, |acc, b| 10 * acc + i32::from(b - b'a'))
+pub fn max_value(n: String, x: i32) -> String {
+    let x = x as u8 + b'0';
+    let mut s = n.into_bytes();
+    if s.first().is_some_and(|&b| b == b'-') {
+        if let Some(i) = s.iter().position(|&b| b > x) {
+            s.insert(i, x);
+        } else {
+            s.push(x);
+        }
+    } else if let Some(i) = s.iter().position(|&b| b < x) {
+        s.insert(i, x);
+    } else {
+        s.push(x);
     }
-    parse(&first_word) + parse(&second_word) == parse(&target_word)
+    String::from_utf8(s).unwrap()
 }
 
 #[cfg(test)]
