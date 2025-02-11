@@ -5,30 +5,34 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn get_biggest_three(grid: Vec<Vec<i32>>) -> Vec<i32> {
-    let [rows, cols] = get_dimensions(&grid);
-    let mut set = std::collections::BTreeSet::new();
-    for row in 0..rows {
-        for col in 0..cols {
-            set.insert(grid[row][col]);
-            let max = col.min(cols - col - 1).min((rows - row - 1) / 2);
-            for width in 0..=max {
-                let curr = (0..width)
-                    .map(|w| {
-                        grid[row + w][col + w]
-                            + grid[row + width + w][col + width - w]
-                            + grid[row + 2 * width - w][col - w]
-                            + grid[row + width - w][col - width + w]
-                    })
-                    .sum::<i32>();
-                set.insert(curr);
-            }
-            while set.len() > 3 {
-                set.pop_first();
-            }
+pub fn minimum_xor_sum(nums1: &[i32], nums2: &[i32]) -> i32 {
+    let n = nums1.len();
+    dfs(nums1, nums2, 0, 0, &mut vec![vec![-1; 1 << n]; n])
+}
+
+fn dfs(nums1: &[i32], nums2: &[i32], i1: usize, mask: usize, memo: &mut [Vec<i32>]) -> i32 {
+    let n = nums1.len();
+    if i1 >= n {
+        if mask.count_ones() as usize == n {
+            return 0;
+        }
+        return i32::MAX;
+    }
+    if memo[i1][mask] > -1 {
+        return memo[i1][mask];
+    }
+    let mut res = i32::MAX;
+    for i2 in 0..n {
+        if (mask >> i2) & 1 == 1 {
+            continue;
+        }
+        let v = dfs(nums1, nums2, 1 + i1, mask | (1 << i2), memo);
+        if v < i32::MAX {
+            res = res.min(v + (nums1[i1] ^ nums2[i2]))
         }
     }
-    set.into_iter().rev().collect()
+    memo[i1][mask] = res;
+    res
 }
 
 #[cfg(test)]
@@ -61,8 +65,16 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(minimum_xor_sum(&[1, 2], &[2, 3]), 2);
+        assert_eq!(minimum_xor_sum(&[1, 0, 3], &[5, 4, 3]), 8);
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(
+            minimum_xor_sum(&[72, 97, 8, 32, 15], &[63, 97, 57, 60, 83]),
+            152
+        );
+    }
 }
