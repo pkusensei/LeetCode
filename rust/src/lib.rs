@@ -5,11 +5,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_good_substrings(s: String) -> i32 {
-    s.as_bytes()
-        .windows(3)
-        .filter(|w| w[0] != w[1] && w[1] != w[2] && w[0] != w[2])
-        .count() as _
+pub fn min_pair_sum(mut nums: Vec<i32>) -> i32 {
+    nums.sort_unstable();
+    let mut left = 0;
+    let mut right = nums.len() - 1;
+    let mut res = 0;
+    while left < right {
+        res = res.max(nums[left] + nums[right]);
+        left += 1;
+        right -= 1;
+    }
+    res
 }
 
 #[cfg(test)]
