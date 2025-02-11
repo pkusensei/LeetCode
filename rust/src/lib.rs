@@ -5,34 +5,11 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_xor_sum(nums1: &[i32], nums2: &[i32]) -> i32 {
-    let n = nums1.len();
-    dfs(nums1, nums2, 0, 0, &mut vec![vec![-1; 1 << n]; n])
-}
-
-fn dfs(nums1: &[i32], nums2: &[i32], i1: usize, mask: usize, memo: &mut [Vec<i32>]) -> i32 {
-    let n = nums1.len();
-    if i1 >= n {
-        if mask.count_ones() as usize == n {
-            return 0;
-        }
-        return i32::MAX;
+pub fn is_sum_equal(first_word: String, second_word: String, target_word: String) -> bool {
+    fn parse(s: &str) -> i32 {
+        s.bytes().fold(0, |acc, b| 10 * acc + i32::from(b - b'a'))
     }
-    if memo[i1][mask] > -1 {
-        return memo[i1][mask];
-    }
-    let mut res = i32::MAX;
-    for i2 in 0..n {
-        if (mask >> i2) & 1 == 1 {
-            continue;
-        }
-        let v = dfs(nums1, nums2, 1 + i1, mask | (1 << i2), memo);
-        if v < i32::MAX {
-            res = res.min(v + (nums1[i1] ^ nums2[i2]))
-        }
-    }
-    memo[i1][mask] = res;
-    res
+    parse(&first_word) + parse(&second_word) == parse(&target_word)
 }
 
 #[cfg(test)]
@@ -65,16 +42,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(minimum_xor_sum(&[1, 2], &[2, 3]), 2);
-        assert_eq!(minimum_xor_sum(&[1, 0, 3], &[5, 4, 3]), 8);
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(
-            minimum_xor_sum(&[72, 97, 8, 32, 15], &[63, 97, 57, 60, 83]),
-            152
-        );
-    }
+    fn test() {}
 }
