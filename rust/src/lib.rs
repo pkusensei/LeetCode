@@ -5,23 +5,15 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn can_reach(s: &str, min_jump: i32, max_jump: i32) -> bool {
-    let (s, n) = (s.as_bytes(), s.len());
-    let [minj, maxj] = [min_jump, max_jump].map(|v| v as usize);
-    let mut dp = vec![false; n];
-    dp[0] = true;
-    let mut count = 0;
-    // sliding window [i-maxj..i-minj]
-    for idx in minj..n {
-        if dp[idx - minj] {
-            count += 1;
+pub fn remove_occurrences(s: &str, part: &str) -> String {
+    let mut res = vec![];
+    for b in s.bytes() {
+        res.push(b);
+        if res.ends_with(part.as_bytes()) {
+            res.truncate(res.len() - part.len());
         }
-        if idx > maxj && dp[idx - maxj - 1] {
-            count -= 1;
-        }
-        dp[idx] = count > 0 && s[idx] == b'0';
     }
-    dp[n - 1]
+    String::from_utf8(res).unwrap()
 }
 
 #[cfg(test)]
@@ -55,8 +47,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert!(can_reach("011010", 2, 3));
-        assert!(!can_reach("01101110", 2, 3));
+        assert_eq!(remove_occurrences("daabcbaabcbc", "abc"), "dab");
+        assert_eq!(remove_occurrences("axxxxyyyyb", "xy"), "ab");
     }
 
     #[test]
