@@ -5,16 +5,32 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_covered(ranges: Vec<Vec<i32>>, left: i32, right: i32) -> bool {
-    let mut prefix = vec![0; 1 + right as usize];
-    for v in ranges.iter() {
-        prefix[v[0] as usize] += 1;
-        prefix[1 + v[1] as usize] -= 1;
+pub fn largest_magic_square(grid: Vec<Vec<i32>>) -> i32 {
+    let [rows, cols] = get_dimensions(&grid);
+    let mut res = 1;
+    for r in 0..rows {
+        for c in 0..cols {
+            let side = (rows - r).min(cols - c);
+            for len in 1..=side {
+                let up: i32 = grid[r][c..c + len].iter().sum();
+                if (1 + r..r + len).any(|i| grid[i][c..c + len].iter().sum::<i32>() != up) {
+                    continue;
+                }
+                if (c..c + len).any(|b| (r..r + len).map(|a| grid[a][b]).sum::<i32>() != up) {
+                    continue;
+                }
+                let d1: i32 = (r..r + len).zip(c..c + len).map(|(a, b)| grid[a][b]).sum();
+                let d2: i32 = (r..r + len)
+                    .zip((c..c + len).rev())
+                    .map(|(a, b)| grid[a][b])
+                    .sum();
+                if d1 == up && d2 == up {
+                    res = res.max(len);
+                }
+            }
+        }
     }
-    for i in 1..=right as usize {
-        prefix[i] += prefix[i - 1];
-    }
-    (left..=right).all(|v| prefix[v as usize] > 0)
+    res as _
 }
 
 #[cfg(test)]
