@@ -2,35 +2,53 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::{
+    collections::HashMap,
+    ops::{BitAnd, BitOr},
+};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn largest_magic_square(grid: Vec<Vec<i32>>) -> i32 {
-    let [rows, cols] = get_dimensions(&grid);
-    let mut res = 1;
-    for r in 0..rows {
-        for c in 0..cols {
-            let side = (rows - r).min(cols - c);
-            for len in 1..=side {
-                let up: i32 = grid[r][c..c + len].iter().sum();
-                if (1 + r..r + len).any(|i| grid[i][c..c + len].iter().sum::<i32>() != up) {
-                    continue;
-                }
-                if (c..c + len).any(|b| (r..r + len).map(|a| grid[a][b]).sum::<i32>() != up) {
-                    continue;
-                }
-                let d1: i32 = (r..r + len).zip(c..c + len).map(|(a, b)| grid[a][b]).sum();
-                let d2: i32 = (r..r + len)
-                    .zip((c..c + len).rev())
-                    .map(|(a, b)| grid[a][b])
-                    .sum();
-                if d1 == up && d2 == up {
-                    res = res.max(len);
-                }
-            }
+pub fn min_operations_to_flip(expression: &str) -> i32 {
+    let mut parens = HashMap::new();
+    let mut stack = vec![];
+    for (idx, b) in expression.bytes().enumerate() {
+        if b == b'(' {
+            stack.push(idx);
+        } else if b == b')' {
+            parens.insert(idx, stack.pop().unwrap());
         }
     }
-    res as _
+    let n = expression.len();
+    dfs(expression.as_bytes(), &parens, 0, n - 1)[1]
+}
+
+// [value of exp, cost to flip]
+fn dfs(s: &[u8], parens: &HashMap<usize, usize>, left: usize, right: usize) -> [i32; 2] {
+    if left == right {
+        return [i32::from(s[left] - b'0'), 1];
+    }
+    let mid = *parens.get(&right).unwrap_or(&right); // default to single digit
+    if left == mid {
+        return dfs(s, parens, left + 1, right - 1); // discard ()
+    }
+    let [val1, cost1] = dfs(s, parens, left, mid - 2); // exp before operator
+    let [val2, cost2] = dfs(s, parens, mid, right);
+    let func: fn(i32, i32) -> i32 = if s[mid - 1] == b'|' {
+        i32::bitor
+    } else {
+        i32::bitand
+    };
+    let cost = if val1 + val2 == 1 {
+        1
+        // 1|0 and 0|1 and 1&0 and 0&1 => flip the op
+    } else {
+        // 0|0 and 1&1 => flip either side
+        // 0&0 and 1|1 => flip either side + flip the op
+        cost1.min(cost2) + (val1 ^ i32::from(s[mid - 1] == b'&'))
+    };
+    [func(val1, val2), cost]
 }
 
 #[cfg(test)]
@@ -63,7 +81,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(min_operations_to_flip("1&(0|1)"), 1);
+        assert_eq!(min_operations_to_flip("(0&0)&(0&0&0)"), 3);
+        assert_eq!(min_operations_to_flip("(0|(1|0&1))"), 1);
+    }
 
     #[test]
     fn test() {}
