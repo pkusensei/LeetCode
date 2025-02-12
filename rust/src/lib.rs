@@ -5,20 +5,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_rotation(mut mat: Vec<Vec<i32>>, target: Vec<Vec<i32>>) -> bool {
-    let n = mat.len();
-    for _ in 0..4 {
-        mat.reverse();
-        for r in 0..n {
-            for c in 0..r {
-                (mat[r][c], mat[c][r]) = (mat[c][r], mat[r][c]);
-            }
-        }
-        if mat == target {
-            return true;
-        }
+pub fn reduction_operations(mut nums: Vec<i32>) -> i32 {
+    nums.sort_unstable_by(|a, b| b.cmp(a));
+    let mut curr = 0;
+    let mut res = 0;
+    for ch in nums.chunk_by(|a, b| a == b) {
+        curr += ch.len();
+        res += curr;
     }
-    false
+    res -= curr; // remove the last chunk(whole array)
+    res as _
 }
 
 #[cfg(test)]
