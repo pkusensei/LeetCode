@@ -2,18 +2,40 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashSet;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn make_equal(words: Vec<String>) -> bool {
-    let n = words.len();
-    let count = words.iter().fold([0; 26], |acc, s| {
-        s.bytes().fold(acc, |mut acc, b| {
-            acc[usize::from(b - b'a')] += 1;
-            acc
-        })
-    });
-    count.into_iter().all(|v| v % n as i32 == 0)
+pub fn maximum_removals(s: &str, p: &str, removable: &[i32]) -> i32 {
+    let mut left = 0;
+    let mut right = removable.len();
+    while left < right {
+        let mid = left + (right + 1 - left) / 2;
+        let del: HashSet<_> = removable[..mid].iter().copied().collect();
+        if is_subseq(s.as_bytes(), p.as_bytes(), &del) {
+            left = mid
+        } else {
+            right = mid - 1;
+        }
+    }
+    left as i32
+}
+
+fn is_subseq(hay: &[u8], needle: &[u8], del: &HashSet<i32>) -> bool {
+    let (n1, n2) = (hay.len(), needle.len());
+    let [mut i1, mut i2] = [0, 0];
+    while i1 < n1 && i2 < n2 {
+        if del.contains(&(i1 as i32)) {
+            i1 += 1;
+            continue;
+        }
+        if i1 < n1 && hay[i1] == needle[i2] {
+            i2 += 1;
+        }
+        i1 += 1;
+    }
+    i2 == n2
 }
 
 #[cfg(test)]
@@ -46,7 +68,14 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(maximum_removals("abcacb", "ab", &[3, 1, 0]), 2);
+        assert_eq!(
+            maximum_removals("abcbddddd", "abcd", &[3, 2, 1, 4, 5, 6]),
+            1
+        );
+        assert_eq!(maximum_removals("abcab", "abc", &[0, 1, 2, 3, 4]), 0);
+    }
 
     #[test]
     fn test() {}
