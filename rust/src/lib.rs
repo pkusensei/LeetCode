@@ -5,16 +5,26 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn reduction_operations(mut nums: Vec<i32>) -> i32 {
-    nums.sort_unstable_by(|a, b| b.cmp(a));
-    let mut curr = 0;
-    let mut res = 0;
-    for ch in nums.chunk_by(|a, b| a == b) {
-        curr += ch.len();
-        res += curr;
+pub fn min_flips(s: &str) -> i32 {
+    let mut res = i32::MAX;
+    let [mut zero_even, mut zero_odd] = [0, 0];
+    let n = s.len();
+    // Slide a window with length n in total 2n array
+    for (idx, b) in s.bytes().cycle().enumerate().take(2 * n) {
+        // Try fit all zeros onto even idx, ones onto odd idx
+        zero_even += i32::from(b != (b'0' + (idx & 1) as u8));
+        // Try fit all ones onto even idx, zeros onto odd idx
+        zero_odd += i32::from(b != (b'0' + 1 - (idx & 1) as u8));
+        if idx >= n {
+            let left = idx - n; // droppped out of window
+            zero_even -= i32::from(s.as_bytes()[left] != (b'0' + (left & 1) as u8));
+            zero_odd -= i32::from(s.as_bytes()[left] != (b'0' + 1 - (left & 1) as u8));
+        }
+        if idx >= n - 1 {
+            res = res.min(zero_even).min(zero_odd);
+        }
     }
-    res -= curr; // remove the last chunk(whole array)
-    res as _
+    res
 }
 
 #[cfg(test)]
@@ -47,8 +57,14 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(min_flips("111000"), 2);
+        assert_eq!(min_flips("010"), 0);
+        assert_eq!(min_flips("1110"), 1);
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(min_flips("01001001101"), 2);
+    }
 }
