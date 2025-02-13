@@ -5,40 +5,43 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn can_be_increasing(nums: &[i32]) -> bool {
-    nums.len() - find_lis(nums) <= 1
+pub fn max_alternating_sum(nums: &[i32]) -> i64 {
+    let n = nums.len();
+    dfs(nums, 1, &mut vec![vec![-1; 1 + n]; 2])
 }
 
-fn find_lis(nums: &[i32]) -> usize {
-    let mut arr = vec![];
+// pick unpick
+fn dfs(nums: &[i32], even: usize, memo: &mut [Vec<i64>]) -> i64 {
+    match nums {
+        [] => 0,
+        [head, tail @ ..] => {
+            let n = nums.len();
+            if memo[even][n] > -1 {
+                return memo[even][n];
+            }
+            let curr = if even == 1 { *head } else { -head };
+            let skip = dfs(tail, even, memo);
+            let take = i64::from(curr) + dfs(tail, 1 - even, memo);
+            let res = skip.max(take);
+            memo[even][n] = res;
+            res
+        }
+    }
+}
+
+pub fn even_odd(nums: &[i32]) -> i64 {
+    let [mut even, mut odd] = [0, 0];
     for &num in nums {
-        let i = arr.partition_point(|&v| v < num);
-        if i == arr.len() {
-            arr.push(num);
-        } else {
-            arr[i] = num;
-        }
+        let ev = even.max(odd + i64::from(num));
+        let od = odd.max(even - i64::from(num));
+        [even, odd] = [ev, od];
     }
-    arr.len()
+    even
 }
 
-pub fn single_pass(nums: &[i32]) -> bool {
-    let mut dropped = false;
-    let mut prev = nums[0];
-    for (idx, &num) in nums.iter().enumerate().skip(1) {
-        if num <= prev {
-            if dropped {
-                return false;
-            }
-            dropped = true;
-            if idx == 1 || num > nums[idx - 2] {
-                prev = num; // drop [idx-1], else drop current num
-            }
-        } else {
-            prev = num;
-        }
-    }
-    true
+pub fn buy_sell_stock(nums: &[i32]) -> i64 {
+    // Sell at high, buy at low
+    nums.windows(2).map(|w| i64::from(w[1] - w[0]).max(0)).sum()
 }
 
 #[cfg(test)]
@@ -72,13 +75,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert!(can_be_increasing(&[1, 2, 10, 5, 7]));
-        assert!(!can_be_increasing(&[2, 3, 1, 2]));
-        assert!(!can_be_increasing(&[1, 1, 1]));
+        assert_eq!(max_alternating_sum(&[4, 2, 5, 3]), 7);
+        assert_eq!(max_alternating_sum(&[5, 6, 7, 8]), 8);
+        assert_eq!(max_alternating_sum(&[6, 2, 1, 2, 4, 5]), 10);
 
-        assert!(single_pass(&[1, 2, 10, 5, 7]));
-        assert!(!single_pass(&[2, 3, 1, 2]));
-        assert!(!single_pass(&[1, 1, 1]));
+        assert_eq!(even_odd(&[4, 2, 5, 3]), 7);
+        assert_eq!(even_odd(&[5, 6, 7, 8]), 8);
+        assert_eq!(even_odd(&[6, 2, 1, 2, 4, 5]), 10);
     }
 
     #[test]
