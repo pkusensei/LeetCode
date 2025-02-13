@@ -5,24 +5,42 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_product_difference(nums: Vec<i32>) -> i32 {
-    let [mut max1, mut max2] = [i32::MIN; 2];
-    let [mut min1, mut min2] = [i32::MAX; 2];
-    for &num in nums.iter() {
-        if num > max1 {
-            max2 = max1;
-            max1 = num;
-        } else if num > max2 {
-            max2 = num
+pub fn rotate_grid(mut grid: Vec<Vec<i32>>, k: i32) -> Vec<Vec<i32>> {
+    let [rows, cols] = get_dimensions(&grid);
+    let layers = rows.min(cols) / 2;
+    for layer in 0..layers {
+        let mut curr = vec![];
+        curr.extend_from_slice(&grid[layer][layer..cols - layer - 1]); // top
+        for r in layer..rows - layer - 1 {
+            curr.push(grid[r][cols - layer - 1]); // right
         }
-        if num < min1 {
-            min2 = min1;
-            min1 = num
-        } else if num < min2 {
-            min2 = num
+        for c in (1 + layer..cols - layer).rev() {
+            curr.push(grid[rows - layer - 1][c]); // bottom
+        }
+        for r in (1 + layer..rows - layer).rev() {
+            curr.push(grid[r][layer]);
+        }
+        let v = k as usize % curr.len();
+        curr.rotate_left(v);
+        let mut idx = 0;
+        for c in layer..cols - layer - 1 {
+            grid[layer][c] = curr[idx];
+            idx += 1;
+        }
+        for r in layer..rows - layer - 1 {
+            grid[r][cols - layer - 1] = curr[idx];
+            idx += 1;
+        }
+        for c in (1 + layer..cols - layer).rev() {
+            grid[rows - layer - 1][c] = curr[idx];
+            idx += 1;
+        }
+        for r in (1 + layer..rows - layer).rev() {
+            grid[r][layer] = curr[idx];
+            idx += 1;
         }
     }
-    max1 * max2 - min1 * min2
+    grid
 }
 
 #[cfg(test)]
