@@ -2,31 +2,21 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::{cmp::Reverse, collections::BinaryHeap};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn merge_triplets(triplets: &[[i32; 3]], target: [i32; 3]) -> bool {
-    let del: std::collections::HashSet<_> = triplets
-        .iter()
-        .enumerate()
-        .filter_map(|(i, v)| {
-            if v.iter().zip(target.iter()).any(|(a, b)| *a > *b) {
-                Some(i)
-            } else {
-                None
-            }
-        })
-        .collect();
-    let n = triplets.len();
-    for (i, &num) in target.iter().enumerate() {
-        if (0..n)
-            .filter(|v| !del.contains(v))
-            .all(|v| triplets[v][i] != num)
-        {
-            return false;
-        }
+pub fn min_operations(nums: Vec<i32>, k: i32) -> i32 {
+    let mut heap: BinaryHeap<_> = nums.iter().map(|&v| Reverse(v as i64)).collect();
+    let mut res = 0;
+    while heap.len() > 1 && heap.peek().is_some_and(|&Reverse(v)| v < k as i64) {
+        let x = heap.pop().unwrap().0;
+        let y = heap.pop().unwrap().0;
+        heap.push(Reverse(2 * x + y));
+        res += 1;
     }
-    true
+    res
 }
 
 #[cfg(test)]
@@ -59,17 +49,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert!(merge_triplets(
-            &[[2, 5, 3], [1, 8, 4], [1, 7, 5]],
-            [2, 7, 5]
-        ));
-        assert!(!merge_triplets(&[[3, 4, 5], [4, 5, 6]], [3, 2, 5]));
-        assert!(merge_triplets(
-            &[[2, 5, 3], [2, 3, 4], [1, 2, 5], [5, 2, 3]],
-            [5, 5, 5]
-        ));
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
