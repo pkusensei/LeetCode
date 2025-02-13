@@ -5,38 +5,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn earliest_and_latest(n: i32, first_player: i32, second_player: i32) -> Vec<i32> {
-    let mut min = i32::MAX;
-    let mut max = i32::MIN;
-    dfs(
-        n,
-        first_player,
-        n + 1 - second_player,
-        1,
-        &mut min,
-        &mut max,
-    );
-    vec![min, max]
-}
-
-fn dfs(n: i32, mut left: i32, mut right: i32, round: i32, min: &mut i32, max: &mut i32) {
-    if left == right {
-        *min = (*min).min(round);
-        *max = (*max).max(round);
-        return;
-    }
-    if left > right {
-        std::mem::swap(&mut left, &mut right);
-    }
-    for new_left in 1..=left {
-        let mut new_right = left + 1 - new_left;
-        while new_left + new_right <= right.min((1 + n) / 2) {
-            if left + right - new_left - new_right <= n / 2 {
-                dfs((1 + n) / 2, new_left, new_right, 1 + round, min, max);
-            }
-            new_right += 1;
+pub fn find_peak_grid(mat: Vec<Vec<i32>>) -> Vec<i32> {
+    let [rows, cols] = get_dimensions(&mat);
+    let [mut left, mut right] = [0, cols - 1];
+    while left <= right {
+        let mid_col = left + (right - left) / 2;
+        let max_row = (0..rows).max_by_key(|&r| mat[r][mid_col]).unwrap_or(0);
+        let peak = mat[max_row][mid_col];
+        let left_neighbor = mid_col
+            .checked_sub(1)
+            .map(|c| mat[max_row][c])
+            .unwrap_or(i32::MIN);
+        let right_neighbor = *mat[max_row].get(1 + mid_col).unwrap_or(&i32::MIN);
+        if peak > left_neighbor && peak > right_neighbor {
+            return vec![max_row as i32, mid_col as i32];
+        } else if peak < left_neighbor {
+            right = mid_col - 1;
+        } else {
+            left = 1 + mid_col;
         }
     }
+    vec![]
 }
 
 #[cfg(test)]
@@ -69,10 +58,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(earliest_and_latest(11, 2, 4), [3, 4]);
-        assert_eq!(earliest_and_latest(5, 1, 5), [1, 1]);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
