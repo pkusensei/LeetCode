@@ -5,42 +5,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn rotate_grid(mut grid: Vec<Vec<i32>>, k: i32) -> Vec<Vec<i32>> {
-    let [rows, cols] = get_dimensions(&grid);
-    let layers = rows.min(cols) / 2;
-    for layer in 0..layers {
-        let mut curr = vec![];
-        curr.extend_from_slice(&grid[layer][layer..cols - layer - 1]); // top
-        for r in layer..rows - layer - 1 {
-            curr.push(grid[r][cols - layer - 1]); // right
-        }
-        for c in (1 + layer..cols - layer).rev() {
-            curr.push(grid[rows - layer - 1][c]); // bottom
-        }
-        for r in (1 + layer..rows - layer).rev() {
-            curr.push(grid[r][layer]);
-        }
-        let v = k as usize % curr.len();
-        curr.rotate_left(v);
-        let mut idx = 0;
-        for c in layer..cols - layer - 1 {
-            grid[layer][c] = curr[idx];
-            idx += 1;
-        }
-        for r in layer..rows - layer - 1 {
-            grid[r][cols - layer - 1] = curr[idx];
-            idx += 1;
-        }
-        for c in (1 + layer..cols - layer).rev() {
-            grid[rows - layer - 1][c] = curr[idx];
-            idx += 1;
-        }
-        for r in (1 + layer..rows - layer).rev() {
-            grid[r][layer] = curr[idx];
-            idx += 1;
+pub fn wonderful_substrings(word: &str) -> i64 {
+    let mut freq = std::collections::HashMap::from([(0, 1)]);
+    let mut res = 0;
+    let mut mask = 0;
+    for b in word.bytes() {
+        mask ^= 1 << (b - b'a');
+        res += freq.get(&mask).unwrap_or(&0); // after xor they are all 0
+        *freq.entry(mask).or_insert(0) += 1;
+        // Try every letter
+        for bit in 0..10 {
+            res += freq.get(&(mask ^ (1 << bit))).unwrap_or(&0);
         }
     }
-    grid
+    res
 }
 
 #[cfg(test)]
@@ -73,7 +51,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(wonderful_substrings("aba"), 4);
+        assert_eq!(wonderful_substrings("aabb"), 9);
+        assert_eq!(wonderful_substrings("he"), 2);
+    }
 
     #[test]
     fn test() {}
