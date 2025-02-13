@@ -5,30 +5,35 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn number_of_rounds(login_time: &str, logout_time: &str) -> i32 {
-    let [mut h1, mut m1] = parse(login_time);
-    let [mut h2, mut m2] = parse(logout_time);
-    if h2 * 60 + m2 < h1 * 60 + m1 {
-        h2 += 24;
+pub fn min_difference(nums: &[i32], queries: &[[i32; 2]]) -> Vec<i32> {
+    let max = *nums.iter().max().unwrap_or(&0) as usize;
+    let mut count = vec![0; 1 + max];
+    let mut prefix = vec![count.clone()];
+    for &num in nums.iter() {
+        count[num as usize] += 1;
+        prefix.push(count.clone());
     }
-    if m1 % 15 > 0 {
-        m1 = (m1 / 15 + 1) * 15;
-        if m1 == 60 {
-            h1 += 1;
-            m1 = 0;
+    let mut res = vec![];
+    for q in queries.iter() {
+        let [left, right] = q[..] else { unreachable!() };
+        let count: Vec<_> = (0..=max)
+            .map(|num| prefix[1 + right as usize][num] - prefix[left as usize][num])
+            .collect();
+        let mut prev = -1;
+        let mut curr = i32::MAX;
+        for (val, &c) in count.iter().enumerate() {
+            if c == 0 {
+                continue;
+            }
+            let val = val as i32;
+            if prev > -1 && val > prev {
+                curr = curr.min(val - prev);
+            }
+            prev = val;
         }
+        res.push(if curr == i32::MAX { -1 } else { curr });
     }
-    m1 += h1 * 60;
-    m2 -= m2 % 15;
-    m2 += 60 * h2;
-    (m2 - m1).max(0) / 15
-}
-
-fn parse(s: &str) -> [i32; 2] {
-    let t = s.split_once(':').unwrap();
-    let h = t.0.parse().unwrap();
-    let m = t.1.parse().unwrap();
-    [h, m]
+    res
 }
 
 #[cfg(test)]
@@ -62,8 +67,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(number_of_rounds("09:31", "10:14"), 1);
-        assert_eq!(number_of_rounds("21:30", "03:00"), 22);
+        assert_eq!(
+            min_difference(&[1, 3, 4, 8], &[[0, 1], [1, 2], [2, 3], [0, 3]]),
+            [2, 1, 4, 1]
+        );
+        assert_eq!(
+            min_difference(&[4, 5, 2, 2, 7, 10], &[[2, 3], [0, 2], [0, 5], [3, 5]]),
+            [-1, 1, 1, 3]
+        );
     }
 
     #[test]
