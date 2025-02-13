@@ -5,35 +5,40 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_difference(nums: &[i32], queries: &[[i32; 2]]) -> Vec<i32> {
-    let max = *nums.iter().max().unwrap_or(&0) as usize;
-    let mut count = vec![0; 1 + max];
-    let mut prefix = vec![count.clone()];
-    for &num in nums.iter() {
-        count[num as usize] += 1;
-        prefix.push(count.clone());
-    }
-    let mut res = vec![];
-    for q in queries.iter() {
-        let [left, right] = q[..] else { unreachable!() };
-        let count: Vec<_> = (0..=max)
-            .map(|num| prefix[1 + right as usize][num] - prefix[left as usize][num])
-            .collect();
-        let mut prev = -1;
-        let mut curr = i32::MAX;
-        for (val, &c) in count.iter().enumerate() {
-            if c == 0 {
-                continue;
-            }
-            let val = val as i32;
-            if prev > -1 && val > prev {
-                curr = curr.min(val - prev);
-            }
-            prev = val;
+pub fn can_be_increasing(nums: &[i32]) -> bool {
+    nums.len() - find_lis(nums) <= 1
+}
+
+fn find_lis(nums: &[i32]) -> usize {
+    let mut arr = vec![];
+    for &num in nums {
+        let i = arr.partition_point(|&v| v < num);
+        if i == arr.len() {
+            arr.push(num);
+        } else {
+            arr[i] = num;
         }
-        res.push(if curr == i32::MAX { -1 } else { curr });
     }
-    res
+    arr.len()
+}
+
+pub fn single_pass(nums: &[i32]) -> bool {
+    let mut dropped = false;
+    let mut prev = nums[0];
+    for (idx, &num) in nums.iter().enumerate().skip(1) {
+        if num <= prev {
+            if dropped {
+                return false;
+            }
+            dropped = true;
+            if idx == 1 || num > nums[idx - 2] {
+                prev = num; // drop [idx-1], else drop current num
+            }
+        } else {
+            prev = num;
+        }
+    }
+    true
 }
 
 #[cfg(test)]
@@ -67,14 +72,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            min_difference(&[1, 3, 4, 8], &[[0, 1], [1, 2], [2, 3], [0, 3]]),
-            [2, 1, 4, 1]
-        );
-        assert_eq!(
-            min_difference(&[4, 5, 2, 2, 7, 10], &[[2, 3], [0, 2], [0, 5], [3, 5]]),
-            [-1, 1, 1, 3]
-        );
+        assert!(can_be_increasing(&[1, 2, 10, 5, 7]));
+        assert!(!can_be_increasing(&[2, 3, 1, 2]));
+        assert!(!can_be_increasing(&[1, 1, 1]));
+
+        assert!(single_pass(&[1, 2, 10, 5, 7]));
+        assert!(!single_pass(&[2, 3, 1, 2]));
+        assert!(!single_pass(&[1, 1, 1]));
     }
 
     #[test]
