@@ -5,27 +5,13 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_peak_grid(mat: Vec<Vec<i32>>) -> Vec<i32> {
-    let [rows, cols] = get_dimensions(&mat);
-    let [mut left, mut right] = [0, cols - 1];
-    while left <= right {
-        let mid_col = left + (right - left) / 2;
-        let max_row = (0..rows).max_by_key(|&r| mat[r][mid_col]).unwrap_or(0);
-        let peak = mat[max_row][mid_col];
-        let left_neighbor = mid_col
-            .checked_sub(1)
-            .map(|c| mat[max_row][c])
-            .unwrap_or(i32::MIN);
-        let right_neighbor = *mat[max_row].get(1 + mid_col).unwrap_or(&i32::MIN);
-        if peak > left_neighbor && peak > right_neighbor {
-            return vec![max_row as i32, mid_col as i32];
-        } else if peak < left_neighbor {
-            right = mid_col - 1;
-        } else {
-            left = 1 + mid_col;
-        }
-    }
-    vec![]
+pub fn largest_odd_number(num: String) -> String {
+    let mut s = num.into_bytes();
+    let Some(i) = s.iter().rposition(|&b| (b - b'0') & 1 == 1) else {
+        return "".to_string();
+    };
+    s.truncate(1 + i);
+    String::from_utf8(s).unwrap()
 }
 
 #[cfg(test)]
