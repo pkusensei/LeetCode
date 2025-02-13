@@ -2,46 +2,63 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::{BTreeSet, HashMap};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_alternating_sum(nums: &[i32]) -> i64 {
-    let n = nums.len();
-    dfs(nums, 1, &mut vec![vec![-1; 1 + n]; 2])
+struct MovieRentingSystem {
+    // movie -> [price, shop]
+    data: HashMap<i32, BTreeSet<[i32; 2]>>,
+    // [shop, movie] -> price
+    prices: HashMap<[i32; 2], i32>,
+    // [price, shop, movie]
+    out: BTreeSet<[i32; 3]>,
 }
 
-// pick unpick
-fn dfs(nums: &[i32], even: usize, memo: &mut [Vec<i64>]) -> i64 {
-    match nums {
-        [] => 0,
-        [head, tail @ ..] => {
-            let n = nums.len();
-            if memo[even][n] > -1 {
-                return memo[even][n];
-            }
-            let curr = if even == 1 { *head } else { -head };
-            let skip = dfs(tail, even, memo);
-            let take = i64::from(curr) + dfs(tail, 1 - even, memo);
-            let res = skip.max(take);
-            memo[even][n] = res;
-            res
+impl MovieRentingSystem {
+    fn new(_n: i32, entries: Vec<Vec<i32>>) -> Self {
+        let mut data: HashMap<i32, BTreeSet<[i32; 2]>> = HashMap::new();
+        let mut prices = HashMap::new();
+        for e in entries.into_iter() {
+            let [shop, movie, price] = e[..] else {
+                unreachable!()
+            };
+            data.entry(movie).or_default().insert([price, shop]);
+            prices.insert([shop, movie], price);
+        }
+        Self {
+            data,
+            prices,
+            out: BTreeSet::new(),
         }
     }
-}
 
-pub fn even_odd(nums: &[i32]) -> i64 {
-    let [mut even, mut odd] = [0, 0];
-    for &num in nums {
-        let ev = even.max(odd + i64::from(num));
-        let od = odd.max(even - i64::from(num));
-        [even, odd] = [ev, od];
+    fn search(&self, movie: i32) -> Vec<i32> {
+        self.data
+            .get(&movie)
+            .map(|set| set.iter().map(|&[_p, s]| s).take(5).collect())
+            .unwrap_or_default()
     }
-    even
-}
 
-pub fn buy_sell_stock(nums: &[i32]) -> i64 {
-    // Sell at high, buy at low
-    nums.windows(2).map(|w| i64::from(w[1] - w[0]).max(0)).sum()
+    fn rent(&mut self, shop: i32, movie: i32) {
+        let Some(set) = self.data.get_mut(&movie) else {
+            return;
+        };
+        let price = self.prices[&[shop, movie]];
+        set.remove(&[price, shop]);
+        self.out.insert([price, shop, movie]);
+    }
+
+    fn drop(&mut self, shop: i32, movie: i32) {
+        let price = self.prices[&[shop, movie]];
+        self.out.remove(&[price, shop, movie]);
+        self.data.entry(movie).or_default().insert([price, shop]);
+    }
+
+    fn report(&self) -> Vec<Vec<i32>> {
+        self.out.iter().map(|v| vec![v[1], v[2]]).take(5).collect()
+    }
 }
 
 #[cfg(test)]
@@ -74,15 +91,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(max_alternating_sum(&[4, 2, 5, 3]), 7);
-        assert_eq!(max_alternating_sum(&[5, 6, 7, 8]), 8);
-        assert_eq!(max_alternating_sum(&[6, 2, 1, 2, 4, 5]), 10);
-
-        assert_eq!(even_odd(&[4, 2, 5, 3]), 7);
-        assert_eq!(even_odd(&[5, 6, 7, 8]), 8);
-        assert_eq!(even_odd(&[6, 2, 1, 2, 4, 5]), 10);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
