@@ -5,19 +5,34 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn wonderful_substrings(word: &str) -> i64 {
-    let mut freq = std::collections::HashMap::from([(0, 1)]);
-    let mut res = 0;
-    let mut mask = 0;
-    for b in word.bytes() {
-        mask ^= 1 << (b - b'a');
-        res += freq.get(&mask).unwrap_or(&0); // after xor they are all 0
-        *freq.entry(mask).or_insert(0) += 1;
-        // Try every letter
-        for bit in 0..10 {
-            res += freq.get(&(mask ^ (1 << bit))).unwrap_or(&0);
-        }
-    }
+pub fn ways_to_build_rooms(prev_room: &[i32]) -> i32 {
+    let n = prev_room.len();
+    let adj =
+        prev_room
+            .iter()
+            .enumerate()
+            .skip(1)
+            .fold(vec![vec![]; n], |mut acc, (prev, &node)| {
+                acc[node as usize].push(prev);
+                acc
+            });
+    let mut size = vec![0; n];
+    dfs(&adj, &mut size, 0);
+    let prod = size.iter().fold(1, |acc, &num| acc * i64::from(num) % MOD);
+    let fact = (1..=n).fold(1, |acc, num| acc * num as i64 % MOD);
+    let inverse = mod_pow(prod, MOD - 2, MOD);
+    (inverse * fact % MOD) as i32
+}
+
+const MOD: i64 = 1_000_000_007;
+
+// size of substree
+fn dfs(adj: &[Vec<usize>], size: &mut [i32], curr: usize) -> i32 {
+    let res = 1 + adj[curr]
+        .iter()
+        .map(|&next| dfs(adj, size, next))
+        .sum::<i32>();
+    size[curr] = res;
     res
 }
 
@@ -52,9 +67,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(wonderful_substrings("aba"), 4);
-        assert_eq!(wonderful_substrings("aabb"), 9);
-        assert_eq!(wonderful_substrings("he"), 2);
+        assert_eq!(ways_to_build_rooms(&[-1, 0, 1]), 1);
+        assert_eq!(ways_to_build_rooms(&[-1, 0, 0, 1, 2]), 6);
     }
 
     #[test]
