@@ -4,18 +4,23 @@ using Solution.Tree;
 
 namespace Solution;
 
-public class Solution
+public class ProductOfNumbers
 {
-    public int[] GetMaximumXor(int[] nums, int maximumBit)
+    List<int> Nums { get; }
+    public ProductOfNumbers() => Nums = [];
+
+    public void Add(int num)
     {
-        List<int> prefix = [];
-        foreach (var item in nums)
-        {
-            prefix.Add(item ^ prefix.LastOrDefault());
-        }
-        var max = (1 << maximumBit) - 1;
-        var res = prefix.Select(p => p ^ max).ToArray();
-        Array.Reverse(res);
-        return res;
+        if (num == 0) { Nums.Clear(); }
+        else if (Nums.LastOrDefault() == 0) { Nums.Add(num); }
+        else { Nums.Add(num * Nums.Last()); }
+    }
+
+    public int GetProduct(int k)
+    {
+        var i = Nums.Count - k;
+        if (i < 0) { return 0; }
+        if (i == 0) { return Nums.Last(); }
+        return Nums.Last() / Nums[i - 1];
     }
 }
