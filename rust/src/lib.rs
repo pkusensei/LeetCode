@@ -5,18 +5,10 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn eliminate_maximum(dist: &[i32], speed: &[i32]) -> i32 {
-    let mut times: Vec<_> = dist
-        .iter()
-        .zip(speed.iter())
-        .map(|(&d, &s)| (f64::from(d) / f64::from(s)).ceil() as i32)
-        .collect();
-    times.sort_unstable();
-    times
-        .iter()
-        .enumerate()
-        .take_while(|&(i, &time)| time as usize > i)
-        .count() as _
+pub fn count_good_numbers(n: i64) -> i32 {
+    const MOD: i64 = 1_000_000_007;
+    let res = if n & 1 == 1 { 5 } else { 1 }; // last digit
+    (res * mod_pow(20, n / 2, MOD) % MOD) as _
 }
 
 #[cfg(test)]
@@ -50,9 +42,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(eliminate_maximum(&[1, 3, 4], &[1, 1, 1]), 3);
-        assert_eq!(eliminate_maximum(&[1, 1, 2, 3], &[1, 1, 1, 1]), 1);
-        assert_eq!(eliminate_maximum(&[3, 2, 4], &[5, 3, 2]), 1);
+        assert_eq!(count_good_numbers(1), 5);
+        assert_eq!(count_good_numbers(4), 400);
+        assert_eq!(count_good_numbers(50), 564908303);
     }
 
     #[test]
