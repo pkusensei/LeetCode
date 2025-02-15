@@ -2,32 +2,68 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::{BinaryHeap, HashSet};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn sum_game(num: &str) -> bool {
-    let n = num.len();
-    let mut sum = 0;
-    let [mut left, mut right] = [0, 0];
-    for b in num[..n / 2].bytes() {
-        if b == b'?' {
-            left += 1
-        } else {
-            sum += i32::from(b - b'0');
+pub fn min_cost(max_time: i32, edges: &[[i32; 3]], passing_fees: &[i32]) -> i32 {
+    let n = passing_fees.len();
+    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
+        let (x, y, time) = (e[0] as usize, e[1] as usize, e[2]);
+        acc[x].push((y, time));
+        acc[y].push((x, time));
+        acc
+    });
+    let mut heap = BinaryHeap::from([State {
+        cost: passing_fees[0],
+        time: 0,
+        node: 0,
+    }]);
+    let mut seen = HashSet::from([(0, 0)]);
+    let mut min_cost = i32::MAX;
+    while let Some(State { cost, time, node }) = heap.pop() {
+        if time > max_time {
+            continue;
+        }
+        if node == n - 1 {
+            min_cost = min_cost.min(cost);
+        }
+        for &(next_node, delta_time) in adj[node].iter() {
+            let next_time = time + delta_time;
+            if seen.insert((next_node, next_time)) && next_time <= max_time {
+                heap.push(State {
+                    cost: cost + passing_fees[next_node],
+                    time: next_time,
+                    node: next_node,
+                });
+            }
         }
     }
-    for b in num[n / 2..].bytes() {
-        if b == b'?' {
-            right += 1
-        } else {
-            sum -= i32::from(b - b'0');
-        }
+    if min_cost == i32::MAX {
+        -1
+    } else {
+        min_cost
     }
-    if (left + right) & 1 == 1 {
-        return true;
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct State {
+    cost: i32,
+    time: i32,
+    node: usize,
+}
+
+impl PartialOrd for State {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
     }
-    sum += left / 2 * 9 - right / 2 * 9;
-    sum != 0
+}
+
+impl Ord for State {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        other.cost.cmp(&self.cost)
+    }
 }
 
 #[cfg(test)]
@@ -61,9 +97,51 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert!(!sum_game("5023"));
-        assert!(sum_game("25??"));
-        assert!(!sum_game("?3295???"));
+        assert_eq!(
+            min_cost(
+                30,
+                &[
+                    [0, 1, 10],
+                    [1, 2, 10],
+                    [2, 5, 10],
+                    [0, 3, 1],
+                    [3, 4, 10],
+                    [4, 5, 15]
+                ],
+                &[5, 1, 2, 20, 20, 3]
+            ),
+            11
+        );
+        assert_eq!(
+            min_cost(
+                29,
+                &[
+                    [0, 1, 10],
+                    [1, 2, 10],
+                    [2, 5, 10],
+                    [0, 3, 1],
+                    [3, 4, 10],
+                    [4, 5, 15]
+                ],
+                &[5, 1, 2, 20, 20, 3],
+            ),
+            48
+        );
+        assert_eq!(
+            min_cost(
+                25,
+                &[
+                    [0, 1, 10],
+                    [1, 2, 10],
+                    [2, 5, 10],
+                    [0, 3, 1],
+                    [3, 4, 10],
+                    [4, 5, 15]
+                ],
+                &[5, 1, 2, 20, 20, 3]
+            ),
+            -1
+        );
     }
 
     #[test]
