@@ -2,37 +2,65 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn punishment_number(n: i32) -> i32 {
-    (1..=n)
-        .filter_map(|num| {
-            if (0..=1).contains(&(num % 9)) && backtrack(num, num.pow(2)) {
-                Some(num.pow(2))
-            } else {
-                None
-            }
-        })
-        .sum()
+pub fn longest_common_subpath(n: i32, paths: &[&[i32]]) -> i32 {
+    let n = i64::from(n);
+    let upper = paths.iter().map(|p| p.len()).min().unwrap();
+    let [mut left, mut right] = [0, upper];
+    while left < right {
+        let mid = left + (right - left) / 2;
+        if rabin_karp(mid, n, paths) {
+            left = 1 + mid;
+        } else {
+            right = mid;
+        }
+    }
+    if left == upper && rabin_karp(left, n, paths) {
+        left as i32
+    } else {
+        left as i32 - 1
+    }
 }
 
-// lol
-const ST: [i32; 29] = [
-    1, 9, 10, 36, 45, 55, 82, 91, 99, 100, 235, 297, 369, 370, 379, 414, 657, 675, 703, 756, 792,
-    909, 918, 945, 964, 990, 991, 999, 1000,
-];
-
-const fn backtrack(target: i32, num: i32) -> bool {
-    if target < 0 || num < target {
-        return false;
-    }
-    if num == target {
+fn rabin_karp(len: usize, base: i64, paths: &[&[i32]]) -> bool {
+    const MOD: i64 = 1_000_000_007;
+    if len == 0 {
         return true;
     }
-    backtrack(target - num % 10, num / 10)
-        || backtrack(target - num % 100, num / 100)
-        || backtrack(target - num % 1000, num / 1000)
+    let base_pow_len = (1..len).fold(1, |acc, _| (acc * base) % MOD);
+
+    let mut map: HashMap<_, Vec<_>> = HashMap::new();
+    for (pi, path) in paths.iter().enumerate() {
+        let mut map2: HashMap<i64, Vec<_>> = HashMap::new();
+        let mut hash = path[..len]
+            .iter()
+            .fold(0, |acc, &v| (acc * base + i64::from(v)) % MOD);
+        for idx in 0..=(path.len() - len) {
+            if let Some(prev_path) = pi.checked_sub(1) {
+                if map.get(&hash).is_some_and(|prev_matches| {
+                    prev_matches.iter().any(|&prev_i| {
+                        &paths[prev_path][prev_i..(prev_i + len)] == &path[idx..(idx + len)]
+                    })
+                }) {
+                    map2.entry(hash).or_default().push(idx);
+                }
+            } else {
+                map2.entry(hash).or_default().push(idx);
+            }
+            if idx < path.len() - len {
+                hash -= i64::from(path[idx]) * base_pow_len;
+                hash *= base;
+                hash += i64::from(path[idx + len]);
+                hash = hash.rem_euclid(MOD);
+            }
+        }
+        map = map2;
+    }
+    !map.is_empty()
 }
 
 #[cfg(test)]
@@ -66,8 +94,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(punishment_number(10), 182);
-        assert_eq!(punishment_number(37), 1478);
+        assert_eq!(
+            longest_common_subpath(5, &[&[0, 1, 2, 3, 4], &[2, 3, 4], &[4, 0, 1, 2, 3]]),
+            2
+        );
+        assert_eq!(longest_common_subpath(3, &[&[0], &[1], &[2]]), 0);
+        assert_eq!(
+            longest_common_subpath(5, &[&[0, 1, 2, 3, 4], &[4, 3, 2, 1, 0]]),
+            1
+        );
     }
 
     #[test]
