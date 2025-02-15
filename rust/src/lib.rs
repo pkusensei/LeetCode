@@ -5,20 +5,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_triples(n: i32) -> i32 {
-    let mut res = 0;
-    for a in 0..n {
-        for b in 1 + a..n {
-            let v = a.pow(2) + b.pow(2);
-            if v > n.pow(2) {
-                break;
-            }
-            if (f64::from(v).sqrt().trunc() as i32).pow(2) == v {
-                res += 2;
+pub fn nearest_exit(maze: Vec<Vec<char>>, entrance: Vec<i32>) -> i32 {
+    let [rows, cols] = get_dimensions(&maze);
+    let mut seen = vec![vec![false; cols]; rows];
+    let start = [entrance[0] as usize, entrance[1] as usize];
+    let mut queue = std::collections::VecDeque::from([(start, 0)]);
+    seen[start[0]][start[1]] = true;
+    while let Some(([row, col], step)) = queue.pop_front() {
+        if [row, col] != start && (row == 0 || row == rows - 1 || col == 0 || col == cols - 1) {
+            return step;
+        }
+        for [nr, nc] in neighbors([row, col]).filter(|&[nr, nc]| {
+            maze.get(nr)
+                .is_some_and(|r| r.get(nc).is_some_and(|&v| v == '.'))
+        }) {
+            if !seen[nr][nc] {
+                seen[nr][nc] = true;
+                queue.push_back(([nr, nc], 1 + step));
             }
         }
     }
-    res
+    -1
 }
 
 #[cfg(test)]
