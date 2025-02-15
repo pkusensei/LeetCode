@@ -5,27 +5,29 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn nearest_exit(maze: Vec<Vec<char>>, entrance: Vec<i32>) -> i32 {
-    let [rows, cols] = get_dimensions(&maze);
-    let mut seen = vec![vec![false; cols]; rows];
-    let start = [entrance[0] as usize, entrance[1] as usize];
-    let mut queue = std::collections::VecDeque::from([(start, 0)]);
-    seen[start[0]][start[1]] = true;
-    while let Some(([row, col], step)) = queue.pop_front() {
-        if [row, col] != start && (row == 0 || row == rows - 1 || col == 0 || col == cols - 1) {
-            return step;
-        }
-        for [nr, nc] in neighbors([row, col]).filter(|&[nr, nc]| {
-            maze.get(nr)
-                .is_some_and(|r| r.get(nc).is_some_and(|&v| v == '.'))
-        }) {
-            if !seen[nr][nc] {
-                seen[nr][nc] = true;
-                queue.push_back(([nr, nc], 1 + step));
-            }
+pub fn sum_game(num: &str) -> bool {
+    let n = num.len();
+    let mut sum = 0;
+    let [mut left, mut right] = [0, 0];
+    for b in num[..n / 2].bytes() {
+        if b == b'?' {
+            left += 1
+        } else {
+            sum += i32::from(b - b'0');
         }
     }
-    -1
+    for b in num[n / 2..].bytes() {
+        if b == b'?' {
+            right += 1
+        } else {
+            sum -= i32::from(b - b'0');
+        }
+    }
+    if (left + right) & 1 == 1 {
+        return true;
+    }
+    sum += left / 2 * 9 - right / 2 * 9;
+    sum != 0
 }
 
 #[cfg(test)]
@@ -58,7 +60,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert!(!sum_game("5023"));
+        assert!(sum_game("25??"));
+        assert!(!sum_game("?3295???"));
+    }
 
     #[test]
     fn test() {}
