@@ -5,15 +5,33 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn add_rungs(rungs: Vec<i32>, dist: i32) -> i32 {
-    let mut res = 0;
-    let mut prev = 0;
-    for &num in rungs.iter() {
-        let delta = num - prev;
-        res += (delta - 1) / dist;
-        prev = num
+pub fn max_points(points: &[&[i32]]) -> i64 {
+    let [rows, cols] = get_dimensions(points);
+    if rows == 1 {
+        return i64::from(*points[0].iter().max().unwrap());
     }
-    res
+    if cols == 1 {
+        return points.iter().map(|r| i64::from(r[0])).sum();
+    }
+    let mut prev: Vec<_> = points[0].iter().map(|&v| i64::from(v)).collect();
+    for row in points.iter().skip(1) {
+        let mut left = vec![prev[0]];
+        for col in 1..cols {
+            left.push(prev[col].max(left[col - 1] - 1));
+        }
+        let mut right = vec![prev[cols - 1]];
+        for col in (0..cols - 1).rev() {
+            right.push(prev[col].max(right.last().unwrap() - 1));
+        }
+        right.reverse();
+        let curr = row
+            .iter()
+            .zip(left.into_iter().zip(right))
+            .map(|(&num, (lv, rv))| i64::from(num) + lv.max(rv))
+            .collect();
+        prev = curr;
+    }
+    prev.into_iter().max().unwrap()
 }
 
 #[cfg(test)]
@@ -46,7 +64,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(max_points(&[&[1, 2, 3], &[1, 5, 1], &[3, 1, 1]]), 9);
+        assert_eq!(max_points(&[&[1, 5], &[2, 3], &[4, 2]]), 11);
+    }
 
     #[test]
     fn test() {}
