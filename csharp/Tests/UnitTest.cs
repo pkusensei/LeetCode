@@ -10,34 +10,25 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow(3, "[3,1,2,3,2]")]
+    [DataRow(5, "[5,3,1,4,3,5,2,4,2]")]
+    public void TestMethod1(int n, string exp)
     {
-        List<List<int?>> arrs = [[2, 1], [3, 2, 5], [5, 4]];
-        var trees = arrs.Select(nums => TreeNode.Make(nums)).ToList();
-        Assert.AreEqual("[3,2,5,1,null,4]", sol.CanMerge(trees).ToString());
+        Assert.AreEqual(exp, sol.ConstructDistancedSequence(n).Print());
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        List<List<int?>> arrs = [[5, 3, 8], [3, 2, 6]];
-        var trees = arrs.Select(nums => TreeNode.Make(nums)).ToList();
-        Assert.IsTrue(sol.CanMerge(trees) is null);
     }
 
     [TestMethod]
     public void TestMethod3()
     {
-        List<List<int?>> arrs = [[5, 4], [3]];
-        var trees = arrs.Select(nums => TreeNode.Make(nums)).ToList();
-        Assert.IsTrue(sol.CanMerge(trees) is null);
     }
 
     [TestMethod]
     public void TestMethod4()
     {
-        List<List<int?>> arrs = [[1, null, 3], [3, 1], [4, 2]];
-        var trees = arrs.Select(nums => TreeNode.Make(nums)).ToList();
-        Assert.IsTrue(sol.CanMerge(trees) is null);
     }
 }
