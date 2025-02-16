@@ -5,30 +5,44 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_number(num: String, change: Vec<i32>) -> String {
-    let Some(left) = num
-        .bytes()
-        .position(|b| change[usize::from(b - b'0')] > (b - b'0') as i32)
-    else {
-        return num;
-    };
-    let right = num[left..]
-        .bytes()
-        .enumerate()
-        .find_map(|(i, b)| {
-            if change[usize::from(b - b'0')] < (b - b'0') as i32 {
-                Some(i + left)
-            } else {
-                None
-            }
-        })
-        .unwrap_or(num.len());
-    let mut s = num.into_bytes();
-    for v in s[left..right].iter_mut() {
-        let temp = change[usize::from(*v - b'0')] as u8 + b'0';
-        *v = temp;
+pub fn max_compatibility_sum(students: &[&[i32]], mentors: &[&[i32]]) -> i32 {
+    let [m, n] = get_dimensions(students);
+    let smasks: Vec<_> = students
+        .iter()
+        .map(|s| s.iter().fold(0, |acc, v| (acc << 1) | (v & 1)))
+        .collect();
+    let mmasks: Vec<_> = mentors
+        .iter()
+        .map(|m| m.iter().fold(0, |acc, v| (acc << 1) | (v & 1)))
+        .collect();
+    let mut memo = vec![vec![-1; 1 << m]; m];
+    dfs(&smasks, &mmasks, n as i32, 0, 0, &mut memo)
+}
+
+fn dfs(
+    smasks: &[i32],
+    mmasks: &[i32],
+    n: i32,
+    idx: usize,
+    mask: usize,
+    memo: &mut [Vec<i32>],
+) -> i32 {
+    if idx >= mmasks.len() {
+        return 0;
     }
-    String::from_utf8(s).unwrap()
+    if memo[idx][mask] > -1 {
+        return memo[idx][mask];
+    }
+    let mut res = 0;
+    for (si, stu) in smasks.iter().enumerate() {
+        if mask & (1 << si) > 0 {
+            continue;
+        }
+        let curr: i32 = n - (stu ^ mmasks[idx]).count_ones() as i32;
+        res = res.max(curr + dfs(smasks, mmasks, n, 1 + idx, mask | (1 << si), memo));
+    }
+    memo[idx][mask] = res;
+    res
 }
 
 #[cfg(test)]
@@ -63,16 +77,18 @@ mod tests {
     #[test]
     fn basics() {
         assert_eq!(
-            maximum_number("132".into(), vec![9, 8, 5, 0, 3, 6, 4, 2, 6, 8]),
-            "832"
+            max_compatibility_sum(
+                &[&[1, 1, 0], &[1, 0, 1], &[0, 0, 1]],
+                &[&[1, 0, 0], &[0, 0, 1], &[1, 1, 0]]
+            ),
+            8
         );
+        assert_eq!(
+            max_compatibility_sum(&[&[0, 0], &[0, 0], &[0, 0]], &[&[1, 1], &[1, 1], &[1, 1]]),
+            0
+        )
     }
 
     #[test]
-    fn test() {
-        assert_eq!(
-            maximum_number("214010".into(), vec![6, 7, 9, 7, 4, 0, 3, 4, 4, 7]),
-            "974676"
-        );
-    }
+    fn test() {}
 }
