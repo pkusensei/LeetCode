@@ -5,12 +5,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_three(n: i32) -> bool {
-    let mut res = 0;
-    for v in 1..=n {
-        res += i32::from(n % v == 0);
+pub fn number_of_weeks(mut milestones: Vec<i32>) -> i64 {
+    let n = milestones.len();
+    milestones.sort_unstable();
+    let max = i64::from(milestones[n - 1]);
+    let rest: i64 = milestones.iter().take(n - 1).map(|&v| i64::from(v)).sum();
+    if max > rest {
+        1 + 2 * rest
+    } else {
+        max + rest
     }
-    res == 3
 }
 
 #[cfg(test)]
