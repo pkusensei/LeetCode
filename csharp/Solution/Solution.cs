@@ -6,39 +6,68 @@ namespace Solution;
 
 public class Solution
 {
-    public int[] ConstructDistancedSequence(int n)
+    public IList<IList<string>> DeleteDuplicateFolder(IList<IList<string>> paths)
     {
-        var res = new int[2 * n - 1];
-        var seen = new bool[1 + n];
-        Backtrack(0);
+        Trie root = new("");
+        foreach (var item in paths) { root.Insert(item); }
+        Dictionary<string, Trie> seen = [];
+        root.Dedup(seen);
+        List<string> path = [];
+        List<IList<string>> res = [];
+        foreach (var v in root.Nodes.Values) { v.Build(path, res); }
         return res;
+    }
+}
 
-        bool Backtrack(int idx)
+public class Trie
+{
+    public string Name { get; }
+    public SortedDictionary<string, Trie> Nodes { get; }
+    public bool Del { get; set; }
+
+    public Trie(string name)
+    {
+        Name = name;
+        Nodes = [];
+        Del = false;
+    }
+
+    public void Insert(IList<string> paths)
+    {
+        var curr = this;
+        foreach (var name in paths)
         {
-            if (idx >= res.Length) { return true; }
-            if (res[idx] > 0) { return Backtrack(1 + idx); }
+            curr.Nodes.TryAdd(name, new(name));
+            curr = curr.Nodes[name];
+        }
+    }
+
+    public string Dedup(IDictionary<string, Trie> seen)
+    {
+        StringBuilder sb = new();
+        foreach (var v in Nodes.Values) { sb.Append(v.Dedup(seen)); }
+        var key = sb.ToString();
+        if (sb.Length > 0)
+        {
+            if (seen.TryGetValue(key, out var node))
+            {
+                node.Del = true;
+                Del = true;
+            }
             else
             {
-                for (int num = n; num > 0; num -= 1)
-                {
-                    if (seen[num]) { continue; }
-                    seen[num] = true;
-                    res[idx] = num;
-                    if (num == 1)
-                    {
-                        if (Backtrack(1 + idx)) { return true; }
-                    }
-                    else if (idx + num < res.Length && res[idx + num] == 0)
-                    {
-                        res[idx + num] = num;
-                        if (Backtrack(1 + idx)) { return true; }
-                        res[idx + num] = 0;
-                    }
-                    res[idx] = 0;
-                    seen[num] = false;
-                }
+                seen.Add(key, this);
             }
-            return false;
         }
+        return $"({Name}{key})";
+    }
+
+    public void Build(List<string> path, List<IList<string>> res)
+    {
+        if (Del) { return; }
+        path.Add(Name);
+        res.Add(path[..]);
+        foreach (var v in Nodes.Values) { v.Build(path, res); }
+        path.RemoveAt(path.Count - 1);
     }
 }

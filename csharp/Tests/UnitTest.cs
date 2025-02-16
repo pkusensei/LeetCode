@@ -10,21 +10,24 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(3, "[3,1,2,3,2]")]
-    [DataRow(5, "[5,3,1,4,3,5,2,4,2]")]
-    public void TestMethod1(int n, string exp)
+    public void TestMethod1()
     {
-        Assert.AreEqual(exp, sol.ConstructDistancedSequence(n).Print());
+        List<IList<string>> paths = [["a"], ["c"], ["d"], ["a", "b"], ["c", "b"], ["d", "a"]];
+        Assert.AreEqual("""[["d"],["d","a"]]""", sol.DeleteDuplicateFolder(paths).Print());
     }
 
     [TestMethod]
     public void TestMethod2()
     {
+        List<IList<string>> paths = [["a", "b"], ["c", "d"], ["c"], ["a"]];
+        Assert.AreEqual("""[["c"],["c","b"],["a"],["a","b"]]""", sol.DeleteDuplicateFolder(paths).Print());
     }
 
     [TestMethod]
     public void TestMethod3()
     {
+        List<IList<string>> paths = [["a"], ["c"], ["d"], ["a", "b"], ["c", "b"], ["d", "a"]];
+        Assert.AreEqual("""[["c"],["c","d"],["a"],["a","b"]]""", sol.DeleteDuplicateFolder(paths).Print());
     }
 
     [TestMethod]
