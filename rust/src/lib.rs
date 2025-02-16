@@ -5,21 +5,30 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn can_see_persons_count(heights: &[i32]) -> Vec<i32> {
-    let mut res = vec![];
-    let mut stack = vec![];
-    for &num in heights.iter().rev() {
-        let mut curr = 0;
-        while stack.last().is_some_and(|&v| v < num) {
-            stack.pop();
-            curr += 1;
-        }
-        curr += i32::from(stack.last().is_some());
-        stack.push(num);
-        res.push(curr);
+pub fn maximum_number(num: String, change: Vec<i32>) -> String {
+    let Some(left) = num
+        .bytes()
+        .position(|b| change[usize::from(b - b'0')] > (b - b'0') as i32)
+    else {
+        return num;
+    };
+    let right = num[left..]
+        .bytes()
+        .enumerate()
+        .find_map(|(i, b)| {
+            if change[usize::from(b - b'0')] < (b - b'0') as i32 {
+                Some(i + left)
+            } else {
+                None
+            }
+        })
+        .unwrap_or(num.len());
+    let mut s = num.into_bytes();
+    for v in s[left..right].iter_mut() {
+        let temp = change[usize::from(*v - b'0')] as u8 + b'0';
+        *v = temp;
     }
-    res.reverse();
-    res
+    String::from_utf8(s).unwrap()
 }
 
 #[cfg(test)]
@@ -54,12 +63,16 @@ mod tests {
     #[test]
     fn basics() {
         assert_eq!(
-            can_see_persons_count(&[10, 6, 8, 5, 11, 9]),
-            [3, 1, 2, 1, 1, 0]
+            maximum_number("132".into(), vec![9, 8, 5, 0, 3, 6, 4, 2, 6, 8]),
+            "832"
         );
-        assert_eq!(can_see_persons_count(&[5, 1, 2, 3, 10]), [4, 1, 1, 1, 0]);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(
+            maximum_number("214010".into(), vec![6, 7, 9, 7, 4, 0, 3, 4, 4, 7]),
+            "974676"
+        );
+    }
 }
