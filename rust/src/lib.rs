@@ -5,14 +5,15 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn can_be_typed_words(text: String, broken_letters: String) -> i32 {
-    let banned = broken_letters.bytes().fold([false; 26], |mut acc, b| {
-        acc[usize::from(b - b'a')] = true;
-        acc
-    });
-    text.split_ascii_whitespace()
-        .filter(|s| !s.bytes().any(|b| banned[usize::from(b - b'a')]))
-        .count() as _
+pub fn add_rungs(rungs: Vec<i32>, dist: i32) -> i32 {
+    let mut res = 0;
+    let mut prev = 0;
+    for &num in rungs.iter() {
+        let delta = num - prev;
+        res += (delta - 1) / dist;
+        prev = num
+    }
+    res
 }
 
 #[cfg(test)]
