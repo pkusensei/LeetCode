@@ -5,17 +5,15 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_prefix_string(s: &str, words: &[&str]) -> bool {
-    let mut curr = s;
-    for w in words.iter() {
-        if !curr.is_empty() {
-            let Some(v) = curr.strip_prefix(w) else {
-                return false;
-            };
-            curr = v;
-        }
+pub fn min_stone_sum(piles: Vec<i32>, k: i32) -> i32 {
+    let mut heap = std::collections::BinaryHeap::from(piles);
+    for _ in 0..k {
+        let Some(v) = heap.pop() else {
+            break;
+        };
+        heap.push(v - v / 2);
     }
-    curr.is_empty()
+    heap.into_iter().sum()
 }
 
 #[cfg(test)]
@@ -48,12 +46,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert!(is_prefix_string(
-            "iloveleetcode",
-            &["i", "love", "leetcode", "apples"]
-        ));
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
