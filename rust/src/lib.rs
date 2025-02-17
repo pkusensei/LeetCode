@@ -5,17 +5,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_perimeter(needed_apples: i64) -> i64 {
-    let [mut left, mut right] = [1, 1_000_000];
-    while left < right {
-        let mid = left + (right - left) / 2;
-        if 2 * mid * (mid + 1) * (mid + mid + 1) >= needed_apples {
-            right = mid;
-        } else {
-            left = 1 + mid;
+pub fn count_special_subsequences(nums: &[i32]) -> i32 {
+    const MOD: i64 = 1_000_000_007;
+    let [mut zero, mut one, mut two] = [0; 3];
+    for &num in nums.iter() {
+        match num {
+            0 => zero += zero + 1,  // seq ends on 0
+            1 => one += zero + one, // seq ends on 1
+            _ => two += one + two,  // seq ends on 2
         }
+        zero %= MOD;
+        one %= MOD;
+        two %= MOD;
     }
-    8 * left
+    two as _
 }
 
 #[cfg(test)]
@@ -49,9 +52,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(minimum_perimeter(1), 8);
-        assert_eq!(minimum_perimeter(13), 16);
-        assert_eq!(minimum_perimeter(1000000000), 5040);
+        assert_eq!(count_special_subsequences(&[0, 1, 2, 2]), 3);
+        assert_eq!(count_special_subsequences(&[2, 2, 0, 0]), 0);
+        assert_eq!(count_special_subsequences(&[0, 1, 2, 0, 1, 2]), 7);
     }
 
     #[test]
