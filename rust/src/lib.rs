@@ -5,34 +5,47 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_space_wasted_k_resizing(nums: &[i32], k: i32) -> i32 {
-    let (n, k) = (nums.len(), k as usize);
-    dfs(nums, 0, k, &mut vec![vec![-1; n]; 1 + k])
+pub fn max_product(s: String) -> i64 {
+    let mut s = s.into_bytes();
+    let prefix = manachers(&s);
+    s.reverse();
+    let mut suffix = manachers(&s);
+    suffix.reverse();
+    prefix
+        .into_iter()
+        .zip(suffix[1..].iter())
+        .map(|(a, b)| (a * b) as i64)
+        .max()
+        .unwrap_or(1)
 }
 
-fn dfs(nums: &[i32], idx: usize, k: usize, memo: &mut [Vec<i32>]) -> i32 {
-    let n = nums.len();
-    if idx >= n {
-        return 0;
-    }
-    if memo[k][idx] > -1 {
-        return memo[k][idx];
-    }
-    let mut res = i32::MAX;
-    let mut max = 0;
-    let mut window_sum = 0;
-    for (next, &num) in nums[idx..].iter().enumerate() {
-        max = max.max(num);
-        window_sum += num;
-        let curr = max * (next + 1) as i32 - window_sum;
-        if k > 0 {
-            res = res.min(curr + dfs(nums, idx + next + 1, k - 1, memo));
+fn manachers(s: &[u8]) -> Vec<usize> {
+    let n = s.len();
+    let mut radius = vec![0; n];
+    let mut res = vec![1; n];
+    let [mut center, mut right_bound] = [0, 0];
+    for idx in 0..n {
+        if idx < right_bound {
+            let mirror = 2 * center - idx;
+            radius[idx] = radius[mirror].min(right_bound - idx);
+        }
+        let mut left = idx as i64 - (1 + radius[idx]) as i64;
+        let mut right = idx + (1 + radius[idx]);
+        while left >= 0 && right < n && s[left as usize] == s[right] {
+            radius[idx] += 1;
+            res[idx + radius[idx]] = res[idx + radius[idx]].max(1 + 2 * radius[idx]);
+            left -= 1;
+            right += 1;
+        }
+        if idx + radius[idx] > right_bound {
+            center = idx;
+            right_bound = idx + radius[idx];
         }
     }
-    if k == 0 {
-        res = max * (n - idx) as i32 - window_sum;
+    // Find prefix max length
+    for idx in 1..n {
+        res[idx] = res[idx].max(res[idx - 1]);
     }
-    memo[k][idx] = res;
     res
 }
 
@@ -67,11 +80,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_space_wasted_k_resizing(&[10, 20], 0), 10);
-        assert_eq!(min_space_wasted_k_resizing(&[10, 20, 30], 1), 10);
-        assert_eq!(min_space_wasted_k_resizing(&[10, 20, 15, 30, 20], 2), 15);
+        assert_eq!(max_product("ababbb".into()), 9);
+        assert_eq!(max_product("zaaaxbbby".into()), 9);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(
+            max_product("ggbswiymmlevedhkbdhntnhdbkhdevelmmyiwsbgg".into()),
+            45
+        );
+    }
 }
