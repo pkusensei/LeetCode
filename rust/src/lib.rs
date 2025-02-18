@@ -5,13 +5,15 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn rearrange_array(mut nums: Vec<i32>) -> Vec<i32> {
-    nums.sort_unstable();
-    let n = nums.len();
-    for idx in (1..n).step_by(2) {
-        nums.swap(idx - 1, idx);
+pub fn min_non_zero_product(p: i32) -> i32 {
+    const MOD: i64 = 1_000_000_007;
+    if p == 1 {
+        return 1;
     }
-    nums
+    let max: i64 = (1 << p) - 1;
+    let max2 = max - 1;
+    let times = (1 << (p - 1)) - 1;
+    (mod_pow(max2, times, MOD) * (max % MOD) % MOD) as _
 }
 
 #[cfg(test)]
@@ -44,7 +46,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(min_non_zero_product(1), 1);
+        assert_eq!(min_non_zero_product(2), 6);
+        assert_eq!(min_non_zero_product(3), 1512);
+    }
 
     #[test]
     fn test() {}
