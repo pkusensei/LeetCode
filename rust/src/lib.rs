@@ -5,49 +5,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn valid_path(n: i32, edges: Vec<Vec<i32>>, source: i32, destination: i32) -> bool {
-    let mut dsu = edges.iter().fold(DSU::new(n as usize), |mut acc, e| {
-        let [a, b] = [e[0], e[1]].map(|v| v as usize);
-        acc.union(a, b);
-        acc
-    });
-    dsu.find(source as usize) == dsu.find(destination as usize)
-}
-
-struct DSU {
-    parent: Vec<usize>,
-    rank: Vec<i32>,
-}
-
-impl DSU {
-    fn new(n: usize) -> Self {
-        Self {
-            parent: (0..n).collect(),
-            rank: vec![0; n],
-        }
-    }
-
-    fn find(&mut self, v: usize) -> usize {
-        if self.parent[v] != v {
-            self.parent[v] = self.find(self.parent[v])
-        }
-        self.parent[v]
-    }
-
-    fn union(&mut self, x: usize, y: usize) {
-        let [rx, ry] = [x, y].map(|v| self.find(v));
-        if rx == ry {
-            return;
-        }
-        match self.rank[rx].cmp(&self.rank[ry]) {
-            std::cmp::Ordering::Less => self.parent[rx] = ry,
-            std::cmp::Ordering::Equal => {
-                self.parent[ry] = rx;
-                self.rank[rx] += 1;
-            }
-            std::cmp::Ordering::Greater => self.parent[ry] = rx,
-        }
-    }
+pub fn min_time_to_type(mut word: String) -> i32 {
+    word.insert(0, 'a');
+    word.as_bytes()
+        .windows(2)
+        .map(|w| {
+            let d = w[0].abs_diff(w[1]);
+            i32::from(d.min(26 - d))
+        })
+        .sum::<i32>()
+        + word.len() as i32
+        - 1
 }
 
 #[cfg(test)]
