@@ -2,35 +2,16 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashSet;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn latest_day_to_cross(row: i32, col: i32, cells: &[[i32; 2]]) -> i32 {
-    let [rows, cols] = [row, col].map(|v| v as usize);
-    let mut blocked: HashSet<_> = cells
-        .iter()
-        .map(|c| [c[0], c[1]].map(|v| v as usize - 1))
-        .collect();
-    let mut dsu = DSU::new(2 + rows * cols);
-    for c in 0..cols {
-        dsu.union(rows * cols, c); // union top row with virtual node rows*cols
-        dsu.union(1 + rows * cols, (rows - 1) * cols + c); // bottom row to another
-    }
-    for (i, c) in cells.iter().enumerate().rev() {
-        let [row, col] = [c[0], c[1]].map(|v| v as usize - 1);
-        blocked.remove(&[row, col]);
-        for [nr, nc] in neighbors([row, col]) {
-            if nr < rows && nc < cols && !blocked.contains(&[nr, nc]) {
-                dsu.union(row * cols + col, nr * cols + nc);
-            }
-        }
-        if dsu.find(rows * cols) == dsu.find(1 + rows * cols) {
-            return i as i32;
-        }
-    }
-    -1
+pub fn valid_path(n: i32, edges: Vec<Vec<i32>>, source: i32, destination: i32) -> bool {
+    let mut dsu = edges.iter().fold(DSU::new(n as usize), |mut acc, e| {
+        let [a, b] = [e[0], e[1]].map(|v| v as usize);
+        acc.union(a, b);
+        acc
+    });
+    dsu.find(source as usize) == dsu.find(destination as usize)
 }
 
 struct DSU {
@@ -99,57 +80,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(
-            latest_day_to_cross(2, 2, &[[1, 1], [2, 1], [1, 2], [2, 2]]),
-            2
-        );
-        assert_eq!(
-            latest_day_to_cross(2, 2, &[[1, 1], [1, 2], [2, 1], [2, 2]]),
-            1
-        );
-        assert_eq!(
-            latest_day_to_cross(
-                3,
-                3,
-                &[
-                    [1, 2],
-                    [2, 1],
-                    [3, 3],
-                    [2, 2],
-                    [1, 1],
-                    [1, 3],
-                    [2, 3],
-                    [3, 2],
-                    [3, 1]
-                ]
-            ),
-            3
-        );
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(
-            latest_day_to_cross(
-                3,
-                4,
-                &[
-                    [3, 1],
-                    [2, 3],
-                    [1, 3],
-                    [3, 2],
-                    [2, 1],
-                    [1, 4],
-                    [1, 1],
-                    [2, 4],
-                    [3, 4],
-                    [1, 2],
-                    [2, 2],
-                    [3, 3]
-                ]
-            ),
-            5
-        );
-    }
+    fn test() {}
 }
