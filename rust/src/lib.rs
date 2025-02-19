@@ -2,32 +2,47 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashSet;
+use std::collections::HashMap;
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimize_the_difference(mat: &[&[i32]], target: i32) -> i32 {
-    let min_sum: i32 = mat.iter().map(|r| r.iter().min().unwrap_or(&0)).sum();
-    if min_sum >= target {
-        return min_sum - target;
+pub fn recover_array(_n: i32, sums: &mut [i32]) -> Vec<i32> {
+    sums.sort_unstable();
+    dfs(sums)
+}
+
+fn dfs(sums: &[i32]) -> Vec<i32> {
+    if sums.len() == 1 {
+        return vec![]; // sums is [0]
     }
-    let mut set = HashSet::from([0]);
-    for row in mat.iter() {
-        let mut next = HashSet::new();
-        for &prev in set.iter() {
-            for &num in row.iter() {
-                if prev + num <= 2 * target - min_sum {
-                    next.insert(prev + num);
-                }
+    let diff = sums[1] - sums[0];
+    let mut count = sums.iter().fold(HashMap::new(), |mut acc, &num| {
+        *acc.entry(num).or_insert(0) += 1;
+        acc
+    });
+    // exc+diff==inc
+    let [mut excluding_diff, mut including_diff] = [vec![], vec![]];
+    let mut pick_including_diff = false;
+    for &exc in sums.iter() {
+        let inc = exc + diff;
+        if count.get(&exc).is_some_and(|&v| v > 0) {
+            count.entry(exc).and_modify(|v| *v -= 1);
+            count.entry(inc).and_modify(|v| *v -= 1);
+            excluding_diff.push(exc);
+            including_diff.push(inc);
+            if inc == 0 {
+                pick_including_diff = true; // split with 0 must be worked on
             }
         }
-        set = next;
     }
-    set.into_iter()
-        .map(|v| (v - target).abs())
-        .min()
-        .unwrap_or_default()
+    let mut res = if pick_including_diff {
+        dfs(&including_diff)
+    } else {
+        dfs(&excluding_diff)
+    };
+    res.push(if pick_including_diff { -diff } else { diff });
+    res
 }
 
 #[cfg(test)]
@@ -61,12 +76,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            minimize_the_difference(&[&[1, 2, 3], &[4, 5, 6], &[7, 8, 9]], 13),
-            0
+        sort_eq!(
+            recover_array(3, &mut [-3, -2, -1, 0, 0, 1, 2, 3]),
+            [-1, -2, 3]
         );
-        assert_eq!(minimize_the_difference(&[&[1], &[2], &[3]], 100), 94);
-        assert_eq!(minimize_the_difference(&[&[1, 2, 9, 8, 7]], 6), 1);
+        sort_eq!(recover_array(2, &mut [0, 0, 0, 0]), [0, 0]);
+        sort_eq!(
+            recover_array(4, &mut [0, 0, 5, 5, 4, -1, 4, 9, 9, -1, 4, 3, 4, 8, 3, 8]),
+            [0, -1, 4, 5]
+        );
     }
 
     #[test]
