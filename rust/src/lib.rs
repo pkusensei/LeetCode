@@ -5,19 +5,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn number_of_unique_good_subsequences(binary: &str) -> i32 {
-    const MOD: i32 = 1_000_000_007;
-    let [mut end0, mut end1] = [0, 0];
-    let mut zero = 0; // "0"
-    for b in binary.bytes() {
-        if b == b'0' {
-            end0 = (end0 + end1) % MOD;
-            zero = 1;
-        } else {
-            end1 = (1 + end0 + end1) % MOD;
+pub fn find_middle_index(nums: &[i32]) -> i32 {
+    let sum: i32 = nums.iter().sum();
+    let mut left = 0;
+    for (i, &num) in nums.iter().enumerate() {
+        if left + num + left == sum {
+            return i as i32;
         }
+        left += num;
     }
-    (end0 + end1 + zero) % MOD
+    -1
 }
 
 #[cfg(test)]
@@ -51,9 +48,7 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(number_of_unique_good_subsequences("001"), 2);
-        assert_eq!(number_of_unique_good_subsequences("11"), 2);
-        assert_eq!(number_of_unique_good_subsequences("101"), 5);
+        assert_eq!(find_middle_index(&[2, 3, -1, 8, 4]), 3);
     }
 
     #[test]
