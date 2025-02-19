@@ -7,26 +7,27 @@ use std::collections::HashSet;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_different_binary_string(nums: Vec<String>) -> String {
-    let n = nums.len();
-    let seen: HashSet<i32> = nums
-        .into_iter()
-        .map(|s| i32::from_str_radix(&s, 2).unwrap_or_default())
-        .collect();
-    backtrack(n, 0, &seen)
-        .map(|v| format!("{:0n$b}", v))
-        .unwrap()
-}
-
-fn backtrack(n: usize, curr: i32, seen: &HashSet<i32>) -> Option<i32> {
-    if n == 0 {
-        return if !seen.contains(&curr) {
-            Some(curr)
-        } else {
-            None
-        };
+pub fn minimize_the_difference(mat: &[&[i32]], target: i32) -> i32 {
+    let min_sum: i32 = mat.iter().map(|r| r.iter().min().unwrap_or(&0)).sum();
+    if min_sum >= target {
+        return min_sum - target;
     }
-    backtrack(n - 1, curr << 1, seen).or_else(|| backtrack(n - 1, (curr << 1) | 1, seen))
+    let mut set = HashSet::from([0]);
+    for row in mat.iter() {
+        let mut next = HashSet::new();
+        for &prev in set.iter() {
+            for &num in row.iter() {
+                if prev + num <= 2 * target - min_sum {
+                    next.insert(prev + num);
+                }
+            }
+        }
+        set = next;
+    }
+    set.into_iter()
+        .map(|v| (v - target).abs())
+        .min()
+        .unwrap_or_default()
 }
 
 #[cfg(test)]
@@ -59,7 +60,14 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(
+            minimize_the_difference(&[&[1, 2, 3], &[4, 5, 6], &[7, 8, 9]], 13),
+            0
+        );
+        assert_eq!(minimize_the_difference(&[&[1], &[2], &[3]], 100), 94);
+        assert_eq!(minimize_the_difference(&[&[1, 2, 9, 8, 7]], 6), 1);
+    }
 
     #[test]
     fn test() {}
