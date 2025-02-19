@@ -5,12 +5,9 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_difference(mut nums: Vec<i32>, k: i32) -> i32 {
-    nums.sort_unstable();
-    nums.windows(k as usize)
-        .map(|w| w[k as usize - 1] - w[0])
-        .min()
-        .unwrap()
+pub fn kth_largest_number(mut nums: Vec<String>, k: i32) -> String {
+    nums.sort_unstable_by(|a, b| b.len().cmp(&a.len()).then(b.cmp(a)));
+    nums.into_iter().nth(k as usize - 1).unwrap()
 }
 
 #[cfg(test)]
