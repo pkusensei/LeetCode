@@ -6,68 +6,93 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<IList<string>> DeleteDuplicateFolder(IList<IList<string>> paths)
+    public string GetHappyString(int n, int k)
     {
-        Trie root = new("");
-        foreach (var item in paths) { root.Insert(item); }
-        Dictionary<string, Trie> seen = [];
-        root.Dedup(seen);
-        List<string> path = [];
-        List<IList<string>> res = [];
-        foreach (var v in root.Nodes.Values) { v.Build(path, res); }
+        StringBuilder sb = new(n);
+        string res = string.Empty;
+        Backtrack(n, ref k);
         return res;
-    }
-}
 
-public class Trie
-{
-    public string Name { get; }
-    public SortedDictionary<string, Trie> Nodes { get; }
-    public bool Del { get; set; }
-
-    public Trie(string name)
-    {
-        Name = name;
-        Nodes = [];
-        Del = false;
-    }
-
-    public void Insert(IList<string> paths)
-    {
-        var curr = this;
-        foreach (var name in paths)
+        bool Backtrack(int n, ref int k)
         {
-            curr.Nodes.TryAdd(name, new(name));
-            curr = curr.Nodes[name];
+            if (n == 0)
+            {
+                k -= 1;
+                if (k == 0)
+                {
+                    res = sb.ToString();
+                    return true;
+                }
+                return false;
+            }
+            foreach (var item in "abc")
+            {
+                if (sb.Length > 0 && sb[^1] == item) { continue; }
+                sb.Append(item);
+                if (Backtrack(n - 1, ref k)) { return true; }
+                sb.Remove(sb.Length - 1, 1);
+            }
+            return false;
         }
     }
 
-    public string Dedup(IDictionary<string, Trie> seen)
+    public string WithStack(int n, int k)
     {
-        StringBuilder sb = new();
-        foreach (var v in Nodes.Values) { sb.Append(v.Dedup(seen)); }
-        var key = sb.ToString();
-        if (sb.Length > 0)
+        Stack<string> st = [];
+        st.Push(string.Empty);
+        int sorted_count = 0;
+        while (st.TryPop(out var curr))
         {
-            if (seen.TryGetValue(key, out var node))
+            if (curr.Length == n)
             {
-                node.Del = true;
-                Del = true;
+                sorted_count += 1;
+                if (sorted_count == k) { return curr; }
+                continue;
             }
-            else
+            foreach (var item in "cba")
             {
-                seen.Add(key, this);
+                if (curr.LastOrDefault() != item) { st.Push(curr + item); }
             }
         }
-        return $"({Name}{key})";
+        return string.Empty;
     }
 
-    public void Build(List<string> path, List<IList<string>> res)
+    public string WithMath(int n, int k)
     {
-        if (Del) { return; }
-        path.Add(Name);
-        res.Add(path[..]);
-        foreach (var v in Nodes.Values) { v.Build(path, res); }
-        path.RemoveAt(path.Count - 1);
+        var total = 3 * (1 << (n - 1));
+        if (k > total) { return string.Empty; }
+
+        StringBuilder sb = new(n);
+        for (int i = 0; i < n; i++) { sb.Append('a'); }
+        Dictionary<char, char> next_smallest = new() { { 'a', 'b' }, { 'b', 'a' }, { 'c', 'a' } };
+        Dictionary<char, char> next_greatest = new() { { 'a', 'c' }, { 'b', 'c' }, { 'c', 'b' } };
+        var start_a = 1;
+        var start_b = start_a + (1 << (n - 1));
+        var start_c = start_b + (1 << (n - 1));
+        if (k < start_b)
+        {
+            sb[0] = 'a';
+            k -= start_a;
+        }
+        else if (k < start_c)
+        {
+            sb[0] = 'b';
+            k -= start_b;
+        }
+        else
+        {
+            sb[0] = 'c';
+            k -= start_c;
+        }
+        for (int idx = 1; idx < n; idx++)
+        {
+            var mid = 1 << (n - idx - 1);
+            if (k < mid) { sb[idx] = next_smallest[sb[idx - 1]]; }
+            else { sb[idx] = next_greatest[sb[idx - 1]]; }
+            k -= mid;
+        }
+        return sb.ToString();
     }
 }
+
+

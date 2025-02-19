@@ -10,24 +10,24 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow(1, 3, "c")]
+    [DataRow(1, 4, "")]
+    [DataRow(3, 9, "cab")]
+    public void TestMethod1(int n, int k, string exp)
     {
-        List<IList<string>> paths = [["a"], ["c"], ["d"], ["a", "b"], ["c", "b"], ["d", "a"]];
-        Assert.AreEqual("""[["d"],["d","a"]]""", sol.DeleteDuplicateFolder(paths).Print());
+        Assert.AreEqual(exp, sol.GetHappyString(n, k));
+        Assert.AreEqual(exp, sol.WithStack(n, k));
+        Assert.AreEqual(exp, sol.WithMath(n, k));
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        List<IList<string>> paths = [["a", "b"], ["c", "d"], ["c"], ["a"]];
-        Assert.AreEqual("""[["c"],["c","b"],["a"],["a","b"]]""", sol.DeleteDuplicateFolder(paths).Print());
     }
 
     [TestMethod]
     public void TestMethod3()
     {
-        List<IList<string>> paths = [["a"], ["c"], ["d"], ["a", "b"], ["c", "b"], ["d", "a"]];
-        Assert.AreEqual("""[["c"],["c","d"],["a"],["a","b"]]""", sol.DeleteDuplicateFolder(paths).Print());
     }
 
     [TestMethod]
