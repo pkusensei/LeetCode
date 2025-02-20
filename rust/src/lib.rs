@@ -5,18 +5,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_quadruplets(nums: Vec<i32>) -> i32 {
-    let n = nums.len();
-    let mut seen = std::collections::HashMap::from([(nums[n - 1], 1)]);
+pub fn number_of_weak_characters(properties: &mut [[i32; 2]]) -> i32 {
+    // inc by attack, dec by defense
+    properties.sort_unstable_by(|a, b| a[0].cmp(&b[0]).then(b[1].cmp(&a[1])));
     let mut res = 0;
-    for (i1, &c) in nums[..n - 1].iter().enumerate().rev() {
-        for (i2, b) in nums[..i1].iter().enumerate().rev() {
-            for a in nums[..i2].iter().rev() {
-                let d = a + b + c;
-                res += seen.get(&d).unwrap_or(&0);
-            }
+    let mut stack = vec![];
+    for p in properties.iter() {
+        let curr = p[1];
+        while stack.last().is_some_and(|&v| v < curr) {
+            stack.pop(); // Pop lower atack AND lower defense
+            res += 1;
         }
-        *seen.entry(c).or_insert(0) += 1;
+        stack.push(curr);
     }
     res
 }
@@ -51,7 +51,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(number_of_weak_characters(&mut [[5, 5], [6, 3], [3, 6]]), 0);
+        assert_eq!(number_of_weak_characters(&mut [[2, 2], [3, 3]]), 1);
+        assert_eq!(number_of_weak_characters(&mut [[1, 5], [10, 4], [4, 3]]), 1);
+    }
 
     #[test]
     fn test() {}
