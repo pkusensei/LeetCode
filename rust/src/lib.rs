@@ -2,51 +2,24 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_original_array(changed: &mut [i32]) -> Vec<i32> {
-    let n = changed.len();
-    if n & 1 == 1 {
-        return vec![];
+pub fn max_taxi_earnings(_n: i32, rides: &mut [[i32; 3]]) -> i64 {
+    let n = rides.len();
+    rides.sort_unstable_by_key(|v| v[1]);
+    let mut dp = vec![0; 1 + n];
+    for (idx, ride) in rides.iter().enumerate() {
+        let [start, end, tip] = ride[..] else {
+            break;
+        };
+        let curr = i64::from(end - start + tip);
+        let i = rides.partition_point(|v| v[1] <= start);
+        // Skip current => dp[idx]
+        // Take current => pick as late one as possible with binary search
+        dp[1 + idx] = dp[idx].max(curr + dp[i]);
     }
-    let mut nums = changed.iter().fold(HashMap::new(), |mut acc, &num| {
-        *acc.entry(num).or_insert(0) += 1;
-        acc
-    });
-    changed.sort_unstable();
-    let n = n / 2;
-    let mut res = Vec::with_capacity(n);
-    let mut idx = 0;
-    while res.len() < n && idx < 2 * n {
-        let curr = changed[idx];
-        if curr == 0 {
-            let Some(v) = nums.get_mut(&0) else {
-                return vec![];
-            };
-            if (*v) & 1 == 1 {
-                return vec![];
-            }
-            if *v >= 2 {
-                *v -= 2;
-                res.push(0);
-            }
-        } else if nums.get(&curr).is_some_and(|v| *v > 0)
-            && nums.get(&(2 * curr)).is_some_and(|v| *v > 0)
-        {
-            res.push(curr);
-            nums.entry(curr).and_modify(|v| *v -= 1);
-            nums.entry(2 * curr).and_modify(|v| *v -= 1);
-        }
-        idx += 1;
-    }
-    if res.len() == n {
-        res
-    } else {
-        vec![]
-    }
+    dp.into_iter().max().unwrap()
 }
 
 #[cfg(test)]
@@ -80,9 +53,21 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(find_original_array(&mut [1, 3, 4, 2, 6, 8]), [1, 3, 4]);
-        assert!(find_original_array(&mut [6, 3, 0, 1]).is_empty());
-        assert!(find_original_array(&mut [1]).is_empty());
+        assert_eq!(max_taxi_earnings(5, &mut [[2, 5, 4], [1, 5, 1]]), 7);
+        assert_eq!(
+            max_taxi_earnings(
+                20,
+                &mut [
+                    [1, 6, 1],
+                    [3, 10, 2],
+                    [10, 12, 3],
+                    [11, 12, 2],
+                    [12, 15, 2],
+                    [13, 18, 1]
+                ]
+            ),
+            20
+        );
     }
 
     #[test]
