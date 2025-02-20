@@ -5,14 +5,13 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn reverse_prefix(word: String, ch: char) -> String {
-    if let Some(i) = word.find(ch) {
-        let mut s = word.into_bytes();
-        s[..=i].reverse();
-        String::from_utf8(s).unwrap()
-    } else {
-        word
+pub fn interchangeable_rectangles(rectangles: Vec<Vec<i32>>) -> i64 {
+    let mut map = std::collections::HashMap::new();
+    for rect in rectangles.iter() {
+        let bits = (f64::from(rect[0]) / f64::from(rect[1])).to_bits();
+        *map.entry(bits).or_insert(0) += 1;
     }
+    map.into_values().map(|v| v * (v - 1) / 2).sum()
 }
 
 #[cfg(test)]
