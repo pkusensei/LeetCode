@@ -5,20 +5,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn number_of_weak_characters(properties: &mut [[i32; 2]]) -> i32 {
-    // inc by attack, dec by defense
-    properties.sort_unstable_by(|a, b| a[0].cmp(&b[0]).then(b[1].cmp(&a[1])));
-    let mut res = 0;
-    let mut stack = vec![];
-    for p in properties.iter() {
-        let curr = p[1];
-        while stack.last().is_some_and(|&v| v < curr) {
-            stack.pop(); // Pop lower atack AND lower defense
-            res += 1;
-        }
-        stack.push(curr);
+pub fn first_day_been_in_all_rooms(next_visit: &[i32]) -> i32 {
+    const MOD: i64 = 1_000_000_007;
+    let n = next_visit.len();
+    let mut dp = vec![0i64; n];
+    for idx in 1..n {
+        let prev = idx - 1;
+        let pvisit = next_visit[prev] as usize;
+        // First time to prev
+        // +1 to pvisit
+        // From pvisit back to prev
+        // Finally onto idx
+        dp[idx] = dp[prev] + 1 + (dp[prev] - dp[pvisit]) + 1;
+        dp[idx] = dp[idx].rem_euclid(MOD);
     }
-    res
+    dp[n - 1] as _
 }
 
 #[cfg(test)]
@@ -52,9 +53,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(number_of_weak_characters(&mut [[5, 5], [6, 3], [3, 6]]), 0);
-        assert_eq!(number_of_weak_characters(&mut [[2, 2], [3, 3]]), 1);
-        assert_eq!(number_of_weak_characters(&mut [[1, 5], [10, 4], [4, 3]]), 1);
+        assert_eq!(first_day_been_in_all_rooms(&[0, 0]), 2);
+        assert_eq!(first_day_been_in_all_rooms(&[0, 0, 2]), 6);
+        assert_eq!(first_day_been_in_all_rooms(&[0, 1, 2, 0]), 6);
     }
 
     #[test]
