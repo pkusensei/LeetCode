@@ -5,13 +5,29 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn interchangeable_rectangles(rectangles: Vec<Vec<i32>>) -> i64 {
-    let mut map = std::collections::HashMap::new();
-    for rect in rectangles.iter() {
-        let bits = (f64::from(rect[0]) / f64::from(rect[1])).to_bits();
-        *map.entry(bits).or_insert(0) += 1;
+pub fn max_product(s: &str) -> i32 {
+    backtrack(s.as_bytes(), &mut vec![], &mut vec![])
+}
+
+fn backtrack(s: &[u8], s1: &mut Vec<u8>, s2: &mut Vec<u8>) -> i32 {
+    match s {
+        [] => {
+            if is_palindrome(s1.as_slice()) && is_palindrome(s2.as_slice()) {
+                return s1.len() as i32 * s2.len() as i32;
+            }
+            return 0;
+        }
+        [head, tail @ ..] => {
+            let skip = backtrack(tail, s1, s2);
+            s1.push(*head);
+            let take1 = backtrack(tail, s1, s2);
+            s1.pop();
+            s2.push(*head);
+            let take2 = backtrack(tail, s1, s2);
+            s2.pop();
+            skip.max(take1).max(take2)
+        }
     }
-    map.into_values().map(|v| v * (v - 1) / 2).sum()
 }
 
 #[cfg(test)]
@@ -44,7 +60,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(max_product("leetcodecom"), 9);
+        assert_eq!(max_product("bb"), 1);
+        assert_eq!(max_product("accbcaxxcxx"), 25);
+    }
 
     #[test]
     fn test() {}
