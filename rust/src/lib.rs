@@ -5,17 +5,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_of_pairs(nums: &[&str], target: &str) -> i32 {
-    let mut map = std::collections::HashMap::new();
+pub fn max_consecutive_answers(answer_key: &str, k: i32) -> i32 {
+    slide(answer_key.as_bytes(), k, b'F').max(slide(answer_key.as_bytes(), k, b'T'))
+}
+
+fn slide(answer_key: &[u8], k: i32, byte: u8) -> i32 {
+    let mut left = 0;
     let mut res = 0;
-    for s in nums.iter() {
-        if let Some(suf) = target.strip_prefix(s).and_then(|suffix| map.get(suffix)) {
-            res += suf;
+    let mut missed = 0;
+    for (right, &b) in answer_key.iter().enumerate() {
+        if b == byte {
+            missed += 1;
         }
-        if let Some(pre) = target.strip_suffix(s).and_then(|prefix| map.get(prefix)) {
-            res += pre;
+        while missed > k {
+            missed -= i32::from(answer_key[left] == byte);
+            left += 1;
         }
-        *map.entry(*s).or_insert(0) += 1;
+        res = res.max((right + 1 - left) as i32);
     }
     res
 }
@@ -51,9 +57,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(num_of_pairs(&["777", "7", "77", "77"], "7777"), 4);
-        assert_eq!(num_of_pairs(&["123", "4", "12", "34"], "1234"), 2);
-        assert_eq!(num_of_pairs(&["1", "1", "1"], "11"), 6);
+        assert_eq!(max_consecutive_answers("TTFF", 2), 4);
+        assert_eq!(max_consecutive_answers("TFFT", 1), 3);
+        assert_eq!(max_consecutive_answers("TTFTTFTT", 1), 5);
     }
 
     #[test]
