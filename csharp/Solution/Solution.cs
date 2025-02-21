@@ -6,17 +6,32 @@ namespace Solution;
 
 public class Solution
 {
-    // Cantor's Diagonal Argument
-    public string FindDifferentBinaryString(string[] nums)
-    {
-        var n = nums.Length;
-        StringBuilder sb = new(n);
-        for (int i = 0; i < n; i++)
-        {
-            sb.Append(nums[i][i] == '1' ? '0' : '1');
-        }
-        return sb.ToString();
-    }
 }
 
+public class FindElements
+{
+    HashSet<int> Nums { get; }
+    public FindElements(TreeNode root)
+    {
+        root.val = 0;
+        Nums = [];
+        Dfs(root);
 
+        void Dfs(TreeNode node)
+        {
+            Nums.Add(node.val);
+            if (node.left is not null)
+            {
+                node.left.val = 1 + 2 * node.val;
+                Dfs(node.left);
+            }
+            if (node.right is not null)
+            {
+                node.right.val = 2 + 2 * node.val;
+                Dfs(node.right);
+            }
+        }
+    }
+
+    public bool Find(int target) => Nums.Contains(target);
+}
