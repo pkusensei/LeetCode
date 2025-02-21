@@ -2,35 +2,42 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn sum_of_beauties(nums: &[i32]) -> i32 {
-    let n = nums.len();
-    let pre_max = nums.iter().fold(Vec::with_capacity(n), |mut acc, &num| {
-        acc.push(num.max(acc.last().copied().unwrap_or(0)));
-        acc
-    });
-    let mut suf_min = nums
-        .iter()
-        .rev()
-        .fold(Vec::with_capacity(n), |mut acc, &num| {
-            acc.push(num.min(acc.last().copied().unwrap_or(i32::MAX)));
-            acc
-        });
-    suf_min.reverse();
-    (1..n - 1)
-        .map(|i| (i, nums[i]))
-        .map(|(i, num)| {
-            if pre_max[i - 1] < num && num < suf_min[1 + i] {
-                2
-            } else if nums[i - 1] < num && num < nums[1 + i] {
-                1
-            } else {
-                0
+struct DetectSquares {
+    pts: HashMap<[i32; 2], i32>,
+}
+
+impl DetectSquares {
+    fn new() -> Self {
+        Self {
+            pts: HashMap::new(),
+        }
+    }
+
+    fn add(&mut self, point: Vec<i32>) {
+        *self.pts.entry([point[0], point[1]]).or_insert(0) += 1;
+    }
+
+    fn count(&self, point: Vec<i32>) -> i32 {
+        let [x0, y0] = point[..] else {
+            return 0;
+        };
+        let mut res = 0;
+        for &[x1, y1] in self.pts.keys().filter(|&&[x1, y1]| x1 == x0 && y1 != y0) {
+            for &[x2, y2] in self.pts.keys().filter(|&&[x2, y2]| x2 != x0 && y2 == y0) {
+                if y1.abs_diff(y0) == x2.abs_diff(x0) {
+                    res += self.pts[&[x1, y1]]
+                        * self.pts[&[x2, y2]]
+                        * self.pts.get(&[x2, y1]).unwrap_or(&0);
+                }
             }
-        })
-        .sum()
+        }
+        res
+    }
 }
 
 #[cfg(test)]
@@ -63,11 +70,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(sum_of_beauties(&[1, 2, 3]), 2);
-        assert_eq!(sum_of_beauties(&[2, 4, 6, 4]), 1);
-        assert_eq!(sum_of_beauties(&[3, 2, 1]), 0);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
