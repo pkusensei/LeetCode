@@ -5,21 +5,36 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_taxi_earnings(_n: i32, rides: &mut [[i32; 3]]) -> i64 {
-    let n = rides.len();
-    rides.sort_unstable_by_key(|v| v[1]);
-    let mut dp = vec![0; 1 + n];
-    for (idx, ride) in rides.iter().enumerate() {
-        let [start, end, tip] = ride[..] else {
-            break;
-        };
-        let curr = i64::from(end - start + tip);
-        let i = rides.partition_point(|v| v[1] <= start);
-        // Skip current => dp[idx]
-        // Take current => pick as late one as possible with binary search
-        dp[1 + idx] = dp[idx].max(curr + dp[i]);
+pub fn min_operations(nums: &[i32]) -> i32 {
+    let n = nums.len();
+    let mut sorted = nums.to_vec();
+    sorted.sort_unstable();
+    sorted.dedup();
+    let mut res = i32::MAX;
+    for (left, &min) in sorted.iter().enumerate() {
+        let max = n as i32 - 1 + min;
+        let right = sorted.partition_point(|&v| v <= max);
+        let len = right - left;
+        res = res.min((n - len) as i32);
     }
-    dp.into_iter().max().unwrap()
+    res
+}
+
+pub fn sliding_window(nums: &[i32]) -> i32 {
+    let n = nums.len();
+    let mut sorted = nums.to_vec();
+    sorted.sort_unstable();
+    sorted.dedup();
+    let mut res = i32::MAX;
+    let mut right = 0;
+    for (left, &min) in sorted.iter().enumerate() {
+        while sorted.get(right).is_some_and(|&v| v < min + n as i32) {
+            right += 1;
+        }
+        let len = right - left;
+        res = res.min((n - len) as i32);
+    }
+    res
 }
 
 #[cfg(test)]
@@ -53,21 +68,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_taxi_earnings(5, &mut [[2, 5, 4], [1, 5, 1]]), 7);
-        assert_eq!(
-            max_taxi_earnings(
-                20,
-                &mut [
-                    [1, 6, 1],
-                    [3, 10, 2],
-                    [10, 12, 3],
-                    [11, 12, 2],
-                    [12, 15, 2],
-                    [13, 18, 1]
-                ]
-            ),
-            20
-        );
+        assert_eq!(min_operations(&[4, 2, 5, 3]), 0);
+        assert_eq!(min_operations(&[1, 2, 3, 5, 6]), 1);
+        assert_eq!(min_operations(&[1, 10, 100, 1000]), 3);
+
+        assert_eq!(sliding_window(&[4, 2, 5, 3]), 0);
+        assert_eq!(sliding_window(&[1, 2, 3, 5, 6]), 1);
+        assert_eq!(sliding_window(&[1, 10, 100, 1000]), 3);
     }
 
     #[test]
