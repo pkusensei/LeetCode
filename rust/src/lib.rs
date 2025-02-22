@@ -2,24 +2,46 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::BTreeMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_operations(grid: Vec<Vec<i32>>, x: i32) -> i32 {
-    let mut nums: Vec<_> = grid.into_iter().flat_map(|r| r.into_iter()).collect();
-    nums.sort_unstable();
-    let n = nums.len();
-    let med = nums[n / 2];
-    let mut res = 0;
-    for num in nums {
-        let d = (med - num).abs();
-        if d % x == 0 {
-            res += d / x
-        } else {
-            return -1;
-        }
+#[derive(Debug, Clone, Default)]
+struct StockPrice {
+    time_price: BTreeMap<i32, i32>,
+    prices: BTreeMap<i32, i32>,
+}
+
+impl StockPrice {
+    fn new() -> Self {
+        Default::default()
     }
-    res
+
+    fn update(&mut self, timestamp: i32, price: i32) {
+        *self.prices.entry(price).or_insert(0) += 1;
+        if let Some(&v) = self.time_price.get(&timestamp) {
+            let count = self.prices.entry(v).or_insert(0);
+            *count -= 1;
+            let prev = *count;
+            if prev == 0 {
+                self.prices.remove(&v);
+            }
+        }
+        self.time_price.insert(timestamp, price);
+    }
+
+    fn current(&self) -> i32 {
+        *self.time_price.values().last().unwrap()
+    }
+
+    fn maximum(&self) -> i32 {
+        *self.prices.keys().last().unwrap()
+    }
+
+    fn minimum(&self) -> i32 {
+        *self.prices.keys().next().unwrap()
+    }
 }
 
 #[cfg(test)]
