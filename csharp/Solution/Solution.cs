@@ -6,32 +6,35 @@ namespace Solution;
 
 public class Solution
 {
-}
-
-public class FindElements
-{
-    HashSet<int> Nums { get; }
-    public FindElements(TreeNode root)
+    public TreeNode RecoverFromPreorder(string traversal)
     {
-        root.val = 0;
-        Nums = [];
-        Dfs(root);
-
-        void Dfs(TreeNode node)
+        Stack<TreeNode> st = [];
+        var idx = 0;
+        while (idx < traversal.Length)
         {
-            Nums.Add(node.val);
-            if (node.left is not null)
+            var depth = 0;
+            while (idx < traversal.Length && traversal[idx] == '-')
             {
-                node.left.val = 1 + 2 * node.val;
-                Dfs(node.left);
+                depth += 1;
+                idx += 1;
             }
-            if (node.right is not null)
+            int num = 0;
+            while (idx < traversal.Length && char.IsAsciiDigit(traversal[idx]))
             {
-                node.right.val = 2 + 2 * node.val;
-                Dfs(node.right);
+                num = 10 * num + traversal[idx] - '0';
+                idx += 1;
             }
+            // Key step: pop nodes until top of stack has depth-1
+            while (st.Count > depth) { st.Pop(); }
+            var node = new TreeNode(num);
+            if (st.TryPeek(out var prev))
+            {
+                if (prev.left is null) { prev.left = node; }
+                else { prev.right = node; }
+            }
+            st.Push(node);
         }
+        return st.LastOrDefault(); // bottom of stack
     }
-
-    public bool Find(int target) => Nums.Contains(target);
 }
+
