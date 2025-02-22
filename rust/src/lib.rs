@@ -2,57 +2,20 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashSet;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn smallest_subsequence(s: &str, k: i32, letter: char, repetition: i32) -> String {
-    let (n, k) = (s.len(), k as usize);
-    let mut rep = repetition as usize;
-    let count = s.chars().filter(|&c| c == letter).count();
-    let mut extra = count - rep; // count of potential pops of letter
-    let mut del = n - k; // count of potential pops in total
-    let mut stack = vec![];
-    for ch in s.chars() {
-        while stack.last().is_some_and(|&v| v > ch && del > 0) {
-            if stack.last().is_some_and(|&v| v == letter && extra == 0) {
-                break;
-            }
-            extra -= usize::from(stack.last().is_some_and(|&v| v == letter));
-            del -= 1;
-            stack.pop();
-        }
-        stack.push(ch);
-    }
-    let mut res = String::with_capacity(k);
-    for ch in stack {
-        if ch != letter && res.len() + rep >= k {
-            continue; // enough candidates left => skip this letter
-        }
-        res.push(ch);
-        rep = rep.saturating_sub(usize::from(ch == letter));
-        if res.len() >= k {
-            break;
-        }
-    }
-    res
-}
-
-// TLE
-fn dfs(s: &[u8], letter: u8, k: i32, rep: i32, curr: &mut Vec<u8>, res: &mut Vec<u8>) {
-    match s {
-        [] => {
-            if k == 0 && rep <= 0 && (res.is_empty() || curr < res) {
-                *res = curr.clone()
-            }
-        }
-        [head, tail @ ..] => {
-            dfs(tail, letter, k, rep, curr, res);
-            curr.push(*head);
-            let is_match = i32::from(*head == letter);
-            dfs(tail, letter, k - 1, rep - is_match, curr, res);
-            curr.pop();
-        }
-    }
+pub fn two_out_of_three(nums1: Vec<i32>, nums2: Vec<i32>, nums3: Vec<i32>) -> Vec<i32> {
+    let [s1, s2, s3] = [nums1, nums2, nums3].map(|v| v.into_iter().collect::<HashSet<_>>());
+    s1.intersection(&s2)
+        .chain(s2.intersection(&s3))
+        .chain(s3.intersection(&s1))
+        .copied()
+        .collect::<HashSet<_>>()
+        .into_iter()
+        .collect()
 }
 
 #[cfg(test)]
@@ -85,11 +48,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(smallest_subsequence("leet", 3, 'e', 1), "eet");
-        assert_eq!(smallest_subsequence("leetcode", 4, 'e', 2), "ecde");
-        assert_eq!(smallest_subsequence("bb", 2, 'b', 2), "bb");
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
