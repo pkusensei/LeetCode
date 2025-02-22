@@ -5,19 +5,26 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_moves(s: String) -> i32 {
-    let (s, n) = (s.as_bytes(), s.len());
-    let mut idx = 0;
-    let mut res = 0;
-    while idx < n {
-        if s[idx] == b'O' {
-            idx += 1;
-            continue;
+pub fn stone_game_ix(stones: &[i32]) -> bool {
+    let [mut zeros, mut ones, mut twos] = [0i32; 3];
+    for &num in stones.iter() {
+        match num % 3 {
+            0 => zeros += 1,
+            1 => ones += 1,
+            _ => twos += 1,
         }
-        res += 1;
-        idx += 3;
     }
-    res
+    // zeros only affects turns
+    if zeros & 1 == 0 {
+        // With a mix of 1s and 2s, Alice always starts with lesser count
+        // So that Bob will be forced to make a 3
+        // If either is empty, Alice making the third move loses
+        ones.min(twos) != 0
+    } else {
+        // Alice always starts with bigger count
+        // abs(ones-zeros)<=2 => never making a 3, Bob wins
+        ones.abs_diff(twos) > 2
+    }
 }
 
 #[cfg(test)]
@@ -50,8 +57,14 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert!(stone_game_ix(&[2, 1]));
+        assert!(!stone_game_ix(&[2]));
+        assert!(!stone_game_ix(&[5, 1, 2, 4, 3]));
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert!(!stone_game_ix(&[3, 3]));
+    }
 }
