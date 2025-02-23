@@ -5,14 +5,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_moves_to_seat(mut seats: Vec<i32>, mut students: Vec<i32>) -> i32 {
-    seats.sort_unstable();
-    students.sort_unstable();
-    seats
-        .into_iter()
-        .zip(students)
-        .map(|(a, b)| (a - b).abs())
-        .sum()
+pub fn winner_of_game(colors: &str) -> bool {
+    colors
+        .as_bytes()
+        .chunk_by(|a, b| a == b)
+        .filter_map(|ch| {
+            let n = ch.len() as i32;
+            if n >= 3 {
+                Some(if ch[0] == b'A' { n - 2 } else { 2 - n })
+            } else {
+                None
+            }
+        })
+        .sum::<i32>()
+        > 0
 }
 
 #[cfg(test)]
