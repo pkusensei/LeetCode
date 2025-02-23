@@ -6,35 +6,42 @@ namespace Solution;
 
 public class Solution
 {
-    public TreeNode RecoverFromPreorder(string traversal)
+    public TreeNode ConstructFromPrePost(int[] preorder, int[] postorder)
     {
-        Stack<TreeNode> st = [];
-        var idx = 0;
-        while (idx < traversal.Length)
+        return Dfs(preorder, postorder);
+
+        TreeNode Dfs(int[] pre, int[] post)
         {
-            var depth = 0;
-            while (idx < traversal.Length && traversal[idx] == '-')
-            {
-                depth += 1;
-                idx += 1;
-            }
-            int num = 0;
-            while (idx < traversal.Length && char.IsAsciiDigit(traversal[idx]))
-            {
-                num = 10 * num + traversal[idx] - '0';
-                idx += 1;
-            }
-            // Key step: pop nodes until top of stack has depth-1
-            while (st.Count > depth) { st.Pop(); }
-            var node = new TreeNode(num);
-            if (st.TryPeek(out var prev))
-            {
-                if (prev.left is null) { prev.left = node; }
-                else { prev.right = node; }
-            }
-            st.Push(node);
+            if (pre.Length == 0) { return null; }
+            TreeNode root = new(pre[0]);
+            if (pre.Length == 1) { return root; }
+            var right_val = post[^2];
+            var right_idx_in_pre = Array.IndexOf(pre, right_val);
+            var right_pre = pre[right_idx_in_pre..];
+            var right_post = post.Where(n => right_pre.Contains(n));
+            root.right = Dfs(right_pre, [.. right_post]);
+            var left_pre = pre[1..right_idx_in_pre];
+            var left_post = post.Where(n => left_pre.Contains(n));
+            root.left = Dfs(left_pre, [.. left_post]);
+            return root;
         }
-        return st.LastOrDefault(); // bottom of stack
+    }
+
+    public TreeNode TwoPtrs(int[] pre, int[] post)
+    {
+        int pre_idx = 0;
+        int post_idx = 0;
+        return Dfs();
+
+        TreeNode Dfs()
+        {
+            TreeNode root = new(pre[pre_idx]);
+            pre_idx += 1;
+            if (root.val != post[post_idx]) { root.left = Dfs(); }
+            if (root.val != post[post_idx]) { root.right = Dfs(); }
+            post_idx += 1;
+            return root;
+        }
     }
 }
 

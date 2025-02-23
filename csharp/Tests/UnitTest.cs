@@ -10,24 +10,22 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow(new[] { 1, 2, 4, 5, 3, 6, 7 }, new[] { 4, 5, 2, 6, 7, 3, 1 }, "[1,2,3,4,5,6,7]")]
+    [DataRow(new[] { 2, 1, 3 }, new[] { 3, 1, 2 }, "[2,null,1,null,3]")]
+    public void TestMethod1(int[] pre, int[] post, string exp)
     {
-        var a = sol.RecoverFromPreorder("1-2--3--4-5--6--7");
-        Assert.AreEqual("[1,2,5,3,4,6,7]", a.ToString());
+        Assert.AreEqual(exp, sol.ConstructFromPrePost(pre, post).ToString());
+        Assert.AreEqual(exp, sol.TwoPtrs(pre, post).ToString());
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        var a = sol.RecoverFromPreorder("1-2--3---4-5--6---7");
-        Assert.AreEqual("[1,2,5,3,null,6,null,4,null,7]", a.ToString());
     }
 
     [TestMethod]
     public void TestMethod3()
     {
-        var a = sol.RecoverFromPreorder("1-401--349---90--88");
-        Assert.AreEqual("[1,401,null,349,88,90]", a.ToString());
     }
 
     [TestMethod]
