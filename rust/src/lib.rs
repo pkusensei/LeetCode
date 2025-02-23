@@ -5,36 +5,55 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn network_becomes_idle(edges: &[[i32; 2]], patience: &[i32]) -> i32 {
-    let n = patience.len();
-    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
-        let [a, b] = [e[0], e[1]].map(|v| v as usize);
-        acc[a].push(b);
-        acc[b].push(a);
-        acc
-    });
-    let mut dists = vec![i32::MAX; n];
-    dists[0] = 0;
-    let mut queue = std::collections::VecDeque::from([(0, 0)]);
-    while let Some((node, step)) = queue.pop_front() {
-        for &next in adj[node].iter() {
-            if dists[next] > step + 1 {
-                dists[next] = 1 + step;
-                queue.push_back((next, 1 + step));
-            }
+pub fn kth_smallest_product(nums1: &[i32], nums2: &[i32], k: i64) -> i64 {
+    let [mut a1, mut a2, mut b1, mut b2] = [0; 4].map(|_| vec![]);
+    for &num in nums1.iter() {
+        if num < 0 {
+            a1.push(-i64::from(num));
+        } else {
+            a2.push(i64::from(num));
         }
     }
-    dists
-        .iter()
-        .zip(patience.iter())
-        .skip(1)
-        .map(|(&d, &p)| {
-            let t = 2 * d;
-            let count = (t - 1) / p;
-            1 + t + count * p
-        })
-        .max()
-        .unwrap()
+    for &num in nums2.iter() {
+        if num < 0 {
+            b1.push(-i64::from(num));
+        } else {
+            b2.push(i64::from(num));
+        }
+    }
+    a1.reverse();
+    b1.reverse();
+    let neg_count = (a1.len() * b2.len() + b1.len() * a2.len()) as i64;
+    let [sign, k] = if k > neg_count {
+        [1, k - neg_count]
+    } else {
+        // Want negative number
+        // switch (b1<0, b2>0)
+        std::mem::swap(&mut b1, &mut b2);
+        [-1, neg_count + 1 - k] // might overflow
+    };
+    let [mut left, mut right] = [0, 10i64.pow(10)];
+    while left < right {
+        let mid = left + (right - left) / 2;
+        if k <= count(&a1, &b1, mid) + count(&a2, &b2, mid) {
+            right = mid;
+        } else {
+            left = 1 + mid;
+        }
+    }
+    sign * left
+}
+
+fn count(nums1: &[i64], nums2: &[i64], val: i64) -> i64 {
+    let mut res = 0;
+    let mut i2 = nums2.len();
+    for &num1 in nums1 {
+        while i2 > 0 && num1 * nums2[i2 - 1] > val {
+            i2 -= 1;
+        }
+        res += i2;
+    }
+    res as _
 }
 
 #[cfg(test)]
@@ -68,10 +87,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(network_becomes_idle(&[[0, 1], [1, 2]], &[0, 2, 1]), 8);
+        assert_eq!(kth_smallest_product(&[2, 5], &[3, 4], 2), 8);
+        assert_eq!(kth_smallest_product(&[-4, -2, 0, 3], &[2, 4], 6), 0);
         assert_eq!(
-            network_becomes_idle(&[[0, 1], [0, 2], [1, 2]], &[0, 10, 10]),
-            3
+            kth_smallest_product(&[-2, -1, 0, 1, 2], &[-3, -1, 2, 4, 5], 3),
+            -6
         );
     }
 
