@@ -2,45 +2,41 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::BTreeMap;
+use std::collections::BTreeSet;
 
 #[allow(unused_imports)]
 use helper::*;
 
-#[derive(Debug, Clone, Default)]
-struct StockPrice {
-    time_price: BTreeMap<i32, i32>,
-    prices: BTreeMap<i32, i32>,
-}
-
-impl StockPrice {
-    fn new() -> Self {
-        Default::default()
-    }
-
-    fn update(&mut self, timestamp: i32, price: i32) {
-        *self.prices.entry(price).or_insert(0) += 1;
-        if let Some(&v) = self.time_price.get(&timestamp) {
-            let count = self.prices.entry(v).or_insert(0);
-            *count -= 1;
-            let prev = *count;
-            if prev == 0 {
-                self.prices.remove(&v);
+pub fn minimum_difference(nums: &[i32]) -> i32 {
+    let n = nums.len() / 2;
+    let sum: i32 = nums.iter().sum();
+    let [mut left, mut right] = [0, 1].map(|_| vec![BTreeSet::new(); 1 + n]);
+    dfs(&nums[..n], 0, 0, &mut left);
+    dfs(&nums[n..], 0, 0, &mut right);
+    let mut res = i32::MAX;
+    for len in 0..=n {
+        for v1 in left[len].iter() {
+            let target = sum / 2 - v1;
+            if let Some(v2) = right[n - len].range(target..).next() {
+                res = res.min((sum - 2 * (v1 + v2)).abs());
+            }
+            if let Some(v2) = right[n - len].range(..target).next_back() {
+                res = res.min((sum - 2 * (v1 + v2)).abs());
             }
         }
-        self.time_price.insert(timestamp, price);
     }
+    res
+}
 
-    fn current(&self) -> i32 {
-        *self.time_price.values().last().unwrap()
-    }
-
-    fn maximum(&self) -> i32 {
-        *self.prices.keys().last().unwrap()
-    }
-
-    fn minimum(&self) -> i32 {
-        *self.prices.keys().next().unwrap()
+fn dfs(nums: &[i32], len: usize, curr: i32, sums: &mut [BTreeSet<i32>]) {
+    match nums {
+        [] => {
+            sums[len].insert(curr);
+        }
+        [head, tail @ ..] => {
+            dfs(tail, len, curr, sums);
+            dfs(tail, 1 + len, curr + *head, sums);
+        }
     }
 }
 
@@ -74,7 +70,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(minimum_difference(&[-36, 36]), 72);
+        assert_eq!(minimum_difference(&[3, 9, 7, 3]), 2);
+        assert_eq!(minimum_difference(&[2, -1, 0, 4, -2, -9]), 0);
+    }
 
     #[test]
     fn test() {}
