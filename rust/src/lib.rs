@@ -5,34 +5,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_time(n: i32, relations: &[[i32; 2]], time: &[i32]) -> i32 {
-    let n = n as usize;
-    let mut indegs = vec![0; n];
-    let mut adj = vec![vec![]; n];
-    for e in relations.iter() {
-        let [a, b] = [0, 1].map(|i| e[i] as usize - 1);
-        adj[a].push(b);
-        indegs[b] += 1;
+pub fn max_two_events(events: &mut [[i32; 3]]) -> i32 {
+    events.sort_unstable_by_key(|e| e[0]);
+    let mut temp = 0;
+    let mut suf_max = vec![];
+    for e in events.iter().rev() {
+        temp = temp.max(e[2]);
+        suf_max.push(temp);
     }
-    let mut dp = vec![0; n];
-    // (node, time)
-    let mut queue = std::collections::VecDeque::new();
-    for (node, &deg) in indegs.iter().enumerate() {
-        if deg == 0 {
-            dp[node] = time[node];
-            queue.push_back(node);
-        }
-    }
+    suf_max.reverse();
     let mut res = 0;
-    while let Some(node) = queue.pop_front() {
-        for &next in adj[node].iter() {
-            indegs[next] -= 1;
-            dp[next] = dp[next].max(time[next] + dp[node]);
-            if indegs[next] == 0 {
-                queue.push_back(next);
-            }
-        }
-        res = res.max(dp[node])
+    for e in events.iter() {
+        let [_start, end, val] = e[..] else {
+            unreachable!()
+        };
+        let i = events.partition_point(|e| e[0] <= end);
+        res = res.max(val + suf_max.get(i).unwrap_or(&0));
     }
     res
 }
@@ -67,17 +55,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(minimum_time(3, &[[1, 3], [2, 3]], &[3, 2, 5]), 8);
-        assert_eq!(
-            minimum_time(
-                5,
-                &[[1, 5], [2, 5], [3, 5], [3, 4], [4, 5]],
-                &[1, 2, 3, 4, 5]
-            ),
-            12
-        );
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
