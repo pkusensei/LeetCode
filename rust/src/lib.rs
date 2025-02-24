@@ -5,50 +5,70 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-struct Bank {
-    data: Vec<i64>,
+pub fn most_profitable_path(edges: &[[i32; 2]], bob: i32, amount: &[i32]) -> i32 {
+    let n = amount.len();
+    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
+        let [a, b] = [0, 1].map(|i| e[i] as usize);
+        acc[a].push(b);
+        acc[b].push(a);
+        acc
+    });
+    let mut b_steps = vec![i32::MAX; n];
+    dfs_b(&adj, bob as _, None, 0, &mut b_steps);
+    dfs_a(&adj, amount, &b_steps, 0, None, 0)
 }
 
-impl Bank {
-    fn new(balance: Vec<i64>) -> Self {
-        Self { data: balance }
-    }
-
-    fn transfer(&mut self, account1: i32, account2: i32, money: i64) -> bool {
-        let n = self.data.len() as i32;
-        if (1..=n).contains(&account1) && (1..=n).contains(&account2) {
-            let a1 = account1 as usize - 1;
-            let a2 = account2 as usize - 1;
-            if self.data[a1] >= money {
-                self.data[a1] -= money;
-                self.data[a2] += money;
-                return true;
-            }
+fn dfs_a(
+    adj: &[Vec<usize>],
+    amount: &[i32],
+    b_steps: &[i32],
+    node: usize,
+    prev: Option<usize>,
+    curr_step: i32,
+) -> i32 {
+    let curr_score = match curr_step.cmp(&b_steps[node]) {
+        std::cmp::Ordering::Less => amount[node],
+        std::cmp::Ordering::Equal => amount[node] / 2,
+        std::cmp::Ordering::Greater => 0,
+    };
+    let mut res = i32::MIN;
+    for &next in adj[node].iter() {
+        if prev.is_some_and(|p| p == next) {
+            continue;
         }
-        false
+        res = res.max(dfs_a(adj, amount, b_steps, next, Some(node), 1 + curr_step));
     }
+    if res == i32::MIN {
+        curr_score
+    } else {
+        res + curr_score
+    }
+}
 
-    fn deposit(&mut self, account: i32, money: i64) -> bool {
-        let n = self.data.len() as i32;
-        if (1..=n).contains(&account) {
-            let a = account as usize - 1;
-            self.data[a] += money;
+fn dfs_b(
+    adj: &[Vec<usize>],
+    node: usize,
+    prev: Option<usize>,
+    curr_step: i32,
+    b_steps: &mut [i32],
+) -> bool {
+    if b_steps[node] < i32::MAX {
+        return false;
+    }
+    if node == 0 && b_steps[0] == i32::MAX {
+        b_steps[0] = curr_step;
+        return true;
+    }
+    for &next in adj[node].iter() {
+        if prev.is_some_and(|p| p == next) {
+            continue;
+        }
+        if dfs_b(adj, next, Some(node), 1 + curr_step, b_steps) {
+            b_steps[node] = curr_step;
             return true;
         }
-        false
     }
-
-    fn withdraw(&mut self, account: i32, money: i64) -> bool {
-        let n = self.data.len() as i32;
-        if (1..=n).contains(&account) {
-            let a = account as usize - 1;
-            if self.data[a] >= money {
-                self.data[a] -= money;
-                return true;
-            }
-        }
-        false
-    }
+    false
 }
 
 #[cfg(test)]
@@ -81,7 +101,13 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(
+            most_profitable_path(&[[0, 1], [1, 2], [1, 3], [3, 4]], 3, &[-2, 4, 2, -4, 6]),
+            6
+        );
+        assert_eq!(most_profitable_path(&[[0, 1]], 1, &[-7280, 2350]), -7280);
+    }
 
     #[test]
     fn test() {}
