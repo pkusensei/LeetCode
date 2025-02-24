@@ -2,20 +2,37 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::{HashSet, VecDeque};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn smallest_equal(nums: Vec<i32>) -> i32 {
-    nums.iter()
-        .enumerate()
-        .find_map(|(i, &v)| {
-            if i % 10 == v as usize {
-                Some(i as i32)
-            } else {
-                None
+pub fn minimum_operations(nums: &[i32], start: i32, goal: i32) -> i32 {
+    let mut queue = VecDeque::from([(start, 0)]);
+    let mut seen = HashSet::from([start]);
+    while let Some((node, step)) = queue.pop_front() {
+        if node == goal {
+            return step;
+        }
+        if !(0..=1000).contains(&node) {
+            continue;
+        }
+        for &num in nums.iter() {
+            let a = num + node;
+            if seen.insert(a) {
+                queue.push_back((a, 1 + step));
             }
-        })
-        .unwrap_or(-1)
+            let b = -num + node;
+            if seen.insert(b) {
+                queue.push_back((b, 1 + step));
+            }
+            let c = num ^ node;
+            if seen.insert(c) {
+                queue.push_back((c, 1 + step));
+            }
+        }
+    }
+    -1
 }
 
 #[cfg(test)]
