@@ -5,22 +5,41 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_two_events(events: &mut [[i32; 3]]) -> i32 {
-    events.sort_unstable_by_key(|e| e[0]);
-    let mut temp = 0;
-    let mut suf_max = vec![];
-    for e in events.iter().rev() {
-        temp = temp.max(e[2]);
-        suf_max.push(temp);
+pub fn plates_between_candles(s: &str, queries: &[[i32; 2]]) -> Vec<i32> {
+    let (s, n) = (s.as_bytes(), s.len());
+    let [mut left_indices, mut right_indices] = [0, 1].map(|_| Vec::with_capacity(n));
+    let mut prefix = Vec::with_capacity(n);
+    let mut candle = -1;
+    for (i, &b) in s.iter().enumerate() {
+        prefix.push(i32::from(b == b'|') + prefix.last().unwrap_or(&0));
+        if b == b'|' {
+            candle = i as i32;
+        }
+        left_indices.push(candle);
     }
-    suf_max.reverse();
-    let mut res = 0;
-    for e in events.iter() {
-        let [_start, end, val] = e[..] else {
-            unreachable!()
-        };
-        let i = events.partition_point(|e| e[0] <= end);
-        res = res.max(val + suf_max.get(i).unwrap_or(&0));
+    candle = -1;
+    for (i, &b) in s.iter().enumerate().rev() {
+        if b == b'|' {
+            candle = i as i32;
+        }
+        right_indices.push(candle);
+    }
+    right_indices.reverse();
+    let mut res = vec![];
+    for q in queries.iter() {
+        let left = right_indices[q[0] as usize]; // left boundary
+        let right = left_indices[q[1] as usize]; // right boundary
+        if right == -1 || left == -1 || right <= left {
+            res.push(0);
+        } else {
+            let count = prefix[right as usize]
+                - if left > 0 {
+                    prefix[left as usize - 1]
+                } else {
+                    0
+                };
+            res.push(right + 1 - left - count);
+        }
     }
     res
 }
@@ -55,7 +74,19 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(
+            plates_between_candles("**|**|***|", &[[2, 5], [5, 9]]),
+            [2, 3]
+        );
+        assert_eq!(
+            plates_between_candles(
+                "***|**|*****|**||**|*",
+                &[[1, 17], [4, 5], [14, 17], [5, 11], [15, 16]]
+            ),
+            [9, 0, 0, 0, 0]
+        );
+    }
 
     #[test]
     fn test() {}
