@@ -5,70 +5,38 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn most_profitable_path(edges: &[[i32; 2]], bob: i32, amount: &[i32]) -> i32 {
-    let n = amount.len();
+pub fn second_minimum(n: i32, edges: &[[i32; 2]], time: i32, change: i32) -> i32 {
+    let n = n as usize;
     let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
-        let [a, b] = [0, 1].map(|i| e[i] as usize);
+        let [a, b] = [0, 1].map(|i| e[i] as usize - 1);
         acc[a].push(b);
         acc[b].push(a);
         acc
     });
-    let mut b_steps = vec![i32::MAX; n];
-    dfs_b(&adj, bob as _, None, 0, &mut b_steps);
-    dfs_a(&adj, amount, &b_steps, 0, None, 0)
-}
-
-fn dfs_a(
-    adj: &[Vec<usize>],
-    amount: &[i32],
-    b_steps: &[i32],
-    node: usize,
-    prev: Option<usize>,
-    curr_step: i32,
-) -> i32 {
-    let curr_score = match curr_step.cmp(&b_steps[node]) {
-        std::cmp::Ordering::Less => amount[node],
-        std::cmp::Ordering::Equal => amount[node] / 2,
-        std::cmp::Ordering::Greater => 0,
-    };
-    let mut res = i32::MIN;
-    for &next in adj[node].iter() {
-        if prev.is_some_and(|p| p == next) {
-            continue;
+    let [mut dist1, mut dist2] = [0, 1].map(|_| vec![-1; n]);
+    dist1[0] = 0;
+    let mut queue = std::collections::VecDeque::from([(0, 1)]);
+    while let Some((node, freq)) = queue.pop_front() {
+        let mut time_taken = if freq == 1 { dist1[node] } else { dist2[node] };
+        if (time_taken / change) & 1 == 1 {
+            time_taken = (time_taken / change + 1) * change + time; // red light
+        } else {
+            time_taken += time;
         }
-        res = res.max(dfs_a(adj, amount, b_steps, next, Some(node), 1 + curr_step));
-    }
-    if res == i32::MIN {
-        curr_score
-    } else {
-        res + curr_score
-    }
-}
-
-fn dfs_b(
-    adj: &[Vec<usize>],
-    node: usize,
-    prev: Option<usize>,
-    curr_step: i32,
-    b_steps: &mut [i32],
-) -> bool {
-    if b_steps[node] < i32::MAX {
-        return false;
-    }
-    if node == 0 && b_steps[0] == i32::MAX {
-        b_steps[0] = curr_step;
-        return true;
-    }
-    for &next in adj[node].iter() {
-        if prev.is_some_and(|p| p == next) {
-            continue;
-        }
-        if dfs_b(adj, next, Some(node), 1 + curr_step, b_steps) {
-            b_steps[node] = curr_step;
-            return true;
+        for &next in adj[node].iter() {
+            if dist1[next] == -1 {
+                dist1[next] = time_taken;
+                queue.push_back((next, 1));
+            } else if dist2[next] == -1 && dist1[next] != time_taken {
+                if next == n - 1 {
+                    return time_taken;
+                }
+                dist2[next] = time_taken;
+                queue.push_back((next, 2));
+            }
         }
     }
-    false
+    -1
 }
 
 #[cfg(test)]
@@ -103,10 +71,10 @@ mod tests {
     #[test]
     fn basics() {
         assert_eq!(
-            most_profitable_path(&[[0, 1], [1, 2], [1, 3], [3, 4]], 3, &[-2, 4, 2, -4, 6]),
-            6
+            second_minimum(5, &[[1, 2], [1, 3], [1, 4], [3, 4], [4, 5]], 3, 5),
+            13
         );
-        assert_eq!(most_profitable_path(&[[0, 1]], 1, &[-7280, 2350]), -7280);
+        assert_eq!(second_minimum(2, &[[1, 2]], 3, 2), 11);
     }
 
     #[test]
