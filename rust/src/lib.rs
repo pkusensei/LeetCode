@@ -5,64 +5,47 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn next_beautiful_number(n: i32) -> i32 {
-    let mut n = 1 + n;
-    while !check(n) {
-        n += 1;
-    }
-    n
+pub fn count_highest_score_nodes(parents: &[i32]) -> i32 {
+    let n = parents.len();
+    let adj = parents
+        .iter()
+        .enumerate()
+        .fold(vec![vec![]; n], |mut acc, (i, &p)| {
+            if p >= 0 {
+                acc[p as usize].push(i);
+            }
+            acc
+        });
+    let mut max_score = 0;
+    let mut max_count = 0;
+    dfs(&adj, 0, &mut max_score, &mut max_count);
+    max_count
 }
 
-fn check(mut n: i32) -> bool {
-    let mut count = [0; 10];
-    while n > 0 {
-        let d = (n % 10) as usize;
-        if d == 0 {
-            return false;
+fn dfs(adj: &[Vec<usize>], node: usize, max_score: &mut i64, max_count: &mut i32) -> i64 {
+    let n = adj.len() as i64;
+    let [subtree, score] = if adj[node].is_empty() {
+        [1, n - 1]
+    } else {
+        let mut score = 1;
+        let mut subtree = 1; // this node
+        for &next in adj[node].iter() {
+            let v = dfs(adj, next, max_score, max_count);
+            score *= v;
+            subtree += v;
         }
-        count[d] += 1;
-        if count[d] > d {
-            return false;
-        }
-        n /= 10;
-    }
-    count.iter().enumerate().all(|(i, &c)| c == 0 || i == c)
-}
-
-pub fn with_backtrack(n: i32) -> i32 {
-    fn dfs(curr: i32, min: i32, len: i32, count: &mut [i32; 10]) -> Option<i32> {
-        if len == 0 {
-            if count
-                .iter()
-                .enumerate()
-                .any(|(i, &c)| c > 0 && c != i as i32)
-            {
-                return None;
-            }
-            return if curr > min { Some(curr) } else { None };
-        }
-        let mut res = i32::MAX;
-        for i in 1..=9 {
-            if count[i] < i as i32 {
-                count[i] += 1;
-                if let Some(v) = dfs(curr * 10 + i as i32, min, len - 1, count) {
-                    res = res.min(v);
-                }
-                count[i] -= 1;
-            }
-        }
-        if res == i32::MAX {
-            None
-        } else {
-            Some(res)
+        score *= (n - subtree).max(1); // Empty group count as 1
+        [subtree, score]
+    };
+    match score.cmp(max_score) {
+        std::cmp::Ordering::Less => (),
+        std::cmp::Ordering::Equal => *max_count += 1,
+        std::cmp::Ordering::Greater => {
+            *max_score = score;
+            *max_count = 1;
         }
     }
-
-    let len = 1 + n.ilog10() as i32;
-    let mut count = [0; 10];
-    dfs(0, n, len, &mut count)
-        .or_else(|| dfs(0, n, 1 + len, &mut count))
-        .unwrap()
+    subtree
 }
 
 #[cfg(test)]
@@ -96,13 +79,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(next_beautiful_number(1), 22);
-        assert_eq!(next_beautiful_number(1000), 1333);
-        assert_eq!(next_beautiful_number(3000), 3133);
-
-        assert_eq!(with_backtrack(1), 22);
-        assert_eq!(with_backtrack(1000), 1333);
-        assert_eq!(with_backtrack(3000), 3133);
+        assert_eq!(count_highest_score_nodes(&[-1, 2, 0, 2, 0]), 3);
+        assert_eq!(count_highest_score_nodes(&[-1, 2, 0]), 2);
     }
 
     #[test]
