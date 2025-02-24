@@ -5,47 +5,36 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_highest_score_nodes(parents: &[i32]) -> i32 {
-    let n = parents.len();
-    let adj = parents
-        .iter()
-        .enumerate()
-        .fold(vec![vec![]; n], |mut acc, (i, &p)| {
-            if p >= 0 {
-                acc[p as usize].push(i);
-            }
-            acc
-        });
-    let mut max_score = 0;
-    let mut max_count = 0;
-    dfs(&adj, 0, &mut max_score, &mut max_count);
-    max_count
-}
-
-fn dfs(adj: &[Vec<usize>], node: usize, max_score: &mut i64, max_count: &mut i32) -> i64 {
-    let n = adj.len() as i64;
-    let [subtree, score] = if adj[node].is_empty() {
-        [1, n - 1]
-    } else {
-        let mut score = 1;
-        let mut subtree = 1; // this node
-        for &next in adj[node].iter() {
-            let v = dfs(adj, next, max_score, max_count);
-            score *= v;
-            subtree += v;
-        }
-        score *= (n - subtree).max(1); // Empty group count as 1
-        [subtree, score]
-    };
-    match score.cmp(max_score) {
-        std::cmp::Ordering::Less => (),
-        std::cmp::Ordering::Equal => *max_count += 1,
-        std::cmp::Ordering::Greater => {
-            *max_score = score;
-            *max_count = 1;
+pub fn minimum_time(n: i32, relations: &[[i32; 2]], time: &[i32]) -> i32 {
+    let n = n as usize;
+    let mut indegs = vec![0; n];
+    let mut adj = vec![vec![]; n];
+    for e in relations.iter() {
+        let [a, b] = [0, 1].map(|i| e[i] as usize - 1);
+        adj[a].push(b);
+        indegs[b] += 1;
+    }
+    let mut dp = vec![0; n];
+    // (node, time)
+    let mut queue = std::collections::VecDeque::new();
+    for (node, &deg) in indegs.iter().enumerate() {
+        if deg == 0 {
+            dp[node] = time[node];
+            queue.push_back(node);
         }
     }
-    subtree
+    let mut res = 0;
+    while let Some(node) = queue.pop_front() {
+        for &next in adj[node].iter() {
+            indegs[next] -= 1;
+            dp[next] = dp[next].max(time[next] + dp[node]);
+            if indegs[next] == 0 {
+                queue.push_back(next);
+            }
+        }
+        res = res.max(dp[node])
+    }
+    res
 }
 
 #[cfg(test)]
@@ -79,8 +68,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(count_highest_score_nodes(&[-1, 2, 0, 2, 0]), 3);
-        assert_eq!(count_highest_score_nodes(&[-1, 2, 0]), 2);
+        assert_eq!(minimum_time(3, &[[1, 3], [2, 3]], &[3, 2, 5]), 8);
+        assert_eq!(
+            minimum_time(
+                5,
+                &[[1, 5], [2, 5], [3, 5], [3, 4], [4, 5]],
+                &[1, 2, 3, 4, 5]
+            ),
+            12
+        );
     }
 
     #[test]
