@@ -2,39 +2,35 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::{BTreeMap, HashMap};
+
 #[allow(unused_imports)]
 use helper::*;
 
-struct Robot {
-    idx: usize,
-    robs: Vec<([i32; 2], &'static str)>,
-}
-
-impl Robot {
-    fn new(width: i32, height: i32) -> Self {
-        let mut robs = vec![([0, 0], "South")];
-        robs.extend((1..width).map(|x| ([x, 0], "East")));
-        robs.extend((1..height).map(|y| ([width - 1, y], "North")));
-        robs.extend((0..width - 1).rev().map(|x| ([x, height - 1], "West")));
-        robs.extend((1..height - 1).rev().map(|y| ([0, y], "South")));
-        Self { idx: 0, robs }
+pub fn maximum_beauty(items: Vec<Vec<i32>>, queries: Vec<i32>) -> Vec<i32> {
+    let mut map = BTreeMap::new();
+    for item in items.iter() {
+        let [key, val] = item[..] else { unreachable!() };
+        let v = map.entry(key).or_insert(val);
+        *v = (*v).max(val);
     }
-
-    fn step(&mut self, num: i32) {
-        self.idx += num as usize
+    let mut val = 0;
+    for v in map.values_mut() {
+        val = val.max(*v);
+        *v = val;
     }
-
-    fn get_pos(&self) -> Vec<i32> {
-        self.robs[self.idx % self.robs.len()].0.to_vec()
-    }
-
-    fn get_dir(&self) -> String {
-        if self.idx == 0 {
-            "East".to_string()
+    let mut res = vec![];
+    let mut seen = HashMap::new();
+    for &q in queries.iter() {
+        if let Some(v) = seen.get(&q) {
+            res.push(*v);
         } else {
-            self.robs[self.idx % self.robs.len()].1.to_string()
+            let v = map.range(..=q).next_back().map(|(_, v)| *v).unwrap_or(0);
+            res.push(v);
+            seen.insert(q, v);
         }
     }
+    res
 }
 
 #[cfg(test)]
