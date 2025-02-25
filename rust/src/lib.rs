@@ -5,29 +5,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_vowel_substrings(word: &str) -> i32 {
+pub fn count_vowels(word: &str) -> i64 {
     const VOWELS: &[u8] = b"aeiou";
     let n = word.len();
-    if n < 5 {
-        return 0;
-    }
     let mut res = 0;
-    for (left, b) in word[..n - 4].bytes().enumerate() {
-        if !VOWELS.contains(&b) {
-            continue;
-        }
-        let mut seen = std::collections::HashSet::new();
-        let mut right = left;
-        while word
-            .as_bytes()
-            .get(right)
-            .is_some_and(|b| VOWELS.contains(b))
-        {
-            seen.insert(word.as_bytes()[right]);
-            right += 1;
-            if seen.len() >= 5 {
-                res += 1;
-            }
+    for (i, b) in word.bytes().enumerate() {
+        if VOWELS.contains(&b) {
+            // substrs ends on i
+            let left = i as i64;
+            // substrs starts on i
+            let right = (n - i - 1) as i64;
+            // left*right => all combos
+            // and single length
+            res += left + right + left * right + 1;
         }
     }
     res
@@ -64,9 +54,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(count_vowel_substrings("aeiouu"), 2);
-        assert_eq!(count_vowel_substrings("unicornarihan"), 0);
-        assert_eq!(count_vowel_substrings("cuaieuouac"), 7);
+        assert_eq!(count_vowels("aba"), 6);
+        assert_eq!(count_vowels("abc"), 3);
+        assert_eq!(count_vowels("ltcd"), 0);
     }
 
     #[test]
