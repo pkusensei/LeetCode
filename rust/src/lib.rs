@@ -2,35 +2,53 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::{BTreeMap, HashMap};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_beauty(items: Vec<Vec<i32>>, queries: Vec<i32>) -> Vec<i32> {
-    let mut map = BTreeMap::new();
-    for item in items.iter() {
-        let [key, val] = item[..] else { unreachable!() };
-        let v = map.entry(key).or_insert(val);
-        *v = (*v).max(val);
-    }
-    let mut val = 0;
-    for v in map.values_mut() {
-        val = val.max(*v);
-        *v = val;
-    }
-    let mut res = vec![];
-    let mut seen = HashMap::new();
-    for &q in queries.iter() {
-        if let Some(v) = seen.get(&q) {
-            res.push(*v);
+pub fn max_task_assign(tasks: &mut [i32], workers: &mut [i32], pills: i32, strength: i32) -> i32 {
+    tasks.sort_unstable();
+    workers.sort_unstable_by(|a, b| b.cmp(a));
+    let [mut left, mut right] = [0, tasks.len()];
+    while left < right {
+        let mid = left + (right + 1 - left) / 2;
+        if check(tasks, workers, pills, strength, mid) {
+            left = mid;
         } else {
-            let v = map.range(..=q).next_back().map(|(_, v)| *v).unwrap_or(0);
-            res.push(v);
-            seen.insert(q, v);
+            right = mid - 1;
         }
     }
-    res
+    left as i32
+}
+
+fn check(tasks: &[i32], workers: &[i32], mut pills: i32, strength: i32, k: usize) -> bool {
+    if k > workers.len() {
+        return false;
+    }
+    let mut taski = 0;
+    let mut queue = std::collections::VecDeque::new();
+    for idx in (0..k).rev() {
+        if queue.is_empty() && taski < k {
+            queue.push_front(tasks[taski]); // decreasing queue
+            taski += 1;
+        }
+        if queue.back().is_some_and(|&v| v <= workers[idx]) {
+            queue.pop_back();
+        } else {
+            if pills == 0 {
+                return false;
+            }
+            if queue.back().is_some_and(|&v| v > workers[idx] + strength) {
+                return false;
+            }
+            while taski < k && tasks[taski] <= workers[idx] + strength {
+                queue.push_front(tasks[taski]);
+                taski += 1;
+            }
+            queue.pop_front(); // this one is done by current worker
+            pills -= 1;
+        }
+    }
+    true
 }
 
 #[cfg(test)]
@@ -63,7 +81,14 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(max_task_assign(&mut [3, 2, 1], &mut [0, 3, 3], 1, 1), 3);
+        assert_eq!(max_task_assign(&mut [5, 4], &mut [0, 0, 0], 1, 5), 1);
+        assert_eq!(
+            max_task_assign(&mut [10, 15, 30], &mut [0, 10, 10, 10, 10], 3, 10),
+            2
+        );
+    }
 
     #[test]
     fn test() {}
