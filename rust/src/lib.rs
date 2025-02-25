@@ -5,22 +5,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_vowels(word: &str) -> i64 {
-    const VOWELS: &[u8] = b"aeiou";
-    let n = word.len();
-    let mut res = 0;
-    for (i, b) in word.bytes().enumerate() {
-        if VOWELS.contains(&b) {
-            // substrs ends on i
-            let left = i as i64;
-            // substrs starts on i
-            let right = (n - i - 1) as i64;
-            // left*right => all combos
-            // and single length
-            res += left + right + left * right + 1;
+pub fn minimized_maximum(n: i32, quantities: Vec<i32>) -> i32 {
+    let mut left = 1;
+    let mut right = *quantities.iter().max().unwrap_or(&100000);
+    while left < right {
+        let mid = left + (right - left) / 2;
+        if count(&quantities, mid) > n {
+            left = 1 + mid;
+        } else {
+            right = mid;
         }
     }
-    res
+    left
+}
+
+fn count(nums: &[i32], mid: i32) -> i32 {
+    nums.iter().map(|n| n / mid + i32::from(n % mid > 0)).sum()
 }
 
 #[cfg(test)]
@@ -53,11 +53,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(count_vowels("aba"), 6);
-        assert_eq!(count_vowels("abc"), 3);
-        assert_eq!(count_vowels("ltcd"), 0);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
