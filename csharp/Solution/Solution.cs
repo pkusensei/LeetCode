@@ -6,30 +6,18 @@ namespace Solution;
 
 public class Solution
 {
-    public int[] NodesBetweenCriticalPoints(ListNode head)
+    public int MaxAbsoluteSum(int[] nums)
     {
-        var curr = head;
-        List<int> nums = [];
-        while (curr is not null)
+        int min = 0;
+        int max = 0;
+        int res = 0;
+        foreach (var num in nums)
         {
-            nums.Add(curr.val);
-            curr = curr.next;
+            min = Math.Min(num, min + num);
+            max = Math.Max(num, max + num);
+            res = Math.Max(res, Math.Max(Math.Abs(min), Math.Abs(max)));
         }
-        List<int> points = [];
-        for (int i = 1; i < nums.Count - 1; i++)
-        {
-            if ((nums[i - 1] < nums[i] && nums[i + 1] < nums[i]) || (nums[i - 1] > nums[i] && nums[i + 1] > nums[i]))
-            {
-                points.Add(i);
-            }
-        }
-        if (points.Count < 2) { return [-1, -1]; }
-        var min = int.MaxValue;
-        for (int i = 0; i < points.Count - 1; i++)
-        {
-            min = Math.Min(min, points[i + 1] - points[i]);
-        }
-        return [min, points.Last() - points[0]];
+        return res;
     }
 }
 

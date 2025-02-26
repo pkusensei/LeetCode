@@ -10,13 +10,11 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(new[] { 3, 1 }, "[-1,-1]")]
-    [DataRow(new[] { 5, 3, 1, 2, 5, 1, 2 }, "[1,3]")]
-    [DataRow(new[] { 1, 3, 2, 2, 3, 2, 2, 2, 7 }, "[3,3]")]
-    public void TestMethod1(int[] nums, string exp)
+    [DataRow(new[] { 1, -3, 2, 3, -4 }, 5)]
+    [DataRow(new[] { 2, -5, 1, -4, 3, -2 }, 8)]
+    public void TestMethod1(int[] nums, int exp)
     {
-        var a = ListNode.Make(nums);
-        Assert.AreEqual(exp, sol.NodesBetweenCriticalPoints(a).Print());
+        Assert.AreEqual(exp, sol.MaxAbsoluteSum(nums));
     }
 
     [TestMethod]
