@@ -5,29 +5,64 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn decode_ciphertext(encoded_text: String, rows: i32) -> String {
-    if rows == 1 {
-        return encoded_text;
-    }
-    let rows = rows as usize;
-    let cols = encoded_text.len() / rows;
+pub fn friend_requests(n: i32, restrictions: Vec<Vec<i32>>, requests: Vec<Vec<i32>>) -> Vec<bool> {
     let mut res = vec![];
-    let [mut r, mut c] = [0, 0];
-    let mut prev_col = 0;
-    while r < rows && c < cols {
-        res.push(encoded_text.as_bytes()[r * cols + c]);
-        r += 1;
-        c += 1;
-        if r == rows|| c == cols {
-            r = 0;
-            c = 1 + prev_col;
-            prev_col += 1;
+    let mut dsu = DSU::new(n as usize);
+    for req in requests.iter() {
+        let [x, y] = [0, 1].map(|i| req[i] as usize);
+        res.push(dsu.try_union(x, y, &restrictions));
+    }
+    res
+}
+
+#[derive(Clone)]
+struct DSU {
+    parent: Vec<usize>,
+    rank: Vec<i32>,
+}
+
+impl DSU {
+    fn new(n: usize) -> Self {
+        Self {
+            parent: (0..n).collect(),
+            rank: vec![0; n],
         }
     }
-    while res.last().is_some_and(|b| b.is_ascii_whitespace()) {
-        res.pop();
+
+    fn find(&mut self, v: usize) -> usize {
+        if self.parent[v] != v {
+            self.parent[v] = self.find(self.parent[v]);
+        }
+        self.parent[v]
     }
-    String::from_utf8(res).unwrap()
+
+    fn union(&mut self, x: usize, y: usize) {
+        let [rx, ry] = [x, y].map(|v| self.find(v));
+        if rx == ry {
+            return;
+        }
+        match self.rank[rx].cmp(&self.rank[ry]) {
+            std::cmp::Ordering::Less => self.parent[rx] = ry,
+            std::cmp::Ordering::Equal => {
+                self.rank[rx] += 1;
+                self.parent[ry] = rx;
+            }
+            std::cmp::Ordering::Greater => self.parent[ry] = rx,
+        }
+    }
+
+    fn try_union(&mut self, x: usize, y: usize, rests: &[Vec<i32>]) -> bool {
+        let mut temp = self.clone();
+        temp.union(x, y);
+        for r in rests.iter() {
+            let [a, b] = [0, 1].map(|i| r[i] as usize);
+            if temp.find(a) == temp.find(b) {
+                return false;
+            }
+        }
+        *self = temp;
+        true
+    }
 }
 
 #[cfg(test)]
