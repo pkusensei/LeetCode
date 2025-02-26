@@ -5,16 +5,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_distance(colors: Vec<i32>) -> i32 {
-    let n = colors.len();
-    let mut res = colors.iter().rposition(|&c| c != colors[0]).unwrap_or(0);
-    for (i, &c) in colors.iter().enumerate() {
-        if c != colors[n - 1] {
-            res = res.max(n - i - 1);
-            break;
+pub fn watering_plants(plants: &[i32], capacity: i32) -> i32 {
+    let mut curr = capacity;
+    let mut res = 0;
+    for (i, &p) in (0..).zip(plants.iter()) {
+        if curr >= p {
+            curr -= p;
+            res += 1;
+        } else {
+            curr = capacity - p;
+            res += 2 * i + 1;
         }
     }
-    res as _
+    res
 }
 
 #[cfg(test)]
@@ -47,7 +50,9 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(watering_plants(&[2, 2, 3, 3], 5), 14);
+    }
 
     #[test]
     fn test() {}
