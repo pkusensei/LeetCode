@@ -2,22 +2,33 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn watering_plants(plants: &[i32], capacity: i32) -> i32 {
-    let mut curr = capacity;
-    let mut res = 0;
-    for (i, &p) in (0..).zip(plants.iter()) {
-        if curr >= p {
-            curr -= p;
-            res += 1;
-        } else {
-            curr = capacity - p;
-            res += 2 * i + 1;
+struct RangeFreqQuery {
+    data: HashMap<i32, Vec<i32>>,
+}
+
+impl RangeFreqQuery {
+    fn new(arr: Vec<i32>) -> Self {
+        Self {
+            data: (0..).zip(arr).fold(HashMap::new(), |mut acc, (i, num)| {
+                acc.entry(num).or_default().push(i);
+                acc
+            }),
         }
     }
-    res
+
+    fn query(&self, left: i32, right: i32, value: i32) -> i32 {
+        let Some(v) = self.data.get(&value) else {
+            return 0;
+        };
+        let a = v.partition_point(|&i| i < left);
+        let b = v.partition_point(|&i| i <= right);
+        (b - a) as i32
+    }
 }
 
 #[cfg(test)]
@@ -51,7 +62,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(watering_plants(&[2, 2, 3, 3], 5), 14);
+        let rf = RangeFreqQuery::new(vec![12, 33, 4, 56, 22, 2, 34, 33, 22, 12, 34, 56]);
+        assert_eq!(rf.query(1, 2, 4), 1); // return 1. The value 4 occurs 1 time in the subarray [33, 4]
+        assert_eq!(rf.query(0, 11, 33), 2); // return 2. The value 33 occurs 2 times in the whole array.
     }
 
     #[test]
