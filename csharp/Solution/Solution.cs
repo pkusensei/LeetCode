@@ -6,18 +6,51 @@ namespace Solution;
 
 public class Solution
 {
-    public int MaxAbsoluteSum(int[] nums)
+    public ListNode ReverseEvenLengthGroups(ListNode head)
     {
-        int min = 0;
-        int max = 0;
-        int res = 0;
-        foreach (var num in nums)
+        ListNode dummy = new(0, head);
+        var prev = dummy;
+        var curr = head;
+        for (int len = 1; curr is not null; len += 1)
         {
-            min = Math.Min(num, min + num);
-            max = Math.Max(num, max + num);
-            res = Math.Max(res, Math.Max(Math.Abs(min), Math.Abs(max)));
+            var tail = curr;
+            var count = 1;
+            while (count < len && tail is not null && tail.next is not null)
+            {
+                tail = tail.next;
+                count += 1;
+            }
+            ListNode next_head = tail.next;
+            if ((count & 1) == 0)
+            {
+                tail.next = null;
+                prev.next = Reverse(curr);
+                prev = curr; // jump forward
+                curr.next = next_head;
+                curr = next_head;
+            }
+            else
+            {
+                prev = tail;
+                curr = next_head;
+            }
         }
-        return res;
+        return dummy.next;
+
+        static ListNode Reverse(ListNode node)
+        {
+            if (node is null) { return null; }
+            ListNode prev = null;
+            var curr = node;
+            while (curr is not null)
+            {
+                var temp = curr.next;
+                curr.next = prev;
+                prev = curr;
+                curr = temp;
+            }
+            return prev;
+        }
     }
 }
 

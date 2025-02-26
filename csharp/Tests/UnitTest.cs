@@ -10,11 +10,13 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(new[] { 1, -3, 2, 3, -4 }, 5)]
-    [DataRow(new[] { 2, -5, 1, -4, 3, -2 }, 8)]
-    public void TestMethod1(int[] nums, int exp)
+    [DataRow(new[] { 5, 2, 6, 3, 9, 1, 7, 3, 8, 4 }, "[5,6,2,3,9,1,4,8,3,7]")]
+    [DataRow(new[] { 1, 1, 0, 6 }, "[1,0,1,6]")]
+    [DataRow(new[] { 1, 1, 0, 6, 5 }, "[1,0,1,5,6]")]
+    public void TestMethod1(int[] nums, string exp)
     {
-        Assert.AreEqual(exp, sol.MaxAbsoluteSum(nums));
+        var a = ListNode.Make(nums);
+        Assert.AreEqual(exp, sol.ReverseEvenLengthGroups(a).Print());
     }
 
     [TestMethod]
