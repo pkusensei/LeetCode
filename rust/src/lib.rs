@@ -5,16 +5,29 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn time_required_to_buy(tickets: Vec<i32>, k: i32) -> i32 {
-    let k = k as usize;
-    tickets[..=k]
-        .iter()
-        .map(|&v| v.min(tickets[k]))
-        .sum::<i32>()
-        + tickets[1 + k..]
-            .iter()
-            .map(|&v| v.min(tickets[k] - 1))
-            .sum::<i32>()
+pub fn decode_ciphertext(encoded_text: String, rows: i32) -> String {
+    if rows == 1 {
+        return encoded_text;
+    }
+    let rows = rows as usize;
+    let cols = encoded_text.len() / rows;
+    let mut res = vec![];
+    let [mut r, mut c] = [0, 0];
+    let mut prev_col = 0;
+    while r < rows && c < cols {
+        res.push(encoded_text.as_bytes()[r * cols + c]);
+        r += 1;
+        c += 1;
+        if r == rows|| c == cols {
+            r = 0;
+            c = 1 + prev_col;
+            prev_col += 1;
+        }
+    }
+    while res.last().is_some_and(|b| b.is_ascii_whitespace()) {
+        res.pop();
+    }
+    String::from_utf8(res).unwrap()
 }
 
 #[cfg(test)]
