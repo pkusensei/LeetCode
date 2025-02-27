@@ -6,51 +6,31 @@ namespace Solution;
 
 public class Solution
 {
-    public ListNode ReverseEvenLengthGroups(ListNode head)
+    public int LenLongestFibSubseq(int[] arr)
     {
-        ListNode dummy = new(0, head);
-        var prev = dummy;
-        var curr = head;
-        for (int len = 1; curr is not null; len += 1)
+        Dictionary<int, int> dict = arr.Select((v, i) => (v, i)).ToDictionary();
+        int n = arr.Length;
+        int[,] dp = new int[n, n];
+        for (int i1 = 0; i1 < n; i1++)
         {
-            var tail = curr;
-            var count = 1;
-            while (count < len && tail is not null && tail.next is not null)
+            for (int i2 = 0; i2 < n; i2++)
             {
-                tail = tail.next;
-                count += 1;
-            }
-            ListNode next_head = tail.next;
-            if ((count & 1) == 0)
-            {
-                tail.next = null;
-                prev.next = Reverse(curr);
-                prev = curr; // jump forward
-                curr.next = next_head;
-                curr = next_head;
-            }
-            else
-            {
-                prev = tail;
-                curr = next_head;
+                dp[i1, i2] = 1;
             }
         }
-        return dummy.next;
-
-        static ListNode Reverse(ListNode node)
+        int res = 0;
+        foreach (var (i1, v1) in arr.Select((v, i) => (i, v)))
         {
-            if (node is null) { return null; }
-            ListNode prev = null;
-            var curr = node;
-            while (curr is not null)
+            foreach (var (i2, v2) in arr.Select((v, i) => (i, v)).Skip(1 + i1))
             {
-                var temp = curr.next;
-                curr.next = prev;
-                prev = curr;
-                curr = temp;
+                if (dict.TryGetValue(v1 + v2, out var i3))
+                {
+                    dp[i2, i3] = Math.Max(dp[i2, i3], Math.Max(3, 1 + dp[i1, i2]));
+                    res = Math.Max(res, dp[i2, i3]);
+                }
             }
-            return prev;
         }
+        return res >= 3 ? res : 0;
     }
 }
 

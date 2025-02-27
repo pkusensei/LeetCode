@@ -10,13 +10,11 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(new[] { 5, 2, 6, 3, 9, 1, 7, 3, 8, 4 }, "[5,6,2,3,9,1,4,8,3,7]")]
-    [DataRow(new[] { 1, 1, 0, 6 }, "[1,0,1,6]")]
-    [DataRow(new[] { 1, 1, 0, 6, 5 }, "[1,0,1,5,6]")]
-    public void TestMethod1(int[] nums, string exp)
+    [DataRow(new[] { 1, 2, 3, 4, 5, 6, 7, 8 }, 5)]
+    [DataRow(new[] { 1, 3, 7, 11, 12, 14, 18 }, 3)]
+    public void TestMethod1(int[] nums, int exp)
     {
-        var a = ListNode.Make(nums);
-        Assert.AreEqual(exp, sol.ReverseEvenLengthGroups(a).Print());
+        Assert.AreEqual(exp, sol.LenLongestFibSubseq(nums));
     }
 
     [TestMethod]
