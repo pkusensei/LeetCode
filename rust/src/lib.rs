@@ -5,31 +5,28 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_cost(
-    start_pos: Vec<i32>,
-    home_pos: Vec<i32>,
-    row_costs: Vec<i32>,
-    col_costs: Vec<i32>,
-) -> i32 {
-    let [r_start, c_start] = [0, 1].map(|i| start_pos[i] as usize);
-    let [r_goal, c_goal] = [0, 1].map(|i| home_pos[i] as usize);
-    match [r_start == r_goal, c_start == c_goal] {
-        [true, true] => 0,
-        [true, false] => col_costs[(1 + c_start).min(c_goal)..c_start.max(1 + c_goal)]
-            .iter()
-            .sum(),
-        [false, true] => row_costs[(1 + r_start).min(r_goal)..r_start.max(1 + r_goal)]
-            .iter()
-            .sum(),
-        _ => {
-            row_costs[(1 + r_start).min(r_goal)..r_start.max(1 + r_goal)]
-                .iter()
-                .sum::<i32>()
-                + col_costs[(1 + c_start).min(c_goal)..c_start.max(1 + c_goal)]
-                    .iter()
-                    .sum::<i32>()
+pub fn count_pyramids(grid: Vec<Vec<i32>>) -> i32 {
+    let [rows, cols] = get_dimensions(&grid);
+    let mut dp = grid.clone();
+    let mut res = 0;
+    for r in (0..rows - 1).rev() {
+        for c in 1..cols - 1 {
+            if dp[1 + r][c] > 0 && dp[r][c] > 0 {
+                dp[r][c] = 1 + dp[1 + r][c - 1].min(dp[1 + r][c + 1]);
+                res += dp[r][c] - 1;
+            }
         }
     }
+    dp = grid;
+    for r in 1..rows {
+        for c in 1..cols - 1 {
+            if dp[r - 1][c] > 0 && dp[r][c] > 0 {
+                dp[r][c] = 1 + dp[r - 1][c - 1].min(dp[r - 1][c + 1]);
+                res += dp[r][c] - 1;
+            }
+        }
+    }
+    res
 }
 
 #[cfg(test)]
@@ -62,7 +59,19 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        // assert_eq!(count_pyramids(vec![vec![0, 1, 1, 0], vec![1, 1, 1, 1]]), 2);
+        // assert_eq!(count_pyramids(vec![vec![0, 1, 1, 0], vec![1, 1, 1, 1]]), 2);
+        assert_eq!(
+            count_pyramids(vec![
+                vec![1, 1, 1, 1, 0],
+                vec![1, 1, 1, 1, 1],
+                vec![1, 1, 1, 1, 1],
+                vec![0, 1, 0, 0, 1]
+            ]),
+            13
+        );
+    }
 
     #[test]
     fn test() {}
