@@ -10,11 +10,13 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(new[] { 1, 2, 3, 4, 5, 6, 7, 8 }, 5)]
-    [DataRow(new[] { 1, 3, 7, 11, 12, 14, 18 }, 3)]
-    public void TestMethod1(int[] nums, int exp)
+    [DataRow(new[] { 1, 3, 4, 7, 1, 2, 6 }, "[1,3,4,1,2,6]")]
+    [DataRow(new[] { 1, 2, 3, 4 }, "[1,2,4]")]
+    [DataRow(new[] { 1, 2 }, "[1]")]
+    public void TestMethod1(int[] nums, string exp)
     {
-        Assert.AreEqual(exp, sol.LenLongestFibSubseq(nums));
+        var a = ListNode.Make(nums);
+        Assert.AreEqual(exp, sol.DeleteMiddle(a).ToString());
     }
 
     [TestMethod]

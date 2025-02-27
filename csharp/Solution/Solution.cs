@@ -6,31 +6,19 @@ namespace Solution;
 
 public class Solution
 {
-    public int LenLongestFibSubseq(int[] arr)
+    public ListNode DeleteMiddle(ListNode head)
     {
-        Dictionary<int, int> dict = arr.Select((v, i) => (v, i)).ToDictionary();
-        int n = arr.Length;
-        int[,] dp = new int[n, n];
-        for (int i1 = 0; i1 < n; i1++)
+        var slow = head;
+        var fast = head;
+        ListNode dummy = new(0, head);
+        ListNode prev = dummy;
+        while (fast is not null && fast.next is not null)
         {
-            for (int i2 = 0; i2 < n; i2++)
-            {
-                dp[i1, i2] = 1;
-            }
+            prev = slow;
+            slow = slow.next;
+            fast = fast.next.next;
         }
-        int res = 0;
-        foreach (var (i1, v1) in arr.Select((v, i) => (i, v)))
-        {
-            foreach (var (i2, v2) in arr.Select((v, i) => (i, v)).Skip(1 + i1))
-            {
-                if (dict.TryGetValue(v1 + v2, out var i3))
-                {
-                    dp[i2, i3] = Math.Max(dp[i2, i3], Math.Max(3, 1 + dp[i1, i2]));
-                    res = Math.Max(res, dp[i2, i3]);
-                }
-            }
-        }
-        return res >= 3 ? res : 0;
+        prev.next = slow.next;
+        return dummy.next;
     }
 }
-
