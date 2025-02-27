@@ -2,21 +2,38 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_words(words1: Vec<String>, words2: Vec<String>) -> i32 {
-    let [map1, map2] = [&words1, &words2].map(|v| {
-        v.iter().fold(HashMap::new(), |mut acc, s| {
-            *acc.entry(s.as_str()).or_insert(0) += 1;
-            acc
-        })
-    });
-    map1.into_iter()
-        .filter(|(s, c1)| *c1 == 1 && map2.get(s).is_some_and(|&c2| c2 == 1))
-        .count() as i32
+pub fn minimum_buckets(hamsters: String) -> i32 {
+    let mut s = hamsters.into_bytes();
+    let n = s.len();
+    let mut res = 0;
+    let mut idx = 0;
+    while idx < n {
+        if s[idx] == b'H' {
+            if idx > 0 && s[idx - 1] == b'B' {
+                idx += 1; // look left first
+                continue;
+            }
+            if s.get(1 + idx).is_some_and(|&v| v == b'.') {
+                s[1 + idx] = b'B'; // put bucket
+                idx += 2;
+                res += 1;
+                continue;
+            }
+            // All above failed, attemp left
+            if idx > 0 && s[idx - 1] == b'.' {
+                res += 1;
+                s[idx - 1] = b'B';
+                idx += 1;
+                continue;
+            }
+            return -1;
+        }
+        idx += 1;
+    }
+    res
 }
 
 #[cfg(test)]
@@ -49,7 +66,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(minimum_buckets("H..H".into()), 2);
+        assert_eq!(minimum_buckets(".H.H.".into()), 1);
+        assert_eq!(minimum_buckets(".HHH.".into()), -1);
+    }
 
     #[test]
     fn test() {}
