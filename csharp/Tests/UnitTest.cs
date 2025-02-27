@@ -10,18 +10,17 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(new[] { 1, 3, 4, 7, 1, 2, 6 }, "[1,3,4,1,2,6]")]
-    [DataRow(new[] { 1, 2, 3, 4 }, "[1,2,4]")]
-    [DataRow(new[] { 1, 2 }, "[1]")]
-    public void TestMethod1(int[] nums, string exp)
+    public void TestMethod1()
     {
-        var a = ListNode.Make(nums);
-        Assert.AreEqual(exp, sol.DeleteMiddle(a).ToString());
+        var a = TreeNode.Make([5, 1, 2, 3, null, 6, 4]);
+        Assert.AreEqual("UURL", sol.GetDirections(a, 3, 6));
     }
 
     [TestMethod]
     public void TestMethod2()
     {
+        var a = TreeNode.Make([2, 1]);
+        Assert.AreEqual("L", sol.GetDirections(a, 2, 1));
     }
 
     [TestMethod]
