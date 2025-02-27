@@ -5,28 +5,12 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_pyramids(grid: Vec<Vec<i32>>) -> i32 {
-    let [rows, cols] = get_dimensions(&grid);
-    let mut dp = grid.clone();
-    let mut res = 0;
-    for r in (0..rows - 1).rev() {
-        for c in 1..cols - 1 {
-            if dp[1 + r][c] > 0 && dp[r][c] > 0 {
-                dp[r][c] = 1 + dp[1 + r][c - 1].min(dp[1 + r][c + 1]);
-                res += dp[r][c] - 1;
-            }
-        }
-    }
-    dp = grid;
-    for r in 1..rows {
-        for c in 1..cols - 1 {
-            if dp[r - 1][c] > 0 && dp[r][c] > 0 {
-                dp[r][c] = 1 + dp[r - 1][c - 1].min(dp[r - 1][c + 1]);
-                res += dp[r][c] - 1;
-            }
-        }
-    }
-    res
+pub fn target_indices(mut nums: Vec<i32>, target: i32) -> Vec<i32> {
+    nums.sort_unstable();
+    nums.iter()
+        .enumerate()
+        .filter_map(|(i, &v)| if v == target { Some(i as i32) } else { None })
+        .collect()
 }
 
 #[cfg(test)]
@@ -59,19 +43,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        // assert_eq!(count_pyramids(vec![vec![0, 1, 1, 0], vec![1, 1, 1, 1]]), 2);
-        // assert_eq!(count_pyramids(vec![vec![0, 1, 1, 0], vec![1, 1, 1, 1]]), 2);
-        assert_eq!(
-            count_pyramids(vec![
-                vec![1, 1, 1, 1, 0],
-                vec![1, 1, 1, 1, 1],
-                vec![1, 1, 1, 1, 1],
-                vec![0, 1, 0, 0, 1]
-            ]),
-            13
-        );
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
