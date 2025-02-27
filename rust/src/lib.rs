@@ -5,35 +5,31 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_buckets(hamsters: String) -> i32 {
-    let mut s = hamsters.into_bytes();
-    let n = s.len();
-    let mut res = 0;
-    let mut idx = 0;
-    while idx < n {
-        if s[idx] == b'H' {
-            if idx > 0 && s[idx - 1] == b'B' {
-                idx += 1; // look left first
-                continue;
-            }
-            if s.get(1 + idx).is_some_and(|&v| v == b'.') {
-                s[1 + idx] = b'B'; // put bucket
-                idx += 2;
-                res += 1;
-                continue;
-            }
-            // All above failed, attemp left
-            if idx > 0 && s[idx - 1] == b'.' {
-                res += 1;
-                s[idx - 1] = b'B';
-                idx += 1;
-                continue;
-            }
-            return -1;
+pub fn min_cost(
+    start_pos: Vec<i32>,
+    home_pos: Vec<i32>,
+    row_costs: Vec<i32>,
+    col_costs: Vec<i32>,
+) -> i32 {
+    let [r_start, c_start] = [0, 1].map(|i| start_pos[i] as usize);
+    let [r_goal, c_goal] = [0, 1].map(|i| home_pos[i] as usize);
+    match [r_start == r_goal, c_start == c_goal] {
+        [true, true] => 0,
+        [true, false] => col_costs[(1 + c_start).min(c_goal)..c_start.max(1 + c_goal)]
+            .iter()
+            .sum(),
+        [false, true] => row_costs[(1 + r_start).min(r_goal)..r_start.max(1 + r_goal)]
+            .iter()
+            .sum(),
+        _ => {
+            row_costs[(1 + r_start).min(r_goal)..r_start.max(1 + r_goal)]
+                .iter()
+                .sum::<i32>()
+                + col_costs[(1 + c_start).min(c_goal)..c_start.max(1 + c_goal)]
+                    .iter()
+                    .sum::<i32>()
         }
-        idx += 1;
     }
-    res
 }
 
 #[cfg(test)]
@@ -66,11 +62,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(minimum_buckets("H..H".into()), 2);
-        assert_eq!(minimum_buckets(".H.H.".into()), 1);
-        assert_eq!(minimum_buckets(".HHH.".into()), -1);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
