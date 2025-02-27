@@ -5,12 +5,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn target_indices(mut nums: Vec<i32>, target: i32) -> Vec<i32> {
-    nums.sort_unstable();
-    nums.iter()
-        .enumerate()
-        .filter_map(|(i, &v)| if v == target { Some(i as i32) } else { None })
-        .collect()
+pub fn get_averages(nums: &[i32], k: i32) -> Vec<i32> {
+    let (n, k) = (nums.len(), k as usize);
+    let mut res = vec![-1; n];
+    if n < 2 * k + 1 {
+        return res;
+    }
+    let mut window: i64 = nums[..1 + 2 * k].iter().map(|&v| i64::from(v)).sum();
+    for i in k..n - k {
+        res[i] = (window / (1 + 2 * k as i64)) as i32;
+        window -= i64::from(nums[i - k]);
+        window += i64::from(*nums.get(i + k + 1).unwrap_or(&0));
+    }
+    res
 }
 
 #[cfg(test)]
