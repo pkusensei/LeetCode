@@ -2,42 +2,19 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
+use std::cmp::Reverse;
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn valid_arrangement(pairs: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
-    let start = find_start(&pairs).unwrap_or(pairs[0][0]);
-    let mut adj = pairs
-        .iter()
-        .fold(HashMap::<_, Vec<_>>::new(), |mut acc, p| {
-            acc.entry(p[0]).or_default().push(p[1]);
-            acc
-        });
-    let mut res = vec![];
-    dfs(&mut adj, start, &mut res);
-    res.reverse();
-    res.windows(2).map(|w| w.to_vec()).collect()
-}
-
-fn dfs(adj: &mut HashMap<i32, Vec<i32>>, node: i32, res: &mut Vec<i32>) {
-    if let Some(next) = adj.get_mut(&node).and_then(|v| v.pop()) {
-        dfs(adj, next, res);
+pub fn max_subsequence(nums: Vec<i32>, k: i32) -> Vec<i32> {
+    if nums.len() <= k as usize {
+        return nums;
     }
-    res.push(node);
-}
-
-fn find_start(pairs: &[Vec<i32>]) -> Option<i32> {
-    let count = pairs.iter().fold(HashMap::new(), |mut acc, p| {
-        let [start, end] = p[..] else { unreachable!() };
-        *acc.entry(start).or_insert(0) += 1;
-        *acc.entry(end).or_insert(0) -= 1;
-        acc
-    });
-    count
-        .iter()
-        .find_map(|(k, v)| if *v == 1 { Some(*k) } else { None })
+    let mut nis: Vec<_> = nums.iter().enumerate().map(|(i, &v)| (i, v)).collect();
+    let (res, _, _) = nis.select_nth_unstable_by_key(k as usize, |&(_i, v)| Reverse(v));
+    res.sort_unstable_by_key(|&(i, _v)| i);
+    res.iter().map(|&(_, v)| v).collect()
 }
 
 #[cfg(test)]
