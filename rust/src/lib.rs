@@ -2,29 +2,42 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_even_numbers(digits: &[i32]) -> Vec<i32> {
-    let freq = digits.iter().fold([0; 10], |mut acc, &d| {
-        acc[d as usize] += 1;
+pub fn valid_arrangement(pairs: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
+    let start = find_start(&pairs).unwrap_or(pairs[0][0]);
+    let mut adj = pairs
+        .iter()
+        .fold(HashMap::<_, Vec<_>>::new(), |mut acc, p| {
+            acc.entry(p[0]).or_default().push(p[1]);
+            acc
+        });
+    let mut res = vec![];
+    dfs(&mut adj, start, &mut res);
+    res.reverse();
+    res.windows(2).map(|w| w.to_vec()).collect()
+}
+
+fn dfs(adj: &mut HashMap<i32, Vec<i32>>, node: i32, res: &mut Vec<i32>) {
+    if let Some(next) = adj.get_mut(&node).and_then(|v| v.pop()) {
+        dfs(adj, next, res);
+    }
+    res.push(node);
+}
+
+fn find_start(pairs: &[Vec<i32>]) -> Option<i32> {
+    let count = pairs.iter().fold(HashMap::new(), |mut acc, p| {
+        let [start, end] = p[..] else { unreachable!() };
+        *acc.entry(start).or_insert(0) += 1;
+        *acc.entry(end).or_insert(0) -= 1;
         acc
     });
-    let mut res = vec![];
-    'outer: for num in (100..999).step_by(2) {
-        let mut x = num;
-        let mut f = freq.clone();
-        while x > 0 {
-            let d = (x % 10) as usize;
-            f[d] -= 1;
-            if f[d] < 0 {
-                continue 'outer;
-            }
-            x /= 10;
-        }
-        res.push(num);
-    }
-    res
+    count
+        .iter()
+        .find_map(|(k, v)| if *v == 1 { Some(*k) } else { None })
 }
 
 #[cfg(test)]
@@ -57,12 +70,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(
-            find_even_numbers(&[2, 1, 3, 0]),
-            [102, 120, 130, 132, 210, 230, 302, 310, 312, 320]
-        );
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
