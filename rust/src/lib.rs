@@ -5,19 +5,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn get_averages(nums: &[i32], k: i32) -> Vec<i32> {
-    let (n, k) = (nums.len(), k as usize);
-    let mut res = vec![-1; n];
-    if n < 2 * k + 1 {
-        return res;
+pub fn minimum_deletions(nums: Vec<i32>) -> i32 {
+    let n = nums.len();
+    if n == 1 {
+        return 1;
     }
-    let mut window: i64 = nums[..1 + 2 * k].iter().map(|&v| i64::from(v)).sum();
-    for i in k..n - k {
-        res[i] = (window / (1 + 2 * k as i64)) as i32;
-        window -= i64::from(nums[i - k]);
-        window += i64::from(*nums.get(i + k + 1).unwrap_or(&0));
-    }
-    res
+    let min = *nums.iter().min().unwrap();
+    let max = *nums.iter().max().unwrap();
+    let mini = nums.iter().position(|&v| v == min).unwrap();
+    let maxi = nums.iter().position(|&v| v == max).unwrap();
+    let left = mini.min(maxi);
+    let right = mini.max(maxi);
+    (1 + right).min(n - left).min(n - (right - left - 1)) as i32
 }
 
 #[cfg(test)]
