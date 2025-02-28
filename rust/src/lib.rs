@@ -5,29 +5,32 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_refill(plants: Vec<i32>, capacity_a: i32, capacity_b: i32) -> i32 {
-    let n = plants.len();
-    let [mut i1, mut i2] = [0, n - 1];
-    let [mut a, mut b] = [capacity_a, capacity_b];
-    let mut res = 0;
-    while i1 < i2 {
-        if a >= plants[i1] {
-            a -= plants[i1];
-        } else {
-            a = capacity_a - plants[i1];
-            res += 1;
-        }
-        if b >= plants[i2] {
-            b -= plants[i2];
-        } else {
-            b = capacity_b - plants[i2];
-            res += 1;
-        }
-        i1 += 1;
-        i2 -= 1;
+pub fn max_total_fruits(fruits: &[[i32; 2]], start_pos: i32, k: i32) -> i32 {
+    let [start, k] = [start_pos, k].map(|v| v as usize);
+    let n = (fruits.last().unwrap()[0] as usize).max(start) + 1;
+    let mut prefix = vec![0; n];
+    for fr in fruits.iter() {
+        prefix[fr[0] as usize] = fr[1];
     }
-    if i1 == i2 {
-        res += i32::from(a.max(b) < plants[i1]);
+    for i in 1..n {
+        prefix[i] += prefix[i - 1];
+    }
+    let walk_left = prefix[start] - start.checked_sub(1 + k).map(|i| prefix[i]).unwrap_or(0);
+    let walk_right = prefix[(start + k).min(n - 1)] - if start > 0 { prefix[start - 1] } else { 0 };
+    let mut res = walk_left.max(walk_right);
+    for v in (1..=k / 2).map(|x| {
+        let a = start.saturating_sub(x);
+        let b = (start + k - 2 * x).min(n - 1);
+        prefix[b] - if a > 0 { prefix[a - 1] } else { 0 }
+    }) {
+        res = res.max(v)
+    }
+    for v in (1..=k / 2).map(|x| {
+        let a = start.saturating_sub(k - 2 * x);
+        let b = (start + x).min(n - 1);
+        prefix[b] - if a > 0 { prefix[a - 1] } else { 0 }
+    }) {
+        res = res.max(v)
     }
     res
 }
@@ -62,8 +65,27 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(max_total_fruits(&[[2, 8], [6, 3], [8, 6]], 5, 4), 9);
+        assert_eq!(
+            max_total_fruits(&[[0, 9], [4, 1], [5, 7], [6, 2], [7, 4], [10, 9]], 5, 4),
+            14
+        );
+        assert_eq!(max_total_fruits(&[[0, 3], [6, 4], [8, 5]], 3, 2), 0);
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(max_total_fruits(&[[0, 10000]], 200000, 200000), 10000);
+        assert_eq!(
+            max_total_fruits(
+                &[[1, 8], [6, 5], [8, 6], [10, 1], [11, 7], [12, 6], [20, 3]],
+                7,
+                3
+            ),
+            11
+        );
+        // 8  5  6  1  7  6  3
+        // 1  6  8  10 11 12 20
+    }
 }
