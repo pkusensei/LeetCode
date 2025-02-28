@@ -2,42 +2,60 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::{cmp::Reverse, collections::BinaryHeap};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_detonation(bombs: Vec<Vec<i32>>) -> i32 {
-    let n = bombs.len();
-    let mut adj = vec![vec![]; n];
-    for (i1, b1) in bombs.iter().enumerate() {
-        let [x1, y1, r1] = [0, 1, 2].map(|i| i64::from(b1[i]));
-        for (i2, b2) in bombs.iter().enumerate() {
-            if i1 == i2 {
-                continue;
-            }
-            let [x2, y2] = [0, 1].map(|i| i64::from(b2[i]));
-            if (x1 - x2).pow(2) + (y1 - y2).pow(2) <= r1.pow(2) {
-                adj[i1].push(i2);
-            }
+#[derive(Debug, Default)]
+struct SORTracker {
+    left: BinaryHeap<Loc>,
+    right: BinaryHeap<Reverse<Loc>>,
+    idx: usize,
+}
+
+impl SORTracker {
+    fn new() -> Self {
+        Default::default()
+    }
+
+    fn add(&mut self, name: String, score: i32) {
+        self.left.push(Loc { score, name });
+        if self.left.len() > 1 + self.idx {
+            let v = self.left.pop().unwrap();
+            self.right.push(Reverse(v));
         }
     }
-    let mut res = 0;
-    for start in 0..n {
-        let mut queue = std::collections::VecDeque::from([start]);
-        let mut seen = vec![false; n];
-        seen[start] = true;
-        let mut curr = 0;
-        while let Some(node) = queue.pop_front() {
-            curr += 1;
-            for &next in adj[node].iter() {
-                if !seen[next] {
-                    seen[next] = true;
-                    queue.push_back(next);
-                }
-            }
+
+    fn get(&mut self) -> String {
+        let res = self.left.peek().unwrap().name.to_string();
+        self.idx += 1;
+        if let Some(Reverse(v)) = self.right.pop() {
+            self.left.push(v);
         }
-        res = res.max(curr);
+        res
     }
-    res
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct Loc {
+    score: i32,
+    name: String,
+}
+
+impl PartialOrd for Loc {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Loc {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        other
+            .score
+            .cmp(&self.score)
+            .then(self.name.cmp(&other.name))
+    }
 }
 
 #[cfg(test)]
