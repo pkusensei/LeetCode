@@ -5,32 +5,31 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn sub_array_ranges(nums: &[i32]) -> i64 {
-    let n = nums.len();
-    let [mut mins, mut maxs] = [0, 1].map(|_| Vec::with_capacity(n));
-    let [mut incst, mut decst] = [0, 1].map(|_| vec![]);
-    for (idx, &num) in nums.iter().enumerate() {
-        while incst.last().is_some_and(|&i| nums[i] >= num) {
-            incst.pop();
-        }
-        if let Some(&i) = incst.last() {
-            mins.push(mins[i] + (idx - i) as i64 * i64::from(num));
+pub fn minimum_refill(plants: Vec<i32>, capacity_a: i32, capacity_b: i32) -> i32 {
+    let n = plants.len();
+    let [mut i1, mut i2] = [0, n - 1];
+    let [mut a, mut b] = [capacity_a, capacity_b];
+    let mut res = 0;
+    while i1 < i2 {
+        if a >= plants[i1] {
+            a -= plants[i1];
         } else {
-            mins.push((1 + idx) as i64 * i64::from(num));
+            a = capacity_a - plants[i1];
+            res += 1;
         }
-        incst.push(idx);
-
-        while decst.last().is_some_and(|&i| nums[i] <= num) {
-            decst.pop();
-        }
-        if let Some(&i) = decst.last() {
-            maxs.push(maxs[i] + (idx - i) as i64 * i64::from(num));
+        if b >= plants[i2] {
+            b -= plants[i2];
         } else {
-            maxs.push((1 + idx) as i64 * i64::from(num));
+            b = capacity_b - plants[i2];
+            res += 1;
         }
-        decst.push(idx);
+        i1 += 1;
+        i2 -= 1;
     }
-    maxs.iter().sum::<i64>() - mins.iter().sum::<i64>()
+    if i1 == i2 {
+        res += i32::from(a.max(b) < plants[i1]);
+    }
+    res
 }
 
 #[cfg(test)]
@@ -63,11 +62,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(sub_array_ranges(&[1, 2, 3]), 4);
-        assert_eq!(sub_array_ranges(&[1, 3, 3]), 4);
-        assert_eq!(sub_array_ranges(&[4, -2, -3, 4, 1]), 59);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
