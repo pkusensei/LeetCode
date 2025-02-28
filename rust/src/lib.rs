@@ -5,18 +5,32 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_points(rings: String) -> i32 {
-    let mut count = [0; 10];
-    for w in rings.as_bytes().chunks(2) {
-        let [color, rod] = w[..] else { unreachable!() };
-        let idx = usize::from(rod - b'0');
-        match color {
-            b'R' => count[idx] |= 0b001,
-            b'G' => count[idx] |= 0b010,
-            _ => count[idx] |= 0b100,
+pub fn sub_array_ranges(nums: &[i32]) -> i64 {
+    let n = nums.len();
+    let [mut mins, mut maxs] = [0, 1].map(|_| Vec::with_capacity(n));
+    let [mut incst, mut decst] = [0, 1].map(|_| vec![]);
+    for (idx, &num) in nums.iter().enumerate() {
+        while incst.last().is_some_and(|&i| nums[i] >= num) {
+            incst.pop();
         }
+        if let Some(&i) = incst.last() {
+            mins.push(mins[i] + (idx - i) as i64 * i64::from(num));
+        } else {
+            mins.push((1 + idx) as i64 * i64::from(num));
+        }
+        incst.push(idx);
+
+        while decst.last().is_some_and(|&i| nums[i] <= num) {
+            decst.pop();
+        }
+        if let Some(&i) = decst.last() {
+            maxs.push(maxs[i] + (idx - i) as i64 * i64::from(num));
+        } else {
+            maxs.push((1 + idx) as i64 * i64::from(num));
+        }
+        decst.push(idx);
     }
-    count.into_iter().filter(|&v| v == 0b111).count() as _
+    maxs.iter().sum::<i64>() - mins.iter().sum::<i64>()
 }
 
 #[cfg(test)]
@@ -49,7 +63,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(sub_array_ranges(&[1, 2, 3]), 4);
+        assert_eq!(sub_array_ranges(&[1, 3, 3]), 4);
+        assert_eq!(sub_array_ranges(&[4, -2, -3, 4, 1]), 59);
+    }
 
     #[test]
     fn test() {}
