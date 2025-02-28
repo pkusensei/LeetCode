@@ -5,11 +5,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn first_palindrome(words: Vec<String>) -> String {
-        words
-            .into_iter()
-            .find(|s| is_palindrome(s.bytes()))
-            .unwrap_or_default()
+pub fn get_descent_periods(prices: Vec<i32>) -> i64 {
+    let mut res = 1;
+    let mut curr = 1;
+    for (i, &num) in prices.iter().enumerate().skip(1) {
+        if 1 + num == prices[i - 1] {
+            curr += 1;
+        } else {
+            curr = 1;
+        }
+        res += curr;
+    }
+    res
 }
 
 #[cfg(test)]
