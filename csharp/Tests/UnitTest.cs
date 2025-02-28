@@ -10,17 +10,16 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow("abac", "cab", "cabac")]
+    [DataRow("aaaaaaaa", "aaaaaaaa", "aaaaaaaa")]
+    public void TestMethod1(string s1, string s2, string exp)
     {
-        var a = TreeNode.Make([5, 1, 2, 3, null, 6, 4]);
-        Assert.AreEqual("UURL", sol.GetDirections(a, 3, 6));
+        Assert.AreEqual(exp, sol.ShortestCommonSupersequence(s1, s2));
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        var a = TreeNode.Make([2, 1]);
-        Assert.AreEqual("L", sol.GetDirections(a, 2, 1));
     }
 
     [TestMethod]
