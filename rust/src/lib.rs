@@ -2,60 +2,21 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::{cmp::Reverse, collections::BinaryHeap};
-
 #[allow(unused_imports)]
 use helper::*;
 
-#[derive(Debug, Default)]
-struct SORTracker {
-    left: BinaryHeap<Loc>,
-    right: BinaryHeap<Reverse<Loc>>,
-    idx: usize,
-}
-
-impl SORTracker {
-    fn new() -> Self {
-        Default::default()
-    }
-
-    fn add(&mut self, name: String, score: i32) {
-        self.left.push(Loc { score, name });
-        if self.left.len() > 1 + self.idx {
-            let v = self.left.pop().unwrap();
-            self.right.push(Reverse(v));
+pub fn count_points(rings: String) -> i32 {
+    let mut count = [0; 10];
+    for w in rings.as_bytes().chunks(2) {
+        let [color, rod] = w[..] else { unreachable!() };
+        let idx = usize::from(rod - b'0');
+        match color {
+            b'R' => count[idx] |= 0b001,
+            b'G' => count[idx] |= 0b010,
+            _ => count[idx] |= 0b100,
         }
     }
-
-    fn get(&mut self) -> String {
-        let res = self.left.peek().unwrap().name.to_string();
-        self.idx += 1;
-        if let Some(Reverse(v)) = self.right.pop() {
-            self.left.push(v);
-        }
-        res
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-struct Loc {
-    score: i32,
-    name: String,
-}
-
-impl PartialOrd for Loc {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl Ord for Loc {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        other
-            .score
-            .cmp(&self.score)
-            .then(self.name.cmp(&other.name))
-    }
+    count.into_iter().filter(|&v| v == 0b111).count() as _
 }
 
 #[cfg(test)]
