@@ -5,37 +5,39 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn good_days_to_rob_bank(security: &[i32], time: i32) -> Vec<i32> {
-    let n = security.len();
-    let mut decs = Vec::with_capacity(n);
-    decs.push(0);
-    for i in 1..n {
-        if security[i - 1] >= security[i] {
-            decs.push(1 + decs[i - 1]);
-        } else {
-            decs.push(0);
-        }
-    }
-    let mut incs = Vec::with_capacity(n);
-    incs.push(0);
-    for i in (0..n - 1).rev() {
-        if security[i] <= security[1 + i] {
-            incs.push(1 + incs.last().unwrap_or(&0));
-        } else {
-            incs.push(0);
-        }
-    }
-    incs.reverse();
-    (0..)
-        .zip(decs.into_iter().zip(incs))
-        .filter_map(|(i, (dec, inc))| {
-            if dec >= time && inc >= time {
-                Some(i)
-            } else {
-                None
+pub fn maximum_detonation(bombs: Vec<Vec<i32>>) -> i32 {
+    let n = bombs.len();
+    let mut adj = vec![vec![]; n];
+    for (i1, b1) in bombs.iter().enumerate() {
+        let [x1, y1, r1] = [0, 1, 2].map(|i| i64::from(b1[i]));
+        for (i2, b2) in bombs.iter().enumerate() {
+            if i1 == i2 {
+                continue;
             }
-        })
-        .collect()
+            let [x2, y2] = [0, 1].map(|i| i64::from(b2[i]));
+            if (x1 - x2).pow(2) + (y1 - y2).pow(2) <= r1.pow(2) {
+                adj[i1].push(i2);
+            }
+        }
+    }
+    let mut res = 0;
+    for start in 0..n {
+        let mut queue = std::collections::VecDeque::from([start]);
+        let mut seen = vec![false; n];
+        seen[start] = true;
+        let mut curr = 0;
+        while let Some(node) = queue.pop_front() {
+            curr += 1;
+            for &next in adj[node].iter() {
+                if !seen[next] {
+                    seen[next] = true;
+                    queue.push_back(next);
+                }
+            }
+        }
+        res = res.max(curr);
+    }
+    res
 }
 
 #[cfg(test)]
@@ -68,11 +70,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(good_days_to_rob_bank(&[5, 3, 3, 3, 5, 6, 2], 2), [2, 3]);
-        assert_eq!(good_days_to_rob_bank(&[1, 1, 1, 1, 1], 0), [0, 1, 2, 3, 4]);
-        assert!(good_days_to_rob_bank(&[1, 2, 3, 4, 5, 6], 2).is_empty());
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
