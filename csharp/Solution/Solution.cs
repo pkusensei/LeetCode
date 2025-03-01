@@ -6,41 +6,43 @@ namespace Solution;
 
 public class Solution
 {
-    public string ShortestCommonSupersequence(string str1, string str2)
+    public int MaximumInvitations(int[] favorite)
     {
-        (int n1, int n2) = (str1.Length, str2.Length);
-        int[,] dp = new int[1 + n1, 1 + n2];
-        foreach (var (i1, c1) in str1.Select((c, i) => (i, c)))
+        int n = favorite.Length;
+        var indegs = new int[n];
+        foreach (var fav in favorite) { indegs[fav] += 1; }
+        Queue<int> queue = [];
+        foreach (var (i, deg) in indegs.Select((v, i) => (i, v)))
         {
-            foreach (var (i2, c2) in str2.Select((c, i) => (i, c)))
-            {
-                if (c1 == c2) { dp[1 + i1, 1 + i2] = 1 + dp[i1, i2]; }
-                else { dp[1 + i1, 1 + i2] = Math.Max(dp[1 + i1, i2], dp[i1, 1 + i2]); }
-            }
+            if (deg == 0) { queue.Enqueue(i); }
         }
-        StringBuilder sb = new();
-        (int ii1, int ii2) = (n1, n2);
-        while (ii1 > 0 && ii2 > 0)
+        var depth = new int[n];
+        Array.Fill(depth, 1);
+        // Topo sort to remove non-cycle nodes
+        // And find their depths
+        while (queue.TryDequeue(out var curr))
         {
-            if (str1[ii1 - 1] == str2[ii2 - 1])
-            {
-                sb.Append(str1[ii1 - 1]);
-                ii1 -= 1;
-                ii2 -= 1;
-            }
-            else if (dp[ii1 - 1, ii2] > dp[ii1, ii2 - 1])
-            {
-                sb.Append(str1[ii1 - 1]);
-                ii1 -= 1;
-            }
-            else
-            {
-                sb.Append(str2[ii2 - 1]);
-                ii2 -= 1;
-            }
+            int next = favorite[curr];
+            depth[next] = Math.Max(depth[next], 1 + depth[curr]);
+            indegs[next] -= 1;
+            if (indegs[next] == 0) { queue.Enqueue(next); }
         }
-        for (int i = ii1 - 1; i >= 0; i -= 1) { sb.Append(str1[i]); }
-        for (int i = ii2 - 1; i >= 0; i -= 1) { sb.Append(str2[i]); }
-        return new([.. sb.ToString().Reverse()]);
+        int long_cycle = 0;
+        int two_cycles = 0;
+        for (int i = 0; i < n; i++)
+        {
+            if (indegs[i] == 0) { continue; }
+            int cycle_len = 0;
+            int curr = i;
+            while (indegs[curr] != 0)
+            {
+                indegs[curr] = 0;
+                cycle_len += 1;
+                curr = favorite[curr];
+            }
+            if (cycle_len == 2) { two_cycles += depth[i] + depth[favorite[i]]; }
+            else { long_cycle = Math.Max(long_cycle, cycle_len); }
+        }
+        return Math.Max(long_cycle, two_cycles);
     }
 }
