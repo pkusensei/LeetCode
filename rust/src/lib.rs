@@ -5,19 +5,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn number_of_beams(bank: Vec<String>) -> i32 {
-    let mut res = 0;
-    let mut prev = 0;
-    for s in bank.iter() {
-        let curr: i32 = s.bytes().map(|b| i32::from(b - b'0')).sum();
-        if prev > 0 && curr > 0 {
-            res += prev * curr;
-            prev = curr;
-        } else if curr > 0 {
-            prev = curr;
+pub fn asteroids_destroyed(mass: i32, mut asteroids: Vec<i32>) -> bool {
+    asteroids.sort_unstable();
+    let mut total = i64::from(mass);
+    for a in asteroids.into_iter().map(i64::from) {
+        if total >= a {
+            total += a;
+        } else {
+            return false;
         }
     }
-    res
+    true
 }
 
 #[cfg(test)]
