@@ -5,18 +5,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn get_descent_periods(prices: Vec<i32>) -> i64 {
-    let mut res = 1;
-    let mut curr = 1;
-    for (i, &num) in prices.iter().enumerate().skip(1) {
-        if 1 + num == prices[i - 1] {
-            curr += 1;
-        } else {
-            curr = 1;
+pub fn apply_operations(mut nums: Vec<i32>) -> Vec<i32> {
+    let n = nums.len();
+    for i in 0..n - 1 {
+        if nums[i] == nums[1 + i] {
+            nums[i] *= 2;
+            nums[1 + i] = 0;
         }
-        res += curr;
     }
-    res
+    let [mut left, mut right] = [0, 1];
+    while right < n {
+        while nums.get(right).is_some_and(|&v| v == 0) {
+            right += 1;
+        }
+        if left < right && right < n && nums[left] == 0 {
+            nums.swap(left, right);
+            right += 1;
+        }
+        left += 1;
+        right = right.max(1 + left);
+    }
+    nums
 }
 
 #[cfg(test)]
@@ -49,7 +58,9 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(apply_operations(vec![1, 2, 2, 1, 1, 0]), [1, 4, 2, 0, 0, 0]);
+    }
 
     #[test]
     fn test() {}
