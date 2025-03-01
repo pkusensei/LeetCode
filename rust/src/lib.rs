@@ -2,15 +2,45 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::{HashMap, VecDeque};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn most_words_found(sentences: Vec<String>) -> i32 {
-    sentences
-        .iter()
-        .map(|s| s.split_ascii_whitespace().count() as i32)
-        .max()
-        .unwrap()
+pub fn find_all_recipes(
+    recipes: Vec<String>,
+    ingredients: Vec<Vec<String>>,
+    supplies: Vec<String>,
+) -> Vec<String> {
+    let mut adj = HashMap::<&str, Vec<&str>>::new();
+    let mut indegs = HashMap::<&str, _>::new();
+    for (rec, ings) in recipes.iter().zip(ingredients.iter()) {
+        for ing in ings.iter() {
+            adj.entry(ing).or_default().push(rec);
+            *indegs.entry(rec).or_insert(0) += 1;
+        }
+    }
+    let mut queue = VecDeque::<&str>::new();
+    for sup in supplies.iter() {
+        queue.push_back(sup);
+        *indegs.entry(sup).or_insert(0) = 0;
+    }
+    let mut res = vec![];
+    while let Some(node) = queue.pop_front() {
+        if recipes.iter().any(|s| s == node) {
+            res.push(node.to_string());
+        }
+        let Some(v) = adj.get(node) else {
+            continue;
+        };
+        for next in v.iter() {
+            *indegs.entry(next).or_insert(0) -= 1;
+            if indegs[next] == 0 {
+                queue.push_back(next);
+            }
+        }
+    }
+    res
 }
 
 #[cfg(test)]
