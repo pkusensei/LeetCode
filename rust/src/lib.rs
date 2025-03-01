@@ -5,37 +5,8 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn abbreviate_product(left: i32, right: i32) -> String {
-    const MAX_SUF: i64 = 100_000_000_000;
-    let mut pre = 1.0;
-    let mut suf = 1;
-    let mut c = 0;
-    let mut len = 0;
-    for num in left..=right {
-        pre *= f64::from(num);
-        suf *= i64::from(num);
-        while pre >= 100_000.0 {
-            pre /= 10.0;
-            len = if len == 0 { 6 } else { 1 + len };
-        }
-        while suf % 10 == 0 {
-            suf /= 10;
-            c += 1;
-        }
-        suf %= MAX_SUF;
-    }
-    let s = suf.to_string();
-    format!(
-        "{}{}{}e{}",
-        pre as i32,
-        if len - c <= 10 { "" } else { "..." },
-        if len - c < 5 {
-            ""
-        } else {
-            &s[s.len() - (len - c - 5).min(5) as usize..]
-        },
-        c
-    )
+pub fn is_same_after_reversals(num: i32) -> bool {
+    num % 10 > 0 || num == 0
 }
 
 #[cfg(test)]
@@ -68,11 +39,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(abbreviate_product(1, 4), "24e0");
-        assert_eq!(abbreviate_product(2, 11), "399168e2");
-        assert_eq!(abbreviate_product(371, 375), "7219856259e3");
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
