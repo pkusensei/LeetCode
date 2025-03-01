@@ -5,8 +5,30 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_same_after_reversals(num: i32) -> bool {
-    num % 10 > 0 || num == 0
+pub fn execute_instructions(n: i32, start_pos: Vec<i32>, s: String) -> Vec<i32> {
+    let mut res = vec![];
+    let m = s.len();
+    'outer: for i in 0..m {
+        let [mut row, mut col] = start_pos[..] else {
+            unreachable!()
+        };
+        let mut idx = i;
+        while (0..n).contains(&row) && (0..n).contains(&col) {
+            let Some(b) = s.as_bytes().get(idx) else {
+                res.push((m - i) as i32);
+                continue 'outer;
+            };
+            idx += 1;
+            match b {
+                b'L' => col -= 1,
+                b'R' => col += 1,
+                b'U' => row -= 1,
+                _ => row += 1,
+            }
+        }
+        res.push((idx - i - 1) as i32);
+    }
+    res
 }
 
 #[cfg(test)]
