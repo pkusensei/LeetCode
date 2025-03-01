@@ -2,45 +2,29 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::{HashMap, VecDeque};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_all_recipes(
-    recipes: Vec<String>,
-    ingredients: Vec<Vec<String>>,
-    supplies: Vec<String>,
-) -> Vec<String> {
-    let mut adj = HashMap::<&str, Vec<&str>>::new();
-    let mut indegs = HashMap::<&str, _>::new();
-    for (rec, ings) in recipes.iter().zip(ingredients.iter()) {
-        for ing in ings.iter() {
-            adj.entry(ing).or_default().push(rec);
-            *indegs.entry(rec).or_insert(0) += 1;
-        }
-    }
-    let mut queue = VecDeque::<&str>::new();
-    for sup in supplies.iter() {
-        queue.push_back(sup);
-        *indegs.entry(sup).or_insert(0) = 0;
-    }
-    let mut res = vec![];
-    while let Some(node) = queue.pop_front() {
-        if recipes.iter().any(|s| s == node) {
-            res.push(node.to_string());
-        }
-        let Some(v) = adj.get(node) else {
-            continue;
-        };
-        for next in v.iter() {
-            *indegs.entry(next).or_insert(0) -= 1;
-            if indegs[next] == 0 {
-                queue.push_back(next);
+pub fn can_be_valid(s: String, locked: String) -> bool {
+    let mut free = vec![];
+    let mut locked_open = vec![];
+    for (idx, (a, b)) in s.bytes().zip(locked.bytes()).enumerate() {
+        match (a, b) {
+            (b'(', b'1') => locked_open.push(idx),
+            (b')', b'1') => {
+                if locked_open.pop().is_none() && free.pop().is_none() {
+                    return false;
+                }
             }
+            _ => free.push(idx),
         }
     }
-    res
+    while let Some(open) = locked_open.pop() {
+        if !free.pop().is_some_and(|i| i > open) {
+            return false;
+        }
+    }
+    free.len() & 1 == 0
 }
 
 #[cfg(test)]
