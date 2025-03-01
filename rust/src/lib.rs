@@ -7,34 +7,37 @@ use std::collections::HashMap;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn get_distances(arr: &[i32]) -> Vec<i64> {
-    let prefs =
-        (0..)
-            .zip(arr.iter())
-            .fold(HashMap::<_, Vec<[i64; 2]>>::new(), |mut acc, (i, &num)| {
-                let v = acc.entry(num).or_default();
-                let last = v.last().map(|[_, p]| p).unwrap_or(&0);
-                v.push([i, i + last]);
-                acc
-            });
+pub fn recover_array(nums: &mut [i32]) -> Vec<i32> {
+    let count = nums.iter().fold(HashMap::new(), |mut acc, &num| {
+        *acc.entry(num).or_insert(0) += 1;
+        acc
+    });
+    nums.sort_unstable();
+    for num in nums.iter().skip(1) {
+        let d = num - nums[0];
+        if d > 0 && d & 1 == 0 {
+            if let Some(v) = check(nums, d / 2, count.clone()) {
+                return v;
+            }
+        }
+    }
+    vec![]
+}
+
+fn check(nums: &[i32], k: i32, mut count: HashMap<i32, i32>) -> Option<Vec<i32>> {
     let mut res = vec![];
-    for (idx, num) in (0..).zip(arr.iter()) {
-        let Some(prefix) = prefs.get(num) else {
-            unreachable!()
-        };
-        if prefix.len() <= 1 {
-            res.push(0);
+    for num in nums {
+        if count.get(num).is_some_and(|&v| v == 0) {
             continue;
         }
-        let Ok(i) = prefix.binary_search_by_key(&idx, |&[i, _]| i) else {
-            unreachable!()
-        };
-        let left = if i > 0 { prefix[i - 1][1] } else { 0 };
-        let right = prefix.last().unwrap()[1] - prefix[i][1];
-        let len = prefix.len() as i64;
-        res.push(i as i64 * idx - left + right - (len - 1 - i as i64) * idx);
+        if !count.get(&(num + 2 * k)).is_some_and(|&v| v > 0) {
+            return None;
+        }
+        count.entry(*num).and_modify(|v| *v -= 1);
+        count.entry(num + 2 * k).and_modify(|v| *v -= 1);
+        res.push(num + k);
     }
-    res
+    Some(res)
 }
 
 #[cfg(test)]
@@ -68,8 +71,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(get_distances(&[2, 1, 3, 1, 2, 3, 3]), [4, 2, 7, 2, 4, 4, 5]);
-        assert_eq!(get_distances(&[10, 5, 10, 10]), [5, 0, 3, 4]);
+        assert_eq!(recover_array(&mut [2, 10, 6, 4, 8, 12]), [3, 7, 11]);
+        assert_eq!(recover_array(&mut [1, 1, 3, 3]), [2, 2]);
+        assert_eq!(recover_array(&mut [5, 435]), [220]);
     }
 
     #[test]
