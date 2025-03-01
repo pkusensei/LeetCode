@@ -2,31 +2,37 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn execute_instructions(n: i32, start_pos: Vec<i32>, s: String) -> Vec<i32> {
+pub fn get_distances(arr: &[i32]) -> Vec<i64> {
+    let prefs =
+        (0..)
+            .zip(arr.iter())
+            .fold(HashMap::<_, Vec<[i64; 2]>>::new(), |mut acc, (i, &num)| {
+                let v = acc.entry(num).or_default();
+                let last = v.last().map(|[_, p]| p).unwrap_or(&0);
+                v.push([i, i + last]);
+                acc
+            });
     let mut res = vec![];
-    let m = s.len();
-    'outer: for i in 0..m {
-        let [mut row, mut col] = start_pos[..] else {
+    for (idx, num) in (0..).zip(arr.iter()) {
+        let Some(prefix) = prefs.get(num) else {
             unreachable!()
         };
-        let mut idx = i;
-        while (0..n).contains(&row) && (0..n).contains(&col) {
-            let Some(b) = s.as_bytes().get(idx) else {
-                res.push((m - i) as i32);
-                continue 'outer;
-            };
-            idx += 1;
-            match b {
-                b'L' => col -= 1,
-                b'R' => col += 1,
-                b'U' => row -= 1,
-                _ => row += 1,
-            }
+        if prefix.len() <= 1 {
+            res.push(0);
+            continue;
         }
-        res.push((idx - i - 1) as i32);
+        let Ok(i) = prefix.binary_search_by_key(&idx, |&[i, _]| i) else {
+            unreachable!()
+        };
+        let left = if i > 0 { prefix[i - 1][1] } else { 0 };
+        let right = prefix.last().unwrap()[1] - prefix[i][1];
+        let len = prefix.len() as i64;
+        res.push(i as i64 * idx - left + right - (len - 1 - i as i64) * idx);
     }
     res
 }
@@ -61,7 +67,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(get_distances(&[2, 1, 3, 1, 2, 3, 3]), [4, 2, 7, 2, 4, 4, 5]);
+        assert_eq!(get_distances(&[10, 5, 10, 10]), [5, 0, 3, 4]);
+    }
 
     #[test]
     fn test() {}
