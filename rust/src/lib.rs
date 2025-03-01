@@ -5,17 +5,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn asteroids_destroyed(mass: i32, mut asteroids: Vec<i32>) -> bool {
-    asteroids.sort_unstable();
-    let mut total = i64::from(mass);
-    for a in asteroids.into_iter().map(i64::from) {
-        if total >= a {
-            total += a;
-        } else {
-            return false;
-        }
-    }
-    true
+pub fn capitalize_title(title: String) -> String {
+    title
+        .split_ascii_whitespace()
+        .map(|s| {
+            let s = s.to_ascii_lowercase();
+            if s.len() > 2 {
+                let mut v = s[..1].to_uppercase();
+                v.push_str(&s[1..]);
+                v
+            } else {
+                s
+            }
+        })
+        .collect::<Vec<_>>()
+        .join(" ")
 }
 
 #[cfg(test)]
