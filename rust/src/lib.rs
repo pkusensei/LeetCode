@@ -5,27 +5,26 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn apply_operations(mut nums: Vec<i32>) -> Vec<i32> {
-    let n = nums.len();
-    for i in 0..n - 1 {
-        if nums[i] == nums[1 + i] {
-            nums[i] *= 2;
-            nums[1 + i] = 0;
+pub fn k_increasing(arr: &[i32], k: i32) -> i32 {
+    let k = k as usize;
+    let mut nums = vec![vec![]; k];
+    for (i, &num) in arr.iter().enumerate() {
+        nums[i % k].push(num);
+    }
+    nums.iter().map(|v| v.len() as i32 - find_lis(v)).sum()
+}
+
+fn find_lis(nums: &[i32]) -> i32 {
+    let mut res = vec![];
+    for &num in nums {
+        let i = res.partition_point(|&v| v <= num);
+        if i == res.len() {
+            res.push(num);
+        } else {
+            res[i] = num;
         }
     }
-    let [mut left, mut right] = [0, 1];
-    while right < n {
-        while nums.get(right).is_some_and(|&v| v == 0) {
-            right += 1;
-        }
-        if left < right && right < n && nums[left] == 0 {
-            nums.swap(left, right);
-            right += 1;
-        }
-        left += 1;
-        right = right.max(1 + left);
-    }
-    nums
+    res.len() as _
 }
 
 #[cfg(test)]
@@ -59,7 +58,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(apply_operations(vec![1, 2, 2, 1, 1, 0]), [1, 4, 2, 0, 0, 0]);
+        assert_eq!(k_increasing(&[5, 4, 3, 2, 1], 1), 4);
+        assert_eq!(k_increasing(&[4, 1, 5, 2, 6, 2], 2), 0);
+        assert_eq!(k_increasing(&[4, 1, 5, 2, 6, 2], 3), 2);
     }
 
     #[test]
