@@ -6,43 +6,26 @@ namespace Solution;
 
 public class Solution
 {
-    public int MaximumInvitations(int[] favorite)
+    public int PairSum(ListNode head)
     {
-        int n = favorite.Length;
-        var indegs = new int[n];
-        foreach (var fav in favorite) { indegs[fav] += 1; }
-        Queue<int> queue = [];
-        foreach (var (i, deg) in indegs.Select((v, i) => (i, v)))
+        var slow = head;
+        var fast = head;
+        Stack<int> st = [];
+        st.Push(slow.val);
+        while (fast.next is not null && fast.next.next is not null)
         {
-            if (deg == 0) { queue.Enqueue(i); }
+            fast = fast.next.next;
+            slow = slow.next;
+            st.Push(slow.val);
         }
-        var depth = new int[n];
-        Array.Fill(depth, 1);
-        // Topo sort to remove non-cycle nodes
-        // And find their depths
-        while (queue.TryDequeue(out var curr))
+        slow = slow.next;
+        int res = 0;
+        while (slow is not null)
         {
-            int next = favorite[curr];
-            depth[next] = Math.Max(depth[next], 1 + depth[curr]);
-            indegs[next] -= 1;
-            if (indegs[next] == 0) { queue.Enqueue(next); }
+            var top = st.Pop();
+            res = Math.Max(res, slow.val + top);
+            slow = slow.next;
         }
-        int long_cycle = 0;
-        int two_cycles = 0;
-        for (int i = 0; i < n; i++)
-        {
-            if (indegs[i] == 0) { continue; }
-            int cycle_len = 0;
-            int curr = i;
-            while (indegs[curr] != 0)
-            {
-                indegs[curr] = 0;
-                cycle_len += 1;
-                curr = favorite[curr];
-            }
-            if (cycle_len == 2) { two_cycles += depth[i] + depth[favorite[i]]; }
-            else { long_cycle = Math.Max(long_cycle, cycle_len); }
-        }
-        return Math.Max(long_cycle, two_cycles);
+        return res;
     }
 }

@@ -10,12 +10,13 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(new[] { 2, 2, 1, 2 }, 3)]
-    [DataRow(new[] { 1, 2, 0 }, 3)]
-    [DataRow(new[] { 3, 0, 1, 4, 1 }, 4)]
+    [DataRow(new[] { 5, 4, 2, 1 }, 6)]
+    [DataRow(new[] { 4, 2, 2, 3 }, 7)]
+    [DataRow(new[] { 1, 100000 }, 100001)]
     public void TestMethod1(int[] nums, int exp)
     {
-        Assert.AreEqual(exp, sol.MaximumInvitations(nums));
+        var a = ListNode.Make(nums);
+        Assert.AreEqual(exp, sol.PairSum(a));
     }
 
     [TestMethod]
