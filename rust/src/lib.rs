@@ -5,36 +5,39 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn most_points(questions: Vec<Vec<i32>>) -> i64 {
-    let n = questions.len();
-    let mut dp = vec![0; n];
-    for idx in (0..n).rev() {
-        let [pts, bra] = questions[idx][..] else {
-            unreachable!()
-        };
-        let next = bra as usize + idx + 1;
-        let take = i64::from(pts) + if next < n { dp[next] } else { 0 };
-        let skip = if 1 + idx < n { dp[1 + idx] } else { 0 };
-        dp[idx] = take.max(skip);
+pub fn max_run_time(n: i32, batteries: &mut [i32]) -> i64 {
+    use std::cmp::Reverse;
+
+    let n = n as usize;
+    batteries.sort_unstable_by_key(|&v| Reverse(v));
+    let mut live: Vec<_> = batteries[..n].iter().copied().map(i64::from).collect();
+    live.reverse();
+    let mut extra: i64 = batteries[n..].iter().copied().map(i64::from).sum();
+    for idx in 0..n - 1 {
+        let curr = (1 + idx as i64) * (live[1 + idx] - live[idx]);
+        if extra < curr {
+            return live[idx] + extra / (1 + idx as i64);
+        }
+        extra -= curr;
     }
-    dp[0]
-    // dfs(&questions, 0, &mut vec![-1; n])
+    live[n - 1] + extra / n as i64
 }
 
-fn dfs(questions: &[Vec<i32>], idx: usize, memo: &mut [i64]) -> i64 {
-    if idx >= questions.len() {
-        return 0;
+pub fn with_binary_search(n: i32, batteries: &[i32]) -> i64 {
+    let n = i64::from(n);
+    let sum: i64 = batteries.iter().copied().map(i64::from).sum();
+    let mut left = 1;
+    let mut right = sum / n;
+    while left < right {
+        let mid = right - (right - left) / 2;
+        let extra: i64 = batteries.iter().map(|&v| i64::from(v).min(mid)).sum();
+        if extra >= n * mid {
+            left = mid;
+        } else {
+            right = mid - 1;
+        }
     }
-    if memo[idx] > -1 {
-        return memo[idx];
-    }
-    let [pts, bra] = questions[idx][..] else {
-        unreachable!()
-    };
-    let take = i64::from(pts) + dfs(questions, 1 + idx + bra as usize, memo);
-    let skip = dfs(questions, 1 + idx, memo);
-    memo[idx] = take.max(skip);
-    memo[idx]
+    left
 }
 
 #[cfg(test)]
@@ -67,7 +70,13 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(max_run_time(2, &mut [3, 3, 3]), 4);
+        assert_eq!(max_run_time(2, &mut [1, 1, 1, 1]), 2);
+
+        assert_eq!(with_binary_search(2, &[3, 3, 3]), 4);
+        assert_eq!(with_binary_search(2, &[1, 1, 1, 1]), 2);
+    }
 
     #[test]
     fn test() {}
