@@ -2,22 +2,28 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::{HashMap, HashSet};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_swaps(mut nums: Vec<i32>) -> i32 {
-    let n = nums.len();
-    let ones: i32 = nums.iter().sum();
-    let window_len = ones as usize;
-    nums.extend_from_within(..);
-    let mut zeros = ones - nums[..window_len].iter().sum::<i32>();
-    let mut res = zeros;
-    for idx in 1..(2 * n - window_len) {
-        zeros -= i32::from(nums[idx - 1] == 0);
-        zeros += i32::from(nums[idx + window_len - 1] == 0);
-        res = res.min(zeros);
+pub fn word_count(start_words: Vec<String>, target_words: Vec<String>) -> i32 {
+    let starts: HashSet<_> = start_words.iter().map(|s| to_mask(s)).collect();
+    let mut res = 0;
+    for tar in target_words.iter() {
+        let mask = to_mask(tar);
+        for b in tar.bytes() {
+            if starts.contains(&(mask - (1 << (b - b'a')))) {
+                res += 1;
+                break;
+            }
+        }
     }
     res
+}
+
+fn to_mask(s: &str) -> i32 {
+    s.bytes().fold(0, |acc, b| acc | (1 << (b - b'a')))
 }
 
 #[cfg(test)]
