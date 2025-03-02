@@ -5,20 +5,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn earliest_full_bloom(plant_time: &[i32], grow_time: &[i32]) -> i32 {
-    let mut nums: Vec<_> = plant_time
-        .iter()
-        .zip(grow_time.iter())
-        .map(|(&p, &g)| [p, g])
-        .collect();
-    nums.sort_unstable_by(|a, b| b[1].cmp(&a[1]).then(a[0].cmp(&b[0])));
-    let mut res = 0;
-    let mut plant = 0;
-    for &[p, g] in nums.iter() {
-        plant += p;
-        res = res.max(plant + g);
-    }
-    res
+pub fn divide_string(s: String, k: i32, fill: char) -> Vec<String> {
+    s.as_bytes()
+        .chunks(k as usize)
+        .map(|w| {
+            let mut v = String::from_utf8(w.to_vec()).unwrap();
+            while v.len() < k as usize {
+                v.push(fill);
+            }
+            v
+        })
+        .collect()
 }
 
 #[cfg(test)]
@@ -51,11 +48,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(earliest_full_bloom(&[1, 4, 3], &[2, 3, 1]), 9);
-        assert_eq!(earliest_full_bloom(&[1, 2, 3, 2], &[2, 1, 2, 1]), 9);
-        assert_eq!(earliest_full_bloom(&[1], &[1]), 2);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
