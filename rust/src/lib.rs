@@ -5,66 +5,31 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn highest_ranked_k_items(
-    mut grid: Vec<Vec<i32>>,
-    pricing: Vec<i32>,
-    start: Vec<i32>,
-    k: i32,
-) -> Vec<Vec<i32>> {
-    use std::collections::{BinaryHeap, VecDeque};
-    let [low, high] = pricing[..] else {
-        unreachable!()
-    };
-    let [row, col] = [0, 1].map(|i| start[i] as usize);
-    let mut queue = VecDeque::from([([row, col], 0)]);
-    let mut heap = BinaryHeap::new();
-    if (low..=high).contains(&grid[row][col]) {
-        heap.push(Item {
-            dist: 0,
-            price: grid[row][col],
-            row,
-            col,
-        });
+pub fn number_of_ways(corridor: &str) -> i32 {
+    let count = corridor.bytes().filter(|&b| b == b'S').count();
+    if count == 0 || count & 1 == 1 {
+        return 0;
     }
-    grid[row][col] = 0;
-    while let Some(([row, col], dist)) = queue.pop_front() {
-        for [nr, nc] in neighbors([row, col]) {
-            let Some(&v) = grid.get(nr).and_then(|r| r.get(nc)) else {
-                continue;
-            };
-            match v.cmp(&1) {
-                std::cmp::Ordering::Less => (),
-                std::cmp::Ordering::Equal => queue.push_back(([nr, nc], 1 + dist)),
-                std::cmp::Ordering::Greater => {
-                    if (low..=high).contains(&v) {
-                        heap.push(Item {
-                            dist: 1 + dist,
-                            price: v,
-                            row: nr,
-                            col: nc,
-                        });
-                    }
-                    queue.push_back(([nr, nc], 1 + dist));
-                }
+    let mut p_count = 0;
+    let mut s_count = 0;
+    let mut res = 1;
+    for b in corridor.bytes() {
+        if b == b'S' {
+            if s_count == 2 {
+                res *= i64::from(1 + p_count);
+                p_count = 0;
+                res %= 1_000_000_007;
+                s_count = 1;
+            } else {
+                s_count += 1;
             }
-            grid[nr][nc] = 0;
-        }
-        while heap.len() > k as usize {
-            heap.pop();
+        } else {
+            if s_count == 2 {
+                p_count += 1;
+            }
         }
     }
-    heap.into_sorted_vec()
-        .iter()
-        .map(|v| vec![v.row as i32, v.col as i32])
-        .collect()
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-struct Item {
-    dist: i32,
-    price: i32,
-    row: usize,
-    col: usize,
+    res as _
 }
 
 #[cfg(test)]
@@ -97,7 +62,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(number_of_ways("SSPPSPS"), 3);
+        assert_eq!(number_of_ways("PPSPSP"), 1);
+        assert_eq!(number_of_ways("S"), 0);
+    }
 
     #[test]
     fn test() {}
