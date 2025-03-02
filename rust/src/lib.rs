@@ -2,28 +2,23 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::{HashMap, HashSet};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn word_count(start_words: Vec<String>, target_words: Vec<String>) -> i32 {
-    let starts: HashSet<_> = start_words.iter().map(|s| to_mask(s)).collect();
+pub fn earliest_full_bloom(plant_time: &[i32], grow_time: &[i32]) -> i32 {
+    let mut nums: Vec<_> = plant_time
+        .iter()
+        .zip(grow_time.iter())
+        .map(|(&p, &g)| [p, g])
+        .collect();
+    nums.sort_unstable_by(|a, b| b[1].cmp(&a[1]).then(a[0].cmp(&b[0])));
     let mut res = 0;
-    for tar in target_words.iter() {
-        let mask = to_mask(tar);
-        for b in tar.bytes() {
-            if starts.contains(&(mask - (1 << (b - b'a')))) {
-                res += 1;
-                break;
-            }
-        }
+    let mut plant = 0;
+    for &[p, g] in nums.iter() {
+        plant += p;
+        res = res.max(plant + g);
     }
     res
-}
-
-fn to_mask(s: &str) -> i32 {
-    s.bytes().fold(0, |acc, b| acc | (1 << (b - b'a')))
 }
 
 #[cfg(test)]
@@ -56,7 +51,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(earliest_full_bloom(&[1, 4, 3], &[2, 3, 1]), 9);
+        assert_eq!(earliest_full_bloom(&[1, 2, 3, 2], &[2, 1, 2, 1]), 9);
+        assert_eq!(earliest_full_bloom(&[1], &[1]), 2);
+    }
 
     #[test]
     fn test() {}
