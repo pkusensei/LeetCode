@@ -5,16 +5,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_elements(nums: Vec<i32>) -> i32 {
-    let min = *nums.iter().min().unwrap();
-    let max = *nums.iter().max().unwrap();
-    if min == max {
-        return 0;
+pub fn rearrange_array(nums: Vec<i32>) -> Vec<i32> {
+    let [mut pos, mut neg] = [0, 1].map(|_| vec![]);
+    for &num in nums.iter() {
+        if num > 0 {
+            pos.push(num);
+        } else {
+            neg.push(num);
+        }
     }
-    let n = nums.len();
-    let min_count = nums.iter().filter(|&&v| v == min).count();
-    let max_count = nums.iter().filter(|&&v| v == max).count();
-    (n - min_count - max_count) as _
+    pos.into_iter().zip(neg).flat_map(|(a, b)| [a, b]).collect()
 }
 
 #[cfg(test)]
