@@ -5,17 +5,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn divide_string(s: String, k: i32, fill: char) -> Vec<String> {
-    s.as_bytes()
-        .chunks(k as usize)
-        .map(|w| {
-            let mut v = String::from_utf8(w.to_vec()).unwrap();
-            while v.len() < k as usize {
-                v.push(fill);
-            }
-            v
-        })
-        .collect()
+pub fn min_moves(mut target: i32, mut max_doubles: i32) -> i32 {
+    let mut res = 0;
+    while target > 1 && max_doubles > 0 {
+        if target & 1 == 1 {
+            target -= 1;
+        } else {
+            target /= 2;
+            max_doubles -= 1;
+        }
+        res += 1;
+    }
+    res += target - 1;
+    res
 }
 
 #[cfg(test)]
