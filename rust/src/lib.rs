@@ -2,39 +2,36 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn merge_arrays(nums1: Vec<Vec<i32>>, nums2: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
-    let (n1, n2) = (nums1.len(), nums2.len());
-    let [mut i1, mut i2] = [0, 0];
-    let mut res = vec![];
-    while i1 < n1 && i2 < n2 {
-        match nums1[i1][0].cmp(&nums2[i2][0]) {
-            std::cmp::Ordering::Less => {
-                res.push(nums1[i1].clone());
-                i1 += 1;
-            }
-            std::cmp::Ordering::Equal => {
-                res.push(vec![nums1[i1][0], nums1[i1][1] + nums2[i2][1]]);
-                i1 += 1;
-                i2 += 1;
-            }
-            std::cmp::Ordering::Greater => {
-                res.push(nums2[i2].clone());
-                i2 += 1;
-            }
+pub fn longest_palindrome(words: &[&str]) -> i32 {
+    let mut sym = HashMap::new(); // 5 3 3 3
+    let mut asym = HashMap::<[u8; 2], [i32; 2]>::new();
+    for w in words.iter() {
+        let [a, b] = w.as_bytes()[..] else {
+            unreachable!()
+        };
+        if a == b {
+            *sym.entry([a; 2]).or_insert(0) += 1;
+        } else if let Some(v) = asym.get_mut(&[b, a]) {
+            v[1] += 1;
+        } else {
+            asym.entry([a, b]).or_insert([0, 0])[0] += 1;
         }
     }
-    while i1 < n1 {
-        res.push(nums1[i1].clone());
-        i1 += 1;
+    // Even syms are all added in
+    // Odd syms => keep the max one, take all others as (val-1)
+    let mut res: i32 = sym.values().sum();
+    let odd_count = sym.values().filter(|&&v| v & 1 == 1).count() as i32;
+    if odd_count > 0 {
+        res -= odd_count;
+        res += 1;
     }
-    while i2 < n2 {
-        res.push(nums2[i2].clone());
-        i2 += 1;
-    }
-    res
+    res += asym.values().map(|v| 2 * v[0].min(v[1])).sum::<i32>();
+    2 * res
 }
 
 #[cfg(test)]
@@ -70,5 +67,12 @@ mod tests {
     fn basics() {}
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(
+            longest_palindrome(&[
+                "dd", "aa", "bb", "dd", "aa", "dd", "bb", "dd", "aa", "cc", "bb", "cc", "dd", "cc"
+            ]),
+            22
+        );
+    }
 }
