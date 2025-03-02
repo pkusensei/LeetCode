@@ -5,12 +5,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_cost(mut cost: Vec<i32>) -> i32 {
-    let sum: i32 = cost.iter().sum();
-    if cost.len()<3{return sum;}
-    cost.sort_unstable_by_key(|&v| std::cmp::Reverse(v));
-    let d: i32 = cost[2..].iter().step_by(3).sum();
-    sum - d
+pub fn number_of_arrays(differences: Vec<i32>, lower: i32, upper: i32) -> i32 {
+    let mut curr = 0;
+    let mut min = 0;
+    let mut max = 0;
+    for &diff in differences.iter() {
+        curr += i64::from(diff);
+        min = min.min(curr);
+        max = max.max(curr);
+    }
+    (upper - lower + 1 - (max - min) as i32).max(0)
 }
 
 #[cfg(test)]
