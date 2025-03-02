@@ -5,16 +5,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn rearrange_array(nums: Vec<i32>) -> Vec<i32> {
-    let [mut pos, mut neg] = [0, 1].map(|_| vec![]);
-    for &num in nums.iter() {
-        if num > 0 {
-            pos.push(num);
-        } else {
-            neg.push(num);
+pub fn find_lonely(nums: Vec<i32>) -> Vec<i32> {
+    let map = nums
+        .iter()
+        .fold(std::collections::HashMap::new(), |mut acc, &num| {
+            *acc.entry(num).or_insert(0) += 1;
+            acc
+        });
+    let mut res = vec![];
+    for (&k, &v) in map.iter() {
+        if v == 1 && !map.contains_key(&(k - 1)) && !map.contains_key(&(1 + k)) {
+            res.push(k);
         }
     }
-    pos.into_iter().zip(neg).flat_map(|(a, b)| [a, b]).collect()
+    res
 }
 
 #[cfg(test)]
