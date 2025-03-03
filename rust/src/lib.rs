@@ -5,26 +5,37 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn sort_even_odd(nums: Vec<i32>) -> Vec<i32> {
-    let [mut odds, mut evens] = [vec![], vec![]];
-    for (i, &v) in nums.iter().enumerate() {
-        if i & 1 == 1 {
-            odds.push(v);
-        } else {
-            evens.push(v);
+pub fn smallest_number(num: i64) -> i64 {
+    let neg = num < 0;
+    let mut num = num.abs();
+    let mut digits = [0; 10];
+    while num > 0 {
+        digits[(num % 10) as usize] += 1;
+        num /= 10;
+    }
+    if neg {
+        let mut res = 0;
+        for (d, mut count) in digits.into_iter().enumerate().rev() {
+            while count > 0 {
+                res = 10 * res + d as i64;
+                count -= 1;
+            }
         }
+        -res
+    } else {
+        let Some(first) = digits[1..].iter().position(|&v| v > 0) else {
+            return 0;
+        };
+        digits[1 + first] -= 1;
+        let mut res = 1 + first as i64;
+        for (d, mut count) in digits.into_iter().enumerate() {
+            while count > 0 {
+                res = 10 * res + d as i64;
+                count -= 1;
+            }
+        }
+        res
     }
-    odds.sort_unstable_by(|a, b| b.cmp(a));
-    evens.sort_unstable();
-    let mut res: Vec<_> = evens
-        .iter()
-        .zip(odds.iter())
-        .flat_map(|(&a, &b)| [a, b])
-        .collect();
-    if evens.len() > odds.len() {
-        res.push(*evens.last().unwrap());
-    }
-    res
 }
 
 #[cfg(test)]
@@ -57,7 +68,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(smallest_number(310), 103);
+        assert_eq!(smallest_number(-7605), -7650);
+    }
 
     #[test]
     fn test() {}
