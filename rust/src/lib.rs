@@ -5,19 +5,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_time(s: &str) -> i32 {
-    let n = s.len() as i32;
-    let mut left = 0;
-    let mut res = n;
-    for (idx, b) in (0..).zip(s.bytes()) {
-        // Scan from left, for every '1' either
-        // 1) remove everything up until current idx => 1+idx
-        // 2) single out current idx => left+2*(b-'0')
-        left = (left + 2 * i32::from(b - b'0')).min(1 + idx);
-        // Consider only removals only from the right
-        res = res.min(left + n - idx - 1);
-    }
-    res
+pub fn count_operations(mut num1: i32, mut num2: i32) -> i32 {
+        let mut res = 0;
+        while num1 != 0 && num2 != 0 {
+            if num1 >= num2 {
+                num1 -= num2;
+            } else {
+                num2 -= num1;
+            }
+            res += 1;
+        }
+        res
 }
 
 #[cfg(test)]
