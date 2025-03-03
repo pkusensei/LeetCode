@@ -2,57 +2,22 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashSet;
-
 #[allow(unused_imports)]
 use helper::*;
 
-struct Bitset {
-    size: i32,
-    bits: HashSet<i32>,
-    unset: HashSet<i32>,
-}
-
-impl Bitset {
-    fn new(size: i32) -> Self {
-        Self {
-            size,
-            bits: HashSet::with_capacity(size as usize),
-            unset: (0..size).collect(),
-        }
+pub fn minimum_time(s: &str) -> i32 {
+    let n = s.len() as i32;
+    let mut left = 0;
+    let mut res = n;
+    for (idx, b) in (0..).zip(s.bytes()) {
+        // Scan from left, for every '1' either
+        // 1) remove everything up until current idx => 1+idx
+        // 2) single out current idx => left+2*(b-'0')
+        left = (left + 2 * i32::from(b - b'0')).min(1 + idx);
+        // Consider only removals only from the right
+        res = res.min(left + n - idx - 1);
     }
-
-    fn fix(&mut self, idx: i32) {
-        self.bits.insert(idx);
-        self.unset.remove(&idx);
-    }
-
-    fn unfix(&mut self, idx: i32) {
-        self.bits.remove(&idx);
-        self.unset.insert(idx);
-    }
-
-    fn flip(&mut self) {
-        std::mem::swap(&mut self.bits, &mut self.unset);
-    }
-
-    fn all(&self) -> bool {
-        self.bits.len() == self.size as usize
-    }
-
-    fn one(&self) -> bool {
-        self.bits.len() >= 1
-    }
-
-    fn count(&self) -> i32 {
-        self.bits.len() as _
-    }
-
-    fn to_string(&self) -> String {
-        (0..self.size)
-            .map(|i| if self.bits.contains(&i) { '1' } else { '0' })
-            .collect()
-    }
+    res
 }
 
 #[cfg(test)]
@@ -85,7 +50,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(minimum_time("1100101"), 5);
+        assert_eq!(minimum_time("0010"), 2);
+    }
 
     #[test]
     fn test() {}
