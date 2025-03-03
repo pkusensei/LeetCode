@@ -5,14 +5,42 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_sum(mut num: i32) -> i32 {
-    let mut digits = [0; 4];
-    for i in 0..4 {
-        digits[i] = num % 10;
+pub fn min_cost_set_time(
+    start_at: i32,
+    move_cost: i32,
+    push_cost: i32,
+    target_seconds: i32,
+) -> i32 {
+    let m = target_seconds / 60;
+    let s = target_seconds % 60;
+    if m >= 100 {
+        return cost(start_at, move_cost, push_cost, m - 1, 60 + s);
+    }
+    let res = cost(start_at, move_cost, push_cost, m, s);
+    if m > 0 && s <= 39 {
+        res.min(cost(start_at, move_cost, push_cost, m - 1, 60 + s))
+    } else {
+        res
+    }
+}
+
+const fn cost(start: i32, m_cost: i32, p_cost: i32, m: i32, s: i32) -> i32 {
+    let mut num = 100 * m + s;
+    let mut res = 0;
+    let mut digit = num % 10;
+    while num > 0 {
+        res += p_cost;
+        if digit != num % 10 {
+            res += m_cost;
+            digit = num % 10;
+        }
         num /= 10;
     }
-    digits.sort_unstable();
-    10 * (digits[0] + digits[1]) + digits[2] + digits[3]
+    if start != digit {
+        res + m_cost
+    } else {
+        res
+    }
 }
 
 #[cfg(test)]
