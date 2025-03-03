@@ -5,18 +5,30 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_lonely(nums: Vec<i32>) -> Vec<i32> {
-    let map = nums
-        .iter()
-        .fold(std::collections::HashMap::new(), |mut acc, &num| {
-            *acc.entry(num).or_insert(0) += 1;
-            acc
-        });
-    let mut res = vec![];
-    for (&k, &v) in map.iter() {
-        if v == 1 && !map.contains_key(&(k - 1)) && !map.contains_key(&(1 + k)) {
-            res.push(k);
+pub fn pivot_array(nums: Vec<i32>, pivot: i32) -> Vec<i32> {
+    let n = nums.len();
+    let mut res = vec![0; n];
+    // ptrs into nums array
+    let mut left = 0;
+    let mut right = n - 1;
+    // ptrs into res array
+    let mut small = 0;
+    let mut big = n - 1;
+    while left < n {
+        if nums[left] < pivot {
+            res[small] = nums[left];
+            small += 1;
         }
+        if nums[right] > pivot {
+            res[big] = nums[right];
+            big -= 1;
+        }
+        left += 1;
+        right -= 1;
+    }
+    while small <= big {
+        res[small] = pivot;
+        small += 1;
     }
     res
 }
