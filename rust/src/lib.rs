@@ -5,25 +5,26 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_score_indices(nums: Vec<i32>) -> Vec<i32> {
-    let mut left_zeros = 0;
-    let mut right_ones: i32 = nums.iter().sum();
-    let mut score = left_zeros + right_ones;
-    let mut res = vec![0];
-    for (idx, &num) in (1..).zip(nums.iter()) {
-        left_zeros += i32::from(num == 0);
-        right_ones -= i32::from(num == 1);
-        let curr = left_zeros + right_ones;
-        match curr.cmp(&score) {
-            std::cmp::Ordering::Less => (),
-            std::cmp::Ordering::Equal => res.push(idx),
-            std::cmp::Ordering::Greater => {
-                score = curr;
-                res = vec![idx];
-            }
+pub fn sub_str_hash(s: &str, power: i32, modulo: i32, k: i32, hash_value: i32) -> String {
+    let (bytes, n) = (s.as_bytes(), s.len());
+    let [p, m, hv] = [power, modulo, hash_value].map(i64::from);
+    let k = k as usize;
+    let mut start = 0;
+    let mut curr = 0;
+    let mut p_k = 1;
+    for (idx, &b) in bytes.iter().enumerate().rev() {
+        curr = (p * curr + i64::from(b - b'a' + 1)) % m;
+        if idx + k >= n {
+            // mod_pow(p, k, m) but here m is not prime
+            p_k = p_k * p % m;
+        } else {
+            curr = (curr - i64::from(bytes[idx + k] - b'a' + 1) * p_k % m).rem_euclid(m);
+        }
+        if curr == hv {
+            start = idx;
         }
     }
-    res
+    s[start..start + k].to_string()
 }
 
 #[cfg(test)]
@@ -56,7 +57,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(sub_str_hash("leetcode", 7, 20, 2, 0), "ee");
+        assert_eq!(sub_str_hash("fbxzaad", 31, 100, 3, 32), "fbx");
+    }
 
     #[test]
     fn test() {}
