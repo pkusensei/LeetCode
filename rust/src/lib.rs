@@ -5,34 +5,13 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_good(statements: &[&[i32]]) -> i32 {
-    let n = statements.len();
-    let mut res = 0;
-    for mask in 0..1 << n {
-        check(statements, mask, &mut res);
+pub fn find_final_value(nums: Vec<i32>, original: i32) -> i32 {
+    let set: std::collections::HashSet<_> = nums.into_iter().collect();
+    let mut res = original;
+    while set.contains(&res) {
+        res *= 2;
     }
-    res as _
-}
-
-fn check(states: &[&[i32]], mask: i32, res: &mut u32) {
-    let [mut good, mut bad] = [0, 0];
-    for (idx, row) in states.iter().enumerate() {
-        if (mask >> idx) & 1 == 1 {
-            for (i, &v) in row.iter().enumerate() {
-                match v {
-                    0 => bad |= 1 << i,
-                    1 => good |= 1 << i,
-                    _ => (),
-                }
-            }
-        }
-        if good & bad > 0 {
-            return;
-        }
-    }
-    if bad & mask == 0 && good & mask == good {
-        *res = (*res).max(mask.count_ones())
-    }
+    res
 }
 
 #[cfg(test)]
@@ -65,27 +44,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(maximum_good(&[&[2, 1, 2], &[1, 2, 2], &[2, 0, 2]]), 2);
-        assert_eq!(maximum_good(&[&[2, 0], &[0, 2]]), 1);
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(maximum_good(&[&[2, 2], &[1, 2]]), 2);
-        assert_eq!(
-            maximum_good(&[
-                &[2, 0, 2, 2, 0],
-                &[2, 2, 2, 1, 2],
-                &[2, 2, 2, 1, 2],
-                &[1, 2, 0, 2, 2],
-                &[1, 0, 2, 1, 2]
-            ]),
-            2
-        );
-        assert_eq!(
-            maximum_good(&[&[2, 2, 2, 2], &[1, 2, 1, 0], &[0, 2, 2, 2], &[0, 0, 0, 2]]),
-            1
-        );
-    }
+    fn test() {}
 }
