@@ -5,32 +5,34 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn pivot_array(nums: Vec<i32>, pivot: i32) -> Vec<i32> {
-    let n = nums.len();
-    let mut res = vec![0; n];
-    // ptrs into nums array
-    let mut left = 0;
-    let mut right = n - 1;
-    // ptrs into res array
-    let mut small = 0;
-    let mut big = n - 1;
-    while left < n {
-        if nums[left] < pivot {
-            res[small] = nums[left];
-            small += 1;
-        }
-        if nums[right] > pivot {
-            res[big] = nums[right];
-            big -= 1;
-        }
-        left += 1;
-        right -= 1;
+pub fn maximum_good(statements: &[&[i32]]) -> i32 {
+    let n = statements.len();
+    let mut res = 0;
+    for mask in 0..1 << n {
+        check(statements, mask, &mut res);
     }
-    while small <= big {
-        res[small] = pivot;
-        small += 1;
+    res as _
+}
+
+fn check(states: &[&[i32]], mask: i32, res: &mut u32) {
+    let [mut good, mut bad] = [0, 0];
+    for (idx, row) in states.iter().enumerate() {
+        if (mask >> idx) & 1 == 1 {
+            for (i, &v) in row.iter().enumerate() {
+                match v {
+                    0 => bad |= 1 << i,
+                    1 => good |= 1 << i,
+                    _ => (),
+                }
+            }
+        }
+        if good & bad > 0 {
+            return;
+        }
     }
-    res
+    if bad & mask == 0 && good & mask == good {
+        *res = (*res).max(mask.count_ones())
+    }
 }
 
 #[cfg(test)]
@@ -63,8 +65,27 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(maximum_good(&[&[2, 1, 2], &[1, 2, 2], &[2, 0, 2]]), 2);
+        assert_eq!(maximum_good(&[&[2, 0], &[0, 2]]), 1);
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(maximum_good(&[&[2, 2], &[1, 2]]), 2);
+        assert_eq!(
+            maximum_good(&[
+                &[2, 0, 2, 2, 0],
+                &[2, 2, 2, 1, 2],
+                &[2, 2, 2, 1, 2],
+                &[1, 2, 0, 2, 2],
+                &[1, 0, 2, 1, 2]
+            ]),
+            2
+        );
+        assert_eq!(
+            maximum_good(&[&[2, 2, 2, 2], &[1, 2, 1, 0], &[0, 2, 2, 2], &[0, 0, 0, 2]]),
+            1
+        );
+    }
 }
