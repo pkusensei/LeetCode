@@ -5,19 +5,44 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_removal(beans: &mut [i32]) -> i64 {
-    let n = beans.len();
-    beans.sort_unstable();
-    let prefix = beans.iter().fold(Vec::with_capacity(n), |mut acc, &num| {
-        acc.push(i64::from(num) + acc.last().unwrap_or(&0));
-        acc
-    });
-    let mut res = i64::MAX;
-    for (idx, &num) in beans.iter().enumerate() {
-        let curr = prefix[n - 1] - i64::from(num) * (n - idx) as i64;
-        res = res.min(curr);
+use std::collections::HashMap;
+
+pub fn maximum_and_sum(nums: &[i32], num_slots: i32) -> i32 {
+    dfs(nums, num_slots, 0, 0, &mut HashMap::new())
+}
+
+fn dfs(
+    nums: &[i32],
+    slots: i32,
+    mask1: i16,
+    mask2: i16,
+    memo: &mut HashMap<(usize, i16, i16), i32>,
+) -> i32 {
+    let n = nums.len();
+    match nums {
+        [] => 0,
+        [head, tail @ ..] => {
+            let k = (n, mask1, mask2);
+            if let Some(&v) = memo.get(&k) {
+                return v;
+            }
+            let mut res = 0;
+            for slot in 0..slots {
+                if (mask1 >> slot) & 1 == 1 && (mask2 >> slot) & 1 == 1 {
+                    continue;
+                }
+                let mut curr = (1 + slot) & head;
+                if (mask1 >> slot) & 1 == 1 {
+                    curr += dfs(tail, slots, mask1, mask2 | (1 << slot), memo);
+                } else {
+                    curr += dfs(tail, slots, mask1 | (1 << slot), mask2, memo);
+                }
+                res = res.max(curr);
+            }
+            memo.insert(k, res);
+            res
+        }
     }
-    res
 }
 
 #[cfg(test)]
@@ -51,8 +76,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(minimum_removal(&mut [4, 1, 6, 5]), 4);
-        assert_eq!(minimum_removal(&mut [2, 10, 3, 2]), 7);
+        assert_eq!(maximum_and_sum(&[1, 2, 3, 4, 5, 6], 3), 9);
+        assert_eq!(maximum_and_sum(&[1, 3, 10, 4, 7, 1], 9), 24);
     }
 
     #[test]
