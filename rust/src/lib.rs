@@ -2,20 +2,48 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_operations(mut num1: i32, mut num2: i32) -> i32 {
-        let mut res = 0;
-        while num1 != 0 && num2 != 0 {
-            if num1 >= num2 {
-                num1 -= num2;
-            } else {
-                num2 -= num1;
+pub fn minimum_operations(nums: &[i32]) -> i32 {
+    let [mut evens, mut odds] = [0, 1].map(|_| HashMap::new());
+    let [mut even_max_count1, mut even_max, mut even_max_count2] = [0; 3];
+    let [mut odd_max_count1, mut odd_max, mut odd_max_count2] = [0; 3];
+    for (i, &num) in nums.iter().enumerate() {
+        if i & 1 == 0 {
+            let v = evens.entry(num).or_insert(0);
+            *v += 1;
+            if *v > even_max_count1 {
+                even_max_count1 = *v;
+                even_max = num;
             }
-            res += 1;
+        } else {
+            let v = odds.entry(num).or_insert(0);
+            *v += 1;
+            if *v > odd_max_count1 {
+                odd_max_count1 = *v;
+                odd_max = num;
+            }
         }
-        res
+    }
+    let n = nums.len() as i32;
+    if even_max != odd_max {
+        return n - even_max_count1 - odd_max_count1;
+    }
+    for (&k, &count) in evens.iter() {
+        if k != even_max {
+            even_max_count2 = even_max_count2.max(count);
+        }
+    }
+    for (&k, &count) in odds.iter() {
+        if k != odd_max {
+            odd_max_count2 = odd_max_count2.max(count);
+        }
+    }
+    let max_count = (even_max_count1 + odd_max_count2).max(even_max_count2 + odd_max_count1);
+    n - max_count
 }
 
 #[cfg(test)]
@@ -49,10 +77,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(minimum_time("1100101"), 5);
-        assert_eq!(minimum_time("0010"), 2);
+        assert_eq!(minimum_operations(&[3, 1, 3, 2, 4, 3]), 3);
+        assert_eq!(minimum_operations(&[1, 2, 2, 2, 2]), 2);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(minimum_operations(&[2, 2, 2, 2]), 2);
+    }
 }
