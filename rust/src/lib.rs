@@ -5,44 +5,14 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-use std::collections::HashMap;
-
-pub fn maximum_and_sum(nums: &[i32], num_slots: i32) -> i32 {
-    dfs(nums, num_slots, 0, 0, &mut HashMap::new())
-}
-
-fn dfs(
-    nums: &[i32],
-    slots: i32,
-    mask1: i16,
-    mask2: i16,
-    memo: &mut HashMap<(usize, i16, i16), i32>,
-) -> i32 {
-    let n = nums.len();
-    match nums {
-        [] => 0,
-        [head, tail @ ..] => {
-            let k = (n, mask1, mask2);
-            if let Some(&v) = memo.get(&k) {
-                return v;
-            }
-            let mut res = 0;
-            for slot in 0..slots {
-                if (mask1 >> slot) & 1 == 1 && (mask2 >> slot) & 1 == 1 {
-                    continue;
-                }
-                let mut curr = (1 + slot) & head;
-                if (mask1 >> slot) & 1 == 1 {
-                    curr += dfs(tail, slots, mask1, mask2 | (1 << slot), memo);
-                } else {
-                    curr += dfs(tail, slots, mask1 | (1 << slot), mask2, memo);
-                }
-                res = res.max(curr);
-            }
-            memo.insert(k, res);
-            res
+pub fn count_pairs(nums: Vec<i32>, k: i32) -> i32 {
+    let mut res = 0;
+    for (i1, &v1) in nums.iter().enumerate() {
+        for (i2, &v2) in nums.iter().enumerate().skip(1 + i1) {
+            res += i32::from(v1 == v2 && i1 * i2 % k as usize == 0);
         }
     }
+    res
 }
 
 #[cfg(test)]
@@ -75,10 +45,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(maximum_and_sum(&[1, 2, 3, 4, 5, 6], 3), 9);
-        assert_eq!(maximum_and_sum(&[1, 3, 10, 4, 7, 1], 9), 24);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
