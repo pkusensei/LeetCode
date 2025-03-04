@@ -6,12 +6,24 @@ namespace Solution;
 
 public class Solution
 {
-    public bool CheckPowersOfThree(int n)
+    public ListNode MergeNodes(ListNode head)
     {
-        // Each power of 3 can have at most one copy
-        // That is, after converting number to base 3
-        // Each digit is at most 1
-        while (n % 3 != 2 && n > 0) { n /= 3; }
-        return n == 0;
+        var left = head;
+        var right = head.next;
+        while (right is not null)
+        {
+            var val = 0;
+            while (right is not null && right.val > 0)
+            {
+                val += right.val;
+                right = right.next;
+            }
+            left.val = val;
+            if (right.next is not null) { left.next = right; }
+            else { left.next = null; }
+            left = right;
+            right = right.next;
+        }
+        return head;
     }
 }

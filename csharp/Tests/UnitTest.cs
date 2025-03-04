@@ -10,12 +10,12 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(12, true)]
-    [DataRow(91, true)]
-    [DataRow(21, false)]
-    public void TestMethod1(int num, bool exp)
+    [DataRow(new[] { 0, 3, 1, 0, 4, 5, 2, 0 }, "[4,11]")]
+    [DataRow(new[] { 0, 1, 0, 3, 0, 2, 2, 0 }, "[1,3,4]")]
+    public void TestMethod1(int[] nums, string exp)
     {
-        Assert.AreEqual(exp, sol.CheckPowersOfThree(num));
+        var a = ListNode.Make(nums);
+        Assert.AreEqual(exp, sol.MergeNodes(a).ToString());
     }
 
     [TestMethod]
