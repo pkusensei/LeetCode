@@ -5,14 +5,12 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_pairs(nums: Vec<i32>, k: i32) -> i32 {
-    let mut res = 0;
-    for (i1, &v1) in nums.iter().enumerate() {
-        for (i2, &v2) in nums.iter().enumerate().skip(1 + i1) {
-            res += i32::from(v1 == v2 && i1 * i2 % k as usize == 0);
-        }
+pub fn sum_of_three(num: i64) -> Vec<i64> {
+    if num % 3 == 0 {
+        vec![num / 3 - 1, num / 3, num / 3 + 1]
+    } else {
+        vec![]
     }
-    res
 }
 
 #[cfg(test)]
