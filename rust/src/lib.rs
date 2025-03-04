@@ -5,15 +5,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_steps(s: String, t: String) -> i32 {
-    let mut count = [0i32; 26];
-    for b in s.bytes() {
-        count[usize::from(b - b'a')] += 1;
+pub fn minimum_time(time: &[i32], total_trips: i32) -> i64 {
+    let trips = i64::from(total_trips);
+    let mut left = 1;
+    let mut right = i64::from(*time.iter().min().unwrap_or(&1)) * trips;
+    while left < right {
+        let mid = left + (right - left) / 2;
+        if time.iter().map(|&v| mid / i64::from(v)).sum::<i64>() >= trips {
+            right = mid;
+        } else {
+            left = mid + 1;
+        }
     }
-    for b in t.bytes() {
-        count[usize::from(b - b'a')] -= 1;
-    }
-    count.into_iter().map(|v| v.abs()).sum()
+    left
 }
 
 #[cfg(test)]
@@ -46,7 +50,9 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(minimum_time(&[1, 2, 3], 5), 3)
+    }
 
     #[test]
     fn test() {}
