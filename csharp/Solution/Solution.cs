@@ -6,26 +6,12 @@ namespace Solution;
 
 public class Solution
 {
-    public int PairSum(ListNode head)
+    public bool CheckPowersOfThree(int n)
     {
-        var slow = head;
-        var fast = head;
-        Stack<int> st = [];
-        st.Push(slow.val);
-        while (fast.next is not null && fast.next.next is not null)
-        {
-            fast = fast.next.next;
-            slow = slow.next;
-            st.Push(slow.val);
-        }
-        slow = slow.next;
-        int res = 0;
-        while (slow is not null)
-        {
-            var top = st.Pop();
-            res = Math.Max(res, slow.val + top);
-            slow = slow.next;
-        }
-        return res;
+        // Each power of 3 can have at most one copy
+        // That is, after converting number to base 3
+        // Each digit is at most 1
+        while (n % 3 != 2 && n > 0) { n /= 3; }
+        return n == 0;
     }
 }
