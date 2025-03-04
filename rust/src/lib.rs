@@ -5,12 +5,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn sum_of_three(num: i64) -> Vec<i64> {
-    if num % 3 == 0 {
-        vec![num / 3 - 1, num / 3, num / 3 + 1]
-    } else {
-        vec![]
+pub fn maximum_even_split(final_sum: i64) -> Vec<i64> {
+    if final_sum & 1 == 1 {
+        return vec![];
     }
+    let mut res = vec![];
+    let mut curr = 0;
+    for num in (2..).step_by(2) {
+        res.push(num);
+        curr += num;
+        if final_sum - curr <= num {
+            res.pop();
+            res.push(final_sum - (curr - num));
+            break;
+        }
+    }
+    res
 }
 
 #[cfg(test)]
