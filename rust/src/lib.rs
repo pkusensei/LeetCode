@@ -5,37 +5,34 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn get_ancestors(n: i32, edges: &[[i32; 2]]) -> Vec<Vec<i32>> {
-    let n = n as usize;
-    let mut adj = vec![vec![]; n];
-    let mut indegs = vec![0; n];
-    for e in edges.iter() {
-        let [a, b] = [0, 1].map(|i| e[i] as usize);
-        adj[b].push(a);
-        indegs[a] += 1;
-    }
-    let mut res = vec![vec![]; n];
-    for (node, &v) in indegs.iter().enumerate() {
-        if v == 0 {
-            dfs(&adj, node, &mut res);
+pub fn min_moves_to_make_palindrome(s: String) -> i32 {
+    let n = s.len();
+    let mut s = s.into_bytes();
+    let [mut left, mut right] = [0, n - 1];
+    let mut res = 0;
+    while left < right {
+        if s[left] != s[right] {
+            let temp = right;
+            while left < right && s[left] != s[right] {
+                right -= 1;
+            }
+            if left == right {
+                // s[left] is at the wrong spot
+                s.swap(left, 1 + left);
+                res += 1;
+                right = temp;
+            } else {
+                s[right..=temp].rotate_left(1);
+                res += temp - right;
+                left += 1;
+                right = temp - 1;
+            }
+        } else {
+            left += 1;
+            right -= 1;
         }
     }
-    res
-}
-
-fn dfs(adj: &[Vec<usize>], node: usize, res: &mut [Vec<i32>]) {
-    if !res[node].is_empty() {
-        return;
-    }
-    let mut curr = vec![];
-    for &next in adj[node].iter() {
-        curr.push(next as i32);
-        dfs(adj, next, res);
-        curr.extend_from_slice(&res[next]);
-    }
-    curr.sort_unstable();
-    curr.dedup();
-    res[node] = curr;
+    res as i32
 }
 
 #[cfg(test)]
@@ -69,52 +66,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            get_ancestors(
-                8,
-                &[
-                    [0, 3],
-                    [0, 4],
-                    [1, 3],
-                    [2, 4],
-                    [2, 7],
-                    [3, 5],
-                    [3, 6],
-                    [3, 7],
-                    [4, 6]
-                ]
-            ),
-            [
-                vec![],
-                vec![],
-                vec![],
-                vec![0, 1],
-                vec![0, 2],
-                vec![0, 1, 3],
-                vec![0, 1, 2, 3, 4],
-                vec![0, 1, 2, 3]
-            ]
-        );
-        assert_eq!(
-            get_ancestors(
-                5,
-                &[
-                    [0, 1],
-                    [0, 2],
-                    [0, 3],
-                    [0, 4],
-                    [1, 2],
-                    [1, 3],
-                    [1, 4],
-                    [2, 3],
-                    [2, 4],
-                    [3, 4]
-                ]
-            ),
-            [vec![], vec![0], vec![0, 1], vec![0, 1, 2], vec![0, 1, 2, 3]]
-        );
+        assert_eq!(min_moves_to_make_palindrome("aabb".into()), 2);
+        assert_eq!(min_moves_to_make_palindrome("letelt".into()), 2);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(
+            min_moves_to_make_palindrome("skwhhaaunskegmdtutlgtteunmuuludii".into()),
+            163
+        );
+    }
 }
