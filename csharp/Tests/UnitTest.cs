@@ -10,17 +10,17 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(new[] { 0, 3, 1, 0, 4, 5, 2, 0 }, "[4,11]")]
-    [DataRow(new[] { 0, 1, 0, 3, 0, 2, 2, 0 }, "[1,3,4]")]
-    public void TestMethod1(int[] nums, string exp)
+    public void TestMethod1()
     {
-        var a = ListNode.Make(nums);
-        Assert.AreEqual(exp, sol.MergeNodes(a).ToString());
+        int[][] des = [[20, 15, 1], [20, 17, 0], [50, 20, 1], [50, 80, 0], [80, 19, 1]];
+        Assert.AreEqual("[50,20,80,15,17,19]", sol.CreateBinaryTree(des).ToString());
     }
 
     [TestMethod]
     public void TestMethod2()
     {
+        int[][] des = [[1, 2, 1], [2, 3, 0], [3, 4, 1]];
+        Assert.AreEqual("[1,2,null,null,3,4]", sol.CreateBinaryTree(des).ToString());
     }
 
     [TestMethod]
