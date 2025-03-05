@@ -5,17 +5,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn most_frequent(nums: Vec<i32>, key: i32) -> i32 {
-    nums.windows(2)
-        .filter_map(|w| if w[0] == key { Some(w[1]) } else { None })
-        .fold(std::collections::HashMap::new(), |mut acc, num| {
-            *acc.entry(num).or_insert(0) += 1;
-            acc
-        })
-        .into_iter()
-        .max_by_key(|&(_k, v)| v)
-        .map(|(k, _v)| k)
-        .unwrap()
+pub fn sort_jumbled(mapping: Vec<i32>, mut nums: Vec<i32>) -> Vec<i32> {
+    nums.sort_by_cached_key(|num| {
+        let mut num = *num;
+        if num == 0 {
+            return mapping[0];
+        }
+        let mut digits = vec![];
+        while num > 0 {
+            digits.push(num % 10);
+            num /= 10;
+        }
+        digits
+            .into_iter()
+            .rev()
+            .fold(0, |acc, d| 10 * acc + mapping[d as usize])
+    });
+    nums
 }
 
 #[cfg(test)]
@@ -51,7 +57,5 @@ mod tests {
     fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(most_frequent(vec![2, 1, 2, 1, 2, 3], 2), 1);
-    }
+    fn test() {}
 }
