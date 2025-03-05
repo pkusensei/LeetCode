@@ -5,17 +5,29 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_k_distant_indices(nums: Vec<i32>, key: i32, k: i32) -> Vec<i32> {
-    let n = nums.len() as i32;
-    let mut set = std::collections::HashSet::new();
-    for (i, &num) in (0..).zip(nums.iter()) {
-        if num == key {
-            set.extend((i - k).max(0)..=(i + k).min(n - 1));
-        }
+pub fn dig_artifacts(n: i32, artifacts: Vec<Vec<i32>>, dig: Vec<Vec<i32>>) -> i32 {
+    let n = n as usize;
+    let mut grid = vec![vec![false; n]; n];
+    for d in dig {
+        let [r, c] = d[..] else { unreachable!() };
+        grid[r as usize][c as usize] = true;
     }
-    let mut res: Vec<_> = set.into_iter().collect();
-    res.sort_unstable();
-    res
+    artifacts
+        .iter()
+        .filter(|a| {
+            let [r1, c1, r2, c2] = a[..] else {
+                unreachable!()
+            };
+            for r in r1..=r2 {
+                for c in c1..=c2 {
+                    if !grid[r as usize][c as usize] {
+                        return false;
+                    }
+                }
+            }
+            true
+        })
+        .count() as _
 }
 
 #[cfg(test)]
