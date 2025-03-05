@@ -5,19 +5,40 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_time(time: &[i32], total_trips: i32) -> i64 {
-    let trips = i64::from(total_trips);
-    let mut left = 1;
-    let mut right = i64::from(*time.iter().min().unwrap_or(&1)) * trips;
-    while left < right {
-        let mid = left + (right - left) / 2;
-        if time.iter().map(|&v| mid / i64::from(v)).sum::<i64>() >= trips {
-            right = mid;
-        } else {
-            left = mid + 1;
+pub fn minimum_finish_time(tires: &[[i32; 2]], change_time: i32, num_laps: i32) -> i32 {
+    let n = num_laps as usize;
+    let change_time = i64::from(change_time);
+    let mut best = vec![i64::MAX; 1 + n];
+    let mut max_laps = 0;
+    for tire in tires.iter() {
+        let [f, r] = [0, 1].map(|i| i64::from(tire[i]));
+        let mut lap_time = f;
+        let mut total = lap_time;
+        for lap in 1..=n {
+            if lap_time >= f + change_time {
+                break;
+            }
+            max_laps = max_laps.max(lap);
+            best[lap] = best[lap].min(total);
+            lap_time *= r;
+            total += lap_time;
         }
     }
-    left
+    dfs(n, change_time, &best, max_laps, &mut vec![i64::MAX; 1 + n]) as i32
+}
+
+fn dfs(n: usize, change_time: i64, best: &[i64], max_laps: usize, memo: &mut [i64]) -> i64 {
+    if n == 0 {
+        return -change_time;
+    }
+    if memo[n] < i64::MAX {
+        return memo[n];
+    }
+    for lap in 1..=n.min(max_laps) {
+        memo[n] =
+            memo[n].min(best[lap] + change_time + dfs(n - lap, change_time, best, max_laps, memo));
+    }
+    memo[n]
 }
 
 #[cfg(test)]
@@ -51,7 +72,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(minimum_time(&[1, 2, 3], 5), 3)
+        assert_eq!(minimum_finish_time(&[[2, 3], [3, 4]], 5, 4), 21);
+        assert_eq!(minimum_finish_time(&[[1, 10], [2, 2], [3, 4]], 6, 5), 25);
     }
 
     #[test]
