@@ -5,29 +5,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn dig_artifacts(n: i32, artifacts: Vec<Vec<i32>>, dig: Vec<Vec<i32>>) -> i32 {
-    let n = n as usize;
-    let mut grid = vec![vec![false; n]; n];
-    for d in dig {
-        let [r, c] = d[..] else { unreachable!() };
-        grid[r as usize][c as usize] = true;
+pub fn maximum_top(nums: Vec<i32>, k: i32) -> i32 {
+    if nums.len() == 1 {
+        return if k & 1 == 1 { -1 } else { nums[0] };
     }
-    artifacts
-        .iter()
-        .filter(|a| {
-            let [r1, c1, r2, c2] = a[..] else {
-                unreachable!()
-            };
-            for r in r1..=r2 {
-                for c in c1..=c2 {
-                    if !grid[r as usize][c as usize] {
-                        return false;
-                    }
-                }
-            }
-            true
-        })
-        .count() as _
+    if k <= 1 {
+        return nums[k as usize];
+    }
+    let mut res = 0;
+    for i in 0..(k as usize - 1).min(nums.len()) {
+        res = res.max(nums[i])
+    }
+    if let Some(&v) = nums.get(k as usize) {
+        res = res.max(v)
+    }
+    res
 }
 
 #[cfg(test)]
