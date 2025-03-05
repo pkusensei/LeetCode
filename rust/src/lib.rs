@@ -2,15 +2,20 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::BTreeSet;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn cells_in_range(s: String) -> Vec<String> {
-    let s = s.as_bytes();
-    let mut res = vec![];
-    for letter in s[0]..=s[3] {
-        for digit in s[1]..=s[4] {
-            res.push(String::from_utf8(vec![letter, digit]).unwrap());
+pub fn minimal_k_sum(nums: Vec<i32>, k: i32) -> i64 {
+    let mut k = i64::from(k);
+    let set: BTreeSet<_> = nums.into_iter().map(i64::from).collect();
+    let mut res = k * (1 + k) / 2;
+    for num in set {
+        if num <= k {
+            res -= num;
+            k += 1;
+            res += k;
         }
     }
     res
@@ -49,5 +54,13 @@ mod tests {
     fn basics() {}
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(
+            minimal_k_sum(
+                vec![53, 41, 90, 33, 84, 26, 50, 32, 63, 47, 66, 43, 29, 88, 71, 28, 83],
+                76
+            ),
+            3444
+        );
+    }
 }
