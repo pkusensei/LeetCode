@@ -5,22 +5,36 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_subsequence_count(text: &str, pattern: &str) -> i64 {
-    let [c1, c2] = [0, 1].map(|i| pattern.as_bytes()[i]);
-    let mut curr = [0, 0];
+pub fn halve_array(nums: Vec<i32>) -> i32 {
+    use std::collections::BinaryHeap;
+    let sum: f64 = nums.iter().map(|&v| f64::from(v)).sum();
+    let mut half = sum / 2.0;
+    let mut heap: BinaryHeap<_> = nums.into_iter().map(|v| Num(f64::from(v))).collect();
     let mut res = 0;
-    for b in text.bytes() {
-        if b == c2 {
-            res += curr[0];
-            curr[1] += 1;
-        }
-        // Put b==c1 second to handle case when c1==c2
-        if b == c1 {
-            curr[0] += 1;
-        }
+    while half >= 0.0 {
+        let top = heap.pop().unwrap();
+        half -= top.0 / 2.0;
+        heap.push(Num(top.0 / 2.0));
+        res += 1;
     }
-    // max => the added char at either end
-    res + curr[0].max(curr[1])
+    res
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+struct Num(f64);
+
+impl Eq for Num {}
+
+impl PartialOrd for Num {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        self.0.partial_cmp(&other.0)
+    }
+}
+
+impl Ord for Num {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.0.total_cmp(&other.0)
+    }
 }
 
 #[cfg(test)]
@@ -53,16 +67,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(maximum_subsequence_count("abdcdbc", "ac"), 4);
-        assert_eq!(maximum_subsequence_count("aabb", "ab"), 6);
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(
-            maximum_subsequence_count("iekbksdsmuuzwxbpmcngsfkjvpzuknqguzvzik", "mp"),
-            5
-        );
-    }
+    fn test() {}
 }
