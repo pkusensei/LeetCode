@@ -2,49 +2,25 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::{cmp::Reverse, collections::BinaryHeap};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_weight(n: i32, edges: &[[i32; 3]], src1: i32, src2: i32, dest: i32) -> i64 {
-    let n = n as usize;
-    let [mut adj, mut adj2] = [0, 1].map(|_| vec![vec![]; n]);
-    for e in edges.iter() {
-        let [a, b] = [0, 1].map(|i| e[i] as usize);
-        adj[a].push((b, e[2]));
-        adj2[b].push((a, e[2]));
-    }
-    let dists1 = dijkstra(&adj, src1 as _);
-    let dists2 = dijkstra(&adj, src2 as _);
-    let dists3 = dijkstra(&adj2, dest as _);
-    dists1
-        .into_iter()
-        .zip(dists2)
-        .zip(dists3)
-        .filter_map(|((a, b), c)| a.checked_add(b).and_then(|v| v.checked_add(c)))
-        .min()
-        .unwrap_or(-1)
-}
-
-fn dijkstra(adj: &[Vec<(usize, i32)>], node: usize) -> Vec<i64> {
-    let n = adj.len();
-    let mut dists = vec![i64::MAX; n];
-    dists[node] = 0;
-    let mut heap = BinaryHeap::from([(Reverse(0), node)]);
-    while let Some((Reverse(cost), node)) = heap.pop() {
-        if cost > dists[node] {
-            continue;
+pub fn maximum_subsequence_count(text: &str, pattern: &str) -> i64 {
+    let [c1, c2] = [0, 1].map(|i| pattern.as_bytes()[i]);
+    let mut curr = [0, 0];
+    let mut res = 0;
+    for b in text.bytes() {
+        if b == c2 {
+            res += curr[0];
+            curr[1] += 1;
         }
-        for &(next, weight) in adj[node].iter() {
-            let nc = cost + i64::from(weight);
-            if nc < dists[next] {
-                dists[next] = nc;
-                heap.push((Reverse(nc), next));
-            }
+        // Put b==c1 second to handle case when c1==c2
+        if b == c1 {
+            curr[0] += 1;
         }
     }
-    dists
+    // max => the added char at either end
+    res + curr[0].max(curr[1])
 }
 
 #[cfg(test)]
@@ -78,29 +54,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            minimum_weight(
-                6,
-                &[
-                    [0, 2, 2],
-                    [0, 5, 6],
-                    [1, 0, 3],
-                    [1, 4, 5],
-                    [2, 1, 1],
-                    [2, 3, 3],
-                    [2, 3, 4],
-                    [3, 4, 2],
-                    [4, 5, 1]
-                ],
-                0,
-                1,
-                5
-            ),
-            9
-        );
-        assert_eq!(minimum_weight(3, &[[0, 1, 1], [2, 1, 1]], 0, 1, 2), -1);
+        assert_eq!(maximum_subsequence_count("abdcdbc", "ac"), 4);
+        assert_eq!(maximum_subsequence_count("aabb", "ab"), 6);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(
+            maximum_subsequence_count("iekbksdsmuuzwxbpmcngsfkjvpzuknqguzvzik", "mp"),
+            5
+        );
+    }
 }
