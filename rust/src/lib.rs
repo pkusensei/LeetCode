@@ -5,40 +5,31 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_collisions(directions: &str) -> i32 {
-    let mut stack = vec![];
-    let mut res = 0;
-    for b in directions.bytes() {
-        match b {
-            b'S' => {
-                while stack.last().is_some_and(|&v| v == b'R') {
-                    stack.pop();
-                    res += 1;
+pub fn maximum_bob_points(num_arrows: i32, alice_arrows: Vec<i32>) -> Vec<i32> {
+    const N: usize = 12;
+    let mut max = 0;
+    let mut res = vec![];
+    'outer: for mask in 0..(1 << N) {
+        let mut num = num_arrows;
+        let mut curr = [0; N];
+        let mut score = 0;
+        for idx in 0..N {
+            if (mask >> idx) & 1 == 0 {
+                num -= alice_arrows[idx] + 1;
+                if num < 0 {
+                    continue 'outer;
                 }
-                stack.push(b'S');
+                curr[idx] = alice_arrows[idx] + 1;
+                score += idx as i32;
             }
-            b'L' => match stack.last() {
-                Some(b'R') => {
-                    res += 1;
-                    while stack.last().is_some_and(|&v| v == b'R') {
-                        stack.pop();
-                        res += 1;
-                    }
-                    stack.push(b'S');
-                }
-                Some(b'S') => res += 1,
-                _ => (),
-            },
-            _ => stack.push(b),
+        }
+        if num >= 0 && score > max {
+            max = score;
+            curr[11] += num;
+            res = curr.to_vec();
         }
     }
     res
-}
-
-pub fn towards_middle(s: &str) -> i32 {
-    let mut s = s.trim_start_matches('L');
-    s = s.trim_end_matches('R');
-    s.bytes().map(|b| i32::from(b != b'S')).sum()
 }
 
 #[cfg(test)]
@@ -71,13 +62,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(count_collisions("RLRSLL"), 5);
-        assert_eq!(count_collisions("LLRR"), 0);
-
-        assert_eq!(towards_middle("RLRSLL"), 5);
-        assert_eq!(towards_middle("LLRR"), 0);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
