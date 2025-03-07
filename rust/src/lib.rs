@@ -5,31 +5,38 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_bob_points(num_arrows: i32, alice_arrows: Vec<i32>) -> Vec<i32> {
-    const N: usize = 12;
-    let mut max = 0;
-    let mut res = vec![];
-    'outer: for mask in 0..(1 << N) {
-        let mut num = num_arrows;
-        let mut curr = [0; N];
-        let mut score = 0;
-        for idx in 0..N {
-            if (mask >> idx) & 1 == 0 {
-                num -= alice_arrows[idx] + 1;
-                if num < 0 {
-                    continue 'outer;
-                }
-                curr[idx] = alice_arrows[idx] + 1;
-                score += idx as i32;
+pub fn closest_primes(left: i32, right: i32) -> Vec<i32> {
+    let sieve = sieve(right);
+    let mut diff = right;
+    let mut res = vec![-1, -1];
+    for w in sieve.windows(2) {
+        let d = w[1] - w[0];
+        if left <= w[0] && d < diff {
+            diff = d;
+            res = w.to_vec();
+            if diff == 2 {
+                break;
             }
-        }
-        if num >= 0 && score > max {
-            max = score;
-            curr[11] += num;
-            res = curr.to_vec();
         }
     }
     res
+}
+
+fn sieve(n: i32) -> Vec<i32> {
+    let mut primes = vec![true; 1 + n as usize];
+    primes[0..2].copy_from_slice(&[false; 2]);
+    for p in 2..=(n as f64).sqrt() as usize {
+        if primes[p] {
+            for i in (p * p..=n as usize).step_by(p) {
+                primes[i] = false;
+            }
+        }
+    }
+    primes
+        .into_iter()
+        .enumerate()
+        .filter_map(|(i, v)| if v { Some(i as i32) } else { None })
+        .collect()
 }
 
 #[cfg(test)]
@@ -62,8 +69,13 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(closest_primes(10, 19), [11, 13]);
+        assert_eq!(closest_primes(4, 6), [-1, -1]);
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(closest_primes(19, 31), [29, 31]);
+    }
 }
