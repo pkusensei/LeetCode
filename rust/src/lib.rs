@@ -5,33 +5,51 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn kth_palindrome(queries: &[i32], int_length: i32) -> Vec<i64> {
-    let base = 10i32.pow((int_length as u32 - 1) / 2);
-    let mut res = vec![];
-    for &q in queries.iter() {
-        let mut half = q - 1 + base;
-        let mut digits = vec![];
-        while half > 0 {
-            digits.push(half % 10);
-            half /= 10;
-        }
-        digits.reverse();
-        let mut right = digits.clone();
-        if int_length & 1 == 1 {
-            right.pop();
-        }
-        right.reverse();
-        if right.len() + digits.len() != int_length as usize {
-            res.push(-1);
-        } else {
-            let num = digits
-                .into_iter()
-                .chain(right)
-                .fold(0, |acc, d| 10 * acc + i64::from(d));
-            res.push(num);
+pub fn max_value_of_coins(piles: &[&[i32]], k: i32) -> i32 {
+    let n = piles.len();
+    let k = k as usize;
+    let mut prefix = Vec::with_capacity(n);
+    for pile in piles.iter() {
+        let curr = pile.iter().take(k).fold(vec![], |mut acc, &num| {
+            acc.push(num + acc.last().unwrap_or(&0));
+            acc
+        });
+        prefix.push(curr);
+    }
+    dfs(&prefix, 0, k, &mut vec![vec![-1; 1 + k]; n])
+}
+
+fn dfs(prefix: &[Vec<i32>], idx: usize, k: usize, memo: &mut [Vec<i32>]) -> i32 {
+    if k == 0 || idx >= prefix.len() {
+        return 0;
+    }
+    if memo[idx][k] > -1 {
+        return memo[idx][k];
+    }
+    let curr = &prefix[idx];
+    let mut res = dfs(prefix, 1 + idx, k, memo);
+    for i in 0..curr.len().min(k) {
+        res = res.max(curr[i] + dfs(prefix, 1 + idx, k - i - 1, memo));
+    }
+    memo[idx][k] = res;
+    res
+}
+
+pub fn tabulation(piles: &[&[i32]], k: i32) -> i32 {
+    let k = k as usize;
+    let mut dp = vec![0; 1 + k];
+    for pile in piles {
+        let prefix = pile.iter().fold(vec![], |mut acc, &num| {
+            acc.push(num + acc.last().unwrap_or(&0));
+            acc
+        });
+        for i in (1..=k).rev() {
+            for curr in 1..=i.min(pile.len()) {
+                dp[i] = dp[i].max(dp[i - curr] + prefix[curr - 1]);
+            }
         }
     }
-    res
+    dp[k]
 }
 
 #[cfg(test)]
@@ -65,10 +83,38 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(kth_palindrome(&[2, 4, 6], 4), [1111, 1331, 1551]);
+        assert_eq!(max_value_of_coins(&[&[1, 100, 3], &[7, 8, 9]], 2), 101);
         assert_eq!(
-            kth_palindrome(&[1, 2, 3, 4, 5, 90], 3),
-            [101, 111, 121, 131, 141, 999]
+            max_value_of_coins(
+                &[
+                    &[100],
+                    &[100],
+                    &[100],
+                    &[100],
+                    &[100],
+                    &[100],
+                    &[1, 1, 1, 1, 1, 1, 700]
+                ],
+                7
+            ),
+            706
+        );
+
+        assert_eq!(tabulation(&[&[1, 100, 3], &[7, 8, 9]], 2), 101);
+        assert_eq!(
+            tabulation(
+                &[
+                    &[100],
+                    &[100],
+                    &[100],
+                    &[100],
+                    &[100],
+                    &[100],
+                    &[1, 1, 1, 1, 1, 1, 700]
+                ],
+                7
+            ),
+            706
         );
     }
 
