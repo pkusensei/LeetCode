@@ -5,13 +5,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_difference(nums1: Vec<i32>, nums2: Vec<i32>) -> Vec<Vec<i32>> {
-    let [set1, set2] =
-        [nums1, nums2].map(|v| v.into_iter().collect::<std::collections::HashSet<_>>());
-    vec![
-        set1.difference(&set2).copied().collect(),
-        set2.difference(&set1).copied().collect(),
-    ]
+pub fn min_deletion(nums: &[i32]) -> i32 {
+    let mut stack = vec![];
+    let mut res = 0;
+    'outer: for &num in nums.iter() {
+        if stack.len() & 1 == 0 {
+            stack.push(num);
+        } else {
+            while stack.last().is_some_and(|&v| v == num) {
+                res += 1;
+                continue 'outer;
+            }
+            stack.push(num);
+        }
+    }
+    res + (stack.len() & 1) as i32
 }
 
 #[cfg(test)]
@@ -44,7 +52,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(min_deletion(&[1, 1, 2, 3, 5]), 1);
+        assert_eq!(min_deletion(&[1, 1, 2, 2, 3, 3]), 2);
+    }
 
     #[test]
     fn test() {}
