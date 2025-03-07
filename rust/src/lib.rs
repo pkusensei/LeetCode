@@ -5,21 +5,33 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_deletion(nums: &[i32]) -> i32 {
-    let mut stack = vec![];
-    let mut res = 0;
-    'outer: for &num in nums.iter() {
-        if stack.len() & 1 == 0 {
-            stack.push(num);
+pub fn kth_palindrome(queries: &[i32], int_length: i32) -> Vec<i64> {
+    let base = 10i32.pow((int_length as u32 - 1) / 2);
+    let mut res = vec![];
+    for &q in queries.iter() {
+        let mut half = q - 1 + base;
+        let mut digits = vec![];
+        while half > 0 {
+            digits.push(half % 10);
+            half /= 10;
+        }
+        digits.reverse();
+        let mut right = digits.clone();
+        if int_length & 1 == 1 {
+            right.pop();
+        }
+        right.reverse();
+        if right.len() + digits.len() != int_length as usize {
+            res.push(-1);
         } else {
-            while stack.last().is_some_and(|&v| v == num) {
-                res += 1;
-                continue 'outer;
-            }
-            stack.push(num);
+            let num = digits
+                .into_iter()
+                .chain(right)
+                .fold(0, |acc, d| 10 * acc + i64::from(d));
+            res.push(num);
         }
     }
-    res + (stack.len() & 1) as i32
+    res
 }
 
 #[cfg(test)]
@@ -53,8 +65,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_deletion(&[1, 1, 2, 3, 5]), 1);
-        assert_eq!(min_deletion(&[1, 1, 2, 2, 3, 3]), 2);
+        assert_eq!(kth_palindrome(&[2, 4, 6], 4), [1111, 1331, 1551]);
+        assert_eq!(
+            kth_palindrome(&[1, 2, 3, 4, 5, 90], 3),
+            [101, 111, 121, 131, 141, 999]
+        );
     }
 
     #[test]
