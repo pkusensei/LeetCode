@@ -2,35 +2,19 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::{cmp::Reverse, collections::BinaryHeap};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimize_result(expression: String) -> String {
-    let (left, right) = expression.split_once('+').unwrap();
-    let mut val = u64::MAX;
-    let mut res = String::new();
-    for [left1, left2] in split(left) {
-        if left2.is_empty() {
-            continue;
-        }
-        let [a1, a2] = [left1, left2].map(|v| v.parse::<u64>().unwrap_or(1));
-        for [right1, right2] in split(right) {
-            if right1.is_empty() {
-                continue;
-            }
-            let [b1, b2] = [right1, right2].map(|v| v.parse::<u64>().unwrap_or(1));
-            if a1 * (a2 + b1) * b2 < val {
-                val = a1 * (a2 + b1) * b2;
-                res = format!("{}({}+{}){}", left1, left2, right1, right2);
-            }
-        }
+pub fn maximum_product(nums: Vec<i32>, k: i32) -> i32 {
+    let mut heap: BinaryHeap<_> = nums.into_iter().map(|v| Reverse(i64::from(v))).collect();
+    for _ in 0..k {
+        let Reverse(v) = heap.pop().unwrap();
+        heap.push(Reverse(1 + v));
     }
-    res
-}
-
-fn split(s: &str) -> impl Iterator<Item = [&str; 2]> {
-    let n = s.len();
-    (0..=n).map(|i| [&s[..i], &s[i..]])
+    heap.into_iter()
+        .fold(1, |acc, v| (acc * v.0) % 1_000_000_007) as i32
 }
 
 #[cfg(test)]
