@@ -5,24 +5,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-// https://cp-algorithms.com/string/z-function.html
-pub fn sum_scores(s: &str) -> i64 {
-    let (s, n) = (s.as_bytes(), s.len());
-    let mut z = vec![0; n];
-    let [mut left, mut right] = [0, 0];
-    for idx in 1..n {
-        if idx < right {
-            z[idx] = (right - idx).min(z[idx - left]);
-        }
-        while s.get(idx + z[idx]).is_some_and(|&v| v == s[z[idx]]) {
-            z[idx] += 1;
-        }
-        if idx + z[idx] > right {
-            left = idx;
-            right = idx + z[idx];
+pub fn convert_time(current: &str, correct: &str) -> i32 {
+    let [a, b] = [&current, &correct].map(|s| {
+        let (h, m) = s.split_once(':').unwrap();
+        60 * h.parse::<i32>().unwrap() + m.parse::<i32>().unwrap()
+    });
+    let mut diff = b - a;
+    let mut res = 0;
+    for div in [60, 15, 5, 1] {
+        if diff >= div {
+            res += diff / div;
+            diff %= div;
         }
     }
-    (z.iter().sum::<usize>() + n) as i64
+    res
 }
 
 #[cfg(test)]
@@ -56,8 +52,7 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(sum_scores("babab"), 9);
-        assert_eq!(sum_scores("azbazbzaz"), 14);
+        assert_eq!(convert_time("02:30", "04:35"), 3);
     }
 
     #[test]
