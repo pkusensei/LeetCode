@@ -5,14 +5,14 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_closest_number(nums: Vec<i32>) -> i32 {
-    let mut res = i32::MAX;
-    for &num in nums.iter() {
-        match num.abs().cmp(&res.abs()) {
-            std::cmp::Ordering::Less => res = num,
-            std::cmp::Ordering::Equal => res = res.max(num),
-            std::cmp::Ordering::Greater => (),
+pub fn ways_to_buy_pens_pencils(total: i32, cost1: i32, cost2: i32) -> i64 {
+    let mut res = 0;
+    for c1 in 0.. {
+        let curr = total - c1 * cost1;
+        if curr < 0 {
+            break;
         }
+        res += 1 + i64::from(curr / cost2);
     }
     res
 }
