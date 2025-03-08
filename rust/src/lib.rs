@@ -2,19 +2,67 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::{cmp::Reverse, collections::BinaryHeap};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_product(nums: Vec<i32>, k: i32) -> i32 {
-    let mut heap: BinaryHeap<_> = nums.into_iter().map(|v| Reverse(i64::from(v))).collect();
-    for _ in 0..k {
-        let Reverse(v) = heap.pop().unwrap();
-        heap.push(Reverse(1 + v));
+pub fn maximum_beauty(
+    flowers: &[i32],
+    mut new_flowers: i64,
+    target: i32,
+    full: i32,
+    partial: i32,
+) -> i64 {
+    let (mut flowers, completed) =
+        flowers
+            .iter()
+            .fold((vec![], 0_i64), |(mut acc, count), &flo| {
+                if flo >= target {
+                    (acc, 1 + count)
+                } else {
+                    acc.push(i64::from(flo));
+                    (acc, count)
+                }
+            });
+    let [target, full, partial] = [target, full, partial].map(i64::from);
+    let completed = completed * full;
+    if flowers.is_empty() {
+        return completed;
     }
-    heap.into_iter()
-        .fold(1, |acc, v| (acc * v.0) % 1_000_000_007) as i32
+
+    let n = flowers.len();
+    flowers.sort_unstable_by(|a, b| b.cmp(a));
+    let mut left = 0;
+    while flowers.get(left).is_some_and(|v| target - v <= new_flowers) {
+        new_flowers -= target - flowers[left];
+        left += 1;
+    }
+    if left == n {
+        return completed + (n as i64 * full).max((n as i64 - 1) * full + (target - 1) * partial);
+    }
+    let mut right = n - 1;
+    let mut sum = 0;
+    let mut res = 0;
+    let mut min_flower = flowers[right];
+    while min_flower < target {
+        while left <= right && flowers[right] <= min_flower {
+            sum += flowers[right];
+            let Some(v) = right.checked_sub(1) else {
+                break;
+            };
+            right = v;
+        }
+        let need = (n - right - 1) as i64 * min_flower - sum;
+        if need <= new_flowers {
+            res = res.max(left as i64 * full + min_flower * partial);
+            min_flower += 1;
+        } else if let Some(v) = left.checked_sub(1) {
+            left = v;
+            new_flowers += target - flowers[left];
+        } else {
+            break;
+        }
+    }
+    res + completed
 }
 
 #[cfg(test)]
@@ -47,7 +95,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(maximum_beauty(&[1, 3, 1, 1], 7, 6, 12, 1), 14);
+        assert_eq!(maximum_beauty(&[2, 4, 5, 3], 10, 5, 2, 6), 30);
+    }
 
     #[test]
     fn test() {}
