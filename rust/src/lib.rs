@@ -5,16 +5,41 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn ways_to_buy_pens_pencils(total: i32, cost1: i32, cost2: i32) -> i64 {
-    let mut res = 0;
-    for c1 in 0.. {
-        let curr = total - c1 * cost1;
-        if curr < 0 {
-            break;
-        }
-        res += 1 + i64::from(curr / cost2);
+struct ATM {
+    data: [i64; 5],
+}
+
+impl ATM {
+    fn new() -> Self {
+        Self { data: [0; 5] }
     }
-    res
+
+    fn deposit(&mut self, banknotes_count: Vec<i32>) {
+        for (i, c) in banknotes_count.into_iter().enumerate() {
+            self.data[i] += i64::from(c);
+        }
+    }
+
+    fn withdraw(&mut self, amount: i32) -> Vec<i32> {
+        const DENS: [i64; 5] = [20, 50, 100, 200, 500];
+        let mut amount = i64::from(amount);
+        let mut temp = self.data;
+        let mut res = vec![0; 5];
+        for (i, (c, d)) in temp.iter_mut().zip(DENS).enumerate().rev() {
+            if amount >= d && *c > 0 {
+                let curr = (amount / d).min(*c);
+                res[i] = curr as i32;
+                *c -= curr;
+                amount -= curr * d;
+            }
+        }
+        if amount == 0 {
+            self.data = temp;
+            res
+        } else {
+            vec![-1]
+        }
+    }
 }
 
 #[cfg(test)]
