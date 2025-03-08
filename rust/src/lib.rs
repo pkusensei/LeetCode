@@ -5,24 +5,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_winners(matches: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
-    let mut map = std::collections::HashMap::new();
-    for m in matches.iter() {
-        let [a, b] = m[..] else { unreachable!() };
-        map.entry(a).or_insert(0);
-        *map.entry(b).or_insert(0) += 1;
+pub fn maximum_candies(candies: &[i32], k: i64) -> i32 {
+    let sum: i64 = candies.iter().map(|&v| i64::from(v)).sum();
+    if sum < k {
+        return 0;
     }
-    let [mut win, mut one] = [vec![], vec![]];
-    for (&k, &v) in map.iter() {
-        match v {
-            0 => win.push(k),
-            1 => one.push(k),
-            _ => (),
+    let mut left = 1;
+    let mut right = *candies.iter().max().unwrap();
+    while left < right {
+        let mid = left + (right + 1 - left) / 2;
+        if candies.iter().map(|&v| i64::from(v / mid)).sum::<i64>() >= k {
+            left = mid;
+        } else {
+            right = mid - 1;
         }
     }
-    win.sort_unstable();
-    one.sort_unstable();
-    vec![win, one]
+    left
 }
 
 #[cfg(test)]
@@ -55,7 +53,9 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(maximum_candies(&[5, 8, 6], 3), 5);
+    }
 
     #[test]
     fn test() {}
