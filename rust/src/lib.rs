@@ -5,21 +5,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_recolors(blocks: &str, k: i32) -> i32 {
-    let mut res = k;
-    let k = k as usize;
-    let s = blocks.as_bytes();
-    let mut curr = 0;
-    for (idx, &b) in s.iter().enumerate() {
-        curr += i32::from(b == b'W');
-        if idx >= k {
-            curr -= i32::from(s[idx - k] == b'W');
+// https://cp-algorithms.com/string/z-function.html
+pub fn sum_scores(s: &str) -> i64 {
+    let (s, n) = (s.as_bytes(), s.len());
+    let mut z = vec![0; n];
+    let [mut left, mut right] = [0, 0];
+    for idx in 1..n {
+        if idx < right {
+            z[idx] = (right - idx).min(z[idx - left]);
         }
-        if idx >= k - 1 {
-            res = res.min(curr);
+        while s.get(idx + z[idx]).is_some_and(|&v| v == s[z[idx]]) {
+            z[idx] += 1;
+        }
+        if idx + z[idx] > right {
+            left = idx;
+            right = idx + z[idx];
         }
     }
-    res
+    (z.iter().sum::<usize>() + n) as i64
 }
 
 #[cfg(test)]
@@ -53,7 +56,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(minimum_recolors("WBWBBBW", 2), 0);
+        assert_eq!(sum_scores("babab"), 9);
+        assert_eq!(sum_scores("azbazbzaz"), 14);
     }
 
     #[test]
