@@ -5,20 +5,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn convert_time(current: &str, correct: &str) -> i32 {
-    let [a, b] = [&current, &correct].map(|s| {
-        let (h, m) = s.split_once(':').unwrap();
-        60 * h.parse::<i32>().unwrap() + m.parse::<i32>().unwrap()
-    });
-    let mut diff = b - a;
-    let mut res = 0;
-    for div in [60, 15, 5, 1] {
-        if diff >= div {
-            res += diff / div;
-            diff %= div;
+pub fn find_winners(matches: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
+    let mut map = std::collections::HashMap::new();
+    for m in matches.iter() {
+        let [a, b] = m[..] else { unreachable!() };
+        map.entry(a).or_insert(0);
+        *map.entry(b).or_insert(0) += 1;
+    }
+    let [mut win, mut one] = [vec![], vec![]];
+    for (&k, &v) in map.iter() {
+        match v {
+            0 => win.push(k),
+            1 => one.push(k),
+            _ => (),
         }
     }
-    res
+    win.sort_unstable();
+    one.sort_unstable();
+    vec![win, one]
 }
 
 #[cfg(test)]
@@ -51,9 +55,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(convert_time("02:30", "04:35"), 3);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
