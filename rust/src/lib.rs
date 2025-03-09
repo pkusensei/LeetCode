@@ -5,20 +5,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn intersection(nums: Vec<Vec<i32>>) -> Vec<i32> {
-    let n = nums.len();
-    let mut res: Vec<_> = nums
-        .into_iter()
-        .flatten()
-        .fold(std::collections::HashMap::new(), |mut acc, num| {
-            *acc.entry(num).or_insert(0) += 1;
-            acc
-        })
-        .into_iter()
-        .filter_map(|(i, v)| if v == n { Some(i) } else { None })
-        .collect();
-    res.sort_unstable();
-    res
+pub fn count_lattice_points(circles: Vec<Vec<i32>>) -> i32 {
+    let mut set = std::collections::HashSet::new();
+    for c in circles.iter() {
+        let [cx, cy, r] = c[..] else { unreachable!() };
+        for x in cx - r..=cx + r {
+            for y in cy - r..=cy + r {
+                if (x - cx).pow(2) + (y - cy).pow(2) <= r.pow(2) {
+                    set.insert([x, y]);
+                }
+            }
+        }
+    }
+    set.len() as i32
 }
 
 #[cfg(test)]
