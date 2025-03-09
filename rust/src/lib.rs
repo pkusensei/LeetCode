@@ -5,41 +5,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-struct ATM {
-    data: [i64; 5],
-}
-
-impl ATM {
-    fn new() -> Self {
-        Self { data: [0; 5] }
-    }
-
-    fn deposit(&mut self, banknotes_count: Vec<i32>) {
-        for (i, c) in banknotes_count.into_iter().enumerate() {
-            self.data[i] += i64::from(c);
-        }
-    }
-
-    fn withdraw(&mut self, amount: i32) -> Vec<i32> {
-        const DENS: [i64; 5] = [20, 50, 100, 200, 500];
-        let mut amount = i64::from(amount);
-        let mut temp = self.data;
-        let mut res = vec![0; 5];
-        for (i, (c, d)) in temp.iter_mut().zip(DENS).enumerate().rev() {
-            if amount >= d && *c > 0 {
-                let curr = (amount / d).min(*c);
-                res[i] = curr as i32;
-                *c -= curr;
-                amount -= curr * d;
-            }
-        }
-        if amount == 0 {
-            self.data = temp;
-            res
+pub fn number_of_alternating_groups(mut colors: Vec<i32>, k: i32) -> i32 {
+    colors.extend_from_within(..k as usize - 1);
+    let mut len = 1;
+    let mut res = 0;
+    for (idx, &color) in colors.iter().enumerate().skip(1) {
+        if color != colors[idx - 1] {
+            len += 1;
+            res += i32::from(len >= k)
         } else {
-            vec![-1]
+            len = 1;
         }
     }
+    res
 }
 
 #[cfg(test)]
@@ -72,7 +50,14 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(number_of_alternating_groups(vec![0, 1, 0, 1, 0], 3), 3);
+        assert_eq!(
+            number_of_alternating_groups(vec![0, 1, 0, 0, 1, 0, 1], 6),
+            2
+        );
+        assert_eq!(number_of_alternating_groups(vec![1, 1, 0, 1], 4), 0);
+    }
 
     #[test]
     fn test() {}
