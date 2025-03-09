@@ -5,57 +5,37 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_trailing_zeros(grid: &[&[i32]]) -> i32 {
-    let [rows, cols] = get_dimensions(grid);
-    let mut left = vec![vec![[0, 0]; 1 + cols]; rows];
-    for r in 0..rows {
-        for c in 0..cols {
-            let [a, b] = factors(grid[r][c]);
-            left[r][1 + c][0] = a + left[r][c][0];
-            left[r][1 + c][1] = b + left[r][c][1];
-        }
-    }
-    let mut top = vec![vec![[0, 0]; cols]; 1 + rows];
-    for c in 0..cols {
-        for r in 0..rows {
-            let [a, b] = factors(grid[r][c]);
-            top[1 + r][c][0] = a + top[r][c][0];
-            top[1 + r][c][1] = b + top[r][c][1];
-        }
-    }
+pub fn longest_path(parent: &[i32], s: &str) -> i32 {
+    let (s, n) = (s.as_bytes(), s.len());
+    let adj = parent
+        .iter()
+        .enumerate()
+        .fold(vec![vec![]; n], |mut acc, (i, &p)| {
+            if p >= 0 {
+                acc[p as usize].push(i);
+            }
+            acc
+        });
     let mut res = 0;
-    for r in 0..rows {
-        for c in 0..cols {
-            let h1 = left[r][c];
-            let h2 = [
-                left[r][cols][0] - left[r][1 + c][0],
-                left[r][cols][1] - left[r][1 + c][1],
-            ];
-            let v1 = top[1 + r][c];
-            let v2 = [
-                top[rows][c][0] - top[r][c][0],
-                top[rows][c][1] - top[r][c][1],
-            ];
-            res = res.max((h1[0] + v1[0]).min(h1[1] + v1[1]));
-            res = res.max((h1[0] + v2[0]).min(h1[1] + v2[1]));
-            res = res.max((h2[0] + v1[0]).min(h2[1] + v1[1]));
-            res = res.max((h2[0] + v2[0]).min(h2[1] + v2[1]));
-        }
-    }
+    dfs(&adj, s, 0, &mut res);
     res
 }
 
-const fn factors(mut num: i32) -> [i32; 2] {
-    let [mut a, mut b] = [0, 0];
-    while num > 0 && num % 2 == 0 {
-        num /= 2;
-        a += 1;
+fn dfs(adj: &[Vec<usize>], s: &[u8], node: usize, res: &mut i32) -> i32 {
+    let [mut max1, mut max2] = [0, 0];
+    for &next in adj[node].iter() {
+        let temp = dfs(adj, s, next, res);
+        if s[node] != s[next] {
+            if temp > max1 {
+                max2 = max1;
+                max1 = temp;
+            } else if temp > max2 {
+                max2 = temp;
+            }
+        }
     }
-    while num > 0 && num % 5 == 0 {
-        num /= 5;
-        b += 1;
-    }
-    [a, b]
+    *res = (*res).max(1 + max1 + max2);
+    1 + max1
 }
 
 #[cfg(test)]
@@ -89,17 +69,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            max_trailing_zeros(&[
-                &[23, 17, 15, 3, 20],
-                &[8, 1, 20, 27, 11],
-                &[9, 4, 6, 2, 21],
-                &[40, 9, 1, 10, 6],
-                &[22, 7, 4, 5, 3]
-            ]),
-            3
-        );
-        assert_eq!(max_trailing_zeros(&[&[4, 3, 2], &[7, 6, 1], &[8, 8, 8]]), 0);
+        assert_eq!(longest_path(&[-1, 0, 0, 1, 1, 2], "abacbe"), 3);
+        assert_eq!(longest_path(&[-1, 0, 0, 0], "aabc"), 3);
     }
 
     #[test]
