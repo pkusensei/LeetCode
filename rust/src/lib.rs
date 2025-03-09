@@ -5,19 +5,25 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_lattice_points(circles: Vec<Vec<i32>>) -> i32 {
-    let mut set = std::collections::HashSet::new();
-    for c in circles.iter() {
-        let [cx, cy, r] = c[..] else { unreachable!() };
-        for x in cx - r..=cx + r {
-            for y in cy - r..=cy + r {
-                if (x - cx).pow(2) + (y - cy).pow(2) <= r.pow(2) {
-                    set.insert([x, y]);
-                }
-            }
-        }
+pub fn count_rectangles(rectangles: Vec<Vec<i32>>, points: Vec<Vec<i32>>) -> Vec<i32> {
+    let mut recs = vec![vec![]; 101];
+    for rect in rectangles.iter() {
+        let [x, y] = rect[..] else { unreachable!() };
+        recs[y as usize].push(x);
     }
-    set.len() as i32
+    for r in recs.iter_mut() {
+        r.sort_unstable_by(|a, b| b.cmp(a));
+    }
+    points
+        .iter()
+        .map(|p| {
+            let [x, y] = p[..] else { unreachable!() };
+            recs[y as usize..]
+                .iter()
+                .map(|r| r.partition_point(|&v| v <= x))
+                .sum::<usize>() as i32
+        })
+        .collect()
 }
 
 #[cfg(test)]
