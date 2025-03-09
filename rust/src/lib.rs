@@ -5,21 +5,28 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn full_bloom_flowers(flowers: &[[i32; 2]], people: &[i32]) -> Vec<i32> {
-    let mut map = std::collections::BTreeMap::new();
-    for flo in flowers.iter() {
-        *map.entry(flo[0]).or_insert(0) += 1;
-        *map.entry(1 + flo[1]).or_insert(0) -= 1;
+pub fn minimum_average_difference(nums: Vec<i32>) -> i32 {
+    let n = nums.len();
+    let prefix = nums.iter().fold(Vec::with_capacity(n), |mut acc, &num| {
+        acc.push(i64::from(num) + acc.last().unwrap_or(&0));
+        acc
+    });
+    let mut res = 0;
+    let mut curr = u64::MAX;
+    for (idx, &left) in prefix.iter().enumerate() {
+        let right = prefix[n - 1] - left;
+        let aleft = left / (1 + idx as i64);
+        let aright = if idx == n - 1 {
+            0
+        } else {
+            right / (n - idx - 1) as i64
+        };
+        if aleft.abs_diff(aright) < curr {
+            curr = aleft.abs_diff(aright);
+            res = idx;
+        }
     }
-    let mut curr = 0;
-    for v in map.values_mut() {
-        curr += *v;
-        *v = curr;
-    }
-    people
-        .iter()
-        .map(|&p| map.range(..=p).next_back().map(|i| *i.1).unwrap_or(0))
-        .collect()
+    res as i32
 }
 
 #[cfg(test)]
@@ -52,12 +59,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(
-            full_bloom_flowers(&[[1, 6], [3, 7], [9, 12], [4, 13]], &[2, 3, 7, 11]),
-            [1, 2, 2, 2]
-        );
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
