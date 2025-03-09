@@ -5,27 +5,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn digit_sum(s: String, k: i32) -> String {
-    let k = k as usize;
-    let mut s: Vec<_> = s.bytes().map(|b| u16::from(b - b'0')).collect();
-    while s.len() > k {
-        s = s
-            .chunks(k)
-            .flat_map(|w| {
-                let mut sum: u16 = w.iter().sum();
-                let mut digits = vec![];
-                while sum > 0 {
-                    digits.push(sum % 10);
-                    sum /= 10;
-                }
-                if digits.is_empty() {
-                    digits.push(0);
-                }
-                digits.into_iter().rev()
-            })
-            .collect();
+pub fn minimum_rounds(tasks: Vec<i32>) -> i32 {
+    use std::collections::HashMap;
+    let map = tasks.iter().fold(HashMap::new(), |mut acc, &num| {
+        *acc.entry(num).or_insert(0) += 1;
+        acc
+    });
+    let mut res = 0;
+    for v in map.into_values() {
+        if v == 1 {
+            return -1;
+        }
+        res += v / 3 + i32::from(v % 3 > 0);
     }
-    s.into_iter().map(|v| char::from(v as u8 + b'0')).collect()
+    res
 }
 
 #[cfg(test)]
