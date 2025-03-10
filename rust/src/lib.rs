@@ -5,20 +5,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_card_pickup(cards: Vec<i32>) -> i32 {
-    let mut res = i32::MAX;
-    let mut seen = std::collections::HashMap::new();
-    for (i, &num) in cards.iter().enumerate() {
-        if let Some(prev) = seen.get(&num) {
-            res = res.min((1 + i - prev) as i32);
+pub fn count_distinct(nums: Vec<i32>, k: i32, p: i32) -> i32 {
+    let n = nums.len();
+    let mut set = std::collections::HashSet::new();
+    for left in 0..n {
+        let mut count = 0;
+        for right in left..n {
+            count += i32::from(nums[right] % p == 0);
+            if count > k {
+                break;
+            }
+            set.insert(&nums[left..=right]);
         }
-        seen.insert(num, i);
     }
-    if res == i32::MAX {
-        -1
-    } else {
-        res
-    }
+    set.len() as i32
 }
 
 #[cfg(test)]
