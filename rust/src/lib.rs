@@ -5,20 +5,30 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_bags(capacity: Vec<i32>, rocks: Vec<i32>, mut additional_rocks: i32) -> i32 {
-    let mut deltas: Vec<_> = capacity
-        .iter()
-        .zip(rocks.iter())
-        .map(|(c, r)| c - r)
-        .collect();
-    deltas.sort_unstable();
-    let mut res = 0;
-    for &num in deltas.iter() {
-        if additional_rocks >= num {
-            additional_rocks -= num;
+pub fn minimum_lines(mut stock_prices: Vec<Vec<i32>>) -> i32 {
+    let n = stock_prices.len();
+    if n <= 2 {
+        return (n as i32 - 1).max(0);
+    }
+    stock_prices.sort_unstable_by_key(|s| s[0]);
+    let [x0, y0] = stock_prices[0][..] else {
+        unreachable!()
+    };
+    let [x1, y1] = stock_prices[1][..] else {
+        unreachable!()
+    };
+    let mut dx = i64::from(x1 - x0);
+    let mut dy = i64::from(y1 - y0);
+    let mut res = 1;
+    for w in stock_prices.windows(2).skip(1) {
+        let [x0, y0] = w[0][..] else { unreachable!() };
+        let [x1, y1] = w[1][..] else { unreachable!() };
+        let cdx = i64::from(x1 - x0);
+        let cdy = i64::from(y1 - y0);
+        if dy * cdx != dx * cdy {
             res += 1;
-        } else {
-            break;
+            dx = cdx;
+            dy = cdy;
         }
     }
     res
