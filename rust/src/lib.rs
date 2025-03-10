@@ -5,15 +5,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_consecutive(bottom: i32, top: i32, mut special: Vec<i32>) -> i32 {
-    let n = special.len();
-    special.sort_unstable();
-    let res = special
-        .windows(2)
-        .map(|w| w[1] - w[0] - 1)
-        .max()
-        .unwrap_or(0);
-    res.max(special[0] - bottom).max(top - special[n - 1])
+pub fn largest_combination(candidates: Vec<i32>) -> i32 {
+    let mut res = 0;
+    for bit in 0..=24 {
+        let mut curr = 0;
+        for &num in candidates.iter() {
+            curr += (num >> bit) & 1
+        }
+        res = res.max(curr)
+    }
+    res
 }
 
 #[cfg(test)]
