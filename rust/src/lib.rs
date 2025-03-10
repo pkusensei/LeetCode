@@ -5,16 +5,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn appeal_sum(s: &str) -> i64 {
-    let mut chs = [-1; 26]; // prev idx
-    let mut res = 0;
-    let mut curr = 0;
-    for (i, b) in (0..).zip(s.bytes()) {
-        curr += i - chs[usize::from(b - b'a')]; // exclude dup
-        res += curr;
-        chs[usize::from(b - b'a')] = i;
-    }
-    res
+pub fn largest_good_integer(num: String) -> String {
+    num.as_bytes()
+        .windows(3)
+        .filter_map(|w| {
+            if w[0] == w[1] && w[1] == w[2] {
+                Some(w)
+            } else {
+                None
+            }
+        })
+        .max()
+        .map(|w| w.iter().map(|b| char::from(*b)).collect())
+        .unwrap_or_default()
 }
 
 #[cfg(test)]
@@ -47,10 +50,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(appeal_sum("abbca"), 28);
-        assert_eq!(appeal_sum("code"), 20);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
