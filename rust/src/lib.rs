@@ -5,17 +5,15 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn remove_anagrams(words: Vec<String>) -> Vec<String> {
-    fn count(s: &str) -> [u8; 26] {
-        s.bytes().fold([0; 26], |mut acc, b| {
-            acc[usize::from(b - b'a')] += 1;
-            acc
-        })
-    }
-    words
-        .chunk_by(|a, b| count(a) == count(b))
-        .map(|w| w[0].to_string())
-        .collect()
+pub fn max_consecutive(bottom: i32, top: i32, mut special: Vec<i32>) -> i32 {
+    let n = special.len();
+    special.sort_unstable();
+    let res = special
+        .windows(2)
+        .map(|w| w[1] - w[0] - 1)
+        .max()
+        .unwrap_or(0);
+    res.max(special[0] - bottom).max(top - special[n - 1])
 }
 
 #[cfg(test)]
