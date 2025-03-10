@@ -2,40 +2,18 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn has_valid_path(grid: &[&[char]]) -> bool {
-    dfs(grid, 0, 0, 0, &mut HashMap::new())
-}
-
-fn dfs(
-    grid: &[&[char]],
-    r: usize,
-    c: usize,
-    mut open: i32,
-    memo: &mut HashMap<(usize, usize, i32), bool>,
-) -> bool {
-    let [rows, cols] = get_dimensions(grid);
-    if (rows + cols - 1) & 1 == 1 {
-        return false; // path must has even length
+pub fn divisor_substrings(num: i32, k: i32) -> i32 {
+    let s = num.to_string();
+    let k = k as usize;
+    let n = s.len();
+    let mut res = 0;
+    for i in 0..=n - k {
+        let val = s[i..i + k].parse::<i32>().unwrap();
+        res += i32::from(val > 0 && num % val == 0);
     }
-    let key = (r, c, open);
-    if let Some(&v) = memo.get(&key) {
-        return v;
-    }
-    open += if grid[r][c] == '(' { 1 } else { -1 };
-    if open < 0 {
-        return false;
-    }
-    if r == rows - 1 && c == cols - 1 {
-        return open == 0;
-    }
-    let res = (1 + r < rows && dfs(grid, 1 + r, c, open, memo))
-        || (1 + c < cols && dfs(grid, r, 1 + c, open, memo));
-    memo.insert(key, res);
     res
 }
 
@@ -69,15 +47,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert!(has_valid_path(&[
-            &['(', '(', '('],
-            &[')', '(', ')'],
-            &['(', '(', ')'],
-            &['(', '(', ')']
-        ]));
-        assert!(!has_valid_path(&[&[')', ')'], &['(', '(']]))
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
