@@ -5,18 +5,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn remove_digit(number: String, digit: char) -> String {
-    let s = number.as_bytes().to_vec();
-    let mut res = vec![];
-    for i in number
-        .char_indices()
-        .filter_map(|(i, c)| if c == digit { Some(i) } else { None })
-    {
-        let mut curr = s.clone();
-        curr.remove(i);
-        res = res.max(curr);
+pub fn minimum_card_pickup(cards: Vec<i32>) -> i32 {
+    let mut res = i32::MAX;
+    let mut seen = std::collections::HashMap::new();
+    for (i, &num) in cards.iter().enumerate() {
+        if let Some(prev) = seen.get(&num) {
+            res = res.min((1 + i - prev) as i32);
+        }
+        seen.insert(num, i);
     }
-    String::from_utf8(res).unwrap()
+    if res == i32::MAX {
+        -1
+    } else {
+        res
+    }
 }
 
 #[cfg(test)]
