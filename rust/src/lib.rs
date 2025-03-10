@@ -5,41 +5,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn largest_variance(s: &str) -> i32 {
-    let count = s.bytes().fold([0; 26], |mut acc, b| {
-        acc[usize::from(b - b'a')] += 1;
-        acc
-    });
-    let mut res = 0;
-    for a in 0..26 {
-        for b in 0..26 {
-            if a == b || count[a] == 0 || count[b] == 0 {
-                continue;
-            }
-            let [ch1, ch2] = [a, b].map(|v| v as u8 + b'a');
-            let [mut major, mut minor] = [0, 0];
-            let mut rest_minor = count[b];
-            for b in s.bytes() {
-                if b == ch1 {
-                    major += 1;
-                }
-                if b == ch2 {
-                    minor += 1;
-                    rest_minor -= 1;
-                }
-                // only when there is a minor char
-                if minor > 0 {
-                    res = res.max(major - minor);
-                }
-                // reset only when a minor exists in the rest
-                if major < minor && rest_minor > 0 {
-                    major = 0;
-                    minor = 0;
-                }
-            }
-        }
+pub fn remove_anagrams(words: Vec<String>) -> Vec<String> {
+    fn count(s: &str) -> [u8; 26] {
+        s.bytes().fold([0; 26], |mut acc, b| {
+            acc[usize::from(b - b'a')] += 1;
+            acc
+        })
     }
-    res
+    words
+        .chunk_by(|a, b| count(a) == count(b))
+        .map(|w| w[0].to_string())
+        .collect()
 }
 
 #[cfg(test)]
@@ -72,10 +48,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(largest_variance("aababbb"), 3);
-        assert_eq!(largest_variance("abcde"), 0);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
