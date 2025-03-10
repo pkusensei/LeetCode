@@ -5,88 +5,39 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-use std::collections::VecDeque;
-
-pub fn maximum_minutes(grid: &[&[i32]]) -> i32 {
-    let (board, queue) = init(grid);
-    let fire_board = spread(board.clone(), queue);
-    let mut left = -1;
-    let mut right = 1_000_000_000;
-    while left < right {
-        let mid = (right + 1 + left) / 2;
-        if walk(&board, &fire_board, mid) {
-            left = mid;
-        } else {
-            right = mid - 1;
-        }
-    }
-    left
-}
-
-fn walk(board: &[Vec<i32>], fire_board: &[Vec<i32>], mid: i32) -> bool {
-    let [rows, cols] = get_dimensions(board);
-    let mut curr_board = board.to_vec();
-    curr_board[0][0] = 0;
-    let mut queue = VecDeque::from([([0, 0], mid)]);
-    while let Some(([r, c], step)) = queue.pop_front() {
-        if r == rows - 1 && c == cols - 1 && (fire_board[r][c] < 0 || step <= fire_board[r][c]) {
-            return true;
-        }
-        if fire_board[r][c] > 0 && step >= fire_board[r][c] {
-            continue;
-        }
-        let step_next = 1 + step;
-        for [nr, nc] in neighbors([r, c]) {
-            if curr_board
-                .get(nr)
-                .is_some_and(|row| row.get(nc).is_some_and(|&v| v == -1))
-            {
-                curr_board[nr][nc] = step_next;
-                queue.push_back(([nr, nc], step_next));
+pub fn count_of_substrings(word: &str, k: i32) -> i64 {
+    fn at_least_k(s: &[u8], k: i32) -> i64 {
+        let n = s.len();
+        let mut res = 0;
+        let mut left = 0;
+        let mut vows = [0; 5];
+        let mut cons = 0;
+        for (right, &b) in s.iter().enumerate() {
+            match b {
+                b'a' => vows[0] += 1,
+                b'e' => vows[1] += 1,
+                b'i' => vows[2] += 1,
+                b'o' => vows[3] += 1,
+                b'u' => vows[4] += 1,
+                _ => cons += 1,
             }
-        }
-    }
-    false
-}
-
-fn spread(mut fire_board: Vec<Vec<i32>>, mut queue: VecDeque<[usize; 2]>) -> Vec<Vec<i32>> {
-    let mut t = 0;
-    while !queue.is_empty() {
-        let _n = queue.len();
-        t += 1;
-        for _ in 0.._n {
-            let [r, c] = queue.pop_front().unwrap();
-            for [nr, nc] in neighbors([r, c]) {
-                if fire_board
-                    .get(nr)
-                    .is_some_and(|row| row.get(nc).is_some_and(|&v| v == -1))
-                {
-                    fire_board[nr][nc] = t;
-                    queue.push_back([nr, nc]);
+            while vows.iter().all(|&v| v > 0) && cons >= k {
+                res += n - right;
+                match s[left] {
+                    b'a' => vows[0] -= 1,
+                    b'e' => vows[1] -= 1,
+                    b'i' => vows[2] -= 1,
+                    b'o' => vows[3] -= 1,
+                    b'u' => vows[4] -= 1,
+                    _ => cons -= 1,
                 }
+                left += 1;
             }
         }
+        res as _
     }
-    fire_board
-}
 
-fn init(grid: &[&[i32]]) -> (Vec<Vec<i32>>, VecDeque<[usize; 2]>) {
-    let [rows, cols] = get_dimensions(grid);
-    let mut board = vec![vec![-1; cols]; rows];
-    let mut queue = VecDeque::new();
-    for (r, row) in grid.iter().enumerate() {
-        for (c, &v) in row.iter().enumerate() {
-            match v {
-                1 => {
-                    board[r][c] = 0;
-                    queue.push_back([r, c]);
-                }
-                2 => board[r][c] = -2,
-                _ => (),
-            }
-        }
-    }
-    (board, queue)
+    at_least_k(word.as_bytes(), k) - at_least_k(word.as_bytes(), 1 + k)
 }
 
 #[cfg(test)]
@@ -120,37 +71,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            maximum_minutes(&[
-                &[0, 2, 0, 0, 0, 0, 0],
-                &[0, 0, 0, 2, 2, 1, 0],
-                &[0, 2, 0, 0, 1, 2, 0],
-                &[0, 0, 2, 2, 2, 0, 2],
-                &[0, 0, 0, 0, 0, 0, 0]
-            ]),
-            3
-        );
-        assert_eq!(
-            maximum_minutes(&[&[0, 0, 0, 0], &[0, 1, 2, 0], &[0, 2, 0, 0]]),
-            -1
-        );
-        assert_eq!(
-            maximum_minutes(&[&[0, 0, 0], &[2, 2, 0], &[1, 2, 0]]),
-            1_000_000_000
-        );
+        assert_eq!(count_of_substrings("aeioqq", 1), 0);
+        assert_eq!(count_of_substrings("aeiou", 0), 1);
+        assert_eq!(count_of_substrings("ieaouqqieaouqq", 1), 3);
     }
 
     #[test]
     fn test() {
-        assert_eq!(
-            maximum_minutes(&[
-                &[0, 2, 0, 0, 1],
-                &[0, 2, 0, 2, 2],
-                &[0, 2, 0, 0, 0],
-                &[0, 0, 2, 2, 0],
-                &[0, 0, 0, 0, 0]
-            ]),
-            0
-        )
+        assert_eq!(count_of_substrings("iqeaouqi", 2), 3);
+        assert_eq!(count_of_substrings("aadieuoh", 1), 2);
     }
 }
