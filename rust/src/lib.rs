@@ -5,20 +5,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_distinct(nums: Vec<i32>, k: i32, p: i32) -> i32 {
-    let n = nums.len();
-    let mut set = std::collections::HashSet::new();
-    for left in 0..n {
-        let mut count = 0;
-        for right in left..n {
-            count += i32::from(nums[right] % p == 0);
-            if count > k {
-                break;
-            }
-            set.insert(&nums[left..=right]);
-        }
+pub fn appeal_sum(s: &str) -> i64 {
+    let mut chs = [-1; 26]; // prev idx
+    let mut res = 0;
+    let mut curr = 0;
+    for (i, b) in (0..).zip(s.bytes()) {
+        curr += i - chs[usize::from(b - b'a')]; // exclude dup
+        res += curr;
+        chs[usize::from(b - b'a')] = i;
     }
-    set.len() as i32
+    res
 }
 
 #[cfg(test)]
@@ -51,7 +47,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(appeal_sum("abbca"), 28);
+        assert_eq!(appeal_sum("code"), 20);
+    }
 
     #[test]
     fn test() {}
