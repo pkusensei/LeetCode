@@ -2,47 +2,40 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_texts(pressed_keys: &str) -> i32 {
-    let (s, n) = (pressed_keys.as_bytes(), pressed_keys.len());
-    // dfs(s, 0, &mut vec![-1; n])
-    let mut dp = vec![0; 1 + n];
-    dp[n] = 1;
-    for idx in (0..n).rev() {
-        let len = if matches!(s[idx], b'7' | b'9') { 4 } else { 3 };
-        for i in idx..(idx + len).min(n) {
-            if s[i] != s[idx] {
-                break;
-            }
-            dp[idx] += dp[1 + i];
-            dp[idx] %= MOD;
-        }
-    }
-    dp[0]
+pub fn has_valid_path(grid: &[&[char]]) -> bool {
+    dfs(grid, 0, 0, 0, &mut HashMap::new())
 }
 
-const MOD: i32 = 1_000_000_007;
-
-fn dfs(s: &[u8], idx: usize, memo: &mut [i32]) -> i32 {
-    let n = s.len();
-    if idx >= n {
-        return 1;
+fn dfs(
+    grid: &[&[char]],
+    r: usize,
+    c: usize,
+    mut open: i32,
+    memo: &mut HashMap<(usize, usize, i32), bool>,
+) -> bool {
+    let [rows, cols] = get_dimensions(grid);
+    if (rows + cols - 1) & 1 == 1 {
+        return false; // path must has even length
     }
-    if memo[idx] > -1 {
-        return memo[idx];
+    let key = (r, c, open);
+    if let Some(&v) = memo.get(&key) {
+        return v;
     }
-    let mut res = 0;
-    let len = if matches!(s[idx], b'7' | b'9') { 4 } else { 3 };
-    for i in idx..(idx + len).min(n) {
-        if s[i] != s[idx] {
-            break;
-        }
-        res += dfs(s, 1 + i, memo);
-        res %= MOD;
+    open += if grid[r][c] == '(' { 1 } else { -1 };
+    if open < 0 {
+        return false;
     }
-    memo[idx] = res;
+    if r == rows - 1 && c == cols - 1 {
+        return open == 0;
+    }
+    let res = (1 + r < rows && dfs(grid, 1 + r, c, open, memo))
+        || (1 + c < cols && dfs(grid, r, 1 + c, open, memo));
+    memo.insert(key, res);
     res
 }
 
@@ -77,11 +70,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(count_texts("22233"), 8);
-        assert_eq!(
-            count_texts("222222222222222222222222222222222222"),
-            82876089
-        );
+        assert!(has_valid_path(&[
+            &['(', '(', '('],
+            &[')', '(', ')'],
+            &['(', '(', ')'],
+            &['(', '(', ')']
+        ]));
+        assert!(!has_valid_path(&[&[')', ')'], &['(', '(']]))
     }
 
     #[test]
