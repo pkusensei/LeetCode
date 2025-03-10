@@ -5,25 +5,38 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_white_tiles(tiles: &mut [[i32; 2]], carpet_len: i32) -> i32 {
-    tiles.sort_unstable();
-    let prefix = tiles.iter().fold(vec![], |mut acc, t| {
-        acc.push(t[1] - t[0] + 1 + acc.last().unwrap_or(&0));
+pub fn largest_variance(s: &str) -> i32 {
+    let count = s.bytes().fold([0; 26], |mut acc, b| {
+        acc[usize::from(b - b'a')] += 1;
         acc
     });
     let mut res = 0;
-    for (idx, tile) in tiles.iter().enumerate() {
-        let [left, right] = tile[..] else {
-            unreachable!()
-        };
-        // Put on left
-        let i = tiles.partition_point(|sp| sp[0] < left + carpet_len);
-        if i == 1 + idx {
-            res = res.max((1 + right - left).min(carpet_len));
-        } else {
-            let mut curr = prefix[i - 2] - if idx > 0 { prefix[idx - 1] } else { 0 };
-            curr += (left + carpet_len).min(1 + tiles[i - 1][1]) - tiles[i - 1][0];
-            res = res.max(curr);
+    for a in 0..26 {
+        for b in 0..26 {
+            if a == b || count[a] == 0 || count[b] == 0 {
+                continue;
+            }
+            let [ch1, ch2] = [a, b].map(|v| v as u8 + b'a');
+            let [mut major, mut minor] = [0, 0];
+            let mut rest_minor = count[b];
+            for b in s.bytes() {
+                if b == ch1 {
+                    major += 1;
+                }
+                if b == ch2 {
+                    minor += 1;
+                    rest_minor -= 1;
+                }
+                // only when there is a minor char
+                if minor > 0 {
+                    res = res.max(major - minor);
+                }
+                // reset only when a minor exists in the rest
+                if major < minor && rest_minor > 0 {
+                    major = 0;
+                    minor = 0;
+                }
+            }
         }
     }
     res
@@ -60,11 +73,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            maximum_white_tiles(&mut [[1, 5], [10, 11], [12, 18], [20, 25], [30, 32]], 10),
-            9
-        );
-        assert_eq!(maximum_white_tiles(&mut [[10, 11], [1, 1]], 2), 2);
+        assert_eq!(largest_variance("aababbb"), 3);
+        assert_eq!(largest_variance("abcde"), 0);
     }
 
     #[test]
