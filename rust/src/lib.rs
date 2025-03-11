@@ -5,17 +5,15 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn digit_count(num: String) -> bool {
-    let count = num.bytes().fold([0; 10], |mut acc, b| {
-        acc[usize::from(b - b'0')] += 1;
-        acc
-    });
-    for (idx, b) in num.bytes().enumerate() {
-        if b - b'0' != count[idx] {
-            return false;
-        }
+pub fn largest_word_count(messages: Vec<String>, senders: Vec<String>) -> String {
+    let mut map = std::collections::HashMap::new();
+    for (m, s) in messages.iter().zip(senders) {
+        *map.entry(s).or_insert(0) += m.split_ascii_whitespace().count();
     }
-    true
+    map.into_iter()
+        .max_by(|a, b| a.1.cmp(&b.1).then(a.0.cmp(&b.0)))
+        .map(|i| i.0)
+        .unwrap_or_default()
 }
 
 #[cfg(test)]
