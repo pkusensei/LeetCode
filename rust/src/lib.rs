@@ -5,31 +5,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_lines(mut stock_prices: Vec<Vec<i32>>) -> i32 {
-    let n = stock_prices.len();
-    if n <= 2 {
-        return (n as i32 - 1).max(0);
-    }
-    stock_prices.sort_unstable_by_key(|s| s[0]);
-    let [x0, y0] = stock_prices[0][..] else {
-        unreachable!()
-    };
-    let [x1, y1] = stock_prices[1][..] else {
-        unreachable!()
-    };
-    let mut dx = i64::from(x1 - x0);
-    let mut dy = i64::from(y1 - y0);
-    let mut res = 1;
-    for w in stock_prices.windows(2).skip(1) {
-        let [x0, y0] = w[0][..] else { unreachable!() };
-        let [x1, y1] = w[1][..] else { unreachable!() };
-        let cdx = i64::from(x1 - x0);
-        let cdy = i64::from(y1 - y0);
-        if dy * cdx != dx * cdy {
-            res += 1;
-            dx = cdx;
-            dy = cdy;
-        }
+pub fn number_of_substrings(s: String) -> i32 {
+    let mut prev = [-1; 3];
+    let mut res = 0;
+    for (idx, b) in (0..).zip(s.bytes()) {
+        prev[usize::from(b - b'a')] = idx;
+        res += 1 + prev.iter().min().unwrap_or(&-1);
+        // a b c a b
+        //     ^   ^
+        // this means, each substr starting in [a b c] is valid
+        // i.e += 1+ index_of(c)
+        // Before that, until every char is included, the min is -1
     }
     res
 }
