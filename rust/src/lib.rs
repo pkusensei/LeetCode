@@ -5,15 +5,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn largest_word_count(messages: Vec<String>, senders: Vec<String>) -> String {
-    let mut map = std::collections::HashMap::new();
-    for (m, s) in messages.iter().zip(senders) {
-        *map.entry(s).or_insert(0) += m.split_ascii_whitespace().count();
-    }
-    map.into_iter()
-        .max_by(|a, b| a.1.cmp(&b.1).then(a.0.cmp(&b.0)))
-        .map(|i| i.0)
-        .unwrap_or_default()
+pub fn maximum_importance(n: i32, roads: Vec<Vec<i32>>) -> i64 {
+    let mut count = roads.iter().fold(vec![0; n as usize], |mut acc, r| {
+        acc[r[0] as usize] += 1;
+        acc[r[1] as usize] += 1;
+        acc
+    });
+    count.sort_unstable_by(|a, b| b.cmp(a));
+    count
+        .iter()
+        .zip((1..=n).rev())
+        .map(|(c, v)| i64::from(v) * c)
+        .sum()
 }
 
 #[cfg(test)]
