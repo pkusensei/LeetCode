@@ -5,31 +5,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_obstacles(grid: Vec<Vec<i32>>) -> i32 {
-    let [rows, cols] = get_dimensions(&grid);
-    let mut dists = vec![vec![i32::MAX; cols]; rows];
-    dists[0][0] = 0;
-    let mut queue = std::collections::VecDeque::from([([0, 0], 0)]);
-    while let Some(([r, c], dist)) = queue.pop_front() {
-        if r == rows - 1 && c == cols - 1 {
-            return dist;
-        }
-        for [nr, nc] in neighbors([r, c]) {
-            if let Some(&v) = grid.get(nr).and_then(|row| row.get(nc)) {
-                if dists[nr][nc] < i32::MAX {
-                    continue;
-                }
-                if v == 1 {
-                    queue.push_back(([nr, nc], 1 + dist));
-                    dists[nr][nc] = 1 + dist;
-                } else {
-                    queue.push_front(([nr, nc], dist));
-                    dists[nr][nc] = dist;
-                }
+pub fn min_max_game(mut nums: Vec<i32>) -> i32 {
+    while nums.len() > 1 {
+        let mut curr = Vec::with_capacity(nums.len() / 2);
+        for (i, ch) in nums.chunks(2).enumerate() {
+            if i & 1 == 0 {
+                curr.push(ch[0].min(ch[1]));
+            } else {
+                curr.push(ch[0].max(ch[1]));
             }
         }
+        nums = curr;
     }
-    -1
+    nums[0]
 }
 
 #[cfg(test)]
