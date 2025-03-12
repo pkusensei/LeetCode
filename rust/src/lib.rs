@@ -5,52 +5,13 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-use std::collections::VecDeque;
-
-#[derive(Default)]
-struct TextEditor {
-    left: VecDeque<u8>,
-    right: VecDeque<u8>,
-}
-
-impl TextEditor {
-    fn new() -> Self {
-        Default::default()
-    }
-
-    fn add_text(&mut self, text: String) {
-        self.left.extend(text.bytes());
-    }
-
-    fn delete_text(&mut self, k: i32) -> i32 {
-        let mut res = 0;
-        while res < k && self.left.pop_back().is_some() {
-            res += 1;
-        }
-        res
-    }
-
-    fn cursor_left(&mut self, mut k: i32) -> String {
-        while k > 0 && !self.left.is_empty() {
-            let b = self.left.pop_back().unwrap();
-            self.right.push_front(b);
-            k -= 1;
-        }
-        let n = self.left.len();
-        let res: Vec<_> = self.left.range(n.saturating_sub(10)..).copied().collect();
-        String::from_utf8(res).unwrap()
-    }
-
-    fn cursor_right(&mut self, mut k: i32) -> String {
-        while k > 0 && !self.right.is_empty() {
-            let b = self.right.pop_front().unwrap();
-            self.left.push_back(b);
-            k -= 1;
-        }
-        let n = self.left.len();
-        let res: Vec<_> = self.left.range(n.saturating_sub(10)..).copied().collect();
-        String::from_utf8(res).unwrap()
-    }
+pub fn strong_password_checker_ii(password: String) -> bool {
+    password.len() >= 8
+        && password.bytes().any(|v| v.is_ascii_uppercase())
+        && password.bytes().any(|v| v.is_ascii_lowercase())
+        && password.bytes().any(|v| v.is_ascii_digit())
+        && password.bytes().any(|v| b"!@#$%^&*()-+".contains(&v))
+        && password.as_bytes().windows(2).all(|w| w[0] != w[1])
 }
 
 #[cfg(test)]
@@ -83,31 +44,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        let mut te = TextEditor::new(); // The current text is "|". (The '|' character represents the cursor)
-        te.add_text("leetcode".into()); // The current text is "leetcode|".
-        assert_eq!(te.delete_text(4), 4);
-        // The current text is "leet|".
-        // 4 characters were deleted.
-        te.add_text("practice".into()); // The current text is "leetpractice|".
-        assert_eq!(te.cursor_right(3), "etpractice");
-        // The current text is "leetpractice|".
-        // The cursor cannot be moved beyond the actual text and thus did not move.
-        // "etpractice" is the last 10 characters to the left of the cursor.
-        assert_eq!(te.cursor_left(8), "leet");
-        // The current text is "leet|practice".
-        // "leet" is the last min(10, 4) = 4 characters to the left of the cursor.
-        assert_eq!(te.delete_text(10), 4);
-        // The current text is "|practice".
-        // Only 4 characters were deleted.
-        assert_eq!(te.cursor_left(2), "");
-        // The current text is "|practice".
-        // The cursor cannot be moved beyond the actual text and thus did not move.
-        // "" is the last min(10, 0) = 0 characters to the left of the cursor.
-        assert_eq!(te.cursor_right(6), "practi");
-        // The current text is "practi|ce".
-        // "practi" is the last min(10, 6) = 6 characters to the left of the cursor.
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
