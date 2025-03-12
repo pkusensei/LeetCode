@@ -5,20 +5,31 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn total_steps(nums: &[i32]) -> i32 {
-    let n = nums.len();
-    let mut dp = vec![0; n];
-    let mut stack = vec![];
-    let mut res = 0;
-    for (idx, &num) in nums.iter().enumerate().rev() {
-        while stack.last().is_some_and(|&i| nums[i] < num) {
-            let i = stack.pop().unwrap();
-            dp[idx] = (1 + dp[idx]).max(dp[i]);
-            res = res.max(dp[idx])
+pub fn minimum_obstacles(grid: Vec<Vec<i32>>) -> i32 {
+    let [rows, cols] = get_dimensions(&grid);
+    let mut dists = vec![vec![i32::MAX; cols]; rows];
+    dists[0][0] = 0;
+    let mut queue = std::collections::VecDeque::from([([0, 0], 0)]);
+    while let Some(([r, c], dist)) = queue.pop_front() {
+        if r == rows - 1 && c == cols - 1 {
+            return dist;
         }
-        stack.push(idx);
+        for [nr, nc] in neighbors([r, c]) {
+            if let Some(&v) = grid.get(nr).and_then(|row| row.get(nc)) {
+                if dists[nr][nc] < i32::MAX {
+                    continue;
+                }
+                if v == 1 {
+                    queue.push_back(([nr, nc], 1 + dist));
+                    dists[nr][nc] = 1 + dist;
+                } else {
+                    queue.push_front(([nr, nc], dist));
+                    dists[nr][nc] = dist;
+                }
+            }
+        }
     }
-    res
+    -1
 }
 
 #[cfg(test)]
@@ -54,8 +65,5 @@ mod tests {
     fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(total_steps(&[5, 3, 4, 4, 7, 3, 6, 11, 8, 5, 11]), 3);
-        assert_eq!(total_steps(&[4, 5, 7, 7, 13]), 0);
-    }
+    fn test() {}
 }
