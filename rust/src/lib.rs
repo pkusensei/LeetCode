@@ -5,21 +5,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn discount_prices(sentence: &str, discount: i32) -> String {
-    sentence
-        .split_whitespace()
-        .map(|s| {
-            if let Some(s) = s.strip_prefix('$') {
-                if !s.is_empty() && s.bytes().all(|v| v.is_ascii_digit()) {
-                    let num: f64 = s.parse().unwrap();
-                    let d = 1.0 - f64::from(discount) / 100.0;
-                    return format!("${:.2}", num * d);
-                }
-            }
-            s.to_string()
-        })
-        .collect::<Vec<_>>()
-        .join(" ")
+pub fn total_steps(nums: &[i32]) -> i32 {
+    let n = nums.len();
+    let mut dp = vec![0; n];
+    let mut stack = vec![];
+    let mut res = 0;
+    for (idx, &num) in nums.iter().enumerate().rev() {
+        while stack.last().is_some_and(|&i| nums[i] < num) {
+            let i = stack.pop().unwrap();
+            dp[idx] = (1 + dp[idx]).max(dp[i]);
+            res = res.max(dp[idx])
+        }
+        stack.push(idx);
+    }
+    res
 }
 
 #[cfg(test)]
@@ -56,6 +55,7 @@ mod tests {
 
     #[test]
     fn test() {
-        assert_eq!(discount_prices("$1e9", 50), "$1e9");
+        assert_eq!(total_steps(&[5, 3, 4, 4, 7, 3, 6, 11, 8, 5, 11]), 3);
+        assert_eq!(total_steps(&[4, 5, 7, 7, 13]), 0);
     }
 }
