@@ -5,28 +5,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn match_replacement(s: String, sub: String, mappings: Vec<Vec<char>>) -> bool {
-    use std::collections::{HashMap, HashSet};
-    let [s, sub] = [&s, &sub].map(|v| v.as_bytes());
-    let map = mappings
-        .iter()
-        .fold(HashMap::<_, HashSet<_>>::new(), |mut acc, m| {
-            let [a, b] = m[..] else { unreachable!() };
-            acc.entry(a as u8).or_default().insert(b as u8);
-            acc
-        });
-    let n = sub.len();
-    for w in s.windows(n) {
-        if sub
-            .iter()
-            .zip(w.iter())
-            .filter(|&(a, b)| a != b)
-            .all(|(a, b)| map.get(a).is_some_and(|set| set.contains(b)))
-        {
-            return true;
+pub fn count_subarrays(nums: Vec<i32>, k: i64) -> i64 {
+    let mut prefix = 0;
+    let mut res = 0;
+    let mut left = 0;
+    for (right, &num) in nums.iter().enumerate() {
+        prefix += i64::from(num);
+        while prefix * (right + 1 - left) as i64 >= k {
+            prefix -= i64::from(nums[left]);
+            left += 1;
         }
+        res += right + 1 - left;
     }
-    false
+    res as _
 }
 
 #[cfg(test)]
