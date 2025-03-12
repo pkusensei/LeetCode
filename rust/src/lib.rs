@@ -5,17 +5,28 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn successful_pairs(spells: Vec<i32>, mut potions: Vec<i32>, success: i64) -> Vec<i32> {
-    let n = potions.len();
-    potions.sort_unstable();
-    spells
+pub fn match_replacement(s: String, sub: String, mappings: Vec<Vec<char>>) -> bool {
+    use std::collections::{HashMap, HashSet};
+    let [s, sub] = [&s, &sub].map(|v| v.as_bytes());
+    let map = mappings
         .iter()
-        .map(|&sp| {
-            let sp = i64::from(sp);
-            let i = potions.partition_point(|&v| i64::from(v) * sp < success);
-            (n - i) as i32
-        })
-        .collect()
+        .fold(HashMap::<_, HashSet<_>>::new(), |mut acc, m| {
+            let [a, b] = m[..] else { unreachable!() };
+            acc.entry(a as u8).or_default().insert(b as u8);
+            acc
+        });
+    let n = sub.len();
+    for w in s.windows(n) {
+        if sub
+            .iter()
+            .zip(w.iter())
+            .filter(|&(a, b)| a != b)
+            .all(|(a, b)| map.get(a).is_some_and(|set| set.contains(b)))
+        {
+            return true;
+        }
+    }
+    false
 }
 
 #[cfg(test)]
