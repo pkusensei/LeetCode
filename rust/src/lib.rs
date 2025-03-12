@@ -5,13 +5,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn strong_password_checker_ii(password: String) -> bool {
-    password.len() >= 8
-        && password.bytes().any(|v| v.is_ascii_uppercase())
-        && password.bytes().any(|v| v.is_ascii_lowercase())
-        && password.bytes().any(|v| v.is_ascii_digit())
-        && password.bytes().any(|v| b"!@#$%^&*()-+".contains(&v))
-        && password.as_bytes().windows(2).all(|w| w[0] != w[1])
+pub fn successful_pairs(spells: Vec<i32>, mut potions: Vec<i32>, success: i64) -> Vec<i32> {
+    let n = potions.len();
+    potions.sort_unstable();
+    spells
+        .iter()
+        .map(|&sp| {
+            let sp = i64::from(sp);
+            let i = potions.partition_point(|&v| i64::from(v) * sp < success);
+            (n - i) as i32
+        })
+        .collect()
 }
 
 #[cfg(test)]
