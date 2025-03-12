@@ -5,19 +5,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_subarrays(nums: Vec<i32>, k: i64) -> i64 {
-    let mut prefix = 0;
-    let mut res = 0;
-    let mut left = 0;
-    for (right, &num) in nums.iter().enumerate() {
-        prefix += i64::from(num);
-        while prefix * (right + 1 - left) as i64 >= k {
-            prefix -= i64::from(nums[left]);
-            left += 1;
+pub fn calculate_tax(brackets: Vec<Vec<i32>>, income: i32) -> f64 {
+    let mut prev = 0;
+    let mut res = 0.0;
+    for bra in brackets.iter() {
+        let [up, per] = bra[..] else { unreachable!() };
+        res += f64::from((income.min(up) - prev) * per) / 100.0;
+        prev = up;
+        if up >= income {
+            break;
         }
-        res += right + 1 - left;
     }
-    res as _
+    res
 }
 
 #[cfg(test)]
