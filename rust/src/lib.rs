@@ -5,26 +5,52 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn array_change(nums: Vec<i32>, operations: Vec<Vec<i32>>) -> Vec<i32> {
-    use std::collections::HashMap;
-    let n = nums.len();
-    let mut map = nums
-        .iter()
-        .enumerate()
-        .fold(HashMap::new(), |mut acc, (i, &num)| {
-            acc.insert(num, i);
-            acc
-        });
-    for op in operations.iter() {
-        let [a, b] = op[..] else { unreachable!() };
-        let i = map.remove(&a).unwrap();
-        map.insert(b, i);
+use std::collections::VecDeque;
+
+#[derive(Default)]
+struct TextEditor {
+    left: VecDeque<u8>,
+    right: VecDeque<u8>,
+}
+
+impl TextEditor {
+    fn new() -> Self {
+        Default::default()
     }
-    let mut res = vec![0; n];
-    for (num, i) in map.into_iter() {
-        res[i] = num;
+
+    fn add_text(&mut self, text: String) {
+        self.left.extend(text.bytes());
     }
-    res
+
+    fn delete_text(&mut self, k: i32) -> i32 {
+        let mut res = 0;
+        while res < k && self.left.pop_back().is_some() {
+            res += 1;
+        }
+        res
+    }
+
+    fn cursor_left(&mut self, mut k: i32) -> String {
+        while k > 0 && !self.left.is_empty() {
+            let b = self.left.pop_back().unwrap();
+            self.right.push_front(b);
+            k -= 1;
+        }
+        let n = self.left.len();
+        let res: Vec<_> = self.left.range(n.saturating_sub(10)..).copied().collect();
+        String::from_utf8(res).unwrap()
+    }
+
+    fn cursor_right(&mut self, mut k: i32) -> String {
+        while k > 0 && !self.right.is_empty() {
+            let b = self.right.pop_front().unwrap();
+            self.left.push_back(b);
+            k -= 1;
+        }
+        let n = self.left.len();
+        let res: Vec<_> = self.left.range(n.saturating_sub(10)..).copied().collect();
+        String::from_utf8(res).unwrap()
+    }
 }
 
 #[cfg(test)]
@@ -57,7 +83,31 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        let mut te = TextEditor::new(); // The current text is "|". (The '|' character represents the cursor)
+        te.add_text("leetcode".into()); // The current text is "leetcode|".
+        assert_eq!(te.delete_text(4), 4);
+        // The current text is "leet|".
+        // 4 characters were deleted.
+        te.add_text("practice".into()); // The current text is "leetpractice|".
+        assert_eq!(te.cursor_right(3), "etpractice");
+        // The current text is "leetpractice|".
+        // The cursor cannot be moved beyond the actual text and thus did not move.
+        // "etpractice" is the last 10 characters to the left of the cursor.
+        assert_eq!(te.cursor_left(8), "leet");
+        // The current text is "leet|practice".
+        // "leet" is the last min(10, 4) = 4 characters to the left of the cursor.
+        assert_eq!(te.delete_text(10), 4);
+        // The current text is "|practice".
+        // Only 4 characters were deleted.
+        assert_eq!(te.cursor_left(2), "");
+        // The current text is "|practice".
+        // The cursor cannot be moved beyond the actual text and thus did not move.
+        // "" is the last min(10, 0) = 0 characters to the left of the cursor.
+        assert_eq!(te.cursor_right(6), "practi");
+        // The current text is "practi|ce".
+        // "practi" is the last min(10, 6) = 6 characters to the left of the cursor.
+    }
 
     #[test]
     fn test() {}
