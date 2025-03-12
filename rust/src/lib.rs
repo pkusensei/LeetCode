@@ -5,18 +5,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn calculate_tax(brackets: Vec<Vec<i32>>, income: i32) -> f64 {
-    let mut prev = 0;
-    let mut res = 0.0;
-    for bra in brackets.iter() {
-        let [up, per] = bra[..] else { unreachable!() };
-        res += f64::from((income.min(up) - prev) * per) / 100.0;
-        prev = up;
-        if up >= income {
-            break;
+pub fn min_path_cost(grid: Vec<Vec<i32>>, move_cost: Vec<Vec<i32>>) -> i32 {
+    let mut prev = grid[0].clone();
+    let n = prev.len();
+    for (r, row) in grid.iter().enumerate().skip(1) {
+        let mut curr = vec![i32::MAX; n];
+        for (c, p) in prev.iter().enumerate() {
+            for i in 0..n {
+                let mc = move_cost[grid[r - 1][c] as usize][i];
+                curr[i] = curr[i].min(p + mc + row[i]);
+            }
         }
+        prev = curr
     }
-    res
+    prev.into_iter().min().unwrap_or(0)
 }
 
 #[cfg(test)]
@@ -49,7 +51,22 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(
+            min_path_cost(
+                vec![vec![5, 3], vec![4, 0], vec![2, 1]],
+                vec![
+                    vec![9, 8],
+                    vec![1, 5],
+                    vec![10, 12],
+                    vec![18, 6],
+                    vec![2, 4],
+                    vec![14, 3]
+                ]
+            ),
+            17
+        );
+    }
 
     #[test]
     fn test() {}
