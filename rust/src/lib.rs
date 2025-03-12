@@ -5,23 +5,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn distinct_names(ideas: &[&str]) -> i64 {
-    use std::collections::HashSet;
-    let map = ideas.iter().fold(vec![HashSet::new(); 26], |mut acc, s| {
-        let [head, tail @ ..] = s.as_bytes() else {
-            unreachable!()
-        };
-        acc[usize::from(head - b'a')].insert(tail);
+pub fn greatest_letter(s: String) -> String {
+    let count = s.bytes().fold([0; 26], |mut acc, b| {
+        if b.is_ascii_uppercase() {
+            acc[usize::from(b - b'A')] |= 0b01
+        } else if b.is_ascii_lowercase() {
+            acc[usize::from(b - b'a')] |= 0b10
+        }
         acc
     });
-    let mut res = 0;
-    for (i, a) in map.iter().enumerate() {
-        for b in map.iter().skip(1 + i) {
-            let common = a.intersection(b).count();
-            res += (a.len() - common) * (b.len() - common);
-        }
-    }
-    (2 * res) as _
+    count
+        .iter()
+        .enumerate()
+        .rev()
+        .find_map(|(i, &v)| {
+            if v == 0b11 {
+                String::from_utf8(vec![i as u8 + b'A']).ok()
+            } else {
+                None
+            }
+        })
+        .unwrap_or_default()
 }
 
 #[cfg(test)]
@@ -54,10 +58,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(distinct_names(&["coffee", "donuts", "time", "toffee"]), 6);
-        assert_eq!(distinct_names(&["lack", "back"]), 0);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
