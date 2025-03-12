@@ -5,26 +5,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn distribute_cookies(cookies: &[i32], k: i32) -> i32 {
-    let k = k as usize;
-    let mut buckets = vec![0; k];
-    backtrack(cookies, &mut buckets)
-}
-
-fn backtrack(cookies: &[i32], buckets: &mut [i32]) -> i32 {
-    match cookies {
-        [] => *buckets.iter().max().unwrap(),
-        [head, tail @ ..] => {
-            let k = buckets.len();
-            let mut res = i32::MAX;
-            for i in 0..k {
-                buckets[i] += head;
-                res = res.min(backtrack(tail, buckets));
-                buckets[i] -= head;
-            }
-            res
+pub fn distinct_names(ideas: &[&str]) -> i64 {
+    use std::collections::HashSet;
+    let map = ideas.iter().fold(vec![HashSet::new(); 26], |mut acc, s| {
+        let [head, tail @ ..] = s.as_bytes() else {
+            unreachable!()
+        };
+        acc[usize::from(head - b'a')].insert(tail);
+        acc
+    });
+    let mut res = 0;
+    for (i, a) in map.iter().enumerate() {
+        for b in map.iter().skip(1 + i) {
+            let common = a.intersection(b).count();
+            res += (a.len() - common) * (b.len() - common);
         }
     }
+    (2 * res) as _
 }
 
 #[cfg(test)]
@@ -58,8 +55,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(distribute_cookies(&[8, 15, 10, 20, 8], 2), 31);
-        assert_eq!(distribute_cookies(&[6, 1, 3, 2, 2, 4, 1, 2], 3), 7);
+        assert_eq!(distinct_names(&["coffee", "donuts", "time", "toffee"]), 6);
+        assert_eq!(distinct_names(&["lack", "back"]), 0);
     }
 
     #[test]
