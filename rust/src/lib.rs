@@ -5,24 +5,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_numbers(num: i32, k: i32) -> i32 {
-    if num == 0 {
-        return 0;
+pub fn longest_subsequence(s: &str, mut k: i32) -> i32 {
+    let mut curr = 1;
+    let mut res = 0;
+    for b in s.bytes().rev() {
+        if b == b'0' || curr <= k {
+            k -= curr * i32::from(b - b'0');
+            res += 1;
+        }
+        if curr <= k {
+            curr *= 2;
+        }
     }
-    if k == 0 {
-        return if num % 10 == 0 { 1 } else { -1 };
-    }
-    solve(num, k).unwrap_or(-1)
-}
-
-fn solve(num: i32, k: i32) -> Option<i32> {
-    if num % 10 == k {
-        return Some(1);
-    }
-    if num < k {
-        return None;
-    }
-    solve(num - k, k).map(|v| 1 + v)
+    res
 }
 
 #[cfg(test)]
@@ -56,9 +51,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(minimum_numbers(58, 9), 2);
-        assert_eq!(minimum_numbers(37, 2), -1);
-        assert_eq!(minimum_numbers(0, 7), 0);
+        assert_eq!(longest_subsequence("1001010", 5), 5);
+        assert_eq!(longest_subsequence("00101001", 6), 6);
     }
 
     #[test]
