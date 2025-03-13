@@ -2,13 +2,78 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_xor(nums: Vec<i32>) -> i32 {
-    // a & (a^x) => unset any bits in a
-    // a^b^c.. => seeking bits non-overlapped
-    nums.iter().fold(0, |acc, v| acc | v)
+pub fn distinct_sequences(n: i32) -> i32 {
+    dfs(n, 0, 0, &mut HashMap::new()) as _
+}
+
+fn dfs(n: i32, x1: i32, x2: i32, memo: &mut HashMap<[i32; 3], i64>) -> i64 {
+    if n == 0 {
+        return 1;
+    }
+    let key = [n, x1, x2];
+    if let Some(&v) = memo.get(&key) {
+        return v;
+    }
+    let mut res = 0;
+    match x2 {
+        1 => {
+            for v in 2..=6 {
+                if v != x1 {
+                    res += dfs(n - 1, x2, v, memo)
+                }
+            }
+        }
+        2 => {
+            for v in [1, 3, 5] {
+                if v != x1 {
+                    res += dfs(n - 1, x2, v, memo)
+                }
+            }
+        }
+        3 => {
+            for v in [1, 2, 4, 5] {
+                if v != x1 {
+                    res += dfs(n - 1, x2, v, memo)
+                }
+            }
+        }
+        4 => {
+            for v in [1, 3, 5] {
+                if v != x1 {
+                    res += dfs(n - 1, x2, v, memo)
+                }
+            }
+        }
+        5 => {
+            for v in [1, 2, 3, 4, 6] {
+                if v != x1 {
+                    res += dfs(n - 1, x2, v, memo)
+                }
+            }
+        }
+        6 => {
+            for v in [1, 5] {
+                if v != x1 {
+                    res += dfs(n - 1, x2, v, memo)
+                }
+            }
+        }
+        _ => {
+            for v in 1..=6 {
+                if v != x1 {
+                    res += dfs(n - 1, x2, v, memo)
+                }
+            }
+        }
+    }
+    res %= 1_000_000_007;
+    memo.insert(key, res);
+    res
 }
 
 #[cfg(test)]
@@ -41,7 +106,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(distinct_sequences(4), 184);
+        assert_eq!(distinct_sequences(2), 22);
+    }
 
     #[test]
     fn test() {}
