@@ -5,27 +5,61 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn greatest_letter(s: String) -> String {
-    let count = s.bytes().fold([0; 26], |mut acc, b| {
-        if b.is_ascii_uppercase() {
-            acc[usize::from(b - b'A')] |= 0b01
-        } else if b.is_ascii_lowercase() {
-            acc[usize::from(b - b'a')] |= 0b10
+pub fn min_zero_array(nums: &[i32], queries: &[[i32; 3]]) -> i32 {
+    let mut left = 0;
+    let mut right = queries.len();
+    if !check(nums, queries, right) {
+        return -1;
+    }
+    while left < right {
+        let mid = left + (right - left) / 2;
+        if check(nums, queries, mid) {
+            right = mid;
+        } else {
+            left = mid + 1;
         }
-        acc
-    });
-    count
-        .iter()
-        .enumerate()
-        .rev()
-        .find_map(|(i, &v)| {
-            if v == 0b11 {
-                String::from_utf8(vec![i as u8 + b'A']).ok()
-            } else {
-                None
+    }
+    left as _
+}
+
+fn check(nums: &[i32], queries: &[[i32; 3]], k: usize) -> bool {
+    let n = nums.len();
+    let mut diff = vec![0; 1 + n];
+    for q in queries.iter().take(k) {
+        let [left, right] = [0, 1].map(|i| q[i] as usize);
+        diff[left] += q[2];
+        diff[1 + right] -= q[2];
+    }
+    let mut prefix = 0;
+    for idx in 0..n {
+        prefix += diff[idx];
+        if prefix < nums[idx] {
+            return false;
+        }
+    }
+    true
+}
+
+pub fn line_sweep(nums: &[i32], queries: &[[i32; 3]]) -> i32 {
+    let n = nums.len();
+    let mut prefix = 0;
+    let mut res = 0;
+    let mut diff = vec![0; 1 + n];
+    for (idx, &num) in nums.iter().enumerate() {
+        while prefix + diff[idx] < num {
+            res += 1;
+            if res > queries.len() {
+                return -1;
             }
-        })
-        .unwrap_or_default()
+            let [left, right, val] = queries[res - 1];
+            if right as usize >= idx {
+                diff[(left as usize).max(idx)] += val;
+                diff[1 + right as usize] -= val;
+            }
+        }
+        prefix += diff[idx];
+    }
+    res as _
 }
 
 #[cfg(test)]
@@ -58,7 +92,19 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(
+            min_zero_array(&[2, 0, 2], &[[0, 2, 1], [0, 2, 1], [1, 1, 3]]),
+            2
+        );
+        assert_eq!(min_zero_array(&[4, 3, 2, 1], &[[1, 3, 2], [0, 2, 1]]), -1);
+
+        assert_eq!(
+            line_sweep(&[2, 0, 2], &[[0, 2, 1], [0, 2, 1], [1, 1, 3]]),
+            2
+        );
+        assert_eq!(line_sweep(&[4, 3, 2, 1], &[[1, 3, 2], [0, 2, 1]]), -1);
+    }
 
     #[test]
     fn test() {}
