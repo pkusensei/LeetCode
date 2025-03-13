@@ -2,78 +2,20 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn distinct_sequences(n: i32) -> i32 {
-    dfs(n, 0, 0, &mut HashMap::new()) as _
-}
-
-fn dfs(n: i32, x1: i32, x2: i32, memo: &mut HashMap<[i32; 3], i64>) -> i64 {
-    if n == 0 {
-        return 1;
-    }
-    let key = [n, x1, x2];
-    if let Some(&v) = memo.get(&key) {
-        return v;
-    }
-    let mut res = 0;
-    match x2 {
-        1 => {
-            for v in 2..=6 {
-                if v != x1 {
-                    res += dfs(n - 1, x2, v, memo)
-                }
+pub fn check_x_matrix(grid: Vec<Vec<i32>>) -> bool {
+    let n = grid.len();
+    for (r, row) in grid.iter().enumerate() {
+        for (c, &v) in row.iter().enumerate() {
+            if ((r == c || r + c + 1 == n) && v > 0) || ((r != c && r + c + 1 != n) && v == 0) {
+                continue;
             }
-        }
-        2 => {
-            for v in [1, 3, 5] {
-                if v != x1 {
-                    res += dfs(n - 1, x2, v, memo)
-                }
-            }
-        }
-        3 => {
-            for v in [1, 2, 4, 5] {
-                if v != x1 {
-                    res += dfs(n - 1, x2, v, memo)
-                }
-            }
-        }
-        4 => {
-            for v in [1, 3, 5] {
-                if v != x1 {
-                    res += dfs(n - 1, x2, v, memo)
-                }
-            }
-        }
-        5 => {
-            for v in [1, 2, 3, 4, 6] {
-                if v != x1 {
-                    res += dfs(n - 1, x2, v, memo)
-                }
-            }
-        }
-        6 => {
-            for v in [1, 5] {
-                if v != x1 {
-                    res += dfs(n - 1, x2, v, memo)
-                }
-            }
-        }
-        _ => {
-            for v in 1..=6 {
-                if v != x1 {
-                    res += dfs(n - 1, x2, v, memo)
-                }
-            }
+            return false;
         }
     }
-    res %= 1_000_000_007;
-    memo.insert(key, res);
-    res
+    true
 }
 
 #[cfg(test)]
@@ -106,10 +48,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(distinct_sequences(4), 184);
-        assert_eq!(distinct_sequences(2), 22);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
