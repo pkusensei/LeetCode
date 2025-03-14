@@ -5,20 +5,37 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn people_aware_of_secret(n: i32, delay: i32, forget: i32) -> i32 {
-    const MOD: i64 = 1_000_000_007;
-    let [n, delay, forget] = [n, delay, forget].map(|v| v as usize);
-    let mut dp = vec![0_i64; 1 + n];
-    dp[1] = 1;
-    let mut curr = 0;
-    for i in 2..=n {
-        curr += dp[i.saturating_sub(delay)] - dp[i.saturating_sub(forget)];
-        curr = curr.rem_euclid(MOD);
-        dp[i] = curr;
+pub fn count_paths(grid: Vec<Vec<i32>>) -> i32 {
+    let [rows, cols] = get_dimensions(&grid);
+    let mut memo = vec![vec![-1; cols]; rows];
+    let mut res = 0;
+    for r in 0..rows {
+        for c in 0..cols {
+            res += dfs(&grid, r, c, &mut memo);
+            res %= MOD;
+        }
     }
-    dp[n - forget + 1..]
-        .iter()
-        .fold(0, |acc, v| (acc + v) % MOD) as i32
+    res
+}
+
+const MOD: i32 = 1_000_000_007;
+
+fn dfs(grid: &[Vec<i32>], r: usize, c: usize, memo: &mut [Vec<i32>]) -> i32 {
+    if memo[r][c] > -1 {
+        return memo[r][c];
+    }
+    let mut res = 1;
+    for [nr, nc] in neighbors([r, c]) {
+        if grid
+            .get(nr)
+            .is_some_and(|row| row.get(nc).is_some_and(|&v| v > grid[r][c]))
+        {
+            res += dfs(grid, nr, nc, memo);
+            res %= MOD;
+        }
+    }
+    memo[r][c] = res;
+    res
 }
 
 #[cfg(test)]
@@ -52,8 +69,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(people_aware_of_secret(6, 2, 4), 5);
-        assert_eq!(people_aware_of_secret(4, 1, 3), 6);
+        assert_eq!(count_paths(vec![vec![1, 1], vec![3, 4]]), 8);
+        assert_eq!(count_paths(vec![vec![1], vec![2]]), 3);
     }
 
     #[test]
