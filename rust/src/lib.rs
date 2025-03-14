@@ -5,26 +5,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn decode_message(key: String, message: String) -> String {
-    use std::collections::HashMap;
-    let mut map = HashMap::new();
-    let mut val = b'a';
-    for b in key.bytes() {
-        if b.is_ascii_alphabetic() && !map.contains_key(&b) {
-            map.insert(b, val);
-            val += 1;
-            if map.len() == 26 {
-                break;
-            }
-        }
+pub fn people_aware_of_secret(n: i32, delay: i32, forget: i32) -> i32 {
+    const MOD: i64 = 1_000_000_007;
+    let [n, delay, forget] = [n, delay, forget].map(|v| v as usize);
+    let mut dp = vec![0_i64; 1 + n];
+    dp[1] = 1;
+    let mut curr = 0;
+    for i in 2..=n {
+        curr += dp[i.saturating_sub(delay)] - dp[i.saturating_sub(forget)];
+        curr = curr.rem_euclid(MOD);
+        dp[i] = curr;
     }
-    let mut s = message.into_bytes();
-    for v in s.iter_mut() {
-        if v.is_ascii_alphabetic() {
-            *v = map[v];
-        }
-    }
-    String::from_utf8(s).unwrap()
+    dp[n - forget + 1..]
+        .iter()
+        .fold(0, |acc, v| (acc + v) % MOD) as i32
 }
 
 #[cfg(test)]
@@ -57,7 +51,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(people_aware_of_secret(6, 2, 4), 5);
+        assert_eq!(people_aware_of_secret(4, 1, 3), 6);
+    }
 
     #[test]
     fn test() {}
