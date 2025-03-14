@@ -5,17 +5,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn check_x_matrix(grid: Vec<Vec<i32>>) -> bool {
-    let n = grid.len();
-    for (r, row) in grid.iter().enumerate() {
-        for (c, &v) in row.iter().enumerate() {
-            if ((r == c || r + c + 1 == n) && v > 0) || ((r != c && r + c + 1 != n) && v == 0) {
-                continue;
-            }
-            return false;
-        }
+pub fn count_house_placements(n: i32) -> i32 {
+    const MOD: i64 = 1_000_000_007;
+    let n = n as usize;
+    let mut prev = [1, 1]; // init i==0
+    for _ in 1..n {
+        let mut curr = [0, 0];
+        curr[0] = (prev[0] + prev[1]) % MOD; // curr[0] is empty
+        curr[1] = prev[0]; // curr[1] is set; take empty prev
+        prev = curr;
     }
-    true
+    ((prev[0] + prev[1]).pow(2) % MOD) as i32
 }
 
 #[cfg(test)]
@@ -48,7 +48,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(count_house_placements(1), 4);
+        assert_eq!(count_house_placements(2), 9);
+    }
 
     #[test]
     fn test() {}
