@@ -5,17 +5,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_house_placements(n: i32) -> i32 {
-    const MOD: i64 = 1_000_000_007;
-    let n = n as usize;
-    let mut prev = [1, 1]; // init i==0
-    for _ in 1..n {
-        let mut curr = [0, 0];
-        curr[0] = (prev[0] + prev[1]) % MOD; // curr[0] is empty
-        curr[1] = prev[0]; // curr[1] is set; take empty prev
-        prev = curr;
+pub fn maximums_spliced_array(nums1: &[i32], nums2: &[i32]) -> i32 {
+    let [mut best1, mut best2] = [i32::MIN; 2];
+    let [mut curr1, mut curr2] = [0, 0];
+    let [mut sum1, mut sum2] = [0, 0];
+    for (v1, v2) in nums1.iter().zip(nums2) {
+        sum1 += v1;
+        sum2 += v2;
+        curr1 = (v1 - v2).max(curr1 + v1 - v2);
+        curr2 = (v2 - v1).max(curr2 + v2 - v1);
+        best1 = best1.max(curr1);
+        best2 = best2.max(curr2);
     }
-    ((prev[0] + prev[1]).pow(2) % MOD) as i32
+    (sum1 + best2.max(0)).max(sum2 + best1.max(0))
 }
 
 #[cfg(test)]
@@ -49,10 +51,19 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(count_house_placements(1), 4);
-        assert_eq!(count_house_placements(2), 9);
+        assert_eq!(maximums_spliced_array(&[60, 60, 60], &[10, 90, 10]), 210);
+        assert_eq!(
+            maximums_spliced_array(&[20, 40, 20, 70, 30], &[50, 20, 50, 40, 20]),
+            220
+        );
+        assert_eq!(maximums_spliced_array(&[7, 11, 13], &[1, 1, 1]), 31);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(
+            maximums_spliced_array(&[10, 20, 50, 15, 30, 10], &[40, 20, 10, 100, 10, 10]),
+            230
+        );
+    }
 }
