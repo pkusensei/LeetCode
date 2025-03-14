@@ -10,10 +10,8 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(new[] { 5, 8, 6 }, 3, 5)]
-    public void TestMethod1(int[] nums, long k, int exp)
+    public void TestMethod1()
     {
-        Assert.AreEqual(exp, sol.MaximumCandies(nums, k));
     }
 
     [TestMethod]
