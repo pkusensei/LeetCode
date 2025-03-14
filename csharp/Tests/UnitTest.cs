@@ -10,17 +10,15 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow(new[] { 5, 8, 6 }, 3, 5)]
+    public void TestMethod1(int[] nums, long k, int exp)
     {
-        var a = TreeNode.Make([4, 8, 5, 0, 1, null, 6]);
-        Assert.AreEqual(5, sol.AverageOfSubtree(a));
+        Assert.AreEqual(exp, sol.MaximumCandies(nums, k));
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        var a = TreeNode.Make([1]);
-        Assert.AreEqual(1, sol.AverageOfSubtree(a));
     }
 
     [TestMethod]

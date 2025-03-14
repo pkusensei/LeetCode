@@ -6,19 +6,18 @@ namespace Solution;
 
 public class Solution
 {
-    public int AverageOfSubtree(TreeNode root)
+    public int MaximumCandies(int[] candies, long k)
     {
-        return Dfs(root).res;
-
-        static (int sum, int count, int res) Dfs(TreeNode node)
+        var sum = candies.Select(v => (long)v).Sum();
+        if (sum < k) { return 0; }
+        int left = 1;
+        int right = candies.Max();
+        while (left < right)
         {
-            if (node is null) { return (0, 0, 0); }
-            var left = Dfs(node.left);
-            var right = Dfs(node.right);
-            var sum = node.val + left.sum + right.sum;
-            var count = 1 + left.count + right.count;
-            var curr = sum / count == node.val ? 1 : 0;
-            return (sum, count, curr + left.res + right.res);
+            var mid = (left + right + 1) / 2;
+            if (candies.Select(v => (long)(v / mid)).Sum() >= k) { left = mid; }
+            else { right = mid - 1; }
         }
+        return left;
     }
 }
