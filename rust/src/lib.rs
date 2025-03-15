@@ -5,41 +5,39 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn latest_time_catch_the_bus(
-    mut buses: Vec<i32>,
-    mut passengers: Vec<i32>,
-    capacity: i32,
-) -> i32 {
-    let n = passengers.len();
-    buses.sort_unstable_by(|a, b| b.cmp(a));
-    passengers.sort_unstable();
-    let mut res = 1;
-    let mut count = 0;
-    let mut last = 0;
-    for idx in 0..n {
-        while buses.last().is_some_and(|&v| v < passengers[idx]) {
-            res = buses.pop().unwrap();
+pub fn min_sum_square_diff(nums1: &[i32], nums2: &[i32], k1: i32, k2: i32) -> i64 {
+    use std::collections::{BinaryHeap, HashMap};
+    let mut heap: BinaryHeap<_> = nums1
+        .iter()
+        .zip(nums2.iter())
+        .fold(HashMap::new(), |mut acc, (a, b)| {
+            *acc.entry(i64::from(a.abs_diff(*b))).or_insert(0_i64) += 1;
+            acc
+        })
+        .into_iter()
+        .filter_map(|(num, count)| if num > 0 { Some((num, count)) } else { None })
+        .collect();
+    let mut k = i64::from(k1 + k2);
+    while let Some((num, mut count)) = heap.pop() {
+        let d = count.min(k);
+        count -= d;
+        if count > 0 {
+            heap.push((num, count));
         }
-        if buses.is_empty() {
+        if heap.peek().is_some_and(|&(n, _c)| n == num - 1) {
+            let (n, c) = heap.pop().unwrap();
+            heap.push((n, c + d));
+        } else if num > 1 {
+            heap.push((num - 1, d));
+        }
+        k -= d;
+        if k == 0 {
             break;
         }
-        if last < passengers[idx] - 1 {
-            res = passengers[idx] - 1;
-        }
-        last = passengers[idx];
-        count += 1;
-        if idx == n - 1
-            || count == capacity
-            || buses.last().is_some_and(|&v| v < passengers[1 + idx])
-        {
-            if count < capacity && buses.last().is_some_and(|&v| v > passengers[idx]) {
-                res = *buses.last().unwrap();
-            }
-            buses.pop();
-            count = 0;
-        }
     }
-    buses.first().copied().unwrap_or(res)
+    heap.into_iter()
+        .map(|(num, count)| num.pow(2) * count)
+        .sum()
 }
 
 #[cfg(test)]
@@ -74,18 +72,16 @@ mod tests {
     #[test]
     fn basics() {
         assert_eq!(
-            latest_time_catch_the_bus(vec![10, 20], vec![2, 17, 18, 19], 2),
-            16
-        );
-        assert_eq!(
-            latest_time_catch_the_bus(vec![20, 30, 10], vec![19, 13, 26, 4, 25, 11, 21], 2),
-            20
+            min_sum_square_diff(&[1, 4, 10, 12], &[5, 8, 6, 9], 1, 1),
+            43
         );
     }
 
     #[test]
     fn test() {
-        assert_eq!(latest_time_catch_the_bus(vec![3, 2], vec![2], 2), 3);
-        assert_eq!(latest_time_catch_the_bus(vec![3], vec![2], 2), 3);
+        assert_eq!(
+            min_sum_square_diff(&[10, 10, 10, 11, 5], &[1, 0, 6, 6, 1], 11, 27),
+            0
+        );
     }
 }
