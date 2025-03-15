@@ -5,33 +5,14 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn valid_subarray_size(nums: &[i32], threshold: i32) -> i32 {
-    let n = nums.len();
-    let mut next_smaller = vec![-1; n];
-    let mut stack = vec![];
-    for (idx, &num) in nums.iter().enumerate() {
-        while stack.last().is_some_and(|&i| num < nums[i]) {
-            let top = stack.pop().unwrap();
-            next_smaller[top] = idx as i32;
-        }
-        stack.push(idx);
+pub fn fill_cups(mut amount: Vec<i32>) -> i32 {
+    amount.sort_unstable();
+    if amount[0] + amount[1] <= amount[2] {
+        amount[2]
+    } else {
+        let sum: i32 = amount.iter().sum();
+        sum / 2 + (sum & 1)
     }
-    let mut prev_smaller = vec![-1; n];
-    stack.clear();
-    for (idx, &num) in nums.iter().enumerate().rev() {
-        while stack.last().is_some_and(|&i| num < nums[i]) {
-            prev_smaller[stack.pop().unwrap()] = idx as i32;
-        }
-        stack.push(idx);
-    }
-    for ((left, right), &num) in prev_smaller.into_iter().zip(next_smaller).zip(nums.iter()) {
-        let right = if right == -1 { n as i32 } else { right };
-        let len = right - left - 1;
-        if f64::from(num) > f64::from(threshold) / f64::from(len) {
-            return len;
-        }
-    }
-    -1
 }
 
 #[cfg(test)]
@@ -64,10 +45,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(valid_subarray_size(&[1, 3, 4, 3, 1], 6), 3);
-        assert_eq!(valid_subarray_size(&[6, 5, 6, 5, 8], 7), 5);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
