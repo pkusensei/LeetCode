@@ -5,36 +5,33 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_paths(grid: Vec<Vec<i32>>) -> i32 {
-    let [rows, cols] = get_dimensions(&grid);
-    let mut memo = vec![vec![-1; cols]; rows];
-    let mut res = 0;
-    for r in 0..rows {
-        for c in 0..cols {
-            res += dfs(&grid, r, c, &mut memo);
-            res %= MOD;
+pub fn min_capability(nums: &[i32], k: i32) -> i32 {
+    let mut left = *nums.iter().min().unwrap();
+    let mut right = *nums.iter().max().unwrap();
+    while left < right {
+        let mid = left + (right - left) / 2;
+        if count(nums, mid) >= k {
+            right = mid;
+        } else {
+            left = mid + 1;
         }
     }
-    res
+    left
 }
 
-const MOD: i32 = 1_000_000_007;
-
-fn dfs(grid: &[Vec<i32>], r: usize, c: usize, memo: &mut [Vec<i32>]) -> i32 {
-    if memo[r][c] > -1 {
-        return memo[r][c];
-    }
-    let mut res = 1;
-    for [nr, nc] in neighbors([r, c]) {
-        if grid
-            .get(nr)
-            .is_some_and(|row| row.get(nc).is_some_and(|&v| v > grid[r][c]))
-        {
-            res += dfs(grid, nr, nc, memo);
-            res %= MOD;
+fn count(nums: &[i32], mid: i32) -> i32 {
+    let mut res = 0;
+    let mut prev = None;
+    for idx in nums
+        .iter()
+        .enumerate()
+        .filter_map(|(i, &v)| if v <= mid { Some(i) } else { None })
+    {
+        if prev.is_none_or(|v| v + 1 < idx) {
+            res += 1;
+            prev = Some(idx);
         }
     }
-    memo[r][c] = res;
     res
 }
 
@@ -69,8 +66,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(count_paths(vec![vec![1, 1], vec![3, 4]]), 8);
-        assert_eq!(count_paths(vec![vec![1], vec![2]]), 3);
+        assert_eq!(min_capability(&[2, 3, 5, 9], 2), 5);
+        assert_eq!(min_capability(&[2, 7, 9, 3, 1], 2), 2);
     }
 
     #[test]
