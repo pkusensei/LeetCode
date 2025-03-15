@@ -5,39 +5,33 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_sum_square_diff(nums1: &[i32], nums2: &[i32], k1: i32, k2: i32) -> i64 {
-    use std::collections::{BinaryHeap, HashMap};
-    let mut heap: BinaryHeap<_> = nums1
-        .iter()
-        .zip(nums2.iter())
-        .fold(HashMap::new(), |mut acc, (a, b)| {
-            *acc.entry(i64::from(a.abs_diff(*b))).or_insert(0_i64) += 1;
-            acc
-        })
-        .into_iter()
-        .filter_map(|(num, count)| if num > 0 { Some((num, count)) } else { None })
-        .collect();
-    let mut k = i64::from(k1 + k2);
-    while let Some((num, mut count)) = heap.pop() {
-        let d = count.min(k);
-        count -= d;
-        if count > 0 {
-            heap.push((num, count));
+pub fn valid_subarray_size(nums: &[i32], threshold: i32) -> i32 {
+    let n = nums.len();
+    let mut next_smaller = vec![-1; n];
+    let mut stack = vec![];
+    for (idx, &num) in nums.iter().enumerate() {
+        while stack.last().is_some_and(|&i| num < nums[i]) {
+            let top = stack.pop().unwrap();
+            next_smaller[top] = idx as i32;
         }
-        if heap.peek().is_some_and(|&(n, _c)| n == num - 1) {
-            let (n, c) = heap.pop().unwrap();
-            heap.push((n, c + d));
-        } else if num > 1 {
-            heap.push((num - 1, d));
+        stack.push(idx);
+    }
+    let mut prev_smaller = vec![-1; n];
+    stack.clear();
+    for (idx, &num) in nums.iter().enumerate().rev() {
+        while stack.last().is_some_and(|&i| num < nums[i]) {
+            prev_smaller[stack.pop().unwrap()] = idx as i32;
         }
-        k -= d;
-        if k == 0 {
-            break;
+        stack.push(idx);
+    }
+    for ((left, right), &num) in prev_smaller.into_iter().zip(next_smaller).zip(nums.iter()) {
+        let right = if right == -1 { n as i32 } else { right };
+        let len = right - left - 1;
+        if f64::from(num) > f64::from(threshold) / f64::from(len) {
+            return len;
         }
     }
-    heap.into_iter()
-        .map(|(num, count)| num.pow(2) * count)
-        .sum()
+    -1
 }
 
 #[cfg(test)]
@@ -71,17 +65,10 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            min_sum_square_diff(&[1, 4, 10, 12], &[5, 8, 6, 9], 1, 1),
-            43
-        );
+        assert_eq!(valid_subarray_size(&[1, 3, 4, 3, 1], 6), 3);
+        assert_eq!(valid_subarray_size(&[6, 5, 6, 5, 8], 7), 5);
     }
 
     #[test]
-    fn test() {
-        assert_eq!(
-            min_sum_square_diff(&[10, 10, 10, 11, 5], &[1, 0, 6, 6, 1], 11, 27),
-            0
-        );
-    }
+    fn test() {}
 }
