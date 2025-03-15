@@ -5,34 +5,41 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_capability(nums: &[i32], k: i32) -> i32 {
-    let mut left = *nums.iter().min().unwrap();
-    let mut right = *nums.iter().max().unwrap();
-    while left < right {
-        let mid = left + (right - left) / 2;
-        if count(nums, mid) >= k {
-            right = mid;
-        } else {
-            left = mid + 1;
+pub fn latest_time_catch_the_bus(
+    mut buses: Vec<i32>,
+    mut passengers: Vec<i32>,
+    capacity: i32,
+) -> i32 {
+    let n = passengers.len();
+    buses.sort_unstable_by(|a, b| b.cmp(a));
+    passengers.sort_unstable();
+    let mut res = 1;
+    let mut count = 0;
+    let mut last = 0;
+    for idx in 0..n {
+        while buses.last().is_some_and(|&v| v < passengers[idx]) {
+            res = buses.pop().unwrap();
+        }
+        if buses.is_empty() {
+            break;
+        }
+        if last < passengers[idx] - 1 {
+            res = passengers[idx] - 1;
+        }
+        last = passengers[idx];
+        count += 1;
+        if idx == n - 1
+            || count == capacity
+            || buses.last().is_some_and(|&v| v < passengers[1 + idx])
+        {
+            if count < capacity && buses.last().is_some_and(|&v| v > passengers[idx]) {
+                res = *buses.last().unwrap();
+            }
+            buses.pop();
+            count = 0;
         }
     }
-    left
-}
-
-fn count(nums: &[i32], mid: i32) -> i32 {
-    let mut res = 0;
-    let mut prev = None;
-    for idx in nums
-        .iter()
-        .enumerate()
-        .filter_map(|(i, &v)| if v <= mid { Some(i) } else { None })
-    {
-        if prev.is_none_or(|v| v + 1 < idx) {
-            res += 1;
-            prev = Some(idx);
-        }
-    }
-    res
+    buses.first().copied().unwrap_or(res)
 }
 
 #[cfg(test)]
@@ -66,10 +73,19 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_capability(&[2, 3, 5, 9], 2), 5);
-        assert_eq!(min_capability(&[2, 7, 9, 3, 1], 2), 2);
+        assert_eq!(
+            latest_time_catch_the_bus(vec![10, 20], vec![2, 17, 18, 19], 2),
+            16
+        );
+        assert_eq!(
+            latest_time_catch_the_bus(vec![20, 30, 10], vec![19, 13, 26, 4, 25, 11, 21], 2),
+            20
+        );
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(latest_time_catch_the_bus(vec![3, 2], vec![2], 2), 3);
+        assert_eq!(latest_time_catch_the_bus(vec![3], vec![2], 2), 3);
+    }
 }
