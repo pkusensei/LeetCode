@@ -2,16 +2,37 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::{
+    cmp::Reverse,
+    collections::{BinaryHeap, HashSet},
+};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn fill_cups(mut amount: Vec<i32>) -> i32 {
-    amount.sort_unstable();
-    if amount[0] + amount[1] <= amount[2] {
-        amount[2]
-    } else {
-        let sum: i32 = amount.iter().sum();
-        sum / 2 + (sum & 1)
+struct SmallestInfiniteSet {
+    heap: BinaryHeap<Reverse<i32>>,
+    out: HashSet<i32>,
+}
+
+impl SmallestInfiniteSet {
+    fn new() -> Self {
+        Self {
+            heap: (1..=1000).map(Reverse).collect(),
+            out: HashSet::new(),
+        }
+    }
+
+    fn pop_smallest(&mut self) -> i32 {
+        let val = self.heap.pop().unwrap().0;
+        self.out.insert(val);
+        val
+    }
+
+    fn add_back(&mut self, num: i32) {
+        if self.out.remove(&num) {
+            self.heap.push(Reverse(num));
+        }
     }
 }
 
