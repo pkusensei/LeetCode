@@ -5,21 +5,26 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_operations(nums: &mut [i32], nums_divide: &[i32]) -> i32 {
-    const fn gcd(a: i32, b: i32) -> i32 {
-        if a == 0 { b } else { gcd(b % a, a) }
-    }
-
-    let ngcd = nums_divide
+pub fn best_hand(ranks: Vec<i32>, suits: Vec<char>) -> String {
+    let r_count = ranks.iter().fold([0; 14], |mut acc, &num| {
+        acc[num as usize] += 1;
+        acc
+    });
+    let s_count = suits
         .iter()
-        .fold(nums_divide[0], |acc, &v| gcd(acc, v));
-    nums.sort_unstable();
-    for (i, &num) in (0..).zip(nums.iter()) {
-        if ngcd % num == 0 {
-            return i;
+        .fold(std::collections::HashMap::new(), |mut acc, &ch| {
+            *acc.entry(ch).or_insert(0) += 1;
+            acc
+        });
+    if s_count.len() == 1 {
+        "Flush".into()
+    } else {
+        match r_count.into_iter().max() {
+            Some(v) if v >= 3 => "Three of a Kind".into(),
+            Some(2) => "Pair".into(),
+            _ => "High Card".into(),
         }
     }
-    -1
 }
 
 #[cfg(test)]
@@ -52,9 +57,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(min_operations(&mut [2, 3, 2, 4, 3], &[9, 6, 9, 3, 15]), 2);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
