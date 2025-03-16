@@ -5,16 +5,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn largest_local(grid: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
-    let n = grid.len();
-    let mut res = vec![vec![0; n - 2]; n - 2];
-    for r in 0..n - 2 {
-        for c in 0..n - 2 {
-            res[r][c] = *grid[r..r + 3]
-                .iter()
-                .flat_map(|row| row[c..c + 3].iter())
-                .max()
-                .unwrap();
+pub fn edge_score(edges: Vec<i32>) -> i32 {
+    let n = edges.len();
+    let mut score = vec![0; n];
+    for (i, &e) in edges.iter().enumerate() {
+        score[e as usize] += i;
+    }
+    let mut res = 0;
+    let mut max = 0;
+    for (i, s) in (0..).zip(score) {
+        if s > max {
+            max = s;
+            res = i;
         }
     }
     res
