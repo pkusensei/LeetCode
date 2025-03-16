@@ -5,31 +5,43 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn reachable_nodes(n: i32, edges: Vec<Vec<i32>>, restricted: Vec<i32>) -> i32 {
-    let n = n as usize;
-    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
-        let [a, b] = [0, 1].map(|i| e[i] as usize);
-        acc[a].push(b);
-        acc[b].push(a);
-        acc
-    });
-    let mut seen = restricted.iter().fold(vec![false; n], |mut acc, &v| {
-        acc[v as usize] = true;
-        acc
-    });
-    let mut queue = std::collections::VecDeque::from([0]);
-    seen[0] = true;
-    let mut res = 1;
-    while let Some(node) = queue.pop_front() {
-        for &next in adj[node].iter() {
-            if !seen[next] {
-                seen[next] = true;
-                queue.push_back(next);
-                res += 1;
+pub fn valid_partition(nums: &[i32]) -> bool {
+    let n = nums.len();
+    dfs(nums, &mut vec![None; 1 + n])
+}
+
+fn dfs(nums: &[i32], memo: &mut [Option<bool>]) -> bool {
+    match nums {
+        [] => true,
+        [_] => false,
+        [a, b] => a == b,
+        [a, b, c, tail @ ..] => {
+            let n = nums.len();
+            if let Some(v) = memo[n] {
+                return v;
             }
+            let res = (a == b && dfs(&nums[2..], memo))
+                || (a == b && b == c && dfs(tail, memo))
+                || (a + 1 == *b && b + 1 == *c && dfs(tail, memo));
+            memo[n] = Some(res);
+            res
         }
     }
-    res
+}
+
+pub fn with_dp(nums: &[i32]) -> bool {
+    let n = nums.len();
+    if n == 1 {
+        return false;
+    }
+    let mut dp = [true, false, if n > 1 { nums[0] == nums[1] } else { false }];
+    for idx in 2..n {
+        let curr = (nums[idx] == nums[idx - 1] && dp[1])
+            || (nums[idx] == nums[idx - 1] && nums[idx - 1] == nums[idx - 2] && dp[0])
+            || (nums[idx] == 1 + nums[idx - 1] && nums[idx - 1] == 1 + nums[idx - 2] && dp[0]);
+        dp = [dp[0], dp[1], curr];
+    }
+    dp[2]
 }
 
 #[cfg(test)]
@@ -62,7 +74,13 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert!(valid_partition(&[4, 4, 4, 5, 6]));
+        assert!(!valid_partition(&[1, 1, 1, 2]));
+
+        assert!(with_dp(&[4, 4, 4, 5, 6]));
+        assert!(!with_dp(&[1, 1, 1, 2]));
+    }
 
     #[test]
     fn test() {}
