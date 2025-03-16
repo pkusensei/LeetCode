@@ -5,38 +5,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-use std::collections::{BTreeSet, HashMap};
-
-#[derive(Default)]
-struct NumberContainers {
-    id_num: HashMap<i32, i32>,
-    num_ids: HashMap<i32, BTreeSet<i32>>,
-}
-
-impl NumberContainers {
-    fn new() -> Self {
-        Default::default()
-    }
-
-    fn change(&mut self, index: i32, number: i32) {
-        if let Some(&v) = self.id_num.get(&index) {
-            if let Some(set) = self.num_ids.get_mut(&v) {
-                set.remove(&index);
-                if set.is_empty() {
-                    self.num_ids.remove(&v);
-                }
-            }
+pub fn shortest_sequence(rolls: &[i32], k: i32) -> i32 {
+    let mut len = 1;
+    let mut set = std::collections::HashSet::new();
+    for &num in rolls.iter() {
+        set.insert(num);
+        // For subseq len==1, find minimum index that all k nums are seen
+        // Then for len==2, start from current min index,
+        // All k nums have to be found again.
+        if set.len() == k as usize {
+            set.clear();
+            len += 1;
         }
-        self.id_num.insert(index, number);
-        self.num_ids.entry(number).or_default().insert(index);
     }
-
-    fn find(&self, number: i32) -> i32 {
-        self.num_ids
-            .get(&number)
-            .and_then(|set| set.first().copied())
-            .unwrap_or(-1)
-    }
+    len
 }
 
 #[cfg(test)]
@@ -69,7 +51,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(shortest_sequence(&[4, 2, 1, 2, 3, 3, 2, 4, 1], 4), 3);
+        assert_eq!(shortest_sequence(&[1, 1, 2, 2], 2), 2);
+        assert_eq!(shortest_sequence(&[1, 1, 3, 2, 2, 2, 3, 3], 4), 1);
+    }
 
     #[test]
     fn test() {}
