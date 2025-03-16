@@ -5,20 +5,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn shortest_sequence(rolls: &[i32], k: i32) -> i32 {
-    let mut len = 1;
-    let mut set = std::collections::HashSet::new();
-    for &num in rolls.iter() {
-        set.insert(num);
-        // For subseq len==1, find minimum index that all k nums are seen
-        // Then for len==2, start from current min index,
-        // All k nums have to be found again.
-        if set.len() == k as usize {
-            set.clear();
-            len += 1;
+pub fn repeated_character(s: String) -> char {
+    let mut mask = 0;
+    for ch in s.chars() {
+        let i = usize::from(ch as u8 - b'a');
+        if (mask >> i) & 1 == 1 {
+            return ch;
         }
+        mask |= 1 << i
     }
-    len
+    '\0'
 }
 
 #[cfg(test)]
@@ -51,11 +47,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(shortest_sequence(&[4, 2, 1, 2, 3, 3, 2, 4, 1], 4), 3);
-        assert_eq!(shortest_sequence(&[1, 1, 2, 2], 2), 2);
-        assert_eq!(shortest_sequence(&[1, 1, 3, 2, 2, 2, 3, 3], 4), 1);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
