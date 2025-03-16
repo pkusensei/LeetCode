@@ -5,15 +5,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn task_scheduler_ii(tasks: Vec<i32>, space: i32) -> i64 {
-    let mut map = std::collections::HashMap::new();
+pub fn minimum_replacement(nums: &[i32]) -> i64 {
+    let n = nums.len();
+    let mut last = nums[n - 1];
     let mut res = 0;
-    for &t in tasks.iter() {
-        res += 1;
-        if let Some(&prev) = map.get(&t) {
-            res = res.max(prev + i64::from(space) + 1);
+    for &num in nums.iter().rev().skip(1) {
+        if num <= last {
+            last = num;
+        } else {
+            let div = num / last + i32::from(num % last > 0);
+            last = num / div;
+            res += i64::from(div - 1);
         }
-        map.insert(t, res);
     }
     res
 }
@@ -48,8 +51,13 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(minimum_replacement(&[3, 9, 3]), 2);
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(minimum_replacement(&[12, 9, 7, 6, 17, 19, 21]), 6);
+        assert_eq!(minimum_replacement(&[2, 10, 20, 19, 1]), 47);
+    }
 }
