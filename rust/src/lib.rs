@@ -5,17 +5,38 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn zero_filled_subarray(nums: Vec<i32>) -> i64 {
-    nums.chunk_by(|a, b| a == b)
-        .filter_map(|w| {
-            if w[0] == 0 {
-                let n = w.len() as i64;
-                Some(n * (n + 1) / 2)
-            } else {
-                None
+use std::collections::{BTreeSet, HashMap};
+
+#[derive(Default)]
+struct NumberContainers {
+    id_num: HashMap<i32, i32>,
+    num_ids: HashMap<i32, BTreeSet<i32>>,
+}
+
+impl NumberContainers {
+    fn new() -> Self {
+        Default::default()
+    }
+
+    fn change(&mut self, index: i32, number: i32) {
+        if let Some(&v) = self.id_num.get(&index) {
+            if let Some(set) = self.num_ids.get_mut(&v) {
+                set.remove(&index);
+                if set.is_empty() {
+                    self.num_ids.remove(&v);
+                }
             }
-        })
-        .sum()
+        }
+        self.id_num.insert(index, number);
+        self.num_ids.entry(number).or_default().insert(index);
+    }
+
+    fn find(&self, number: i32) -> i32 {
+        self.num_ids
+            .get(&number)
+            .and_then(|set| set.first().copied())
+            .unwrap_or(-1)
+    }
 }
 
 #[cfg(test)]
