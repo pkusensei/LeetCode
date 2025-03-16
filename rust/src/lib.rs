@@ -5,13 +5,28 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn arithmetic_triplets(nums: Vec<i32>, diff: i32) -> i32 {
-    let mut res = 0;
-    for &num in nums.iter() {
-        if nums.binary_search(&(num + diff)).is_ok()
-            && nums.binary_search(&(num + diff * 2)).is_ok()
-        {
-            res += 1;
+pub fn reachable_nodes(n: i32, edges: Vec<Vec<i32>>, restricted: Vec<i32>) -> i32 {
+    let n = n as usize;
+    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
+        let [a, b] = [0, 1].map(|i| e[i] as usize);
+        acc[a].push(b);
+        acc[b].push(a);
+        acc
+    });
+    let mut seen = restricted.iter().fold(vec![false; n], |mut acc, &v| {
+        acc[v as usize] = true;
+        acc
+    });
+    let mut queue = std::collections::VecDeque::from([0]);
+    seen[0] = true;
+    let mut res = 1;
+    while let Some(node) = queue.pop_front() {
+        for &next in adj[node].iter() {
+            if !seen[next] {
+                seen[next] = true;
+                queue.push_back(next);
+                res += 1;
+            }
         }
     }
     res
