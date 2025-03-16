@@ -5,20 +5,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn merge_similar_items(items1: Vec<Vec<i32>>, items2: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
-    use itertools::Itertools;
-    items1
-        .iter()
-        .chain(items2.iter())
-        .fold(std::collections::HashMap::new(), |mut acc, it| {
-            let [v, w] = it[..] else { unreachable!() };
-            *acc.entry(v).or_insert(0) += w;
-            acc
-        })
-        .into_iter()
-        .sorted_unstable_by_key(|&(v, _w)| v)
-        .map(|(v, w)| vec![v, w])
-        .collect()
+pub fn task_scheduler_ii(tasks: Vec<i32>, space: i32) -> i64 {
+    let mut map = std::collections::HashMap::new();
+    let mut res = 0;
+    for &t in tasks.iter() {
+        res += 1;
+        if let Some(&prev) = map.get(&t) {
+            res = res.max(prev + i64::from(space) + 1);
+        }
+        map.insert(t, res);
+    }
+    res
 }
 
 #[cfg(test)]
