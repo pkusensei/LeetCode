@@ -5,16 +5,9 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_excellent_pairs(mut nums: Vec<i32>, k: i32) -> i64 {
-    nums.sort_unstable_by(|a, b| a.count_ones().cmp(&b.count_ones()).then(a.cmp(b)));
-    nums.dedup();
-    let n = nums.len();
-    let mut res = 0;
-    for &a in nums.iter() {
-        let i = nums.partition_point(|&v| v.count_ones() + a.count_ones() < k as u32);
-        res += n - i;
-    }
-    res as i64
+pub fn minimum_operations(nums: Vec<i32>) -> i32 {
+    use itertools::Itertools;
+    nums.into_iter().filter(|&v| v > 0).unique().count() as _
 }
 
 #[cfg(test)]
@@ -47,10 +40,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(count_excellent_pairs(vec![1, 2, 3, 1], 3), 5);
-        assert_eq!(count_excellent_pairs(vec![5, 1, 1], 10), 0);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
