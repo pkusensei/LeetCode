@@ -5,16 +5,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn repeated_character(s: String) -> char {
-    let mut mask = 0;
-    for ch in s.chars() {
-        let i = usize::from(ch as u8 - b'a');
-        if (mask >> i) & 1 == 1 {
-            return ch;
+pub fn equal_pairs(grid: Vec<Vec<i32>>) -> i32 {
+    let n = grid.len();
+    let mut res = 0;
+    for row in grid.iter() {
+        for c in 0..n {
+            if row.iter().zip(0..n).all(|(&v1, r)| v1 == grid[r][c]) {
+                res += 1;
+            }
         }
-        mask |= 1 << i
     }
-    '\0'
+    res
 }
 
 #[cfg(test)]
