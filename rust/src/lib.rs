@@ -5,9 +5,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_operations(nums: Vec<i32>) -> i32 {
-    use itertools::Itertools;
-    nums.into_iter().filter(|&v| v > 0).unique().count() as _
+pub fn maximum_groups(grades: Vec<i32>) -> i32 {
+    let n = grades.len();
+    let mut left = 1;
+    let mut right = n;
+    while left < right {
+        let mid = (left + right) / 2;
+        if mid * (1 + mid) / 2 > n {
+            right = mid - 1
+        } else {
+            left = mid
+        }
+    }
+    left as i32
 }
 
 #[cfg(test)]
