@@ -5,43 +5,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn valid_partition(nums: &[i32]) -> bool {
-    let n = nums.len();
-    dfs(nums, &mut vec![None; 1 + n])
-}
-
-fn dfs(nums: &[i32], memo: &mut [Option<bool>]) -> bool {
-    match nums {
-        [] => true,
-        [_] => false,
-        [a, b] => a == b,
-        [a, b, c, tail @ ..] => {
-            let n = nums.len();
-            if let Some(v) = memo[n] {
-                return v;
-            }
-            let res = (a == b && dfs(&nums[2..], memo))
-                || (a == b && b == c && dfs(tail, memo))
-                || (a + 1 == *b && b + 1 == *c && dfs(tail, memo));
-            memo[n] = Some(res);
-            res
+pub fn longest_ideal_string(s: &str, k: i32) -> i32 {
+    let s = s.as_bytes();
+    let k = k as u8;
+    let mut dp = [0; 26];
+    for &b in s.iter() {
+        let mut curr = dp;
+        for i in (b - b'a').saturating_sub(k)..=(b - b'a' + k).min(25) {
+            curr[usize::from(b - b'a')] = curr[usize::from(b - b'a')].max(1 + dp[usize::from(i)]);
         }
+        dp = curr;
     }
-}
-
-pub fn with_dp(nums: &[i32]) -> bool {
-    let n = nums.len();
-    if n == 1 {
-        return false;
-    }
-    let mut dp = [true, false, if n > 1 { nums[0] == nums[1] } else { false }];
-    for idx in 2..n {
-        let curr = (nums[idx] == nums[idx - 1] && dp[1])
-            || (nums[idx] == nums[idx - 1] && nums[idx - 1] == nums[idx - 2] && dp[0])
-            || (nums[idx] == 1 + nums[idx - 1] && nums[idx - 1] == 1 + nums[idx - 2] && dp[0]);
-        dp = [dp[0], dp[1], curr];
-    }
-    dp[2]
+    dp.into_iter().max().unwrap_or(1)
 }
 
 #[cfg(test)]
@@ -75,13 +50,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert!(valid_partition(&[4, 4, 4, 5, 6]));
-        assert!(!valid_partition(&[1, 1, 1, 2]));
-
-        assert!(with_dp(&[4, 4, 4, 5, 6]));
-        assert!(!with_dp(&[1, 1, 1, 2]));
+        assert_eq!(longest_ideal_string("acfgbd", 2), 4);
+        assert_eq!(longest_ideal_string("abcd", 3), 4);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(longest_ideal_string("lkpkxcigcs", 6), 7);
+    }
 }
