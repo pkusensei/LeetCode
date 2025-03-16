@@ -5,24 +5,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn longest_cycle(edges: &[i32]) -> i32 {
-    let n = edges.len();
-    let mut res = -1;
-    let mut ids = vec![-1; n];
-    let mut id = 0;
-    for i in 0..n as i32 {
-        let mut node = i;
-        let curr = id;
-        while node != -1 && ids[node as usize] == -1 {
-            ids[node as usize] = id;
-            id += 1;
-            node = edges[node as usize];
-        }
-        if node != -1 && ids[node as usize] >= curr {
-            res = res.max(id - ids[node as usize]);
-        }
-    }
-    res
+pub fn merge_similar_items(items1: Vec<Vec<i32>>, items2: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
+    use itertools::Itertools;
+    items1
+        .iter()
+        .chain(items2.iter())
+        .fold(std::collections::HashMap::new(), |mut acc, it| {
+            let [v, w] = it[..] else { unreachable!() };
+            *acc.entry(v).or_insert(0) += w;
+            acc
+        })
+        .into_iter()
+        .sorted_unstable_by_key(|&(v, _w)| v)
+        .map(|(v, w)| vec![v, w])
+        .collect()
 }
 
 #[cfg(test)]
@@ -55,10 +51,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(longest_cycle(&[3, 3, 4, 2, 3]), 3);
-        assert_eq!(longest_cycle(&[2, -1, 3, 1]), -1);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
