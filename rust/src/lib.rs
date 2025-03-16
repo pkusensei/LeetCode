@@ -5,49 +5,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-use std::collections::{BTreeMap, BTreeSet, HashMap};
-#[derive(Default)]
-struct FoodRatings {
-    f_cr: HashMap<String, (String, i32)>,
-    c_r_f: HashMap<String, BTreeMap<i32, BTreeSet<String>>>,
-}
-
-impl FoodRatings {
-    fn new(foods: Vec<String>, cuisines: Vec<String>, ratings: Vec<i32>) -> Self {
-        let mut f_cr = HashMap::new();
-        let mut c_r_f: HashMap<String, BTreeMap<i32, BTreeSet<String>>> = HashMap::new();
-        for (f, (c, r)) in foods.into_iter().zip(cuisines.into_iter().zip(ratings)) {
-            f_cr.insert(f.clone(), (c.clone(), r));
-            c_r_f.entry(c).or_default().entry(r).or_default().insert(f);
-        }
-        Self { f_cr, c_r_f }
+pub fn count_excellent_pairs(mut nums: Vec<i32>, k: i32) -> i64 {
+    nums.sort_unstable_by(|a, b| a.count_ones().cmp(&b.count_ones()).then(a.cmp(b)));
+    nums.dedup();
+    let n = nums.len();
+    let mut res = 0;
+    for &a in nums.iter() {
+        let i = nums.partition_point(|&v| v.count_ones() + a.count_ones() < k as u32);
+        res += n - i;
     }
-
-    fn change_rating(&mut self, food: String, new_rating: i32) {
-        let (c, old_r) = self.f_cr.remove(&food).unwrap();
-        let r_f = self.c_r_f.get_mut(&c).unwrap();
-        let set = r_f.get_mut(&old_r).unwrap();
-        set.remove(&food);
-        if set.is_empty() {
-            r_f.remove(&old_r);
-        }
-        self.f_cr.insert(food.clone(), (c.clone(), new_rating));
-        self.c_r_f
-            .entry(c)
-            .or_default()
-            .entry(new_rating)
-            .or_default()
-            .insert(food);
-    }
-
-    fn highest_rated(&self, cuisine: String) -> String {
-        self.c_r_f
-            .get(&cuisine)
-            .and_then(|r_f| r_f.values().last())
-            .and_then(|set| set.first())
-            .map(|s| s.to_string())
-            .unwrap_or_default()
-    }
+    res as i64
 }
 
 #[cfg(test)]
@@ -80,7 +47,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(count_excellent_pairs(vec![1, 2, 3, 1], 3), 5);
+        assert_eq!(count_excellent_pairs(vec![5, 1, 1], 10), 0);
+    }
 
     #[test]
     fn test() {}
