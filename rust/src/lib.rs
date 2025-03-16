@@ -5,26 +5,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn best_hand(ranks: Vec<i32>, suits: Vec<char>) -> String {
-    let r_count = ranks.iter().fold([0; 14], |mut acc, &num| {
-        acc[num as usize] += 1;
-        acc
-    });
-    let s_count = suits
-        .iter()
-        .fold(std::collections::HashMap::new(), |mut acc, &ch| {
-            *acc.entry(ch).or_insert(0) += 1;
-            acc
-        });
-    if s_count.len() == 1 {
-        "Flush".into()
-    } else {
-        match r_count.into_iter().max() {
-            Some(v) if v >= 3 => "Three of a Kind".into(),
-            Some(2) => "Pair".into(),
-            _ => "High Card".into(),
-        }
-    }
+pub fn zero_filled_subarray(nums: Vec<i32>) -> i64 {
+    nums.chunk_by(|a, b| a == b)
+        .filter_map(|w| {
+            if w[0] == 0 {
+                let n = w.len() as i64;
+                Some(n * (n + 1) / 2)
+            } else {
+                None
+            }
+        })
+        .sum()
 }
 
 #[cfg(test)]
