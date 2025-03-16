@@ -5,18 +5,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn longest_ideal_string(s: &str, k: i32) -> i32 {
-    let s = s.as_bytes();
-    let k = k as u8;
-    let mut dp = [0; 26];
-    for &b in s.iter() {
-        let mut curr = dp;
-        for i in (b - b'a').saturating_sub(k)..=(b - b'a' + k).min(25) {
-            curr[usize::from(b - b'a')] = curr[usize::from(b - b'a')].max(1 + dp[usize::from(i)]);
+pub fn largest_local(grid: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
+    let n = grid.len();
+    let mut res = vec![vec![0; n - 2]; n - 2];
+    for r in 0..n - 2 {
+        for c in 0..n - 2 {
+            res[r][c] = *grid[r..r + 3]
+                .iter()
+                .flat_map(|row| row[c..c + 3].iter())
+                .max()
+                .unwrap();
         }
-        dp = curr;
     }
-    dp.into_iter().max().unwrap_or(1)
+    res
 }
 
 #[cfg(test)]
@@ -49,13 +50,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(longest_ideal_string("acfgbd", 2), 4);
-        assert_eq!(longest_ideal_string("abcd", 3), 4);
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(longest_ideal_string("lkpkxcigcs", 6), 7);
-    }
+    fn test() {}
 }
