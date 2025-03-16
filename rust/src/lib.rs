@@ -5,31 +5,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn closest_meeting_node(edges: &[i32], node1: i32, node2: i32) -> i32 {
-    let a = bfs(edges, node1 as _);
-    let b = bfs(edges, node2 as _);
-    a.into_iter()
-        .zip(b)
-        .enumerate()
-        .filter(|&(_i, (x, y))| x > -1 && y > -1)
-        .min_by_key(|&(_i, (x, y))| x.max(y))
-        .map(|(i, _)| i as i32)
-        .unwrap_or(-1)
-}
-
-fn bfs(edges: &[i32], start: usize) -> Vec<i32> {
-    use std::collections::VecDeque;
+pub fn longest_cycle(edges: &[i32]) -> i32 {
     let n = edges.len();
-    let mut res = vec![-1; n];
-    let mut queue = VecDeque::from([(start, 0)]);
-    res[start] = 0;
-    while let Some((node, dist)) = queue.pop_front() {
-        if edges[node] > -1 {
-            let next = edges[node] as usize;
-            if res[next] == -1 {
-                res[next] = 1 + dist;
-                queue.push_back((next, 1 + dist));
-            }
+    let mut res = -1;
+    let mut ids = vec![-1; n];
+    let mut id = 0;
+    for i in 0..n as i32 {
+        let mut node = i;
+        let curr = id;
+        while node != -1 && ids[node as usize] == -1 {
+            ids[node as usize] = id;
+            id += 1;
+            node = edges[node as usize];
+        }
+        if node != -1 && ids[node as usize] >= curr {
+            res = res.max(id - ids[node as usize]);
         }
     }
     res
@@ -65,7 +55,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(longest_cycle(&[3, 3, 4, 2, 3]), 3);
+        assert_eq!(longest_cycle(&[2, -1, 3, 1]), -1);
+    }
 
     #[test]
     fn test() {}
