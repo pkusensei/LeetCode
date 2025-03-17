@@ -5,30 +5,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn k_sum(nums: &[i32], k: i32) -> i64 {
-    use std::collections::BinaryHeap;
-    let mut vals = Vec::with_capacity(nums.len());
-    let mut res = 0;
-    for &num in nums.iter() {
-        let v = i64::from(num);
-        res += v.max(0);
-        vals.push(v.abs());
-    }
-    vals.sort_unstable();
-    // First, try max_sum-vals[0]
-    let mut heap = BinaryHeap::from([(res - vals[0], 0)]);
-    // res starts with max sum => 1..k
-    for _ in 1..k {
-        let Some((sum, idx)) = heap.pop() else {
-            break;
-        };
-        res = sum;
-        if let Some(next) = vals.get(1 + idx) {
-            heap.push((sum - next, 1 + idx));
-            heap.push((sum + vals[idx] - next, 1 + idx));
+pub fn remove_stars(s: String) -> String {
+    let mut res = vec![];
+    for b in s.bytes() {
+        if b == b'*' {
+            res.pop();
+        } else {
+            res.push(b);
         }
     }
-    res
+    String::from_utf8(res).unwrap()
 }
 
 #[cfg(test)]
@@ -61,10 +47,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(k_sum(&[2, 4, -2], 5), 2);
-        assert_eq!(k_sum(&[1, -2, 3, 4, -10, 12], 16), 10);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
