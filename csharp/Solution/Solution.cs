@@ -6,11 +6,6 @@ namespace Solution;
 
 public class Solution
 {
-    public bool EvaluateTree(TreeNode root) => root.val switch
-    {
-        0 => false,
-        1 => true,
-        2 => EvaluateTree(root.left) || EvaluateTree(root.right),
-        _ => EvaluateTree(root.left) && EvaluateTree(root.right),
-    };
+    public bool DivideArray(int[] nums)
+    => nums.GroupBy(x => x).Select(g => g.Count()).All(v => (v & 1) == 0);
 }
