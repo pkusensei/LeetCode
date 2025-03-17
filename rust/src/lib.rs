@@ -5,38 +5,30 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn largest_palindromic(num: &str) -> String {
-    use std::collections::VecDeque;
-    let count = num.bytes().fold([0; 10], |mut acc, b| {
-        acc[usize::from(b - b'0')] += 1;
-        acc
-    });
-    let mut left = VecDeque::new();
-    let mut right = VecDeque::new();
-    for (idx, &c) in count.iter().enumerate().rev() {
-        if c >= 2 {
-            let ch = char::from(idx as u8 + b'0');
-            for _ in 0..c / 2 {
-                left.push_back(ch);
-                right.push_front(ch);
-            }
+pub fn k_sum(nums: &[i32], k: i32) -> i64 {
+    use std::collections::BinaryHeap;
+    let mut vals = Vec::with_capacity(nums.len());
+    let mut res = 0;
+    for &num in nums.iter() {
+        let v = i64::from(num);
+        res += v.max(0);
+        vals.push(v.abs());
+    }
+    vals.sort_unstable();
+    // First, try max_sum-vals[0]
+    let mut heap = BinaryHeap::from([(res - vals[0], 0)]);
+    // res starts with max sum => 1..k
+    for _ in 1..k {
+        let Some((sum, idx)) = heap.pop() else {
+            break;
+        };
+        res = sum;
+        if let Some(next) = vals.get(1 + idx) {
+            heap.push((sum - next, 1 + idx));
+            heap.push((sum + vals[idx] - next, 1 + idx));
         }
     }
-    while left.front().is_some_and(|&v| v == '0') {
-        left.pop_front();
-        right.pop_back();
-    }
-    if let Some(i) = count
-        .iter()
-        .enumerate()
-        .rev()
-        .find_map(|(i, &c)| if c & 1 == 1 { Some(i) } else { None })
-    {
-        let ch = char::from(i as u8 + b'0');
-        left.push_back(ch);
-    }
-    let res: String = left.into_iter().chain(right).collect();
-    if res.is_empty() { "0".into() } else { res }
+    res
 }
 
 #[cfg(test)]
@@ -70,8 +62,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(largest_palindromic("444947137"), "7449447");
-        assert_eq!(largest_palindromic("00009"), "9");
+        assert_eq!(k_sum(&[2, 4, -2], 5), 2);
+        assert_eq!(k_sum(&[1, -2, 3, 4, -10, 12], 16), 10);
     }
 
     #[test]
