@@ -5,54 +5,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_special_numbers(n: i32) -> i32 {
-    (1..=9).map(|d| dfs(i64::from(n), d, 1 << d)).sum()
-}
-
-fn dfs(n: i64, curr: i64, mask: i32) -> i32 {
-    if curr > n {
-        return 0;
-    }
-    let mut res = 1;
-    for d in 0..=9 {
-        if (mask >> d) & 1 == 0 {
-            res += dfs(n, 10 * curr + d, mask | (1 << d))
+pub fn seconds_to_remove_occurrences(mut s: String) -> i32 {
+    let mut res = 0;
+    // while s.contains(&"01") {
+    //     res += 1;
+    //     s = s.replace("01", "10");
+    // }
+    let mut zeros = 0;
+    for b in s.bytes() {
+        zeros += i32::from(b == b'0');
+        if b == b'1' && zeros > 0 {
+            res = (1 + res).max(zeros);
         }
-    }
-    res
-}
-
-pub fn with_perm(n: i32) -> i32 {
-    fn perm(n: i32, k: i32) -> i32 {
-        (n - k + 1..=n).product()
-    }
-
-    let mut n = 1 + n;
-    let mut digits: Vec<_> = std::iter::from_fn(move || {
-        if n > 0 {
-            let d = n % 10;
-            n /= 10;
-            Some(d)
-        } else {
-            None
-        }
-    })
-    .collect();
-    digits.reverse();
-    let len = digits.len();
-    let mut res = (1..len).map(|v| 9 * perm(9, v as i32 - 1)).sum();
-    let mut mask = 0;
-    for (idx, &digit) in digits.iter().enumerate() {
-        let start = i32::from(idx == 0);
-        for d in start..digit {
-            if (mask >> d) & 1 == 0 {
-                res += perm(9 - idx as i32, (len - idx - 1) as i32);
-            }
-        }
-        if (mask >> digit) & 1 == 1 {
-            break;
-        }
-        mask |= 1 << digit;
     }
     res
 }
@@ -87,20 +51,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(count_special_numbers(20), 19);
-        assert_eq!(count_special_numbers(5), 5);
-        assert_eq!(count_special_numbers(135), 110);
-
-        assert_eq!(with_perm(20), 19);
-        assert_eq!(with_perm(5), 5);
-        assert_eq!(with_perm(135), 110);
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(count_special_numbers(820486701), 4968690);
-
-        assert_eq!(with_perm(820486701), 4968690);
-    }
+    fn test() {}
 }
