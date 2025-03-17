@@ -5,14 +5,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_subarrays(nums: Vec<i32>) -> bool {
-    let mut seen = std::collections::HashSet::new();
-    for w in nums.windows(2) {
-        if !seen.insert(w[0] + w[1]) {
-            return true;
+pub fn maximum_rows(matrix: Vec<Vec<i32>>, num_select: i32) -> i32 {
+    let cols = matrix[0].len();
+    let grid: Vec<_> = matrix
+        .iter()
+        .map(|row| row.iter().fold(0, |acc, &v| (acc << 1) | v))
+        .collect();
+    let mut res = 0;
+    for mask in 0_i32..(1 << (1 + cols)) - 1 {
+        if mask.count_ones() == num_select as u32 {
+            let curr = grid.iter().filter(|&&num| num & mask == num).count() as i32;
+            res = res.max(curr)
         }
     }
-    false
+    res
 }
 
 #[cfg(test)]
