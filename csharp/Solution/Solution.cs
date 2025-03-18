@@ -6,39 +6,21 @@ namespace Solution;
 
 public class Solution
 {
-    public int AmountOfTime(TreeNode root, int start)
+    public int MinGroups(int[][] intervals)
     {
-        Dictionary<int, List<int>> adj = [];
-        Dfs(root, null);
-        Queue<(int node, int dist)> queue = [];
-        queue.Enqueue((start, 0));
-        int res = 0;
-        HashSet<int> seen = [start];
-        while (queue.TryDequeue(out var item))
+        SortedList<int, int> map = [];
+        foreach (var item in intervals)
         {
-            res = Math.Max(res, item.dist);
-            foreach (var next in adj[item.node])
-            {
-                if (seen.Add(next)) { queue.Enqueue((next, 1 + item.dist)); }
-            }
+            if (!map.TryAdd(item[0], 1)) { map[item[0]] += 1; }
+            if (!map.TryAdd(item[1] + 1, -1)) { map[item[1] + 1] -= 1; }
+        }
+        int curr = 0;
+        int res = 0;
+        foreach (var val in map.Values)
+        {
+            curr += val;
+            res = Math.Max(res, curr);
         }
         return res;
-
-        void Dfs(TreeNode node, TreeNode parent)
-        {
-            if (node is null) { return; }
-            adj.TryAdd(node.val, []);
-            if (parent is not null) { adj[node.val].Add(parent.val); }
-            if (node.left is not null)
-            {
-                adj[node.val].Add(node.left.val);
-                Dfs(node.left, node);
-            }
-            if (node.right is not null)
-            {
-                adj[node.val].Add(node.right.val);
-                Dfs(node.right, node);
-            }
-        }
     }
 }
