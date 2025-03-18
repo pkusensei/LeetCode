@@ -5,21 +5,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn match_players_and_trainers(mut players: Vec<i32>, mut trainers: Vec<i32>) -> i32 {
-    players.sort_unstable();
-    trainers.sort_unstable();
-    let [mut i1, mut i2] = [0, 0];
-    let mut res = 0;
-    while i1 < players.len() && i2 < trainers.len() {
-        while trainers.get(i2).is_some_and(|&v| v < players[i1]) {
-            i2 += 1;
+pub fn smallest_subarrays(nums: &[i32]) -> Vec<i32> {
+    let n = nums.len();
+    let mut pos = [0; 30];
+    let mut res = vec![0; n];
+    for (idx, &num) in nums.iter().enumerate().rev() {
+        res[idx] = 1;
+        for bit in 0..30 {
+            if (num >> bit) & 1 == 1 {
+                pos[bit] = idx;
+            }
+            // rightmost bit that is set
+            res[idx] = res[idx].max((pos[bit] + 1 - idx) as i32);
         }
-        if i2 >= trainers.len() {
-            break;
-        }
-        res += 1;
-        i1 += 1;
-        i2 += 1;
     }
     res
 }
@@ -54,7 +52,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(smallest_subarrays(&[1, 0, 2, 1, 3]), [3, 3, 2, 2, 1]);
+        assert_eq!(smallest_subarrays(&[1, 2]), [2, 1]);
+    }
 
     #[test]
     fn test() {}
