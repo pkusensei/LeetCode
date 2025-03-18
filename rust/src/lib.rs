@@ -5,22 +5,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn most_frequent_even(nums: Vec<i32>) -> i32 {
-    let map = nums
-        .iter()
-        .fold(std::collections::HashMap::new(), |mut acc, &num| {
-            if num & 1 == 0 {
-                *acc.entry(num).or_insert(0) += 1;
-            }
-            acc
-        });
-    let Some(&max) = map.values().max() else {
-        return -1;
-    };
-    map.into_iter()
-        .filter_map(|(k, v)| if v == max { Some(k) } else { None })
-        .min()
-        .unwrap_or(-1)
+pub fn partition_string(s: String) -> i32 {
+    let mut mask = 0;
+    let mut res = 1;
+    for b in s.bytes() {
+        let bit = i32::from(b - b'a');
+        if (mask >> bit) & 1 == 0 {
+            mask |= 1 << bit;
+        } else {
+            mask = 1 << bit;
+            res += 1;
+        }
+    }
+    res
 }
 
 #[cfg(test)]
