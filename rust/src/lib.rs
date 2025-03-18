@@ -5,55 +5,25 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn length_of_lis(nums: &[i32], k: i32) -> i32 {
-    let n = *nums.iter().max().unwrap() as usize + 1;
-    let mut tree = SegmentTree::new(n);
-    let mut res = 1;
-    for &num in nums.iter() {
-        let temp = tree.find(1, 0, n - 1, [(num - k).max(0) as usize, num as usize - 1]);
-        res = res.max(1 + temp);
-        tree.update(1, 0, n - 1, num as usize, 1 + temp);
-    }
-    res
+pub fn count_days_together(
+    arrive_alice: &str,
+    leave_alice: &str,
+    arrive_bob: &str,
+    leave_bob: &str,
+) -> i32 {
+    let [a1, a2] = [&arrive_alice, &leave_alice].map(|s| parse(s));
+    let [b1, b2] = [&arrive_bob, &leave_bob].map(|s| parse(s));
+    dbg!(a1, a2);
+    dbg!(b1, b2);
+    (a2.min(b2) - a1.max(b1) + 1).max(0)
 }
 
-struct SegmentTree {
-    tree: Vec<i32>,
-}
-
-impl SegmentTree {
-    fn new(n: usize) -> Self {
-        SegmentTree {
-            tree: vec![0; 4 * n],
-        }
-    }
-
-    fn find(&self, u: usize, left: usize, right: usize, range: [usize; 2]) -> i32 {
-        if right < range[0] || range[1] < left {
-            return 0;
-        }
-        if left == right || (range[0] <= left && right <= range[1]) {
-            return self.tree[u];
-        }
-        let mid = left + (right - left) / 2;
-        let a = self.find(2 * u, left, mid, range);
-        let b = self.find(2 * u + 1, 1 + mid, right, range);
-        a.max(b)
-    }
-
-    fn update(&mut self, u: usize, left: usize, right: usize, idx: usize, val: i32) {
-        if left == right {
-            self.tree[u] = val;
-            return;
-        }
-        let mid = left + (right - left) / 2;
-        if idx <= mid {
-            self.update(2 * u, left, mid, idx, val);
-        } else {
-            self.update(2 * u + 1, 1 + mid, right, idx, val);
-        }
-        self.tree[u] = self.tree[2 * u].max(self.tree[2 * u + 1]);
-    }
+fn parse(s: &str) -> i32 {
+    const M: [i32; 12] = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    let (a, b) = s.split_once('-').unwrap();
+    let mon = a.parse::<usize>().map(|v| v).unwrap_or(1);
+    let day = b.parse().unwrap_or(1);
+    M[..mon - 1].iter().sum::<i32>() + day
 }
 
 #[cfg(test)]
@@ -87,9 +57,7 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(length_of_lis(&[4, 2, 1, 4, 3, 4, 5, 8, 15], 3), 5);
-        assert_eq!(length_of_lis(&[7, 4, 5, 1, 8, 12, 4, 7], 5), 4);
-        assert_eq!(length_of_lis(&[1, 5], 1), 1);
+        assert_eq!(count_days_together("10-01", "10-31", "11-01", "12-31"), 0);
     }
 
     #[test]
