@@ -5,39 +5,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn most_booked(n: i32, meetings: &mut [[i32; 2]]) -> i32 {
-    use std::{cmp::Reverse, collections::BinaryHeap};
-    let n = n as usize;
-    meetings.sort_unstable();
-    let mut count = vec![0; n];
-    // min heap by id
-    let mut free: BinaryHeap<_> = (0..n).map(|i| Reverse(i)).collect();
-    // min heap by endtime
-    let mut busy: BinaryHeap<Reverse<(i64, usize)>> = BinaryHeap::new();
-    for meet in meetings.iter() {
-        let [start, end] = [0, 1].map(|i| i64::from(meet[i]));
-        while busy.peek().is_some_and(|Reverse((time, _))| *time <= start) {
-            let Reverse((_, id)) = busy.pop().unwrap();
-            free.push(Reverse(id));
-        }
-        if let Some(Reverse(id)) = free.pop() {
-            count[id] += 1;
-            busy.push(Reverse((i64::from(end), id)));
-        } else {
-            let Reverse((prev, id)) = busy.pop().unwrap();
-            count[id] += 1;
-            busy.push(Reverse((prev + i64::from(end - start), id)));
-        }
-    }
-    let mut res = 0;
-    let mut max = 0;
-    for (i, &c) in count.iter().enumerate() {
-        if c > max {
-            res = i as i32;
-            max = c;
-        }
-    }
-    res
+pub fn most_frequent_even(nums: Vec<i32>) -> i32 {
+    let map = nums
+        .iter()
+        .fold(std::collections::HashMap::new(), |mut acc, &num| {
+            if num & 1 == 0 {
+                *acc.entry(num).or_insert(0) += 1;
+            }
+            acc
+        });
+    let Some(&max) = map.values().max() else {
+        return -1;
+    };
+    map.into_iter()
+        .filter_map(|(k, v)| if v == max { Some(k) } else { None })
+        .min()
+        .unwrap_or(-1)
 }
 
 #[cfg(test)]
@@ -70,19 +53,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(most_booked(2, &mut [[0, 10], [1, 5], [2, 7], [3, 4]]), 0);
-        assert_eq!(
-            most_booked(3, &mut [[1, 20], [2, 10], [3, 5], [4, 9], [6, 8]]),
-            1
-        );
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(
-            most_booked(4, &mut [[18, 19], [3, 12], [17, 19], [2, 13], [7, 10]]),
-            0
-        );
-    }
+    fn test() {}
 }
