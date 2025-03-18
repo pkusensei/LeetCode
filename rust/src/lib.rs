@@ -5,25 +5,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_days_together(
-    arrive_alice: &str,
-    leave_alice: &str,
-    arrive_bob: &str,
-    leave_bob: &str,
-) -> i32 {
-    let [a1, a2] = [&arrive_alice, &leave_alice].map(|s| parse(s));
-    let [b1, b2] = [&arrive_bob, &leave_bob].map(|s| parse(s));
-    dbg!(a1, a2);
-    dbg!(b1, b2);
-    (a2.min(b2) - a1.max(b1) + 1).max(0)
-}
-
-fn parse(s: &str) -> i32 {
-    const M: [i32; 12] = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-    let (a, b) = s.split_once('-').unwrap();
-    let mon = a.parse::<usize>().map(|v| v).unwrap_or(1);
-    let day = b.parse().unwrap_or(1);
-    M[..mon - 1].iter().sum::<i32>() + day
+pub fn match_players_and_trainers(mut players: Vec<i32>, mut trainers: Vec<i32>) -> i32 {
+    players.sort_unstable();
+    trainers.sort_unstable();
+    let [mut i1, mut i2] = [0, 0];
+    let mut res = 0;
+    while i1 < players.len() && i2 < trainers.len() {
+        while trainers.get(i2).is_some_and(|&v| v < players[i1]) {
+            i2 += 1;
+        }
+        if i2 >= trainers.len() {
+            break;
+        }
+        res += 1;
+        i1 += 1;
+        i2 += 1;
+    }
+    res
 }
 
 #[cfg(test)]
@@ -56,9 +54,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(count_days_together("10-01", "10-31", "11-01", "12-31"), 0);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
