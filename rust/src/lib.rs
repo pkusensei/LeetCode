@@ -4,28 +4,56 @@ mod trie;
 
 #[allow(unused_imports)]
 use helper::*;
-use itertools::Itertools;
 
-pub fn equal_frequency(word: &str) -> bool {
-    let mut it = word
-        .bytes()
-        .fold([0; 26], |mut acc, b| {
-            acc[usize::from(b - b'a')] += 1;
-            acc
-        })
-        .into_iter()
-        .filter(|&v| v > 0)
-        .counts()
-        .into_iter();
-    match [it.next(), it.next(), it.next()] {
-        [Some((k1, v1)), Some((k2, v2)), None] => {
-            let mut vals = [[k1, v1], [k2, v2]];
-            vals.sort_unstable();
-            let [[k1, v1], [k2, v2]] = vals;
-            (k1 == 1 && v1 == 1) || (k1 + 1 == k2 && v2 == 1)
+struct LUPrefix {
+    parent: Vec<usize>,
+    size: Vec<i32>,
+}
+
+impl LUPrefix {
+    fn new(n: i32) -> Self {
+        let n = n as usize;
+        Self {
+            parent: (0..n).collect(),
+            size: vec![0; n],
         }
-        [Some((k, v)), None, None] => k == 1 || v == 1,
-        _ => false,
+    }
+
+    fn upload(&mut self, video: i32) {
+        let idx = video as usize - 1;
+        self.size[idx] += 1;
+        if idx > 0 && self.size[idx - 1] > 0 {
+            self.union(idx - 1, idx);
+        }
+        if self.size.get(1 + idx).is_some_and(|&v| v > 0) {
+            self.union(idx, 1 + idx);
+        }
+    }
+
+    fn longest(&mut self) -> i32 {
+        let root = self.find(0);
+        self.size[root]
+    }
+
+    fn find(&mut self, v: usize) -> usize {
+        if self.parent[v] != v {
+            self.parent[v] = self.find(self.parent[v]);
+        }
+        self.parent[v]
+    }
+
+    fn union(&mut self, x: usize, y: usize) {
+        let [rx, ry] = [x, y].map(|v| self.find(v));
+        if rx == ry {
+            return;
+        }
+        if self.size[rx] < self.size[ry] {
+            self.size[ry] += self.size[rx];
+            self.parent[rx] = ry;
+        } else {
+            self.size[rx] += self.size[ry];
+            self.parent[ry] = rx;
+        }
     }
 }
 
@@ -59,13 +87,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert!(equal_frequency("abcc"));
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert!(equal_frequency("abbcc"));
-        assert!(equal_frequency("zz"));
-    }
+    fn test() {}
 }
