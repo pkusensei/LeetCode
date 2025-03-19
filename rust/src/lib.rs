@@ -5,40 +5,49 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn good_indices(nums: &[i32], k: i32) -> Vec<i32> {
-    let mut dec = vec![0];
-    let mut curr = 0;
-    for w in nums.windows(2) {
-        if w[0] >= w[1] {
-            curr += 1;
-        } else {
-            curr = 0;
+use itertools::Itertools;
+use std::collections::HashMap;
+
+pub fn number_of_good_paths(vals: &[i32], edges: &[[i32; 2]]) -> i32 {
+    let n = vals.len();
+    let mut count = vals.iter().map(|&v| HashMap::from([(v, 1)])).collect_vec();
+    let edges = edges
+        .iter()
+        .map(|e| {
+            let [a, b] = [0, 1].map(|i| e[i] as usize);
+            (vals[a].max(vals[b]), a, b)
+        })
+        .sorted_unstable()
+        .collect_vec();
+    let mut dsu = DSU::new(n);
+    let mut res = 0;
+    for &(val, node1, node2) in edges.iter() {
+        let [r1, r2] = [node1, node2].map(|v| dsu.find(v));
+        let [c1, c2] = [r1, r2].map(|v| *count[v].get(&val).unwrap_or(&0));
+        res += c1 * c2;
+        dsu.parent[r2] = r1;
+        count[r1] = HashMap::from([(val, c1 + c2)]);
+    }
+    res + n as i32
+}
+
+struct DSU {
+    parent: Vec<usize>,
+}
+
+impl DSU {
+    fn new(n: usize) -> Self {
+        Self {
+            parent: (0..n).collect(),
         }
-        dec.push(curr);
     }
-    let mut inc = vec![];
-    curr = 0;
-    for w in nums.windows(2).rev() {
-        if w[0] <= w[1] {
-            curr += 1
-        } else {
-            curr = 0
+
+    fn find(&mut self, v: usize) -> usize {
+        if self.parent[v] != v {
+            self.parent[v] = self.find(self.parent[v]);
         }
-        inc.push(curr);
+        self.parent[v]
     }
-    inc.reverse();
-    inc.push(0);
-    let n = nums.len();
-    let mut res = vec![];
-    if n <= 2 * k as usize {
-        return res;
-    }
-    for i in k as usize..n - k as usize {
-        if dec[i - 1] >= k - 1 && inc[i + 1] >= k - 1 {
-            res.push(i as i32);
-        }
-    }
-    res
 }
 
 #[cfg(test)]
@@ -72,9 +81,34 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(good_indices(&[2, 1, 1, 1, 3, 4, 1], 2), [2, 3]);
+        assert_eq!(
+            number_of_good_paths(&[1, 3, 2, 1, 3], &[[0, 1], [0, 2], [2, 3], [2, 4]]),
+            6
+        );
+        assert_eq!(
+            number_of_good_paths(&[1, 1, 2, 2, 3], &[[0, 1], [1, 2], [2, 3], [2, 4]]),
+            7
+        );
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(
+            number_of_good_paths(
+                &[2, 5, 5, 1, 5, 2, 3, 5, 1, 5],
+                &[
+                    [0, 1],
+                    [2, 1],
+                    [3, 2],
+                    [3, 4],
+                    [3, 5],
+                    [5, 6],
+                    [1, 7],
+                    [8, 4],
+                    [9, 7]
+                ]
+            ),
+            20
+        );
+    }
 }
