@@ -5,21 +5,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn smallest_subarrays(nums: &[i32]) -> Vec<i32> {
-    let n = nums.len();
-    let mut pos = [0; 30];
-    let mut res = vec![0; n];
-    for (idx, &num) in nums.iter().enumerate().rev() {
-        res[idx] = 1;
-        for bit in 0..30 {
-            if (num >> bit) & 1 == 1 {
-                pos[bit] = idx;
-            }
-            // rightmost bit that is set
-            res[idx] = res[idx].max((pos[bit] + 1 - idx) as i32);
+pub fn minimum_money(transactions: &[[i32; 2]]) -> i64 {
+    let mut spend = 0;
+    let [mut max_cost, mut max_cash] = [0, 0];
+    for tr in transactions.iter() {
+        let [cost, cash] = [0, 1].map(|i| i64::from(tr[i]));
+        if cost > cash {
+            // sum all deficits
+            spend += cost - cash;
+            // cashback cannot be used
+            // start with max_cashback to start all transactions
+            max_cash = max_cash.max(cash);
+        } else {
+            max_cost = max_cost.max(cost);
         }
     }
-    res
+    spend + max_cost.max(max_cash)
 }
 
 #[cfg(test)]
@@ -53,8 +54,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(smallest_subarrays(&[1, 0, 2, 1, 3]), [3, 3, 2, 2, 1]);
-        assert_eq!(smallest_subarrays(&[1, 2]), [2, 1]);
+        assert_eq!(minimum_money(&[[2, 1], [5, 0], [4, 2]]), 10);
+        assert_eq!(minimum_money(&[[3, 0], [0, 3]]), 3);
     }
 
     #[test]
