@@ -5,12 +5,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn common_factors(a: i32, b: i32) -> i32 {
-    const fn gcd(a: i32, b: i32) -> i32 {
-        if a == 0 { b } else { gcd(b % a, a) }
+pub fn max_sum(grid: Vec<Vec<i32>>) -> i32 {
+    let [rows, cols] = get_dimensions(&grid);
+    let mut res = 0;
+    for r in 0..=rows - 3 {
+        for c in 0..=cols - 3 {
+            let curr = grid[r][c]
+                + grid[r][c + 1]
+                + grid[r][c + 2]
+                + grid[r + 1][c + 1]
+                + grid[r + 2][c]
+                + grid[r + 2][c + 1]
+                + grid[r + 2][c + 2];
+            res = res.max(curr)
+        }
     }
-    let v = gcd(a, b);
-    (1..=v).filter(|&div| v % div == 0).count() as i32
+    res
 }
 
 #[cfg(test)]
