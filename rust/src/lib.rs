@@ -2,59 +2,26 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::BTreeMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-struct LUPrefix {
-    parent: Vec<usize>,
-    size: Vec<i32>,
-}
-
-impl LUPrefix {
-    fn new(n: i32) -> Self {
-        let n = n as usize;
-        Self {
-            parent: (0..n).collect(),
-            size: vec![0; n],
-        }
-    }
-
-    fn upload(&mut self, video: i32) {
-        let idx = video as usize - 1;
-        self.size[idx] += 1;
-        if idx > 0 && self.size[idx - 1] > 0 {
-            self.union(idx - 1, idx);
-        }
-        if self.size.get(1 + idx).is_some_and(|&v| v > 0) {
-            self.union(idx, 1 + idx);
-        }
-    }
-
-    fn longest(&mut self) -> i32 {
-        let root = self.find(0);
-        self.size[root]
-    }
-
-    fn find(&mut self, v: usize) -> usize {
-        if self.parent[v] != v {
-            self.parent[v] = self.find(self.parent[v]);
-        }
-        self.parent[v]
-    }
-
-    fn union(&mut self, x: usize, y: usize) {
-        let [rx, ry] = [x, y].map(|v| self.find(v));
-        if rx == ry {
-            return;
-        }
-        if self.size[rx] < self.size[ry] {
-            self.size[ry] += self.size[rx];
-            self.parent[rx] = ry;
+// nums1[i] - nums1[j] <= nums2[i] - nums2[j] + diff
+// nums1[i] - nums2[i] <= nums1[j] - nums2[j] + diff
+pub fn number_of_pairs(nums1: &[i32], nums2: &[i32], diff: i32) -> i64 {
+    let mut res = 0;
+    let mut sorted = Vec::with_capacity(nums1.len());
+    for (&a, &b) in nums1.iter().zip(nums2.iter()) {
+        res += sorted.partition_point(|&v| v <= a - b + diff) as i64;
+        let i = sorted.partition_point(|&v| v < a - b);
+        if i == sorted.len() {
+            sorted.push(a - b);
         } else {
-            self.size[rx] += self.size[ry];
-            self.parent[ry] = rx;
+            sorted.insert(i, a - b);
         }
     }
+    res
 }
 
 #[cfg(test)]
@@ -87,7 +54,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(number_of_pairs(&[3, 2, 5], &[2, 2, 1], 1), 3);
+        assert_eq!(number_of_pairs(&[3, -1], &[-2, 2], -1), 0);
+    }
 
     #[test]
     fn test() {}
