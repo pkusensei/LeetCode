@@ -2,25 +2,46 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::VecDeque;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_money(transactions: &[[i32; 2]]) -> i64 {
-    let mut spend = 0;
-    let [mut max_cost, mut max_cash] = [0, 0];
-    for tr in transactions.iter() {
-        let [cost, cash] = [0, 1].map(|i| i64::from(tr[i]));
-        if cost > cash {
-            // sum all deficits
-            spend += cost - cash;
-            // cashback cannot be used
-            // start with max_cashback to start all transactions
-            max_cash = max_cash.max(cash);
-        } else {
-            max_cost = max_cost.max(cost);
+pub fn min_operations(nums: &mut [i32]) -> i32 {
+    let n = nums.len();
+    let mut res = 0;
+    for i in 0..=n - 3 {
+        if nums[i] == 0 {
+            for v in &mut nums[i..i + 3] {
+                *v = 1 - *v;
+            }
+            res += 1;
         }
     }
-    spend + max_cost.max(max_cash)
+    if nums[n - 2] == 1 && nums[n - 1] == 1 {
+        res
+    } else {
+        -1
+    }
+}
+
+pub fn with_deque(nums: &[i32]) -> i32 {
+    let n = nums.len();
+    let mut res = 0;
+    let mut queue = VecDeque::new();
+    for (idx, &num) in nums.iter().enumerate() {
+        while queue.front().is_some_and(|&v| v + 2 < idx) {
+            queue.pop_front();
+        }
+        if (num + queue.len() as i32) & 1 == 0 {
+            if idx + 2 >= n {
+                return -1;
+            }
+            res += 1;
+            queue.push_back(idx);
+        }
+    }
+    res
 }
 
 #[cfg(test)]
@@ -54,8 +75,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(minimum_money(&[[2, 1], [5, 0], [4, 2]]), 10);
-        assert_eq!(minimum_money(&[[3, 0], [0, 3]]), 3);
+        assert_eq!(min_operations(&mut [0, 1, 1, 1, 0, 0]), 3);
+        assert_eq!(min_operations(&mut [0, 1, 1, 1]), -1);
+
+        assert_eq!(with_deque(&[0, 1, 1, 1, 0, 0]), 3);
+        assert_eq!(with_deque(&[0, 1, 1, 1]), -1);
     }
 
     #[test]
