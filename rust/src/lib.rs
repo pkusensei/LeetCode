@@ -2,44 +2,21 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::VecDeque;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_operations(nums: &mut [i32]) -> i32 {
-    let n = nums.len();
+pub fn longest_continuous_substring(s: String) -> i32 {
     let mut res = 0;
-    for i in 0..=n - 3 {
-        if nums[i] == 0 {
-            for v in &mut nums[i..i + 3] {
-                *v = 1 - *v;
-            }
-            res += 1;
+    let mut prev = None;
+    let mut curr = 0;
+    for b in s.bytes() {
+        if prev.is_some_and(|v| v + 1 == b) {
+            curr += 1;
+        } else {
+            curr = 1;
         }
-    }
-    if nums[n - 2] == 1 && nums[n - 1] == 1 {
-        res
-    } else {
-        -1
-    }
-}
-
-pub fn with_deque(nums: &[i32]) -> i32 {
-    let n = nums.len();
-    let mut res = 0;
-    let mut queue = VecDeque::new();
-    for (idx, &num) in nums.iter().enumerate() {
-        while queue.front().is_some_and(|&v| v + 2 < idx) {
-            queue.pop_front();
-        }
-        if (num + queue.len() as i32) & 1 == 0 {
-            if idx + 2 >= n {
-                return -1;
-            }
-            res += 1;
-            queue.push_back(idx);
-        }
+        prev = Some(b);
+        res = res.max(curr);
     }
     res
 }
@@ -74,13 +51,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(min_operations(&mut [0, 1, 1, 1, 0, 0]), 3);
-        assert_eq!(min_operations(&mut [0, 1, 1, 1]), -1);
-
-        assert_eq!(with_deque(&[0, 1, 1, 1, 0, 0]), 3);
-        assert_eq!(with_deque(&[0, 1, 1, 1]), -1);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
