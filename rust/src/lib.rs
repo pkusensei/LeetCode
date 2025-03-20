@@ -5,23 +5,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_time(time: String) -> i32 {
-    let (h, m) = time.split_once(':').unwrap();
-    let h = match [h.as_bytes()[0], h.as_bytes()[1]] {
-        [b'?', b'?'] => 24,
-        [b'0' | b'1', b'?'] => 10,
-        [b'2', b'?'] => 4,
-        [b'?', b'0'..=b'3'] => 3,
-        [b'?', _] => 2,
-        _ => 1,
-    };
-    let m = match [m.as_bytes()[0], m.as_bytes()[1]] {
-        [b'?', b'?'] => 60,
-        [b'0'..=b'5', b'?'] => 10,
-        [b'?', b'0'..=b'9'] => 6,
-        _ => 1,
-    };
-    h * m
+pub fn product_queries(n: i32, queries: &[[i32; 2]]) -> Vec<i32> {
+    let mut powers = vec![];
+    for bit in 0..=n.ilog2() {
+        if (n >> bit) & 1 == 1 {
+            powers.push(1_i64 << bit);
+        }
+    }
+    queries
+        .iter()
+        .map(|q| {
+            let [a, b] = [0, 1].map(|i| q[i] as usize);
+            powers[a..=b]
+                .iter()
+                .fold(1, |acc, &v| (acc * v) % 1_000_000_007) as i32
+        })
+        .collect()
 }
 
 #[cfg(test)]
@@ -54,7 +53,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(product_queries(15, &[[0, 1], [2, 2], [0, 3]]), [2, 4, 64]);
+        assert_eq!(product_queries(2, &[[0, 0]]), [2]);
+    }
 
     #[test]
     fn test() {}
