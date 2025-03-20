@@ -5,14 +5,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_array(pref: &[i32]) -> Vec<i32> {
-    let mut prev = 0;
-    let mut res = Vec::with_capacity(pref.len());
-    for &p in pref.iter() {
-        res.push(prev ^ p);
-        prev = p;
+pub fn robot_with_string(s: &str) -> String {
+    let mut count = s
+        .bytes()
+        .fold(std::collections::HashMap::new(), |mut acc, b| {
+            *acc.entry(b).or_insert(0) += 1;
+            acc
+        });
+    let mut t = vec![];
+    let mut p = vec![];
+    let mut smaller = b'a';
+    for b in s.bytes() {
+        t.push(b);
+        count.entry(b).and_modify(|v| *v -= 1);
+        while smaller < b'z' && count.get(&smaller).is_none_or(|&v| v == 0) {
+            smaller += 1; // all chars <= smaller that are exhausted by this point
+        }
+        while t.last().is_some_and(|&v| v <= smaller) {
+            p.push(t.pop().unwrap());
+        }
     }
-    res
+    String::from_utf8(p).unwrap()
 }
 
 #[cfg(test)]
@@ -46,8 +59,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(find_array(&[5, 2, 0, 3, 1]), [5, 7, 2, 3, 2]);
-        assert_eq!(find_array(&[12]), [12]);
+        assert_eq!(robot_with_string("zza"), "azz");
+        assert_eq!(robot_with_string("bac"), "abc");
+        assert_eq!(robot_with_string("bdda"), "addb");
     }
 
     #[test]
