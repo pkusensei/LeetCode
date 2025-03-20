@@ -5,22 +5,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn delete_string(s: &str) -> i32 {
-    let (s, n) = (s.as_bytes(), s.len());
-    let mut dp = vec![1; n];
-    let mut lcs = vec![vec![0; 1 + n]; 1 + n];
-    for left in (0..n).rev() {
-        dp[left] = 1;
-        for right in 1 + left..n {
-            if s[left] == s[right] {
-                lcs[left][right] = 1 + lcs[1 + left][1 + right];
-            }
-            if lcs[left][right] >= (right - left) as i32 {
-                dp[left] = dp[left].max(1 + dp[right]);
-            }
+pub fn hardest_worker(n: i32, logs: Vec<Vec<i32>>) -> i32 {
+    let mut res = n - 1;
+    let mut prev = 0;
+    let mut time = 0;
+    for log in logs.iter() {
+        let [id, end] = log[..] else { unreachable!() };
+        let curr = end - prev;
+        prev = end;
+        if curr > time {
+            time = curr;
+            res = id
+        } else if curr == time {
+            res = res.min(id)
         }
     }
-    dp[0]
+    res
 }
 
 #[cfg(test)]
@@ -53,11 +53,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(delete_string("abcabcdabc"), 2);
-        assert_eq!(delete_string("aaabaab"), 4);
-        assert_eq!(delete_string("aaaaa"), 5);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
