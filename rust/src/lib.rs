@@ -5,22 +5,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn product_queries(n: i32, queries: &[[i32; 2]]) -> Vec<i32> {
-    let mut powers = vec![];
-    for bit in 0..=n.ilog2() {
-        if (n >> bit) & 1 == 1 {
-            powers.push(1_i64 << bit);
-        }
+pub fn minimize_array_value(nums: &[i32]) -> i32 {
+    let mut res = 0;
+    let mut prefix = 0.0;
+    // [.. a+1, b-1 ..]
+    // 1's can "flow" to left
+    // The average is the minimum of max of [..right]
+    for (len, &num) in (1..).zip(nums.iter()) {
+        let len = f64::from(len);
+        prefix += f64::from(num);
+        res = res.max((prefix / len).ceil() as i32);
     }
-    queries
-        .iter()
-        .map(|q| {
-            let [a, b] = [0, 1].map(|i| q[i] as usize);
-            powers[a..=b]
-                .iter()
-                .fold(1, |acc, &v| (acc * v) % 1_000_000_007) as i32
-        })
-        .collect()
+    res
 }
 
 #[cfg(test)]
@@ -54,8 +50,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(product_queries(15, &[[0, 1], [2, 2], [0, 3]]), [2, 4, 64]);
-        assert_eq!(product_queries(2, &[[0, 0]]), [2]);
+        assert_eq!(minimize_array_value(&[3, 7, 1, 6]), 5);
+        assert_eq!(minimize_array_value(&[10, 1]), 10);
     }
 
     #[test]
