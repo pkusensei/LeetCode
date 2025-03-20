@@ -7,48 +7,20 @@ use helper::*;
 
 pub fn subarray_gcd(nums: &[i32], k: i32) -> i32 {
     let n = nums.len();
-    let mut tree = SegmentTree::new(n);
-    for (idx, &num) in nums.iter().enumerate() {
-        tree.update(1, 0, n - 1, idx, num);
-    }
-    tree.find(1, 0, n - 1, k)
-}
-
-struct SegmentTree {
-    tree: Vec<i32>,
-}
-
-impl SegmentTree {
-    fn new(n: usize) -> Self {
-        Self {
-            tree: vec![0; 4 * n],
+    let mut res = 0;
+    for i1 in 0..n {
+        let mut curr = 0;
+        for i2 in i1..n {
+            curr = gcd(curr, nums[i2]);
+            if curr == k {
+                res += 1;
+            }
+            if curr < k {
+                break;
+            }
         }
     }
-
-    fn update(&mut self, u: usize, left: usize, right: usize, idx: usize, val: i32) {
-        if left == right {
-            self.tree[u] = val;
-            return;
-        }
-        let mid = left + (right - left) / 2;
-        if idx <= mid {
-            self.update(2 * u, left, mid, idx, val);
-        } else {
-            self.update(2 * u + 1, 1 + mid, right, idx, val);
-        }
-        self.tree[u] = gcd(self.tree[2 * u], self.tree[2 * u + 1])
-    }
-
-    fn find(&self, u: usize, left: usize, right: usize, k: i32) -> i32 {
-        if left == right {
-            return i32::from(self.tree[u] == k);
-        }
-        let mut res = i32::from(self.tree[u] == k);
-        let mid = left + (right - left) / 2;
-        res += self.find(2 * u, left, mid, k);
-        res += self.find(2 * u + 1, 1 + mid, right, k);
-        res
-    }
+    res
 }
 
 const fn gcd(a: i32, b: i32) -> i32 {
