@@ -5,18 +5,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_max_k(mut nums: Vec<i32>) -> i32 {
-    nums.sort_unstable();
-    let mut left = 0;
-    let mut right = nums.len() - 1;
-    while left < right && nums[left] < nums[right] {
-        match nums[left].abs().cmp(&nums[right]) {
-            std::cmp::Ordering::Less => right -= 1,
-            std::cmp::Ordering::Equal => return nums[right],
-            std::cmp::Ordering::Greater => left += 1,
-        }
+pub fn count_distinct_integers(nums: Vec<i32>) -> i32 {
+    let mut set: std::collections::HashSet<_> = nums.iter().copied().map(reverse).collect();
+    set.extend(nums);
+    set.len() as _
+}
+
+const fn reverse(mut num: i32) -> i32 {
+    let mut res = 0;
+    while num > 0 {
+        res = 10 * res + num % 10;
+        num /= 10;
     }
-    -1
+    res
 }
 
 #[cfg(test)]
