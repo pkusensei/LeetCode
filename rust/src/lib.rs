@@ -5,10 +5,13 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_distinct_integers(nums: Vec<i32>) -> i32 {
-    let mut set: std::collections::HashSet<_> = nums.iter().copied().map(reverse).collect();
-    set.extend(nums);
-    set.len() as _
+pub fn sum_of_number_and_reverse(num: i32) -> bool {
+    for v in num / 2..=num {
+        if v + reverse(v) == num {
+            return true;
+        }
+    }
+    false
 }
 
 const fn reverse(mut num: i32) -> i32 {
