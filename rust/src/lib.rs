@@ -5,25 +5,54 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn have_conflict(event1: Vec<String>, event2: Vec<String>) -> bool {
-    let mut map = std::collections::BTreeMap::new();
-    *map.entry(parse(&event1[0])).or_insert(0) += 1;
-    *map.entry(parse(&event1[1]) + 1).or_insert(0) -= 1;
-    *map.entry(parse(&event2[0])).or_insert(0) += 1;
-    *map.entry(parse(&event2[1]) + 1).or_insert(0) -= 1;
-    let mut curr = 0;
-    for v in map.values() {
-        curr += v;
-        if curr > 1 {
-            return true;
-        }
+pub fn subarray_gcd(nums: &[i32], k: i32) -> i32 {
+    let n = nums.len();
+    let mut tree = SegmentTree::new(n);
+    for (idx, &num) in nums.iter().enumerate() {
+        tree.update(1, 0, n - 1, idx, num);
     }
-    false
+    tree.find(1, 0, n - 1, k)
 }
 
-fn parse(s: &str) -> i32 {
-    let (h, m) = s.split_once(':').unwrap();
-    h.parse::<i32>().unwrap_or(0) * 60 + m.parse::<i32>().unwrap_or(0)
+struct SegmentTree {
+    tree: Vec<i32>,
+}
+
+impl SegmentTree {
+    fn new(n: usize) -> Self {
+        Self {
+            tree: vec![0; 4 * n],
+        }
+    }
+
+    fn update(&mut self, u: usize, left: usize, right: usize, idx: usize, val: i32) {
+        if left == right {
+            self.tree[u] = val;
+            return;
+        }
+        let mid = left + (right - left) / 2;
+        if idx <= mid {
+            self.update(2 * u, left, mid, idx, val);
+        } else {
+            self.update(2 * u + 1, 1 + mid, right, idx, val);
+        }
+        self.tree[u] = gcd(self.tree[2 * u], self.tree[2 * u + 1])
+    }
+
+    fn find(&self, u: usize, left: usize, right: usize, k: i32) -> i32 {
+        if left == right {
+            return i32::from(self.tree[u] == k);
+        }
+        let mut res = i32::from(self.tree[u] == k);
+        let mid = left + (right - left) / 2;
+        res += self.find(2 * u, left, mid, k);
+        res += self.find(2 * u + 1, 1 + mid, right, k);
+        res
+    }
+}
+
+const fn gcd(a: i32, b: i32) -> i32 {
+    if a == 0 { b } else { gcd(b % a, a) }
 }
 
 #[cfg(test)]
@@ -56,7 +85,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(subarray_gcd(&[9, 3, 1, 2, 6, 3], 3), 4);
+        assert_eq!(subarray_gcd(&[4], 7), 0);
+    }
 
     #[test]
     fn test() {}
