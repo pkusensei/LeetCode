@@ -5,20 +5,12 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn hardest_worker(n: i32, logs: Vec<Vec<i32>>) -> i32 {
-    let mut res = n - 1;
+pub fn find_array(pref: &[i32]) -> Vec<i32> {
     let mut prev = 0;
-    let mut time = 0;
-    for log in logs.iter() {
-        let [id, end] = log[..] else { unreachable!() };
-        let curr = end - prev;
-        prev = end;
-        if curr > time {
-            time = curr;
-            res = id
-        } else if curr == time {
-            res = res.min(id)
-        }
+    let mut res = Vec::with_capacity(pref.len());
+    for &p in pref.iter() {
+        res.push(prev ^ p);
+        prev = p;
     }
     res
 }
@@ -53,7 +45,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(find_array(&[5, 2, 0, 3, 1]), [5, 7, 2, 3, 2]);
+        assert_eq!(find_array(&[12]), [12]);
+    }
 
     #[test]
     fn test() {}
