@@ -5,20 +5,25 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn sum_of_number_and_reverse(num: i32) -> bool {
-    for v in num / 2..=num {
-        if v + reverse(v) == num {
-            return true;
-        }
-    }
-    false
-}
-
-const fn reverse(mut num: i32) -> i32 {
+pub fn count_subarrays(nums: &[i32], min_k: i32, max_k: i32) -> i64 {
+    let [mut max_pos, mut min_pos] = [None, None];
+    let mut start = 0;
     let mut res = 0;
-    while num > 0 {
-        res = 10 * res + num % 10;
-        num /= 10;
+    for (idx, &num) in (0..).zip(nums.iter()) {
+        if !(min_k..=max_k).contains(&num) {
+            max_pos = None;
+            min_pos = None;
+            start = 1 + idx;
+        }
+        if num == min_k {
+            min_pos = Some(idx);
+        }
+        if num == max_k {
+            max_pos = Some(idx);
+        }
+        if let Some((a, b)) = min_pos.zip(max_pos) {
+            res += a.min(b) - start + 1
+        }
     }
     res
 }
@@ -53,7 +58,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(count_subarrays(&[1, 3, 5, 2, 7, 5], 1, 5), 2);
+        assert_eq!(count_subarrays(&[1, 1, 1, 1], 1, 1), 10);
+    }
 
     #[test]
     fn test() {}
