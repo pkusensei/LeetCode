@@ -2,21 +2,52 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::VecDeque;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimize_array_value(nums: &[i32]) -> i32 {
-    let mut res = 0;
-    let mut prefix = 0.0;
-    // [.. a+1, b-1 ..]
-    // 1's can "flow" to left
-    // The average is the minimum of max of [..right]
-    for (len, &num) in (1..).zip(nums.iter()) {
-        let len = f64::from(len);
-        prefix += f64::from(num);
-        res = res.max((prefix / len).ceil() as i32);
+pub fn component_value(nums: &[i32], edges: &[[i32; 2]]) -> i32 {
+    let n = nums.len();
+    let mut adj = vec![vec![]; n];
+    let mut degs = vec![0; n];
+    for e in edges.iter() {
+        let [a, b] = [0, 1].map(|i| e[i] as usize);
+        adj[a].push(b);
+        adj[b].push(a);
+        degs[a] += 1;
+        degs[b] += 1;
     }
-    res
+    let [max, sum] = nums
+        .iter()
+        .fold([0, 0], |[max, sum], &num| [max.max(num), sum + num]);
+    for div in (max..=sum).filter(|&v| sum % v == 0) {
+        if bfs(&adj, nums.to_vec(), degs.clone(), div) {
+            return sum / div - 1;
+        }
+    }
+    0
+}
+
+fn bfs(adj: &[Vec<usize>], mut nums: Vec<i32>, mut degs: Vec<i32>, target: i32) -> bool {
+    let mut queue: VecDeque<_> = degs
+        .iter()
+        .enumerate()
+        .filter_map(|(i, &v)| if v == 1 { Some(i) } else { None })
+        .collect();
+    while let Some(node) = queue.pop_front() {
+        for &next in adj[node].iter() {
+            if nums[node] > target {
+                return false;
+            }
+            nums[next] += if nums[node] < target { nums[node] } else { 0 };
+            degs[next] -= 1;
+            if degs[next] == 1 {
+                queue.push_back(next);
+            }
+        }
+    }
+    true
 }
 
 #[cfg(test)]
@@ -50,8 +81,10 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(minimize_array_value(&[3, 7, 1, 6]), 5);
-        assert_eq!(minimize_array_value(&[10, 1]), 10);
+        assert_eq!(
+            component_value(&[6, 2, 2, 2, 6], &[[0, 1], [1, 2], [1, 3], [3, 4]]),
+            2
+        );
     }
 
     #[test]
