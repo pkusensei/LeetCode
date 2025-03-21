@@ -2,44 +2,20 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_total_distance(robot: &mut [i32], factory: &mut [[i32; 2]]) -> i64 {
-    robot.sort_unstable();
-    factory.sort_unstable();
-    dfs(robot, factory, 0, 0, 0, &mut HashMap::new())
-}
-
-fn dfs(
-    robot: &[i32],
-    factory: &[[i32; 2]],
-    i1: usize,
-    i2: usize,
-    count: i32,
-    memo: &mut HashMap<(usize, usize, i32), i64>,
-) -> i64 {
-    if i1 >= robot.len() {
-        return 0;
+pub fn distinct_averages(mut nums: Vec<i32>) -> i32 {
+    nums.sort_unstable();
+    let mut set = std::collections::HashSet::new();
+    let mut left = 0;
+    let mut right = nums.len() - 1;
+    while left < right {
+        set.insert((f64::from(nums[left] + nums[right]) / 2.0).to_bits());
+        left += 1;
+        right -= 1;
     }
-    if i2 >= factory.len() {
-        return 10_i64.pow(12);
-    }
-    let k = (i1, i2, count);
-    if let Some(&v) = memo.get(&k) {
-        return v;
-    }
-    // skip
-    let mut res = dfs(robot, factory, i1, 1 + i2, 0, memo);
-    if count < factory[i2][1] {
-        let take = i64::from(robot[i1].abs_diff(factory[i2][0]))
-            + dfs(robot, factory, 1 + i1, i2, 1 + count, memo);
-        res = res.min(take);
-    }
-    memo.insert(k, res);
-    res
+    set.len() as _
 }
 
 #[cfg(test)]
@@ -72,16 +48,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(
-            minimum_total_distance(&mut [0, 4, 6], &mut [[2, 2], [6, 2]]),
-            4
-        );
-        assert_eq!(
-            minimum_total_distance(&mut [1, -1], &mut [[-2, 1], [2, 1]]),
-            2
-        );
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
