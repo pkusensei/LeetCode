@@ -4,29 +4,33 @@ mod trie;
 
 #[allow(unused_imports)]
 use helper::*;
-use itertools::Itertools;
 
-pub fn min_cost(nums: &[i32], cost: &[i32]) -> i64 {
-    let pairs = nums
-        .iter()
-        .copied()
-        .zip(cost.iter().copied())
-        .sorted()
-        .collect_vec();
-    let total: i64 = cost.iter().map(|&v| i64::from(v)).sum();
-    let mut prefix = 0;
-    let mut target = 0;
-    for &(num, co) in pairs.iter() {
-        prefix += i64::from(co);
-        if prefix > total / 2 {
-            target = num;
-            break;
+pub fn make_similar(nums: &[i32], target: &[i32]) -> i64 {
+    let [num_e, num_o] = split(nums);
+    let [target_e, target_o] = split(target);
+    (count(&num_e, &target_e) + count(&num_o, &target_o)) / 2
+}
+
+fn count(arr1: &[i32], arr2: &[i32]) -> i64 {
+    arr1.iter()
+        .zip(arr2)
+        .map(|(a, b)| i64::from(a.abs_diff(*b) / 2))
+        .sum::<i64>()
+}
+
+fn split(arr: &[i32]) -> [Vec<i32>; 2] {
+    let mut evens = vec![];
+    let mut odds = vec![];
+    for &num in arr {
+        if num & 1 == 0 {
+            evens.push(num);
+        } else {
+            odds.push(num);
         }
     }
-    pairs
-        .into_iter()
-        .map(|(num, co)| i64::from(co) * i64::from(num.abs_diff(target)))
-        .sum()
+    evens.sort_unstable();
+    odds.sort_unstable();
+    [evens, odds]
 }
 
 #[cfg(test)]
@@ -60,8 +64,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_cost(&[1, 3, 5, 2], &[2, 3, 1, 14]), 8);
-        assert_eq!(min_cost(&[2, 2, 2, 2, 2], &[4, 2, 8, 1, 3]), 0);
+        assert_eq!(make_similar(&[8, 12, 6], &[2, 14, 10]), 2);
+        assert_eq!(make_similar(&[1, 2, 5], &[4, 1, 3]), 1);
     }
 
     #[test]
