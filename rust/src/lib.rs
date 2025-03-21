@@ -5,33 +5,15 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn odd_string(words: Vec<String>) -> String {
-    use itertools::Itertools;
-    use std::collections::HashMap;
-    words
-        .iter()
-        .enumerate()
-        .map(|(i, s)| {
-            let v = s
-                .as_bytes()
-                .windows(2)
-                .map(|w| i32::from(w[1]) - i32::from(w[0]))
-                .collect_vec();
-            (v, i)
+pub fn two_edit_words(queries: Vec<String>, dictionary: Vec<String>) -> Vec<String> {
+    queries
+        .into_iter()
+        .filter(|q| {
+            dictionary
+                .iter()
+                .any(|d| d.bytes().zip(q.bytes()).filter(|(a, b)| a != b).count() <= 2)
         })
-        .fold(HashMap::<_, Vec<_>>::new(), |mut acc, (v, i)| {
-            acc.entry(v).or_default().push(i);
-            acc
-        })
-        .into_values()
-        .find_map(|v| {
-            if v.len() == 1 {
-                Some(words[v[0]].to_string())
-            } else {
-                None
-            }
-        })
-        .unwrap_or_default()
+        .collect()
 }
 
 #[cfg(test)]
