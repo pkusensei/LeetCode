@@ -5,17 +5,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn distinct_averages(mut nums: Vec<i32>) -> i32 {
-    nums.sort_unstable();
-    let mut set = std::collections::HashSet::new();
-    let mut left = 0;
-    let mut right = nums.len() - 1;
-    while left < right {
-        set.insert((f64::from(nums[left] + nums[right]) / 2.0).to_bits());
-        left += 1;
-        right -= 1;
+pub fn count_good_strings(low: i32, high: i32, zero: i32, one: i32) -> i32 {
+    const MOD: i32 = 1_000_000_007;
+    let [low, high, zero, one] = [low, high, zero, one].map(|v| v as usize);
+    let mut dp = vec![0; 1 + high];
+    dp[0] = 1;
+    for i in 0..=high {
+        if i + zero <= high {
+            dp[i + zero] = (dp[i + zero] + dp[i]) % MOD;
+        }
+        if i + one <= high {
+            dp[i + one] = (dp[i + one] + dp[i]) % MOD;
+        }
     }
-    set.len() as _
+    dp[low..=high].iter().fold(0, |acc, v| (acc + v) % MOD)
 }
 
 #[cfg(test)]
