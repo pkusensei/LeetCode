@@ -6,27 +6,37 @@ namespace Solution;
 
 public class Solution
 {
-    public int[] TreeQueries(TreeNode root, int[] queries)
+    public int MinimumOperations(TreeNode root)
     {
-        Dictionary<int, int> cache = [];
-        Dictionary<int, int> heights = [];
-        Dfs(root, 0, 0);
-        return [.. queries.Select(n => cache[n])];
-
-        void Dfs(TreeNode node, int depth, int max_val)
+        List<TreeNode> nodes = [root];
+        int res = 0;
+        while (nodes.Count > 0)
         {
-            if (node is null) { return; }
-            cache.Add(node.val, max_val);
-            Dfs(node.left, 1 + depth, Math.Max(max_val, 1 + depth + Height(node.right)));
-            Dfs(node.right, 1 + depth, Math.Max(max_val, 1 + depth + Height(node.left)));
+            var nums = nodes.Select(n => n.val).ToList();
+            res += Swaps(nums);
+            nodes = nodes.SelectMany(n => new[] { n.left, n.right }).Where(n => n is not null).ToList();
         }
+        return res;
 
-        int Height(TreeNode node)
+        static int Swaps(IList<int> nums)
         {
-            if (node is null) { return -1; }
-            if (heights.TryGetValue(node.val, out var v)) { return v; }
-            int res = 1 + Math.Max(Height(node.left), Height(node.right));
-            heights.Add(node.val, res);
+            if (nums.Count < 2) { return 0; }
+            var sorted = nums.Select((v, i) => (i, v)).OrderBy(p => p.v).Select(p => p.i).ToList();
+            Span<bool> seen = stackalloc bool[nums.Count];
+            int res = 0;
+            for (int i = 0; i < nums.Count; i++)
+            {
+                if (seen[i] || sorted[i] == i) { continue; }
+                int curr = i;
+                int cycle = 0;
+                while (!seen[curr])
+                {
+                    seen[curr] = true;
+                    curr = sorted[curr];
+                    cycle += 1;
+                }
+                res += Math.Max(cycle - 1, 0);
+            }
             return res;
         }
     }
