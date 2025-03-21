@@ -2,36 +2,34 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::{
-    cmp::Reverse,
-    collections::{BinaryHeap, HashMap},
-};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn most_popular_creator(
-    creators: Vec<String>,
-    ids: Vec<String>,
-    views: Vec<i32>,
-) -> Vec<Vec<String>> {
-    let mut map = HashMap::<_, (i64, BinaryHeap<_>)>::new();
-    for ((cr, id), view) in creators.iter().zip(ids.iter()).zip(views.iter()) {
-        let v = map.entry(cr.as_str()).or_default();
-        v.0 += i64::from(*view);
-        v.1.push((view, Reverse(id.as_str())));
+pub fn make_integer_beautiful(n: i64, target: i32) -> i64 {
+    let mut res = 0;
+    let mut num = n;
+    while digit_sum(num) > i64::from(target) {
+        let d = alter(num);
+        res += d;
+        num += d;
     }
-    let mut max_score = 0;
-    let mut res = vec![];
-    for (cr, (score, mut heap)) in map.into_iter() {
-        if score > max_score {
-            max_score = score;
-            res.clear();
-        }
-        if score == max_score {
-            let id = heap.pop().unwrap().1.0.to_string();
-            res.push(vec![cr.to_string(), id]);
-        }
+    res
+}
+
+const fn alter(mut num: i64) -> i64 {
+    let mut pow = 1;
+    while num % 10 == 0 {
+        pow *= 10;
+        num /= 10;
+    }
+    pow * (10 - num % 10)
+}
+
+const fn digit_sum(mut num: i64) -> i64 {
+    let mut res = 0;
+    while num > 0 {
+        res += num % 10;
+        num /= 10;
     }
     res
 }
@@ -66,7 +64,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(make_integer_beautiful(16, 6), 4);
+        assert_eq!(make_integer_beautiful(467, 6), 33);
+    }
 
     #[test]
     fn test() {}
