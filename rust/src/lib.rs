@@ -5,15 +5,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn two_edit_words(queries: Vec<String>, dictionary: Vec<String>) -> Vec<String> {
-    queries
-        .into_iter()
-        .filter(|q| {
-            dictionary
-                .iter()
-                .any(|d| d.bytes().zip(q.bytes()).filter(|(a, b)| a != b).count() <= 2)
-        })
-        .collect()
+pub fn destroy_targets(nums: Vec<i32>, space: i32) -> i32 {
+    let map = nums.iter().fold(
+        std::collections::HashMap::<_, [i32; 2]>::new(),
+        |mut acc, &num| {
+            let v = acc.entry(num % space).or_insert([0, i32::MAX]);
+            v[0] += 1;
+            v[1] = v[1].min(num);
+            acc
+        },
+    );
+    let mut count = 0;
+    let mut res = i32::MAX;
+    for [c, min] in map.into_values() {
+        if c > count {
+            count = c;
+            res = min
+        } else if c == count {
+            res = res.min(min)
+        }
+    }
+    res
 }
 
 #[cfg(test)]
