@@ -6,20 +6,35 @@ namespace Solution;
 
 public class Solution
 {
-    public int MinGroups(int[][] intervals)
+    public IList<string> FindAllRecipes(string[] recipes, IList<IList<string>> ingredients, string[] supplies)
     {
-        SortedList<int, int> map = [];
-        foreach (var item in intervals)
+        Dictionary<string, List<string>> adj = [];
+        Dictionary<string, int> indegs = [];
+        foreach (var item in recipes.Zip(ingredients))
         {
-            if (!map.TryAdd(item[0], 1)) { map[item[0]] += 1; }
-            if (!map.TryAdd(item[1] + 1, -1)) { map[item[1] + 1] -= 1; }
+            (var recipe, var ingreds) = item;
+            foreach (var ingred in ingreds)
+            {
+                if (!adj.TryAdd(ingred, [recipe])) { adj[ingred].Add(recipe); }
+                if (!indegs.TryAdd(recipe, 1)) { indegs[recipe] += 1; }
+            }
         }
-        int curr = 0;
-        int res = 0;
-        foreach (var val in map.Values)
+        Queue<string> queue = new(supplies);
+        List<string> res = [];
+        while (queue.TryDequeue(out var node))
         {
-            curr += val;
-            res = Math.Max(res, curr);
+            if (recipes.Contains(node)) { res.Add(node); }
+            if (adj.TryGetValue(node, out var children))
+            {
+                foreach (var item in children)
+                {
+                    if (indegs.TryGetValue(item, out var deg))
+                    {
+                        indegs[item] -= 1;
+                        if (deg == 1) { queue.Enqueue(item); }
+                    }
+                }
+            }
         }
         return res;
     }

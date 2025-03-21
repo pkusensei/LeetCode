@@ -12,6 +12,7 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
+        Assert.AreEqual("""[bread]""", sol.FindAllRecipes(["bread"], [["yeast", "flour"]], ["yeast", "flour", "corn"]).Print());
     }
 
     [TestMethod]
