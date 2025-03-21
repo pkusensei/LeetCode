@@ -2,51 +2,43 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn total_cost(costs: &[i32], k: i32, candidates: i32) -> i64 {
-    use std::{cmp::Reverse, collections::BinaryHeap};
-    let n = costs.len();
-    let c = candidates as usize;
-    let mut left_heap: BinaryHeap<_> = costs[..c].iter().copied().map(Reverse).collect();
-    let mut right_heap: BinaryHeap<_> = costs[(n - c).max(c)..]
-        .iter()
-        .copied()
-        .map(Reverse)
-        .collect();
-    let mut res = 0;
-    let mut left = c;
-    let mut right = (n - c).max(c) - 1;
-    for _ in 0..k {
-        match [left_heap.peek(), right_heap.peek()] {
-            [Some(&Reverse(a)), Some(&Reverse(b))] if a <= b => {
-                left_heap.pop();
-                res += i64::from(a);
-                if left <= right {
-                    left_heap.push(Reverse(costs[left]));
-                    left += 1;
-                }
-            }
-            [Some(&Reverse(_a)), Some(&Reverse(b))] => {
-                right_heap.pop();
-                res += i64::from(b);
-                if left <= right {
-                    right_heap.push(Reverse(costs[right]));
-                    right -= 1;
-                }
-            }
-            [Some(&Reverse(a)), None] => {
-                left_heap.pop();
-                res += i64::from(a);
-            }
-            [None, Some(&Reverse(b))] => {
-                right_heap.pop();
-                res += i64::from(b);
-            }
-            _ => break,
-        }
+pub fn minimum_total_distance(robot: &mut [i32], factory: &mut [[i32; 2]]) -> i64 {
+    robot.sort_unstable();
+    factory.sort_unstable();
+    dfs(robot, factory, 0, 0, 0, &mut HashMap::new())
+}
+
+fn dfs(
+    robot: &[i32],
+    factory: &[[i32; 2]],
+    i1: usize,
+    i2: usize,
+    count: i32,
+    memo: &mut HashMap<(usize, usize, i32), i64>,
+) -> i64 {
+    if i1 >= robot.len() {
+        return 0;
     }
+    if i2 >= factory.len() {
+        return 10_i64.pow(12);
+    }
+    let k = (i1, i2, count);
+    if let Some(&v) = memo.get(&k) {
+        return v;
+    }
+    // skip
+    let mut res = dfs(robot, factory, i1, 1 + i2, 0, memo);
+    if count < factory[i2][1] {
+        let take = i64::from(robot[i1].abs_diff(factory[i2][0]))
+            + dfs(robot, factory, 1 + i1, i2, 1 + count, memo);
+        res = res.min(take);
+    }
+    memo.insert(k, res);
     res
 }
 
@@ -81,8 +73,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(total_cost(&[17, 12, 10, 2, 7, 2, 11, 20, 8], 3, 4), 11);
-        assert_eq!(total_cost(&[1, 2, 4, 1], 3, 3), 4);
+        assert_eq!(
+            minimum_total_distance(&mut [0, 4, 6], &mut [[2, 2], [6, 2]]),
+            4
+        );
+        assert_eq!(
+            minimum_total_distance(&mut [1, -1], &mut [[-2, 1], [2, 1]]),
+            2
+        );
     }
 
     #[test]
