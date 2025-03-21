@@ -6,36 +6,28 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<string> FindAllRecipes(string[] recipes, IList<IList<string>> ingredients, string[] supplies)
+    public int[] TreeQueries(TreeNode root, int[] queries)
     {
-        Dictionary<string, List<string>> adj = [];
-        Dictionary<string, int> indegs = [];
-        foreach (var item in recipes.Zip(ingredients))
+        Dictionary<int, int> cache = [];
+        Dictionary<int, int> heights = [];
+        Dfs(root, 0, 0);
+        return [.. queries.Select(n => cache[n])];
+
+        void Dfs(TreeNode node, int depth, int max_val)
         {
-            (var recipe, var ingreds) = item;
-            foreach (var ingred in ingreds)
-            {
-                if (!adj.TryAdd(ingred, [recipe])) { adj[ingred].Add(recipe); }
-                if (!indegs.TryAdd(recipe, 1)) { indegs[recipe] += 1; }
-            }
+            if (node is null) { return; }
+            cache.Add(node.val, max_val);
+            Dfs(node.left, 1 + depth, Math.Max(max_val, 1 + depth + Height(node.right)));
+            Dfs(node.right, 1 + depth, Math.Max(max_val, 1 + depth + Height(node.left)));
         }
-        Queue<string> queue = new(supplies);
-        List<string> res = [];
-        while (queue.TryDequeue(out var node))
+
+        int Height(TreeNode node)
         {
-            if (recipes.Contains(node)) { res.Add(node); }
-            if (adj.TryGetValue(node, out var children))
-            {
-                foreach (var item in children)
-                {
-                    if (indegs.TryGetValue(item, out var deg))
-                    {
-                        indegs[item] -= 1;
-                        if (deg == 1) { queue.Enqueue(item); }
-                    }
-                }
-            }
+            if (node is null) { return -1; }
+            if (heights.TryGetValue(node.val, out var v)) { return v; }
+            int res = 1 + Math.Max(Height(node.left), Height(node.right));
+            heights.Add(node.val, res);
+            return res;
         }
-        return res;
     }
 }
