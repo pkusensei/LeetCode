@@ -4,27 +4,29 @@ mod trie;
 
 #[allow(unused_imports)]
 use helper::*;
+use itertools::Itertools;
 
-pub fn subarray_gcd(nums: &[i32], k: i32) -> i32 {
-    let n = nums.len();
-    let mut res = 0;
-    for i1 in 0..n {
-        let mut curr = 0;
-        for i2 in i1..n {
-            curr = gcd(curr, nums[i2]);
-            if curr == k {
-                res += 1;
-            }
-            if curr < k {
-                break;
-            }
+pub fn min_cost(nums: &[i32], cost: &[i32]) -> i64 {
+    let pairs = nums
+        .iter()
+        .copied()
+        .zip(cost.iter().copied())
+        .sorted()
+        .collect_vec();
+    let total: i64 = cost.iter().map(|&v| i64::from(v)).sum();
+    let mut prefix = 0;
+    let mut target = 0;
+    for &(num, co) in pairs.iter() {
+        prefix += i64::from(co);
+        if prefix > total / 2 {
+            target = num;
+            break;
         }
     }
-    res
-}
-
-const fn gcd(a: i32, b: i32) -> i32 {
-    if a == 0 { b } else { gcd(b % a, a) }
+    pairs
+        .into_iter()
+        .map(|(num, co)| i64::from(co) * i64::from(num.abs_diff(target)))
+        .sum()
 }
 
 #[cfg(test)]
@@ -58,8 +60,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(subarray_gcd(&[9, 3, 1, 2, 6, 3], 3), 4);
-        assert_eq!(subarray_gcd(&[4], 7), 0);
+        assert_eq!(min_cost(&[1, 3, 5, 2], &[2, 3, 1, 14]), 8);
+        assert_eq!(min_cost(&[2, 2, 2, 2, 2], &[4, 2, 8, 1, 3]), 0);
     }
 
     #[test]
