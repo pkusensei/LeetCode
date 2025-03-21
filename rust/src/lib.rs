@@ -5,25 +5,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn destroy_targets(nums: Vec<i32>, space: i32) -> i32 {
-    let map = nums.iter().fold(
-        std::collections::HashMap::<_, [i32; 2]>::new(),
-        |mut acc, &num| {
-            let v = acc.entry(num % space).or_insert([0, i32::MAX]);
-            v[0] += 1;
-            v[1] = v[1].min(num);
-            acc
-        },
-    );
-    let mut count = 0;
-    let mut res = i32::MAX;
-    for [c, min] in map.into_values() {
-        if c > count {
-            count = c;
-            res = min
-        } else if c == count {
-            res = res.min(min)
+pub fn second_greater_element(nums: &[i32]) -> Vec<i32> {
+    use std::{cmp::Reverse, collections::BinaryHeap};
+    let n = nums.len();
+    let mut res = vec![-1; n];
+    let mut stack = Vec::<(i32, usize)>::new();
+    let mut heap = BinaryHeap::<(Reverse<i32>, usize)>::new();
+    for (idx, &num) in nums.iter().enumerate() {
+        while heap.peek().is_some_and(|v| v.0.0 < num) {
+            let i = heap.pop().unwrap().1;
+            res[i] = num;
         }
+        while stack.last().is_some_and(|v| v.0 < num) {
+            let (top_num, top_idx) = stack.pop().unwrap();
+            heap.push((Reverse(top_num), top_idx));
+        }
+        stack.push((num, idx));
     }
     res
 }
@@ -58,7 +55,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(second_greater_element(&[2, 4, 0, 9, 6]), [9, 6, 6, -1, -1]);
+        assert_eq!(second_greater_element(&[3, 3]), [-1, -1]);
+    }
 
     #[test]
     fn test() {}
