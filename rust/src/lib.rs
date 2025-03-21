@@ -2,25 +2,36 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::{
+    cmp::Reverse,
+    collections::{BinaryHeap, HashMap},
+};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn second_greater_element(nums: &[i32]) -> Vec<i32> {
-    use std::{cmp::Reverse, collections::BinaryHeap};
-    let n = nums.len();
-    let mut res = vec![-1; n];
-    let mut stack = Vec::<(i32, usize)>::new();
-    let mut heap = BinaryHeap::<(Reverse<i32>, usize)>::new();
-    for (idx, &num) in nums.iter().enumerate() {
-        while heap.peek().is_some_and(|v| v.0.0 < num) {
-            let i = heap.pop().unwrap().1;
-            res[i] = num;
+pub fn most_popular_creator(
+    creators: Vec<String>,
+    ids: Vec<String>,
+    views: Vec<i32>,
+) -> Vec<Vec<String>> {
+    let mut map = HashMap::<_, (i64, BinaryHeap<_>)>::new();
+    for ((cr, id), view) in creators.iter().zip(ids.iter()).zip(views.iter()) {
+        let v = map.entry(cr.as_str()).or_default();
+        v.0 += i64::from(*view);
+        v.1.push((view, Reverse(id.as_str())));
+    }
+    let mut max_score = 0;
+    let mut res = vec![];
+    for (cr, (score, mut heap)) in map.into_iter() {
+        if score > max_score {
+            max_score = score;
+            res.clear();
         }
-        while stack.last().is_some_and(|v| v.0 < num) {
-            let (top_num, top_idx) = stack.pop().unwrap();
-            heap.push((Reverse(top_num), top_idx));
+        if score == max_score {
+            let id = heap.pop().unwrap().1.0.to_string();
+            res.push(vec![cr.to_string(), id]);
         }
-        stack.push((num, idx));
     }
     res
 }
@@ -55,10 +66,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(second_greater_element(&[2, 4, 0, 9, 6]), [9, 6, 6, -1, -1]);
-        assert_eq!(second_greater_element(&[3, 3]), [-1, -1]);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
