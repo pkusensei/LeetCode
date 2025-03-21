@@ -5,32 +5,33 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn make_similar(nums: &[i32], target: &[i32]) -> i64 {
-    let [num_e, num_o] = split(nums);
-    let [target_e, target_o] = split(target);
-    (count(&num_e, &target_e) + count(&num_o, &target_o)) / 2
-}
-
-fn count(arr1: &[i32], arr2: &[i32]) -> i64 {
-    arr1.iter()
-        .zip(arr2)
-        .map(|(a, b)| i64::from(a.abs_diff(*b) / 2))
-        .sum::<i64>()
-}
-
-fn split(arr: &[i32]) -> [Vec<i32>; 2] {
-    let mut evens = vec![];
-    let mut odds = vec![];
-    for &num in arr {
-        if num & 1 == 0 {
-            evens.push(num);
-        } else {
-            odds.push(num);
-        }
-    }
-    evens.sort_unstable();
-    odds.sort_unstable();
-    [evens, odds]
+pub fn odd_string(words: Vec<String>) -> String {
+    use itertools::Itertools;
+    use std::collections::HashMap;
+    words
+        .iter()
+        .enumerate()
+        .map(|(i, s)| {
+            let v = s
+                .as_bytes()
+                .windows(2)
+                .map(|w| i32::from(w[1]) - i32::from(w[0]))
+                .collect_vec();
+            (v, i)
+        })
+        .fold(HashMap::<_, Vec<_>>::new(), |mut acc, (v, i)| {
+            acc.entry(v).or_default().push(i);
+            acc
+        })
+        .into_values()
+        .find_map(|v| {
+            if v.len() == 1 {
+                Some(words[v[0]].to_string())
+            } else {
+                None
+            }
+        })
+        .unwrap_or_default()
 }
 
 #[cfg(test)]
@@ -63,10 +64,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(make_similar(&[8, 12, 6], &[2, 14, 10]), 2);
-        assert_eq!(make_similar(&[1, 2, 5], &[4, 1, 3]), 1);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
