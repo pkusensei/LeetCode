@@ -5,30 +5,37 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_fuel_cost(roads: &[[i32; 2]], seats: i32) -> i64 {
-    let adj = roads.iter().fold(vec![vec![]; 100_000], |mut acc, r| {
-        let [a, b] = [0, 1].map(|i| r[i] as usize);
-        acc[a].push(b);
-        acc[b].push(a);
-        acc
-    });
-    let (f, c) = dfs(&adj, seats, 0, None);
-    f - i64::from(c / seats) - i64::from(c % seats > 0)
+pub fn beautiful_partitions(s: &str, k: i32, min_length: i32) -> i32 {
+    let (s, n) = (s.as_bytes(), s.len());
+    if !P.contains(&s[0]) || P.contains(&s[n - 1]) {
+        return 0;
+    }
+    let [k, len] = [k, min_length].map(|v| v as usize);
+    dfs(s, k - 1, len, len, &mut vec![vec![-1; n]; k])
 }
 
-// (fuel, count)
-fn dfs(adj: &[Vec<usize>], seats: i32, node: usize, prev: Option<usize>) -> (i64, i32) {
-    let mut fuel = 0;
-    let mut count = 1;
-    for &next in adj[node].iter() {
-        if prev.is_none_or(|p| p != next) {
-            let (f, c) = dfs(adj, seats, next, Some(node));
-            fuel += f;
-            count += c;
-        }
+const P: &[u8] = b"2357";
+
+fn dfs(s: &[u8], k: usize, len: usize, idx: usize, memo: &mut [Vec<i32>]) -> i32 {
+    let n = s.len();
+    if k == 0 {
+        return i32::from(idx <= n);
     }
-    fuel += i64::from(count / seats) + i64::from(count % seats > 0);
-    (fuel, count)
+    if idx >= n {
+        return 0;
+    }
+    if memo[k][idx] > -1 {
+        return memo[k][idx];
+    }
+    // skip
+    let mut res = dfs(s, k, len, 1 + idx, memo);
+    // take
+    if P.contains(&s[idx]) && !P.contains(&s[idx - 1]) {
+        res += dfs(s, k - 1, len, idx + len, memo);
+    }
+    res %= 1_000_000_007;
+    memo[k][idx] = res;
+    res
 }
 
 #[cfg(test)]
@@ -62,11 +69,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(minimum_fuel_cost(&[[0, 1], [0, 2], [0, 3]], 5), 3);
-        assert_eq!(
-            minimum_fuel_cost(&[[3, 1], [3, 2], [1, 0], [0, 4], [0, 5], [4, 6]], 2),
-            7
-        );
+        assert_eq!(beautiful_partitions("23542185131", 3, 2), 3);
+        assert_eq!(beautiful_partitions("23542185131", 3, 3), 1);
+        assert_eq!(beautiful_partitions("3312958", 3, 1), 1);
     }
 
     #[test]
