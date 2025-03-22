@@ -5,23 +5,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_palindromes(s: &str, k: i32) -> i32 {
-    let (s, n) = (s.as_bytes(), s.len());
-    let k = k as usize;
-    let mut res = 0;
-    let mut idx = 0;
-    while idx <= n - k {
-        if is_palindrome(&s[idx..idx + k]) {
-            res += 1;
-            idx += k;
-        } else if idx + k + 1 <= n && is_palindrome(&s[idx..idx + k + 1]) {
-            res += 1;
-            idx += k + 1;
-        } else {
-            idx += 1;
-        }
+pub fn unequal_triplets(nums: Vec<i32>) -> i32 {
+    use itertools::Itertools;
+    let map = nums.into_iter().counts();
+    if map.len() < 3 {
+        return 0;
     }
-    res
+    map.values()
+        .array_combinations::<3>()
+        .map(|w| w.iter().copied().product::<usize>() as i32)
+        .sum()
 }
 
 #[cfg(test)]
@@ -54,10 +47,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(max_palindromes("abaccdbbd", 3), 2);
-        assert_eq!(max_palindromes("adbcda", 2), 0);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
