@@ -12,15 +12,15 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
-        var a = TreeNode.Make([1, 3, 4, 2, null, 6, 5, null, null, null, null, null, 7]);
-        Assert.AreEqual("[2]", sol.TreeQueries(a, [4]).Print());
+        var a = TreeNode.Make([6, 2, 13, 1, 4, 9, 15, null, null, null, null, null, null, 14]);
+        Assert.AreEqual("[[2,2],[4,6],[15,-1]]", sol.ClosestNodes(a, [2, 5, 16]).Print());
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        var a = TreeNode.Make([5, 8, 9, 2, 1, 3, 7, 4, 6]);
-        Assert.AreEqual("[3,2,3,2]", sol.TreeQueries(a, [3, 2, 4, 8]).Print());
+        var a = TreeNode.Make([4, null, 9]);
+        Assert.AreEqual("[[-1,4]]", sol.ClosestNodes(a, [3]).Print());
     }
 
     [TestMethod]

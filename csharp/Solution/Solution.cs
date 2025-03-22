@@ -6,38 +6,31 @@ namespace Solution;
 
 public class Solution
 {
-    public int MinimumOperations(TreeNode root)
+    public IList<IList<int>> ClosestNodes(TreeNode root, IList<int> queries)
     {
-        List<TreeNode> nodes = [root];
-        int res = 0;
-        while (nodes.Count > 0)
+        List<int> nums = [];
+        Flatten(root);
+        List<IList<int>> res = [];
+        foreach (var q in queries)
         {
-            var nums = nodes.Select(n => n.val).ToList();
-            res += Swaps(nums);
-            nodes = nodes.SelectMany(n => new[] { n.left, n.right }).Where(n => n is not null).ToList();
+            int i = nums.BinarySearch(q);
+            if (i >= 0) { res.Add([q, q]); }
+            else
+            {
+                i = ~i;
+                if (i == 0) { res.Add([-1, nums[i]]); }
+                else if (i == nums.Count) { res.Add([nums[i - 1], -1]); }
+                else { res.Add([nums[i - 1], nums[i]]); }
+            }
         }
         return res;
 
-        static int Swaps(IList<int> nums)
+        void Flatten(TreeNode node)
         {
-            if (nums.Count < 2) { return 0; }
-            var sorted = nums.Select((v, i) => (i, v)).OrderBy(p => p.v).Select(p => p.i).ToList();
-            Span<bool> seen = stackalloc bool[nums.Count];
-            int res = 0;
-            for (int i = 0; i < nums.Count; i++)
-            {
-                if (seen[i] || sorted[i] == i) { continue; }
-                int curr = i;
-                int cycle = 0;
-                while (!seen[curr])
-                {
-                    seen[curr] = true;
-                    curr = sorted[curr];
-                    cycle += 1;
-                }
-                res += Math.Max(cycle - 1, 0);
-            }
-            return res;
+            if (node is null) { return; }
+            Flatten(node.left);
+            nums.Add(node.val);
+            Flatten(node.right);
         }
     }
 }
