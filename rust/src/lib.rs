@@ -5,9 +5,15 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub const fn pivot_integer(n: i32) -> i32 {
-    let v = ((n * n + n) / 2).isqrt();
-    if 2 * v * v == n * n + n { v } else { -1 }
+pub fn append_characters(s: String, t: String) -> i32 {
+    let (t, n) = (t.as_bytes(), t.len());
+    let mut idx = 0;
+    for b in s.bytes() {
+        if t.get(idx).is_some_and(|&v| v == b) {
+            idx += 1
+        }
+    }
+    (n - idx) as i32
 }
 
 #[cfg(test)]
