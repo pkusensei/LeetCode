@@ -5,21 +5,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn ones_minus_zeros(grid: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
-    let [rows, cols] = get_dimensions(&grid);
-    let pre_rows: Vec<_> = grid.iter().map(|r| r.iter().sum::<i32>()).collect();
-    let pre_cols: Vec<_> = (0..cols)
-        .map(|c| grid.iter().map(|row| row[c]).sum::<i32>())
-        .collect();
-    let mut res = vec![vec![0; cols]; rows];
-    for r in 0..rows {
-        for c in 0..cols {
-            res[r][c] = pre_rows[r] + pre_cols[c]
-                - (cols as i32 - pre_rows[r])
-                - (rows as i32 - pre_cols[c]);
+pub fn best_closing_time(customers: String) -> i32 {
+    let mut score = 0;
+    let mut curr = 0;
+    let mut res = -1;
+    for (idx, b) in (0..).zip(customers.bytes()) {
+        if b == b'Y' {
+            curr += 1
+        } else {
+            curr -= 1
+        }
+        if curr > score {
+            score = curr;
+            res = idx;
         }
     }
-    res
+    1 + res as i32
 }
 
 #[cfg(test)]
