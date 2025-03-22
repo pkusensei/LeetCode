@@ -5,27 +5,63 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn subarray_lcm(nums: &[i32], k: i32) -> i32 {
-    let n = nums.len();
-    let mut res = 0;
-    for i1 in 0..n {
-        let mut curr = nums[i1];
-        for i2 in i1..n {
-            curr = lcm(curr, nums[i2]);
-            res += i32::from(curr == k);
-            if curr > k {
-                break;
-            }
-        }
+pub fn count_complete_components(n: i32, edges: &[[i32; 2]]) -> i32 {
+    use std::collections::HashSet;
+    let n = n as usize;
+    let mut dsu = DSU::new(n);
+    for e in edges.iter() {
+        dsu.union(e[0] as _, e[1] as _);
     }
-    res
+    (0..n)
+        .map(|v| dsu.find(v))
+        .collect::<HashSet<_>>()
+        .into_iter()
+        .filter(|&v| {
+            let e = dsu.edges[v];
+            let size = dsu.size[v];
+            size * (size - 1) / 2 == e
+        })
+        .count() as _
 }
 
-const fn lcm(a: i32, b: i32) -> i32 {
-    const fn gcd(a: i32, b: i32) -> i32 {
-        if a == 0 { b } else { gcd(b % a, a) }
+struct DSU {
+    parent: Vec<usize>,
+    size: Vec<i32>,
+    edges: Vec<i32>,
+}
+
+impl DSU {
+    fn new(n: usize) -> Self {
+        Self {
+            parent: (0..n).collect(),
+            size: vec![1; n],
+            edges: vec![0; n],
+        }
     }
-    a / gcd(a, b) * b
+
+    fn find(&mut self, v: usize) -> usize {
+        if self.parent[v] != v {
+            self.parent[v] = self.find(self.parent[v]);
+        }
+        self.parent[v]
+    }
+
+    fn union(&mut self, x: usize, y: usize) {
+        let [rx, ry] = [x, y].map(|v| self.find(v));
+        if rx == ry {
+            self.edges[rx] += 1;
+            return;
+        }
+        if self.size[rx] < self.size[ry] {
+            self.parent[rx] = ry;
+            self.size[ry] += self.size[rx];
+            self.edges[ry] += 1 + self.edges[rx];
+        } else {
+            self.parent[ry] = rx;
+            self.size[rx] += self.size[ry];
+            self.edges[rx] += 1 + self.edges[ry];
+        }
+    }
 }
 
 #[cfg(test)]
@@ -59,8 +95,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(subarray_lcm(&[3, 6, 2, 7, 1], 6), 4);
-        assert_eq!(subarray_lcm(&[3], 2), 0);
+        assert_eq!(
+            count_complete_components(6, &[[0, 1], [0, 2], [1, 2], [3, 4]]),
+            3
+        );
+        assert_eq!(
+            count_complete_components(6, &[[0, 1], [0, 2], [1, 2], [3, 4], [3, 5]]),
+            1
+        );
     }
 
     #[test]
