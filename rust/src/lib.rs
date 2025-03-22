@@ -5,22 +5,35 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn best_closing_time(customers: String) -> i32 {
-    let mut score = 0;
-    let mut curr = 0;
-    let mut res = -1;
-    for (idx, b) in (0..).zip(customers.bytes()) {
-        if b == b'Y' {
-            curr += 1
-        } else {
-            curr -= 1
-        }
-        if curr > score {
-            score = curr;
-            res = idx;
+pub fn count_palindromes(s: &str) -> i32 {
+    let (s, n) = (s.as_bytes(), s.len());
+    let mut res = 0;
+    for a in b'0'..=b'9' {
+        for b in b'0'..=b'9' {
+            let mut memo = vec![[-1; 5]; n];
+            res += dfs(s, [a, b, b'#', b, a], 0, 0, &mut memo);
+            res %= MOD;
         }
     }
-    1 + res as i32
+    res
+}
+
+const MOD: i32 = 1_000_000_007;
+
+fn dfs(s: &[u8], pattern: [u8; 5], si: usize, pi: usize, memo: &mut [[i32; 5]]) -> i32 {
+    if pi == 5 || si >= s.len() {
+        return i32::from(pi == 5);
+    }
+    if memo[si][pi] > -1 {
+        return memo[si][pi];
+    }
+    let mut res = dfs(s, pattern, 1 + si, pi, memo);
+    if s[si] == pattern[pi] || pattern[pi] == b'#' {
+        res += dfs(s, pattern, 1 + si, 1 + pi, memo);
+        res %= MOD;
+    }
+    memo[si][pi] = res;
+    res
 }
 
 #[cfg(test)]
@@ -53,7 +66,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(count_palindromes("103301"), 2);
+        assert_eq!(count_palindromes("0000000"), 21);
+        assert_eq!(count_palindromes("9999900000"), 2);
+    }
 
     #[test]
     fn test() {}
