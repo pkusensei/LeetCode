@@ -2,19 +2,50 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn delete_greatest_value(mut grid: Vec<Vec<i32>>) -> i32 {
-    let cols = grid[0].len();
-    for r in grid.iter_mut() {
-        r.sort_unstable();
+struct Allocator {
+    slots: Vec<bool>,
+    map: HashMap<i32, Vec<[usize; 2]>>,
+}
+
+impl Allocator {
+    fn new(n: i32) -> Self {
+        Self {
+            slots: vec![false; n as usize],
+            map: HashMap::new(),
+        }
     }
-    let mut res = 0;
-    for c in 0..cols {
-        res += grid.iter().map(|r| r[c]).max().unwrap_or(0);
+
+    fn allocate(&mut self, size: i32, m_id: i32) -> i32 {
+        let n = size as usize;
+        let Some(start) = self
+            .slots
+            .windows(n)
+            .enumerate()
+            .find_map(|(i, w)| if w.iter().all(|&v| !v) { Some(i) } else { None })
+        else {
+            return -1;
+        };
+        self.slots[start..start + n].fill(true);
+        self.map.entry(m_id).or_default().push([start, start + n]);
+        start as i32
     }
-    res
+
+    fn free_memory(&mut self, m_id: i32) -> i32 {
+        let Some(v) = self.map.remove(&m_id) else {
+            return 0;
+        };
+        let mut res = 0;
+        for [a, b] in v {
+            self.slots[a..b].fill(false);
+            res += b - a;
+        }
+        res as _
+    }
 }
 
 #[cfg(test)]
