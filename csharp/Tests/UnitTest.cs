@@ -10,17 +10,17 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(new[] { 5, 2, 13, 3, 8 }, "[13,8]")]
-    [DataRow(new[] { 1, 1, 1, 1 }, "[1,1,1,1]")]
-    public void TestMethod1(int[] nums, string exp)
+    public void TestMethod1()
     {
-        var a = ListNode.Make(nums);
-        Assert.AreEqual(exp, sol.RemoveNodes(a).ToString());
+        int[][] v = [[0, 6, 7], [0, 1, 2], [1, 2, 3], [1, 3, 3], [6, 3, 3], [3, 5, 1], [6, 5, 1], [2, 5, 1], [0, 4, 5], [4, 6, 2]];
+        Assert.AreEqual(4, sol.CountPaths(7, v));
     }
 
     [TestMethod]
     public void TestMethod2()
     {
+        int[][] v = [[1, 0, 10]];
+        Assert.AreEqual(1, sol.CountPaths(2, v));
     }
 
     [TestMethod]

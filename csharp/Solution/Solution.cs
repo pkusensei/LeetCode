@@ -6,24 +6,42 @@ namespace Solution;
 
 public class Solution
 {
-    public ListNode RemoveNodes(ListNode head)
+    public int CountPaths(int n, int[][] roads)
     {
-        Stack<ListNode> st = [];
-        var curr = head;
-        while (curr is not null)
+        List<(int node, long cost)>[] adj = [.. Enumerable.Range(0, n).Select(_ => new List<(int, long)>())];
+        foreach (var item in roads)
         {
-            while (st.TryPeek(out var n) && n.val < curr.val) { st.Pop(); }
-            st.Push(curr);
-            curr = curr.next;
+            int a = item[0];
+            int b = item[1];
+            int time = item[2];
+            adj[a].Add((b, time));
+            adj[b].Add((a, time));
         }
-        ListNode dummy = new(0);
-        curr = dummy;
-        foreach (var item in st.Reverse())
+        Span<int> dp = stackalloc int[n];
+        dp[0] = 1;
+        Span<long> costs = stackalloc long[n];
+        costs.Fill(long.MaxValue);
+        PriorityQueue<int, long> pq = new();
+        pq.Enqueue(0, 0);
+        while (pq.TryDequeue(out var curr, out var cost))
         {
-            curr.next = item;
-            curr = curr.next;
+            if (cost > costs[curr]) { continue; }
+            foreach (var next in adj[curr])
+            {
+                long nc = cost + next.cost;
+                if (nc < costs[next.node])
+                {
+                    dp[next.node] = dp[curr];
+                    costs[next.node] = nc;
+                    pq.Enqueue(next.node, nc);
+                }
+                else if (nc == costs[next.node])
+                {
+                    dp[next.node] += dp[curr];
+                    dp[next.node] %= 1_000_000_007;
+                }
+            }
         }
-        curr.next = null;
-        return dummy.next;
+        return dp[n - 1];
     }
 }
