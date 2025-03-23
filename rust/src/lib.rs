@@ -5,29 +5,51 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_subarrays(nums: &[i32], k: i32) -> i32 {
-    let Some(ki) = nums.iter().position(|&v| v == k) else {
-        return 0;
-    };
-    let mut curr = 0;
-    let mut res = 0;
-    let mut map = std::collections::HashMap::new();
-    for &num in &nums[ki..] {
-        curr += (num - k).signum();
-        res += i32::from(matches!(curr, 0 | 1));
-        *map.entry(curr).or_insert(0) += 1;
+pub fn min_score(n: i32, roads: Vec<Vec<i32>>) -> i32 {
+    let n = n as usize;
+    let mut dsu = DSU::new(n);
+    for r in roads.iter() {
+        let [a, b] = [0, 1].map(|i| r[i] as usize - 1);
+        dsu.union(a, b, r[2]);
     }
-    curr = 0;
-    for &num in nums[..ki].iter().rev() {
-        curr += (num - k).signum();
-        if let Some(v) = map.get(&-curr) {
-            res += v;
-        }
-        if let Some(v) = map.get(&(1 - curr)) {
-            res += v;
+    let root = dsu.find(0);
+    dsu.edge[root]
+}
+
+struct DSU {
+    parent: Vec<usize>,
+    edge: Vec<i32>,
+}
+
+impl DSU {
+    fn new(n: usize) -> Self {
+        Self {
+            parent: (0..n).collect(),
+            edge: vec![i32::MAX; n],
         }
     }
-    res
+
+    fn find(&mut self, v: usize) -> usize {
+        if self.parent[v] != v {
+            self.parent[v] = self.find(self.parent[v]);
+        }
+        self.parent[v]
+    }
+
+    fn union(&mut self, x: usize, y: usize, edge: i32) {
+        let [rx, ry] = [x, y].map(|v| self.find(v));
+        if rx == ry {
+            self.edge[rx] = self.edge[rx].min(edge);
+            return;
+        }
+        if self.edge[rx] <= self.edge[ry] {
+            self.parent[ry] = rx;
+            self.edge[rx] = self.edge[rx].min(edge);
+        } else {
+            self.parent[rx] = ry;
+            self.edge[ry] = self.edge[ry].min(edge);
+        }
+    }
 }
 
 #[cfg(test)]
@@ -60,21 +82,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(count_subarrays(&[3, 2, 1, 4, 5], 4), 3);
-        assert_eq!(count_subarrays(&[2, 3, 1], 3), 1);
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(
-            count_subarrays(
-                &[
-                    5, 19, 11, 15, 13, 16, 4, 6, 2, 7, 10, 8, 18, 20, 1, 3, 17, 9, 12, 14
-                ],
-                6
-            ),
-            13
-        );
-    }
+    fn test() {}
 }
