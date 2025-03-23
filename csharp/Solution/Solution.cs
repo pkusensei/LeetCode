@@ -6,31 +6,24 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<IList<int>> ClosestNodes(TreeNode root, IList<int> queries)
+    public ListNode RemoveNodes(ListNode head)
     {
-        List<int> nums = [];
-        Flatten(root);
-        List<IList<int>> res = [];
-        foreach (var q in queries)
+        Stack<ListNode> st = [];
+        var curr = head;
+        while (curr is not null)
         {
-            int i = nums.BinarySearch(q);
-            if (i >= 0) { res.Add([q, q]); }
-            else
-            {
-                i = ~i;
-                if (i == 0) { res.Add([-1, nums[i]]); }
-                else if (i == nums.Count) { res.Add([nums[i - 1], -1]); }
-                else { res.Add([nums[i - 1], nums[i]]); }
-            }
+            while (st.TryPeek(out var n) && n.val < curr.val) { st.Pop(); }
+            st.Push(curr);
+            curr = curr.next;
         }
-        return res;
-
-        void Flatten(TreeNode node)
+        ListNode dummy = new(0);
+        curr = dummy;
+        foreach (var item in st.Reverse())
         {
-            if (node is null) { return; }
-            Flatten(node.left);
-            nums.Add(node.val);
-            Flatten(node.right);
+            curr.next = item;
+            curr = curr.next;
         }
+        curr.next = null;
+        return dummy.next;
     }
 }
