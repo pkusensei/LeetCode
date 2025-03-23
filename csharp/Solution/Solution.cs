@@ -6,42 +6,89 @@ namespace Solution;
 
 public class Solution
 {
-    public int CountPaths(int n, int[][] roads)
+    public int MagnificentSets(int n, int[][] edges)
     {
-        List<(int node, long cost)>[] adj = [.. Enumerable.Range(0, n).Select(_ => new List<(int, long)>())];
-        foreach (var item in roads)
+        var dsu = new DSU(n);
+        List<List<int>> adj = [.. Enumerable.Range(0, n).Select(_ => new List<int>())];
+        foreach (var item in edges)
         {
-            int a = item[0];
-            int b = item[1];
-            int time = item[2];
-            adj[a].Add((b, time));
-            adj[b].Add((a, time));
+            int a = item[0] - 1;
+            int b = item[1] - 1;
+            dsu.Union(a, b);
+            adj[a].Add(b);
+            adj[b].Add(a);
         }
-        Span<int> dp = stackalloc int[n];
-        dp[0] = 1;
-        Span<long> costs = stackalloc long[n];
-        costs.Fill(long.MaxValue);
-        PriorityQueue<int, long> pq = new();
-        pq.Enqueue(0, 0);
-        while (pq.TryDequeue(out var curr, out var cost))
+        Dictionary<int, int> components = [];
+        for (int node = 0; node < n; node++)
         {
-            if (cost > costs[curr]) { continue; }
-            foreach (var next in adj[curr])
+            int v = BFS(node);
+            if (v == -1) { return -1; }
+            int root = dsu.Find(node);
+            if (!components.TryAdd(root, v))
             {
-                long nc = cost + next.cost;
-                if (nc < costs[next.node])
-                {
-                    dp[next.node] = dp[curr];
-                    costs[next.node] = nc;
-                    pq.Enqueue(next.node, nc);
-                }
-                else if (nc == costs[next.node])
-                {
-                    dp[next.node] += dp[curr];
-                    dp[next.node] %= 1_000_000_007;
-                }
+                components[root] = Math.Max(components[root], v);
             }
         }
-        return dp[n - 1];
+        return components.Values.Sum();
+
+        int BFS(int start)
+        {
+            Queue<int> queue = [];
+            queue.Enqueue(start);
+            Span<int> seen = stackalloc int[n];
+            seen.Fill(-1);
+            int layer = 0;
+            seen[start] = layer;
+            while (queue.Count > 0)
+            {
+                int c = queue.Count;
+                for (int _ = 0; _ < c; _ += 1)
+                {
+                    int curr = queue.Dequeue();
+                    foreach (var next in adj[curr])
+                    {
+                        if (seen[next] == -1)
+                        {
+                            seen[next] = 1 + layer;
+                            queue.Enqueue(next);
+                        }
+                        else if (seen[next] == layer)
+                        {
+                            return -1;
+                        }
+                    }
+                }
+                layer += 1;
+            }
+            return layer;
+        }
+    }
+}
+
+class DSU
+{
+    public int[] Parent { get; init; }
+    public int[] Rank { get; init; }
+
+    public DSU(int n)
+    {
+        Parent = [.. Enumerable.Range(0, n)]; // !!
+        Rank = new int[n];
+    }
+
+    public int Find(int v)
+    {
+        if (Parent[v] != v) { Parent[v] = Find(Parent[v]); }
+        return Parent[v];
+    }
+
+    public void Union(int x, int y)
+    {
+        int rx = Find(x);
+        int ry = Find(y);
+        if (rx == ry) { return; }
+        if (Rank[rx] < Rank[ry]) { Parent[rx] = ry; }
+        else if (Rank[rx] > Rank[ry]) { Parent[ry] = rx; }
+        else { Rank[rx] += 1; Parent[ry] = rx; }
     }
 }
