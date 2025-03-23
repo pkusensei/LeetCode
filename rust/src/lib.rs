@@ -5,15 +5,30 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn similar_pairs(words: Vec<String>) -> i32 {
-    use itertools::Itertools;
-    words
-        .iter()
-        .map(|s| s.bytes().fold(0, |acc, b| acc | (1 << (b - b'a'))))
-        .counts()
-        .into_values()
-        .map(|v| (v * (v - 1) / 2) as i32)
-        .sum()
+pub fn smallest_value(n: i32) -> i32 {
+    let mut n = n;
+    while let Some(v) = sum_prime(n) {
+        if n == v {
+            break;
+        }
+        n = v;
+    }
+    n
+}
+
+fn sum_prime(n: i32) -> Option<i32> {
+    if n < 4 {
+        return None;
+    }
+    let mut res = 0;
+    let mut num = n;
+    for p in 2..n {
+        while num % p == 0 {
+            res += p;
+            num /= p;
+        }
+    }
+    if res > 0 { Some(res) } else { None }
 }
 
 #[cfg(test)]
@@ -46,8 +61,12 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(smallest_value(15), 5);
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(smallest_value(4), 4);
+    }
 }
