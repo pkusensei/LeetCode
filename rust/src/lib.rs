@@ -2,50 +2,39 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-struct Allocator {
-    slots: Vec<bool>,
-    map: HashMap<i32, Vec<[usize; 2]>>,
-}
-
-impl Allocator {
-    fn new(n: i32) -> Self {
-        Self {
-            slots: vec![false; n as usize],
-            map: HashMap::new(),
+pub fn max_points(grid: &[&[i32]], queries: &[i32]) -> Vec<i32> {
+    use itertools::Itertools;
+    use std::{cmp::Reverse, collections::BinaryHeap};
+    let [rows, cols] = get_dimensions(grid);
+    // (query_idx, val)
+    let queries = queries
+        .iter()
+        .copied()
+        .enumerate()
+        .sorted_unstable_by_key(|&(_i, v)| v)
+        .collect_vec();
+    let mut res = vec![0; queries.len()];
+    let mut heap = BinaryHeap::from([(Reverse(grid[0][0]), 0, 0)]);
+    let mut seen = vec![vec![false; cols]; rows];
+    seen[0][0] = true;
+    let mut count = 0;
+    for (idx, q) in queries {
+        while heap.peek().is_some_and(|&(Reverse(v), ..)| v < q) {
+            let (_, r, c) = heap.pop().unwrap();
+            count += 1;
+            for [nr, nc] in neighbors([r, c]) {
+                if nr < rows && nc < cols && !seen[nr][nc] {
+                    seen[nr][nc] = true;
+                    heap.push((Reverse(grid[nr][nc]), nr, nc));
+                }
+            }
         }
+        res[idx] = count;
     }
-
-    fn allocate(&mut self, size: i32, m_id: i32) -> i32 {
-        let n = size as usize;
-        let Some(start) = self
-            .slots
-            .windows(n)
-            .enumerate()
-            .find_map(|(i, w)| if w.iter().all(|&v| !v) { Some(i) } else { None })
-        else {
-            return -1;
-        };
-        self.slots[start..start + n].fill(true);
-        self.map.entry(m_id).or_default().push([start, start + n]);
-        start as i32
-    }
-
-    fn free_memory(&mut self, m_id: i32) -> i32 {
-        let Some(v) = self.map.remove(&m_id) else {
-            return 0;
-        };
-        let mut res = 0;
-        for [a, b] in v {
-            self.slots[a..b].fill(false);
-            res += b - a;
-        }
-        res as _
-    }
+    res
 }
 
 #[cfg(test)]
@@ -78,7 +67,13 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(
+            max_points(&[&[1, 2, 3], &[2, 5, 7], &[3, 5, 1]], &[5, 6, 2]),
+            [5, 8, 1]
+        );
+        assert_eq!(max_points(&[&[5, 2, 1], &[1, 1, 2]], &[3]), [0]);
+    }
 
     #[test]
     fn test() {}
