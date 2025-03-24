@@ -5,27 +5,37 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimize_set(divisor1: i32, divisor2: i32, unique_cnt1: i32, unique_cnt2: i32) -> i32 {
-    let [a, b, c1, c2] = [divisor1, divisor2, unique_cnt1, unique_cnt2].map(i64::from);
-    let _lcm = lcm(a, b);
-    let mut left = 1;
-    let mut right = i64::from(i32::MAX);
-    while left < right {
-        let mid = left + (right - left) / 2;
-        if mid - mid / a >= c1 && mid - mid / b >= c2 && mid - mid / _lcm >= c1 + c2 {
-            right = mid;
-        } else {
-            left = mid + 1;
-        }
-    }
-    left as _
+pub fn count_anagrams(s: &str) -> i32 {
+    let f = facts(100_001);
+    s.split_ascii_whitespace()
+        .map(|w| {
+            let count = w.bytes().fold([0; 26], |mut acc, b| {
+                acc[usize::from(b - b'a')] += 1;
+                acc
+            });
+            let mut v = f[w.len()];
+            for c in count {
+                if c > 0 {
+                    v = v * mod_pow(f[c], MOD - 2, MOD) % MOD;
+                }
+            }
+            v
+        })
+        .fold(1, |acc, v| acc * v % MOD) as i32
 }
 
-const fn lcm(a: i64, b: i64) -> i64 {
-    const fn gcd(a: i64, b: i64) -> i64 {
-        if a == 0 { b } else { gcd(b % a, a) }
+// For big number x, y
+// to find (x/y)%mod
+// use x*mod_pow(y, mod-2, mod)
+
+const MOD: i64 = 1_000_000_007;
+
+fn facts(n: usize) -> Vec<i64> {
+    let mut res = vec![1; n];
+    for i in 2..n {
+        res[i] = res[i - 1] * i as i64 % MOD;
     }
-    a / gcd(a, b) * b
+    res
 }
 
 #[cfg(test)]
@@ -59,13 +69,10 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(minimize_set(2, 7, 1, 3), 4);
-        assert_eq!(minimize_set(3, 5, 2, 1), 3);
-        assert_eq!(minimize_set(2, 4, 8, 2), 15);
+        assert_eq!(count_anagrams("too hot"), 18);
+        assert_eq!(count_anagrams("aa"), 1);
     }
 
     #[test]
-    fn test() {
-        assert_eq!(minimize_set(2, 2, 6, 4), 19);
-    }
+    fn test() {}
 }
