@@ -6,29 +6,39 @@ namespace Solution;
 
 public class Solution
 {
-    public int TakeCharacters(string s, int k)
+    public int[] ClosestPrimes(int left, int right)
     {
-        var count = new int[3];
-        foreach (var c in s) { count[c - 'a'] += 1; }
-        if (count.Any(v => v < k)) { return -1; }
-        var best = new int[3];
-        for (int i = 0; i < 3; i++) { best[i] = count[i] - k; }
-        var window = new int[3];
-        int left = 0;
-        int res = 0;
-        foreach (var (right, ch) in s.Select((c, i) => (i, c)))
+        int[] res = [-1, -1];
+        int[] sieve = Sieve();
+        int diff = right;
+        for (int i = 0; i < sieve.Length - 1; i++)
         {
-            window[ch - 'a'] += 1;
-            if (window.Zip(best).All(p => p.First <= p.Second))
+            int d = sieve[1 + i] - sieve[i];
+            if (left <= sieve[i] && d < diff)
             {
-                res = Math.Max(res, right + 1 - left);
-            }
-            while (window.Zip(best).Any(p => p.First > p.Second))
-            {
-                window[s[left] - 'a'] -= 1;
-                left += 1;
+                diff = d;
+                res = [sieve[i], sieve[1 + i]];
+                if (diff == 2) { break; }
             }
         }
-        return s.Length - res;
+        return res;
+
+        int[] Sieve()
+        {
+            var sieve = new bool[1 + right];
+            sieve[0] = true;
+            sieve[1] = true;
+            for (int p = 2; p <= Math.Sqrt(right); p++)
+            {
+                if (!sieve[p]) // p is prime
+                {
+                    for (int v = p * p; v <= right; v += p)
+                    {
+                        sieve[v] = true;
+                    }
+                }
+            }
+            return [.. sieve.Select((v, i) => (i, v)).Where(p => !p.v).Select(p => p.i)];
+        }
     }
 }
