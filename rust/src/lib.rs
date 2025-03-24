@@ -5,35 +5,52 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_tastiness(price: &mut [i32], k: i32) -> i32 {
-    price.sort_unstable();
-    let mut left = 0;
-    let mut right = *price.last().unwrap();
-    while left < right {
-        let mid = left + (right + 1 - left) / 2;
-        if check(price, mid, k) {
-            left = mid;
-        } else {
-            right = mid - 1;
+pub fn count_partitions(nums: &[i32], k: i32) -> i32 {
+    let k = k as usize;
+    let n = nums.len();
+    let sum: usize = nums.iter().map(|&v| v as usize).sum();
+    if sum < 2 * k {
+        return 0;
+    }
+    let total = (0..n).fold(1, |acc, _| acc * 2 % MOD);
+    // let mut memo = vec![vec![-1; k]; 1 + n];
+    // let invalid = (0..k).fold(0, |acc, t| (acc + dfs(nums, t, &mut memo)) % MOD);
+    let mut dp = vec![0; k];
+    dp[0] = 1;
+    for &num in nums.iter() {
+        let mut target = k - 1;
+        while target >= num as usize {
+            dp[target] += dp[target - num as usize];
+            dp[target] %= MOD;
+            target -= 1;
         }
     }
-    left
+    let invalid = dp.into_iter().fold(0, |acc, v| (acc + v) % MOD);
+    (total - 2 * invalid).rem_euclid(MOD)
 }
 
-fn check(nums: &[i32], mid: i32, k: i32) -> bool {
-    let n = nums.len();
-    let mut res = 1;
-    let mut prev = nums[0];
-    while res < k {
-        let i = nums.partition_point(|&v| v < prev + mid);
-        if i < n {
-            res += 1;
-            prev = nums[i];
-        } else {
-            break;
+const MOD: i32 = 1_000_000_007;
+
+fn dfs(nums: &[i32], target: usize, memo: &mut [Vec<i32>]) -> i32 {
+    if target == 0 {
+        return 1;
+    }
+    match nums {
+        [] => 0,
+        [head, tail @ ..] => {
+            let n = nums.len();
+            if memo[n][target] > -1 {
+                return memo[n][target];
+            }
+            let mut res = dfs(tail, target, memo); // skip
+            if *head as usize <= target {
+                res += dfs(tail, target - *head as usize, memo);
+                res %= MOD;
+            }
+            memo[n][target] = res;
+            res
         }
     }
-    res >= k
 }
 
 #[cfg(test)]
@@ -67,7 +84,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(maximum_tastiness(&mut [13, 5, 1, 8, 21, 2], 3), 8);
+        assert_eq!(count_partitions(&[1, 2, 3, 4], 4), 6);
+        assert_eq!(count_partitions(&[3, 3, 3], 4), 0);
+        assert_eq!(count_partitions(&[6, 6], 4), 2);
     }
 
     #[test]
