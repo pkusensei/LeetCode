@@ -5,44 +5,38 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_possible(n: i32, edges: &[[i32; 2]]) -> bool {
-    use itertools::Itertools;
-    use std::collections::HashSet;
-    let n = n as usize;
-    let adj = edges.iter().fold(vec![HashSet::new(); n], |mut acc, e| {
-        let [a, b] = [0, 1].map(|i| e[i] as usize - 1);
-        acc[a].insert(b);
-        acc[b].insert(a);
-        acc
-    });
-    let odds: Vec<_> = adj
-        .iter()
-        .enumerate()
-        .filter(|(_, s)| s.len() & 1 == 1)
-        .collect();
-    match odds.len() {
-        0 => true,
-        2 => {
-            let a = odds[0];
-            let b = odds[1];
-            if !a.1.contains(&b.0) && !b.1.contains(&a.0) {
-                true
-            } else {
-                (0..n)
-                    .any(|i| i != a.0 && i != b.0 && !adj[i].contains(&a.0) && !adj[i].contains(&b.0))
-            }
-        }
-        4 => {
-            for v in odds.into_iter().permutations(4) {
-                let [a, b, c, d] = v[..] else { unreachable!() };
-                if !a.1.contains(&b.0) && !c.1.contains(&d.0) {
-                    return true;
-                }
-            }
-            false
-        }
-        _ => false,
+pub fn count_days(days: i32, meetings: &[[i32; 2]]) -> i32 {
+    let mut map = std::collections::BTreeMap::new();
+    for m in meetings.iter() {
+        *map.entry(m[0]).or_insert(0) += 1;
+        *map.entry(1 + m[1]).or_insert(0) -= 1;
     }
+    let mut curr = 0;
+    let mut prev = 0;
+    let mut res = 0;
+    for (k, v) in map.iter() {
+        if curr > 0 {
+            res += k - prev;
+        }
+        curr += v;
+        prev = *k;
+    }
+    days - res
+}
+
+pub fn with_sorting(days: i32, meetings: &mut [[i32; 2]]) -> i32 {
+    meetings.sort_unstable();
+    let mut res = 0;
+    let mut last_end = 0;
+    for m in meetings.iter() {
+        let [start, end] = *m;
+        if start > 1 + last_end {
+            res += start - last_end - 1;
+        }
+        last_end = last_end.max(end);
+    }
+    res += days - last_end;
+    res
 }
 
 #[cfg(test)]
@@ -76,28 +70,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert!(is_possible(
-            5,
-            &[[1, 2], [2, 3], [3, 4], [4, 2], [1, 4], [2, 5]]
-        ));
-        assert!(is_possible(4, &[[1, 2], [3, 4]]));
-        assert!(!is_possible(4, &[[1, 2], [1, 3], [1, 4]]));
+        assert_eq!(count_days(10, &[[5, 7], [1, 3], [9, 10]]), 2);
+        assert_eq!(count_days(5, &[[2, 4], [1, 3]]), 1);
+        assert_eq!(count_days(6, &[[1, 6]]), 0);
+
+        assert_eq!(with_sorting(10, &mut [[5, 7], [1, 3], [9, 10]]), 2);
+        assert_eq!(with_sorting(5, &mut [[2, 4], [1, 3]]), 1);
+        assert_eq!(with_sorting(6, &mut [[1, 6]]), 0);
     }
 
     #[test]
-    fn test() {
-        assert!(!is_possible(4, &[[1, 2], [2, 3], [3, 4], [4, 1], [1, 3]]));
-        assert!(is_possible(
-            17,
-            &[
-                [11, 12],
-                [11, 8],
-                [4, 2],
-                [15, 6],
-                [6, 11],
-                [2, 11],
-                [12, 16]
-            ]
-        ));
-    }
+    fn test() {}
 }
