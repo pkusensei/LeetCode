@@ -5,38 +5,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_days(days: i32, meetings: &[[i32; 2]]) -> i32 {
-    let mut map = std::collections::BTreeMap::new();
-    for m in meetings.iter() {
-        *map.entry(m[0]).or_insert(0) += 1;
-        *map.entry(1 + m[1]).or_insert(0) -= 1;
-    }
-    let mut curr = 0;
-    let mut prev = 0;
-    let mut res = 0;
-    for (k, v) in map.iter() {
-        if curr > 0 {
-            res += k - prev;
-        }
-        curr += v;
-        prev = *k;
-    }
-    days - res
+pub fn cycle_length_queries(_n: i32, queries: &[[i32; 2]]) -> Vec<i32> {
+    queries.iter().map(|q| solve(q[0], q[1])).collect()
 }
 
-pub fn with_sorting(days: i32, meetings: &mut [[i32; 2]]) -> i32 {
-    meetings.sort_unstable();
+fn solve(a: i32, b: i32) -> i32 {
+    let mut min = a.min(b);
+    let mut max = a.max(b);
     let mut res = 0;
-    let mut last_end = 0;
-    for m in meetings.iter() {
-        let [start, end] = *m;
-        if start > 1 + last_end {
-            res += start - last_end - 1;
+    while min != max {
+        max /= 2;
+        if max < min {
+            std::mem::swap(&mut min, &mut max);
         }
-        last_end = last_end.max(end);
+        res += 1;
     }
-    res += days - last_end;
-    res
+    1 + res
 }
 
 #[cfg(test)]
@@ -70,13 +54,27 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(count_days(10, &[[5, 7], [1, 3], [9, 10]]), 2);
-        assert_eq!(count_days(5, &[[2, 4], [1, 3]]), 1);
-        assert_eq!(count_days(6, &[[1, 6]]), 0);
-
-        assert_eq!(with_sorting(10, &mut [[5, 7], [1, 3], [9, 10]]), 2);
-        assert_eq!(with_sorting(5, &mut [[2, 4], [1, 3]]), 1);
-        assert_eq!(with_sorting(6, &mut [[1, 6]]), 0);
+        assert_eq!(
+            cycle_length_queries(3, &[[5, 3], [4, 7], [2, 3]]),
+            [4, 5, 3]
+        );
+        assert_eq!(cycle_length_queries(2, &[[1, 2]]), [2]);
+        assert_eq!(
+            cycle_length_queries(
+                5,
+                &[
+                    [17, 21],
+                    [23, 5],
+                    [15, 7],
+                    [3, 21],
+                    [31, 9],
+                    [5, 15],
+                    [11, 2],
+                    [19, 7]
+                ]
+            ),
+            [7, 3, 2, 6, 8, 6, 3, 7]
+        );
     }
 
     #[test]
