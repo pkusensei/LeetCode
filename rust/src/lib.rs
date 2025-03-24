@@ -5,28 +5,35 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn closest_target(words: &[&str], target: &str, start_index: i32) -> i32 {
-    let n = words.len();
-    let start = start_index as usize;
-    let mut idx = start;
-    let mut a = 0;
-    while words[idx] != target {
-        idx = (1 + idx) % n;
-        a += 1;
-        if idx == start {
-            return -1;
+pub fn maximum_tastiness(price: &mut [i32], k: i32) -> i32 {
+    price.sort_unstable();
+    let mut left = 0;
+    let mut right = *price.last().unwrap();
+    while left < right {
+        let mid = left + (right + 1 - left) / 2;
+        if check(price, mid, k) {
+            left = mid;
+        } else {
+            right = mid - 1;
         }
     }
-    let mut b = 0;
-    idx = start;
-    while words[idx] != target {
-        idx = (idx + n - 1) % n;
-        b += 1;
-        if idx == start {
+    left
+}
+
+fn check(nums: &[i32], mid: i32, k: i32) -> bool {
+    let n = nums.len();
+    let mut res = 1;
+    let mut prev = nums[0];
+    while res < k {
+        let i = nums.partition_point(|&v| v < prev + mid);
+        if i < n {
+            res += 1;
+            prev = nums[i];
+        } else {
             break;
         }
     }
-    a.min(b)
+    res >= k
 }
 
 #[cfg(test)]
@@ -60,7 +67,7 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(closest_target(&["a", "b", "leetcode"], "leetcode", 0), 1);
+        assert_eq!(maximum_tastiness(&mut [13, 5, 1, 8, 21, 2], 3), 8);
     }
 
     #[test]
