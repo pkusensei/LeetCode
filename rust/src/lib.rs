@@ -5,37 +5,28 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_anagrams(s: &str) -> i32 {
-    let f = facts(100_001);
-    s.split_ascii_whitespace()
-        .map(|w| {
-            let count = w.bytes().fold([0; 26], |mut acc, b| {
-                acc[usize::from(b - b'a')] += 1;
-                acc
-            });
-            let mut v = f[w.len()];
-            for c in count {
-                if c > 0 {
-                    v = v * mod_pow(f[c], MOD - 2, MOD) % MOD;
-                }
-            }
-            v
-        })
-        .fold(1, |acc, v| acc * v % MOD) as i32
-}
-
-// For big number x, y
-// to find (x/y)%mod
-// use x*mod_pow(y, mod-2, mod)
-
-const MOD: i64 = 1_000_000_007;
-
-fn facts(n: usize) -> Vec<i64> {
-    let mut res = vec![1; n];
-    for i in 2..n {
-        res[i] = res[i - 1] * i as i64 % MOD;
+pub fn closest_target(words: &[&str], target: &str, start_index: i32) -> i32 {
+    let n = words.len();
+    let start = start_index as usize;
+    let mut idx = start;
+    let mut a = 0;
+    while words[idx] != target {
+        idx = (1 + idx) % n;
+        a += 1;
+        if idx == start {
+            return -1;
+        }
     }
-    res
+    let mut b = 0;
+    idx = start;
+    while words[idx] != target {
+        idx = (idx + n - 1) % n;
+        b += 1;
+        if idx == start {
+            break;
+        }
+    }
+    a.min(b)
 }
 
 #[cfg(test)]
@@ -69,8 +60,7 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(count_anagrams("too hot"), 18);
-        assert_eq!(count_anagrams("aa"), 1);
+        assert_eq!(closest_target(&["a", "b", "leetcode"], "leetcode", 0), 1);
     }
 
     #[test]
