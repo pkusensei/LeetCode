@@ -5,27 +5,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_partition(s: &str, k: i32) -> i32 {
-    let n = s.len();
-    let len = 1 + k.ilog10() as usize;
-    let mut prev = 0;
-    let mut res = 0;
-    let mut curr = len.min(n);
-    while curr <= n {
-        while curr > prev && s[prev..curr].parse::<i32>().is_ok_and(|v| v > k) {
-            curr -= 1;
-        }
-        if curr == prev {
-            return -1;
-        }
-        res += 1;
-        prev = curr;
-        curr = (prev + len).min(n);
-        if prev == n {
-            break;
-        }
+pub fn categorize_box(length: i32, width: i32, height: i32, mass: i32) -> String {
+    let [a, b, c] = [length, width, height].map(i64::from);
+    let bulky = [a, b, c].iter().any(|&v| v >= 10_000) || a * b * c >= 1_000_000_000;
+    let heavy = mass >= 100;
+    match [bulky, heavy] {
+        [true, true] => "Both".into(),
+        [true, false] => "Bulky".into(),
+        [false, true] => "Heavy".into(),
+        [false, false] => "Neither".into(),
     }
-    res
 }
 
 #[cfg(test)]
@@ -58,10 +47,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(minimum_partition("165462", 60), 4);
-        assert_eq!(minimum_partition("238182", 5), -1);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
