@@ -5,22 +5,31 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn cycle_length_queries(_n: i32, queries: &[[i32; 2]]) -> Vec<i32> {
-    queries.iter().map(|q| solve(q[0], q[1])).collect()
-}
-
-fn solve(a: i32, b: i32) -> i32 {
-    let mut min = a.min(b);
-    let mut max = a.max(b);
+pub fn capture_forts(forts: &[i32]) -> i32 {
+    let mut neg_one = -1;
+    let mut one = -1;
     let mut res = 0;
-    while min != max {
-        max /= 2;
-        if max < min {
-            std::mem::swap(&mut min, &mut max);
+    for (idx, &num) in (0..).zip(forts.iter()) {
+        if num == -1 {
+            if one < neg_one {
+                one = -1;
+            }
+            neg_one = idx;
+            if one > -1 {
+                res = res.max(neg_one - one - 1);
+            }
         }
-        res += 1;
+        if num == 1 {
+            if neg_one < one {
+                neg_one = -1;
+            }
+            one = idx;
+            if neg_one > -1 {
+                res = res.max(one - neg_one - 1);
+            }
+        }
     }
-    1 + res
+    res
 }
 
 #[cfg(test)]
@@ -54,29 +63,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            cycle_length_queries(3, &[[5, 3], [4, 7], [2, 3]]),
-            [4, 5, 3]
-        );
-        assert_eq!(cycle_length_queries(2, &[[1, 2]]), [2]);
-        assert_eq!(
-            cycle_length_queries(
-                5,
-                &[
-                    [17, 21],
-                    [23, 5],
-                    [15, 7],
-                    [3, 21],
-                    [31, 9],
-                    [5, 15],
-                    [11, 2],
-                    [19, 7]
-                ]
-            ),
-            [7, 3, 2, 6, 8, 6, 3, 7]
-        );
+        assert_eq!(capture_forts(&[1, 0, 0, -1, 0, 0, 0, 0, 1]), 4);
+        assert_eq!(capture_forts(&[0, 0, 1, -1]), 0);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(capture_forts(&[1, 0, 0, -1, 0, 0, -1, 0, 0, 1]), 2);
+    }
 }
