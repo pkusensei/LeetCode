@@ -5,15 +5,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn categorize_box(length: i32, width: i32, height: i32, mass: i32) -> String {
-    let [a, b, c] = [length, width, height].map(i64::from);
-    let bulky = [a, b, c].iter().any(|&v| v >= 10_000) || a * b * c >= 1_000_000_000;
-    let heavy = mass >= 100;
-    match [bulky, heavy] {
-        [true, true] => "Both".into(),
-        [true, false] => "Bulky".into(),
-        [false, true] => "Heavy".into(),
-        [false, false] => "Neither".into(),
+struct DataStream {
+    value: i32,
+    k: i32,
+    count: i32,
+}
+
+impl DataStream {
+    fn new(value: i32, k: i32) -> Self {
+        Self { value, k, count: 0 }
+    }
+
+    fn consec(&mut self, num: i32) -> bool {
+        if num == self.value {
+            self.count += 1;
+        } else {
+            self.count = 0;
+        }
+        self.count >= self.k
     }
 }
 
