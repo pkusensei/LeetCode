@@ -5,30 +5,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn top_students(
-    positive_feedback: Vec<String>,
-    negative_feedback: Vec<String>,
-    report: Vec<String>,
-    student_id: Vec<i32>,
-    k: i32,
-) -> Vec<i32> {
-    use itertools::Itertools;
-    use std::collections::HashSet;
-    let pos: HashSet<_> = positive_feedback.iter().map(|s| s.as_str()).collect();
-    let neg: HashSet<_> = negative_feedback.iter().map(|s| s.as_str()).collect();
-    report
-        .iter()
-        .zip(student_id.iter())
-        .map(|(rep, id)| {
-            let words = rep.split_ascii_whitespace();
-            let p = words.clone().filter(|w| pos.contains(w)).count() as i32;
-            let n = words.filter(|w| neg.contains(w)).count() as i32;
-            (3 * p - n, *id)
-        })
-        .sorted_unstable_by(|a, b| b.0.cmp(&a.0).then(a.1.cmp(&b.1)))
-        .take(k as usize)
-        .map(|(_, id)| id)
-        .collect()
+pub fn minimize_set(divisor1: i32, divisor2: i32, unique_cnt1: i32, unique_cnt2: i32) -> i32 {
+    let [a, b, c1, c2] = [divisor1, divisor2, unique_cnt1, unique_cnt2].map(i64::from);
+    let _lcm = lcm(a, b);
+    let mut left = 1;
+    let mut right = i64::from(i32::MAX);
+    while left < right {
+        let mid = left + (right - left) / 2;
+        if mid - mid / a >= c1 && mid - mid / b >= c2 && mid - mid / _lcm >= c1 + c2 {
+            right = mid;
+        } else {
+            left = mid + 1;
+        }
+    }
+    left as _
+}
+
+const fn lcm(a: i64, b: i64) -> i64 {
+    const fn gcd(a: i64, b: i64) -> i64 {
+        if a == 0 { b } else { gcd(b % a, a) }
+    }
+    a / gcd(a, b) * b
 }
 
 #[cfg(test)]
@@ -61,8 +58,14 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(minimize_set(2, 7, 1, 3), 4);
+        assert_eq!(minimize_set(3, 5, 2, 1), 3);
+        assert_eq!(minimize_set(2, 4, 8, 2), 15);
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(minimize_set(2, 2, 6, 4), 19);
+    }
 }
