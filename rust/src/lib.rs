@@ -5,31 +5,30 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn capture_forts(forts: &[i32]) -> i32 {
-    let mut neg_one = -1;
-    let mut one = -1;
-    let mut res = 0;
-    for (idx, &num) in (0..).zip(forts.iter()) {
-        if num == -1 {
-            if one < neg_one {
-                one = -1;
-            }
-            neg_one = idx;
-            if one > -1 {
-                res = res.max(neg_one - one - 1);
-            }
-        }
-        if num == 1 {
-            if neg_one < one {
-                neg_one = -1;
-            }
-            one = idx;
-            if neg_one > -1 {
-                res = res.max(one - neg_one - 1);
-            }
-        }
-    }
-    res
+pub fn top_students(
+    positive_feedback: Vec<String>,
+    negative_feedback: Vec<String>,
+    report: Vec<String>,
+    student_id: Vec<i32>,
+    k: i32,
+) -> Vec<i32> {
+    use itertools::Itertools;
+    use std::collections::HashSet;
+    let pos: HashSet<_> = positive_feedback.iter().map(|s| s.as_str()).collect();
+    let neg: HashSet<_> = negative_feedback.iter().map(|s| s.as_str()).collect();
+    report
+        .iter()
+        .zip(student_id.iter())
+        .map(|(rep, id)| {
+            let words = rep.split_ascii_whitespace();
+            let p = words.clone().filter(|w| pos.contains(w)).count() as i32;
+            let n = words.filter(|w| neg.contains(w)).count() as i32;
+            (3 * p - n, *id)
+        })
+        .sorted_unstable_by(|a, b| b.0.cmp(&a.0).then(a.1.cmp(&b.1)))
+        .take(k as usize)
+        .map(|(_, id)| id)
+        .collect()
 }
 
 #[cfg(test)]
@@ -62,13 +61,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(capture_forts(&[1, 0, 0, -1, 0, 0, 0, 0, 1]), 4);
-        assert_eq!(capture_forts(&[0, 0, 1, -1]), 0);
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(capture_forts(&[1, 0, 0, -1, 0, 0, -1, 0, 0, 1]), 2);
-    }
+    fn test() {}
 }
