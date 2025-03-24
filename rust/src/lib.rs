@@ -2,28 +2,28 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashSet;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn distinct_prime_factors(nums: Vec<i32>) -> i32 {
-    let mut res = HashSet::new();
-    for &num in nums.iter() {
-        res.extend(find(num));
-    }
-    res.len() as _
-}
-
-fn find(mut num: i32) -> HashSet<i32> {
-    let mut res = HashSet::new();
-    let mut p = 2;
-    while num > 1 {
-        while num % p == 0 {
-            num /= p;
-            res.insert(p);
+pub fn minimum_partition(s: &str, k: i32) -> i32 {
+    let n = s.len();
+    let len = 1 + k.ilog10() as usize;
+    let mut prev = 0;
+    let mut res = 0;
+    let mut curr = len.min(n);
+    while curr <= n {
+        while curr > prev && s[prev..curr].parse::<i32>().is_ok_and(|v| v > k) {
+            curr -= 1;
         }
-        p += 1;
+        if curr == prev {
+            return -1;
+        }
+        res += 1;
+        prev = curr;
+        curr = (prev + len).min(n);
+        if prev == n {
+            break;
+        }
     }
     res
 }
@@ -58,7 +58,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(minimum_partition("165462", 60), 4);
+        assert_eq!(minimum_partition("238182", 5), -1);
+    }
 
     #[test]
     fn test() {}
