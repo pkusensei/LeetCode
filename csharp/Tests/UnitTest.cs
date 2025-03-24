@@ -10,10 +10,11 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(new[] { 4, 16, 256, 65536 }, 4)]
-    public void TestMethod1(int[] nums, int exp)
+    [DataRow("aabaaaacaabc", 2, 8)]
+    [DataRow("a", 1, -1)]
+    public void TestMethod1(string s, int k, int exp)
     {
-        Assert.AreEqual(exp, sol.LongestSquareStreak(nums));
+        Assert.AreEqual(exp, sol.TakeCharacters(s, k));
     }
 
     [TestMethod]
