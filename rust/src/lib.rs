@@ -5,23 +5,34 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_operations(nums1: &[i32], nums2: &[i32], k: i32) -> i64 {
-    if k == 0 {
-        return if nums1 == nums2 { 0 } else { -1 };
-    }
-    if nums1.iter().map(|&v| i64::from(v)).sum::<i64>()
-        != nums2.iter().map(|&v| i64::from(v)).sum::<i64>()
-    {
-        return -1;
-    }
+pub fn max_score(nums1: &[i32], nums2: &[i32], k: i32) -> i64 {
+    use itertools::Itertools;
+    use std::{cmp::Reverse, collections::BinaryHeap};
+    // sort desc on nums2 vals
+    // so that when iterating, keep min(nums2)
+    let pairs = nums2
+        .iter()
+        .zip(nums1.iter())
+        .map(|(&a, &b)| [a, b].map(i64::from))
+        .sorted_unstable_by(|a, b| b[0].cmp(&a[0]))
+        .collect_vec();
+    let mut sum = 0;
+    let mut min = i64::MAX;
     let mut res = 0;
-    for (a, b) in nums1.iter().zip(nums2.iter()) {
-        if a % k != b % k {
-            return -1;
+    // min heap to keep biggest nums1 in sum
+    let mut heap = BinaryHeap::new();
+    for p in pairs {
+        // While in loop, ensure current p is in calculation
+        sum += p[1];
+        min = min.min(p[0]);
+        heap.push(Reverse(p[1]));
+        if heap.len() == k as usize {
+            res = res.max(sum * min);
+            let num = heap.pop().unwrap().0;
+            sum -= num;
         }
-        res += i64::from((a - b) / k).abs();
     }
-    res / 2
+    res
 }
 
 #[cfg(test)]
@@ -55,8 +66,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_operations(&[4, 3, 1, 4], &[1, 3, 7, 1], 3), 2);
-        assert_eq!(min_operations(&[3, 8, 5, 2], &[2, 4, 1, 6], 1), -1);
+        assert_eq!(max_score(&[1, 3, 3, 2], &[2, 1, 3, 4], 3), 12);
+        assert_eq!(max_score(&[4, 2, 3, 1, 1], &[7, 5, 10, 9, 6], 1), 30);
     }
 
     #[test]
