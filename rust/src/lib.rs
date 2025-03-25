@@ -5,34 +5,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_score(nums1: &[i32], nums2: &[i32], k: i32) -> i64 {
-    use itertools::Itertools;
-    use std::{cmp::Reverse, collections::BinaryHeap};
-    // sort desc on nums2 vals
-    // so that when iterating, keep min(nums2)
-    let pairs = nums2
-        .iter()
-        .zip(nums1.iter())
-        .map(|(&a, &b)| [a, b].map(i64::from))
-        .sorted_unstable_by(|a, b| b[0].cmp(&a[0]))
-        .collect_vec();
-    let mut sum = 0;
-    let mut min = i64::MAX;
-    let mut res = 0;
-    // min heap to keep biggest nums1 in sum
-    let mut heap = BinaryHeap::new();
-    for p in pairs {
-        // While in loop, ensure current p is in calculation
-        sum += p[1];
-        min = min.min(p[0]);
-        heap.push(Reverse(p[1]));
-        if heap.len() == k as usize {
-            res = res.max(sum * min);
-            let num = heap.pop().unwrap().0;
-            sum -= num;
+pub fn is_reachable(target_x: i32, target_y: i32) -> bool {
+    // gcd(target_x as _, target_y as _).count_ones() == 1
+    let [mut x, mut y] = [target_x, target_y];
+    while x > 1 && y > 1 {
+        if x < y {
+            if y & 1 == 0 { y /= 2 } else { y -= x }
+        } else {
+            if x & 1 == 0 { x /= 2 } else { x -= y }
         }
     }
-    res
+    x == 1 && y == 1
 }
 
 #[cfg(test)]
@@ -65,10 +48,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(max_score(&[1, 3, 3, 2], &[2, 1, 3, 4], 3), 12);
-        assert_eq!(max_score(&[4, 2, 3, 1, 1], &[7, 5, 10, 9, 6], 1), 30);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
