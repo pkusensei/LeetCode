@@ -7,24 +7,54 @@ use std::collections::HashMap;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_good(nums: &[i32], k: i32) -> i64 {
-    let n = nums.len();
-    let k = i64::from(k);
-    let mut freq = HashMap::new();
-    let mut count = 0;
+pub fn max_output(n: i32, edges: &[[i32; 2]], price: &[i32]) -> i64 {
+    let n = n as usize;
+    if n == 1 {
+        return 0;
+    }
+    if n == 2 {
+        return i64::from(*price.iter().max().unwrap());
+    }
+    let mut adj = vec![vec![]; n];
+    let mut degs = vec![0; n];
+    for e in edges.iter() {
+        let [a, b] = [0, 1].map(|i| e[i] as usize);
+        adj[a].push(b);
+        adj[b].push(a);
+        degs[a] += 1;
+        degs[b] += 1;
+    }
     let mut res = 0;
-    let mut left = 0;
-    for (right, &num) in nums.iter().enumerate() {
-        *freq.entry(num).or_insert(0_i64) += 1;
-        count += freq[&num] - 1;
-        while count >= k {
-            res += n - right;
-            freq.entry(nums[left]).and_modify(|v| *v -= 1);
-            count -= freq[&nums[left]];
-            left += 1;
+    let mut memo = HashMap::new();
+    for node in degs
+        .into_iter()
+        .enumerate()
+        .filter_map(|(i, v)| if v > 1 { Some(i) } else { None })
+    {
+        res = res.max(dfs(&adj, price, node, n, &mut memo))
+    }
+    res
+}
+
+fn dfs(
+    adj: &[Vec<usize>],
+    price: &[i32],
+    node: usize,
+    prev: usize,
+    memo: &mut HashMap<[usize; 2], i64>,
+) -> i64 {
+    if let Some(&v) = memo.get(&[node, prev]) {
+        return v;
+    }
+    let mut res = 0;
+    for &next in adj[node].iter() {
+        if prev != next {
+            res = res.max(dfs(adj, price, next, node, memo));
         }
     }
-    res as i64
+    res += i64::from(price[node]);
+    memo.insert([node, prev], res);
+    res
 }
 
 #[cfg(test)]
@@ -58,8 +88,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(count_good(&[1, 1, 1, 1, 1], 10), 1);
-        assert_eq!(count_good(&[3, 1, 4, 3, 2, 2, 4], 2), 4);
+        assert_eq!(
+            max_output(
+                6,
+                &[[0, 1], [1, 2], [1, 3], [3, 4], [3, 5]],
+                &[9, 8, 7, 6, 10, 5]
+            ),
+            24
+        );
+        assert_eq!(max_output(3, &[[0, 1], [1, 2]], &[1, 1, 1]), 2);
     }
 
     #[test]
