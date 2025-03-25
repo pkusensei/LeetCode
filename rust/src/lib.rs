@@ -5,19 +5,25 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn difference_of_sum(nums: Vec<i32>) -> i32 {
-    let mut sum = 0;
-    let mut dsum = 0;
-    for &(mut num) in nums.iter() {
-        sum += num;
-        let mut curr = 0;
-        while num > 0 {
-            curr += num % 10;
-            num /= 10;
+pub fn range_add_queries(n: i32, queries: &[[i32; 4]]) -> Vec<Vec<i32>> {
+    let n = n as usize;
+    let mut res = vec![vec![0; 1 + n]; n];
+    for q in queries.iter() {
+        let [r1, c1, r2, c2] = [0, 1, 2, 3].map(|i| q[i] as usize);
+        for r in r1..=r2 {
+            res[r][c1] += 1;
+            res[r][1 + c2] -= 1;
         }
-        dsum += curr;
     }
-    (sum - dsum).abs()
+    for r in 0..n {
+        let mut curr = 0;
+        for v in res[r].iter_mut() {
+            curr += *v;
+            *v = curr;
+        }
+        res[r].pop();
+    }
+    res
 }
 
 #[cfg(test)]
@@ -50,7 +56,12 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(
+            range_add_queries(3, &[[1, 1, 2, 2], [0, 0, 1, 1]]),
+            [[1, 1, 0], [1, 2, 1], [0, 1, 1]]
+        );
+    }
 
     #[test]
     fn test() {}
