@@ -15,7 +15,7 @@ pub fn is_reachable(target_x: i32, target_y: i32) -> bool {
             if x & 1 == 0 { x /= 2 } else { x -= y }
         }
     }
-    x == 1 && y == 1
+    x == 1 || y == 1
 }
 
 #[cfg(test)]
