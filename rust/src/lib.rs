@@ -2,28 +2,29 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn range_add_queries(n: i32, queries: &[[i32; 4]]) -> Vec<Vec<i32>> {
-    let n = n as usize;
-    let mut res = vec![vec![0; 1 + n]; n];
-    for q in queries.iter() {
-        let [r1, c1, r2, c2] = [0, 1, 2, 3].map(|i| q[i] as usize);
-        for r in r1..=r2 {
-            res[r][c1] += 1;
-            res[r][1 + c2] -= 1;
+pub fn count_good(nums: &[i32], k: i32) -> i64 {
+    let n = nums.len();
+    let k = i64::from(k);
+    let mut freq = HashMap::new();
+    let mut count = 0;
+    let mut res = 0;
+    let mut left = 0;
+    for (right, &num) in nums.iter().enumerate() {
+        *freq.entry(num).or_insert(0_i64) += 1;
+        count += freq[&num] - 1;
+        while count >= k {
+            res += n - right;
+            freq.entry(nums[left]).and_modify(|v| *v -= 1);
+            count -= freq[&nums[left]];
+            left += 1;
         }
     }
-    for r in 0..n {
-        let mut curr = 0;
-        for v in res[r].iter_mut() {
-            curr += *v;
-            *v = curr;
-        }
-        res[r].pop();
-    }
-    res
+    res as i64
 }
 
 #[cfg(test)]
@@ -57,10 +58,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            range_add_queries(3, &[[1, 1, 2, 2], [0, 0, 1, 1]]),
-            [[1, 1, 0], [1, 2, 1], [0, 1, 1]]
-        );
+        assert_eq!(count_good(&[1, 1, 1, 1, 1], 10), 1);
+        assert_eq!(count_good(&[3, 1, 4, 3, 2, 2, 4], 2), 4);
     }
 
     #[test]
