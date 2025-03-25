@@ -5,35 +5,60 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn check_valid_cuts(_n: i32, rectangles: &[[i32; 4]]) -> bool {
-    let mut xspans = vec![];
-    let mut yspans = vec![];
-    for rec in rectangles.iter() {
-        let [x1, y1, x2, y2] = rec[..] else {
-            unreachable!()
-        };
-        xspans.push([x1, x2]);
-        yspans.push([y1, y2]);
+pub fn max_power(stations: &[i32], r: i32, k: i32) -> i64 {
+    let r = r as usize;
+    let k = i64::from(k);
+    let n = stations.len();
+    let mut powers = vec![0; 1 + n];
+    let mut sum = 0;
+    for (i, &v) in stations.iter().enumerate() {
+        let v = i64::from(v);
+        let a = i.saturating_sub(r);
+        let b = (i + r + 1).min(n);
+        powers[a] += v;
+        powers[b] -= v;
+        sum += v;
     }
-    xspans.sort_unstable();
-    yspans.sort_unstable();
-    check(&xspans) || check(&yspans)
+    powers.pop();
+    let mut curr = 0;
+    let mut left = i64::MAX;
+    for v in powers.iter_mut() {
+        curr += *v;
+        *v = curr;
+        left = left.min(curr);
+    }
+    let mut right = sum + k;
+    while left < right {
+        let mid = left + (right + 1 - left) / 2;
+        if check(&powers, r, k, mid) {
+            left = mid;
+        } else {
+            right = mid - 1;
+        }
+    }
+    left
 }
 
-fn check(spans: &[[i32; 2]]) -> bool {
-    let mut curr_end = spans[0][1];
-    let mut count = 0;
-    for sp in spans[1..].iter() {
-        let [start, end] = *sp;
-        if start >= curr_end {
-            count += 1;
+fn check(nums: &[i64], r: usize, mut k: i64, mid: i64) -> bool {
+    let n = nums.len();
+    let mut prefix = vec![0; 1 + n];
+    for (left, &num) in nums.iter().enumerate() {
+        if left > 0 {
+            prefix[left] += prefix[left - 1];
         }
-        curr_end = curr_end.max(end);
-        if count >= 2 {
-            break;
+        let curr = num + prefix[left];
+        if curr < mid {
+            let diff = mid - curr;
+            k -= diff;
+            if k < 0 {
+                return false;
+            }
+            let right = (left + r + r).min(n - 1);
+            prefix[left] += diff;
+            prefix[right + 1] -= diff;
         }
     }
-    count >= 2
+    k >= 0
 }
 
 #[cfg(test)]
@@ -67,37 +92,10 @@ mod tests {
 
     #[test]
     fn basics() {
-        // assert!(check_valid_cuts(
-        //     5,
-        //     &[[1, 0, 5, 2], [0, 2, 2, 4], [3, 2, 5, 3], [0, 4, 4, 5]]
-        // ));
-        // assert!(check_valid_cuts(
-        //     4,
-        //     &[[0, 0, 1, 1], [2, 0, 3, 4], [0, 2, 2, 3], [3, 0, 4, 3]]
-        // ));
-        assert!(!check_valid_cuts(
-            4,
-            &[
-                [0, 2, 2, 4],
-                [1, 0, 3, 2],
-                [2, 2, 3, 4],
-                [3, 0, 4, 2],
-                [3, 2, 4, 4]
-            ]
-        ));
+        assert_eq!(max_power(&[1, 2, 4, 5, 0], 1, 2), 5);
+        assert_eq!(max_power(&[4, 4, 4, 4], 0, 3), 4);
     }
 
     #[test]
-    fn test() {
-        assert!(!check_valid_cuts(
-            4,
-            &[
-                [0, 0, 1, 4],
-                [1, 0, 2, 3],
-                [2, 0, 3, 3],
-                [3, 0, 4, 3],
-                [1, 3, 4, 4]
-            ]
-        ));
-    }
+    fn test() {}
 }
