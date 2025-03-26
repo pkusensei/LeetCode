@@ -6,18 +6,31 @@ namespace Solution;
 
 public class Solution
 {
-    public int MinOperations(int[][] grid, int x)
+    public int MinCapability(int[] nums, int k)
     {
-        List<int> nums = [.. grid.SelectMany(row => row)];
-        nums.Sort();
-        int med = nums[nums.Count / 2];
-        int res = 0;
-        foreach (var item in nums)
+        int left = nums.Min();
+        int right = nums.Max();
+        while (left < right)
         {
-            int diff = Math.Abs(item - med);
-            if (diff % x == 0) { res += diff / x; }
-            else{ return -1; }
+            int mid = left + (right - left) / 2;
+            if (Count(mid) >= k) { right = mid; }
+            else { left = mid + 1; }
         }
-        return res;
+        return left;
+
+        int Count(int mid)
+        {
+            int res = 0;
+            int prev = -1;
+            for (int i = 0; i < nums.Length; i++)
+            {
+                if (nums[i] <= mid && (i - prev > 1 || prev == -1))
+                {
+                    res += 1;
+                    prev = i;
+                }
+            }
+            return res;
+        }
     }
 }
