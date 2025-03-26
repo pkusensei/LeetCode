@@ -6,39 +6,18 @@ namespace Solution;
 
 public class Solution
 {
-    public int[] ClosestPrimes(int left, int right)
+    public int MinOperations(int[][] grid, int x)
     {
-        int[] res = [-1, -1];
-        int[] sieve = Sieve();
-        int diff = right;
-        for (int i = 0; i < sieve.Length - 1; i++)
+        List<int> nums = [.. grid.SelectMany(row => row)];
+        nums.Sort();
+        int med = nums[nums.Count / 2];
+        int res = 0;
+        foreach (var item in nums)
         {
-            int d = sieve[1 + i] - sieve[i];
-            if (left <= sieve[i] && d < diff)
-            {
-                diff = d;
-                res = [sieve[i], sieve[1 + i]];
-                if (diff == 2) { break; }
-            }
+            int diff = Math.Abs(item - med);
+            if (diff % x == 0) { res += diff / x; }
+            else{ return -1; }
         }
         return res;
-
-        int[] Sieve()
-        {
-            var sieve = new bool[1 + right];
-            sieve[0] = true;
-            sieve[1] = true;
-            for (int p = 2; p <= Math.Sqrt(right); p++)
-            {
-                if (!sieve[p]) // p is prime
-                {
-                    for (int v = p * p; v <= right; v += p)
-                    {
-                        sieve[v] = true;
-                    }
-                }
-            }
-            return [.. sieve.Select((v, i) => (i, v)).Where(p => !p.v).Select(p => p.i)];
-        }
     }
 }
