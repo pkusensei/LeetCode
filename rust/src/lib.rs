@@ -5,36 +5,30 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_score(s: &str, t: &str) -> i32 {
-    let sn = s.len();
-    let (t, tn) = (t.as_bytes(), t.len());
-    let mut left = Vec::with_capacity(1 + sn);
-    left.push(0);
-    let mut count = 0;
-    for b in s.bytes() {
-        if t.get(count).is_some_and(|&v| v == b) {
-            count += 1;
-        }
-        left.push(count as i32);
+pub fn min_max_difference(mut num: i32) -> i32 {
+    let mut digits = vec![];
+    while num > 0 {
+        digits.push(num % 10);
+        num /= 10;
     }
-    let mut right = Vec::with_capacity(1 + sn);
-    right.push(0);
-    count = 0;
-    for b in s.bytes().rev() {
-        if count < tn && t.get(tn - 1 - count).is_some_and(|&v| v == b) {
-            count += 1;
+    digits.reverse();
+    let mut max = 0;
+    let mut mark = 9;
+    for &d in digits.iter() {
+        if mark == 9 && d != 9 {
+            mark = d;
         }
-        right.push(count as i32);
+        max = 10 * max + if d == mark { 9 } else { d };
     }
-    right.reverse();
-    let tn = tn as i32;
-    let mut res = tn;
-    for (a, b) in left.into_iter().zip(right) {
-        if a + b < tn {
-            res = res.min(tn - a - b);
+    let mut min = 0;
+    mark = 0;
+    for &d in digits.iter() {
+        if mark == 0 && d != 0 {
+            mark = d;
         }
+        min = 10 * min + if d == mark { 0 } else { d };
     }
-    res
+    max - min
 }
 
 #[cfg(test)]
@@ -67,13 +61,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(minimum_score("abacaba", "bzaa"), 1);
-        assert_eq!(minimum_score("cde", "xyz"), 3);
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(minimum_score("abecdebe", "eaebceae"), 6);
-    }
+    fn test() {}
 }
