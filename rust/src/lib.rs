@@ -5,32 +5,36 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn substring_xor_queries(s: String, queries: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
-    let mut map = std::collections::HashMap::<i32, [i32; 2]>::new();
-    let n = s.len();
-    let mut idx = 0;
-    while idx < n {
-        for len in 1..=30 {
-            if idx + len <= n {
-                let num = i32::from_str_radix(&s[idx..idx + len], 2).unwrap();
-                if let Some(v) = map.get_mut(&num) {
-                    if v[1] - v[0] + 1 > len as i32 {
-                        *v = [idx as i32, (idx + len - 1) as i32];
-                    }
-                } else {
-                    map.insert(num, [idx as i32, (idx + len - 1) as i32]);
-                }
-            }
+pub fn minimum_score(s: &str, t: &str) -> i32 {
+    let sn = s.len();
+    let (t, tn) = (t.as_bytes(), t.len());
+    let mut left = Vec::with_capacity(1 + sn);
+    left.push(0);
+    let mut count = 0;
+    for b in s.bytes() {
+        if t.get(count).is_some_and(|&v| v == b) {
+            count += 1;
         }
-        idx += 1;
+        left.push(count as i32);
     }
-    queries
-        .iter()
-        .map(|q| {
-            let v = q[0] ^ q[1];
-            map.get(&v).map(|v| v.to_vec()).unwrap_or(vec![-1, -1])
-        })
-        .collect()
+    let mut right = Vec::with_capacity(1 + sn);
+    right.push(0);
+    count = 0;
+    for b in s.bytes().rev() {
+        if count < tn && t.get(tn - 1 - count).is_some_and(|&v| v == b) {
+            count += 1;
+        }
+        right.push(count as i32);
+    }
+    right.reverse();
+    let tn = tn as i32;
+    let mut res = tn;
+    for (a, b) in left.into_iter().zip(right) {
+        if a + b < tn {
+            res = res.min(tn - a - b);
+        }
+    }
+    res
 }
 
 #[cfg(test)]
@@ -63,8 +67,13 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(minimum_score("abacaba", "bzaa"), 1);
+        assert_eq!(minimum_score("cde", "xyz"), 3);
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(minimum_score("abecdebe", "eaebceae"), 6);
+    }
 }
