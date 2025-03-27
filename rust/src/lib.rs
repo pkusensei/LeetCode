@@ -5,17 +5,32 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_fair_pairs(nums: &[i32], lower: i32, upper: i32) -> i64 {
-    let mut map = std::collections::BTreeMap::new();
-    let mut res = 0;
-    for &num in nums.iter() {
-        res += map
-            .range(lower - num..=upper - num)
-            .map(|(_, v)| *v as i64)
-            .sum::<i64>();
-        *map.entry(num).or_insert(0) += 1;
+pub fn substring_xor_queries(s: String, queries: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
+    let mut map = std::collections::HashMap::<i32, [i32; 2]>::new();
+    let n = s.len();
+    let mut idx = 0;
+    while idx < n {
+        for len in 1..=30 {
+            if idx + len <= n {
+                let num = i32::from_str_radix(&s[idx..idx + len], 2).unwrap();
+                if let Some(v) = map.get_mut(&num) {
+                    if v[1] - v[0] + 1 > len as i32 {
+                        *v = [idx as i32, (idx + len - 1) as i32];
+                    }
+                } else {
+                    map.insert(num, [idx as i32, (idx + len - 1) as i32]);
+                }
+            }
+        }
+        idx += 1;
     }
-    res
+    queries
+        .iter()
+        .map(|q| {
+            let v = q[0] ^ q[1];
+            map.get(&v).map(|v| v.to_vec()).unwrap_or(vec![-1, -1])
+        })
+        .collect()
 }
 
 #[cfg(test)]
@@ -48,10 +63,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(count_fair_pairs(&[0, 1, 7, 4, 4, 5], 3, 6), 6);
-        assert_eq!(count_fair_pairs(&[1, 7, 9, 2, 5], 11, 11), 1);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
