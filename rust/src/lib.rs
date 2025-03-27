@@ -5,30 +5,15 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_max_difference(mut num: i32) -> i32 {
-    let mut digits = vec![];
-    while num > 0 {
-        digits.push(num % 10);
-        num /= 10;
+pub fn minimize_sum(mut nums: Vec<i32>) -> i32 {
+    let n = nums.len();
+    if n <= 3 {
+        return 0;
     }
-    digits.reverse();
-    let mut max = 0;
-    let mut mark = 9;
-    for &d in digits.iter() {
-        if mark == 9 && d != 9 {
-            mark = d;
-        }
-        max = 10 * max + if d == mark { 9 } else { d };
-    }
-    let mut min = 0;
-    mark = 0;
-    for &d in digits.iter() {
-        if mark == 0 && d != 0 {
-            mark = d;
-        }
-        min = 10 * min + if d == mark { 0 } else { d };
-    }
-    max - min
+    nums.sort_unstable();
+    (nums[n - 2] - nums[1])
+        .min(nums[n - 1] - nums[2])
+        .min(nums[n - 3] - nums[0])
 }
 
 #[cfg(test)]
