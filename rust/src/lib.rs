@@ -5,21 +5,15 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_the_array_conc_val(nums: Vec<i32>) -> i64 {
-    let n = nums.len();
+pub fn count_fair_pairs(nums: &[i32], lower: i32, upper: i32) -> i64 {
+    let mut map = std::collections::BTreeMap::new();
     let mut res = 0;
-    let mut left = 0;
-    let mut right = n - 1;
-    while left <= right && left < n {
-        if left == right {
-            res += i64::from(nums[left])
-        } else {
-            let v1 = i64::from(nums[left]);
-            let v2 = i64::from(nums[right]);
-            res += v1 * 10i64.pow(1 + v2.ilog10()) + v2;
-        }
-        left += 1;
-        right -= 1;
+    for &num in nums.iter() {
+        res += map
+            .range(lower - num..=upper - num)
+            .map(|(_, v)| *v as i64)
+            .sum::<i64>();
+        *map.entry(num).or_insert(0) += 1;
     }
     res
 }
@@ -54,7 +48,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(count_fair_pairs(&[0, 1, 7, 4, 4, 5], 3, 6), 6);
+        assert_eq!(count_fair_pairs(&[1, 7, 9, 2, 5], 11, 11), 1);
+    }
 
     #[test]
     fn test() {}
