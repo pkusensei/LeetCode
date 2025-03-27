@@ -5,45 +5,36 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_index(nums: &[i32]) -> i32 {
-    let n = nums.len();
-    // let (major, mcount) = with_hashmap(nums);
-    let (major, mcount) = with_boyer_moore(nums);
-    let mut left = 0;
-    let mut right = mcount;
-    for (idx, &num) in (0..).zip(nums.iter()) {
-        left += usize::from(num == major);
-        right -= usize::from(num == major);
-        if left > (1 + idx) / 2 && right > (n - 1 - idx) / 2 {
-            return idx as i32;
-        }
+pub fn min_cost(basket1: Vec<i32>, basket2: Vec<i32>) -> i64 {
+    use std::{collections::BTreeMap, iter};
+    let mut map = BTreeMap::<i32, i32>::new();
+    for &num in basket1.iter() {
+        *map.entry(num).or_insert(0) += 1;
     }
-    -1
-}
-
-fn with_hashmap(nums: &[i32]) -> (i32, usize) {
-    use itertools::Itertools;
-    let n = nums.len();
-    let count = nums.iter().copied().counts();
-    let (&major, &mcount) = count.iter().find(|(_, v)| **v > n / 2).unwrap();
-    (major, mcount)
-}
-
-fn with_boyer_moore(nums: &[i32]) -> (i32, usize) {
-    let mut count = 0;
-    let mut major = nums[0];
-    for &num in nums {
-        if num == major {
-            count += 1
-        } else {
-            count -= 1
-        }
-        if count == 0 {
-            major = num;
-            count = 1;
-        }
+    for &num in basket2.iter() {
+        *map.entry(num).or_insert(0) -= 1;
     }
-    (major, nums.iter().filter(|&&v| v == major).count())
+    let mut nums = vec![]; // nums to be swapped
+    for (k, v) in map.iter().map(|(&k, &v)| (k, v.unsigned_abs() as usize)) {
+        if v & 1 == 1 {
+            return -1;
+        }
+        nums.extend(iter::repeat_n(k, v / 2));
+    }
+    let mut res = 0;
+    // min of both arrays
+    let min = *map.keys().next().unwrap_or(&10i32.pow(9));
+    // Of all nums to be swapped, try either
+    // 1) smaller num paired with bigger num => take(n/2)
+    //    [4,4] and [3,3] => 2*[3,4] with min cost of 3
+    // 2) pair big num with min element, and swap twice => 2*min
+    //    [1, 3,3] and [1, 4,4]
+    //    1st swap => [4, 3, 3] and [1, 1, 4]
+    //    2nd swap => [4, 1, 3] and [1, 3, 4]
+    for &num in nums.iter().take(nums.len() / 2) {
+        res += i64::from(num.min(2 * min));
+    }
+    res
 }
 
 #[cfg(test)]
@@ -77,9 +68,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(minimum_index(&[1, 2, 2, 2]), 2);
-        assert_eq!(minimum_index(&[2, 1, 3, 1, 1, 1, 7, 1, 2, 1]), 4);
-        assert_eq!(minimum_index(&[3, 3, 3, 3, 7, 2, 2]), -1);
+        assert_eq!(min_cost(vec![4, 2, 2, 2], vec![1, 4, 1, 2]), 1);
+        assert_eq!(min_cost(vec![2, 3, 4, 1], vec![3, 2, 5, 1]), -1);
     }
 
     #[test]
