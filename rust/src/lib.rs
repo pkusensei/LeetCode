@@ -5,15 +5,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimize_sum(mut nums: Vec<i32>) -> i32 {
-    let n = nums.len();
-    if n <= 3 {
-        return 0;
+pub fn min_impossible_or(nums: Vec<i32>) -> i32 {
+    use std::collections::HashSet;
+    let mut set: HashSet<_> = nums.into_iter().collect();
+    for p in 0..=30 {
+        let val = 2i32.pow(p);
+        if set.insert(val) {
+            return val;
+        }
     }
-    nums.sort_unstable();
-    (nums[n - 2] - nums[1])
-        .min(nums[n - 1] - nums[2])
-        .min(nums[n - 3] - nums[0])
+    unreachable!()
 }
 
 #[cfg(test)]
