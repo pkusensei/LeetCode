@@ -5,16 +5,36 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_impossible_or(nums: Vec<i32>) -> i32 {
-    use std::collections::HashSet;
-    let mut set: HashSet<_> = nums.into_iter().collect();
-    for p in 0..=30 {
-        let val = 2i32.pow(p);
-        if set.insert(val) {
-            return val;
+pub fn minimum_score(s: &str, t: &str) -> i32 {
+    let sn = s.len();
+    let (t, tn) = (t.as_bytes(), t.len());
+    let mut left = Vec::with_capacity(1 + sn);
+    left.push(0);
+    let mut count = 0;
+    for b in s.bytes() {
+        if t.get(count).is_some_and(|&v| v == b) {
+            count += 1;
+        }
+        left.push(count as i32);
+    }
+    let mut right = Vec::with_capacity(1 + sn);
+    count = 0;
+    for b in s.bytes().rev() {
+        if count < tn && t.get(tn - 1 - count).is_some_and(|&v| v == b) {
+            count += 1;
+        }
+        right.push(count as i32);
+    }
+    right.reverse();
+    right.push(0);
+    let tn = tn as i32;
+    let mut res = tn;
+    for (a, b) in left.into_iter().zip(right) {
+        if a + b <= tn {
+            res = res.min(tn - a - b);
         }
     }
-    unreachable!()
+    res
 }
 
 #[cfg(test)]
