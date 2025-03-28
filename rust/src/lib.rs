@@ -5,23 +5,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn split_num(mut num: i32) -> i32 {
-    let mut digits = vec![];
-    while num > 0 {
-        digits.push(num % 10);
-        num /= 10;
-    }
-    digits.sort_unstable();
-    let mut a = vec![];
-    let mut b = vec![];
-    for (i, d) in digits.into_iter().enumerate() {
-        if i & 1 == 1 {
-            a.push(d);
-        } else {
-            b.push(d);
+pub fn count_ways(ranges: &mut [[i32; 2]]) -> i32 {
+    ranges.sort_unstable_by_key(|v| v[0]);
+    let mut curr_end = ranges[0][1];
+    let mut count = 1;
+    for r in ranges.iter() {
+        let [a, b] = [r[0], r[1]];
+        if curr_end < a {
+            count += 1;
         }
+        curr_end = curr_end.max(b);
     }
-    a.iter().fold(0, |acc, d| 10 * acc + d) + b.iter().fold(0, |acc, d| 10 * acc + d)
+    mod_pow(2, count, 1_000_000_007) as _
 }
 
 #[cfg(test)]
@@ -54,7 +49,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(count_ways(&mut [[6, 10], [5, 15]]), 2);
+        assert_eq!(count_ways(&mut [[1, 3], [10, 20], [2, 5], [4, 8]]), 4);
+    }
 
     #[test]
     fn test() {}
