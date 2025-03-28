@@ -12,15 +12,15 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
-        int[][] a = [[1, 2, 3], [2, 5, 7], [3, 5, 1]];
-        Assert.AreEqual("[5,8,1]", sol.MaxPoints(a, [5, 6, 2]).Print());
+        int[][] a = [[0, 1, 3, 2], [5, 1, 2, 5], [4, 3, 8, 6]];
+        Assert.AreEqual(7, sol.MinimumTime(a));
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        int[][] a = [[5, 2, 1], [1, 1, 2]];
-        Assert.AreEqual("[0]", sol.MaxPoints(a, [3]).Print());
+        int[][] a = [[0, 2, 4], [3, 2, 1], [1, 0, 4]];
+        Assert.AreEqual(-1, sol.MinimumTime(a));
     }
 
     [TestMethod]
