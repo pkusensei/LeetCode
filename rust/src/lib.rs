@@ -5,23 +5,15 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn left_right_difference(nums: Vec<i32>) -> Vec<i32> {
-    let mut prefix = nums.iter().fold(vec![0], |mut acc, &num| {
-        acc.push(num + acc.last().unwrap_or(&0));
-        acc
-    });
-    prefix.pop();
-    let mut suffix = nums.iter().rev().fold(vec![0], |mut acc, &num| {
-        acc.push(num + acc.last().unwrap_or(&0));
-        acc
-    });
-    suffix.pop();
-    suffix.reverse();
-    prefix
-        .into_iter()
-        .zip(suffix)
-        .map(|(a, b)| (a - b).abs())
-        .collect()
+pub fn divisibility_array(word: String, m: i32) -> Vec<i32> {
+    let mut res = vec![];
+    let mut curr = 0;
+    for b in word.bytes() {
+        let d = i64::from(b - b'0');
+        curr = (10 * curr + d) % i64::from(m);
+        res.push(i32::from(curr == 0));
+    }
+    res
 }
 
 #[cfg(test)]
