@@ -5,15 +5,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn divisibility_array(word: String, m: i32) -> Vec<i32> {
-    let mut res = vec![];
-    let mut curr = 0;
-    for b in word.bytes() {
-        let d = i64::from(b - b'0');
-        curr = (10 * curr + d) % i64::from(m);
-        res.push(i32::from(curr == 0));
+pub fn max_num_of_marked_indices(mut nums: Vec<i32>) -> i32 {
+    let n = nums.len();
+    nums.sort_unstable();
+    let mut left = 0;
+    for &v in nums[(1 + n) / 2..].iter() {
+        if nums[left] * 2 <= v {
+            left += 1;
+        }
     }
-    res
+    2 * left as i32
 }
 
 #[cfg(test)]
@@ -46,7 +47,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(max_num_of_marked_indices(vec![3, 5, 2, 4]), 2);
+        assert_eq!(max_num_of_marked_indices(vec![9, 2, 5, 4]), 4);
+        assert_eq!(max_num_of_marked_indices(vec![7, 6, 8]), 0);
+    }
 
     #[test]
     fn test() {}
