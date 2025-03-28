@@ -10,16 +10,17 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(new[] { 2, 3, 5, 9 }, 2, 5)]
-    [DataRow(new[] { 2, 7, 9, 3, 1 }, 2, 2)]
-    public void TestMethod1(int[] nums, int k, int exp)
+    public void TestMethod1()
     {
-        Assert.AreEqual(exp, sol.MinCapability(nums, k));
+        int[][] a = [[1, 2, 3], [2, 5, 7], [3, 5, 1]];
+        Assert.AreEqual("[5,8,1]", sol.MaxPoints(a, [5, 6, 2]).Print());
     }
 
     [TestMethod]
     public void TestMethod2()
     {
+        int[][] a = [[5, 2, 1], [1, 1, 2]];
+        Assert.AreEqual("[0]", sol.MaxPoints(a, [3]).Print());
     }
 
     [TestMethod]
