@@ -5,41 +5,34 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn square_free_subsets(nums: &[i32]) -> i32 {
-    use std::collections::HashMap;
-    const MOD: i32 = 1_000_000_007;
-    let mut dp = HashMap::from([(0, 0)]);
-    for &num in nums.iter() {
-        if let Some(mask) = to_mask(num) {
-            let mut curr = dp.clone();
-            let v = curr.entry(mask).or_insert(0);
-            *v = (*v + 1) % MOD;
-            for (&m, &c) in dp.iter() {
-                if m & mask == 0 {
-                    let v = curr.entry(m | mask).or_insert(0);
-                    *v = (*v + c) % MOD;
-                }
+pub fn find_the_string(lcp: &[&[i32]]) -> String {
+    let n = lcp.len();
+    let mut res = vec![0; n];
+    let mut curr = b'a' - 1;
+    for (r, row) in lcp.iter().enumerate() {
+        if res[r] > 0 {
+            continue;
+        }
+        curr += 1;
+        if curr > b'z' {
+            return String::new();
+        }
+        for (c, &v) in row.iter().enumerate().skip(r) {
+            if v > 0 {
+                res[c] = curr
             }
-            dp = curr;
         }
     }
-    dp.values().fold(0, |acc, v| (acc + v) % MOD)
-}
-
-fn to_mask(num: i32) -> Option<i32> {
-    const P: [i32; 10] = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29];
-    let mut mask = 0;
-    let mut val = num;
-    for p in P {
-        while val > 0 && val % p == 0 {
-            val /= p;
-            if (mask >> p) & 1 == 1 {
-                return None;
+    for r in 0..n {
+        for c in 0..n {
+            let mut v = *lcp.get(1 + r).and_then(|row| row.get(1 + c)).unwrap_or(&0);
+            v = if res[r] == res[c] { 1 + v } else { 0 };
+            if lcp[r][c] != v {
+                return String::new();
             }
-            mask |= 1 << p
         }
     }
-    Some(mask)
+    String::from_utf8(res).unwrap()
 }
 
 #[cfg(test)]
@@ -73,8 +66,18 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(square_free_subsets(&[3, 4, 4, 5]), 3);
-        assert_eq!(square_free_subsets(&[1]), 1);
+        assert_eq!(
+            find_the_string(&[&[4, 0, 2, 0], &[0, 3, 0, 1], &[2, 0, 2, 0], &[0, 1, 0, 1]]),
+            "abab"
+        );
+        assert_eq!(
+            find_the_string(&[&[4, 3, 2, 1], &[3, 3, 2, 1], &[2, 2, 2, 1], &[1, 1, 1, 1]]),
+            "aaaa"
+        );
+        assert_eq!(
+            find_the_string(&[&[4, 3, 2, 1], &[3, 3, 2, 1], &[2, 2, 2, 1], &[1, 1, 1, 3]]),
+            ""
+        );
     }
 
     #[test]
