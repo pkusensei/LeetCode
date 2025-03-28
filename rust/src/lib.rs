@@ -5,16 +5,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_num_of_marked_indices(mut nums: Vec<i32>) -> i32 {
-    let n = nums.len();
-    nums.sort_unstable();
-    let mut left = 0;
-    for &v in nums[(1 + n) / 2..].iter() {
-        if nums[left] * 2 <= v {
-            left += 1;
+pub fn split_num(mut num: i32) -> i32 {
+    let mut digits = vec![];
+    while num > 0 {
+        digits.push(num % 10);
+        num /= 10;
+    }
+    digits.sort_unstable();
+    let mut a = vec![];
+    let mut b = vec![];
+    for (i, d) in digits.into_iter().enumerate() {
+        if i & 1 == 1 {
+            a.push(d);
+        } else {
+            b.push(d);
         }
     }
-    2 * left as i32
+    a.iter().fold(0, |acc, d| 10 * acc + d) + b.iter().fold(0, |acc, d| 10 * acc + d)
 }
 
 #[cfg(test)]
@@ -47,11 +54,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(max_num_of_marked_indices(vec![3, 5, 2, 4]), 2);
-        assert_eq!(max_num_of_marked_indices(vec![9, 2, 5, 4]), 4);
-        assert_eq!(max_num_of_marked_indices(vec![7, 6, 8]), 0);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
