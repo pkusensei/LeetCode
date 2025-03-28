@@ -5,16 +5,41 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_operations(mut n: i32) -> i32 {
-    let mut res = 0;
-    while n != 0 {
-        let p = n.ilog2();
-        let a = 2i32.pow(p);
-        let b = 2i32.pow(1 + p);
-        n = (n - a).min(b - n);
-        res += 1;
+pub fn square_free_subsets(nums: &[i32]) -> i32 {
+    use std::collections::HashMap;
+    const MOD: i32 = 1_000_000_007;
+    let mut dp = HashMap::from([(0, 0)]);
+    for &num in nums.iter() {
+        if let Some(mask) = to_mask(num) {
+            let mut curr = dp.clone();
+            let v = curr.entry(mask).or_insert(0);
+            *v = (*v + 1) % MOD;
+            for (&m, &c) in dp.iter() {
+                if m & mask == 0 {
+                    let v = curr.entry(m | mask).or_insert(0);
+                    *v = (*v + c) % MOD;
+                }
+            }
+            dp = curr;
+        }
     }
-    res
+    dp.values().fold(0, |acc, v| (acc + v) % MOD)
+}
+
+fn to_mask(num: i32) -> Option<i32> {
+    const P: [i32; 10] = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29];
+    let mut mask = 0;
+    let mut val = num;
+    for p in P {
+        while val > 0 && val % p == 0 {
+            val /= p;
+            if (mask >> p) & 1 == 1 {
+                return None;
+            }
+            mask |= 1 << p
+        }
+    }
+    Some(mask)
 }
 
 #[cfg(test)]
@@ -47,7 +72,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(square_free_subsets(&[3, 4, 4, 5]), 3);
+        assert_eq!(square_free_subsets(&[1]), 1);
+    }
 
     #[test]
     fn test() {}
