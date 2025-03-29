@@ -5,21 +5,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn dist_money(money: i32, children: i32) -> i32 {
-    if money < children {
-        return -1;
+pub fn maximize_greatness(mut nums: Vec<i32>) -> i32 {
+    nums.sort_unstable();
+    let mut left = 0;
+    let mut res = 0;
+    for &num in nums.iter() {
+        while nums[left] < num {
+            res += 1;
+            left += 1;
+        }
     }
-    let count = (money - children) / 7;
-    let rem = (money - children) % 7;
-    if count > children {
-        children - 1
-    } else if count == children {
-        if rem > 0 { count - 1 } else { count }
-    } else if rem == 3 && count + 1 == children {
-        count - 1
-    } else {
-        count
-    }
+    res
 }
 
 #[cfg(test)]
