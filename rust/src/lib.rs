@@ -5,13 +5,12 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_smallest_integer(nums: Vec<i32>, value: i32) -> i32 {
-    use itertools::Itertools;
-    let map = nums.iter().map(|v| v.rem_euclid(value)).counts();
-    (0..value)
-        .map(|val| *map.get(&val).unwrap_or(&0) as i32 * value + val)
-        .min()
-        .unwrap()
+pub fn k_items_with_maximum_sum(num_ones: i32, num_zeros: i32, num_neg_ones: i32, k: i32) -> i32 {
+    if k <= num_ones + num_zeros {
+        num_ones.min(k)
+    } else {
+        num_ones - (k - num_ones - num_zeros)
+    }
 }
 
 #[cfg(test)]
@@ -47,10 +46,5 @@ mod tests {
     fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(
-            find_smallest_integer(vec![3, 0, 3, 2, 4, 2, 1, 1, 0, 4], 5),
-            10
-        );
-    }
+    fn test() {}
 }
