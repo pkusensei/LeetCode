@@ -5,19 +5,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn even_odd_bit(mut n: i32) -> Vec<i32> {
-    let [mut even, mut odd] = [0, 0];
-    let mut flag = false;
-    while n > 0 {
-        if flag {
-            odd += n & 1
-        } else {
-            even += n & 1
-        }
-        n >>= 1;
-        flag = !flag;
+pub fn check_valid_grid(grid: Vec<Vec<i32>>) -> bool {
+    if grid[0][0] != 0 {
+        return false;
     }
-    vec![even, odd]
+    let mut nums = vec![];
+    for (r, row) in grid.iter().enumerate() {
+        for (c, &v) in row.iter().enumerate() {
+            nums.push((v, r, c));
+        }
+    }
+    nums.sort_unstable_by_key(|v| v.0);
+    nums.windows(2).all(|w| {
+        let d1 = w[0].1.abs_diff(w[1].1);
+        let d2 = w[0].2.abs_diff(w[1].2);
+        w[0].0 + 1 == w[1].0 && d1 * d2 == 2
+    })
 }
 
 #[cfg(test)]
