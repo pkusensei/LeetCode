@@ -5,68 +5,46 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 use itertools::Itertools;
+use std::collections::HashMap;
 
-pub fn maximum_score(nums: &[i32], k: i32) -> i32 {
-    const MOD: i64 = 1_000_000_007;
+pub fn find_valid_split(nums: &[i32]) -> i32 {
     let n = nums.len();
-    let scores = nums.iter().map(|&v| p_score(v)).collect_vec();
-    let mut right_greater = vec![n as i64; n];
-    let mut stack = vec![];
-    for (idx, &num) in scores.iter().enumerate() {
-        while stack.last().is_some_and(|&i| scores[i] < num) {
-            let i = stack.pop().unwrap();
-            right_greater[i] = idx as i64;
+    let maps = nums.iter().map(|&v| primes(v)).collect_vec();
+    let mut right = HashMap::new();
+    for m in maps.iter() {
+        for (&k, v) in m.iter() {
+            *right.entry(k).or_insert(0) += v;
         }
-        stack.push(idx);
     }
-    let mut left_greater = vec![-1_i64; n];
-    stack.clear();
-    for (idx, &num) in scores.iter().enumerate().rev() {
-        while stack.last().is_some_and(|&i| scores[i] <= num) {
-            let i = stack.pop().unwrap();
-            left_greater[i] = idx as i64;
-        }
-        stack.push(idx);
-    }
-    let ranges = (0..)
-        .zip(left_greater.into_iter().zip(right_greater))
-        .map(|(i, (left, right))| (i - left) * (right - i))
-        .collect_vec();
-    let mut k = i64::from(k);
-    let mut res = 1;
-    for (idx, &num) in nums
-        .iter()
-        .enumerate()
-        .sorted_unstable_by(|a, b| b.1.cmp(a.1))
-    {
-        if k == 0 {
-            break;
-        }
-        let count = ranges[idx].min(k);
-        k -= count;
-        res *= mod_pow(num.into(), count, MOD);
-        res %= MOD;
-    }
-    res as i32
-}
-
-fn p_score(mut num: i32) -> i32 {
-    if num < 2 {
-        0
-    } else {
-        let mut res = 0;
-        let sq = num.isqrt();
-        for p in 2..=sq {
-            let mut temp = true;
-            while num % p == 0 {
-                num /= p;
-                res += i32::from(temp);
-                temp = false;
+    let mut left = HashMap::new();
+    for (idx, m) in maps[..n - 1].iter().enumerate() {
+        for (&k, v) in m.iter() {
+            *left.entry(k).or_insert(0) += v;
+            right.entry(k).and_modify(|c| *c -= v);
+            if right[&k] == 0 {
+                right.remove(&k);
             }
         }
-        res += i32::from(num >= 2);
-        res
+        if left.keys().all(|a| !right.contains_key(a)) {
+            return idx as i32;
+        }
     }
+    -1
+}
+
+fn primes(mut num: i32) -> HashMap<i32, i32> {
+    let mut res = HashMap::new();
+    let sq = num.isqrt();
+    for p in 2..=sq {
+        while num % p == 0 {
+            num /= p;
+            *res.entry(p).or_insert(0) += 1;
+        }
+    }
+    if num > 1 {
+        *res.entry(num).or_insert(0) += 1;
+    }
+    res
 }
 
 #[cfg(test)]
@@ -100,8 +78,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(maximum_score(&[19, 12, 14, 6, 10, 18], 3), 4788);
-        assert_eq!(maximum_score(&[8, 3, 9, 3, 8], 2), 81);
+        assert_eq!(find_valid_split(&[4, 7, 8, 15, 3, 5]), 2);
+        assert_eq!(find_valid_split(&[4, 7, 15, 8, 3, 5]), -1);
     }
 
     #[test]
