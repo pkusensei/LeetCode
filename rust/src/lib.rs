@@ -5,17 +5,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_score(mut nums: Vec<i32>) -> i32 {
-    nums.sort_unstable_by(|a, b| b.cmp(a));
+pub fn beautiful_subarrays(nums: Vec<i32>) -> i64 {
+    use std::collections::HashMap;
     let mut prefix = 0;
+    let mut seen = HashMap::from([(0, 1)]);
     let mut res = 0;
     for &num in nums.iter() {
-        prefix += i64::from(num);
-        if prefix > 0 {
-            res += 1;
-        } else {
-            break;
+        prefix ^= num;
+        if let Some(v) = seen.get(&(0 ^ prefix)) {
+            res += v
         }
+        *seen.entry(prefix).or_insert(0) += 1;
     }
     res
 }
