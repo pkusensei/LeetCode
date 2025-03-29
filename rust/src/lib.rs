@@ -2,27 +2,16 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashSet;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn beautiful_subsets(mut nums: Vec<i32>, k: i32) -> i32 {
-    nums.sort_unstable();
-    backtrack(&nums, k, 0, &mut HashSet::new())
-}
-
-fn backtrack(nums: &[i32], k: i32, idx: usize, set: &mut HashSet<i32>) -> i32 {
-    if idx >= nums.len() {
-        return i32::from(!set.is_empty());
-    }
-    let mut res = backtrack(nums, k, 1 + idx, set);
-    if !set.contains(&(nums[idx] - k)) {
-        set.insert(nums[idx]);
-        res += backtrack(nums, k, 1 + idx, set);
-        set.remove(&nums[idx]);
-    }
-    res
+pub fn find_smallest_integer(nums: Vec<i32>, value: i32) -> i32 {
+    use itertools::Itertools;
+    let map = nums.iter().map(|v| v.rem_euclid(value)).counts();
+    (0..value)
+        .map(|val| *map.get(&val).unwrap_or(&0) as i32 * value + val)
+        .min()
+        .unwrap()
 }
 
 #[cfg(test)]
@@ -55,11 +44,13 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(beautiful_subsets(vec![2, 4, 6], 2), 4);
-        assert_eq!(beautiful_subsets(vec![1], 1), 1);
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(
+            find_smallest_integer(vec![3, 0, 3, 2, 4, 2, 1, 1, 0, 4], 5),
+            10
+        );
+    }
 }
