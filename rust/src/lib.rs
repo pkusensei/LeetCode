@@ -5,17 +5,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximize_greatness(mut nums: Vec<i32>) -> i32 {
-    nums.sort_unstable();
-    let mut left = 0;
-    let mut res = 0;
-    for &num in nums.iter() {
-        while nums[left] < num {
-            res += 1;
-            left += 1;
+pub fn even_odd_bit(mut n: i32) -> Vec<i32> {
+    let [mut even, mut odd] = [0, 0];
+    let mut flag = false;
+    while n > 0 {
+        if flag {
+            odd += n & 1
+        } else {
+            even += n & 1
         }
+        n >>= 1;
+        flag = !flag;
     }
-    res
+    vec![even, odd]
 }
 
 #[cfg(test)]
