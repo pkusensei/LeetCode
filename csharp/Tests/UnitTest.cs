@@ -10,17 +10,17 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow(new[] { 4, 9, 6, 10 }, true)]
+    [DataRow(new[] { 6, 8, 11, 12 }, true)]
+    [DataRow(new[] { 5, 8, 3 }, false)]
+    public void TestMethod1(int[] nums, bool exp)
     {
-        int[][] a = [[0, 1, 3, 2], [5, 1, 2, 5], [4, 3, 8, 6]];
-        Assert.AreEqual(7, sol.MinimumTime(a));
+        Assert.AreEqual(exp, sol.PrimeSubOperation(nums));
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        int[][] a = [[0, 2, 4], [3, 2, 1], [1, 0, 4]];
-        Assert.AreEqual(-1, sol.MinimumTime(a));
     }
 
     [TestMethod]
