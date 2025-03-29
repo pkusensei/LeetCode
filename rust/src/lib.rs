@@ -5,14 +5,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn vowel_strings(words: Vec<String>, left: i32, right: i32) -> i32 {
-    words[left as usize..=right as usize]
-        .iter()
-        .filter(|s| {
-            s.bytes().next().is_some_and(|b| b"aeiou".contains(&b))
-                && s.bytes().last().is_some_and(|b| b"aeiou".contains(&b))
-        })
-        .count() as i32
+pub fn max_score(mut nums: Vec<i32>) -> i32 {
+    nums.sort_unstable_by(|a, b| b.cmp(a));
+    let mut prefix = 0;
+    let mut res = 0;
+    for &num in nums.iter() {
+        prefix += i64::from(num);
+        if prefix > 0 {
+            res += 1;
+        } else {
+            break;
+        }
+    }
+    res
 }
 
 #[cfg(test)]
