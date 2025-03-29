@@ -2,25 +2,27 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashSet;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn check_valid_grid(grid: Vec<Vec<i32>>) -> bool {
-    if grid[0][0] != 0 {
-        return false;
+pub fn beautiful_subsets(mut nums: Vec<i32>, k: i32) -> i32 {
+    nums.sort_unstable();
+    backtrack(&nums, k, 0, &mut HashSet::new())
+}
+
+fn backtrack(nums: &[i32], k: i32, idx: usize, set: &mut HashSet<i32>) -> i32 {
+    if idx >= nums.len() {
+        return i32::from(!set.is_empty());
     }
-    let mut nums = vec![];
-    for (r, row) in grid.iter().enumerate() {
-        for (c, &v) in row.iter().enumerate() {
-            nums.push((v, r, c));
-        }
+    let mut res = backtrack(nums, k, 1 + idx, set);
+    if !set.contains(&(nums[idx] - k)) {
+        set.insert(nums[idx]);
+        res += backtrack(nums, k, 1 + idx, set);
+        set.remove(&nums[idx]);
     }
-    nums.sort_unstable_by_key(|v| v.0);
-    nums.windows(2).all(|w| {
-        let d1 = w[0].1.abs_diff(w[1].1);
-        let d2 = w[0].2.abs_diff(w[1].2);
-        w[0].0 + 1 == w[1].0 && d1 * d2 == 2
-    })
+    res
 }
 
 #[cfg(test)]
@@ -53,7 +55,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(beautiful_subsets(vec![2, 4, 6], 2), 4);
+        assert_eq!(beautiful_subsets(vec![1], 1), 1);
+    }
 
     #[test]
     fn test() {}
