@@ -5,17 +5,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_matrix(nums: Vec<i32>) -> Vec<Vec<i32>> {
-    use std::collections::HashMap;
-    let mut map = HashMap::new();
-    let mut res = vec![];
-    for &num in nums.iter() {
-        let v = map.entry(num).or_insert(0);
-        if *v >= res.len() {
-            res.push(vec![]);
-        }
-        res[*v].push(num);
-        *v += 1;
+pub fn mice_and_cheese(reward1: &[i32], reward2: &[i32], k: i32) -> i32 {
+    use std::collections::BinaryHeap;
+    let mut heap: BinaryHeap<_> = reward1
+        .iter()
+        .zip(reward2.iter())
+        .map(|(a, b)| a - b)
+        .collect();
+    let mut res: i32 = reward2.iter().sum::<i32>();
+    for _ in 0..k {
+        let Some(diff) = heap.pop() else {
+            break;
+        };
+        res += diff
     }
     res
 }
@@ -50,7 +52,9 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(mice_and_cheese(&[1, 1, 3, 4], &[4, 4, 1, 1], 2), 15);
+    }
 
     #[test]
     fn test() {}
