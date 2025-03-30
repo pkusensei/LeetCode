@@ -5,45 +5,25 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_shortest_cycle(n: i32, edges: &[[i32; 2]]) -> i32 {
-    use std::collections::VecDeque;
-    let n = n as usize;
-    let mut adj = vec![vec![]; n];
-    let mut degs = vec![0; n];
-    for e in edges.iter() {
-        let [a, b] = [0, 1].map(|i| e[i] as usize);
-        adj[a].push(b);
-        adj[b].push(a);
-        degs[a] += 1;
-        degs[b] += 1;
-    }
-    let mut nodes = vec![];
-    for (node, &deg) in degs.iter().enumerate() {
-        if deg == 1 {
-            adj[node].clear();
+pub fn find_the_longest_balanced_substring(s: &str) -> i32 {
+    let [mut zeros, mut ones] = [0, 0];
+    let mut prev = b'1';
+    let mut res = 0;
+    for b in s.bytes() {
+        if b == b'0' {
+            if prev == b'1' {
+                res = res.max(2 * zeros.min(ones));
+                zeros = 0;
+                ones = 0;
+            }
+            zeros += 1;
         } else {
-            nodes.push((node, deg));
+            ones += 1;
         }
+        prev = b;
     }
-    nodes.sort_unstable_by_key(|&(_, v)| v);
-    let mut res = None;
-    'outer: while let Some((start, _)) = nodes.pop() {
-        let mut queue = VecDeque::from([(start, n, 0)]);
-        while let Some((node, prev, dist)) = queue.pop_front() {
-            if node == start && dist > 0 {
-                let min = res.get_or_insert(dist);
-                *min = (*min).min(dist);
-                adj[start].clear();
-                continue 'outer;
-            }
-            for &next in adj[node].iter() {
-                if next != prev {
-                    queue.push_back((next, node, 1 + dist));
-                }
-            }
-        }
-    }
-    res.unwrap_or(-1)
+    res = res.max(2 * zeros.min(ones));
+    res
 }
 
 #[cfg(test)]
@@ -77,11 +57,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            find_shortest_cycle(7, &[[0, 1], [1, 2], [2, 0], [3, 4], [4, 5], [5, 6], [6, 3]]),
-            3
-        );
-        assert_eq!(find_shortest_cycle(4, &[[0, 1], [0, 2]]), -1);
+        assert_eq!(find_the_longest_balanced_substring("01000111"), 6);
+        assert_eq!(find_the_longest_balanced_substring("00111"), 4);
+        assert_eq!(find_the_longest_balanced_substring("111"), 0);
     }
 
     #[test]
