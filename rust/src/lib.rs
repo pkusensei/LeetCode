@@ -5,24 +5,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_the_longest_balanced_substring(s: &str) -> i32 {
-    let [mut zeros, mut ones] = [0, 0];
-    let mut prev = b'1';
-    let mut res = 0;
-    for b in s.bytes() {
-        if b == b'0' {
-            if prev == b'1' {
-                res = res.max(2 * zeros.min(ones));
-                zeros = 0;
-                ones = 0;
-            }
-            zeros += 1;
-        } else {
-            ones += 1;
+pub fn find_matrix(nums: Vec<i32>) -> Vec<Vec<i32>> {
+    use std::collections::HashMap;
+    let mut map = HashMap::new();
+    let mut res = vec![];
+    for &num in nums.iter() {
+        let v = map.entry(num).or_insert(0);
+        if *v >= res.len() {
+            res.push(vec![]);
         }
-        prev = b;
+        res[*v].push(num);
+        *v += 1;
     }
-    res = res.max(2 * zeros.min(ones));
     res
 }
 
@@ -56,11 +50,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(find_the_longest_balanced_substring("01000111"), 6);
-        assert_eq!(find_the_longest_balanced_substring("00111"), 4);
-        assert_eq!(find_the_longest_balanced_substring("111"), 0);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
