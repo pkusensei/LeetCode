@@ -5,15 +5,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_number(nums1: Vec<i32>, nums2: Vec<i32>) -> i32 {
-    use std::collections::HashSet;
-    let s1: HashSet<_> = nums1.iter().copied().collect();
-    let s2: HashSet<_> = nums2.iter().copied().collect();
-    if let Some(&v) = s1.intersection(&s2).min() {
-        return v;
+pub fn maximum_cost_substring(s: String, chars: String, vals: Vec<i32>) -> i32 {
+    use std::collections::HashMap;
+    let map: HashMap<_, _> = chars.bytes().zip(vals).collect();
+    let mut res = 0;
+    let mut curr = 0;
+    for b in s.bytes() {
+        let score = map.get(&b).copied().unwrap_or(i32::from(b - b'a' + 1));
+        curr = score.max(curr + score);
+        res = res.max(curr)
     }
-    let [a, b] = [s1, s2].map(|s| s.into_iter().min().unwrap_or(9));
-    a.min(b) * 10 + a.max(b)
+    res
 }
 
 #[cfg(test)]
