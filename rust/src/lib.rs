@@ -5,33 +5,15 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn partition_labels(s: &str) -> Vec<i32> {
-    let n = s.len();
-    // last occurrence of byte
-    let latest = s
-        .bytes()
-        .enumerate()
-        .rev()
-        .fold([n; 26], |mut acc, (i, b)| {
-            let pos = usize::from(b - b'a');
-            if acc[pos] == n {
-                acc[pos] = i;
-            }
-            acc
-        });
-    let mut end = 0;
-    let mut prev = -1;
-    let mut res = vec![];
-    for (idx, b) in s.bytes().enumerate() {
-        let last = latest[usize::from(b - b'a')];
-        end = end.max(last);
-        if end == idx {
-            res.push(end as i32 - prev);
-            prev = end as i32;
-            end = 1 + idx;
-        }
+pub fn min_number(nums1: Vec<i32>, nums2: Vec<i32>) -> i32 {
+    use std::collections::HashSet;
+    let s1: HashSet<_> = nums1.iter().copied().collect();
+    let s2: HashSet<_> = nums2.iter().copied().collect();
+    if let Some(&v) = s1.intersection(&s2).min() {
+        return v;
     }
-    res
+    let [a, b] = [s1, s2].map(|s| s.into_iter().min().unwrap_or(9));
+    a.min(b) * 10 + a.max(b)
 }
 
 #[cfg(test)]
@@ -64,10 +46,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(partition_labels("ababcbacadefegdehijhklij"), [9, 7, 8]);
-        assert_eq!(partition_labels("eccbbbbdec"), [10]);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
