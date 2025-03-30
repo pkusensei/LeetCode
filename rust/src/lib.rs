@@ -5,33 +5,45 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-// (i+k)%n
-// gcd(n, k) => smallest "unit" of circular subarray
-pub fn make_sub_k_sum_equal(arr: &[i32], k: i32) -> i64 {
-    let n = arr.len();
-    let k = k as usize;
-    let b_count = gcd(n, k);
-    let mut buckets = arr
-        .iter()
-        .enumerate()
-        .fold(vec![vec![]; b_count], |mut acc, (i, &num)| {
-            acc[i % b_count].push(num);
-            acc
-        });
-    let mut res = 0;
-    for bucket in buckets.iter_mut() {
-        let len = bucket.len();
-        let (_, &mut med, _) = bucket.select_nth_unstable(len / 2);
-        res += bucket
-            .iter()
-            .map(|v| i64::from((v - med).abs()))
-            .sum::<i64>();
+pub fn find_shortest_cycle(n: i32, edges: &[[i32; 2]]) -> i32 {
+    use std::collections::VecDeque;
+    let n = n as usize;
+    let mut adj = vec![vec![]; n];
+    let mut degs = vec![0; n];
+    for e in edges.iter() {
+        let [a, b] = [0, 1].map(|i| e[i] as usize);
+        adj[a].push(b);
+        adj[b].push(a);
+        degs[a] += 1;
+        degs[b] += 1;
     }
-    res
-}
-
-const fn gcd(a: usize, b: usize) -> usize {
-    if a == 0 { b } else { gcd(b % a, a) }
+    let mut nodes = vec![];
+    for (node, &deg) in degs.iter().enumerate() {
+        if deg == 1 {
+            adj[node].clear();
+        } else {
+            nodes.push((node, deg));
+        }
+    }
+    nodes.sort_unstable_by_key(|&(_, v)| v);
+    let mut res = None;
+    'outer: while let Some((start, _)) = nodes.pop() {
+        let mut queue = VecDeque::from([(start, n, 0)]);
+        while let Some((node, prev, dist)) = queue.pop_front() {
+            if node == start && dist > 0 {
+                let min = res.get_or_insert(dist);
+                *min = (*min).min(dist);
+                adj[start].clear();
+                continue 'outer;
+            }
+            for &next in adj[node].iter() {
+                if next != prev {
+                    queue.push_back((next, node, 1 + dist));
+                }
+            }
+        }
+    }
+    res.unwrap_or(-1)
 }
 
 #[cfg(test)]
@@ -65,8 +77,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(make_sub_k_sum_equal(&[1, 4, 1, 3], 2), 1);
-        assert_eq!(make_sub_k_sum_equal(&[2, 5, 5, 7], 3), 5);
+        assert_eq!(
+            find_shortest_cycle(7, &[[0, 1], [1, 2], [2, 0], [3, 4], [4, 5], [5, 6], [6, 3]]),
+            3
+        );
+        assert_eq!(find_shortest_cycle(4, &[[0, 1], [0, 2]]), -1);
     }
 
     #[test]
