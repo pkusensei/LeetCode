@@ -5,17 +5,33 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_cost_substring(s: String, chars: String, vals: Vec<i32>) -> i32 {
-    use std::collections::HashMap;
-    let map: HashMap<_, _> = chars.bytes().zip(vals).collect();
+// (i+k)%n
+// gcd(n, k) => smallest "unit" of circular subarray
+pub fn make_sub_k_sum_equal(arr: &[i32], k: i32) -> i64 {
+    let n = arr.len();
+    let k = k as usize;
+    let b_count = gcd(n, k);
+    let mut buckets = arr
+        .iter()
+        .enumerate()
+        .fold(vec![vec![]; b_count], |mut acc, (i, &num)| {
+            acc[i % b_count].push(num);
+            acc
+        });
     let mut res = 0;
-    let mut curr = 0;
-    for b in s.bytes() {
-        let score = map.get(&b).copied().unwrap_or(i32::from(b - b'a' + 1));
-        curr = score.max(curr + score);
-        res = res.max(curr)
+    for bucket in buckets.iter_mut() {
+        let len = bucket.len();
+        let (_, &mut med, _) = bucket.select_nth_unstable(len / 2);
+        res += bucket
+            .iter()
+            .map(|v| i64::from((v - med).abs()))
+            .sum::<i64>();
     }
     res
+}
+
+const fn gcd(a: usize, b: usize) -> usize {
+    if a == 0 { b } else { gcd(b % a, a) }
 }
 
 #[cfg(test)]
@@ -48,7 +64,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(make_sub_k_sum_equal(&[1, 4, 1, 3], 2), 1);
+        assert_eq!(make_sub_k_sum_equal(&[2, 5, 5, 7], 3), 5);
+    }
 
     #[test]
     fn test() {}
