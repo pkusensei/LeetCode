@@ -5,21 +5,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_div_score(nums: Vec<i32>, divisors: Vec<i32>) -> i32 {
-    let mut res = divisors[0];
-    let mut score = 0;
-    for div in divisors {
-        let curr: i32 = nums.iter().map(|&v| i32::from(v % div == 0)).sum();
-        match score.cmp(&curr) {
-            std::cmp::Ordering::Less => {
-                score = curr;
-                res = div;
-            }
-            std::cmp::Ordering::Equal => res = res.min(div),
-            std::cmp::Ordering::Greater => (),
+pub fn add_minimum(word: &str) -> i32 {
+    let t = b"abc";
+    let mut idx = 0;
+    let mut res = 0;
+    for b in word.bytes() {
+        while t[idx] != b {
+            idx = (1 + idx) % 3;
+            res += 1;
         }
+        idx = (1 + idx) % 3;
     }
-    res
+    if idx == 0 { res } else { res + 3 - idx as i32 }
 }
 
 #[cfg(test)]
@@ -52,7 +49,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(add_minimum("b"), 2);
+        assert_eq!(add_minimum("aaa"), 6);
+        assert_eq!(add_minimum("abc"), 0);
+    }
 
     #[test]
     fn test() {}
