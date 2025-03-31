@@ -10,16 +10,17 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(new[] { 1, 3, 5, 1 }, 2, 4)]
-    [DataRow(new[] { 1, 3 }, 2, 0)]
-    public void TestMethod1(int[] nums, int k, int exp)
+    public void TestMethod1()
     {
-        Assert.AreEqual(exp, sol.PutMarbles(nums, k));
+        var a = TreeNode.Make([5, 4, 9, 1, 10, null, 7]);
+        Assert.AreEqual("[0,0,0,7,7,null,11]", sol.ReplaceValueInTree(a).ToString());
     }
 
     [TestMethod]
     public void TestMethod2()
     {
+        var a = TreeNode.Make([3, 1, 2]);
+        Assert.AreEqual("[0,0,0]", sol.ReplaceValueInTree(a).ToString());
     }
 
     [TestMethod]

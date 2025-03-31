@@ -6,17 +6,30 @@ namespace Solution;
 
 public class Solution
 {
-    // 1 2 3
-    // 2 3
-    public long PutMarbles(int[] weights, int k)
+    public TreeNode ReplaceValueInTree(TreeNode root)
     {
-        if (weights.Length == k || k < 2) { return 0; }
-        var nums = weights.Zip(weights.Skip(1))
-                          .Select(p => (long)(p.First + p.Second))
-                          .Order()
-                          .ToList();
-        long min = nums[..(k - 1)].Sum();
-        long max = nums.TakeLast(k - 1).Sum();
-        return max - min;
+        int[] level_sums = new int[100_000];
+        SumUp(root, 0);
+        Replace(root, 0, 0);
+        return root;
+
+        void SumUp(TreeNode node, int depth)
+        {
+            if (node is null) { return; }
+            level_sums[depth] += node.val;
+            SumUp(node.left, 1 + depth);
+            SumUp(node.right, 1 + depth);
+        }
+
+        void Replace(TreeNode node, int depth, int sib_sum)
+        {
+            if (node is null) { return; }
+            if (depth < 2) { node.val = 0; }
+            else { node.val = level_sums[depth] - node.val - sib_sum; }
+            int left_val = node.left is null ? 0 : node.left.val;
+            int right_val = node.right is null ? 0 : node.right.val;
+            Replace(node.left, 1 + depth, right_val);
+            Replace(node.right, 1 + depth, left_val);
+        }
     }
 }
