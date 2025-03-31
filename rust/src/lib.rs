@@ -5,17 +5,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn row_and_maximum_ones(mat: Vec<Vec<i32>>) -> Vec<i32> {
-    let mut idx = 0;
-    let mut count = 0;
-    for (r, row) in mat.iter().enumerate() {
-        let sum: i32 = row.iter().sum();
-        if sum > count {
-            idx = r as i32;
-            count = sum;
+pub fn max_div_score(nums: Vec<i32>, divisors: Vec<i32>) -> i32 {
+    let mut res = divisors[0];
+    let mut score = 0;
+    for div in divisors {
+        let curr: i32 = nums.iter().map(|&v| i32::from(v % div == 0)).sum();
+        match score.cmp(&curr) {
+            std::cmp::Ordering::Less => {
+                score = curr;
+                res = div;
+            }
+            std::cmp::Ordering::Equal => res = res.min(div),
+            std::cmp::Ordering::Greater => (),
         }
     }
-    vec![idx, count]
+    res
 }
 
 #[cfg(test)]
