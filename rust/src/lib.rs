@@ -5,33 +5,36 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimize_max(mut nums: Vec<i32>, p: i32) -> i32 {
-    nums.sort_unstable();
-    let mut left = 0;
-    let mut right = 10i32.pow(9);
-    while left < right {
-        let mid = left + (right - left) / 2;
-        if count(&nums, mid) >= p {
-            right = mid;
-        } else {
-            left = mid + 1;
+pub fn minimum_visited_cells(grid: &[&[i32]]) -> i32 {
+    use std::{cmp::Reverse, collections::BinaryHeap};
+    let [rows, cols] = get_dimensions(grid);
+    let mut dp = vec![vec![i64::MAX; cols]; rows];
+    dp[0][0] = 1;
+    let mut heap = BinaryHeap::from([Reverse((1, 0, 0))]);
+    while let Some(Reverse((dist, r, c))) = heap.pop() {
+        if r == rows - 1 && c == cols - 1 {
+            return dist as i32;
+        }
+        for k in 1 + c..(c + grid[r][c] as usize + 1).min(cols) {
+            if dp[r][k] > 1 + dist {
+                dp[r][k] = 1 + dist;
+                heap.push(Reverse((1 + dist, r, k)));
+                if r == rows - 1 && k == cols - 1 {
+                    return 1 + dist as i32;
+                }
+            }
+        }
+        for k in 1 + r..(r + grid[r][c] as usize + 1).min(rows) {
+            if dp[k][c] > 1 + dist {
+                dp[k][c] = 1 + dist;
+                heap.push(Reverse((1 + dist, k, c)));
+                if k == rows - 1 && c == cols - 1 {
+                    return 1 + dist as i32;
+                }
+            }
         }
     }
-    left
-}
-
-fn count(nums: &[i32], mid: i32) -> i32 {
-    let mut idx = 0;
-    let mut res = 0;
-    while let (Some(a), Some(b)) = (nums.get(idx), nums.get(1 + idx)) {
-        if b - a <= mid {
-            res += 1;
-            idx += 2
-        } else {
-            idx += 1;
-        }
-    }
-    res
+    -1
 }
 
 #[cfg(test)]
@@ -65,8 +68,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(minimize_max(vec![10, 1, 2, 7, 1, 3], 2), 1);
-        assert_eq!(minimize_max(vec![4, 2, 1, 2], 1), 0);
+        assert_eq!(
+            minimum_visited_cells(&[&[3, 4, 2, 1], &[4, 2, 3, 1], &[2, 1, 0, 0], &[2, 4, 0, 0]]),
+            4
+        );
+        assert_eq!(
+            minimum_visited_cells(&[&[3, 4, 2, 1], &[4, 2, 1, 1], &[2, 1, 1, 0], &[3, 4, 1, 0]]),
+            3
+        );
+        assert_eq!(minimum_visited_cells(&[&[2, 1, 0], &[1, 0, 0]]), -1);
     }
 
     #[test]
