@@ -2,37 +2,34 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn distance(nums: &[i32]) -> Vec<i64> {
-    let prefs =
-        (0..)
-            .zip(nums.iter())
-            .fold(HashMap::<_, Vec<[i64; 2]>>::new(), |mut acc, (i, &num)| {
-                let v = acc.entry(num).or_default();
-                let last = v.last().map(|[_, p]| p).unwrap_or(&0);
-                v.push([i, i + last]);
-                acc
-            });
-    let mut res = vec![];
-    for (idx, num) in (0..).zip(nums.iter()) {
-        let Some(prefix) = prefs.get(num) else {
-            unreachable!()
-        };
-        if prefix.len() <= 1 {
-            res.push(0);
-            continue;
+pub fn minimize_max(mut nums: Vec<i32>, p: i32) -> i32 {
+    nums.sort_unstable();
+    let mut left = 0;
+    let mut right = 10i32.pow(9);
+    while left < right {
+        let mid = left + (right - left) / 2;
+        if count(&nums, mid) >= p {
+            right = mid;
+        } else {
+            left = mid + 1;
         }
-        let Ok(i) = prefix.binary_search_by_key(&idx, |&[i, _]| i) else {
-            unreachable!()
-        };
-        let left = if i > 0 { prefix[i - 1][1] } else { 0 };
-        let right = prefix.last().unwrap()[1] - prefix[i][1];
-        let len = prefix.len() as i64;
-        res.push(i as i64 * idx - left + right - (len - 1 - i as i64) * idx);
+    }
+    left
+}
+
+fn count(nums: &[i32], mid: i32) -> i32 {
+    let mut idx = 0;
+    let mut res = 0;
+    while let (Some(a), Some(b)) = (nums.get(idx), nums.get(1 + idx)) {
+        if b - a <= mid {
+            res += 1;
+            idx += 2
+        } else {
+            idx += 1;
+        }
     }
     res
 }
@@ -68,8 +65,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(distance(&[1, 3, 1, 1, 2]), [5, 0, 3, 4, 0]);
-        assert_eq!(distance(&[0, 5, 3]), [0, 0, 0]);
+        assert_eq!(minimize_max(vec![10, 1, 2, 7, 1, 3], 2), 1);
+        assert_eq!(minimize_max(vec![4, 2, 1, 2], 1), 0);
     }
 
     #[test]
