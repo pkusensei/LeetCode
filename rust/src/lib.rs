@@ -5,19 +5,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_column_width(grid: Vec<Vec<i32>>) -> Vec<i32> {
-        let cols = grid[0].len();
-        (0..cols)
-            .map(|c| grid.iter().map(|r| width(r[c])).max().unwrap())
-            .collect()
-}
-
-fn width(num: i32) -> i32 {
-    match num.cmp(&0) {
-        std::cmp::Ordering::Less => 2 + num.abs().ilog10() as i32,
-        std::cmp::Ordering::Equal => 1,
-        std::cmp::Ordering::Greater => 1 + num.abs().ilog10() as i32,
+pub fn find_prefix_score(nums: &[i32]) -> Vec<i64> {
+    let mut res = vec![];
+    let mut max = 0;
+    let mut prefix = 0;
+    for num in nums.iter().map(|&v| i64::from(v)) {
+        max = max.max(num);
+        prefix += num + max;
+        res.push(prefix);
     }
+    res
 }
 
 #[cfg(test)]
@@ -50,7 +47,13 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(find_prefix_score(&[2, 3, 7, 5, 10]), [4, 10, 24, 36, 56]);
+        assert_eq!(
+            find_prefix_score(&[1, 1, 2, 4, 8, 16]),
+            [2, 4, 8, 16, 32, 64]
+        );
+    }
 
     #[test]
     fn test() {}
