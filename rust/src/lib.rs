@@ -5,28 +5,15 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_operations(nums: &[i32]) -> i32 {
-    let n = nums.len();
-    let ones = nums.iter().filter(|&&v| v == 1).count();
-    if ones > 0 {
-        return (n - ones) as i32;
+pub fn find_the_prefix_common_array(a: Vec<i32>, b: Vec<i32>) -> Vec<i32> {
+    let mut res = Vec::with_capacity(a.len());
+    let [mut ma, mut mb] = [0i64, 0];
+    for (va, vb) in a.iter().zip(b.iter()) {
+        ma |= 1 << va;
+        mb |= 1 << vb;
+        res.push((ma & mb).count_ones() as i32);
     }
-    let mut res = n;
-    for (left, &a) in nums.iter().enumerate() {
-        let mut val = a;
-        for (right, &b) in nums[left..].iter().enumerate() {
-            val = gcd(val, b);
-            if val == 1 {
-                res = res.min(right);
-                break;
-            }
-        }
-    }
-    if res == n { -1 } else { (res + n - 1) as i32 }
-}
-
-const fn gcd(a: i32, b: i32) -> i32 {
-    if a == 0 { b } else { gcd(b % a, a) }
+    res
 }
 
 #[cfg(test)]
@@ -59,13 +46,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(min_operations(&[2, 6, 3, 4]), 4);
-        assert_eq!(min_operations(&[2, 10, 6, 14]), -1);
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(min_operations(&[1, 1]), 0);
-    }
+    fn test() {}
 }
