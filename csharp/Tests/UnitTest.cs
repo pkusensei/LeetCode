@@ -10,12 +10,11 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(new[] { 4, 9, 6, 10 }, true)]
-    [DataRow(new[] { 6, 8, 11, 12 }, true)]
-    [DataRow(new[] { 5, 8, 3 }, false)]
-    public void TestMethod1(int[] nums, bool exp)
+    [DataRow(new[] { 1, 3, 5, 1 }, 2, 4)]
+    [DataRow(new[] { 1, 3 }, 2, 0)]
+    public void TestMethod1(int[] nums, int k, int exp)
     {
-        Assert.AreEqual(exp, sol.PrimeSubOperation(nums));
+        Assert.AreEqual(exp, sol.PutMarbles(nums, k));
     }
 
     [TestMethod]
