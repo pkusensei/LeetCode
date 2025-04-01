@@ -5,52 +5,34 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-use std::collections::{HashMap, HashSet};
-#[derive(Default)]
-struct FrequencyTracker {
-    num_freq: HashMap<i32, i32>,
-    freq_num: HashMap<i32, HashSet<i32>>,
-}
-
-impl FrequencyTracker {
-    fn new() -> Self {
-        Default::default()
-    }
-
-    fn add(&mut self, number: i32) {
-        let v = self.num_freq.entry(number).or_insert(0);
-        let old = *v;
-        *v += 1;
-        self.freq_num.entry(*v).or_default().insert(number);
-        if old > 0 {
-            let Some(v) = self.freq_num.get_mut(&old) else {
-                unreachable!()
-            };
-            v.remove(&number);
+pub fn color_the_array(n: i32, queries: &[[i32; 2]]) -> Vec<i32> {
+    let n = n as usize;
+    let mut v = vec![0; n];
+    let mut res = vec![];
+    let mut curr = 0;
+    for q in queries {
+        let idx = q[0] as usize;
+        let color = q[1];
+        if 1 + idx < n {
+            if v[1 + idx] == v[idx] && v[idx] > 0 {
+                curr -= 1;
+            }
+            if v[1 + idx] == color {
+                curr += 1;
+            }
         }
-    }
-
-    fn delete_one(&mut self, number: i32) {
-        let Some(v) = self.num_freq.get_mut(&number) else {
-            return;
-        };
-        let old = *v;
-        *v -= 1;
-        if old == 1 {
-            self.num_freq.remove(&number);
+        if idx > 0 {
+            if v[idx - 1] == v[idx] && v[idx] > 0 {
+                curr -= 1;
+            }
+            if v[idx - 1] == color {
+                curr += 1;
+            }
         }
-        let Some(set) = self.freq_num.get_mut(&old) else {
-            unreachable!()
-        };
-        set.remove(&number);
-        if old > 1 {
-            self.freq_num.entry(old - 1).or_default().insert(number);
-        }
+        v[idx] = color;
+        res.push(curr);
     }
-
-    fn has_frequency(&self, frequency: i32) -> bool {
-        self.freq_num.get(&frequency).is_some_and(|s| !s.is_empty())
-    }
+    res
 }
 
 #[cfg(test)]
@@ -83,7 +65,13 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(
+            color_the_array(4, &[[0, 2], [1, 2], [3, 1], [1, 1], [2, 1]]),
+            [0, 1, 1, 0, 2]
+        );
+        assert_eq!(color_the_array(1, &[[0, 100000]]), [0]);
+    }
 
     #[test]
     fn test() {}
