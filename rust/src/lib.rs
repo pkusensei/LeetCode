@@ -5,15 +5,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_the_prefix_common_array(a: Vec<i32>, b: Vec<i32>) -> Vec<i32> {
-    let mut res = Vec::with_capacity(a.len());
-    let [mut ma, mut mb] = [0i64, 0];
-    for (va, vb) in a.iter().zip(b.iter()) {
-        ma |= 1 << va;
-        mb |= 1 << vb;
-        res.push((ma & mb).count_ones() as i32);
+pub fn count_operations_to_empty_array(mut nums: Vec<i32>) -> i64 {
+    use std::collections::HashMap;
+    let n = nums.len();
+    let pos: HashMap<_, _> = nums.iter().enumerate().map(|(i, &v)| (v, i)).collect();
+    let mut res = n;
+    nums.sort_unstable();
+    for (i, w) in nums.windows(2).enumerate() {
+        let [x, y] = w[..] else { unreachable!() };
+        // x<y, remove x before y
+        // but x appears after y in original array
+        // removing x takes (1+i) moves => the length of array [.. x]
+        // i.e the price to pay before moving anothing bigger than x
+        if pos[&y] < pos[&x] {
+            res += n - (1 + i);
+        }
     }
-    res
+    res as i64
 }
 
 #[cfg(test)]
@@ -46,7 +54,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(count_operations_to_empty_array(vec![3, 4, -1]), 5);
+        assert_eq!(count_operations_to_empty_array(vec![1, 2, 4, 3]), 5);
+        assert_eq!(count_operations_to_empty_array(vec![1, 2, 3]), 3);
+    }
 
     #[test]
     fn test() {}
