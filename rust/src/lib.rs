@@ -5,31 +5,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn smallest_beautiful_string(s: &str, k: i32) -> String {
-    let (s, n) = (s.as_bytes(), s.len());
-    let k = k as u8 + b'a' - 1;
-    let mut res = s.to_vec();
-    for idx in (0..n).rev() {
-        res[idx] += 1;
-        while !check(&res, idx) {
-            res[idx] += 1;
+pub fn distinct_difference_array(nums: Vec<i32>) -> Vec<i32> {
+    use std::collections::HashMap;
+    let mut right = nums.iter().fold(HashMap::new(), |mut acc, &num| {
+        *acc.entry(num).or_insert(0) += 1;
+        acc
+    });
+    let mut left = HashMap::new();
+    let mut res = vec![];
+    for &num in nums.iter() {
+        *left.entry(num).or_insert(0) += 1;
+        right.entry(num).and_modify(|v| *v -= 1);
+        if right[&num] == 0 {
+            right.remove(&num);
         }
-        if res[idx] <= k {
-            for i in 1 + idx..n {
-                res[i] = b'a';
-                while !check(&res, i) {
-                    res[i] += 1;
-                }
-            }
-            return String::from_utf8(res).unwrap();
-        }
+        res.push(left.len() as i32 - right.len() as i32);
     }
-    String::new()
-}
-
-fn check(v: &[u8], idx: usize) -> bool {
-    idx.checked_sub(1).is_none_or(|i| v[i] != v[idx])
-        && idx.checked_sub(2).is_none_or(|i| v[i] != v[idx])
+    res
 }
 
 #[cfg(test)]
@@ -62,10 +54,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(smallest_beautiful_string("abcz", 26), "abda");
-        assert_eq!(smallest_beautiful_string("dc", 4), "");
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
