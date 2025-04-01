@@ -5,23 +5,52 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn distinct_difference_array(nums: Vec<i32>) -> Vec<i32> {
-    use std::collections::HashMap;
-    let mut right = nums.iter().fold(HashMap::new(), |mut acc, &num| {
-        *acc.entry(num).or_insert(0) += 1;
-        acc
-    });
-    let mut left = HashMap::new();
-    let mut res = vec![];
-    for &num in nums.iter() {
-        *left.entry(num).or_insert(0) += 1;
-        right.entry(num).and_modify(|v| *v -= 1);
-        if right[&num] == 0 {
-            right.remove(&num);
-        }
-        res.push(left.len() as i32 - right.len() as i32);
+use std::collections::{HashMap, HashSet};
+#[derive(Default)]
+struct FrequencyTracker {
+    num_freq: HashMap<i32, i32>,
+    freq_num: HashMap<i32, HashSet<i32>>,
+}
+
+impl FrequencyTracker {
+    fn new() -> Self {
+        Default::default()
     }
-    res
+
+    fn add(&mut self, number: i32) {
+        let v = self.num_freq.entry(number).or_insert(0);
+        let old = *v;
+        *v += 1;
+        self.freq_num.entry(*v).or_default().insert(number);
+        if old > 0 {
+            let Some(v) = self.freq_num.get_mut(&old) else {
+                unreachable!()
+            };
+            v.remove(&number);
+        }
+    }
+
+    fn delete_one(&mut self, number: i32) {
+        let Some(v) = self.num_freq.get_mut(&number) else {
+            return;
+        };
+        let old = *v;
+        *v -= 1;
+        if old == 1 {
+            self.num_freq.remove(&number);
+        }
+        let Some(set) = self.freq_num.get_mut(&old) else {
+            unreachable!()
+        };
+        set.remove(&number);
+        if old > 1 {
+            self.freq_num.entry(old - 1).or_default().insert(number);
+        }
+    }
+
+    fn has_frequency(&self, frequency: i32) -> bool {
+        self.freq_num.get(&frequency).is_some_and(|s| !s.is_empty())
+    }
 }
 
 #[cfg(test)]
