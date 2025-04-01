@@ -5,36 +5,14 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_increments(n: i32, cost: &[i32]) -> i32 {
-    let n = n as usize;
-    let mut vals = vec![0; n];
-    let max = max_cost(n, cost, 0, 0, &mut vals);
-    let mut res = 0;
-    dfs(n, &vals, max, 0, &mut res);
-    res
-}
-
-fn dfs(n: usize, vals: &[i32], max: i32, node: usize, res: &mut i32) -> i32 {
-    if 2 * node + 1 >= n {
-        return max - vals[node];
+pub fn matrix_sum(mut nums: Vec<Vec<i32>>) -> i32 {
+    let cols = nums[0].len();
+    for v in nums.iter_mut() {
+        v.sort_unstable_by(|a, b| b.cmp(a));
     }
-    let a = dfs(n, vals, max, 2 * node + 1, res);
-    let b = dfs(n, vals, max, 2 * node + 2, res);
-    let big = a.max(b);
-    let small = a.min(b);
-    *res += big - small;
-    small
-}
-
-fn max_cost(n: usize, cost: &[i32], node: usize, val: i32, vals: &mut [i32]) -> i32 {
-    let curr = val + cost[node];
-    if 2 * node + 1 >= n {
-        vals[node] = curr; // leaf
-        return curr;
-    }
-    let a = max_cost(n, cost, 2 * node + 1, curr, vals);
-    let b = max_cost(n, cost, 2 * node + 2, curr, vals);
-    a.max(b)
+    (0..cols)
+        .map(|c| nums.iter().map(|r| r[c]).max().unwrap_or(0))
+        .sum()
 }
 
 #[cfg(test)]
@@ -67,10 +45,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(min_increments(7, &[1, 5, 2, 2, 3, 3, 1]), 6);
-        assert_eq!(min_increments(3, &[5, 3, 3]), 0);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
