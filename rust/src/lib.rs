@@ -5,24 +5,25 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_or(nums: &[i32], k: i32) -> i64 {
-    let prefix = nums.iter().fold(vec![], |mut acc, &num| {
-        acc.push(i64::from(num) | acc.last().unwrap_or(&0));
-        acc
-    });
-    let mut suffix = nums.iter().rev().fold(vec![], |mut acc, &num| {
-        acc.push(i64::from(num) | acc.last().unwrap_or(&0));
-        acc
-    });
-    suffix.reverse();
+pub fn sum_of_power(mut nums: Vec<i32>) -> i32 {
+    const MOD: i64 = 1_000_000_007;
+    nums.sort_unstable();
+    let mut prefix = 0;
     let mut res = 0;
-    for (i, &num) in nums.iter().enumerate() {
-        let left = if i > 0 { prefix[i - 1] } else { 0 };
-        let right = *suffix.get(1 + i).unwrap_or(&0);
-        let curr = (i64::from(num) << k) | left | right;
-        res = res.max(curr);
+    for &num in nums.iter() {
+        let num = i64::from(num);
+        res += (prefix + num) * num % MOD * num % MOD;
+        res %= MOD;
+        // prefix * 2
+        // [1, 2, 3], when accumulating on [3], there are
+        // [1, 3]
+        // [2, 3]
+        // [1, (2), 3] where 2 is omitted
+        // Generally, for [.. a, b ..]
+        // [a] contributes twice as much as b does
+        prefix = (prefix * 2 % MOD + num) % MOD;
     }
-    res
+    res as i32
 }
 
 #[cfg(test)]
@@ -56,8 +57,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(maximum_or(&[12, 9], 1), 30);
-        assert_eq!(maximum_or(&[8, 1, 2], 2), 35);
+        assert_eq!(sum_of_power(vec![2, 1, 4]), 141);
+        assert_eq!(sum_of_power(vec![1, 1, 1]), 7);
     }
 
     #[test]
