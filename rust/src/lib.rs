@@ -2,28 +2,25 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashSet;
+
 #[allow(unused_imports)]
 use helper::*;
+use itertools::Itertools;
 
-pub fn sum_of_power(mut nums: Vec<i32>) -> i32 {
-    const MOD: i64 = 1_000_000_007;
-    nums.sort_unstable();
-    let mut prefix = 0;
-    let mut res = 0;
-    for &num in nums.iter() {
-        let num = i64::from(num);
-        res += (prefix + num) * num % MOD * num % MOD;
-        res %= MOD;
-        // prefix * 2
-        // [1, 2, 3], when accumulating on [3], there are
-        // [1, 3]
-        // [2, 3]
-        // [1, (2), 3] where 2 is omitted
-        // Generally, for [.. a, b ..]
-        // [a] contributes twice as much as b does
-        prefix = (prefix * 2 % MOD + num) % MOD;
+pub fn circular_game_losers(n: i32, k: i32) -> Vec<i32> {
+    let mut curr = 1;
+    let mut seen = HashSet::new();
+    let mut x = 1;
+    while seen.insert(curr) {
+        curr = (curr + x * k) % n;
+        x += 1;
     }
-    res as i32
+    (0..n)
+        .filter(|v| !seen.contains(v))
+        .map(|v| if v == 0 { n } else { v })
+        .sorted_unstable()
+        .collect()
 }
 
 #[cfg(test)]
@@ -56,10 +53,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(sum_of_power(vec![2, 1, 4]), 141);
-        assert_eq!(sum_of_power(vec![1, 1, 1]), 7);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
