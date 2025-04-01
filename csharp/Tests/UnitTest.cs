@@ -12,15 +12,15 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
-        var a = TreeNode.Make([5, 4, 9, 1, 10, null, 7]);
-        Assert.AreEqual("[0,0,0,7,7,null,11]", sol.ReplaceValueInTree(a).ToString());
+        int[][] a = [[3, 2], [4, 3], [4, 4], [2, 5]];
+        Assert.AreEqual(5, sol.MostPoints(a));
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        var a = TreeNode.Make([3, 1, 2]);
-        Assert.AreEqual("[0,0,0]", sol.ReplaceValueInTree(a).ToString());
+        int[][] a = [[1, 1], [2, 2], [3, 3], [4, 4], [5, 5]];
+        Assert.AreEqual(7, sol.MostPoints(a));
     }
 
     [TestMethod]
