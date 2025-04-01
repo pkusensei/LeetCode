@@ -5,14 +5,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn matrix_sum(mut nums: Vec<Vec<i32>>) -> i32 {
-    let cols = nums[0].len();
-    for v in nums.iter_mut() {
-        v.sort_unstable_by(|a, b| b.cmp(a));
+pub fn maximum_or(nums: &[i32], k: i32) -> i64 {
+    let prefix = nums.iter().fold(vec![], |mut acc, &num| {
+        acc.push(i64::from(num) | acc.last().unwrap_or(&0));
+        acc
+    });
+    let mut suffix = nums.iter().rev().fold(vec![], |mut acc, &num| {
+        acc.push(i64::from(num) | acc.last().unwrap_or(&0));
+        acc
+    });
+    suffix.reverse();
+    let mut res = 0;
+    for (i, &num) in nums.iter().enumerate() {
+        let left = if i > 0 { prefix[i - 1] } else { 0 };
+        let right = *suffix.get(1 + i).unwrap_or(&0);
+        let curr = (i64::from(num) << k) | left | right;
+        res = res.max(curr);
     }
-    (0..cols)
-        .map(|c| nums.iter().map(|r| r[c]).max().unwrap_or(0))
-        .sum()
+    res
 }
 
 #[cfg(test)]
@@ -45,7 +55,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(maximum_or(&[12, 9], 1), 30);
+        assert_eq!(maximum_or(&[8, 1, 2], 2), 35);
+    }
 
     #[test]
     fn test() {}
