@@ -5,20 +5,26 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_length(s: String) -> i32 {
-    let mut res = vec![];
-    for b in s.bytes() {
-        match b {
-            b'B' if res.last().is_some_and(|&v| v == b'A') => {
-                res.pop();
+pub fn make_smallest_palindrome(s: String) -> String {
+    let mut s = s.into_bytes();
+    let mut left = 0;
+    let mut right = s.len() - 1;
+    while left <= right {
+        while left <= right && s[left] == s[right] {
+            left += 1;
+            if right == 0 {
+                break;
             }
-            b'D' if res.last().is_some_and(|&v| v == b'C') => {
-                res.pop();
-            }
-            _ => res.push(b),
+            right -= 1;
         }
+        if left > right {
+            break;
+        }
+        let t = s[left].min(s[right]);
+        s[left] = t;
+        s[right] = t;
     }
-    res.len() as i32
+    String::from_utf8(s).unwrap()
 }
 
 #[cfg(test)]
