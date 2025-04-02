@@ -5,29 +5,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_triplet_value(nums: &[i32]) -> i64 {
-    let mut res = 0;
-    for (i1, a) in nums.iter().enumerate() {
-        for (i2, b) in nums.iter().enumerate().skip(1 + i1) {
-            for c in nums.iter().skip(1 + i2) {
-                res = res.max(i64::from(a - b) * i64::from(*c));
+pub fn min_length(s: String) -> i32 {
+    let mut res = vec![];
+    for b in s.bytes() {
+        match b {
+            b'B' if res.last().is_some_and(|&v| v == b'A') => {
+                res.pop();
             }
+            b'D' if res.last().is_some_and(|&v| v == b'C') => {
+                res.pop();
+            }
+            _ => res.push(b),
         }
     }
-    res
-}
-
-pub fn greedy(nums: &[i32]) -> i64 {
-    let mut res = 0;
-    let mut maxi = 0;
-    let mut diff = 0;
-    for &num in nums.iter() {
-        let num = i64::from(num);
-        res = res.max(diff * num); // diff * [k]
-        diff = diff.max(maxi - num); // [i] - [j]
-        maxi = maxi.max(num); // max of [i]
-    }
-    res
+    res.len() as i32
 }
 
 #[cfg(test)]
@@ -60,15 +51,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(maximum_triplet_value(&[12, 6, 1, 2, 7]), 77);
-        assert_eq!(maximum_triplet_value(&[1, 10, 3, 4, 19]), 133);
-        assert_eq!(maximum_triplet_value(&[1, 2, 3]), 0);
-
-        assert_eq!(greedy(&[12, 6, 1, 2, 7]), 77);
-        assert_eq!(greedy(&[1, 10, 3, 4, 19]), 133);
-        assert_eq!(greedy(&[1, 2, 3]), 0);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
