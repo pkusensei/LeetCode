@@ -5,26 +5,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn make_smallest_palindrome(s: String) -> String {
-    let mut s = s.into_bytes();
-    let mut left = 0;
-    let mut right = s.len() - 1;
-    while left <= right {
-        while left <= right && s[left] == s[right] {
-            left += 1;
-            if right == 0 {
-                break;
-            }
-            right -= 1;
-        }
-        if left > right {
-            break;
-        }
-        let t = s[left].min(s[right]);
-        s[left] = t;
-        s[right] = t;
+pub fn maximum_triplet_value(nums: Vec<i32>) -> i64 {
+    let mut res = 0;
+    let mut diff = 0;
+    let mut maxi = 0;
+    for &num in nums.iter() {
+        let num = i64::from(num);
+        res = res.max(diff * num);
+        diff = diff.max(maxi - num);
+        maxi = maxi.max(num)
     }
-    String::from_utf8(s).unwrap()
+    res
 }
 
 #[cfg(test)]
