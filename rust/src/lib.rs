@@ -5,17 +5,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_triplet_value(nums: Vec<i32>) -> i64 {
-    let mut res = 0;
-    let mut diff = 0;
-    let mut maxi = 0;
-    for &num in nums.iter() {
-        let num = i64::from(num);
-        res = res.max(diff * num);
-        diff = diff.max(maxi - num);
-        maxi = maxi.max(num)
+pub fn buy_choco(prices: Vec<i32>, money: i32) -> i32 {
+    let [mut min1, mut min2] = [money; 2];
+    for &num in prices.iter() {
+        if num < min1 {
+            min2 = min1;
+            min1 = num
+        } else if num < min2 {
+            min2 = num;
+        }
     }
-    res
+    let res = money - min1 - min2;
+    if res < 0 { money } else { res }
 }
 
 #[cfg(test)]
