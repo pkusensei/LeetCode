@@ -6,19 +6,22 @@ namespace Solution;
 
 public class Solution
 {
-    public long MostPoints(int[][] questions)
+    public int PunishmentNumber(int n)
     {
-        int n = questions.Length;
-        long[] dp = new long[n];
-        for (int i = n - 1; i >= 0; i -= 1)
+        int res = 0;
+        for (int i = 1; i <= n; i++)
         {
-            int pts = questions[i][0];
-            int pow = questions[i][1];
-            long skip = 1 + i >= n ? 0 : dp[1 + i];
-            int next = i + pow + 1;
-            long take = (long)pts + (next >= n ? 0 : dp[next]);
-            dp[i] = Math.Max(skip, take);
+            if (Backtrack(i, i * i)) { res += i * i; }
         }
-        return dp[0];
+        return res;
+
+        static bool Backtrack(int target, int val)
+        {
+            if (target == val) { return true; }
+            if (target < 0 || val < target) { return false; }
+            return Backtrack(target - val % 10, val / 10)
+                   || Backtrack(target - val % 100, val / 100)
+                   || Backtrack(target - val % 1000, val / 1000);
+        }
     }
 }

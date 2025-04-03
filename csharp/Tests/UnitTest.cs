@@ -10,17 +10,16 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow(10, 182)]
+    [DataRow(37, 1478)]
+    public void TestMethod1(int n, int exp)
     {
-        int[][] a = [[3, 2], [4, 3], [4, 4], [2, 5]];
-        Assert.AreEqual(5, sol.MostPoints(a));
+        Assert.AreEqual(exp, sol.PunishmentNumber(n));
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        int[][] a = [[1, 1], [2, 2], [3, 3], [4, 4], [5, 5]];
-        Assert.AreEqual(7, sol.MostPoints(a));
     }
 
     [TestMethod]
