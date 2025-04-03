@@ -97,11 +97,7 @@ pub fn gcd<T>(a: T, b: T) -> T
 where
     T: Copy + std::ops::Rem<Output = T> + PartialEq + From<bool>,
 {
-    if a == false.into() {
-        b
-    } else {
-        gcd(b % a, a)
-    }
+    if a == false.into() { b } else { gcd(b % a, a) }
 }
 
 pub const fn mod_pow(mut base: i64, mut exp: i64, modu: i64) -> i64 {
