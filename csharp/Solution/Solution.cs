@@ -6,22 +6,62 @@ namespace Solution;
 
 public class Solution
 {
-    public int PunishmentNumber(int n)
+    const int INF = 2_000_000_000;
+    public int[][] ModifiedGraphEdges(int n, int[][] edges, int source, int destination, int target)
     {
-        int res = 0;
-        for (int i = 1; i <= n; i++)
+        long curr = Dijkstra();
+        if (curr < target) { return []; }
+        bool matched = curr == target;
+        foreach (var edge in edges)
         {
-            if (Backtrack(i, i * i)) { res += i * i; }
+            if (edge[2] > 0) { continue; }
+            edge[2] = matched ? INF : 1;
+            if (!matched)
+            {
+                curr = Dijkstra();
+                if (curr <= target)
+                {
+                    matched = true;
+                    edge[2] += target - (int)curr;
+                }
+            }
         }
-        return res;
+        return matched ? edges : [];
 
-        static bool Backtrack(int target, int val)
+        long Dijkstra()
         {
-            if (target == val) { return true; }
-            if (target < 0 || val < target) { return false; }
-            return Backtrack(target - val % 10, val / 10)
-                   || Backtrack(target - val % 100, val / 100)
-                   || Backtrack(target - val % 1000, val / 1000);
+            int[,] adj = new int[n, n];
+            foreach (var edge in edges)
+            {
+                if (edge[2] > 0)
+                {
+                    adj[edge[0], edge[1]] = edge[2];
+                    adj[edge[1], edge[0]] = edge[2];
+                }
+            }
+            long[] dists = new long[n];
+            Array.Fill(dists, INF);
+            dists[source] = 0;
+            var pq = new PriorityQueue<int, long>();
+            pq.Enqueue(source, 0);
+            while (pq.TryDequeue(out int node, out long dist))
+            {
+                if (node == destination) { return dist; }
+                if (dist > dists[node]) { continue; }
+                for (int next = 0; next < n; next += 1)
+                {
+                    if (adj[node, next] > 0)
+                    {
+                        long nc = dist + adj[node, next];
+                        if (nc < dists[next])
+                        {
+                            dists[next] = nc;
+                            pq.Enqueue(next, nc);
+                        }
+                    }
+                }
+            }
+            return dists[destination];
         }
     }
 }
