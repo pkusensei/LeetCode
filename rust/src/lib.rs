@@ -5,59 +5,29 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_extra_char(s: &str, dictionary: &[&str]) -> i32 {
-    let mut trie = Trie::default();
-    let mut max_len = 0; // of word in dict
-    for w in dictionary.iter() {
-        trie.add(w.bytes());
-        max_len = max_len.max(w.len());
-    }
-    let n = s.len();
-    let mut dp = vec![n; 1 + n];
-    dp[0] = 0;
-    for end in 1..=n {
-        for left in end.saturating_sub(max_len)..end {
-            let len = end - left;
-            let curr = if trie.find(s[left..end].bytes(), len) {
-                dp[left]
-            } else {
-                dp[left] + len
-            };
-            dp[end] = dp[end].min(curr);
+pub fn max_strength(mut nums: Vec<i32>) -> i64 {
+    let n = nums.len();
+    nums.sort_unstable();
+    let mut res = 0;
+    let mut idx = 0;
+    while 1 + idx < n && nums[idx] < 0 && nums[1 + idx] < 0 {
+        if res == 0 {
+            res = 1;
         }
+        res *= i64::from(nums[idx] * nums[1 + idx]);
+        idx += 2;
     }
-    dp[n] as i32
-}
-
-#[derive(Default)]
-struct Trie {
-    nodes: [Option<Box<Trie>>; 26],
-    len: usize,
-}
-
-impl Trie {
-    fn add(&mut self, it: impl Iterator<Item = u8>) {
-        let mut curr = self;
-        let mut len = 0;
-        for b in it {
-            let idx = usize::from(b - b'a');
-            curr = curr.nodes[idx].get_or_insert(Box::new(Trie::default()));
-            len += 1;
+    while idx < n && nums[idx] <= 0 {
+        idx += 1;
+    }
+    while let Some(&v) = nums.get(idx) {
+        if res == 0 {
+            res = 1;
         }
-        curr.len = len;
+        res *= i64::from(v);
+        idx += 1;
     }
-
-    fn find(&self, it: impl Iterator<Item = u8>, len: usize) -> bool {
-        let mut curr = self;
-        for b in it {
-            let idx = usize::from(b - b'a');
-            let Some(ref v) = curr.nodes[idx] else {
-                break;
-            };
-            curr = v;
-        }
-        curr.len == len
-    }
+    if res == 0 { nums[n - 1] as i64 } else { res }
 }
 
 #[cfg(test)]
@@ -90,13 +60,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(
-            min_extra_char("leetscode", &["leet", "code", "leetcode"]),
-            1
-        );
-        assert_eq!(min_extra_char("sayhelloworld", &["hello", "world"]), 3);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
