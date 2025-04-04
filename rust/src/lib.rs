@@ -5,25 +5,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn semi_ordered_permutation(nums: Vec<i32>) -> i32 {
-    let n = nums.len();
-    let (mut min, mut mini) = (i32::MAX, 0);
-    let (mut max, mut maxi) = (0, 0);
-    for (idx, &num) in nums.iter().enumerate() {
-        if num < min {
-            min = num;
-            mini = idx;
-        }
-        if num > max {
-            max = num;
-            maxi = idx;
+pub fn matrix_sum_queries(n: i32, queries: &[[i32; 3]]) -> i64 {
+    use std::collections::HashSet;
+    let n = n as usize;
+    let mut res = 0;
+    let mut row_set = HashSet::new();
+    let mut col_set = HashSet::new();
+    for q in queries.iter().rev() {
+        let [t, idx, val] = q[..] else { unreachable!() };
+        let idx = idx as usize;
+        let val = i64::from(val);
+        if t == 0 && row_set.insert(idx) {
+            res += val * (n - col_set.len()) as i64;
+        } else if t == 1 && col_set.insert(idx) {
+            res += val * (n - row_set.len()) as i64;
         }
     }
-    if mini < maxi {
-        (mini + n - maxi - 1) as i32
-    } else {
-        (mini + n - maxi - 1 - 1) as i32
-    }
+    res
 }
 
 #[cfg(test)]
@@ -56,7 +54,16 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(
+            matrix_sum_queries(3, &[[0, 0, 1], [1, 2, 2], [0, 2, 3], [1, 0, 4]]),
+            23
+        );
+        assert_eq!(
+            matrix_sum_queries(3, &[[0, 0, 4], [0, 1, 2], [1, 0, 1], [0, 2, 3], [1, 2, 1]]),
+            17
+        );
+    }
 
     #[test]
     fn test() {}
