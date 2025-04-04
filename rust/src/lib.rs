@@ -5,24 +5,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn sum_distance(nums: &[i32], s: &str, d: i32) -> i32 {
-    let mut nums: Vec<_> = nums.iter().copied().map(i64::from).collect();
-    for (v, dir) in nums.iter_mut().zip(s.bytes()) {
-        if dir == b'R' {
-            *v += i64::from(d);
-        } else {
-            *v -= i64::from(d);
+pub fn good_subsetof_binary_matrix(grid: Vec<Vec<i32>>) -> Vec<i32> {
+    let rows: Vec<_> = grid
+        .iter()
+        .map(|r| r.iter().fold(0, |acc, &v| (acc << 1) | v))
+        .collect();
+    for (i1, v1) in rows.iter().enumerate() {
+        if v1.count_ones() == 0 {
+            return vec![i1 as i32];
+        }
+        for (i2, v2) in rows.iter().enumerate().skip(1 + i1) {
+            if v1 & v2 == 0 {
+                return vec![i1 as i32, i2 as i32];
+            }
         }
     }
-    nums.sort_unstable();
-    let mut prefix = 0;
-    let mut res = 0;
-    for (i, num) in (0..).zip(nums) {
-        res += i * num - prefix;
-        res %= 1_000_000_007;
-        prefix += num;
-    }
-    res as i32
+    vec![]
 }
 
 #[cfg(test)]
