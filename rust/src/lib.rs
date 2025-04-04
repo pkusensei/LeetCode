@@ -5,22 +5,35 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn good_subsetof_binary_matrix(grid: Vec<Vec<i32>>) -> Vec<i32> {
-    let rows: Vec<_> = grid
-        .iter()
-        .map(|r| r.iter().fold(0, |acc, &v| (acc << 1) | v))
-        .collect();
-    for (i1, v1) in rows.iter().enumerate() {
-        if v1.count_ones() == 0 {
-            return vec![i1 as i32];
+pub fn smallest_string(s: String) -> String {
+    let n = s.len();
+    let mut s = s.into_bytes();
+    match s.iter().position(|&b| b == b'a') {
+        None => {
+            for v in s.iter_mut() {
+                *v -= 1;
+            }
         }
-        for (i2, v2) in rows.iter().enumerate().skip(1 + i1) {
-            if v1 & v2 == 0 {
-                return vec![i1 as i32, i2 as i32];
+        Some(a) if a > 0 => {
+            for v in s[..a].iter_mut() {
+                *v -= 1;
+            }
+        }
+        _ => {
+            if let Some(b) = s.iter().position(|&b| b != b'a') {
+                let mut last = b;
+                while s.get(last).is_some_and(|&b| b != b'a') {
+                    last += 1;
+                }
+                for v in s[b..last].iter_mut() {
+                    *v -= 1;
+                }
+            } else {
+                s[n - 1] = b'z';
             }
         }
     }
-    vec![]
+    String::from_utf8(s).unwrap()
 }
 
 #[cfg(test)]
