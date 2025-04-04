@@ -5,71 +5,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count(num1: String, num2: String, min_sum: i32, max_sum: i32) -> i32 {
-    let (n1, n2) = (num1.len(), num2.len());
-    let mut v = num1.into_bytes();
-    for b in v.iter_mut().rev() {
-        if *b == b'0' {
-            *b = b'9';
-        } else {
-            *b -= 1;
-            break;
+pub fn longest_semi_repetitive_substring(s: &str) -> i32 {
+    let (s, n) = (s.as_bytes(), s.len());
+    let mut res = 1;
+    let mut pair1 = -1; // left idx of [0,0]
+    let mut pair2 = 0; // right idx of [0,0]
+    for idx in 1..n {
+        if s[idx] == s[idx - 1] {
+            pair1 = pair2 - 1;
+            pair2 = idx as i32;
         }
-    }
-    let a = dfs(
-        &v,
-        min_sum,
-        max_sum,
-        0,
-        0,
-        true,
-        &mut vec![vec![-1; 450]; n1],
-    );
-    let b = dfs(
-        num2.as_bytes(),
-        min_sum,
-        max_sum,
-        0,
-        0,
-        true,
-        &mut vec![vec![-1; 450]; n2],
-    );
-    (b - a).rem_euclid(MOD)
-}
-
-const MOD: i32 = 1_000_000_007;
-
-fn dfs(
-    max: &[u8],
-    min_sum: i32,
-    max_sum: i32,
-    idx: usize,
-    sum: i32,
-    limit: bool,
-    memo: &mut [Vec<i32>],
-) -> i32 {
-    if idx >= max.len() {
-        return i32::from((min_sum..=max_sum).contains(&sum));
-    }
-    if !limit && memo[idx][sum as usize] > -1 {
-        return memo[idx][sum as usize];
-    }
-    let mut res = 0;
-    let upper = if limit { i32::from(max[idx] - b'0') } else { 9 };
-    for d in 0..=upper {
-        res += dfs(
-            max,
-            min_sum,
-            max_sum,
-            1 + idx,
-            sum + d,
-            limit && d == upper,
-            memo,
-        );
-        res %= MOD;
-    }
-    if !limit {
-        memo[idx][sum as usize] = res;
+        res = res.max(idx as i32 - pair1);
     }
     res
 }
@@ -105,15 +51,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(count("1".into(), "12".into(), 1, 8), 11);
-        assert_eq!(count("1".into(), "5".into(), 1, 5), 5);
+        assert_eq!(longest_semi_repetitive_substring("52233"), 4);
+        assert_eq!(longest_semi_repetitive_substring("5494"), 4);
+        assert_eq!(longest_semi_repetitive_substring("1111111"), 2);
     }
 
     #[test]
     fn test() {
-        assert_eq!(
-            count("4179205230".into(), "7748704426".into(), 8, 46),
-            883045899
-        );
+        assert_eq!(longest_semi_repetitive_substring("0001"), 3);
     }
 }
