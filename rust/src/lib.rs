@@ -5,35 +5,35 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_cost(s: &str) -> i64 {
-    let n = s.len();
-    let mut prefix = vec![0_i64];
-    let mut prev = s.as_bytes()[0];
-    for (i, b) in s.bytes().enumerate().skip(1) {
-        // i is the length of previous substr
-        if prev == b {
-            // no op required to make substr ending in b
-            prefix.push(*prefix.last().unwrap_or(&0));
-        } else {
-            // flip length of i to end in b
-            prefix.push(i as i64 + prefix.last().unwrap_or(&0));
+pub fn max_increasing_cells(mat: &[&[i32]]) -> i32 {
+    use std::collections::BTreeMap;
+    let mut map = BTreeMap::<_, Vec<_>>::new();
+    let [mut rows, mut cols] = [0, 0];
+    for (r, row) in mat.iter().enumerate() {
+        rows = rows.max(1 + r);
+        for (c, &v) in row.iter().enumerate() {
+            cols = cols.max(1 + c);
+            map.entry(v).or_default().push([r, c]);
         }
-        prev = b;
     }
-    let mut suffix = vec![0_i64];
-    prev = s.as_bytes()[n - 1];
-    for (i, b) in s.bytes().rev().enumerate().skip(1) {
-        if prev == b {
-            suffix.push(*suffix.last().unwrap_or(&0));
-        } else {
-            suffix.push(i as i64 + suffix.last().unwrap_or(&0));
+    // record max increments per row or col
+    let mut row_inc = vec![0; rows];
+    let mut col_inc = vec![0; cols];
+    let mut res = 0;
+    for pts in map.values() {
+        // local increments per grid cell
+        let mut curr_inc = vec![];
+        for &[r, c] in pts {
+            // potential increments if path crosses this point
+            let val = 1 + row_inc[r].max(col_inc[c]);
+            curr_inc.push(val);
+            res = res.max(val);
         }
-        prev = b;
-    }
-    suffix.reverse();
-    let mut res = i64::MAX;
-    for (p, s) in prefix.into_iter().zip(suffix) {
-        res = res.min(p + s);
+        for (&val, &[r, c]) in curr_inc.iter().zip(pts) {
+            // update local increments into global arrays
+            row_inc[r] = row_inc[r].max(val);
+            col_inc[c] = col_inc[c].max(val);
+        }
     }
     res
 }
@@ -69,8 +69,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(minimum_cost("0011"), 2);
-        assert_eq!(minimum_cost("010101"), 9);
+        assert_eq!(max_increasing_cells(&[&[3, 1], &[3, 4]]), 2);
+        assert_eq!(max_increasing_cells(&[&[1, 1], &[1, 1]]), 1);
+        assert_eq!(max_increasing_cells(&[&[3, 1, 6], &[-9, 5, 7]]), 4);
     }
 
     #[test]
