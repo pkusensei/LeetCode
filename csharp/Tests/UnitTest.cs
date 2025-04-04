@@ -12,22 +12,22 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
-        int[][] edges = [[4, 1, -1], [2, 0, -1], [0, 3, -1], [4, 3, -1]];
-        Assert.AreEqual([[4, 1, 1], [2, 0, 1], [0, 3, 3], [4, 3, 1]], sol.ModifiedGraphEdges(5, edges, 0, 1, 5));
+        var a = TreeNode.Make([3, 5, 1, 6, 2, 0, 8, null, null, 7, 4]);
+        Assert.AreEqual("[2,7,4]", sol.LcaDeepestLeaves(a).ToString());
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        int[][] edges = [[0, 1, -1], [0, 2, 5]];
-        Assert.AreEqual([], sol.ModifiedGraphEdges(3, edges, 0, 2, 6));
+        var a = TreeNode.Make([0, 1, 3, null, 2]);
+        Assert.AreEqual("[2]", sol.LcaDeepestLeaves(a).ToString());
     }
 
     [TestMethod]
     public void TestMethod3()
     {
-        int[][] edges = [[1, 0, 4], [1, 2, 3], [2, 3, 5], [0, 3, -1]];
-        Assert.AreEqual([[1, 0, 4], [1, 2, 3], [2, 3, 5], [0, 3, 1]], sol.ModifiedGraphEdges(4, edges, 0, 2, 6));
+        var a = TreeNode.Make([1]);
+        Assert.AreEqual("[1]", sol.LcaDeepestLeaves(a).ToString());
     }
 
     [TestMethod]
