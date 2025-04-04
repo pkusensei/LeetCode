@@ -5,19 +5,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn longest_semi_repetitive_substring(s: &str) -> i32 {
-    let (s, n) = (s.as_bytes(), s.len());
-    let mut res = 1;
-    let mut pair1 = -1; // left idx of [0,0]
-    let mut pair2 = 0; // right idx of [0,0]
-    for idx in 1..n {
-        if s[idx] == s[idx - 1] {
-            pair1 = pair2 - 1;
-            pair2 = idx as i32;
+pub fn sum_distance(nums: &[i32], s: &str, d: i32) -> i32 {
+    let mut nums: Vec<_> = nums.iter().copied().map(i64::from).collect();
+    for (v, dir) in nums.iter_mut().zip(s.bytes()) {
+        if dir == b'R' {
+            *v += i64::from(d);
+        } else {
+            *v -= i64::from(d);
         }
-        res = res.max(idx as i32 - pair1);
     }
-    res
+    nums.sort_unstable();
+    let mut prefix = 0;
+    let mut res = 0;
+    for (i, num) in (0..).zip(nums) {
+        res += i * num - prefix;
+        res %= 1_000_000_007;
+        prefix += num;
+    }
+    res as i32
 }
 
 #[cfg(test)]
@@ -50,14 +55,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(longest_semi_repetitive_substring("52233"), 4);
-        assert_eq!(longest_semi_repetitive_substring("5494"), 4);
-        assert_eq!(longest_semi_repetitive_substring("1111111"), 2);
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(longest_semi_repetitive_substring("0001"), 3);
-    }
+    fn test() {}
 }
