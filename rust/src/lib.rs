@@ -5,37 +5,25 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_increasing_cells(mat: &[&[i32]]) -> i32 {
-    use std::collections::BTreeMap;
-    let mut map = BTreeMap::<_, Vec<_>>::new();
-    let [mut rows, mut cols] = [0, 0];
-    for (r, row) in mat.iter().enumerate() {
-        rows = rows.max(1 + r);
-        for (c, &v) in row.iter().enumerate() {
-            cols = cols.max(1 + c);
-            map.entry(v).or_default().push([r, c]);
+pub fn semi_ordered_permutation(nums: Vec<i32>) -> i32 {
+    let n = nums.len();
+    let (mut min, mut mini) = (i32::MAX, 0);
+    let (mut max, mut maxi) = (0, 0);
+    for (idx, &num) in nums.iter().enumerate() {
+        if num < min {
+            min = num;
+            mini = idx;
+        }
+        if num > max {
+            max = num;
+            maxi = idx;
         }
     }
-    // record max increments per row or col
-    let mut row_inc = vec![0; rows];
-    let mut col_inc = vec![0; cols];
-    let mut res = 0;
-    for pts in map.values() {
-        // local increments per grid cell
-        let mut curr_inc = vec![];
-        for &[r, c] in pts {
-            // potential increments if path crosses this point
-            let val = 1 + row_inc[r].max(col_inc[c]);
-            curr_inc.push(val);
-            res = res.max(val);
-        }
-        for (&val, &[r, c]) in curr_inc.iter().zip(pts) {
-            // update local increments into global arrays
-            row_inc[r] = row_inc[r].max(val);
-            col_inc[c] = col_inc[c].max(val);
-        }
+    if mini < maxi {
+        (mini + n - maxi - 1) as i32
+    } else {
+        (mini + n - maxi - 1 - 1) as i32
     }
-    res
 }
 
 #[cfg(test)]
@@ -68,11 +56,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(max_increasing_cells(&[&[3, 1], &[3, 4]]), 2);
-        assert_eq!(max_increasing_cells(&[&[1, 1], &[1, 1]]), 1);
-        assert_eq!(max_increasing_cells(&[&[3, 1, 6], &[-9, 5, 7]]), 4);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
