@@ -5,35 +5,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn smallest_string(s: String) -> String {
-    let n = s.len();
-    let mut s = s.into_bytes();
-    match s.iter().position(|&b| b == b'a') {
-        None => {
-            for v in s.iter_mut() {
-                *v -= 1;
-            }
+pub fn min_cost(mut nums: Vec<i32>, x: i32) -> i64 {
+    let n = nums.len();
+    let x = i64::from(x);
+    let mut res = i64::MAX;
+    for k in 0..n {
+        let curr: i64 = nums.iter().map(|&v| i64::from(v)).sum();
+        res = res.min(curr + k as i64 * x);
+        let mut temp = Vec::with_capacity(n);
+        for i in 0..n {
+            temp.push(nums[i].min(nums[(1 + i) % n]));
         }
-        Some(a) if a > 0 => {
-            for v in s[..a].iter_mut() {
-                *v -= 1;
-            }
-        }
-        _ => {
-            if let Some(b) = s.iter().position(|&b| b != b'a') {
-                let mut last = b;
-                while s.get(last).is_some_and(|&b| b != b'a') {
-                    last += 1;
-                }
-                for v in s[b..last].iter_mut() {
-                    *v -= 1;
-                }
-            } else {
-                s[n - 1] = b'z';
-            }
-        }
+        nums = temp;
     }
-    String::from_utf8(s).unwrap()
+    res
 }
 
 #[cfg(test)]
@@ -66,7 +51,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(min_cost(vec![20, 1, 15], 5), 13);
+        assert_eq!(min_cost(vec![1, 2, 3], 4), 6);
+    }
 
     #[test]
     fn test() {}
