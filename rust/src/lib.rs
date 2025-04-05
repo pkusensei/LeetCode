@@ -5,18 +5,9 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub const fn distance_traveled(mut main_tank: i32, mut additional_tank: i32) -> i32 {
-    let mut res = 0;
-    while main_tank >= 5 {
-        main_tank -= 5;
-        res += 5;
-        if additional_tank > 0 {
-            main_tank += 1;
-            additional_tank -= 1;
-        }
-    }
-    res += main_tank;
-    res * 10
+pub fn find_value_of_partition(mut nums: Vec<i32>) -> i32 {
+    nums.sort_unstable();
+    nums.windows(2).map(|w| w[1] - w[0]).min().unwrap()
 }
 
 #[cfg(test)]
