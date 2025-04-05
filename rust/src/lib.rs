@@ -7,35 +7,49 @@ use std::collections::HashMap;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn special_perm(nums: &[i32]) -> i32 {
-        let n = nums.len();
-        dfs(nums, 0, n, &mut HashMap::new())
+pub fn paint_walls(cost: &[i32], time: &[i32]) -> i32 {
+    let n = cost.len();
+    dfs(cost, time, 0, n as i32, &mut HashMap::new())
 }
 
-fn dfs(nums: &[i32], mask: i16, prev: usize, memo: &mut HashMap<(i16, usize), i32>) -> i32 {
-    let n = nums.len();
-    if n == mask.count_ones() as usize {
-        return 1;
+fn dfs(
+    cost: &[i32],
+    time: &[i32],
+    idx: usize,
+    remain: i32,
+    memo: &mut HashMap<(usize, i32), i32>,
+) -> i32 {
+    let n = cost.len();
+    if remain <= 0 {
+        return 0;
     }
-    if let Some(&v) = memo.get(&(mask, prev)) {
+    if idx >= n {
+        return i32::MAX / 2;
+    }
+    if let Some(&v) = memo.get(&(idx, remain)) {
         return v;
     }
-    let mut res = 0;
-    for bit in 0..n {
-        if (mask >> bit) & 1 == 1 {
-            continue;
-        }
-        let curr = nums[bit];
-        if nums
-            .get(prev)
-            .is_none_or(|&v| v % curr == 0 || curr % v == 0)
-        {
-            res += dfs(nums, mask | (1 << bit), bit, memo);
-            res %= 1_000_000_007;
-        }
-    }
-    memo.insert((mask, prev), res);
+    let take = cost[idx] + dfs(cost, time, 1 + idx, remain - 1 - time[idx], memo);
+    let skip = dfs(cost, time, 1 + idx, remain, memo);
+    let res = take.min(skip);
+    memo.insert((idx, remain), res);
     res
+}
+
+pub fn tabulation(cost: &[i32], time: &[i32]) -> i32 {
+    let n = cost.len();
+    let mut dp = vec![i32::MAX / 2; 1 + n];
+    dp[0] = 0;
+    for idx in (0..n).rev() {
+        let mut curr = vec![0; 1 + n];
+        for remain in 1..=n {
+            let take = cost[idx] + 0.max(remain as i32 - 1 - time[idx]);
+            let skip = dp[remain];
+            curr[remain] = skip.min(take);
+        }
+        dp = curr
+    }
+    dp[n]
 }
 
 #[cfg(test)]
@@ -69,8 +83,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(special_perm(&[2, 3, 6]), 2);
-        assert_eq!(special_perm(&[1, 4, 3]), 2);
+        assert_eq!(paint_walls(&[1, 2, 3, 2], &[1, 2, 3, 2]), 3);
+        assert_eq!(paint_walls(&[2, 3, 4, 2], &[1, 1, 1, 1]), 4);
+
+        assert_eq!(tabulation(&[1, 2, 3, 2], &[1, 2, 3, 2]), 3);
+        assert_eq!(tabulation(&[2, 3, 4, 2], &[1, 1, 1, 1]), 4);
     }
 
     #[test]
