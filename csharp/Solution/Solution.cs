@@ -6,22 +6,26 @@ namespace Solution;
 
 public class Solution
 {
-    public TreeNode LcaDeepestLeaves(TreeNode root)
+    public int SubsetXORSum(int[] nums)
     {
-        int max_depth = 0;
-        var res = root;
-        PostOrder(root, 0);
+        int res = 0;
+        Backtrack(nums, 0);
         return res;
 
-        int PostOrder(TreeNode node, int depth)
+        void Backtrack(Span<int> nums, int curr)
         {
-            if (node is null) { return depth; }
-            int left = PostOrder(node.left, 1 + depth);
-            int right = PostOrder(node.right, 1 + depth);
-            int curr = Math.Max(left, right);
-            if (curr > max_depth) { max_depth = curr; }
-            if (left == max_depth && right == max_depth) { res = node; }
-            return curr;
+            if (nums.Length == 0) { res += curr; }
+            else
+            {
+                Backtrack(nums[1..], curr);
+                Backtrack(nums[1..], curr ^ nums[0]);
+            }
         }
+    }
+
+    public int WithBits(int[] nums)
+    {
+        int bitor = nums.Aggregate(0, (a, b) => a | b);
+        return bitor * (1 << nums.Length - 1);
     }
 }

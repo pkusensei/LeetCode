@@ -10,24 +10,22 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow(new[] { 1, 3 }, 6)]
+    [DataRow(new[] { 5, 1, 6 }, 28)]
+    [DataRow(new[] { 3, 4, 5, 6, 7, 8 }, 480)]
+    public void TestMethod1(int[] nums, int exp)
     {
-        var a = TreeNode.Make([3, 5, 1, 6, 2, 0, 8, null, null, 7, 4]);
-        Assert.AreEqual("[2,7,4]", sol.LcaDeepestLeaves(a).ToString());
+        Assert.AreEqual(exp, sol.SubsetXORSum(nums));
+        Assert.AreEqual(exp, sol.WithBits(nums));
     }
 
     [TestMethod]
     public void TestMethod2()
-    {
-        var a = TreeNode.Make([0, 1, 3, null, 2]);
-        Assert.AreEqual("[2]", sol.LcaDeepestLeaves(a).ToString());
-    }
+    { }
 
     [TestMethod]
     public void TestMethod3()
     {
-        var a = TreeNode.Make([1]);
-        Assert.AreEqual("[1]", sol.LcaDeepestLeaves(a).ToString());
     }
 
     [TestMethod]
