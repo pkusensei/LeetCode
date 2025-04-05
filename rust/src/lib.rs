@@ -5,19 +5,12 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_number_of_string_pairs(words: Vec<String>) -> i32 {
-    let mut res = 0;
-    let mut seen = std::collections::HashSet::new();
-    for w in words {
-        let mut w = w.into_bytes();
-        if seen.remove(&w) {
-            res += 1;
-        } else {
-            w.reverse();
-            seen.insert(w);
-        }
+pub fn longest_string(x: i32, y: i32, z: i32) -> i32 {
+    if x == y {
+        2 * (x + y + z)
+    } else {
+        2 * (2 * x.min(y) + 1 + z)
     }
-    res
 }
 
 #[cfg(test)]
