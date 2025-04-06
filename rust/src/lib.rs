@@ -5,32 +5,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_beautiful_pairs(nums: Vec<i32>) -> i32 {
-    use itertools::Itertools;
-    const fn gcd(a: i32, b: i32) -> i32 {
-        if a == 0 { b } else { gcd(b % a, a) }
-    }
-
-    let ds = nums
-        .iter()
-        .map(|num| {
-            let mut num = *num;
-            let last = num % 10;
-            let mut first = 0;
-            while num > 0 {
-                first = num % 10;
-                num /= 10;
-            }
-            [first, last]
-        })
-        .collect_vec();
-    let mut res = 0;
-    for (i, &[a, _]) in ds.iter().enumerate() {
-        for &[_, b] in ds.iter().skip(1 + i) {
-            res += i32::from(gcd(a, b) == 1);
+pub fn make_the_integer_zero(num1: i32, num2: i32) -> i32 {
+    // num1 - n(2^p+num2) = 0
+    // num1 - n*num2 = n set bits
+    let [n1, n2] = [num1, num2].map(i64::from);
+    for k in 1..=60 {
+        if (n1 - k * n2).count_ones() <= k as u32 && k <= n1 - k * n2 {
+            return k as i32;
         }
     }
-    res
+    -1
 }
 
 #[cfg(test)]
