@@ -6,26 +6,33 @@ namespace Solution;
 
 public class Solution
 {
-    public int SubsetXORSum(int[] nums)
+    public IList<int> LargestDivisibleSubset(int[] nums)
     {
-        int res = 0;
-        Backtrack(nums, 0);
-        return res;
-
-        void Backtrack(Span<int> nums, int curr)
+        Array.Sort(nums);
+        int n = nums.Length;
+        Span<int> dp = stackalloc int[n];
+        Span<int> prev = stackalloc int[n];
+        prev.Fill(-1);
+        int max_idx = 0;
+        for (int i1 = 1; i1 < n; i1++)
         {
-            if (nums.Length == 0) { res += curr; }
-            else
+            for (int i2 = 0; i2 < i1; i2++)
             {
-                Backtrack(nums[1..], curr);
-                Backtrack(nums[1..], curr ^ nums[0]);
+                if (nums[i1] % nums[i2] == 0 && dp[i1] <= dp[i2])
+                {
+                    dp[i1] = 1 + dp[i2];
+                    prev[i1] = i2;
+                }
             }
+            if (dp[i1] > dp[max_idx]) { max_idx = i1; }
         }
-    }
-
-    public int WithBits(int[] nums)
-    {
-        int bitor = nums.Aggregate(0, (a, b) => a | b);
-        return bitor * (1 << nums.Length - 1);
+        var res = new List<int>();
+        while (max_idx != -1)
+        {
+            res.Add(nums[max_idx]);
+            max_idx = prev[max_idx];
+        }
+        res.Reverse();
+        return res;
     }
 }

@@ -10,13 +10,11 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(new[] { 1, 3 }, 6)]
-    [DataRow(new[] { 5, 1, 6 }, 28)]
-    [DataRow(new[] { 3, 4, 5, 6, 7, 8 }, 480)]
-    public void TestMethod1(int[] nums, int exp)
+    [DataRow(new[] { 1, 2, 3 }, "[1,2]")]
+    [DataRow(new[] { 1, 2, 4, 8 }, "[1,2,4,8]")]
+    public void TestMethod1(int[] nums, string exp)
     {
-        Assert.AreEqual(exp, sol.SubsetXORSum(nums));
-        Assert.AreEqual(exp, sol.WithBits(nums));
+        Assert.AreEqual(exp, sol.LargestDivisibleSubset(nums).Print());
     }
 
     [TestMethod]
