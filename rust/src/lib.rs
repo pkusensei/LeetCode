@@ -5,16 +5,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn make_the_integer_zero(num1: i32, num2: i32) -> i32 {
-    // num1 - n(2^p+num2) = 0
-    // num1 - n*num2 = n set bits
-    let [n1, n2] = [num1, num2].map(i64::from);
-    for k in 1..=60 {
-        if (n1 - k * n2).count_ones() <= k as u32 && k <= n1 - k * n2 {
-            return k as i32;
-        }
+pub fn number_of_good_subarray_splits(nums: Vec<i32>) -> i32 {
+    let idx: Vec<_> = nums
+        .iter()
+        .enumerate()
+        .filter_map(|(i, &v)| if v == 1 { Some(i) } else { None })
+        .collect();
+    if idx.is_empty() {
+        return 0;
     }
-    -1
+    idx.windows(2)
+        .fold(1, |acc, w| acc * (w[1] - w[0]) % 1_000_000_007) as i32
 }
 
 #[cfg(test)]
