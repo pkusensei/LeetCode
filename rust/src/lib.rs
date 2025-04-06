@@ -5,33 +5,28 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn survived_robots_healths(positions: &[i32], healths: &[i32], directions: &str) -> Vec<i32> {
-    use itertools::{Itertools, izip};
-    // (id, pos, health, dir)
-    let robs = izip!(positions.iter(), healths.iter(), directions.bytes())
-        .enumerate()
-        .map(|(i, (&p, &h, b))| (i, p, h, b))
-        .sorted_unstable_by_key(|t| t.1)
-        .collect_vec();
-    // (id, health, dir)
-    let mut stack: Vec<(usize, i32, u8)> = vec![];
-    'outer: for rob in robs {
-        let mut curr = (rob.0, rob.2, rob.3);
-        while stack.last().is_some_and(|&v| v.2 == b'R' && curr.2 == b'L') {
-            let v = stack.pop().unwrap();
-            match v.1.cmp(&curr.1) {
-                std::cmp::Ordering::Less => curr.1 -= 1,
-                std::cmp::Ordering::Equal => continue 'outer,
-                std::cmp::Ordering::Greater => {
-                    curr = v;
-                    curr.1 -= 1
-                }
-            }
+pub fn longest_alternating_subarray(nums: &[i32], threshold: i32) -> i32 {
+    let n = nums.len();
+    let mut left = 0;
+    let mut res = 0;
+    while left < n {
+        while nums.get(left).is_some_and(|&v| v & 1 == 1 || v > threshold) {
+            left += 1;
         }
-        stack.push(curr);
+        if left >= n {
+            break;
+        }
+        let mut right = left;
+        while nums
+            .get(1 + right)
+            .is_some_and(|&v| v <= threshold && v & 1 != nums[right] & 1)
+        {
+            right += 1;
+        }
+        res = res.max(right + 1 - left);
+        left += 1;
     }
-    stack.sort_unstable_by_key(|v| v.0);
-    stack.into_iter().map(|v| v.1).collect()
+    res as i32
 }
 
 #[cfg(test)]
@@ -65,25 +60,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            survived_robots_healths(&[5, 4, 3, 2, 1], &[2, 17, 9, 15, 10], "RRRRR"),
-            [2, 17, 9, 15, 10]
-        );
-        assert_eq!(
-            survived_robots_healths(&[3, 5, 2, 6], &[10, 10, 15, 12], "RLRL"),
-            [14]
-        );
-        assert_eq!(
-            survived_robots_healths(&[1, 2, 5, 6], &[10, 10, 11, 11], "RLRL"),
-            []
-        );
+        assert_eq!(longest_alternating_subarray(&[3, 2, 5, 4], 5), 3);
+        assert_eq!(longest_alternating_subarray(&[1, 2], 2), 1);
+        assert_eq!(longest_alternating_subarray(&[2, 3, 4, 5], 4), 3);
     }
 
     #[test]
-    fn test() {
-        assert_eq!(
-            survived_robots_healths(&[11, 44, 16], &[1, 20, 17], "RLR"),
-            [18]
-        );
-    }
+    fn test() {}
 }
