@@ -4,34 +4,31 @@ mod trie;
 
 #[allow(unused_imports)]
 use helper::*;
-use itertools::Itertools;
-use std::collections::HashMap;
 
-pub fn count_servers(n: i32, mut logs: Vec<[i32; 2]>, x: i32, queries: Vec<i32>) -> Vec<i32> {
-    logs.sort_unstable_by_key(|v| v[1]); // [id, time]
-    let qn = queries.len();
-    let qis = (0..qn)
-        .sorted_unstable_by_key(|&i| queries[i])
-        .collect_vec();
-    let mut res = vec![0; qn];
-    let [mut left, mut right] = [0, 0];
-    let mut map = HashMap::new();
-    for qi in qis {
-        let start = queries[qi] - x;
-        let end = queries[qi];
-        while logs.get(right).is_some_and(|v| v[1] <= end) {
-            *map.entry(logs[right][0]).or_insert(0) += 1;
-            right += 1;
-        }
-        while logs.get(left).is_some_and(|v| v[1] < start) {
-            let id = logs[left][0];
-            *map.entry(id).or_insert(0) -= 1;
-            left += 1;
-            if map[&id] == 0 {
-                map.remove(&id);
+pub fn count_beautiful_pairs(nums: Vec<i32>) -> i32 {
+    use itertools::Itertools;
+    const fn gcd(a: i32, b: i32) -> i32 {
+        if a == 0 { b } else { gcd(b % a, a) }
+    }
+
+    let ds = nums
+        .iter()
+        .map(|num| {
+            let mut num = *num;
+            let last = num % 10;
+            let mut first = 0;
+            while num > 0 {
+                first = num % 10;
+                num /= 10;
             }
+            [first, last]
+        })
+        .collect_vec();
+    let mut res = 0;
+    for (i, &[a, _]) in ds.iter().enumerate() {
+        for &[_, b] in ds.iter().skip(1 + i) {
+            res += i32::from(gcd(a, b) == 1);
         }
-        res[qi] = n - map.len() as i32;
     }
     res
 }
@@ -66,16 +63,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(
-            count_servers(3, vec![[1, 3], [2, 6], [1, 5]], 5, vec![10, 11]),
-            [1, 2]
-        );
-        assert_eq!(
-            count_servers(3, vec![[2, 4], [2, 1], [1, 2], [3, 1]], 2, vec![3, 4]),
-            [0, 1]
-        );
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
