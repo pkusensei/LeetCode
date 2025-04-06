@@ -5,52 +5,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn sum_imbalance_numbers(nums: &[i32]) -> i32 {
-    use std::collections::BTreeSet;
+pub fn alternating_subarray(nums: &[i32]) -> i32 {
     let mut res = 0;
-    for (i1, &a) in nums.iter().enumerate() {
-        let mut map = BTreeSet::from([a]);
-        let mut curr = 0;
-        for &b in nums.iter().skip(1 + i1) {
-            match (map.range(..=b).next_back(), map.range(b..).next()) {
-                (Some(&left), None) => curr += i32::from(b - left > 1),
-                (None, Some(&right)) => curr += i32::from(right - b > 1),
-                (Some(&left), Some(&right)) if b == left || b == right => (),
-                (Some(&left), Some(&right)) => match (b - left > 1, right - b > 1) {
-                    (true, true) => curr += 1,
-                    (true, false) | (false, true) => (),
-                    (false, false) => curr -= 1,
-                },
-                _ => (),
-            }
-            res += curr;
-            map.insert(b);
+    for (left, &v) in nums.iter().enumerate() {
+        let mut curr = v;
+        let mut d = 1;
+        let mut right = 1 + left;
+        while nums.get(right).is_some_and(|&v| v == curr + d) {
+            curr += d;
+            d *= -1;
+            right += 1;
         }
+        res = res.max(right - left);
     }
-    res
-}
-
-pub fn with_vec(nums: &[i32]) -> i32 {
-    let n = nums.len();
-    let mut res = 0;
-    for (i1, &a) in nums.iter().enumerate() {
-        let mut seen = vec![false; 2 + n];
-        let mut curr = 0;
-        seen[a as usize] = true;
-        for &b in nums.iter().skip(1 + i1) {
-            let b = b as usize;
-            if !seen[b] {
-                seen[b] = true;
-                if seen[b - 1] && seen[b + 1] {
-                    curr -= 1;
-                } else if !seen[b - 1] && !seen[b + 1] {
-                    curr += 1;
-                }
-            }
-            res += curr;
-        }
-    }
-    res
+    if res >= 2 { res as i32 } else { -1 }
 }
 
 #[cfg(test)]
@@ -84,16 +52,10 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(sum_imbalance_numbers(&[2, 3, 1, 4]), 3);
-        assert_eq!(sum_imbalance_numbers(&[1, 3, 3, 3, 5]), 8);
-
-        assert_eq!(with_vec(&[2, 3, 1, 4]), 3);
-        assert_eq!(with_vec(&[1, 3, 3, 3, 5]), 8);
+        assert_eq!(alternating_subarray(&[2, 3, 4, 3, 4]), 4);
+        assert_eq!(alternating_subarray(&[3, 4, 5]), 2);
     }
 
     #[test]
-    fn test() {
-        assert_eq!(sum_imbalance_numbers(&[1, 3, 2]), 1);
-        assert_eq!(with_vec(&[1, 3, 2]), 1);
-    }
+    fn test() {}
 }
