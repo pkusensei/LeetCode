@@ -5,46 +5,28 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_beautiful_substrings(s: &str) -> i32 {
-    let n = s.len();
-    dfs(s.as_bytes(), 0, &mut vec![None; n]).unwrap_or(-1)
-}
-
-fn dfs(s: &[u8], idx: usize, memo: &mut [Option<i32>]) -> Option<i32> {
-    let n = s.len();
-    if idx >= n {
-        return Some(0);
-    }
-    if s[idx] == b'0' {
-        return None;
-    }
-    if let Some(v) = memo[idx] {
-        return if v == -1 { None } else { Some(v) };
-    }
-    let mut curr = 0;
-    let mut res = i32::MAX;
-    for i in idx..n {
-        curr = curr * 2 + i32::from(s[i] - b'0');
-        if check(curr) {
-            if let Some(v) = dfs(s, 1 + i, memo) {
-                res = res.min(v);
+pub fn count_black_blocks(m: i32, n: i32, coordinates: &[[i32; 2]]) -> Vec<i64> {
+    use itertools::iproduct;
+    use std::collections::HashMap;
+    let mut map = HashMap::new();
+    for c in coordinates {
+        let [x, y] = c[..] else { unreachable!() };
+        for (dx, dy) in iproduct!(-1..=0, -1..=0) {
+            let bx = x + dx;
+            let by = y + dy;
+            if (0..m - 1).contains(&bx) && (0..n - 1).contains(&by) {
+                *map.entry([bx, by]).or_insert(0) += 1;
             }
         }
     }
-    if res == i32::MAX {
-        memo[idx] = Some(-1);
-        None
-    } else {
-        memo[idx] = Some(1 + res);
-        Some(1 + res)
+    let mut res = vec![];
+    let [m, n] = [m, n].map(|v| v as usize - 1);
+    res.push((m * n - map.len()) as i64);
+    for val in 1..=4 {
+        let c = map.values().filter(|&&v| v == val).count();
+        res.push(c as i64);
     }
-}
-
-const fn check(mut num: i32) -> bool {
-    while num > 1 && num % 5 == 0 {
-        num /= 5
-    }
-    num == 1
+    res
 }
 
 #[cfg(test)]
@@ -78,9 +60,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(minimum_beautiful_substrings("1011"), 2);
-        assert_eq!(minimum_beautiful_substrings("111"), 3);
-        assert_eq!(minimum_beautiful_substrings("0"), -1);
+        assert_eq!(count_black_blocks(3, 3, &[[0, 0]]), [3, 1, 0, 0, 0]);
+        assert_eq!(
+            count_black_blocks(3, 3, &[[0, 0], [1, 1], [0, 2]]),
+            [0, 2, 2, 0, 0]
+        );
     }
 
     #[test]
