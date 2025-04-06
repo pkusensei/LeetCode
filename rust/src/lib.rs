@@ -5,28 +5,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn longest_alternating_subarray(nums: &[i32], threshold: i32) -> i32 {
-    let n = nums.len();
-    let mut left = 0;
-    let mut res = 0;
-    while left < n {
-        while nums.get(left).is_some_and(|&v| v & 1 == 1 || v > threshold) {
-            left += 1;
+pub fn find_prime_pairs(n: i32) -> Vec<Vec<i32>> {
+    let n = n as usize;
+    let mut sieve = vec![true; 1 + n];
+    sieve[..2].fill(false);
+    for p in 2..=n {
+        if sieve[p] {
+            for i in (2 * p..=n).step_by(p) {
+                sieve[i] = false;
+            }
         }
-        if left >= n {
-            break;
-        }
-        let mut right = left;
-        while nums
-            .get(1 + right)
-            .is_some_and(|&v| v <= threshold && v & 1 != nums[right] & 1)
-        {
-            right += 1;
-        }
-        res = res.max(right + 1 - left);
-        left += 1;
     }
-    res as i32
+    let mut res = vec![];
+    for a in 2..=n / 2 {
+        if sieve[a] && sieve[n - a] {
+            res.push(vec![a as i32, (n - a) as i32]);
+        }
+    }
+    res
 }
 
 #[cfg(test)]
@@ -59,11 +55,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(longest_alternating_subarray(&[3, 2, 5, 4], 5), 3);
-        assert_eq!(longest_alternating_subarray(&[1, 2], 2), 1);
-        assert_eq!(longest_alternating_subarray(&[2, 3, 4, 5], 4), 3);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
