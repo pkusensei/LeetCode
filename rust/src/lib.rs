@@ -5,15 +5,46 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn relocate_marbles(nums: Vec<i32>, move_from: Vec<i32>, move_to: Vec<i32>) -> Vec<i32> {
-    use itertools::Itertools;
-    use std::collections::HashSet;
-    let mut set: HashSet<_> = nums.iter().copied().collect();
-    for (from, to) in move_from.iter().zip(move_to.iter()) {
-        set.remove(from);
-        set.insert(*to);
+pub fn minimum_beautiful_substrings(s: &str) -> i32 {
+    let n = s.len();
+    dfs(s.as_bytes(), 0, &mut vec![None; n]).unwrap_or(-1)
+}
+
+fn dfs(s: &[u8], idx: usize, memo: &mut [Option<i32>]) -> Option<i32> {
+    let n = s.len();
+    if idx >= n {
+        return Some(0);
     }
-    set.into_iter().sorted().collect()
+    if s[idx] == b'0' {
+        return None;
+    }
+    if let Some(v) = memo[idx] {
+        return if v == -1 { None } else { Some(v) };
+    }
+    let mut curr = 0;
+    let mut res = i32::MAX;
+    for i in idx..n {
+        curr = curr * 2 + i32::from(s[i] - b'0');
+        if check(curr) {
+            if let Some(v) = dfs(s, 1 + i, memo) {
+                res = res.min(v);
+            }
+        }
+    }
+    if res == i32::MAX {
+        memo[idx] = Some(-1);
+        None
+    } else {
+        memo[idx] = Some(1 + res);
+        Some(1 + res)
+    }
+}
+
+const fn check(mut num: i32) -> bool {
+    while num > 1 && num % 5 == 0 {
+        num /= 5
+    }
+    num == 1
 }
 
 #[cfg(test)]
@@ -46,7 +77,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(minimum_beautiful_substrings("1011"), 2);
+        assert_eq!(minimum_beautiful_substrings("111"), 3);
+        assert_eq!(minimum_beautiful_substrings("0"), -1);
+    }
 
     #[test]
     fn test() {}
