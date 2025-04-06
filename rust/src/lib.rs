@@ -5,20 +5,15 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn alternating_subarray(nums: &[i32]) -> i32 {
-    let mut res = 0;
-    for (left, &v) in nums.iter().enumerate() {
-        let mut curr = v;
-        let mut d = 1;
-        let mut right = 1 + left;
-        while nums.get(right).is_some_and(|&v| v == curr + d) {
-            curr += d;
-            d *= -1;
-            right += 1;
-        }
-        res = res.max(right - left);
+pub fn relocate_marbles(nums: Vec<i32>, move_from: Vec<i32>, move_to: Vec<i32>) -> Vec<i32> {
+    use itertools::Itertools;
+    use std::collections::HashSet;
+    let mut set: HashSet<_> = nums.iter().copied().collect();
+    for (from, to) in move_from.iter().zip(move_to.iter()) {
+        set.remove(from);
+        set.insert(*to);
     }
-    if res >= 2 { res as i32 } else { -1 }
+    set.into_iter().sorted().collect()
 }
 
 #[cfg(test)]
@@ -51,10 +46,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(alternating_subarray(&[2, 3, 4, 3, 4]), 4);
-        assert_eq!(alternating_subarray(&[3, 4, 5]), 2);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
