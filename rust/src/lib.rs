@@ -5,19 +5,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn split_words_by_separator(words: Vec<String>, separator: char) -> Vec<String> {
-    words
-        .iter()
-        .flat_map(|word| {
-            word.split(separator).filter_map(|s| {
-                if !s.is_empty() {
-                    Some(s.to_string())
-                } else {
-                    None
-                }
-            })
-        })
-        .collect()
+pub fn max_array_value(nums: Vec<i32>) -> i64 {
+    let n = nums.len();
+    let mut curr = i64::from(nums[n - 1]);
+    let mut res = curr;
+    for &num in nums[..n - 1].iter().rev() {
+        let num = i64::from(num);
+        if num <= curr {
+            curr += num
+        } else {
+            curr = num;
+        }
+        res = res.max(curr);
+    }
+    res
 }
 
 #[cfg(test)]
