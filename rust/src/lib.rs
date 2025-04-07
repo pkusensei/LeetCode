@@ -5,29 +5,47 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_non_decreasing_length(nums1: &[i32], nums2: &[i32]) -> i32 {
-    let n = nums1.len();
-    let [mut end1, mut end2] = [1, 1];
-    let mut res = 1;
-    for idx in 1..n {
-        let [mut curr1, mut curr2] = [1, 1];
-        if nums1[idx] >= nums1[idx - 1] {
-            curr1 = curr1.max(1 + end1);
+pub fn check_array(nums: Vec<i32>, k: i32) -> bool {
+    use itertools::Itertools;
+    let mut nums = nums;
+    let n = nums.len();
+    let k = k as usize;
+    for left in 0..=n - k {
+        let curr = nums[left];
+        if curr < 0 {
+            return false;
         }
-        if nums1[idx] >= nums2[idx - 1] {
-            curr1 = curr1.max(1 + end2);
+        if curr == 0 {
+            continue;
         }
-        if nums2[idx] >= nums1[idx - 1] {
-            curr2 = curr2.max(1 + end1);
+        for v in nums[left..left + k].iter_mut() {
+            *v -= curr;
         }
-        if nums2[idx] >= nums2[idx - 1] {
-            curr2 = curr2.max(1 + end2);
-        }
-        res = res.max(curr1).max(curr2);
-        end1 = curr1;
-        end2 = curr2;
     }
-    res
+    for v in nums.iter().tail(k) {
+        if *v != 0 {
+            return false;
+        }
+    }
+    true
+}
+
+pub fn sliding_window(nums: Vec<i32>, k: i32) -> bool {
+    let mut nums = nums;
+    let n = nums.len();
+    let k = k as usize;
+    let mut curr = 0;
+    for idx in 0..n {
+        if curr > nums[idx] {
+            return false;
+        }
+        nums[idx] -= curr;
+        curr += nums[idx];
+        if idx >= k - 1 {
+            curr -= nums[idx + 1 - k];
+        }
+    }
+    curr == 0
 }
 
 #[cfg(test)]
@@ -61,16 +79,28 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_non_decreasing_length(&[2, 3, 1], &[1, 2, 1]), 2);
-        assert_eq!(max_non_decreasing_length(&[1, 3, 2, 1], &[2, 2, 3, 4],), 4);
-        assert_eq!(max_non_decreasing_length(&[1, 1], &[2, 2]), 2);
+        assert!(check_array(vec![2, 2, 3, 1, 1, 0], 3));
+        assert!(!check_array(vec![1, 3, 1, 1], 2));
+
+        assert!(sliding_window(vec![2, 2, 3, 1, 1, 0], 3));
+        assert!(!sliding_window(vec![1, 3, 1, 1], 2));
     }
 
     #[test]
     fn test() {
-        assert_eq!(
-            max_non_decreasing_length(&[3, 19, 13, 19], &[20, 18, 7, 14]),
-            2
-        );
+        assert!(check_array(
+            vec![
+                60, 72, 87, 89, 63, 52, 64, 62, 31, 37, 57, 83, 98, 94, 92, 77, 94, 91, 87, 100,
+                91, 91, 50, 26
+            ],
+            4
+        ));
+        assert!(sliding_window(
+            vec![
+                60, 72, 87, 89, 63, 52, 64, 62, 31, 37, 57, 83, 98, 94, 92, 77, 94, 91, 87, 100,
+                91, 91, 50, 26
+            ],
+            4
+        ));
     }
 }
