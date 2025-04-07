@@ -6,16 +6,28 @@ namespace Solution;
 
 public class Solution
 {
-    public int MaximumBeauty(int[] nums, int k)
+    public int MinimumIndex(IList<int> nums)
     {
-        Array.Sort(nums);
-        int left = 0;
-        int res = 0;
-        for (int right = 0; right < nums.Length; right++)
+        int major = nums[0];
+        int count = 0;
+        foreach (var item in nums)
         {
-            while (nums[right] - nums[left] > 2 * k) { left += 1; }
-            res = Math.Max(res, right + 1 - left);
+            if (major == item) { count += 1; }
+            else { count -= 1; }
+            if (count == 0)
+            {
+                major = item;
+                count = 1;
+            }
         }
-        return res;
+        int left = 0;
+        int right = nums.Where(v => v == major).Count();
+        for (int i = 0; i < nums.Count; i++)
+        {
+            left += nums[i] == major ? 1 : 0;
+            right -= nums[i] == major ? 1 : 0;
+            if (left > (1 + i) / 2 && right > (nums.Count - i - 1) / 2) { return i; }
+        }
+        return -1;
     }
 }
