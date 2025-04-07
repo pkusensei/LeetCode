@@ -5,39 +5,49 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_score(nums: &[i32], x: i32) -> i64 {
-    let n = nums.len();
-    let prev = i64::from(nums[0]);
-    prev + dfs(nums, x.into(), 1, prev & 1, &mut vec![[-1, -1]; n])
+pub fn number_of_ways(n: i32, x: i32) -> i32 {
+    let n = n as usize;
+    let mut dp = vec![vec![-1; 1 + n]; 1 + n];
+    dfs(n, x as _, 1, &mut dp)
 }
 
-fn dfs(nums: &[i32], x: i64, idx: usize, par: i64, memo: &mut [[i64; 2]]) -> i64 {
-    if idx >= nums.len() {
-        return 0;
+fn dfs(n: usize, x: u32, start: usize, memo: &mut [Vec<i32>]) -> i32 {
+    if n == 0 {
+        return 1;
     }
-    if memo[idx][par as usize] > -1 {
-        return memo[idx][par as usize];
+    if memo[n][start] > -1 {
+        return memo[n][start];
     }
-    let skip = dfs(nums, x, 1 + idx, par, memo);
-    let val = i64::from(nums[idx]);
-    let take = val + dfs(nums, x, 1 + idx, val & 1, memo) - x * ((val & 1) ^ par);
-    memo[idx][par as usize] = skip.max(take);
-    memo[idx][par as usize]
+    let mut res = 0;
+    let mut base = start;
+    while base.pow(x) <= n {
+        res += dfs(n - base.pow(x), x, 1 + base, memo);
+        res %= 1_000_000_007;
+        base += 1;
+    }
+    memo[n][start] = res;
+    res
 }
 
-pub fn odd_even_dp(nums: &[i32], x: i32) -> i64 {
-    let x = i64::from(x);
-    let [mut dp0, mut dp1] = [0_i64, 0];
-    for &val in nums.iter().rev() {
-        let val = i64::from(val);
-        let par = val & 1;
-        if par == 0 {
-            dp0 = (dp0 + val).max(dp1 + val - x);
-        } else {
-            dp1 = (dp1 + val).max(dp0 + val - x);
+pub fn tabulation(n: i32, x: i32) -> i32 {
+    let n = n as usize;
+    let x = x as u32;
+    let mut base = 0;
+    let mut v = 1_usize;
+    while v.pow(x) <= n {
+        base = v;
+        v += 1;
+    }
+    let mut dp = vec![0; 1 + n];
+    dp[0] = 1;
+    for i1 in 1..=base {
+        let p = i1.pow(x);
+        for i2 in (p..=n).rev() {
+            dp[i2] += dp[i2 - p];
+            dp[i2] %= 1_000_000_007;
         }
     }
-    if nums[0] & 1 == 1 { dp1 } else { dp0 }
+    dp[n]
 }
 
 #[cfg(test)]
@@ -71,34 +81,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_score(&[2, 3, 6, 1, 9, 2], 5), 13);
-        assert_eq!(max_score(&[2, 4, 6, 8], 3), 20);
+        assert_eq!(number_of_ways(10, 2), 1);
+        assert_eq!(number_of_ways(4, 1), 2);
 
-        assert_eq!(odd_even_dp(&[2, 3, 6, 1, 9, 2], 5), 13);
-        assert_eq!(odd_even_dp(&[2, 4, 6, 8], 3), 20);
+        assert_eq!(tabulation(10, 2), 1);
+        assert_eq!(tabulation(4, 1), 2);
     }
 
     #[test]
-    fn test() {
-        assert_eq!(
-            max_score(
-                &[
-                    9, 58, 17, 54, 91, 90, 32, 6, 13, 67, 24, 80, 8, 56, 29, 66, 85, 38, 45, 13,
-                    20, 73, 16, 98, 28, 56, 23, 2, 47, 85, 11, 97, 72, 2, 28, 52, 33
-                ],
-                90
-            ),
-            886
-        );
-        assert_eq!(
-            odd_even_dp(
-                &[
-                    9, 58, 17, 54, 91, 90, 32, 6, 13, 67, 24, 80, 8, 56, 29, 66, 85, 38, 45, 13,
-                    20, 73, 16, 98, 28, 56, 23, 2, 47, 85, 11, 97, 72, 2, 28, 52, 33
-                ],
-                90
-            ),
-            886
-        );
-    }
+    fn test() {}
 }
