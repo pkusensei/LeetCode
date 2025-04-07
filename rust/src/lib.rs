@@ -5,18 +5,29 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_jumps(nums: &[i32], target: i32) -> i32 {
-    let n = nums.len();
-    let mut dp = vec![-1; n];
-    dp[0] = 0;
-    for end in 0..n {
-        for prev in 0..end {
-            if nums[end].abs_diff(nums[prev]) <= target as u32 && dp[prev] >= 0 {
-                dp[end] = dp[end].max(1 + dp[prev]);
-            }
+pub fn max_non_decreasing_length(nums1: &[i32], nums2: &[i32]) -> i32 {
+    let n = nums1.len();
+    let [mut end1, mut end2] = [1, 1];
+    let mut res = 1;
+    for idx in 1..n {
+        let [mut curr1, mut curr2] = [1, 1];
+        if nums1[idx] >= nums1[idx - 1] {
+            curr1 = curr1.max(1 + end1);
         }
+        if nums1[idx] >= nums2[idx - 1] {
+            curr1 = curr1.max(1 + end2);
+        }
+        if nums2[idx] >= nums1[idx - 1] {
+            curr2 = curr2.max(1 + end1);
+        }
+        if nums2[idx] >= nums2[idx - 1] {
+            curr2 = curr2.max(1 + end2);
+        }
+        res = res.max(curr1).max(curr2);
+        end1 = curr1;
+        end2 = curr2;
     }
-    dp[n - 1]
+    res
 }
 
 #[cfg(test)]
@@ -50,13 +61,16 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(maximum_jumps(&[1, 3, 6, 4, 1, 2], 2), 3);
-        assert_eq!(maximum_jumps(&[1, 3, 6, 4, 1, 2], 3), 5);
-        assert_eq!(maximum_jumps(&[1, 3, 6, 4, 1, 2], 0), -1);
+        assert_eq!(max_non_decreasing_length(&[2, 3, 1], &[1, 2, 1]), 2);
+        assert_eq!(max_non_decreasing_length(&[1, 3, 2, 1], &[2, 2, 3, 4],), 4);
+        assert_eq!(max_non_decreasing_length(&[1, 1], &[2, 2]), 2);
     }
 
     #[test]
     fn test() {
-        assert_eq!(maximum_jumps(&[0, 2, 1, 3], 1), -1);
+        assert_eq!(
+            max_non_decreasing_length(&[3, 19, 13, 19], &[20, 18, 7, 14]),
+            2
+        );
     }
 }
