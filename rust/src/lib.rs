@@ -5,20 +5,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_array_value(nums: Vec<i32>) -> i64 {
-    let n = nums.len();
-    let mut curr = i64::from(nums[n - 1]);
-    let mut res = curr;
-    for &num in nums[..n - 1].iter().rev() {
-        let num = i64::from(num);
-        if num <= curr {
-            curr += num
-        } else {
-            curr = num;
+pub fn max_increasing_groups(mut usage_limits: Vec<i32>) -> i32 {
+    usage_limits.sort_unstable();
+    let mut prefix = 0;
+    let mut res = 0;
+    for &num in usage_limits.iter() {
+        prefix += i64::from(num);
+        if prefix > res {
+            res += 1; // enough to form new group
+            prefix -= res;
         }
-        res = res.max(curr);
     }
-    res
+    res as i32
 }
 
 #[cfg(test)]
@@ -51,7 +49,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(max_increasing_groups(vec![1, 2, 5]), 3);
+        assert_eq!(max_increasing_groups(vec![2, 1, 2]), 2);
+        assert_eq!(max_increasing_groups(vec![1, 1]), 1);
+    }
 
     #[test]
     fn test() {}
