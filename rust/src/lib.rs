@@ -2,59 +2,21 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn can_partition(nums: &[i32]) -> bool {
-    let sum: i32 = nums.iter().sum();
-    if sum & 1 == 1 {
-        return false;
-    }
-    dfs(nums, 0, sum / 2, &mut HashMap::new())
-}
-
-fn dfs(nums: &[i32], idx: usize, target: i32, memo: &mut HashMap<(usize, i32), bool>) -> bool {
-    if target == 0 {
-        return true;
-    }
-    if idx >= nums.len() || target < 0 {
-        return false;
-    }
-    if let Some(&v) = memo.get(&(idx, target)) {
-        return v;
-    }
-    let skip = dfs(nums, 1 + idx, target, memo);
-    let take = dfs(nums, 1 + idx, target - nums[idx], memo);
-    let res = skip || take;
-    memo.insert((idx, target), res);
-    res
-}
-
-pub fn tabulation(nums: &[i32]) -> bool {
-    let sum: i32 = nums.iter().sum();
-    if sum & 1 == 1 {
-        return false;
-    }
-    let target = (sum / 2) as usize;
-    let mut dp = vec![false; 1 + target];
-    dp[0] = true;
-    for &num in nums {
-        let num = num as usize;
-        if num > target {
-            return false;
-        }
-        for prev in (0..=target - num).rev() {
-            if dp[prev] {
-                dp[prev + num] = true;
+pub fn maximum_jumps(nums: &[i32], target: i32) -> i32 {
+    let n = nums.len();
+    let mut dp = vec![-1; n];
+    dp[0] = 0;
+    for end in 0..n {
+        for prev in 0..end {
+            if nums[end].abs_diff(nums[prev]) <= target as u32 && dp[prev] >= 0 {
+                dp[end] = dp[end].max(1 + dp[prev]);
             }
         }
-        if dp[target] {
-            return true;
-        }
     }
-    dp[target]
+    dp[n - 1]
 }
 
 #[cfg(test)]
@@ -88,13 +50,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert!(can_partition(&[1, 5, 11, 5]));
-        assert!(!can_partition(&[1, 2, 3, 5]));
-
-        assert!(tabulation(&[1, 5, 11, 5]));
-        assert!(!tabulation(&[1, 2, 3, 5]));
+        assert_eq!(maximum_jumps(&[1, 3, 6, 4, 1, 2], 2), 3);
+        assert_eq!(maximum_jumps(&[1, 3, 6, 4, 1, 2], 3), 5);
+        assert_eq!(maximum_jumps(&[1, 3, 6, 4, 1, 2], 0), -1);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(maximum_jumps(&[0, 2, 1, 3], 1), -1);
+    }
 }
