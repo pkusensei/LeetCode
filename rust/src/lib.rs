@@ -5,47 +5,12 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn check_array(nums: Vec<i32>, k: i32) -> bool {
-    use itertools::Itertools;
-    let mut nums = nums;
+pub fn sum_of_squares(nums: Vec<i32>) -> i32 {
     let n = nums.len();
-    let k = k as usize;
-    for left in 0..=n - k {
-        let curr = nums[left];
-        if curr < 0 {
-            return false;
-        }
-        if curr == 0 {
-            continue;
-        }
-        for v in nums[left..left + k].iter_mut() {
-            *v -= curr;
-        }
-    }
-    for v in nums.iter().tail(k) {
-        if *v != 0 {
-            return false;
-        }
-    }
-    true
-}
-
-pub fn sliding_window(nums: Vec<i32>, k: i32) -> bool {
-    let mut nums = nums;
-    let n = nums.len();
-    let k = k as usize;
-    let mut curr = 0;
-    for idx in 0..n {
-        if curr > nums[idx] {
-            return false;
-        }
-        nums[idx] -= curr;
-        curr += nums[idx];
-        if idx >= k - 1 {
-            curr -= nums[idx + 1 - k];
-        }
-    }
-    curr == 0
+    (1..)
+        .zip(nums)
+        .filter_map(|(i, v)| if n % i == 0 { Some(v.pow(2)) } else { None })
+        .sum()
 }
 
 #[cfg(test)]
@@ -78,29 +43,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert!(check_array(vec![2, 2, 3, 1, 1, 0], 3));
-        assert!(!check_array(vec![1, 3, 1, 1], 2));
-
-        assert!(sliding_window(vec![2, 2, 3, 1, 1, 0], 3));
-        assert!(!sliding_window(vec![1, 3, 1, 1], 2));
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert!(check_array(
-            vec![
-                60, 72, 87, 89, 63, 52, 64, 62, 31, 37, 57, 83, 98, 94, 92, 77, 94, 91, 87, 100,
-                91, 91, 50, 26
-            ],
-            4
-        ));
-        assert!(sliding_window(
-            vec![
-                60, 72, 87, 89, 63, 52, 64, 62, 31, 37, 57, 83, 98, 94, 92, 77, 94, 91, 87, 100,
-                91, 91, 50, 26
-            ],
-            4
-        ));
-    }
+    fn test() {}
 }
