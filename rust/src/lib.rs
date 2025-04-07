@@ -2,31 +2,59 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_black_blocks(m: i32, n: i32, coordinates: &[[i32; 2]]) -> Vec<i64> {
-    use itertools::iproduct;
-    use std::collections::HashMap;
-    let mut map = HashMap::new();
-    for c in coordinates {
-        let [x, y] = c[..] else { unreachable!() };
-        for (dx, dy) in iproduct!(-1..=0, -1..=0) {
-            let bx = x + dx;
-            let by = y + dy;
-            if (0..m - 1).contains(&bx) && (0..n - 1).contains(&by) {
-                *map.entry([bx, by]).or_insert(0) += 1;
+pub fn can_partition(nums: &[i32]) -> bool {
+    let sum: i32 = nums.iter().sum();
+    if sum & 1 == 1 {
+        return false;
+    }
+    dfs(nums, 0, sum / 2, &mut HashMap::new())
+}
+
+fn dfs(nums: &[i32], idx: usize, target: i32, memo: &mut HashMap<(usize, i32), bool>) -> bool {
+    if target == 0 {
+        return true;
+    }
+    if idx >= nums.len() || target < 0 {
+        return false;
+    }
+    if let Some(&v) = memo.get(&(idx, target)) {
+        return v;
+    }
+    let skip = dfs(nums, 1 + idx, target, memo);
+    let take = dfs(nums, 1 + idx, target - nums[idx], memo);
+    let res = skip || take;
+    memo.insert((idx, target), res);
+    res
+}
+
+pub fn tabulation(nums: &[i32]) -> bool {
+    let sum: i32 = nums.iter().sum();
+    if sum & 1 == 1 {
+        return false;
+    }
+    let target = (sum / 2) as usize;
+    let mut dp = vec![false; 1 + target];
+    dp[0] = true;
+    for &num in nums {
+        let num = num as usize;
+        if num > target {
+            return false;
+        }
+        for prev in (0..=target - num).rev() {
+            if dp[prev] {
+                dp[prev + num] = true;
             }
         }
+        if dp[target] {
+            return true;
+        }
     }
-    let mut res = vec![];
-    let [m, n] = [m, n].map(|v| v as usize - 1);
-    res.push((m * n - map.len()) as i64);
-    for val in 1..=4 {
-        let c = map.values().filter(|&&v| v == val).count();
-        res.push(c as i64);
-    }
-    res
+    dp[target]
 }
 
 #[cfg(test)]
@@ -60,11 +88,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(count_black_blocks(3, 3, &[[0, 0]]), [3, 1, 0, 0, 0]);
-        assert_eq!(
-            count_black_blocks(3, 3, &[[0, 0], [1, 1], [0, 2]]),
-            [0, 2, 2, 0, 0]
-        );
+        assert!(can_partition(&[1, 5, 11, 5]));
+        assert!(!can_partition(&[1, 2, 3, 5]));
+
+        assert!(tabulation(&[1, 5, 11, 5]));
+        assert!(!tabulation(&[1, 2, 3, 5]));
     }
 
     #[test]
