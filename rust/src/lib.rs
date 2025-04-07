@@ -2,38 +2,23 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashSet;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn longest_valid_substring(word: &str, forbidden: &[&str]) -> i32 {
-    let (s, n) = (word.as_bytes(), word.len());
-    let set: HashSet<_> = forbidden.iter().map(|s| s.as_bytes()).collect();
-    let mut res = 0;
-    let mut left = 0;
-    for right in 0..n {
-        let start = left.max(right.saturating_sub(10));
-        for i in start..=right {
-            if is_valid(&set, &s[i..=right]) {
-                break;
-            } else {
-                left = 1 + i;
-            }
-        }
-        res = res.max(right + 1 - left);
+pub fn is_good(nums: Vec<i32>) -> bool {
+    let n = nums.len() - 1;
+    if n == 0 {
+        return false;
     }
-    res as i32
-}
-
-fn is_valid(set: &HashSet<&[u8]>, s: &[u8]) -> bool {
-    let n = s.len();
-    for i in (0..n).rev() {
-        if set.contains(&s[i..]) {
+    let mut count = vec![0; n];
+    for &num in nums.iter() {
+        let num = num as usize - 1;
+        if num >= n {
             return false;
         }
+        count[num] += 1;
     }
-    true
+    count[..n - 1].iter().all(|&v| v == 1) && count[n - 1] == 2
 }
 
 #[cfg(test)]
@@ -66,10 +51,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(longest_valid_substring("cbaaaabc", &["aaa", "cb"]), 4);
-        assert_eq!(longest_valid_substring("leetcode", &["de", "le", "e"]), 4);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
