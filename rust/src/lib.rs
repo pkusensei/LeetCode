@@ -5,24 +5,39 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn sort_vowels(s: String) -> String {
-    use itertools::Itertools;
-    const V: &[u8] = b"AEIOUaeiou";
-    let mut s = s.into_bytes();
-    let v = s
-        .iter()
-        .copied()
-        .filter(|b| V.contains(b))
-        .sorted_unstable()
-        .collect_vec();
-    let mut idx = 0;
-    for b in s.iter_mut() {
-        if V.contains(b) {
-            *b = v[idx];
-            idx += 1;
+pub fn max_score(nums: &[i32], x: i32) -> i64 {
+    let n = nums.len();
+    let prev = i64::from(nums[0]);
+    prev + dfs(nums, x.into(), 1, prev & 1, &mut vec![[-1, -1]; n])
+}
+
+fn dfs(nums: &[i32], x: i64, idx: usize, par: i64, memo: &mut [[i64; 2]]) -> i64 {
+    if idx >= nums.len() {
+        return 0;
+    }
+    if memo[idx][par as usize] > -1 {
+        return memo[idx][par as usize];
+    }
+    let skip = dfs(nums, x, 1 + idx, par, memo);
+    let val = i64::from(nums[idx]);
+    let take = val + dfs(nums, x, 1 + idx, val & 1, memo) - x * ((val & 1) ^ par);
+    memo[idx][par as usize] = skip.max(take);
+    memo[idx][par as usize]
+}
+
+pub fn odd_even_dp(nums: &[i32], x: i32) -> i64 {
+    let x = i64::from(x);
+    let [mut dp0, mut dp1] = [0_i64, 0];
+    for &val in nums.iter().rev() {
+        let val = i64::from(val);
+        let par = val & 1;
+        if par == 0 {
+            dp0 = (dp0 + val).max(dp1 + val - x);
+        } else {
+            dp1 = (dp1 + val).max(dp0 + val - x);
         }
     }
-    String::from_utf8(s).unwrap()
+    if nums[0] & 1 == 1 { dp1 } else { dp0 }
 }
 
 #[cfg(test)]
@@ -55,8 +70,35 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(max_score(&[2, 3, 6, 1, 9, 2], 5), 13);
+        assert_eq!(max_score(&[2, 4, 6, 8], 3), 20);
+
+        assert_eq!(odd_even_dp(&[2, 3, 6, 1, 9, 2], 5), 13);
+        assert_eq!(odd_even_dp(&[2, 4, 6, 8], 3), 20);
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(
+            max_score(
+                &[
+                    9, 58, 17, 54, 91, 90, 32, 6, 13, 67, 24, 80, 8, 56, 29, 66, 85, 38, 45, 13,
+                    20, 73, 16, 98, 28, 56, 23, 2, 47, 85, 11, 97, 72, 2, 28, 52, 33
+                ],
+                90
+            ),
+            886
+        );
+        assert_eq!(
+            odd_even_dp(
+                &[
+                    9, 58, 17, 54, 91, 90, 32, 6, 13, 67, 24, 80, 8, 56, 29, 66, 85, 38, 45, 13,
+                    20, 73, 16, 98, 28, 56, 23, 2, 47, 85, 11, 97, 72, 2, 28, 52, 33
+                ],
+                90
+            ),
+            886
+        );
+    }
 }
