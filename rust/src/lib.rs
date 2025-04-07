@@ -5,20 +5,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_good(nums: Vec<i32>) -> bool {
-    let n = nums.len() - 1;
-    if n == 0 {
-        return false;
-    }
-    let mut count = vec![0; n];
-    for &num in nums.iter() {
-        let num = num as usize - 1;
-        if num >= n {
-            return false;
+pub fn sort_vowels(s: String) -> String {
+    use itertools::Itertools;
+    const V: &[u8] = b"AEIOUaeiou";
+    let mut s = s.into_bytes();
+    let v = s
+        .iter()
+        .copied()
+        .filter(|b| V.contains(b))
+        .sorted_unstable()
+        .collect_vec();
+    let mut idx = 0;
+    for b in s.iter_mut() {
+        if V.contains(b) {
+            *b = v[idx];
+            idx += 1;
         }
-        count[num] += 1;
     }
-    count[..n - 1].iter().all(|&v| v == 1) && count[n - 1] == 2
+    String::from_utf8(s).unwrap()
 }
 
 #[cfg(test)]
