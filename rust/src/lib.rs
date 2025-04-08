@@ -5,42 +5,26 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_palindrome_paths(parent: &[i32], s: &str) -> i64 {
-    let n = parent.len();
-    let adj = parent
-        .iter()
-        .enumerate()
-        .fold(vec![vec![]; n], |mut acc, (i, &p)| {
-            if p >= 0 {
-                acc[p as usize].push(i);
-            }
-            acc
-        });
-    let mut masks = vec![0; n];
-    dfs(&adj, s.as_bytes(), 0, 0, &mut masks);
+pub fn count_complete_subarrays(nums: Vec<i32>) -> i32 {
+    use itertools::Itertools;
+    use std::collections::HashMap;
+    let n = nums.len();
+    let count = nums.iter().unique().count();
+    let mut map = HashMap::new();
+    let mut left = 0;
     let mut res = 0;
-    let mut seen = std::collections::HashMap::new();
-    for &mask in masks[1..].iter() {
-        res += i64::from(mask.count_ones() <= 1);
-        for bit in 0..26 {
-            let xor = mask ^ (1 << bit);
-            res += seen.get(&xor).unwrap_or(&0);
+    for (right, &num) in nums.iter().enumerate() {
+        *map.entry(num).or_insert(0) += 1;
+        while map.len() == count {
+            res += n - right;
+            *map.entry(nums[left]).or_insert(0) -= 1;
+            if map[&nums[left]] == 0 {
+                map.remove(&nums[left]);
+            }
+            left += 1;
         }
-        let v = seen.entry(mask).or_insert(0);
-        res += *v;
-        *v += 1;
     }
-    res
-}
-
-fn dfs(adj: &[Vec<usize>], s: &[u8], node: usize, mut mask: i32, masks: &mut [i32]) {
-    if node > 0 {
-        mask ^= 1 << (s[node] - b'a');
-        masks[node] = mask;
-    }
-    for &next in adj[node].iter() {
-        dfs(adj, s, next, mask, masks);
-    }
+    res as i32
 }
 
 #[cfg(test)]
@@ -73,10 +57,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(count_palindrome_paths(&[-1, 0, 0, 1, 1, 2], &"acaabc"), 8);
-        assert_eq!(count_palindrome_paths(&[-1, 0, 0, 0, 0], &"aaaaa"), 10);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
