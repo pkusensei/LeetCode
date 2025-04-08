@@ -2,58 +2,25 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_stepping_numbers(low: String, high: &str) -> i32 {
-    let mut low = low.into_bytes();
-    for v in low.iter_mut().rev() {
-        if *v == b'0' {
-            *v = b'9'
+pub fn minimum_seconds(nums: &[i32]) -> i32 {
+    use std::collections::HashMap;
+    let n = nums.len() as i32;
+    let mut map = HashMap::<_, Vec<_>>::new();
+    for (i, &num) in nums.iter().enumerate() {
+        map.entry(num).or_default().push(i as i32);
+    }
+    let mut res = n;
+    for v in map.values() {
+        if v.len() == 1 {
+            res = res.min(n / 2);
         } else {
-            *v -= 1;
-            break;
+            let curr: i32 = v.windows(2).map(|w| (w[1] - w[0]) / 2).max().unwrap();
+            res = res.min(curr.max((v[0] + n - v.last().unwrap()) / 2));
         }
     }
-    (count_less_than(high.as_bytes()) - count_less_than(&low)).rem_euclid(MOD)
-}
-
-const MOD: i32 = 1_000_000_007;
-
-fn count_less_than(s: &[u8]) -> i32 {
-    // -1 => the seq of all (-1)'s
-    dfs(s, 0, true, -1, &mut HashMap::new()) - 1
-}
-
-fn dfs(
-    s: &[u8],
-    idx: usize,
-    tight: bool,
-    last: i32,
-    memo: &mut HashMap<(usize, bool, i32), i32>,
-) -> i32 {
-    if idx == s.len() {
-        return 1;
-    }
-    let key = (idx, tight, last);
-    if let Some(&v) = memo.get(&key) {
-        return v;
-    }
-    let max_d = if tight { i32::from(s[idx] - b'0') } else { 9 };
-    let mut res = 0;
-    for d in 0..=max_d {
-        let next_tight = tight && d == max_d;
-        if last == -1 {
-            let digit = if d == 0 { -1 } else { d };
-            res += dfs(s, 1 + idx, next_tight, digit, memo);
-        } else if last.abs_diff(d) == 1 {
-            res += dfs(s, 1 + idx, next_tight, d, memo);
-        }
-        res %= MOD;
-    }
-    memo.insert(key, res);
     res
 }
 
@@ -88,16 +55,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(count_less_than(b"11"), 10);
-        assert_eq!(count_less_than(b"0"), 0);
-        assert_eq!(count_stepping_numbers("1".into(), "11"), 10);
-        assert_eq!(count_stepping_numbers("90".into(), "101"), 2);
+        assert_eq!(minimum_seconds(&[1, 2, 1, 2]), 1);
+        assert_eq!(minimum_seconds(&[2, 1, 3, 3, 2]), 2);
+        assert_eq!(minimum_seconds(&[5, 5, 5, 5]), 0);
     }
 
     #[test]
-    fn test() {
-        assert_eq!(count_less_than(b"149"), 29);
-        assert_eq!(count_less_than(b"17"), 11);
-        assert_eq!(count_stepping_numbers("17".into(), "149"), 18);
-    }
+    fn test() {}
 }
