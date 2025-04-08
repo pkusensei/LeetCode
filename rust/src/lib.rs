@@ -5,16 +5,37 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn final_string(s: String) -> String {
-    let mut res = vec![];
-    for b in s.bytes() {
-        if b == b'i' {
-            res.reverse();
-        } else {
-            res.push(b);
-        }
+pub fn can_split_array(nums: Vec<i32>, m: i32) -> bool {
+    let n = nums.len();
+    if n <= 2 {
+        return true;
     }
-    String::from_utf8(res).unwrap()
+    // let sum: i32 = nums.iter().sum();
+    // dfs(&nums, m, sum, 0, n - 1, &mut vec![vec![None; n]; n])
+    nums.windows(2).any(|w| w[0] + w[1] >= m)
+}
+
+fn dfs(
+    nums: &[i32],
+    m: i32,
+    sum: i32,
+    left: usize,
+    right: usize,
+    memo: &mut [Vec<Option<bool>>],
+) -> bool {
+    if left == right {
+        return true;
+    }
+    if sum < m {
+        return false;
+    }
+    if let Some(v) = memo[left][right] {
+        return v;
+    }
+    let res = dfs(nums, m, sum - nums[left], left + 1, right, memo)
+        || dfs(nums, m, sum - nums[right], left, right - 1, memo);
+    memo[left][right] = Some(res);
+    res
 }
 
 #[cfg(test)]
