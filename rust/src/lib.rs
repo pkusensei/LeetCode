@@ -5,18 +5,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_increasing_groups(mut usage_limits: Vec<i32>) -> i32 {
-    usage_limits.sort_unstable();
-    let mut prefix = 0;
-    let mut res = 0;
-    for &num in usage_limits.iter() {
-        prefix += i64::from(num);
-        if prefix > res {
-            res += 1; // enough to form new group
-            prefix -= res;
+pub fn minimum_operations(nums: Vec<i32>) -> i32 {
+    let mut seen = std::collections::HashSet::new();
+    let mut len = nums.len();
+    for (idx, &num) in nums.iter().enumerate().rev() {
+        if seen.insert(num) {
+            len = idx;
+        } else {
+            break;
         }
     }
-    res as i32
+    (len / 3) as i32 + i32::from(len % 3 > 0)
 }
 
 #[cfg(test)]
@@ -49,11 +48,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(max_increasing_groups(vec![1, 2, 5]), 3);
-        assert_eq!(max_increasing_groups(vec![2, 1, 2]), 2);
-        assert_eq!(max_increasing_groups(vec![1, 1]), 1);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
