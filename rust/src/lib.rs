@@ -2,59 +2,59 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_string(a: &str, b: &str, c: &str) -> String {
-    use itertools::{Itertools, chain};
-    let res = chain!(a.bytes(), b.bytes(), c.bytes()).collect_vec();
-    let s = [a.as_bytes(), b.as_bytes(), c.as_bytes()]
-        .iter()
-        .permutations(3)
-        .map(|v| {
-            let [a, b, c] = v[..] else { unreachable!() };
-            let v = build(a, b, c);
-            dbg!(v)
-        })
-        .min_by(|a, b| a.len().cmp(&b.len()).then(a.cmp(b)))
-        .unwrap_or(res);
-    String::from_utf8(s).unwrap()
-}
-
-fn build(a: &[u8], b: &[u8], c: &[u8]) -> Vec<u8> {
-    let mut res = a.to_vec();
-    if !is_sub(&res, b) {
-        append(&mut res, b);
-    }
-    if !is_sub(&res, c) {
-        append(&mut res, c);
-    }
-    res
-}
-
-fn is_sub(mut hay: &[u8], needle: &[u8]) -> bool {
-    while !hay.is_empty() {
-        if hay.starts_with(needle) {
-            return true;
-        }
-        hay = &hay[1..];
-    }
-    false
-}
-
-fn append(res: &mut Vec<u8>, b: &[u8]) {
-    let n = b.len();
-    let mut flag = false;
-    for i in (0..n).rev() {
-        if res.ends_with(&b[..=i]) {
-            res.extend_from_slice(&b[1 + i..]);
-            flag = true;
+pub fn count_stepping_numbers(low: String, high: &str) -> i32 {
+    let mut low = low.into_bytes();
+    for v in low.iter_mut().rev() {
+        if *v == b'0' {
+            *v = b'9'
+        } else {
+            *v -= 1;
             break;
         }
     }
-    if !flag {
-        res.extend_from_slice(b);
+    (count_less_than(high.as_bytes()) - count_less_than(&low)).rem_euclid(MOD)
+}
+
+const MOD: i32 = 1_000_000_007;
+
+fn count_less_than(s: &[u8]) -> i32 {
+    // -1 => the seq of all (-1)'s
+    dfs(s, 0, true, -1, &mut HashMap::new()) - 1
+}
+
+fn dfs(
+    s: &[u8],
+    idx: usize,
+    tight: bool,
+    last: i32,
+    memo: &mut HashMap<(usize, bool, i32), i32>,
+) -> i32 {
+    if idx == s.len() {
+        return 1;
     }
+    let key = (idx, tight, last);
+    if let Some(&v) = memo.get(&key) {
+        return v;
+    }
+    let max_d = if tight { i32::from(s[idx] - b'0') } else { 9 };
+    let mut res = 0;
+    for d in 0..=max_d {
+        let next_tight = tight && d == max_d;
+        if last == -1 {
+            let digit = if d == 0 { -1 } else { d };
+            res += dfs(s, 1 + idx, next_tight, digit, memo);
+        } else if last.abs_diff(d) == 1 {
+            res += dfs(s, 1 + idx, next_tight, d, memo);
+        }
+        res %= MOD;
+    }
+    memo.insert(key, res);
+    res
 }
 
 #[cfg(test)]
@@ -88,12 +88,16 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(minimum_string("abc", "bca", "aaa"), "aaabca");
-        assert_eq!(minimum_string("ab", "ba", "aba"), "aba");
+        assert_eq!(count_less_than(b"11"), 10);
+        assert_eq!(count_less_than(b"0"), 0);
+        assert_eq!(count_stepping_numbers("1".into(), "11"), 10);
+        assert_eq!(count_stepping_numbers("90".into(), "101"), 2);
     }
 
     #[test]
     fn test() {
-        assert_eq!(minimum_string("cac", "b", "a"), "bcac")
+        assert_eq!(count_less_than(b"149"), 29);
+        assert_eq!(count_less_than(b"17"), 11);
+        assert_eq!(count_stepping_numbers("17".into(), "149"), 18);
     }
 }
