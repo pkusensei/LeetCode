@@ -5,12 +5,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_acronym(words: Vec<String>, s: String) -> bool {
-    words.len() == s.len()
-        && words
-            .iter()
-            .zip(s.bytes())
-            .all(|(a, b)| a.as_bytes()[0] == b)
+pub fn minimum_sum(n: i32, k: i32) -> i32 {
+    use std::collections::HashSet;
+    let mut set = HashSet::new();
+    let mut num = 1;
+    while set.len() < n as usize {
+        while num < k && set.contains(&(k - num)) {
+            num += 1;
+        }
+        set.insert(num);
+        num += 1;
+    }
+    set.into_iter().sum()
 }
 
 #[cfg(test)]
