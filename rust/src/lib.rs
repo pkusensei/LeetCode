@@ -2,40 +2,78 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::VecDeque;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn can_split_array(nums: Vec<i32>, m: i32) -> bool {
-    let n = nums.len();
-    if n <= 2 {
-        return true;
+pub fn maximum_safeness_factor(grid: Vec<Vec<i32>>) -> i32 {
+    let n = grid.len();
+    let mut queue = VecDeque::new();
+    for (r, row) in grid.iter().enumerate() {
+        for (c, &v) in row.iter().enumerate() {
+            if v == 1 {
+                queue.push_back([r, c]);
+            }
+        }
     }
-    // let sum: i32 = nums.iter().sum();
-    // dfs(&nums, m, sum, 0, n - 1, &mut vec![vec![None; n]; n])
-    nums.windows(2).any(|w| w[0] + w[1] >= m)
+    let mut dists = vec![vec![i32::MAX; n]; n];
+    let mut dist = 0;
+    while !queue.is_empty() {
+        let len = queue.len();
+        for _ in 0..len {
+            let [r, c] = queue.pop_front().unwrap();
+            dists[r][c] = dists[r][c].min(dist);
+            for [nr, nc] in neighbors([r, c]) {
+                if grid
+                    .get(nr)
+                    .is_some_and(|row| row.get(nc).is_some_and(|&v| v == 0))
+                    && dists[nr][nc] > 1 + dist
+                {
+                    dists[nr][nc] = 1 + dist;
+                    queue.push_back([nr, nc]);
+                }
+            }
+        }
+        dist += 1;
+    }
+    let mut left = 0;
+    let mut right = dist;
+    while left < right {
+        let mid = left + (right + 1 - left) / 2;
+        if check(&grid, &dists, mid) {
+            left = mid;
+        } else {
+            right = mid - 1;
+        }
+    }
+    left
 }
 
-fn dfs(
-    nums: &[i32],
-    m: i32,
-    sum: i32,
-    left: usize,
-    right: usize,
-    memo: &mut [Vec<Option<bool>>],
-) -> bool {
-    if left == right {
-        return true;
-    }
-    if sum < m {
+fn check(grid: &[Vec<i32>], dists: &[Vec<i32>], mid: i32) -> bool {
+    let n = grid.len();
+    if dists[0][0] < mid || dists[n - 1][n - 1] < mid {
         return false;
     }
-    if let Some(v) = memo[left][right] {
-        return v;
+    let mut queue = VecDeque::from([[0, 0]]);
+    let mut seen = vec![vec![false; n]; n];
+    seen[0][0] = true;
+    while let Some([r, c]) = queue.pop_front() {
+        if r == n - 1 && c == n - 1 {
+            return true;
+        }
+        for [nr, nc] in neighbors([r, c]) {
+            if dists
+                .get(nr)
+                .is_some_and(|row| row.get(nc).is_some_and(|&v| v >= mid))
+                && !seen[nr][nc]
+            {
+                seen[nr][nc] = true;
+                queue.push_back([nr, nc]);
+            }
+        }
     }
-    let res = dfs(nums, m, sum - nums[left], left + 1, right, memo)
-        || dfs(nums, m, sum - nums[right], left, right - 1, memo);
-    memo[left][right] = Some(res);
-    res
+    false
 }
 
 #[cfg(test)]
@@ -68,8 +106,28 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(
+            maximum_safeness_factor(vec![vec![1, 0, 0], vec![0, 0, 0], vec![0, 0, 1]]),
+            0
+        );
+        assert_eq!(
+            maximum_safeness_factor(vec![vec![0, 0, 1], vec![0, 0, 0], vec![0, 0, 0]]),
+            2
+        );
+        assert_eq!(
+            maximum_safeness_factor(vec![
+                vec![0, 0, 0, 1],
+                vec![0, 0, 0, 0],
+                vec![0, 0, 0, 0],
+                vec![1, 0, 0, 0]
+            ]),
+            2
+        );
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(maximum_safeness_factor(vec![vec![1]]), 0);
+    }
 }
