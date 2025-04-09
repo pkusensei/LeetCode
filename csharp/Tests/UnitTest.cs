@@ -10,12 +10,11 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(new[] { 1, 8, 9 }, "[3,7,8]")]
-    [DataRow(new[] { 9, 9, 9 }, "[1,9,9,8]")]
-    public void TestMethod1(int[] nums, string exp)
+    [DataRow(new[] { 8, 3, 9, 3, 8 }, 2, 81)]
+    [DataRow(new[] { 19, 12, 14, 6, 10, 18 }, 3, 4788)]
+    public void TestMethod1(int[] nums, int k, int exp)
     {
-        var a = ListNode.Make(nums);
-        Assert.AreEqual(exp, sol.DoubleIt(a).ToString());
+        Assert.AreEqual(exp, sol.MaximumScore(nums, k));
     }
 
     [TestMethod]
