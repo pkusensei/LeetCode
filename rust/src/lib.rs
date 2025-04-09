@@ -2,47 +2,29 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::{
-    cmp::Reverse,
-    collections::{BinaryHeap, HashMap},
-};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_maximum_elegance(mut items: Vec<[i32; 2]>, k: i32) -> i64 {
-    let k = k as usize;
-    items.sort_unstable_by_key(|v| Reverse(v[0]));
-    let mut profit = 0;
-    let mut cats = HashMap::new();
-    let mut heap = BinaryHeap::new();
-    // Greedily sum up bigger profits
-    for &v in items[..k].iter() {
-        let [p, c] = v[..] else { unreachable!() };
-        profit += i64::from(p);
-        *cats.entry(c).or_insert(0) += 1;
-        heap.push((Reverse(p), c));
+pub fn max_sum(nums: Vec<i32>) -> i32 {
+    fn find(mut num: i32) -> i32 {
+        let mut d = 0;
+        while num > 0 {
+            d = d.max(num % 10);
+            num /= 10
+        }
+        d
     }
-    let mut res = profit + (cats.len() as i64).pow(2);
-    for item in items[k..].iter() {
-        let [pro, cat] = item[..] else { unreachable!() };
-        if cats.contains_key(&cat) {
-            continue; // Only new cat wanted
+    let mut ds = [const { vec![] }; 10];
+    for &num in nums.iter() {
+        let d = find(num);
+        ds[d as usize].push(num);
+    }
+    let mut res = -1;
+    for v in ds.iter_mut().rev() {
+        if v.len() > 1 {
+            v.sort_unstable_by(|a, b| b.cmp(a));
+            res = res.max(v[0] + v[1]);
         }
-        while heap
-            .peek()
-            .is_some_and(|v| cats.get(&v.1).is_some_and(|&count| count == 1))
-        {
-            heap.pop(); // Pop all cats with count<2
-        }
-        let Some((Reverse(p), c)) = heap.pop() else {
-            break;
-        };
-        profit += i64::from(pro - p);
-        *cats.entry(cat).or_insert(0) += 1;
-        let count = cats.entry(c).or_insert(0);
-        *count -= 1;
-        res = res.max(profit + (cats.len() as i64).pow(2));
     }
     res
 }
@@ -77,24 +59,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(find_maximum_elegance(vec![[3, 2], [5, 1], [10, 1]], 2), 17);
-        assert_eq!(
-            find_maximum_elegance(vec![[3, 1], [3, 1], [2, 2], [5, 3]], 3),
-            19
-        );
-        assert_eq!(find_maximum_elegance(vec![[1, 1], [2, 1], [3, 1]], 3), 7);
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(
-            find_maximum_elegance(vec![[6, 2], [10, 3], [7, 3], [7, 1]], 2),
-            21
-        );
-        assert_eq!(
-            find_maximum_elegance(vec![[3, 4], [8, 4], [2, 2], [1, 3]], 2),
-            14
-        );
-    }
+    fn test() {}
 }
