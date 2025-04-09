@@ -5,25 +5,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_sum(nums: Vec<i32>) -> i32 {
-    fn find(mut num: i32) -> i32 {
-        let mut d = 0;
-        while num > 0 {
-            d = d.max(num % 10);
-            num /= 10
+pub fn min_absolute_difference(nums: &[i32], x: i32) -> i32 {
+    use std::collections::BTreeSet;
+    let x = x as usize;
+    let mut set = BTreeSet::new();
+    let mut res = i32::MAX;
+    for (idx, &num) in nums.iter().enumerate().skip(x) {
+        set.insert(nums[idx - x]);
+        if let Some(v) = set.range(num..).next() {
+            res = res.min((num - v).abs());
         }
-        d
-    }
-    let mut ds = [const { vec![] }; 10];
-    for &num in nums.iter() {
-        let d = find(num);
-        ds[d as usize].push(num);
-    }
-    let mut res = -1;
-    for v in ds.iter_mut().rev() {
-        if v.len() > 1 {
-            v.sort_unstable_by(|a, b| b.cmp(a));
-            res = res.max(v[0] + v[1]);
+        if let Some(v) = set.range(..num).next_back() {
+            res = res.min((num - v).abs());
         }
     }
     res
@@ -59,7 +52,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(min_absolute_difference(&[4, 3, 2, 4], 2), 0);
+        assert_eq!(min_absolute_difference(&[5, 3, 2, 10, 15], 1), 1);
+        assert_eq!(min_absolute_difference(&[1, 2, 3, 4], 3), 3);
+    }
 
     #[test]
     fn test() {}
