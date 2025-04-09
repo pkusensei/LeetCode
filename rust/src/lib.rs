@@ -2,78 +2,21 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::VecDeque;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_safeness_factor(grid: Vec<Vec<i32>>) -> i32 {
-    let n = grid.len();
-    let mut queue = VecDeque::new();
-    for (r, row) in grid.iter().enumerate() {
-        for (c, &v) in row.iter().enumerate() {
-            if v == 1 {
-                queue.push_back([r, c]);
+pub fn min_operations(nums: Vec<i32>, k: i32) -> i32 {
+    let mut set = std::collections::HashSet::new();
+    for &num in nums.iter() {
+        match num.cmp(&k) {
+            std::cmp::Ordering::Less => return -1,
+            std::cmp::Ordering::Equal => (),
+            std::cmp::Ordering::Greater => {
+                set.insert(num);
             }
         }
     }
-    let mut dists = vec![vec![i32::MAX; n]; n];
-    let mut dist = 0;
-    while !queue.is_empty() {
-        let len = queue.len();
-        for _ in 0..len {
-            let [r, c] = queue.pop_front().unwrap();
-            dists[r][c] = dists[r][c].min(dist);
-            for [nr, nc] in neighbors([r, c]) {
-                if grid
-                    .get(nr)
-                    .is_some_and(|row| row.get(nc).is_some_and(|&v| v == 0))
-                    && dists[nr][nc] > 1 + dist
-                {
-                    dists[nr][nc] = 1 + dist;
-                    queue.push_back([nr, nc]);
-                }
-            }
-        }
-        dist += 1;
-    }
-    let mut left = 0;
-    let mut right = dist;
-    while left < right {
-        let mid = left + (right + 1 - left) / 2;
-        if check(&grid, &dists, mid) {
-            left = mid;
-        } else {
-            right = mid - 1;
-        }
-    }
-    left
-}
-
-fn check(grid: &[Vec<i32>], dists: &[Vec<i32>], mid: i32) -> bool {
-    let n = grid.len();
-    if dists[0][0] < mid || dists[n - 1][n - 1] < mid {
-        return false;
-    }
-    let mut queue = VecDeque::from([[0, 0]]);
-    let mut seen = vec![vec![false; n]; n];
-    seen[0][0] = true;
-    while let Some([r, c]) = queue.pop_front() {
-        if r == n - 1 && c == n - 1 {
-            return true;
-        }
-        for [nr, nc] in neighbors([r, c]) {
-            if dists
-                .get(nr)
-                .is_some_and(|row| row.get(nc).is_some_and(|&v| v >= mid))
-                && !seen[nr][nc]
-            {
-                seen[nr][nc] = true;
-                queue.push_back([nr, nc]);
-            }
-        }
-    }
-    false
+    set.len() as i32
 }
 
 #[cfg(test)]
@@ -106,28 +49,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(
-            maximum_safeness_factor(vec![vec![1, 0, 0], vec![0, 0, 0], vec![0, 0, 1]]),
-            0
-        );
-        assert_eq!(
-            maximum_safeness_factor(vec![vec![0, 0, 1], vec![0, 0, 0], vec![0, 0, 0]]),
-            2
-        );
-        assert_eq!(
-            maximum_safeness_factor(vec![
-                vec![0, 0, 0, 1],
-                vec![0, 0, 0, 0],
-                vec![0, 0, 0, 0],
-                vec![1, 0, 0, 0]
-            ]),
-            2
-        );
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(maximum_safeness_factor(vec![vec![1]]), 0);
-    }
+    fn test() {}
 }
