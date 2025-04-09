@@ -10,12 +10,12 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(new[] { 1, 2, 2, 2 }, 2)]
-    [DataRow(new[] { 2, 1, 3, 1, 1, 1, 7, 1, 2, 1 }, 4)]
-    [DataRow(new[] { 3, 3, 3, 3, 7, 2, 2 }, -1)]
-    public void TestMethod1(int[] nums, int exp)
+    [DataRow(new[] { 1, 8, 9 }, "[3,7,8]")]
+    [DataRow(new[] { 9, 9, 9 }, "[1,9,9,8]")]
+    public void TestMethod1(int[] nums, string exp)
     {
-        Assert.AreEqual(exp, sol.MinimumIndex(nums));
+        var a = ListNode.Make(nums);
+        Assert.AreEqual(exp, sol.DoubleIt(a).ToString());
     }
 
     [TestMethod]

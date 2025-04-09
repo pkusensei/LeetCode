@@ -6,28 +6,21 @@ namespace Solution;
 
 public class Solution
 {
-    public int MinimumIndex(IList<int> nums)
+    public ListNode DoubleIt(ListNode head)
     {
-        int major = nums[0];
-        int count = 0;
-        foreach (var item in nums)
+        ListNode dummy = new(0, head);
+        int carry = Dfs(head);
+        dummy.val = carry;
+        if (carry == 0) { return head; }
+        else { return dummy; }
+
+        static int Dfs(ListNode node)
         {
-            if (major == item) { count += 1; }
-            else { count -= 1; }
-            if (count == 0)
-            {
-                major = item;
-                count = 1;
-            }
+            if (node is null) { return 0; }
+            int carry = Dfs(node.next);
+            int val = carry + 2 * node.val;
+            node.val = val % 10;
+            return val / 10;
         }
-        int left = 0;
-        int right = nums.Where(v => v == major).Count();
-        for (int i = 0; i < nums.Count; i++)
-        {
-            left += nums[i] == major ? 1 : 0;
-            right -= nums[i] == major ? 1 : 0;
-            if (left > (1 + i) / 2 && right > (nums.Count - i - 1) / 2) { return i; }
-        }
-        return -1;
     }
 }
