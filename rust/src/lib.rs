@@ -5,19 +5,12 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_absolute_difference(nums: &[i32], x: i32) -> i32 {
-    use std::collections::BTreeSet;
-    let x = x as usize;
-    let mut set = BTreeSet::new();
-    let mut res = i32::MAX;
-    for (idx, &num) in nums.iter().enumerate().skip(x) {
-        set.insert(nums[idx - x]);
-        if let Some(v) = set.range(num..).next() {
-            res = res.min((num - v).abs());
-        }
-        if let Some(v) = set.range(..num).next_back() {
-            res = res.min((num - v).abs());
-        }
+pub fn count_pairs(mut nums: Vec<i32>, target: i32) -> i32 {
+    nums.sort_unstable();
+    let mut res = 0;
+    for (i, &num) in nums.iter().enumerate() {
+        let i = nums[..i].partition_point(|&v| v + num < target);
+        res += i as i32;
     }
     res
 }
@@ -52,11 +45,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(min_absolute_difference(&[4, 3, 2, 4], 2), 0);
-        assert_eq!(min_absolute_difference(&[5, 3, 2, 10, 15], 1), 1);
-        assert_eq!(min_absolute_difference(&[1, 2, 3, 4], 3), 3);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
