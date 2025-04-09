@@ -5,14 +5,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_pairs(mut nums: Vec<i32>, target: i32) -> i32 {
-    nums.sort_unstable();
-    let mut res = 0;
-    for (i, &num) in nums.iter().enumerate() {
-        let i = nums[..i].partition_point(|&v| v + num < target);
-        res += i as i32;
+pub fn minimum_operations(nums: Vec<i32>) -> i32 {
+    let mut lis = vec![];
+    for &num in nums.iter() {
+        let i = lis.partition_point(|&v| v <= num);
+        if i == lis.len() {
+            lis.push(num);
+        } else {
+            lis[i] = num;
+        }
     }
-    res
+    (nums.len() - lis.len()) as i32
 }
 
 #[cfg(test)]
