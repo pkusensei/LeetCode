@@ -5,20 +5,29 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn check_strings(s1: &str, s2: &str) -> bool {
+pub fn max_sum(nums: Vec<i32>, m: i32, k: i32) -> i64 {
     use std::collections::HashMap;
-    let [s1, s2] = [&s1, &s2].map(|s| {
-        let [mut odd, mut even] = [HashMap::new(), HashMap::new()];
-        for (idx, b) in s.bytes().enumerate() {
-            if idx & 1 == 0 {
-                *even.entry(b).or_insert(0) += 1;
-            } else {
-                *odd.entry(b).or_insert(0) += 1;
+    let [m, k] = [m, k].map(|v| v as usize);
+    let mut map = HashMap::new();
+    let mut sum = 0;
+    let mut res = 0;
+    for (idx, &num) in nums.iter().enumerate() {
+        sum += i64::from(num);
+        *map.entry(num).or_insert(0) += 1;
+        if idx >= k {
+            let left = nums[idx - k];
+            let v = map.entry(left).or_insert(0);
+            *v -= 1;
+            if *v == 0 {
+                map.remove(&left);
             }
+            sum -= i64::from(left);
         }
-        [odd, even]
-    });
-    s1 == s2
+        if idx >= k - 1 && map.len() >= m {
+            res = res.max(sum);
+        }
+    }
+    res
 }
 
 #[cfg(test)]
