@@ -2,16 +2,36 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::cmp::Reverse;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_possible_sum(n: i32, target: i32) -> i32 {
-    const MOD: i64 = 1_000_000_007;
-    let [n, k] = [n, target].map(i64::from);
-    let low = n.min(k / 2);
-    let mut res = (1 + low) * low / 2 % MOD;
-    res += (k + k + n - low - 1) * (n - low) / 2 % MOD;
-    (res % MOD) as i32
+pub fn min_operations(mut nums: Vec<i32>, target: i32) -> i32 {
+    let sum: i64 = nums.iter().map(|&v| i64::from(v)).sum();
+    if sum < i64::from(target) {
+        return -1;
+    }
+    nums.sort_unstable_by_key(|&v| Reverse(v));
+    let mut res = 0;
+    for bit in 0..31 {
+        if (target >> bit) & 1 == 0 {
+            continue;
+        }
+        let mut curr = 0;
+        while curr < (1 << bit) {
+            while nums.last().is_some_and(|&v| v <= (1 << bit)) && curr < (1 << bit) {
+                let top = nums.pop().unwrap();
+                curr += top;
+            }
+            if curr < (1 << bit) {
+                res += 1;
+                let top = nums.pop().unwrap();
+                nums.extend([top / 2; 2]);
+            }
+        }
+    }
+    res
 }
 
 #[cfg(test)]
@@ -45,13 +65,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(minimum_possible_sum(2, 3), 4);
-        assert_eq!(minimum_possible_sum(3, 3), 8);
-        assert_eq!(minimum_possible_sum(1, 1), 1);
+        assert_eq!(min_operations(vec![1, 2, 8], 7), 1);
+        assert_eq!(min_operations(vec![1, 32, 1, 2], 12), 2);
+        assert_eq!(min_operations(vec![1, 32, 1], 35), -1);
     }
 
     #[test]
     fn test() {
-        assert_eq!(minimum_possible_sum(1000000000, 1000000000), 750000042);
+        assert_eq!(min_operations(vec![1, 1, 1], 3), 0);
     }
 }
