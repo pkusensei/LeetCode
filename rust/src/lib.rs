@@ -5,45 +5,36 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn number_of_powerful_int(start: i64, finish: i64, limit: i32, s: &str) -> i64 {
-    less_than(finish, limit, &s) - less_than(start - 1, limit, &s)
+pub fn maximize_the_profit(_n: i32, mut offers: Vec<[i32; 3]>) -> i32 {
+    let len = offers.len();
+    offers.sort_unstable();
+    dfs(&offers, 0, &mut vec![-1; len])
 }
 
-fn less_than(num: i64, limit: i32, s: &str) -> i64 {
-    let num = num.to_string();
-    let mut memo = vec![[-1; 2]; num.len()];
-    dfs(&num, limit, s, 0, 1, &mut memo)
-}
-
-fn dfs(num: &str, limit: i32, s: &str, idx: usize, tight: usize, memo: &mut [[i64; 2]]) -> i64 {
-    let n = num.len();
-    if idx >= n {
-        return 1;
-    }
-    if n < s.len() {
+fn dfs(offers: &[[i32; 3]], idx: usize, memo: &mut [i32]) -> i32 {
+    let len = offers.len();
+    if idx >= len {
         return 0;
     }
-    if memo[idx][tight] > -1 {
-        return memo[idx][tight];
+    if memo[idx] > -1 {
+        return memo[idx];
     }
-    let len = n - s.len();
-    let num_d = i32::from(num.as_bytes()[idx] - b'0');
-    let upper = if tight > 0 { num_d.min(limit) } else { limit };
-    let mut res = 0;
-    if idx >= len {
-        match upper.cmp(&i32::from(s.as_bytes()[idx - len] - b'0')) {
-            std::cmp::Ordering::Less => return 0,
-            std::cmp::Ordering::Greater => return 1,
-            std::cmp::Ordering::Equal => res += dfs(num, limit, s, 1 + idx, tight & 1, memo),
-        }
-    } else {
-        for d in 0..=upper {
-            let next_tight = tight & usize::from(d == num_d);
-            res += dfs(num, limit, s, 1 + idx, next_tight, memo);
+    let skip = dfs(offers, 1 + idx, memo);
+    let mut left = 1 + idx;
+    let mut right = len - 1;
+    let mut next = len;
+    while left <= right {
+        let mid = left + (right - left) / 2;
+        if offers[mid][0] > offers[idx][1] {
+            right = mid - 1;
+            next = mid;
+        } else {
+            left = mid + 1;
         }
     }
-    memo[idx][tight] = res;
-    res
+    let take = offers[idx][2] + dfs(offers, next, memo);
+    memo[idx] = skip.max(take);
+    memo[idx]
 }
 
 #[cfg(test)]
@@ -77,9 +68,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(number_of_powerful_int(1, 6000, 4, "124"), 5);
-        assert_eq!(number_of_powerful_int(15, 215, 6, "10"), 2);
-        assert_eq!(number_of_powerful_int(1000, 2000, 4, "3000"), 0);
+        assert_eq!(
+            maximize_the_profit(5, vec![[0, 0, 1], [0, 2, 2], [1, 3, 2]]),
+            3
+        );
+        assert_eq!(
+            maximize_the_profit(5, vec![[0, 0, 1], [0, 2, 10], [1, 3, 2]]),
+            10
+        );
     }
 
     #[test]
