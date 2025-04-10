@@ -5,36 +5,25 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximize_the_profit(_n: i32, mut offers: Vec<[i32; 3]>) -> i32 {
-    let len = offers.len();
-    offers.sort_unstable();
-    dfs(&offers, 0, &mut vec![-1; len])
-}
-
-fn dfs(offers: &[[i32; 3]], idx: usize, memo: &mut [i32]) -> i32 {
-    let len = offers.len();
-    if idx >= len {
-        return 0;
+pub fn longest_equal_subarray(nums: &[i32], k: i32) -> i32 {
+    use std::collections::HashMap;
+    let mut map = HashMap::<_, Vec<_>>::new();
+    for (idx, &num) in nums.iter().enumerate() {
+        map.entry(num).or_default().push(idx as i32);
     }
-    if memo[idx] > -1 {
-        return memo[idx];
-    }
-    let skip = dfs(offers, 1 + idx, memo);
-    let mut left = 1 + idx;
-    let mut right = len - 1;
-    let mut next = len;
-    while left <= right {
-        let mid = left + (right - left) / 2;
-        if offers[mid][0] > offers[idx][1] {
-            right = mid - 1;
-            next = mid;
-        } else {
-            left = mid + 1;
+    let mut res = 0;
+    for ids in map.values() {
+        let mut left = 0;
+        let mut curr = 0;
+        for (right, &val) in ids.iter().enumerate() {
+            while val - ids[left] - (right - left) as i32 > k {
+                left += 1;
+            }
+            curr = curr.max(right + 1 - left);
         }
+        res = res.max(curr as i32);
     }
-    let take = offers[idx][2] + dfs(offers, next, memo);
-    memo[idx] = skip.max(take);
-    memo[idx]
+    res
 }
 
 #[cfg(test)]
@@ -68,14 +57,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            maximize_the_profit(5, vec![[0, 0, 1], [0, 2, 2], [1, 3, 2]]),
-            3
-        );
-        assert_eq!(
-            maximize_the_profit(5, vec![[0, 0, 1], [0, 2, 10], [1, 3, 2]]),
-            10
-        );
+        assert_eq!(longest_equal_subarray(&[1, 3, 2, 3, 1, 3], 3), 3);
+        assert_eq!(longest_equal_subarray(&[1, 1, 2, 2, 1, 1], 2), 4);
     }
 
     #[test]
