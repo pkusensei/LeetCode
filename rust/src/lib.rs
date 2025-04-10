@@ -5,25 +5,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn longest_equal_subarray(nums: &[i32], k: i32) -> i32 {
-    use std::collections::HashMap;
-    let mut map = HashMap::<_, Vec<_>>::new();
-    for (idx, &num) in nums.iter().enumerate() {
-        map.entry(num).or_default().push(idx as i32);
-    }
-    let mut res = 0;
-    for ids in map.values() {
-        let mut left = 0;
-        let mut curr = 0;
-        for (right, &val) in ids.iter().enumerate() {
-            while val - ids[left] - (right - left) as i32 > k {
-                left += 1;
-            }
-            curr = curr.max(right + 1 - left);
+pub fn furthest_distance_from_origin(moves: String) -> i32 {
+    let mut ml = 0i32;
+    let mut mr = 0;
+    let mut un = 0;
+    for b in moves.bytes() {
+        match b {
+            b'L' => ml += 1,
+            b'R' => mr += 1,
+            _ => un += 1,
         }
-        res = res.max(curr as i32);
     }
-    res
+    (ml - mr).abs() + un
 }
 
 #[cfg(test)]
@@ -56,10 +49,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(longest_equal_subarray(&[1, 3, 2, 3, 1, 3], 3), 3);
-        assert_eq!(longest_equal_subarray(&[1, 1, 2, 2, 1, 1], 2), 4);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
