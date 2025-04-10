@@ -2,36 +2,22 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::cmp::Reverse;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_operations(mut nums: Vec<i32>, target: i32) -> i32 {
-    let sum: i64 = nums.iter().map(|&v| i64::from(v)).sum();
-    if sum < i64::from(target) {
-        return -1;
-    }
-    nums.sort_unstable_by_key(|&v| Reverse(v));
-    let mut res = 0;
-    for bit in 0..31 {
-        if (target >> bit) & 1 == 0 {
-            continue;
-        }
-        let mut curr = 0;
-        while curr < (1 << bit) {
-            while nums.last().is_some_and(|&v| v <= (1 << bit)) && curr < (1 << bit) {
-                let top = nums.pop().unwrap();
-                curr += top;
-            }
-            if curr < (1 << bit) {
-                res += 1;
-                let top = nums.pop().unwrap();
-                nums.extend([top / 2; 2]);
+pub fn can_be_equal(s1: &str, s2: &str) -> bool {
+    let [s1, s2] = [&s1, &s2].map(|s| {
+        let [mut odd, mut even] = [0, 0];
+        for (idx, b) in s.bytes().enumerate() {
+            if idx & 1 == 0 {
+                even |= 1 << (b - b'a')
+            } else {
+                odd |= 1 << (b - b'a');
             }
         }
-    }
-    res
+        [odd, even]
+    });
+    s1 == s2
 }
 
 #[cfg(test)]
@@ -65,13 +51,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_operations(vec![1, 2, 8], 7), 1);
-        assert_eq!(min_operations(vec![1, 32, 1, 2], 12), 2);
-        assert_eq!(min_operations(vec![1, 32, 1], 35), -1);
+        assert!(!can_be_equal("abcd", "dacb"))
     }
 
     #[test]
-    fn test() {
-        assert_eq!(min_operations(vec![1, 1, 1], 3), 0);
-    }
+    fn test() {}
 }
