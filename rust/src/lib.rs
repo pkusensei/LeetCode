@@ -5,14 +5,15 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn can_be_equal(s1: &str, s2: &str) -> bool {
+pub fn check_strings(s1: &str, s2: &str) -> bool {
+    use std::collections::HashMap;
     let [s1, s2] = [&s1, &s2].map(|s| {
-        let [mut odd, mut even] = [0, 0];
+        let [mut odd, mut even] = [HashMap::new(), HashMap::new()];
         for (idx, b) in s.bytes().enumerate() {
             if idx & 1 == 0 {
-                even |= 1 << (b - b'a')
+                *even.entry(b).or_insert(0) += 1;
             } else {
-                odd |= 1 << (b - b'a');
+                *odd.entry(b).or_insert(0) += 1;
             }
         }
         [odd, even]
@@ -50,9 +51,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert!(!can_be_equal("abcd", "dacb"))
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
