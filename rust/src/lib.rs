@@ -5,26 +5,26 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_operations(num: String) -> i32 {
-    let n = num.len();
-    let mut zeros = 0;
-    let mut res = n;
-    for (i1, a) in num.bytes().enumerate() {
-        if b"0257".contains(&a) {
-            zeros += i32::from(a == b'0');
-            for b in num.bytes().skip(1 + i1) {
-                match a {
-                    b'0' | b'5' if b == b'0' => res = res.min(n - i1 - 2),
-                    b'2' | b'7' if b == b'5' => res = res.min(n - i1 - 2),
-                    _ => (),
-                }
-            }
-        }
+pub fn count_interesting_subarrays(nums: &[i32], modulo: i32, k: i32) -> i64 {
+    use itertools::Itertools;
+    use std::collections::HashMap;
+    let n = nums.len();
+    let mut prefix = nums
+        .iter()
+        .map(|v| i32::from(v % modulo == k))
+        .collect_vec();
+    for i in 1..n {
+        prefix[i] += prefix[i - 1];
     }
-    if zeros == 1 {
-        res = res.min(n-1);
+    let mut map = HashMap::from([(0, 1)]);
+    let mut res = 0_i64;
+    for &p in prefix.iter() {
+        res += map
+            .get(&((p + modulo - k).rem_euclid(modulo)))
+            .unwrap_or(&0);
+        *map.entry(p % modulo).or_insert(0) += 1;
     }
-    res as i32
+    res
 }
 
 #[cfg(test)]
@@ -57,8 +57,13 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(count_interesting_subarrays(&[3, 2, 4], 2, 1), 3);
+        assert_eq!(count_interesting_subarrays(&[3, 1, 9, 6], 3, 0), 2);
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(count_interesting_subarrays(&[11, 12, 21, 31], 10, 1), 5);
+    }
 }
