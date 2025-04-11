@@ -5,17 +5,13 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn number_of_points(nums: Vec<Vec<i32>>) -> i32 {
-    let mut line = [0; 102];
-    for v in nums.iter() {
-        let [a, b] = v[..] else { unreachable!() };
-        line[a as usize] += 1;
-        line[1 + b as usize] -= 1;
+pub fn is_reachable_at_time(sx: i32, sy: i32, fx: i32, fy: i32, t: i32) -> bool {
+    if sx == fx && sy == fy {
+        t != 1
+    } else {
+        let d = (sx - fx).abs().max((sy - fy).abs());
+        d <= t
     }
-    for i in 1..102 {
-        line[i] += line[i - 1];
-    }
-    line.iter().filter(|&&v| v > 0).count() as i32
 }
 
 #[cfg(test)]
