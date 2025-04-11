@@ -5,41 +5,45 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn get_max_function_value(receiver: &[i32], k: i64) -> i64 {
-    let n = receiver.len();
-    let k = k as usize;
-    let mut edges = vec![];
-    // [node, score]
-    let mut prev: Vec<_> = receiver.iter().map(|&v| [v as usize; 2]).collect();
-    let mut dist = 2;
-    while dist <= k {
-        let next = prev
-            .iter()
-            .map(|&[node, score]| {
-                let [next, next_score] = prev[node];
-                [next, score + next_score]
-            })
-            .collect();
-        edges.push(prev);
-        prev = next;
-        dist <<= 1;
+pub fn count_k_subsequences_with_max_beauty(s: &str, k: i32) -> i32 {
+    use itertools::Itertools;
+    use std::cmp::Reverse;
+    const MOD: usize = 1_000_000_007;
+    let count = s
+        .bytes()
+        .fold([0; 26], |mut acc, b| {
+            acc[usize::from(b - b'a')] += 1;
+            acc
+        })
+        .into_iter()
+        .filter(|&v| v > 0)
+        .sorted_unstable_by_key(|&v| Reverse(v))
+        .collect_vec();
+    let n = count.len();
+    let mut k = k as usize;
+    if !(1..=n).contains(&k) {
+        return 0;
     }
-    edges.push(prev);
-    let mut res = 0;
-    for mut node in 0..n {
-        let mut score = node;
-        let mut b = 0;
-        while (1 << b) <= k {
-            if (1 << b) & k > 0 {
-                let [next, s] = edges[b][node];
-                node = next;
-                score += s;
-            }
-            b += 1;
+    let mut freq = count.as_slice();
+    let mut res = 1;
+    while let Some(&f) = freq.get(0) {
+        let mut repeat = freq.iter().filter(|&&v| v == f).count();
+        if repeat > k {
+            let m = repeat - k;
+            let comb = (1..=k).fold(1, |acc, v| acc * (m + v) / v);
+            res = (res * comb) % MOD;
+            repeat = k;
         }
-        res = res.max(score)
+        for _ in 0..repeat {
+            res = res * f % MOD;
+        }
+        if repeat >= k {
+            break;
+        }
+        freq = &freq[repeat..];
+        k -= repeat;
     }
-    res as i64
+    res as i32
 }
 
 #[cfg(test)]
@@ -73,8 +77,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(get_max_function_value(&[2, 0, 1], 4), 6);
-        assert_eq!(get_max_function_value(&[1, 1, 1, 2, 3], 3), 10);
+        assert_eq!(count_k_subsequences_with_max_beauty("bcca", 2), 4);
+        assert_eq!(count_k_subsequences_with_max_beauty("abbcd", 4), 2);
     }
 
     #[test]
