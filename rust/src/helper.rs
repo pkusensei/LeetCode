@@ -112,3 +112,14 @@ pub const fn mod_pow(mut base: i64, mut exp: i64, modu: i64) -> i64 {
     }
     res
 }
+
+pub const fn mod_pow_rec(base: i64, exp: i64, modu: i64) -> i64 {
+    if exp == 0 {
+        return 1;
+    }
+    if exp & 1 == 0 {
+        mod_pow_rec(base * base % modu, exp >> 1, modu)
+    } else {
+        base * mod_pow_rec(base * base % modu, exp >> 1, modu) % modu
+    }
+}

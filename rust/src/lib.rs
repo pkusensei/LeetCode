@@ -5,37 +5,56 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_moves(grid: [[i32; 3]; 3]) -> i32 {
-    use std::collections::{HashSet, VecDeque};
-    let mut board = [[0; 3]; 3];
-    for (b, g) in board.iter_mut().zip(grid.iter()) {
-        b.copy_from_slice(g);
-    }
-    let mut queue = VecDeque::from([(board, 0)]);
-    let mut seen = HashSet::from([board]);
-    while let Some((curr, dist)) = queue.pop_front() {
-        if curr.iter().all(|r| r.iter().all(|&v| v == 1)) {
-            return dist;
+pub fn number_of_ways(s: &str, t: &str, k: i64) -> i32 {
+    const MOD: i64 = 1_000_000_007;
+    let n = t.len();
+    let mut s = s.as_bytes().to_vec();
+    s.extend_from_within(..n - 1);
+    let pos = kmp(&s, t.as_bytes());
+    let mut f_k = [0, 0];
+    f_k[1] = (mod_pow(n as i64 - 1, k, MOD) + ((k & 1) * 2 - 1)).rem_euclid(MOD)
+        * mod_pow(n as i64, MOD - 2, MOD);
+    f_k[0] = (f_k[1] - ((k & 1) * 2 - 1)).rem_euclid(MOD);
+    let mut res = 0;
+    for p in pos {
+        if p == 0 {
+            res += f_k[0]
+        } else {
+            res += f_k[1]
         }
-        for (r, row) in curr.iter().enumerate() {
-            for (c, &v) in row.iter().enumerate() {
-                if v > 1 {
-                    for [nr, nc] in neighbors([r, c]).filter(|&[nr, nc]| {
-                        curr.get(nr)
-                            .is_some_and(|rr| rr.get(nc).is_some_and(|&vv| vv < v))
-                    }) {
-                        let mut next = curr;
-                        next[r][c] -= 1;
-                        next[nr][nc] += 1;
-                        if seen.insert(next) {
-                            queue.push_back((next, 1 + dist));
-                        }
-                    }
-                }
-            }
+        res %= MOD;
+    }
+    res as i32
+}
+
+fn kmp(s: &[u8], t: &[u8]) -> Vec<usize> {
+    let n = t.len();
+    let mut f = vec![0; n];
+    for i1 in 1..n {
+        let mut i2 = f[i1 - 1];
+        while i2 > 0 && t[i2] != t[i1] {
+            i2 = f[i2 - 1];
+        }
+        if i2 == 0 && t[0] != t[i1] {
+            f[i1] = 0;
+        } else {
+            f[i1] = 1 + i2;
         }
     }
-    -1
+    let mut i2 = 0;
+    let mut res = vec![];
+    for (i1, &byte) in s.iter().enumerate() {
+        while i2 >= n || (i2 > 0 && byte != t[i2]) {
+            i2 = f[i2 - 1];
+        }
+        if byte == t[i2] {
+            i2 += 1
+        }
+        if i2 == n {
+            res.push(i1 + 1 - n);
+        }
+    }
+    res
 }
 
 #[cfg(test)]
@@ -69,8 +88,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(minimum_moves([[1, 1, 0], [1, 1, 1], [1, 2, 1]]), 3);
-        assert_eq!(minimum_moves([[1, 3, 0], [1, 0, 0], [1, 0, 3]]), 4);
+        assert_eq!(number_of_ways("abcd", "cdab", 2), 2);
+        assert_eq!(number_of_ways("ababab", "ababab", 1), 2);
     }
 
     #[test]
