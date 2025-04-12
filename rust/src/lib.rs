@@ -5,44 +5,37 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_good_integers(n: i32, k: i32) -> i64 {
-    use itertools::Itertools;
-    use std::collections::HashSet;
-    let half = (1 + n) as u32 / 2;
-    let min = 10i32.pow(half - 1);
-    let max = 10i32.pow(half);
-    let mut seen = HashSet::new();
-    let mut res = 0;
-    for num in min..max {
-        let mut a = num.to_string();
-        let b: String = a.chars().rev().collect();
-        a.push_str(&b[(n & 1) as usize..]);
-        if a.parse::<i64>().ok().is_none_or(|v| v % i64::from(k) > 0) {
-            continue;
+pub fn minimum_moves(grid: [[i32; 3]; 3]) -> i32 {
+    use std::collections::{HashSet, VecDeque};
+    let mut board = [[0; 3]; 3];
+    for (b, g) in board.iter_mut().zip(grid.iter()) {
+        b.copy_from_slice(g);
+    }
+    let mut queue = VecDeque::from([(board, 0)]);
+    let mut seen = HashSet::from([board]);
+    while let Some((curr, dist)) = queue.pop_front() {
+        if curr.iter().all(|r| r.iter().all(|&v| v == 1)) {
+            return dist;
         }
-        let sorted = a.into_bytes().into_iter().sorted_unstable().collect_vec();
-        if !seen.insert(sorted.clone()) {
-            continue;
-        }
-        let count = sorted.iter().fold([0; 10], |mut acc, &b| {
-            acc[usize::from(b - b'0')] += 1;
-            acc
-        });
-        let n = i64::from(n);
-        let first = n - count[0];
-        let mut perm = first * fact(n - 1);
-        for freq in count {
-            if freq > 1 {
-                perm /= fact(freq);
+        for (r, row) in curr.iter().enumerate() {
+            for (c, &v) in row.iter().enumerate() {
+                if v > 1 {
+                    for [nr, nc] in neighbors([r, c]).filter(|&[nr, nc]| {
+                        curr.get(nr)
+                            .is_some_and(|rr| rr.get(nc).is_some_and(|&vv| vv < v))
+                    }) {
+                        let mut next = curr;
+                        next[r][c] -= 1;
+                        next[nr][nc] += 1;
+                        if seen.insert(next) {
+                            queue.push_back((next, 1 + dist));
+                        }
+                    }
+                }
             }
         }
-        res += perm;
     }
-    res
-}
-
-const fn fact(n: i64) -> i64 {
-    if n < 2 { 1 } else { n * fact(n - 1) }
+    -1
 }
 
 #[cfg(test)]
@@ -76,9 +69,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(count_good_integers(3, 5), 27);
-        assert_eq!(count_good_integers(1, 4), 2);
-        assert_eq!(count_good_integers(5, 6), 2468);
+        assert_eq!(minimum_moves([[1, 1, 0], [1, 1, 1], [1, 2, 1]]), 3);
+        assert_eq!(minimum_moves([[1, 3, 0], [1, 0, 0], [1, 0, 3]]), 4);
     }
 
     #[test]
