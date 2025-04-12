@@ -4,16 +4,35 @@ mod trie;
 
 #[allow(unused_imports)]
 use helper::*;
+use itertools::izip;
 
-pub fn count_ways(mut nums: Vec<i32>) -> i32 {
-    let n = nums.len();
-    nums.sort_unstable();
-    let mut res = i32::from(nums[0] > 0);
-    for (i, &val) in nums.iter().enumerate() {
-        res +=
-            i32::from((1 + i) as i32 > val && nums.get(1 + i).is_some_and(|&v| v > (1 + i) as i32));
+pub fn max_number_of_alloys(
+    _n: i32,
+    _k: i32,
+    budget: i32,
+    composition: &[&[i32]],
+    stock: &[i32],
+    cost: &[i32],
+) -> i32 {
+    let mut res = 0;
+    for machine in composition.iter() {
+        let mut left = 0;
+        let mut right = 10i32.pow(9);
+        while left < right {
+            let mid = left + (right + 1 - left) / 2;
+            let total: i64 = izip!(machine.iter(), stock.iter(), cost.iter())
+                .map(|(&comp, &st, &co)| {
+                    (i64::from(comp) * i64::from(mid) - i64::from(st)).max(0) * i64::from(co)
+                })
+                .sum();
+            if total <= i64::from(budget) {
+                left = mid;
+            } else {
+                right = mid - 1;
+            }
+        }
+        res = res.max(left);
     }
-    res += i32::from(nums[n - 1] < n as i32);
     res
 }
 
@@ -48,12 +67,27 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(count_ways(vec![1, 1]), 2);
-        assert_eq!(count_ways(vec![6, 0, 3, 3, 6, 7, 2, 7]), 3);
+        assert_eq!(
+            max_number_of_alloys(3, 2, 15, &[&[1, 1, 1], &[1, 1, 10]], &[0, 0, 0], &[1, 2, 3]),
+            2
+        );
+        assert_eq!(
+            max_number_of_alloys(
+                3,
+                2,
+                15,
+                &[&[1, 1, 1], &[1, 1, 10]],
+                &[0, 0, 100],
+                &[1, 2, 3]
+            ),
+            5
+        );
+        assert_eq!(
+            max_number_of_alloys(2, 3, 10, &[&[2, 1], &[1, 2], &[1, 1]], &[1, 1], &[5, 5]),
+            2
+        );
     }
 
     #[test]
-    fn test() {
-        assert_eq!(count_ways(vec![1, 1, 0, 1]), 1);
-    }
+    fn test() {}
 }
