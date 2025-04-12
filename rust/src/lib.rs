@@ -5,23 +5,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_length_after_removals(nums: &[i32]) -> i32 {
-    let n = nums.len();
-    let mut left = 0;
-    let mut right = n / 2;
-    let mut count = 0;
-    while left < n / 2 && right < n {
-        while nums.get(right).is_some_and(|&v| v == nums[left]) {
-            right += 1;
+pub fn count_pairs(coordinates: &[[i32; 2]], k: i32) -> i32 {
+    let mut map = std::collections::HashMap::new();
+    let mut res = 0;
+    for c in coordinates.iter() {
+        let [x1, y1] = c[..] else { unreachable!() };
+        for x in 0..=k {
+            let y = k - x;
+            let x2 = x ^ x1;
+            let y2 = y ^ y1;
+            res += map.get(&[x2, y2]).unwrap_or(&0);
         }
-        if right >= n {
-            break;
-        }
-        left += 1;
-        right += 1;
-        count += 2;
+        *map.entry([x1, y1]).or_insert(0) += 1;
     }
-    n as i32 - count
+    res
 }
 
 #[cfg(test)]
@@ -55,7 +52,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_length_after_removals(&[1, 2, 3, 4]), 0);
+        assert_eq!(count_pairs(&[[1, 2], [4, 2], [1, 3], [5, 2]], 5), 2);
+        assert_eq!(
+            count_pairs(&[[1, 3], [1, 3], [1, 3], [1, 3], [1, 3]], 0),
+            10
+        );
     }
 
     #[test]
