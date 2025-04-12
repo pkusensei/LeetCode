@@ -5,19 +5,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_right_shifts(nums: Vec<i32>) -> i32 {
-    let Some(start) = nums.windows(2).position(|w| w[0] > w[1]) else {
-        return 0;
-    };
+pub fn min_length_after_removals(nums: &[i32]) -> i32 {
     let n = nums.len();
-    let mut i = (1 + start) % n;
-    while i != start {
-        if nums[i] > nums[(i + 1) % n] {
-            return -1;
+    let mut left = 0;
+    let mut right = n / 2;
+    let mut count = 0;
+    while left < n / 2 && right < n {
+        while nums.get(right).is_some_and(|&v| v == nums[left]) {
+            right += 1;
         }
-        i = (1 + i) % n;
+        if right >= n {
+            break;
+        }
+        left += 1;
+        right += 1;
+        count += 2;
     }
-    (n - start - 1) as i32
+    n as i32 - count
 }
 
 #[cfg(test)]
@@ -50,7 +54,9 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(min_length_after_removals(&[1, 2, 3, 4]), 0);
+    }
 
     #[test]
     fn test() {}
