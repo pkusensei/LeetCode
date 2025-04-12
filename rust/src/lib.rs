@@ -4,36 +4,42 @@ mod trie;
 
 #[allow(unused_imports)]
 use helper::*;
-use itertools::izip;
 
-pub fn max_number_of_alloys(
-    _n: i32,
-    _k: i32,
-    budget: i32,
-    composition: &[&[i32]],
-    stock: &[i32],
-    cost: &[i32],
-) -> i32 {
-    let mut res = 0;
-    for machine in composition.iter() {
-        let mut left = 0;
-        let mut right = 10i32.pow(9);
-        while left < right {
-            let mid = left + (right + 1 - left) / 2;
-            let total: i64 = izip!(machine.iter(), stock.iter(), cost.iter())
-                .map(|(&comp, &st, &co)| {
-                    (i64::from(comp) * i64::from(mid) - i64::from(st)).max(0) * i64::from(co)
-                })
-                .sum();
-            if total <= i64::from(budget) {
-                left = mid;
-            } else {
-                right = mid - 1;
+pub fn maximum_sum(nums: &[i32]) -> i64 {
+    use std::collections::HashMap;
+    let n = nums.len();
+    let sieve = primes(n);
+    let mut map = HashMap::new();
+    for (mut i, &val) in (1..).zip(nums.iter()) {
+        let mut product = 1;
+        for &p in sieve.iter() {
+            while i % (p * p) == 0 {
+                i /= p * p;
+            }
+            if i % p == 0 {
+                product *= p;
             }
         }
-        res = res.max(left);
+        *map.entry(product).or_insert(0) += i64::from(val);
     }
-    res
+    map.into_values().max().unwrap()
+}
+
+fn primes(n: usize) -> Vec<i32> {
+    let mut sieve = vec![true; 1 + n];
+    sieve[..2].fill(false);
+    for p in 2..=n {
+        if sieve[p] {
+            for val in (2 * p..=n).step_by(p) {
+                sieve[val] = false;
+            }
+        }
+    }
+    sieve
+        .iter()
+        .enumerate()
+        .filter_map(|(i, &v)| if v { Some(i as i32) } else { None })
+        .collect()
 }
 
 #[cfg(test)]
@@ -67,25 +73,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            max_number_of_alloys(3, 2, 15, &[&[1, 1, 1], &[1, 1, 10]], &[0, 0, 0], &[1, 2, 3]),
-            2
-        );
-        assert_eq!(
-            max_number_of_alloys(
-                3,
-                2,
-                15,
-                &[&[1, 1, 1], &[1, 1, 10]],
-                &[0, 0, 100],
-                &[1, 2, 3]
-            ),
-            5
-        );
-        assert_eq!(
-            max_number_of_alloys(2, 3, 10, &[&[2, 1], &[1, 2], &[1, 1]], &[1, 1], &[5, 5]),
-            2
-        );
+        assert_eq!(maximum_sum(&[8, 7, 3, 5, 7, 2, 4, 9]), 16);
+        assert_eq!(maximum_sum(&[8, 10, 3, 8, 1, 13, 7, 9, 4]), 20);
     }
 
     #[test]
