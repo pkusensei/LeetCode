@@ -5,24 +5,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_sum_of_heights(heights: &[i32]) -> i64 {
-    let n = heights.len();
-    let mut res = 0;
-    for (peak, &num) in heights.iter().enumerate() {
-        let mut curr = i64::from(num);
-        let mut temp = num;
-        for left in (0..peak).rev() {
-            temp = temp.min(heights[left]);
-            curr += i64::from(temp);
-        }
-        temp = num;
-        for right in 1 + peak..n {
-            temp = temp.min(heights[right]);
-            curr += i64::from(temp);
-        }
-        res = res.max(curr)
+pub fn count_good_numbers(n: i64) -> i32 {
+    const MOD: i64 = 1_000_000_007;
+    let mut res = if n & 1 == 1 { 5 } else { 1 };
+    res *= mod_pow(20, n >> 1, MOD);
+    (res % MOD) as i32
+}
+
+const fn mod_pow(base: i64, exp: i64, m: i64) -> i64 {
+    if exp == 0 {
+        return 1;
     }
-    res
+    if exp & 1 == 0 {
+        mod_pow(base * base % m, exp >> 1, m)
+    } else {
+        base * mod_pow(base * base % m, exp >> 1, m) % m
+    }
 }
 
 #[cfg(test)]
@@ -55,9 +53,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(maximum_sum_of_heights(&[6, 5, 3, 9, 2, 7]), 22);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
