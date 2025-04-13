@@ -2,23 +2,28 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashSet;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_operations(nums: Vec<i32>, k: i32) -> i32 {
-    let target: i64 = (1 << k) - 1;
-    let mut res = 0;
-    let mut mask = 0;
-    for &num in nums.iter().rev() {
-        mask |= 1 << (num - 1);
-        res += 1;
-        if mask & target == target {
-            return res;
-        }
-    }
-    -1
+pub fn min_operations(nums: Vec<i32>) -> i32 {
+    use std::collections::HashMap;
+    nums.iter()
+        .fold(HashMap::new(), |mut acc, &num| {
+            *acc.entry(num).or_insert(0) += 1;
+            acc
+        })
+        .into_values()
+        .map(|v| {
+            if v == 1 {
+                None
+            } else if v % 3 == 0 {
+                Some(v / 3)
+            } else {
+                Some(v / 3 + 1)
+            }
+        })
+        .sum::<Option<i32>>()
+        .unwrap_or(-1)
 }
 
 #[cfg(test)]
