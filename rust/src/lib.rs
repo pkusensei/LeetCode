@@ -5,31 +5,57 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_size_subarray(nums: &[i32], target: i32) -> i32 {
-    use std::collections::HashMap;
-    let k = i64::from(target);
-    let n = nums.len();
-    let sum: i64 = nums.iter().map(|&v| i64::from(v)).sum();
-    let rem = k % sum;
-    let len = (k / sum) as i32 * n as i32;
-    if rem == 0 {
-        return len;
-    }
-    let mut res = i32::MAX;
-    let mut prefix = HashMap::new();
-    let mut curr = 0;
-    for (idx, &num) in nums.iter().enumerate() {
-        curr += i64::from(num);
-        if let Some(&left) = prefix.get(&(curr - rem)) {
-            res = res.min((idx - left) as i32 + len);
+pub fn count_visited_nodes(edges: &[i32]) -> Vec<i32> {
+    use std::collections::VecDeque;
+    let n = edges.len();
+    let mut indegs = edges.iter().fold(vec![0; n], |mut acc, &v| {
+        acc[v as usize] += 1;
+        acc
+    });
+    let mut queue: VecDeque<_> = indegs
+        .iter()
+        .enumerate()
+        .filter_map(|(i, &v)| if v == 0 { Some(i) } else { None })
+        .collect();
+    let mut out_of_cycle = vec![];
+    while let Some(node) = queue.pop_front() {
+        out_of_cycle.push(node);
+        let next = edges[node] as usize;
+        indegs[next] -= 1;
+        if indegs[next] == 0 {
+            queue.push_back(next);
         }
-        let right_sum = sum - curr;
-        if let Some(&left) = prefix.get(&(rem - right_sum)) {
-            res = res.min((1 + left + n - idx - 1) as i32 + len);
-        }
-        prefix.insert(curr, idx);
     }
-    if res == i32::MAX { -1 } else { res }
+    let mut res = vec![0; n];
+    for node in 0..n {
+        if indegs[node] > 0 {
+            cycle_dfs(edges, &mut indegs, node, 0, &mut res);
+        }
+    }
+    for node in out_of_cycle {
+        out_dfs(edges, node, &mut res);
+    }
+    res
+}
+
+fn cycle_dfs(edges: &[i32], indegs: &mut [i32], node: usize, depth: i32, res: &mut [i32]) -> i32 {
+    if indegs[node] == 0 {
+        res[node] = depth;
+        return depth;
+    }
+    indegs[node] = 0; // mark visited
+    let val = cycle_dfs(edges, indegs, edges[node] as usize, 1 + depth, res);
+    res[node] = val;
+    val
+}
+
+fn out_dfs(edges: &[i32], node: usize, res: &mut [i32]) -> i32 {
+    if res[node] > 0 {
+        return res[node];
+    }
+    let val = 1 + out_dfs(edges, edges[node] as usize, res);
+    res[node] = val;
+    val
 }
 
 #[cfg(test)]
@@ -63,13 +89,10 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_size_subarray(&[1, 2, 3], 5), 2);
-        assert_eq!(min_size_subarray(&[1, 1, 1, 2, 3], 4), 2);
-        assert_eq!(min_size_subarray(&[2, 4, 6, 8], 3), -1);
+        assert_eq!(count_visited_nodes(&[1, 2, 0, 0]), [3, 3, 3, 4]);
+        assert_eq!(count_visited_nodes(&[1, 2, 3, 4, 0]), [5, 5, 5, 5, 5]);
     }
 
     #[test]
-    fn test() {
-        assert_eq!(min_size_subarray(&[2, 1, 5, 7, 7, 1, 6, 3], 39), 9);
-    }
+    fn test() {}
 }
