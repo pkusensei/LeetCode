@@ -2,52 +2,65 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashSet;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_sum_of_heights(max_heights: &[i32]) -> i64 {
-    use itertools::izip;
-    let n = max_heights.len();
-    let mut stack = vec![];
-    let mut next_smaller = vec![None; n];
-    for (idx, &num) in max_heights.iter().enumerate() {
-        while stack.last().is_some_and(|&i| max_heights[i] >= num) {
-            let top = stack.pop().unwrap();
-            next_smaller[top] = Some(idx);
-        }
-        stack.push(idx);
-    }
-    stack.clear();
-    let mut prev_smaller = vec![None; n];
-    for (idx, &num) in max_heights.iter().enumerate().rev() {
-        while stack.last().is_some_and(|&i| max_heights[i] >= num) {
-            let top = stack.pop().unwrap();
-            prev_smaller[top] = Some(idx);
-        }
-        stack.push(idx);
-    }
-    let mut left_dp = vec![0; n];
-    for (idx, &num) in max_heights.iter().enumerate() {
-        let num = i64::from(num);
-        if let Some(prev) = prev_smaller[idx] {
-            left_dp[idx] = left_dp[prev] + (idx - prev) as i64 * num;
-        } else {
-            left_dp[idx] = (1 + idx) as i64 * num;
-        }
-    }
-    let mut right_dp = vec![0; n];
-    for (idx, &num) in max_heights.iter().enumerate().rev() {
-        let num = i64::from(num);
-        if let Some(next) = next_smaller[idx] {
-            right_dp[idx] = right_dp[next] + (next - idx) as i64 * num;
-        } else {
-            right_dp[idx] = (n - idx) as i64 * num;
+pub fn count_paths(n: i32, edges: &[[i32; 2]]) -> i64 {
+    let n = 1 + n as usize;
+    let sieve = primes(n);
+    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
+        let [a, b] = [0, 1].map(|i| e[i] as usize);
+        acc[a].push(b);
+        acc[b].push(a);
+        acc
+    });
+    let mut res = 0;
+    dfs(&adj, &sieve, 1, n, &mut res);
+    res
+}
+
+fn dfs(
+    adj: &[Vec<usize>],
+    sieve: &HashSet<usize>,
+    node: usize,
+    prev: usize,
+    res: &mut i64,
+) -> [i64; 2] {
+    let is_prime = sieve.contains(&node);
+    // [not prime, prime]
+    let mut count = [!is_prime, is_prime].map(i64::from);
+    for &next in adj[node].iter() {
+        if next != prev {
+            let [not_prime, prime] = dfs(adj, sieve, next, node, res);
+            *res += not_prime * count[1] + prime * count[0];
+            if is_prime {
+                count[1] += not_prime;
+            } else {
+                count[0] += not_prime;
+                count[1] += prime;
+            }
         }
     }
-    izip!(left_dp, right_dp, max_heights.iter())
-        .map(|(a, b, &c)| a + b - i64::from(c))
-        .max()
-        .unwrap()
+    count
+}
+
+fn primes(n: usize) -> HashSet<usize> {
+    let mut sieve = vec![true; n];
+    sieve[..2].fill(false);
+    for p in 2..n {
+        if sieve[p] {
+            for val in (2 * p..n).step_by(p) {
+                sieve[val] = false;
+            }
+        }
+    }
+    sieve
+        .into_iter()
+        .enumerate()
+        .filter_map(|(i, v)| if v { Some(i) } else { None })
+        .collect()
 }
 
 #[cfg(test)]
@@ -81,9 +94,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(maximum_sum_of_heights(&[5, 3, 4, 1, 1]), 13);
-        assert_eq!(maximum_sum_of_heights(&[6, 5, 3, 9, 2, 7]), 22);
-        assert_eq!(maximum_sum_of_heights(&[3, 2, 5, 5, 2, 3]), 18);
+        assert_eq!(count_paths(5, &[[1, 2], [1, 3], [2, 4], [2, 5]]), 4);
+        assert_eq!(count_paths(6, &[[1, 2], [1, 3], [2, 4], [3, 5], [3, 6]]), 6);
     }
 
     #[test]
