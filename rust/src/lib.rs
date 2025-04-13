@@ -5,14 +5,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_odd_binary_number(s: String) -> String {
-    let n = s.len();
-    let mut s = s.into_bytes();
-    let ones = s.iter().filter(|&&v| v == b'1').count();
-    s.fill(b'0');
-    s[n - 1] = b'1';
-    s[..ones - 1].fill(b'1');
-    String::from_utf8(s).unwrap()
+pub fn maximum_sum_of_heights(heights: &[i32]) -> i64 {
+    let n = heights.len();
+    let mut res = 0;
+    for (peak, &num) in heights.iter().enumerate() {
+        let mut curr = i64::from(num);
+        let mut temp = num;
+        for left in (0..peak).rev() {
+            temp = temp.min(heights[left]);
+            curr += i64::from(temp);
+        }
+        temp = num;
+        for right in 1 + peak..n {
+            temp = temp.min(heights[right]);
+            curr += i64::from(temp);
+        }
+        res = res.max(curr)
+    }
+    res
 }
 
 #[cfg(test)]
@@ -45,7 +55,9 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(maximum_sum_of_heights(&[6, 5, 3, 9, 2, 7]), 22);
+    }
 
     #[test]
     fn test() {}
