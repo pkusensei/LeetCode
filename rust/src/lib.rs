@@ -5,22 +5,49 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_good_numbers(n: i64) -> i32 {
-    const MOD: i64 = 1_000_000_007;
-    let mut res = if n & 1 == 1 { 5 } else { 1 };
-    res *= mod_pow(20, n >> 1, MOD);
-    (res % MOD) as i32
-}
-
-const fn mod_pow(base: i64, exp: i64, m: i64) -> i64 {
-    if exp == 0 {
-        return 1;
+pub fn maximum_sum_of_heights(max_heights: &[i32]) -> i64 {
+    use itertools::izip;
+    let n = max_heights.len();
+    let mut stack = vec![];
+    let mut next_smaller = vec![None; n];
+    for (idx, &num) in max_heights.iter().enumerate() {
+        while stack.last().is_some_and(|&i| max_heights[i] >= num) {
+            let top = stack.pop().unwrap();
+            next_smaller[top] = Some(idx);
+        }
+        stack.push(idx);
     }
-    if exp & 1 == 0 {
-        mod_pow(base * base % m, exp >> 1, m)
-    } else {
-        base * mod_pow(base * base % m, exp >> 1, m) % m
+    stack.clear();
+    let mut prev_smaller = vec![None; n];
+    for (idx, &num) in max_heights.iter().enumerate().rev() {
+        while stack.last().is_some_and(|&i| max_heights[i] >= num) {
+            let top = stack.pop().unwrap();
+            prev_smaller[top] = Some(idx);
+        }
+        stack.push(idx);
     }
+    let mut left_dp = vec![0; n];
+    for (idx, &num) in max_heights.iter().enumerate() {
+        let num = i64::from(num);
+        if let Some(prev) = prev_smaller[idx] {
+            left_dp[idx] = left_dp[prev] + (idx - prev) as i64 * num;
+        } else {
+            left_dp[idx] = (1 + idx) as i64 * num;
+        }
+    }
+    let mut right_dp = vec![0; n];
+    for (idx, &num) in max_heights.iter().enumerate().rev() {
+        let num = i64::from(num);
+        if let Some(next) = next_smaller[idx] {
+            right_dp[idx] = right_dp[next] + (next - idx) as i64 * num;
+        } else {
+            right_dp[idx] = (n - idx) as i64 * num;
+        }
+    }
+    izip!(left_dp, right_dp, max_heights.iter())
+        .map(|(a, b, &c)| a + b - i64::from(c))
+        .max()
+        .unwrap()
 }
 
 #[cfg(test)]
@@ -53,7 +80,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(maximum_sum_of_heights(&[5, 3, 4, 1, 1]), 13);
+        assert_eq!(maximum_sum_of_heights(&[6, 5, 3, 9, 2, 7]), 22);
+        assert_eq!(maximum_sum_of_heights(&[3, 2, 5, 5, 2, 3]), 18);
+    }
 
     #[test]
     fn test() {}
