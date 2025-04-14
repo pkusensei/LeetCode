@@ -5,24 +5,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn construct_product_matrix(grid: &[&[i32]]) -> Vec<Vec<i32>> {
-    const MOD: i64 = 12345;
-    let [rows, cols] = get_dimensions(grid);
-    let flat: Vec<_> = grid.iter().flat_map(|r| r.iter().copied()).collect();
-    let f = |mut acc: Vec<i64>, &val| {
-        acc.push(i64::from(val) * acc.last().unwrap_or(&1) % MOD);
-        acc
-    };
-    let prefix = flat[..rows * cols - 1].iter().fold(vec![1_i64], f);
-    let mut suffix = flat[1..].iter().rev().fold(vec![1_i64], f);
+pub fn minimum_sum(nums: &[i32]) -> i32 {
+    let n = nums.len();
+    let [mut prefix, mut suffix] = [Vec::with_capacity(n), Vec::with_capacity(n)];
+    for &num in nums.iter() {
+        prefix.push(num.min(*prefix.last().unwrap_or(&i32::MAX)));
+    }
+    for &num in nums.iter().rev() {
+        suffix.push(num.min(*suffix.last().unwrap_or(&i32::MAX)));
+    }
     suffix.reverse();
-    let mut res = vec![vec![0; cols]; rows];
-    for r in 0..rows {
-        for c in 0..cols {
-            res[r][c] = (prefix[r * cols + c] * suffix[r * cols + c] % MOD) as i32;
+    let mut res = i32::MAX;
+    for i in 1..n - 1 {
+        if prefix[i - 1] < nums[i] && nums[i] > suffix[1 + i] {
+            res = res.min(prefix[i - 1] + nums[i] + suffix[1 + i]);
         }
     }
-    res
+    if res == i32::MAX { -1 } else { res }
 }
 
 #[cfg(test)]
@@ -56,14 +55,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            construct_product_matrix(&[&[1, 2], &[3, 4]]),
-            [[24, 12], [8, 6]]
-        );
-        assert_eq!(
-            construct_product_matrix(&[&[12345], &[2], &[1]]),
-            [[2], [0], [0]]
-        );
+        assert_eq!(minimum_sum(&[8, 6, 1, 5, 3]), 9);
+        assert_eq!(minimum_sum(&[5, 4, 8, 7, 10, 2]), 13);
+        assert_eq!(minimum_sum(&[6, 5, 4, 3, 4, 5]), -1);
     }
 
     #[test]
