@@ -5,15 +5,25 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_indices(nums: Vec<i32>, index_difference: i32, value_difference: i32) -> Vec<i32> {
-    for (i1, &a) in nums.iter().enumerate() {
-        for (i2, &b) in nums.iter().enumerate().skip(index_difference as usize + i1) {
-            if (a - b).abs() >= value_difference {
-                return vec![i1 as i32, i2 as i32];
+pub fn shortest_beautiful_substring(s: &str, k: i32) -> String {
+    let s = s.as_bytes();
+    let mut left = 0;
+    let mut res = "".as_bytes();
+    let mut count = 0;
+    for (right, &b) in s.iter().enumerate() {
+        count += i32::from(b == b'1');
+        while count == k {
+            let curr = &s[left..=right];
+            if res.is_empty() || curr.len() < res.len() {
+                res = curr;
+            } else if curr.len() == res.len() {
+                res = res.min(curr);
             }
+            count -= i32::from(s[left] == b'1');
+            left += 1;
         }
     }
-    vec![-1, -1]
+    std::str::from_utf8(res).unwrap().to_string()
 }
 
 #[cfg(test)]
@@ -46,7 +56,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(shortest_beautiful_substring("100011001", 3), "11001");
+        assert_eq!(shortest_beautiful_substring("1011", 2), "11");
+        assert_eq!(shortest_beautiful_substring("000", 1), "");
+    }
 
     #[test]
     fn test() {}
