@@ -7,16 +7,19 @@ namespace Solution;
 
 public class Solution
 {
-    public long MaximumTripletValue(int[] nums)
+    public int CountGoodTriplets(int[] arr, int a, int b, int c)
     {
-        long maxi = 0;
-        long delta = 0;
-        long res = 0;
-        foreach (var num in nums)
+        int res = 0;
+        for (int i1 = 0; i1 < arr.Length; i1++)
         {
-            res = Math.Max(res, delta * num);
-            delta = Math.Max(delta, maxi - num);
-            maxi = Math.Max(maxi, num);
+            for (int i2 = 1 + i1; i2 < arr.Length; i2++)
+            {
+                if (Math.Abs(arr[i1] - arr[i2]) > a) { continue; }
+                for (int i3 = 1 + i2; i3 < arr.Length; i3++)
+                {
+                    if (Math.Abs(arr[i2] - arr[i3]) <= b && Math.Abs(arr[i3] - arr[i1]) <= c) { res += 1; }
+                }
+            }
         }
         return res;
     }
