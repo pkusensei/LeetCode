@@ -5,29 +5,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_indices(nums: &[i32], index_difference: i32, value_difference: i32) -> Vec<i32> {
-    let idiff = index_difference as usize;
-    let mut min = i32::MAX;
-    let mut max = i32::MIN;
-    let [mut mini, mut maxi] = [nums.len(); 2];
-    for (right, &num) in nums.iter().enumerate().skip(idiff) {
-        let left = right - idiff;
-        if (nums[left]) < min {
-            min = nums[left];
-            mini = left;
-        };
-        if (nums[left]) > max {
-            max = nums[left];
-            maxi = left;
-        }
-        if (min - num).abs() >= value_difference {
-            return vec![mini as i32, right as i32];
-        }
-        if (max - num).abs() >= value_difference {
-            return vec![maxi as i32, right as i32];
+pub fn construct_product_matrix(grid: &[&[i32]]) -> Vec<Vec<i32>> {
+    const MOD: i64 = 12345;
+    let [rows, cols] = get_dimensions(grid);
+    let flat: Vec<_> = grid.iter().flat_map(|r| r.iter().copied()).collect();
+    let f = |mut acc: Vec<i64>, &val| {
+        acc.push(i64::from(val) * acc.last().unwrap_or(&1) % MOD);
+        acc
+    };
+    let prefix = flat[..rows * cols - 1].iter().fold(vec![1_i64], f);
+    let mut suffix = flat[1..].iter().rev().fold(vec![1_i64], f);
+    suffix.reverse();
+    let mut res = vec![vec![0; cols]; rows];
+    for r in 0..rows {
+        for c in 0..cols {
+            res[r][c] = (prefix[r * cols + c] * suffix[r * cols + c] % MOD) as i32;
         }
     }
-    vec![-1, -1]
+    res
 }
 
 #[cfg(test)]
@@ -61,9 +56,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(find_indices(&[5, 1, 4, 1], 2, 4), [0, 3]);
-        assert_eq!(find_indices(&[2, 1], 0, 0), [0, 0]);
-        assert_eq!(find_indices(&[1, 2, 3], 2, 4), [-1, -1]);
+        assert_eq!(
+            construct_product_matrix(&[&[1, 2], &[3, 4]]),
+            [[24, 12], [8, 6]]
+        );
+        assert_eq!(
+            construct_product_matrix(&[&[12345], &[2], &[1]]),
+            [[2], [0], [0]]
+        );
     }
 
     #[test]
