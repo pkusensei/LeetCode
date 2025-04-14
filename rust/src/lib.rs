@@ -5,28 +5,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_sum(nums: &[i32], k: i32) -> i32 {
-    let mut freq = [0; 32];
-    for &num in nums {
-        for bit in 0..32 {
-            if num & (1 << bit) > 0 {
-                freq[bit] += 1;
-            }
+pub fn last_visited_integers(nums: Vec<i32>) -> Vec<i32> {
+    use std::collections::VecDeque;
+    let mut seen = VecDeque::new();
+    let mut idx = 0;
+    let mut res = vec![];
+    for &num in nums.iter() {
+        if num != -1 {
+            seen.push_front(num);
+            idx = 0;
+        } else {
+            res.push(*seen.get(idx).unwrap_or(&-1));
+            idx += 1;
         }
     }
-    let mut res = 0;
-    for _ in 0..k {
-        let mut curr = 0_i64;
-        for (bit, v) in freq.iter_mut().enumerate() {
-            if *v > 0 {
-                *v -= 1;
-                curr |= 1 << bit
-            }
-        }
-        res += curr.pow(2);
-        res %= 1_000_000_007;
-    }
-    res as i32
+    res
 }
 
 #[cfg(test)]
@@ -59,10 +52,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(max_sum(&[2, 6, 5, 8], 2), 261);
-        assert_eq!(max_sum(&[4, 5, 4, 7], 3), 90);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
