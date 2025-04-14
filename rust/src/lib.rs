@@ -5,35 +5,28 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_operations(s1: &str, s2: &str, x: i32) -> i32 {
-    let diff: Vec<i32> = s1
-        .bytes()
-        .zip(s2.bytes())
-        .enumerate()
-        .filter_map(|(i, (b1, b2))| if b1 != b2 { Some(i as i32) } else { None })
-        .collect();
-    let n = diff.len();
-    if n & 1 == 1 {
-        return -1;
+pub fn max_sum(nums: &[i32], k: i32) -> i32 {
+    let mut freq = [0; 32];
+    for &num in nums {
+        for bit in 0..32 {
+            if num & (1 << bit) > 0 {
+                freq[bit] += 1;
+            }
+        }
     }
-    dfs(&diff, f64::from(x) / 2.0, 0, &mut vec![-1.0; n]) as i32
-}
-
-fn dfs(diff: &[i32], cost: f64, idx: usize, memo: &mut [f64]) -> f64 {
-    let n = diff.len();
-    if idx >= n {
-        return 0.0;
+    let mut res = 0;
+    for _ in 0..k {
+        let mut curr = 0_i64;
+        for (bit, v) in freq.iter_mut().enumerate() {
+            if *v > 0 {
+                *v -= 1;
+                curr |= 1 << bit
+            }
+        }
+        res += curr.pow(2);
+        res %= 1_000_000_007;
     }
-    if idx == n - 1 {
-        return cost;
-    }
-    if memo[idx] > -1.0 {
-        return memo[idx];
-    }
-    let op1 = cost + dfs(diff, cost, 1 + idx, memo);
-    let op2 = f64::from(diff[1 + idx] - diff[idx]) + dfs(diff, cost, 2 + idx, memo);
-    memo[idx] = op1.min(op2);
-    memo[idx]
+    res as i32
 }
 
 #[cfg(test)]
@@ -67,8 +60,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_operations("1100011000", "0101001010", 2), 4);
-        assert_eq!(min_operations("10110", "00011", 4), -1)
+        assert_eq!(max_sum(&[2, 6, 5, 8], 2), 261);
+        assert_eq!(max_sum(&[4, 5, 4, 7], 3), 90);
     }
 
     #[test]
