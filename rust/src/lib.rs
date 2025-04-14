@@ -5,23 +5,29 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_sum(nums: &[i32]) -> i32 {
-    let n = nums.len();
-    let [mut prefix, mut suffix] = [Vec::with_capacity(n), Vec::with_capacity(n)];
-    for &num in nums.iter() {
-        prefix.push(num.min(*prefix.last().unwrap_or(&i32::MAX)));
+pub fn min_groups_for_valid_assignment(balls: &[i32]) -> i32 {
+    use itertools::Itertools;
+    let freq = balls.iter().copied().counts();
+    if freq.len() == 1 {
+        return 1;
     }
-    for &num in nums.iter().rev() {
-        suffix.push(num.min(*suffix.last().unwrap_or(&i32::MAX)));
-    }
-    suffix.reverse();
-    let mut res = i32::MAX;
-    for i in 1..n - 1 {
-        if prefix[i - 1] < nums[i] && nums[i] > suffix[1 + i] {
-            res = res.min(prefix[i - 1] + nums[i] + suffix[1 + i]);
+    let min = *freq.values().min().unwrap_or(&1);
+    let mut res = freq.values().sum::<usize>() as i32;
+    'outer: for f in (1..=min).rev() {
+        let f1 = 1 + f;
+        let mut curr = 0;
+        for &count in freq.values() {
+            let gr = count / f1;
+            let last = count % f1;
+            if last > 0 && last + gr < f {
+                continue 'outer;
+            }
+            curr += gr + usize::from(last > 0);
         }
+        res = res.min(curr as i32);
+        break;
     }
-    if res == i32::MAX { -1 } else { res }
+    res
 }
 
 #[cfg(test)]
@@ -55,11 +61,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(minimum_sum(&[8, 6, 1, 5, 3]), 9);
-        assert_eq!(minimum_sum(&[5, 4, 8, 7, 10, 2]), 13);
-        assert_eq!(minimum_sum(&[6, 5, 4, 3, 4, 5]), -1);
+        assert_eq!(min_groups_for_valid_assignment(&[3, 2, 3, 2, 3]), 2);
+        assert_eq!(min_groups_for_valid_assignment(&[10, 10, 10, 3, 1, 1]), 4);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(min_groups_for_valid_assignment(&[2, 3, 2, 2, 2]), 3);
+        assert_eq!(min_groups_for_valid_assignment(&[1, 1, 3, 1, 1, 3]), 3);
+    }
 }
