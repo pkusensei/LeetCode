@@ -5,8 +5,14 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn difference_of_sums(n: i32, m: i32) -> i32 {
-    n * (1 + n) / 2 - n / m * m * (n / m + 1)
+pub fn min_processing_time(mut processor_time: Vec<i32>, mut tasks: Vec<i32>) -> i32 {
+    processor_time.sort_unstable_by(|a, b| b.cmp(a));
+    tasks.sort_unstable();
+    let mut res = 0;
+    for (i, p) in processor_time.iter().enumerate() {
+        res = res.max(tasks[i * 4 + 3] + p);
+    }
+    res
 }
 
 #[cfg(test)]
