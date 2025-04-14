@@ -5,18 +5,13 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn last_visited_integers(nums: Vec<i32>) -> Vec<i32> {
-    use std::collections::VecDeque;
-    let mut seen = VecDeque::new();
-    let mut idx = 0;
+pub fn get_longest_subsequence(words: Vec<String>, groups: Vec<i32>) -> Vec<String> {
     let mut res = vec![];
-    for &num in nums.iter() {
-        if num != -1 {
-            seen.push_front(num);
-            idx = 0;
-        } else {
-            res.push(*seen.get(idx).unwrap_or(&-1));
-            idx += 1;
+    let mut prev = -1;
+    for (w, g) in words.into_iter().zip(groups) {
+        if g != prev {
+            prev = g;
+            res.push(w);
         }
     }
     res
