@@ -2,62 +2,77 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn good_triplets(nums1: &[i32], nums2: &[i32]) -> i64 {
-    let n = nums1.len();
-    let mut pos2 = vec![0; n]; // num=>idx in nums2
-    for (i, &num) in nums2.iter().enumerate() {
-        pos2[num as usize] = i;
+pub fn minimum_changes(s: &str, k: i32) -> i32 {
+    let (s, n) = (s.as_bytes(), s.len());
+    let k = k as usize;
+    let mut divs = HashMap::new();
+    for d in 2..n {
+        for v in (d + d..=n).step_by(d) {
+            divs.entry(v).or_insert(vec![1]).push(d);
+        }
     }
-    // map: idx in nums2 => idx in nums1
-    let mut pos2_pos1_idx_map = vec![0; n];
-    for (i, &num) in nums1.iter().enumerate() {
-        pos2_pos1_idx_map[pos2[num as usize]] = i;
+    let mut memo1 = vec![vec![-1; 1 + k]; 1 + n];
+    let mut memo2 = vec![vec![vec![-1; n]; 1 + n]; 1 + n];
+    dfs(s, &divs, n, k, &mut memo1, &mut memo2)
+}
+
+// dp1: Break into chunks and try all substrs
+fn dfs(
+    s: &[u8],
+    divs: &HashMap<usize, Vec<usize>>,
+    idx: usize,
+    k: usize,
+    memo1: &mut [Vec<i32>],
+    memo2: &mut [Vec<Vec<i32>>],
+) -> i32 {
+    if k == 1 {
+        return make_semi(s, divs, 0, idx, memo2);
     }
-    let mut tree = FenwickTree::new(n);
-    let mut res = 0;
-    for pos2 in 0..n {
-        let pos1 = pos2_pos1_idx_map[pos2];
-        let left = i64::from(tree.query(pos1));
-        tree.update(pos1, 1);
-        // Count of indices bigger than pos1 - (Bigger, but placed to the left of pos1)
-        let right = (n - 1 - pos1) as i64 - (pos2 as i64 - left);
-        res += left * right;
+    if memo1[idx][k] > -1 {
+        return memo1[idx][k];
+    }
+    let mut res = i32::MAX;
+    for left in 2 * (k - 1)..idx - 1 {
+        res =
+            res.min(dfs(s, divs, left, k - 1, memo1, memo2) + make_semi(s, divs, left, idx, memo2));
+    }
+    memo1[idx][k] = res;
+    res
+}
+
+// dp2: For each substr [left..right), find d that minimizes changes
+fn make_semi(
+    s: &[u8],
+    divs: &HashMap<usize, Vec<usize>>,
+    left: usize,
+    right: usize,
+    memo2: &mut [Vec<Vec<i32>>],
+) -> i32 {
+    let mut res = i32::MAX;
+    for &d in divs.get(&(right - left)).unwrap_or(&vec![1]) {
+        res = res.min(count_diff(s, left, right, d, memo2));
     }
     res
 }
 
-struct FenwickTree {
-    tree: Vec<i32>,
-}
-
-impl FenwickTree {
-    fn new(n: usize) -> Self {
-        Self {
-            tree: vec![0; 1 + n],
-        }
+fn count_diff(s: &[u8], left: usize, right: usize, d: usize, memo2: &mut [Vec<Vec<i32>>]) -> i32 {
+    if left >= right {
+        return 0;
     }
-
-    fn update(&mut self, mut idx: usize, delta: i32) {
-        idx += 1;
-        while idx < self.tree.len() {
-            self.tree[idx] += delta;
-            // idx&(-idx) => least significant bit of idx
-            idx += idx & (!idx + 1);
-        }
+    if memo2[left][right][d] > -1 {
+        return memo2[left][right][d];
     }
-
-    fn query(&mut self, mut idx: usize) -> i32 {
-        let mut res = 0;
-        idx += 1;
-        while idx > 0 {
-            res += self.tree[idx];
-            idx -= idx & (!idx + 1);
-        }
-        res
+    let mut res = count_diff(s, left + d, right - d, d, memo2);
+    for delta in 0..d {
+        res += i32::from(s[left + delta] != s[right + delta - d]);
     }
+    memo2[left][right][d] = res;
+    res
 }
 
 #[cfg(test)]
@@ -91,8 +106,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(good_triplets(&[2, 0, 1, 3], &[0, 1, 2, 3]), 1);
-        assert_eq!(good_triplets(&[4, 0, 1, 3, 2], &[4, 1, 0, 2, 3]), 4);
+        assert_eq!(minimum_changes("abcac", 2), 1);
+        assert_eq!(minimum_changes("abcdef", 2), 2);
+        assert_eq!(minimum_changes("aabbaa", 3), 0);
     }
 
     #[test]
