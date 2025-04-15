@@ -5,29 +5,59 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_groups_for_valid_assignment(balls: &[i32]) -> i32 {
-    use itertools::Itertools;
-    let freq = balls.iter().copied().counts();
-    if freq.len() == 1 {
-        return 1;
+pub fn good_triplets(nums1: &[i32], nums2: &[i32]) -> i64 {
+    let n = nums1.len();
+    let mut pos2 = vec![0; n]; // num=>idx in nums2
+    for (i, &num) in nums2.iter().enumerate() {
+        pos2[num as usize] = i;
     }
-    let min = *freq.values().min().unwrap_or(&1);
-    let mut res = freq.values().sum::<usize>() as i32;
-    'outer: for f in (1..=min).rev() {
-        let f1 = 1 + f;
-        let mut curr = 0;
-        for &count in freq.values() {
-            let gr = count / f1;
-            let last = count % f1;
-            if last > 0 && last + gr < f {
-                continue 'outer; // borrow from at most gr groups
-            }
-            curr += gr + usize::from(last > 0);
-        }
-        res = res.min(curr as i32);
-        break;
+    // map: idx in nums2 => idx in nums1
+    let mut pos2_pos1_idx_map = vec![0; n];
+    for (i, &num) in nums1.iter().enumerate() {
+        pos2_pos1_idx_map[pos2[num as usize]] = i;
+    }
+    let mut tree = FenwickTree::new(n);
+    let mut res = 0;
+    for pos2 in 0..n {
+        let pos1 = pos2_pos1_idx_map[pos2];
+        let left = i64::from(tree.query(pos1));
+        tree.update(pos1, 1);
+        // Count of indices bigger than pos1 - (Bigger, but placed to the left of pos1)
+        let right = (n - 1 - pos1) as i64 - (pos2 as i64 - left);
+        res += left * right;
     }
     res
+}
+
+struct FenwickTree {
+    tree: Vec<i32>,
+}
+
+impl FenwickTree {
+    fn new(n: usize) -> Self {
+        Self {
+            tree: vec![0; 1 + n],
+        }
+    }
+
+    fn update(&mut self, mut idx: usize, delta: i32) {
+        idx += 1;
+        while idx < self.tree.len() {
+            self.tree[idx] += delta;
+            // idx&(-idx) => least significant bit of idx
+            idx += idx & (!idx + 1);
+        }
+    }
+
+    fn query(&mut self, mut idx: usize) -> i32 {
+        let mut res = 0;
+        idx += 1;
+        while idx > 0 {
+            res += self.tree[idx];
+            idx -= idx & (!idx + 1);
+        }
+        res
+    }
 }
 
 #[cfg(test)]
@@ -61,13 +91,10 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_groups_for_valid_assignment(&[3, 2, 3, 2, 3]), 2);
-        assert_eq!(min_groups_for_valid_assignment(&[10, 10, 10, 3, 1, 1]), 4);
+        assert_eq!(good_triplets(&[2, 0, 1, 3], &[0, 1, 2, 3]), 1);
+        assert_eq!(good_triplets(&[4, 0, 1, 3, 2], &[4, 1, 0, 2, 3]), 4);
     }
 
     #[test]
-    fn test() {
-        assert_eq!(min_groups_for_valid_assignment(&[2, 3, 2, 2, 2]), 3);
-        assert_eq!(min_groups_for_valid_assignment(&[1, 1, 3, 1, 1, 3]), 3);
-    }
+    fn test() {}
 }
