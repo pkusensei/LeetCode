@@ -5,43 +5,13 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_points(edges: &[[i32; 2]], coins: &[i32], k: i32) -> i32 {
-    let n = coins.len();
-    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
-        let [a, b] = [0, 1].map(|i| e[i] as usize);
-        acc[a].push(b);
-        acc[b].push(a);
-        acc
-    });
-    dfs(&adj, coins, k, 0, n, 0, &mut vec![[-1; 15]; n])
-}
-
-fn dfs(
-    adj: &[Vec<usize>],
-    coins: &[i32],
-    k: i32,
-    node: usize,
-    prev: usize,
-    halfed: usize,
-    memo: &mut [[i32; 15]],
-) -> i32 {
-    if halfed > 14 {
-        return 0;
-    }
-    if memo[node][halfed] > -1 {
-        return memo[node][halfed];
-    }
-    let coin = coins[node] >> halfed;
-    let mut no_half = coin - k;
-    let mut half = coin >> 1;
-    for &next in adj[node].iter() {
-        if next != prev {
-            no_half += dfs(adj, coins, k, next, node, halfed, memo);
-            half += dfs(adj, coins, k, next, node, 1 + halfed, memo);
-        }
-    }
-    memo[node][halfed] = no_half.max(half);
-    memo[node][halfed]
+pub fn find_champion(grid: Vec<Vec<i32>>) -> i32 {
+    grid.iter()
+        .enumerate()
+        .map(|(i, v)| (i, v.iter().sum::<i32>()))
+        .max_by_key(|(_i, v)| *v)
+        .map(|(i, _)| i as i32)
+        .unwrap()
 }
 
 #[cfg(test)]
@@ -74,13 +44,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(
-            maximum_points(&[[0, 1], [1, 2], [2, 3]], &[10, 10, 3, 3], 5),
-            11
-        );
-        assert_eq!(maximum_points(&[[0, 1], [0, 2]], &[8, 4, 4], 0), 16);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
