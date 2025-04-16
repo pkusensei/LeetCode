@@ -5,31 +5,37 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_score_after_operations(edges: &[[i32; 2]], values: &[i32]) -> i64 {
-    let n = values.len();
-    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
-        let [a, b] = [0, 1].map(|i| e[i] as usize);
-        acc[a].push(b);
-        acc[b].push(a);
-        acc
-    });
-    let sum: i64 = values.iter().map(|&v| i64::from(v)).sum();
-    sum - dfs(&adj, values, 0, n, &mut vec![-1; n])
-}
-
-fn dfs(adj: &[Vec<usize>], values: &[i32], node: usize, prev: usize, memo: &mut [i64]) -> i64 {
-    if memo[node] > -1 {
-        return memo[node];
-    }
-    let mut leaves = 0;
-    for &next in adj[node].iter() {
-        if next != prev {
-            leaves += dfs(adj, values, next, node, memo);
+pub fn max_balanced_subsequence_sum(nums: &[i64]) -> i64 {
+    use std::collections::BTreeMap;
+    let arr: Vec<_> = nums
+        .iter()
+        .enumerate()
+        .map(|(i, &num)| i64::from(num) - i as i64)
+        .collect();
+    // nums[i]-i => max_sum up to i
+    let mut map = BTreeMap::new();
+    let mut res = i64::MIN;
+    for (&num, &val) in nums.iter().zip(arr.iter()) {
+        let mut curr = i64::from(num);
+        if curr <= 0 {
+            res = res.max(curr);
+            continue;
         }
+        if let Some((_, &v)) = map.range(..=val).next_back() {
+            curr += v;
+        }
+        let del: Vec<_> = map
+            .range(val..)
+            .take_while(|(_, v)| **v < curr)
+            .map(|(&k, _)| k)
+            .collect();
+        for k in del {
+            map.remove(&k);
+        }
+        map.insert(val, curr);
+        res = res.max(curr);
     }
-    let curr = i64::from(values[node]);
-    memo[node] = if leaves == 0 { curr } else { curr.min(leaves) };
-    memo[node]
+    res
 }
 
 #[cfg(test)]
@@ -63,20 +69,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            maximum_score_after_operations(
-                &[[0, 1], [0, 2], [0, 3], [2, 4], [4, 5]],
-                &[5, 2, 5, 2, 1, 1]
-            ),
-            11
-        );
-        assert_eq!(
-            maximum_score_after_operations(
-                &[[0, 1], [0, 2], [1, 3], [1, 4], [2, 5], [2, 6]],
-                &[20, 10, 9, 7, 4, 3, 5],
-            ),
-            40
-        );
+        assert_eq!(max_balanced_subsequence_sum(&[3, 3, 5, 6]), 14);
+        assert_eq!(max_balanced_subsequence_sum(&[5, -1, -3, 8]), 13);
+        assert_eq!(max_balanced_subsequence_sum(&[-2, -1]), -1);
     }
 
     #[test]
