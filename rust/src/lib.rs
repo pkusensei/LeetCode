@@ -2,29 +2,18 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn distribute_candies(n: i32, limit: i32) -> i32 {
-        dfs(n, limit, 3, &mut HashMap::new())
-}
-
-fn dfs(n: i32, limit: i32, c: i32, memo: &mut HashMap<[i32; 2], i32>) -> i32 {
-    if c == 0 {
-        return i32::from(n == 0);
+pub fn distribute_candies(n: i32, limit: i32) -> i64 {
+    let mut res = 0;
+    for a in 0..=n.min(limit) {
+        // b => [0, (n-a).min(limit)]
+        // c => [0, (n-a-b).min(limit)]
+        let max_c = (n - a).min(limit); // b==0
+        let min_c = (n - a - limit).max(0); // b==limit
+        res += i64::from(max_c - min_c + 1).max(0);
     }
-    if n < 0 {
-        return 0;
-    }
-    if let Some(&v) = memo.get(&[n, c]) {
-        return v;
-    }
-    let res = (0..=limit.min(n))
-        .map(|v| dfs(n - v, limit, c - 1, memo))
-        .sum();
-    memo.insert([n, c], res);
     res
 }
 
