@@ -5,26 +5,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_good(nums: &[i32], k: i32) -> i64 {
-    use std::collections::HashMap;
+pub fn min_increment_operations(nums: &[i32], k: i32) -> i64 {
     let n = nums.len();
-    let k = i64::from(k);
-    let mut pair_count = 0;
-    let mut map = HashMap::new();
-    let mut left = 0;
-    let mut res = 0;
-    for (right, &num) in nums.iter().enumerate() {
-        let v = map.entry(num).or_insert(0);
-        pair_count += *v;
-        *v += 1;
-        while pair_count >= k {
-            res += n - right;
-            map.entry(nums[left]).and_modify(|v| *v -= 1);
-            pair_count -= map[&nums[left]];
-            left += 1;
+    let mut dp = vec![0; n];
+    for (i, &num) in nums.iter().enumerate() {
+        if i < 3 {
+            dp[i] = i64::from(k - num).max(0);
+        } else {
+            dp[i] = i64::from(k - num).max(0) + dp[i - 3..i].iter().min().unwrap_or(&0);
         }
     }
-    res as i64
+    *dp[n - 3..].iter().min().unwrap()
 }
 
 #[cfg(test)]
@@ -58,8 +49,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(count_good(&[1, 1, 1, 1, 1], 10), 1);
-        assert_eq!(count_good(&[3, 1, 4, 3, 2, 2, 4], 2), 4);
+        assert_eq!(min_increment_operations(&[2, 3, 0, 0, 2], 4), 3);
+        assert_eq!(min_increment_operations(&[0, 1, 3, 3], 5), 2);
+        assert_eq!(min_increment_operations(&[1, 1, 2], 1), 0);
     }
 
     #[test]
