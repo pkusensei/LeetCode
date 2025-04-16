@@ -5,17 +5,43 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_increment_operations(nums: &[i32], k: i32) -> i64 {
-    let n = nums.len();
-    let mut dp = vec![0; n];
-    for (i, &num) in nums.iter().enumerate() {
-        if i < 3 {
-            dp[i] = i64::from(k - num).max(0);
-        } else {
-            dp[i] = i64::from(k - num).max(0) + dp[i - 3..i].iter().min().unwrap_or(&0);
+pub fn maximum_points(edges: &[[i32; 2]], coins: &[i32], k: i32) -> i32 {
+    let n = coins.len();
+    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
+        let [a, b] = [0, 1].map(|i| e[i] as usize);
+        acc[a].push(b);
+        acc[b].push(a);
+        acc
+    });
+    dfs(&adj, coins, k, 0, n, 0, &mut vec![[-1; 15]; n])
+}
+
+fn dfs(
+    adj: &[Vec<usize>],
+    coins: &[i32],
+    k: i32,
+    node: usize,
+    prev: usize,
+    halfed: usize,
+    memo: &mut [[i32; 15]],
+) -> i32 {
+    if halfed > 14 {
+        return 0;
+    }
+    if memo[node][halfed] > -1 {
+        return memo[node][halfed];
+    }
+    let coin = coins[node] >> halfed;
+    let mut no_half = coin - k;
+    let mut half = coin >> 1;
+    for &next in adj[node].iter() {
+        if next != prev {
+            no_half += dfs(adj, coins, k, next, node, halfed, memo);
+            half += dfs(adj, coins, k, next, node, 1 + halfed, memo);
         }
     }
-    *dp[n - 3..].iter().min().unwrap()
+    memo[node][halfed] = no_half.max(half);
+    memo[node][halfed]
 }
 
 #[cfg(test)]
@@ -49,9 +75,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_increment_operations(&[2, 3, 0, 0, 2], 4), 3);
-        assert_eq!(min_increment_operations(&[0, 1, 3, 3], 5), 2);
-        assert_eq!(min_increment_operations(&[1, 1, 2], 1), 0);
+        assert_eq!(
+            maximum_points(&[[0, 1], [1, 2], [2, 3]], &[10, 10, 3, 3], 5),
+            11
+        );
+        assert_eq!(maximum_points(&[[0, 1], [0, 2]], &[8, 4, 4], 0), 16);
     }
 
     #[test]
