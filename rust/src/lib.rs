@@ -5,13 +5,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_champion(grid: Vec<Vec<i32>>) -> i32 {
-    grid.iter()
+pub fn find_champion(n: i32, edges: Vec<Vec<i32>>) -> i32 {
+    let mut it = edges
+        .iter()
+        .fold(vec![0; n as usize], |mut acc, e| {
+            acc[e[1] as usize] += 1;
+            acc
+        })
+        .into_iter()
         .enumerate()
-        .map(|(i, v)| (i, v.iter().sum::<i32>()))
-        .max_by_key(|(_i, v)| *v)
-        .map(|(i, _)| i as i32)
-        .unwrap()
+        .filter_map(|(i, v)| if v == 0 { Some(i) } else { None });
+    match (it.next(), it.next()) {
+        (Some(i), None) => i as i32,
+        _ => -1,
+    }
 }
 
 #[cfg(test)]
