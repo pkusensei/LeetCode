@@ -5,24 +5,51 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_operations(nums1: &[i32], nums2: &[i32]) -> i32 {
-    let n = nums1.len();
-    let mut dp1 = 0;
-    let mut dp2 = 0;
-    let max1 = nums1[n - 1];
-    let max2 = nums2[n - 1];
-    for (&num1, &num2) in nums1.iter().zip(nums2.iter()) {
-        if num1.min(num2) > max1.min(max2) || num1.max(num2) > max1.max(max2) {
-            return -1;
+pub fn maximum_strong_pair_xor(mut nums: Vec<i32>) -> i32 {
+    nums.sort_unstable();
+    let mut res = 0;
+    for (i, &num) in nums.iter().enumerate() {
+        let mut left = i;
+        let mut right = nums.partition_point(|&v| v <= 2 * num);
+        for bit in (0..=20).rev() {
+            if left >= right {
+                break;
+            }
+            let [nl, nr] = if num & (1 << bit) > 0 {
+                // bit is set in [left]
+                // confine search within range where it's unset
+                [left, binary_search(&nums, left, right, 1 << bit)]
+            } else {
+                // Or search in all numbers that has it set
+                [binary_search(&nums, left, right, 1 << bit), right]
+            };
+            if nl != nr {
+                left = nl;
+                right = nr;
+            }
         }
-        if num1 > max1 || num2 > max2 {
-            dp1 += 1
-        }
-        if num1 > max2 || num2 > max1 {
-            dp2 += 1
+        res = res.max(num ^ nums[left]);
+    }
+    res
+}
+
+// Find the min num with set bit in mask
+fn binary_search(nums: &[i32], mut left: usize, mut right: usize, mask: i32) -> usize {
+    if nums[left] & mask > 0 {
+        return left;
+    }
+    if right.checked_sub(1).is_some_and(|i| nums[i] & mask == 0) {
+        return right;
+    }
+    while left < right {
+        let mid = left.midpoint(right);
+        if nums[mid] & mask > 0 {
+            right = mid;
+        } else {
+            left = 1 + mid;
         }
     }
-    dp1.min(dp2)
+    left
 }
 
 #[cfg(test)]
@@ -56,13 +83,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_operations(&[1, 2, 7], &[4, 5, 3],), 1);
-        assert_eq!(min_operations(&[2, 3, 4, 5, 9], &[8, 8, 4, 4, 4]), 2);
-        assert_eq!(min_operations(&[1, 5, 4], &[2, 5, 3]), -1)
+        assert_eq!(maximum_strong_pair_xor(vec![1, 2, 3, 4, 5]), 7);
+        assert_eq!(maximum_strong_pair_xor(vec![10, 100]), 0);
+        assert_eq!(maximum_strong_pair_xor(vec![500, 520, 2500, 3000]), 1020);
     }
 
     #[test]
-    fn test() {
-        assert_eq!(min_operations(&[8, 6, 6, 6, 7, 8], &[5, 8, 8, 8, 7, 7]), 2);
-    }
+    fn test() {}
 }
