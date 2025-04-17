@@ -5,16 +5,15 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn distribute_candies(n: i32, limit: i32) -> i64 {
-    let mut res = 0;
-    for a in 0..=n.min(limit) {
-        // b => [0, (n-a).min(limit)]
-        // c => [0, (n-a-b).min(limit)]
-        let max_c = (n - a).min(limit); // b==0
-        let min_c = (n - a - limit).max(0); // b==limit
-        res += i64::from(max_c - min_c + 1).max(0);
-    }
-    res
+pub fn max_spending(values: Vec<Vec<i32>>) -> i64 {
+    use itertools::Itertools;
+    values
+        .into_iter()
+        .flatten()
+        .sorted_unstable()
+        .zip(1..)
+        .map(|(v, d)| i64::from(v) * d)
+        .sum()
 }
 
 #[cfg(test)]
@@ -47,10 +46,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(distribute_candies(5, 2), 3);
-        assert_eq!(distribute_candies(3, 3), 10);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
