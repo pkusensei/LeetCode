@@ -5,16 +5,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_minimum_operations(s1: String, s2: String, s3: String) -> i32 {
-    use itertools::izip;
-    let len = izip!(s1.bytes(), s2.bytes(), s3.bytes())
-        .take_while(|(a, b, c)| a == b && b == c)
-        .count();
-    if len == 0 {
-        -1
-    } else {
-        (s1.len() - len + s2.len() - len + s3.len() - len) as i32
+pub fn maximum_xor_product(mut a: i64, mut b: i64, n: i32) -> i32 {
+    for bit in (0..n).rev() {
+        let mask: i64 = 1 << bit;
+        if a & mask > 0 && b & mask > 0 {
+        } else if a & mask > 0 {
+            if a > b {
+                a ^= mask;
+                b |= mask
+            }
+        } else if b & mask > 0 {
+            if a < b {
+                a |= mask;
+                b ^= mask;
+            }
+        } else {
+            a |= mask;
+            b |= mask;
+        }
     }
+    const MOD: i64 = 1_000_000_007;
+    ((a % MOD) * (b % MOD) % MOD) as i32
 }
 
 #[cfg(test)]
@@ -47,7 +58,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(maximum_xor_product(1, 6, 3), 12);
+        assert_eq!(maximum_xor_product(6, 7, 5), 930);
+    }
 
     #[test]
     fn test() {}
