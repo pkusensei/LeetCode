@@ -5,15 +5,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_spending(values: Vec<Vec<i32>>) -> i64 {
-    use itertools::Itertools;
-    values
-        .into_iter()
-        .flatten()
-        .sorted_unstable()
-        .zip(1..)
-        .map(|(v, d)| i64::from(v) * d)
-        .sum()
+pub fn maximum_strong_pair_xor(mut nums: Vec<i32>) -> i32 {
+    // y-x<x y<2x
+    nums.sort_unstable();
+    let mut res = 0;
+    for (left, &x) in nums.iter().enumerate() {
+        let right = nums.partition_point(|&v| v <= 2 * x);
+        for &v in nums[1 + left..right].iter() {
+            res = res.max(x ^ v)
+        }
+    }
+    res
 }
 
 #[cfg(test)]
