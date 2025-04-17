@@ -2,36 +2,27 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_high_access_employees(access_times: Vec<Vec<String>>) -> Vec<String> {
-    let mut map = HashMap::new();
-    for a in access_times.iter() {
-        let (name, time) = parse(a);
-        map.entry(name).or_insert(vec![]).push(time);
-    }
-    let mut res = vec![];
-    for (k, v) in map.iter_mut() {
-        v.sort_unstable();
-        for (left, a) in v.iter().enumerate() {
-            let right = v.partition_point(|&x| x < a + 60);
-            if right - left >= 3 {
-                res.push(k.to_string());
-                break;
-            }
+pub fn min_operations(nums1: &[i32], nums2: &[i32]) -> i32 {
+    let n = nums1.len();
+    let mut dp1 = 0;
+    let mut dp2 = 0;
+    let max1 = nums1[n - 1];
+    let max2 = nums2[n - 1];
+    for (&num1, &num2) in nums1.iter().zip(nums2.iter()) {
+        if num1.min(num2) > max1.min(max2) || num1.max(num2) > max1.max(max2) {
+            return -1;
+        }
+        if num1 > max1 || num2 > max2 {
+            dp1 += 1
+        }
+        if num1 > max2 || num2 > max1 {
+            dp2 += 1
         }
     }
-    res
-}
-
-fn parse(line: &[String]) -> (&str, i32) {
-    let name = line[0].as_str();
-    let h = line[1][..2].parse::<i32>().unwrap_or_default();
-    let m = line[1][2..].parse::<i32>().unwrap_or_default();
-    (name, h * 60 + m)
+    dp1.min(dp2)
 }
 
 #[cfg(test)]
@@ -64,8 +55,14 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(min_operations(&[1, 2, 7], &[4, 5, 3],), 1);
+        assert_eq!(min_operations(&[2, 3, 4, 5, 9], &[8, 8, 4, 4, 4]), 2);
+        assert_eq!(min_operations(&[1, 5, 4], &[2, 5, 3]), -1)
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(min_operations(&[8, 6, 6, 6, 7, 8], &[5, 8, 8, 8, 7, 7]), 2);
+    }
 }
