@@ -5,27 +5,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_xor_product(mut a: i64, mut b: i64, n: i32) -> i32 {
-    for bit in (0..n).rev() {
-        let mask: i64 = 1 << bit;
-        if a & mask > 0 && b & mask > 0 {
-        } else if a & mask > 0 {
-            if a > b {
-                a ^= mask;
-                b |= mask
-            }
-        } else if b & mask > 0 {
-            if a < b {
-                a |= mask;
-                b ^= mask;
-            }
+pub fn count_and_say(n: i32) -> String {
+    let mut res = "".to_string();
+    for i in 0..n {
+        if i == 0 {
+            res = "1".to_string()
         } else {
-            a |= mask;
-            b |= mask;
+            res = res
+                .as_bytes()
+                .chunk_by(|a, b| a == b)
+                .map(|ch| format!("{}{}", ch.len(), ch[0] - b'0'))
+                .collect();
         }
     }
-    const MOD: i64 = 1_000_000_007;
-    ((a % MOD) * (b % MOD) % MOD) as i32
+    res
 }
 
 #[cfg(test)]
@@ -58,10 +51,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(maximum_xor_product(1, 6, 3), 12);
-        assert_eq!(maximum_xor_product(6, 7, 5), 930);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
