@@ -5,12 +5,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_words_containing(words: Vec<String>, x: char) -> Vec<i32> {
-    words
-        .iter()
-        .enumerate()
-        .filter_map(|(i, s)| if s.contains(x) { Some(i as i32) } else { None })
-        .collect()
+pub fn maximize_square_hole_area(
+    n: i32,
+    m: i32,
+    mut h_bars: Vec<i32>,
+    mut v_bars: Vec<i32>,
+) -> i32 {
+    h_bars.sort_unstable();
+    v_bars.sort_unstable();
+    let a = h_bars.chunk_by(|a, b| b - a == 1).map(|ch| ch.len()).max();
+    let b = v_bars.chunk_by(|a, b| b - a == 1).map(|ch| ch.len()).max();
+    a.zip(b)
+        .map(|(a, b)| (a.min(b) as i32 + 1).pow(2))
+        .unwrap_or(1)
 }
 
 #[cfg(test)]
