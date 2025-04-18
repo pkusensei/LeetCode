@@ -18,19 +18,15 @@ impl DSU {
         }
     }
 
-    pub fn find(&mut self, x: usize) -> usize {
-        if self.parent[x] != x {
-            self.parent[x] = self.find(self.parent[x]);
+    pub fn find(&mut self, v: usize) -> usize {
+        if self.parent[v] != v {
+            self.parent[v] = self.find(self.parent[v]);
         }
-        self.parent[x]
+        self.parent[v]
     }
 
     pub fn union(&mut self, x: usize, y: usize) -> bool {
-        if x == y {
-            return false;
-        }
-        let (x, y) = (x.min(y), x.max(y));
-        let (rx, ry) = (self.find(x), self.find(y));
+        let [rx, ry] = [x, y].map(|v| self.find(v));
         if rx == ry {
             return false;
         }
@@ -53,12 +49,8 @@ impl DSU {
         true
     }
 
-    pub fn count(&self) -> usize {
-        self.count
-    }
-
-    pub fn get_size(&mut self, x: usize) -> i32 {
-        let p = self.find(x);
-        self.size[p]
+    pub fn get_size(&mut self, v: usize) -> i32 {
+        let root = self.find(v);
+        self.size[root]
     }
 }

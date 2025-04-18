@@ -20,26 +20,12 @@ impl<F, const N: usize> Trie<F, N> {
         I: IntoIterator<Item = T>,
         F: Fn(T) -> usize + Clone,
     {
-        self.insert_impl(input.into_iter())
-    }
-
-    fn insert_impl<T, I>(&mut self, mut it: I)
-    where
-        I: Iterator<Item = T>,
-        F: Fn(T) -> usize + Clone,
-    {
-        if let Some(v) = it.next() {
-            let idx = (self.index_of)(v);
-            if let Some(n) = self.data.get_mut(idx).and_then(|opt| opt.as_mut()) {
-                n.insert(it);
-            } else {
-                let mut node = Box::new(Self::new(self.index_of.clone()));
-                node.insert(it);
-                self.data[idx] = Some(node);
-            }
-        } else {
-            self.is_end = true;
+        let mut curr = self;
+        for item in input {
+            let idx = (curr.index_of)(item);
+            curr = curr.data[idx].get_or_insert(Box::new(Trie::new(curr.index_of.clone())))
         }
+        curr.is_end = true;
     }
 
     pub fn check<T, I>(&self, input: I) -> bool
@@ -47,23 +33,15 @@ impl<F, const N: usize> Trie<F, N> {
         I: IntoIterator<Item = T>,
         F: Fn(T) -> usize,
     {
-        self.check_impl(input.into_iter())
-    }
-
-    fn check_impl<T, I>(&self, mut it: I) -> bool
-    where
-        I: Iterator<Item = T>,
-        F: Fn(T) -> usize,
-    {
-        if let Some(v) = it.next() {
-            let idx = (self.index_of)(v);
-            if let Some(node) = self.data.get(idx).and_then(|n| n.as_ref()) {
-                return node.check(it);
-            } else {
+        let mut curr = self;
+        for item in input {
+            let idx = (curr.index_of)(item);
+            let Some(ref v) = curr.data[idx] else {
                 return false;
-            }
+            };
+            curr = v;
         }
-        self.is_end
+        curr.is_end
     }
 }
 
