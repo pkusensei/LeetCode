@@ -5,18 +5,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn are_similar(mat: Vec<Vec<i32>>, k: i32) -> bool {
-    let mut grid = mat.clone();
-    let n = grid[0].len();
-    let k = k as usize % n;
-    for (r, row) in grid.iter_mut().enumerate() {
-        if r & 1 == 0 {
-            row.rotate_left(k);
-        } else {
-            row.rotate_right(k);
+pub fn beautiful_substrings(s: String, k: i32) -> i32 {
+    use std::collections::HashSet;
+    let vowels = HashSet::from([b'a', b'e', b'i', b'o', b'u']);
+    let (s, n) = (s.as_bytes(), s.len());
+    let mut res = 0;
+    for left in 0..n - 1 {
+        let [mut vs, mut cs] = [0, 0];
+        for right in left..n {
+            if vowels.contains(&s[right]) {
+                vs += 1
+            } else {
+                cs += 1
+            }
+            res += i32::from(right - left > 0 && vs == cs && vs * cs % k == 0);
         }
     }
-    grid == mat
+    res
 }
 
 #[cfg(test)]
