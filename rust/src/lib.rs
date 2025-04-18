@@ -5,30 +5,12 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn leftmost_building_queries(heights: &[i32], queries: &[[i32; 2]]) -> Vec<i32> {
-    use std::{cmp::Reverse, collections::BinaryHeap};
-    let mut res = vec![-1; queries.len()];
-    let mut pending = vec![vec![]; heights.len()];
-    for (idx, q) in queries.iter().enumerate() {
-        let x = q[0].min(q[1]) as usize;
-        let y = q[0].max(q[1]) as usize;
-        if x == y || heights[x] < heights[y] {
-            res[idx] = y as i32;
-        } else {
-            pending[y].push((idx, heights[x])); // h[x]>=h[y]
-        }
-    }
-    let mut heap: BinaryHeap<Reverse<(i32, usize)>> = BinaryHeap::new();
-    for (hi, &num) in heights.iter().enumerate() {
-        while heap.peek().is_some_and(|v| v.0.0 < num) {
-            let qi = heap.pop().unwrap().0.1;
-            res[qi] = hi as i32;
-        }
-        for &(qi, q) in &pending[hi] {
-            heap.push(Reverse((q, qi)));
-        }
-    }
-    res
+pub fn find_words_containing(words: Vec<String>, x: char) -> Vec<i32> {
+    words
+        .iter()
+        .enumerate()
+        .filter_map(|(i, s)| if s.contains(x) { Some(i as i32) } else { None })
+        .collect()
 }
 
 #[cfg(test)]
@@ -61,22 +43,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(
-            leftmost_building_queries(
-                &[6, 4, 8, 5, 2, 7],
-                &[[0, 1], [0, 3], [2, 4], [3, 4], [2, 2]]
-            ),
-            [2, 5, -1, 5, 2]
-        );
-        assert_eq!(
-            leftmost_building_queries(
-                &[5, 3, 8, 2, 6, 1, 4, 6],
-                &[[0, 7], [3, 5], [5, 2], [3, 0], [1, 6]]
-            ),
-            [7, 6, -1, 4, 6]
-        );
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
