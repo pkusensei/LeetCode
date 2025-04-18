@@ -5,19 +5,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximize_square_hole_area(
-    n: i32,
-    m: i32,
-    mut h_bars: Vec<i32>,
-    mut v_bars: Vec<i32>,
-) -> i32 {
-    h_bars.sort_unstable();
-    v_bars.sort_unstable();
-    let a = h_bars.chunk_by(|a, b| b - a == 1).map(|ch| ch.len()).max();
-    let b = v_bars.chunk_by(|a, b| b - a == 1).map(|ch| ch.len()).max();
-    a.zip(b)
-        .map(|(a, b)| (a.min(b) as i32 + 1).pow(2))
-        .unwrap_or(1)
+pub fn minimum_coins(prices: &[i32]) -> i32 {
+    let n = prices.len();
+    let mut dp = vec![i32::MAX; 1 + n];
+    dp[n] = 0;
+    for left in (0..n).rev() {
+        for right in 1 + left..=(2 + 2 * left).min(n) {
+            dp[left] = dp[left].min(prices[left] + dp[right]);
+        }
+    }
+    dp[0]
 }
 
 #[cfg(test)]
@@ -50,7 +47,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(minimum_coins(&[3, 1, 2]), 4);
+        assert_eq!(minimum_coins(&[1, 10, 1, 1]), 2);
+        assert_eq!(minimum_coins(&[26, 18, 6, 12, 49, 7, 45, 45]), 39);
+    }
 
     #[test]
     fn test() {}
