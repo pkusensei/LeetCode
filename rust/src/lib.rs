@@ -5,20 +5,30 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_added_coins(mut coins: Vec<i32>, target: i32) -> i32 {
-    coins.sort_unstable();
-    let mut curr = 1;
-    let mut idx = 0;
+pub fn count_complete_substrings(word: &str, k: i32) -> i32 {
     let mut res = 0;
-    while curr <= target {
-        // Suppose v is reachable,
-        // Adding v makes all [v..=2v] reachable
-        if coins.get(idx).is_some_and(|&v| v <= curr) {
-            curr += coins[idx];
-            idx += 1
-        } else {
-            res += 1;
-            curr *= 2;
+    for ch in word.as_bytes().chunk_by(|&a, &b| a.abs_diff(b) <= 2) {
+        res += substr(ch, k);
+    }
+    res
+}
+
+fn substr(s: &[u8], k: i32) -> i32 {
+    let n = s.len();
+    let k = k as usize;
+    let mut res = 0;
+    for len in (k..=(26 * k).min(n)).step_by(k) {
+        let mut freq = s[..len].iter().fold([0; 26], |mut acc, &b| {
+            acc[usize::from(b - b'a')] += 1;
+            acc
+        });
+        res += i32::from(freq.iter().filter(|&&f| f == k).count() == len / k);
+        for idx in len..n {
+            let add = usize::from(s[idx] - b'a');
+            freq[add] += 1;
+            let del = usize::from(s[idx - len] - b'a');
+            freq[del] -= 1;
+            res += i32::from(freq.iter().filter(|&&f| f == k).count() == len / k);
         }
     }
     res
@@ -55,9 +65,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(minimum_added_coins(vec![1, 4, 10], 19), 2);
-        assert_eq!(minimum_added_coins(vec![1, 4, 10, 5, 7, 19], 19), 1);
-        assert_eq!(minimum_added_coins(vec![1, 1, 1], 20), 3);
+        assert_eq!(count_complete_substrings("igigee", 2), 3);
+        assert_eq!(count_complete_substrings("aaabbbccc", 3), 6);
     }
 
     #[test]
