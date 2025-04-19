@@ -5,18 +5,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn remove_almost_equal_characters(word: &str) -> i32 {
-    let (s, n) = (word.as_bytes(), word.len());
+pub fn max_subarray_length(nums: &[i32], k: i32) -> i32 {
     let mut res = 0;
-    let mut idx = 1;
-    while idx < n {
-        if s[idx - 1].abs_diff(s[idx]) <= 1 {
-            res += 1;
-            idx += 1;
+    let mut map = std::collections::HashMap::new();
+    let mut left = 0;
+    for (right, &num) in nums.iter().enumerate() {
+        *map.entry(num).or_insert(0) += 1;
+        while map[&num] > k {
+            map.entry(nums[left]).and_modify(|v| *v -= 1);
+            left += 1;
         }
-        idx += 1;
+        res = res.max(right - left + 1);
     }
-    res
+    res as i32
 }
 
 #[cfg(test)]
@@ -50,9 +51,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(remove_almost_equal_characters("aaaaa"), 2);
-        assert_eq!(remove_almost_equal_characters("abddez"), 2);
-        assert_eq!(remove_almost_equal_characters("zyxyxyz"), 3);
+        assert_eq!(max_subarray_length(&[1, 2, 3, 1, 2, 3, 1, 2], 2), 6);
+        assert_eq!(max_subarray_length(&[1, 2, 1, 2, 1, 2, 1, 2], 1), 2);
+        assert_eq!(max_subarray_length(&[5, 5, 5, 5, 5, 5, 5], 4), 4);
     }
 
     #[test]
