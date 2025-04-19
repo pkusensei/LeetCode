@@ -7,20 +7,31 @@ namespace Solution;
 
 public class Solution
 {
-    public int CountGoodTriplets(int[] arr, int a, int b, int c)
+    public long CountFairPairs(int[] nums, int lower, int upper)
     {
-        int res = 0;
-        for (int i1 = 0; i1 < arr.Length; i1++)
+        Array.Sort(nums);
+        return LessThan(nums, 1 + upper) - LessThan(nums, lower);
+
+        static long LessThan(Span<int> nums, int value)
         {
-            for (int i2 = 1 + i1; i2 < arr.Length; i2++)
+            int left = 0;
+            int right = nums.Length - 1;
+            long res = 0;
+            while (left < right)
             {
-                if (Math.Abs(arr[i1] - arr[i2]) > a) { continue; }
-                for (int i3 = 1 + i2; i3 < arr.Length; i3++)
+                int sum = nums[left] + nums[right];
+                if (sum < value)
                 {
-                    if (Math.Abs(arr[i2] - arr[i3]) <= b && Math.Abs(arr[i3] - arr[i1]) <= c) { res += 1; }
+                    // this pair is valid, so is everything between
+                    res += right - left;
+                    left += 1;
+                }
+                else
+                {
+                    right -= 1; // pair sum too big
                 }
             }
+            return res;
         }
-        return res;
     }
 }
