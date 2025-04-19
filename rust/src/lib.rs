@@ -5,33 +5,49 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_complete_substrings(word: &str, k: i32) -> i32 {
-    let mut res = 0;
-    for ch in word.as_bytes().chunk_by(|&a, &b| a.abs_diff(b) <= 2) {
-        res += substr(ch, k);
+pub fn number_of_sequence(n: i32, sick: &[i32]) -> i32 {
+    const MOD: i64 = 1_000_000_007;
+    let mut fact = vec![0; 1 + n as usize];
+    fact[..2].fill(1);
+    for v in 2..=n {
+        fact[v as usize] = i64::from(v) * fact[v as usize - 1] % MOD;
     }
-    res
-}
-
-fn substr(s: &[u8], k: i32) -> i32 {
-    let n = s.len();
-    let k = k as usize;
-    let mut res = 0;
-    for len in (k..=(26 * k).min(n)).step_by(k) {
-        let mut freq = s[..len].iter().fold([0; 26], |mut acc, &b| {
-            acc[usize::from(b - b'a')] += 1;
-            acc
-        });
-        res += i32::from(freq.iter().filter(|&&f| f == k).count() == len / k);
-        for idx in len..n {
-            let add = usize::from(s[idx] - b'a');
-            freq[add] += 1;
-            let del = usize::from(s[idx - len] - b'a');
-            freq[del] -= 1;
-            res += i32::from(freq.iter().filter(|&&f| f == k).count() == len / k);
+    let mut s = 0;
+    let mut len_fact = 1;
+    let mut k = 0;
+    if sick[0] > 0 {
+        let seg = i64::from(sick[0]); // left end
+        s += seg;
+        len_fact = (len_fact * fact[seg as usize]) % MOD;
+    }
+    for w in sick.windows(2) {
+        if w[1] - w[0] > 1 {
+            let seg = i64::from(w[1] - w[0] - 1);
+            s += seg;
+            len_fact = (len_fact * fact[seg as usize]) % MOD;
+            k += seg - 1;
         }
     }
-    res
+    if let Some(&v) = sick.last() {
+        if n - v > 1 {
+            let seg = i64::from(n - v - 1); // right end
+            s += seg;
+            len_fact = (len_fact * fact[seg as usize]) % MOD;
+        }
+    }
+    let res = (fact[s as usize] * mod_pow(len_fact, MOD - 2, MOD)) % MOD * mod_pow(2, k, MOD) % MOD;
+    res as i32
+}
+
+const fn mod_pow(base: i64, exp: i64, m: i64) -> i64 {
+    if exp == 0 {
+        return 1;
+    };
+    if exp & 1 == 0 {
+        mod_pow(base * base % m, exp >> 1, m)
+    } else {
+        base * mod_pow(base * base % m, exp >> 1, m) % m
+    }
 }
 
 #[cfg(test)]
@@ -65,8 +81,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(count_complete_substrings("igigee", 2), 3);
-        assert_eq!(count_complete_substrings("aaabbbccc", 3), 6);
+        assert_eq!(number_of_sequence(5, &[0, 4]), 4);
+        assert_eq!(number_of_sequence(4, &[1]), 3);
     }
 
     #[test]
