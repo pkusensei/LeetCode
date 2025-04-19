@@ -5,32 +5,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn get_good_indices(variables: Vec<Vec<i32>>, target: i32) -> Vec<i32> {
-    variables
-        .iter()
-        .enumerate()
-        .filter_map(|(i, v)| {
-            let [a, b, c, m] = v[..] else { unreachable!() };
-            let x = mod_pow(a.into(), b.into(), 10);
-            let y = mod_pow(x.into(), c.into(), m.into());
-            if y == i64::from(target) {
-                Some(i as i32)
-            } else {
-                None
-            }
-        })
-        .collect()
-}
-
-const fn mod_pow(base: i64, exp: i64, m: i64) -> i64 {
-    if exp == 0 {
-        return 1;
+pub fn count_subarrays(nums: &[i32], k: i32) -> i64 {
+    let max = nums.iter().copied().max().unwrap();
+    let mut count = 0;
+    let mut left = 0;
+    let mut res = 0;
+    for (right, &num) in nums.iter().enumerate() {
+        count += i32::from(num == max);
+        while count >= k {
+            count -= i32::from(nums[left] == max);
+            left += 1;
+        }
+        res += right + 1 - left;
     }
-    if exp & 1 == 0 {
-        mod_pow(base * base % m, exp >> 1, m)
-    } else {
-        base * mod_pow(base * base % m, exp >> 1, m) % m
-    }
+    let n = nums.len();
+    (n * (1 + n) / 2 - res) as i64
 }
 
 #[cfg(test)]
