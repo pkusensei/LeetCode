@@ -7,31 +7,14 @@ namespace Solution;
 
 public class Solution
 {
-    public long CountFairPairs(int[] nums, int lower, int upper)
+    public int NumRabbits(int[] answers)
     {
-        Array.Sort(nums);
-        return LessThan(nums, 1 + upper) - LessThan(nums, lower);
-
-        static long LessThan(Span<int> nums, int value)
+        int res = 0;
+        foreach (var (key, val) in answers.CountBy(x => x))
         {
-            int left = 0;
-            int right = nums.Length - 1;
-            long res = 0;
-            while (left < right)
-            {
-                int sum = nums[left] + nums[right];
-                if (sum < value)
-                {
-                    // this pair is valid, so is everything between
-                    res += right - left;
-                    left += 1;
-                }
-                else
-                {
-                    right -= 1; // pair sum too big
-                }
-            }
-            return res;
+            int group = 1 + key;
+            res += (int)Math.Ceiling(1.0 * val / group) * group; // cannot see self
         }
+        return res;
     }
 }
