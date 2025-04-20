@@ -5,18 +5,25 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn divide_array(mut nums: Vec<i32>, k: i32) -> Vec<Vec<i32>> {
-    nums.sort_unstable();
-    nums.chunks(3)
-        .map(|ch| {
-            if ch[2] - ch[0] <= k {
-                Some(ch.to_vec())
-            } else {
-                None
-            }
-        })
-        .collect::<Option<Vec<Vec<i32>>>>()
-        .unwrap_or_default()
+pub fn minimum_cost(mut nums: Vec<i32>) -> i64 {
+    let n = nums.len();
+    let (_, &mut med, _) = nums.select_nth_unstable(n / 2);
+    let val1 = build(med, -1);
+    let val2 = build(med, 1);
+    cost(&nums, val1).min(cost(&nums, val2))
+}
+
+fn cost(nums: &[i32], med: i32) -> i64 {
+    nums.iter()
+        .map(|&v| (i64::from(v.abs_diff(med))).abs())
+        .sum()
+}
+
+fn build(mut num: i32, delta: i32) -> i32 {
+    while !is_palindrome(num.to_string().into_bytes()) {
+        num += delta;
+    }
+    num
 }
 
 #[cfg(test)]
@@ -49,7 +56,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(minimum_cost(vec![10, 12, 13, 14, 15]), 11);
+        assert_eq!(minimum_cost(vec![1, 2, 3, 4, 5]), 6);
+        assert_eq!(minimum_cost(vec![22, 33, 22, 33, 22]), 22);
+    }
 
     #[test]
     fn test() {}
