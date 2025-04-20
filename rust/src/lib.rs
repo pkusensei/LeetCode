@@ -5,32 +5,38 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximize_square_area(m: i32, n: i32, mut h_fences: Vec<i32>, mut v_fences: Vec<i32>) -> i32 {
-    use std::collections::HashSet;
-    const MOD: i64 = 1_000_000_007;
-    h_fences.extend([1, m]);
-    v_fences.extend([1, n]);
-    h_fences.sort_unstable();
-    v_fences.sort_unstable();
-    let mut set = HashSet::new();
-    for (i, &a) in h_fences.iter().enumerate() {
-        for &b in h_fences.iter().skip(1 + i) {
-            set.insert(b - a);
-        }
+pub fn minimum_cost(
+    source: String,
+    target: String,
+    original: Vec<char>,
+    changed: Vec<char>,
+    cost: Vec<i32>,
+) -> i64 {
+    use itertools::izip;
+    let mut mat = [[i64::MAX; 26]; 26];
+    for (a, b, c) in izip!(original, changed, cost) {
+        let [i1, i2] = [a, b].map(|v| usize::from(v as u8 - b'a'));
+        mat[i1][i2] = mat[i1][i2].min(i64::from(c));
     }
-    let mut max = -1;
-    for (i, &a) in v_fences.iter().enumerate() {
-        for &b in v_fences.iter().skip(1 + i) {
-            if set.contains(&(b - a)) {
-                max = max.max(i64::from(b - a));
+    for mid in 0..26 {
+        for a in 0..26 {
+            for b in 0..26 {
+                if mat[a][mid] < i64::MAX && mat[mid][b] < i64::MAX {
+                    mat[a][b] = mat[a][b].min(mat[a][mid] + mat[mid][b]);
+                }
             }
         }
     }
-    if max > 0 {
-        (max.pow(2) % MOD) as i32
-    } else {
-        -1
+    let mut res = 0;
+    for (a, b) in izip!(source.bytes(), target.bytes()).filter(|(a, b)| a != b) {
+        let [i1, i2] = [a, b].map(|v| usize::from(v - b'a'));
+        if mat[i1][i2] < i64::MAX {
+            res += mat[i1][i2]
+        } else {
+            return -1;
+        }
     }
+    res
 }
 
 #[cfg(test)]
