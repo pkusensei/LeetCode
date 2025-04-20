@@ -5,22 +5,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn incremovable_subarray_count(nums: &[i32]) -> i32 {
-    let mut res = 0;
-    let n = nums.len();
-    for left in 0..n {
-        'outer: for right in left..n {
-            let mut prev = -1;
-            for (idx, &num) in nums.iter().enumerate() {
-                if idx < left || idx > right {
-                    if prev >= num {
-                        continue 'outer;
-                    }
-                    prev = num;
-                }
-            }
-            res += 1;
+pub fn largest_perimeter(mut nums: Vec<i32>) -> i64 {
+    nums.sort_unstable();
+    let mut res = -1;
+    let mut prefix = 0;
+    for (count, &num) in nums.iter().enumerate() {
+        let num = i64::from(num);
+        if count >= 2 && prefix > num {
+            res = res.max(prefix + num);
         }
+        prefix += num;
     }
     res
 }
@@ -56,9 +50,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(incremovable_subarray_count(&[1, 2, 3, 4]), 10);
-        assert_eq!(incremovable_subarray_count(&[6, 5, 7, 8]), 7);
-        assert_eq!(incremovable_subarray_count(&[8, 7, 6, 6]), 3);
+        assert_eq!(largest_perimeter(vec![5, 5, 5]), 15);
+        assert_eq!(largest_perimeter(vec![1, 12, 1, 2, 5, 50, 3]), 12);
+        assert_eq!(largest_perimeter(vec![5, 5, 50]), -1);
     }
 
     #[test]
