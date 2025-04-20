@@ -2,68 +2,35 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::{cmp::Reverse, collections::BinaryHeap};
-
 #[allow(unused_imports)]
 use helper::*;
-use itertools::Itertools;
 
-pub fn placed_coins(edges: &[[i32; 2]], cost: &[i32]) -> Vec<i64> {
-    let n = cost.len();
-    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
-        let [a, b] = [0, 1].map(|i| e[i] as usize);
-        acc[a].push(b);
-        acc[b].push(a);
-        acc
-    });
-    let mut res = vec![0; n];
-    dfs(&adj, cost, 0, n, &mut res);
-    res
-}
-
-// (pos_heap min_heap, neg_heap)
-fn dfs(
-    adj: &[Vec<usize>],
-    cost: &[i32],
-    node: usize,
-    prev: usize,
-    res: &mut [i64],
-) -> (BinaryHeap<Reverse<i64>>, BinaryHeap<i64>) {
-    let val = i64::from(cost[node]);
-    let mut pos = BinaryHeap::new();
-    let mut neg = BinaryHeap::new();
-    if val > 0 {
-        pos.push(Reverse(val));
-    } else {
-        neg.push(val);
-    }
-    for &next in adj[node].iter() {
-        if next != prev {
-            let (npos, nneg) = dfs(adj, cost, next, node, res);
-            pos.extend(npos);
-            neg.extend(nneg);
+pub fn maximize_square_area(m: i32, n: i32, mut h_fences: Vec<i32>, mut v_fences: Vec<i32>) -> i32 {
+    use std::collections::HashSet;
+    const MOD: i64 = 1_000_000_007;
+    h_fences.extend([1, m]);
+    v_fences.extend([1, n]);
+    h_fences.sort_unstable();
+    v_fences.sort_unstable();
+    let mut set = HashSet::new();
+    for (i, &a) in h_fences.iter().enumerate() {
+        for &b in h_fences.iter().skip(1 + i) {
+            set.insert(b - a);
         }
     }
-    while pos.len() > 3 {
-        pos.pop();
+    let mut max = -1;
+    for (i, &a) in v_fences.iter().enumerate() {
+        for &b in v_fences.iter().skip(1 + i) {
+            if set.contains(&(b - a)) {
+                max = max.max(i64::from(b - a));
+            }
+        }
     }
-    while neg.len() > 3 {
-        neg.pop();
-    }
-    let nums = pos
-        .iter()
-        .map(|v| v.0)
-        .chain(neg.iter().copied())
-        .sorted_unstable()
-        .collect_vec();
-    if nums.len() < 3 {
-        res[node] = 1;
+    if max > 0 {
+        (max.pow(2) % MOD) as i32
     } else {
-        let a = nums[0] * nums[1] * nums.last().unwrap_or(&1);
-        let b: i64 = nums.iter().tail(3).product();
-        res[node] = a.max(b).max(0);
+        -1
     }
-    (pos, neg)
 }
 
 #[cfg(test)]
@@ -96,32 +63,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(
-            placed_coins(
-                &[[0, 1], [0, 2], [0, 3], [0, 4], [0, 5]],
-                &[1, 2, 3, 4, 5, 6]
-            ),
-            [120, 1, 1, 1, 1, 1]
-        );
-        assert_eq!(
-            placed_coins(
-                &[
-                    [0, 1],
-                    [0, 2],
-                    [1, 3],
-                    [1, 4],
-                    [1, 5],
-                    [2, 6],
-                    [2, 7],
-                    [2, 8]
-                ],
-                &[1, 4, 2, 3, 5, 7, 8, -4, 2]
-            ),
-            [280, 140, 32, 1, 1, 1, 1, 1, 1]
-        );
-        assert_eq!(placed_coins(&[[0, 1], [0, 2]], &[1, 2, -2]), [0, 1, 1]);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
