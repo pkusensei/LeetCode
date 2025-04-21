@@ -2,12 +2,42 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::{HashSet, VecDeque};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_operations(nums: Vec<i32>, k: i32) -> i32 {
-    let xor = nums.iter().fold(0, |acc, &v| acc ^ v);
-    (k ^ xor).count_ones() as i32
+pub fn minimum_operations_to_make_equal(x: i32, y: i32) -> i32 {
+        if x <= y {
+            return y - x;
+        }
+        let upper = x + x - y;
+        let mut seen = HashSet::from([x]);
+        let mut queue = VecDeque::from([(x, 0)]);
+        while let Some((num, step)) = queue.pop_front() {
+            if num == y {
+                return step.min(x - y);
+            }
+            if num % 11 == 0 {
+                let val = num / 11;
+                if (1..=upper).contains(&val) && seen.insert(val) {
+                    queue.push_back((val, 1 + step));
+                }
+            }
+            if num % 5 == 0 {
+                let val = num / 5;
+                if (1..=upper).contains(&val) && seen.insert(val) {
+                    queue.push_back((val, 1 + step));
+                }
+            }
+            for d in [-1, 1] {
+                let val = num + d;
+                if (1..=upper).contains(&val) && seen.insert(val) {
+                    queue.push_back((val, 1 + step));
+                }
+            }
+        }
+        -1
 }
 
 #[cfg(test)]
@@ -40,7 +70,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(minimum_operations_to_make_equal(26, 1), 3);
+        assert_eq!(minimum_operations_to_make_equal(54, 2), 4);
+        assert_eq!(minimum_operations_to_make_equal(25, 30), 5);
+    }
 
     #[test]
     fn test() {}
