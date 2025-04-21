@@ -5,20 +5,40 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn area_of_max_diagonal(dimensions: Vec<Vec<i32>>) -> i32 {
-    let mut max_d = 0.0;
-    let mut res = 0;
-    for v in dimensions {
-        let [a, b] = v[..] else { unreachable!() };
-        let d = f64::from(a.pow(2) + b.pow(2)).sqrt();
-        if d > max_d {
-            max_d = d;
-            res = a * b;
-        } else if d == max_d {
-            res = res.max(a * b);
-        }
+pub fn min_moves_to_capture_the_queen(a: i32, b: i32, c: i32, d: i32, e: i32, f: i32) -> i32 {
+    if a == e {
+        let min = b.min(f);
+        let max = b.max(f);
+        return if c == a && (min..max).contains(&d) {
+            2
+        } else {
+            1
+        };
     }
-    res
+    if b == f {
+        let min = a.min(e);
+        let max = a.max(e);
+        return if d == b && (min..max).contains(&c) {
+            2
+        } else {
+            1
+        };
+    }
+    if c.abs_diff(e) == d.abs_diff(f) {
+        if a.abs_diff(e) == b.abs_diff(f) {
+            let dx1 = c - e;
+            let dy1 = d - f;
+            let dx2 = a - e;
+            let dy2 = b - f;
+            return if dx1 / dy1 == dx2 / dy2 && dx1 * dx2 > 0 && dx1.abs() > dx2.abs() {
+                2
+            } else {
+                1
+            };
+        }
+        return 1;
+    }
+    2
 }
 
 #[cfg(test)]
@@ -54,5 +74,8 @@ mod tests {
     fn basics() {}
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(min_moves_to_capture_the_queen(4, 5, 6, 4, 7, 5), 1);
+        assert_eq!(min_moves_to_capture_the_queen(8, 4, 8, 8, 7, 7), 1);
+    }
 }
