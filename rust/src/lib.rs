@@ -5,22 +5,9 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn missing_integer(nums: Vec<i32>) -> i32 {
-    use std::collections::HashSet;
-    let n = nums.len();
-    let mut prefix = nums[0];
-    for i in 1..n {
-        if nums[i] == 1 + nums[i - 1] {
-            prefix += nums[i];
-        } else {
-            break;
-        }
-    }
-    let set: HashSet<_> = nums.into_iter().collect();
-    while set.contains(&prefix) {
-        prefix += 1;
-    }
-    prefix
+pub fn min_operations(nums: Vec<i32>, k: i32) -> i32 {
+    let xor = nums.iter().fold(0, |acc, &v| acc ^ v);
+    (k ^ xor).count_ones() as i32
 }
 
 #[cfg(test)]
