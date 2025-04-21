@@ -10,12 +10,12 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(new[] { 1, -3, 4 }, 1, 6, 2)]
-    [DataRow(new[] { 3, -4, 5, 1, -2 }, -4, 5, 4)]
-    [DataRow(new[] { 4, -7, 2 }, 3, 6, 0)]
-    public void TestMethod1(int[] nums, int lower, int upper, int exp)
+    [DataRow(1, 6000, 4, "124", 5)]
+    [DataRow(15, 215, 6, "10", 2)]
+    [DataRow(1000, 2000, 4, "3000", 0)]
+    public void TestMethod1(long start, long finish, int limit, string s, long exp)
     {
-        Assert.AreEqual(exp, sol.NumberOfArrays(nums, lower, upper));
+        Assert.AreEqual(exp, sol.NumberOfPowerfulInt(start, finish, limit, s));
     }
 
     [TestMethod]
