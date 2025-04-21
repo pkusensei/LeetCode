@@ -2,36 +2,100 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
-use itertools::Itertools;
+use itertools::{Itertools, izip};
 
-pub fn maximum_length(s: &str) -> i32 {
-    use std::{cmp::Reverse, collections::BinaryHeap};
-    let mut lens = [const { BinaryHeap::new() }; 26];
-    for ch in s.as_bytes().chunk_by(|&a, &b| a == b) {
-        let idx = usize::from(ch[0] - b'a');
-        lens[idx].push(Reverse(ch.len() as i32));
-        if lens[idx].len() > 3 {
-            lens[idx].pop();
+pub fn can_make_palindrome_queries(s: &str, queries: &[[i32; 4]]) -> Vec<bool> {
+    let n = s.len();
+    let mut freq = [0; 26];
+    let func = move |mut acc: Vec<_>, b| {
+        freq[usize::from(b - b'a')] += 1;
+        acc.push(freq);
+        acc
+    };
+    let left_freq = s[..n / 2].bytes().fold(Vec::with_capacity(n / 2), func);
+    let right_freq = s[n / 2..]
+        .bytes()
+        .rev()
+        .fold(Vec::with_capacity(n / 2), func);
+    let equals = izip!(s.bytes(), s.bytes().rev()).take(n / 2).fold(
+        Vec::with_capacity(n / 2),
+        |mut acc, (a, b)| {
+            acc.push(i32::from(a == b) + acc.last().unwrap_or(&0));
+            acc
+        },
+    );
+    let right_half = s[n / 2..].bytes().rev().collect_vec();
+    let mut res = vec![];
+    let mut memo = HashMap::new();
+    'outer: for q in queries.iter() {
+        let [a, b, _c, _d] = [0, 1, 2, 3].map(|i| q[i] as usize);
+        let k = [a, b, _c, _d];
+        if let Some(&v) = memo.get(&k) {
+            res.push(v);
+            continue;
+        }
+        let c = n - 1 - _d;
+        let d = n - 1 - _c;
+        let min = a.min(c);
+        let max = b.max(d);
+        // left_equal
+        if min > 0 && equals[min - 1] != min as i32 {
+            res.push(false);
+            memo.insert(k, false);
+            continue;
+        };
+        let right_equal = equals.last().unwrap() - equals[max];
+        if right_equal != (n / 2 - max - 1) as i32 {
+            res.push(false);
+            memo.insert(k, false);
+            continue;
+        }
+        let mut range1 = range(&left_freq, a, b);
+        let mut range2 = range(&right_freq, c, d);
+        for idx in min..=max {
+            match [(a..=b).contains(&idx), (c..=d).contains(&idx)] {
+                [false, false] if s.as_bytes()[idx] != right_half[idx] => {
+                    res.push(false);
+                    memo.insert(k, false);
+                    continue 'outer;
+                }
+                [true, false] => {
+                    range1[usize::from(right_half[idx] - b'a')] -= 1;
+                    if range1[usize::from(right_half[idx] - b'a')] < 0 {
+                        res.push(false);
+                        memo.insert(k, false);
+                        continue 'outer;
+                    }
+                }
+                [false, true] => {
+                    range2[usize::from(s.as_bytes()[idx] - b'a')] -= 1;
+                    if range2[usize::from(s.as_bytes()[idx] - b'a')] < 0 {
+                        res.push(false);
+                        memo.insert(k, false);
+                        continue 'outer;
+                    }
+                }
+                _ => (),
+            }
+        }
+        memo.insert(k, range1 == range2);
+        res.push(range1 == range2);
+    }
+    res
+}
+
+fn range(prefix: &[[i32; 26]], left: usize, right: usize) -> [i32; 26] {
+    let mut res = prefix[right];
+    if left > 0 {
+        for (v, d) in res.iter_mut().zip(prefix[left - 1]) {
+            *v -= d;
         }
     }
-    let mut res = -1;
-    for heap in lens {
-        let v = heap
-            .into_sorted_vec()
-            .into_iter()
-            .map(|v| v.0)
-            .collect_vec();
-        match v[..] {
-            [a] => res = res.max(a - 2),
-            [a, b, c] if a == b && b == c => res = res.max(a),
-            [a, b, ..] if a == b => res = res.max(a - 1),
-            [a, b, ..] => res = res.max(a - 2).max(b),
-            _ => (),
-        }
-    }
-    if res > 0 { res } else { -1 }
+    res
 }
 
 #[cfg(test)]
@@ -65,14 +129,29 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(maximum_length("aaaa"), 2);
-        assert_eq!(maximum_length("abcdef"), -1);
-        assert_eq!(maximum_length("abcaba"), 1);
+        assert_eq!(
+            can_make_palindrome_queries("aaaaaa", &[[0, 0, 5, 5]]),
+            [true]
+        );
+        assert_eq!(
+            can_make_palindrome_queries("abcabc", &[[1, 1, 3, 5], [0, 2, 5, 5]]),
+            [true, true]
+        );
+        assert_eq!(
+            can_make_palindrome_queries("abbcdecbba", &[[0, 2, 7, 9]]),
+            [false]
+        );
+        assert_eq!(
+            can_make_palindrome_queries("acbcab", &[[1, 2, 4, 5]]),
+            [true]
+        );
     }
 
     #[test]
     fn test() {
-        assert_eq!(maximum_length("alappaaaaapttgvvvmmc"), 3);
-        assert_eq!(maximum_length("aada"), 1);
+        assert_eq!(
+            can_make_palindrome_queries("odaxusaweuasuoeudxwa", &[[0, 5, 10, 14]]),
+            [false]
+        )
     }
 }
