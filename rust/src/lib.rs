@@ -5,40 +5,14 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_moves_to_capture_the_queen(a: i32, b: i32, c: i32, d: i32, e: i32, f: i32) -> i32 {
-    if a == e {
-        let min = b.min(f);
-        let max = b.max(f);
-        return if c == a && (min..max).contains(&d) {
-            2
-        } else {
-            1
-        };
-    }
-    if b == f {
-        let min = a.min(e);
-        let max = a.max(e);
-        return if d == b && (min..max).contains(&c) {
-            2
-        } else {
-            1
-        };
-    }
-    if c.abs_diff(e) == d.abs_diff(f) {
-        if a.abs_diff(e) == b.abs_diff(f) {
-            let dx1 = c - e;
-            let dy1 = d - f;
-            let dx2 = a - e;
-            let dy2 = b - f;
-            return if dx1 / dy1 == dx2 / dy2 && dx1 * dx2 > 0 && dx1.abs() > dx2.abs() {
-                2
-            } else {
-                1
-            };
-        }
-        return 1;
-    }
-    2
+pub fn maximum_set_size(nums1: &[i32], nums2: &[i32]) -> i32 {
+    use std::collections::HashSet;
+    let n = nums1.len();
+    let [set1, set2] = [&nums1, &nums2].map(|v| v.iter().copied().collect::<HashSet<_>>());
+    let common = set1.intersection(&set2).count();
+    let n1 = (set1.len() - common).min(n / 2);
+    let n2 = (set2.len() - common).min(n / 2);
+    (n1 + n2 + common).min(n) as i32
 }
 
 #[cfg(test)]
@@ -71,11 +45,18 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(maximum_set_size(&[1, 2, 1, 2], &[1, 1, 1, 1]), 2);
+        assert_eq!(
+            maximum_set_size(&[1, 2, 3, 4, 5, 6], &[2, 3, 2, 3, 2, 3]),
+            5
+        );
+        assert_eq!(
+            maximum_set_size(&[1, 1, 2, 2, 3, 3], &[4, 4, 5, 5, 6, 6]),
+            6
+        );
+    }
 
     #[test]
-    fn test() {
-        assert_eq!(min_moves_to_capture_the_queen(4, 5, 6, 4, 7, 5), 1);
-        assert_eq!(min_moves_to_capture_the_queen(8, 4, 8, 8, 7, 7), 1);
-    }
+    fn test() {}
 }
