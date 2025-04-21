@@ -2,42 +2,23 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::{HashSet, VecDeque};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_operations_to_make_equal(x: i32, y: i32) -> i32 {
-        if x <= y {
-            return y - x;
+pub fn area_of_max_diagonal(dimensions: Vec<Vec<i32>>) -> i32 {
+    let mut max_d = 0.0;
+    let mut res = 0;
+    for v in dimensions {
+        let [a, b] = v[..] else { unreachable!() };
+        let d = f64::from(a.pow(2) + b.pow(2)).sqrt();
+        if d > max_d {
+            max_d = d;
+            res = a * b;
+        } else if d == max_d {
+            res = res.max(a * b);
         }
-        let upper = x + x - y;
-        let mut seen = HashSet::from([x]);
-        let mut queue = VecDeque::from([(x, 0)]);
-        while let Some((num, step)) = queue.pop_front() {
-            if num == y {
-                return step.min(x - y);
-            }
-            if num % 11 == 0 {
-                let val = num / 11;
-                if (1..=upper).contains(&val) && seen.insert(val) {
-                    queue.push_back((val, 1 + step));
-                }
-            }
-            if num % 5 == 0 {
-                let val = num / 5;
-                if (1..=upper).contains(&val) && seen.insert(val) {
-                    queue.push_back((val, 1 + step));
-                }
-            }
-            for d in [-1, 1] {
-                let val = num + d;
-                if (1..=upper).contains(&val) && seen.insert(val) {
-                    queue.push_back((val, 1 + step));
-                }
-            }
-        }
-        -1
+    }
+    res
 }
 
 #[cfg(test)]
@@ -70,11 +51,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(minimum_operations_to_make_equal(26, 1), 3);
-        assert_eq!(minimum_operations_to_make_equal(54, 2), 4);
-        assert_eq!(minimum_operations_to_make_equal(25, 30), 5);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
