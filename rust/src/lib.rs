@@ -2,49 +2,23 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_partitions_after_operations(s: &str, k: i32) -> i32 {
-    dfs(s.as_bytes(), k as u32, 0, 0, false, &mut HashMap::new())
-}
-
-fn dfs(
-    s: &[u8],
-    k: u32,
-    idx: usize,
-    mask: i32,
-    changed: bool,
-    memo: &mut HashMap<(usize, i32, bool), i32>,
-) -> i32 {
-    if idx >= s.len() {
-        return 1;
-    }
-    let key = (idx, mask, changed);
-    if let Some(&v) = memo.get(&key) {
-        return v;
-    }
-    let bit = 1 << (s[idx] - b'a');
-    let mut res = if (mask | bit).count_ones() <= k {
-        dfs(s, k, 1 + idx, mask | bit, changed, memo)
-    } else {
-        1 + dfs(s, k, 1 + idx, bit, changed, memo)
-    };
-    if !changed {
-        for i in 0..26 {
-            let bit = 1 << i;
-            let curr = if (mask | bit).count_ones() <= k {
-                dfs(s, k, 1 + idx, mask | bit, true, memo)
-            } else {
-                1 + dfs(s, k, 1 + idx, bit, true, memo)
-            };
-            res = res.max(curr);
+pub fn max_frequency_elements(nums: Vec<i32>) -> i32 {
+    use std::collections::HashMap;
+    let mut freq = HashMap::new();
+    let mut freq_count = HashMap::new();
+    let mut max_freq = 0;
+    for &num in &nums {
+        let f = freq.entry(num).or_insert(0);
+        *f += 1;
+        *freq_count.entry(*f).or_insert(0) += 1;
+        if *f > max_freq {
+            max_freq = *f;
         }
     }
-    memo.insert(key, res);
-    res
+    max_freq * freq_count[&max_freq]
 }
 
 #[cfg(test)]
@@ -77,11 +51,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(max_partitions_after_operations("accca", 2), 3);
-        assert_eq!(max_partitions_after_operations("aabaab", 3), 1);
-        assert_eq!(max_partitions_after_operations("xxyz", 1), 4);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
