@@ -5,20 +5,35 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_frequency_elements(nums: Vec<i32>) -> i32 {
-    use std::collections::HashMap;
-    let mut freq = HashMap::new();
-    let mut freq_count = HashMap::new();
-    let mut max_freq = 0;
-    for &num in &nums {
-        let f = freq.entry(num).or_insert(0);
-        *f += 1;
-        *freq_count.entry(*f).or_insert(0) += 1;
-        if *f > max_freq {
-            max_freq = *f;
+pub fn beautiful_indices(s: &str, a: &str, b: &str, k: i32) -> Vec<i32> {
+    let ns = s.len();
+    let k = k as usize;
+    let mut ia = s.find(a).unwrap_or(ns);
+    let mut ib = s.find(b).unwrap_or(ns);
+    let mut res = vec![];
+    while ia < ns && ib < ns {
+        if ia < ib.saturating_sub(k) {
+            ia += ib - ia - k;
+            let Some(v) = s[ia..].find(a) else {
+                break;
+            };
+            ia += v;
+        } else if ib + k < ia {
+            ib += ia - ib - k;
+            let Some(v) = s[ib..].find(b) else {
+                break;
+            };
+            ib += v;
+        } else {
+            res.push(ia as i32);
+            ia += 1;
+            let Some(v) = s[ia..].find(a) else {
+                break;
+            };
+            ia += v;
         }
     }
-    max_freq * freq_count[&max_freq]
+    res
 }
 
 #[cfg(test)]
@@ -51,7 +66,13 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(
+            beautiful_indices("isawsquirrelnearmysquirrelhouseohmy", "my", "squirrel", 15),
+            [16, 33]
+        );
+        assert_eq!(beautiful_indices("abcd", "a", "a", 4), [0]);
+    }
 
     #[test]
     fn test() {}
