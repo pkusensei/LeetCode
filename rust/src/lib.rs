@@ -2,17 +2,49 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_set_size(nums1: &[i32], nums2: &[i32]) -> i32 {
-    use std::collections::HashSet;
-    let n = nums1.len();
-    let [set1, set2] = [&nums1, &nums2].map(|v| v.iter().copied().collect::<HashSet<_>>());
-    let common = set1.intersection(&set2).count();
-    let n1 = (set1.len() - common).min(n / 2);
-    let n2 = (set2.len() - common).min(n / 2);
-    (n1 + n2 + common).min(n) as i32
+pub fn max_partitions_after_operations(s: &str, k: i32) -> i32 {
+    dfs(s.as_bytes(), k as u32, 0, 0, false, &mut HashMap::new())
+}
+
+fn dfs(
+    s: &[u8],
+    k: u32,
+    idx: usize,
+    mask: i32,
+    changed: bool,
+    memo: &mut HashMap<(usize, i32, bool), i32>,
+) -> i32 {
+    if idx >= s.len() {
+        return 1;
+    }
+    let key = (idx, mask, changed);
+    if let Some(&v) = memo.get(&key) {
+        return v;
+    }
+    let bit = 1 << (s[idx] - b'a');
+    let mut res = if (mask | bit).count_ones() <= k {
+        dfs(s, k, 1 + idx, mask | bit, changed, memo)
+    } else {
+        1 + dfs(s, k, 1 + idx, bit, changed, memo)
+    };
+    if !changed {
+        for i in 0..26 {
+            let bit = 1 << i;
+            let curr = if (mask | bit).count_ones() <= k {
+                dfs(s, k, 1 + idx, mask | bit, true, memo)
+            } else {
+                1 + dfs(s, k, 1 + idx, bit, true, memo)
+            };
+            res = res.max(curr);
+        }
+    }
+    memo.insert(key, res);
+    res
 }
 
 #[cfg(test)]
@@ -46,15 +78,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(maximum_set_size(&[1, 2, 1, 2], &[1, 1, 1, 1]), 2);
-        assert_eq!(
-            maximum_set_size(&[1, 2, 3, 4, 5, 6], &[2, 3, 2, 3, 2, 3]),
-            5
-        );
-        assert_eq!(
-            maximum_set_size(&[1, 1, 2, 2, 3, 3], &[4, 4, 5, 5, 6, 6]),
-            6
-        );
+        assert_eq!(max_partitions_after_operations("accca", 2), 3);
+        assert_eq!(max_partitions_after_operations("aabaab", 3), 1);
+        assert_eq!(max_partitions_after_operations("xxyz", 1), 4);
     }
 
     #[test]
