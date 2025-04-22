@@ -5,65 +5,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn beautiful_indices(s: &str, a: &str, b: &str, k: i32) -> Vec<i32> {
-    let lps_a = kmp(a.as_bytes());
-    let lps_b = kmp(b.as_bytes());
-    let match_a = search(s.as_bytes(), a.as_bytes(), &lps_a);
-    let match_b = search(s.as_bytes(), b.as_bytes(), &lps_b);
-    let mut res = vec![];
-    let mut ia = 0;
-    let mut ib = 0;
-    while let Some(&va) = match_a.get(ia) {
-        while let Some(&vb) = match_b.get(ib) {
-            if va.abs_diff(vb) <= k as usize {
-                res.push(va as i32);
-                break;
-            } else if match_b
-                .get(1 + ib)
-                .is_some_and(|&next_val| next_val.abs_diff(va) < vb.abs_diff(va))
-            {
-                ib += 1;
-            } else {
-                break;
-            }
-        }
-        ia += 1;
-    }
-    res
-}
-
-fn kmp(s: &[u8]) -> Vec<usize> {
-    let n = s.len();
-    let mut lps = vec![0; n];
-    let mut j = 0;
-    for i in 1..n {
-        while j > 0 && s[i] != s[j] {
-            j = lps[j - 1];
-        }
-        if s[i] == s[j] {
-            j += 1;
-        }
-        lps[i] = j;
-    }
-    lps
-}
-
-fn search(s: &[u8], pat: &[u8], lps: &[usize]) -> Vec<usize> {
-    let mut res = vec![];
-    let mut j = 0;
-    for (i, &b) in s.iter().enumerate() {
-        while j > 0 && b != pat[j] {
-            j = lps[j - 1];
-        }
-        if b == pat[j] {
-            j += 1;
-        }
-        if j == pat.len() {
-            res.push(1 + i - j);
-            j = lps[j - 1];
+pub fn minimum_array_length(nums: Vec<i32>) -> i32 {
+    let mut min = i32::MAX;
+    let mut count = 0;
+    for &num in &nums {
+        if num < min {
+            min = num;
+            count = 1;
+        } else if num == min {
+            count += 1;
         }
     }
-    res
+    if count == 1 {
+        return 1;
+    }
+    if nums.iter().any(|&v| v % min > 0) {
+        return 1;
+    }
+    (1 + count) / 2
 }
 
 #[cfg(test)]
@@ -96,13 +55,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(
-            beautiful_indices("isawsquirrelnearmysquirrelhouseohmy", "my", "squirrel", 15),
-            [16, 33]
-        );
-        assert_eq!(beautiful_indices("abcd", "a", "a", 4), [0]);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
