@@ -5,37 +5,26 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_length(nums: &[i32]) -> i32 {
-    use itertools::Itertools;
-    let freq = nums.iter().copied().counts();
-    let mut res = freq
-        .get(&1)
-        .map(|&v| if v & 1 == 1 { v } else { v - 1 })
-        .unwrap_or(1);
-    for (&k, &v) in freq.iter() {
-        if k == 1 || v == 1 {
-            continue;
-        }
-        let mut num = k;
-        let mut curr = 0;
-        while let Some(&v) = freq.get(&num) {
-            if v > 1 {
-                curr += 2;
-                let Some(next) = num.checked_mul(num) else {
-                    break;
-                };
-                num = next;
+pub fn min_or_after_operations(nums: Vec<i32>, k: i32) -> i32 {
+    let mut res = 0;
+    let mut mask = 0;
+    for bit in (0..31).rev() {
+        mask |= 1 << bit;
+        let mut count = k;
+        let mut and = mask;
+        for &num in &nums {
+            and &= num;
+            if and | res == res {
+                and = mask;
             } else {
-                curr += 1;
-                break;
+                count -= 1;
             }
         }
-        if curr & 1 == 0 {
-            curr -= 1;
+        if count < 0 {
+            res |= 1 << bit;
         }
-        res = res.max(curr)
     }
-    res as i32
+    res
 }
 
 #[cfg(test)]
@@ -69,10 +58,16 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(maximum_length(&[5, 4, 1, 2, 2]), 3);
-        assert_eq!(maximum_length(&[1, 3, 2, 4]), 1);
+        assert_eq!(min_or_after_operations(vec![3, 5, 3, 2, 7], 2), 3);
+        assert_eq!(min_or_after_operations(vec![7, 3, 15, 14, 2, 8], 4), 2);
+        assert_eq!(
+            min_or_after_operations(vec![10, 7, 10, 3, 9, 14, 9, 4], 1),
+            15
+        );
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(min_or_after_operations(vec![39, 62, 35, 11, 28, 32], 3), 38);
+    }
 }
