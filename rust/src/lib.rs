@@ -5,11 +5,33 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_pushes(word: String) -> i32 {
-    let n = word.len() as i32;
-    let full = n / 8;
-    let rem = n % 8;
-    rem * (1 + full) + full * (1 + full) * 4
+pub fn count_of_pairs(n: i32, x: i32, y: i32) -> Vec<i32> {
+    use itertools::Itertools;
+    let n = 1 + n as usize;
+    let [x, y] = [x, y].map(|v| v as usize);
+    let mut adj = vec![vec![i32::MAX; n]; n];
+    for i in 1..n {
+        adj[i][i] = 0;
+    }
+    for i in 1..n - 1 {
+        adj[i][1 + i] = 1;
+        adj[1 + i][i] = 1;
+    }
+    adj[x][y] = adj[x][y].min(1);
+    adj[y][x] = adj[y][x].min(1);
+    for mid in 1..n {
+        for a in 1..n {
+            for b in 1..n {
+                if adj[a][mid] < i32::MAX && adj[mid][b] < i32::MAX {
+                    adj[a][b] = adj[a][b].min(adj[a][mid] + adj[mid][b]);
+                }
+            }
+        }
+    }
+    let map = adj.into_iter().flatten().counts();
+    (1..n)
+        .map(|k| *map.get(&(k as i32)).unwrap_or(&0) as i32)
+        .collect()
 }
 
 #[cfg(test)]
