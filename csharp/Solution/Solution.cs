@@ -7,26 +7,19 @@ namespace Solution;
 
 public class Solution
 {
-    public int CountLargestGroup(int n)
+    public int MinimumPushes(string word)
     {
-        Dictionary<int, int> dict = [];
-        for (int i = 1; i <= n; i++)
+        Span<int> freq = stackalloc int[26];
+        foreach (var c in word)
         {
-            int sum = SumDigit(i);
-            if (!dict.TryAdd(sum, 1)) { dict[sum] += 1; }
+            freq[c - 'a'] += 1;
         }
-        int max = dict.Values.Max();
-        return dict.Values.Where(v => v == max).Count();
-
-        static int SumDigit(int val)
+        freq.Sort((x, y) => y - x);
+        int res = 0;
+        for (int i = 0; i < 26; i++)
         {
-            int res = 0;
-            while (val > 0)
-            {
-                res += val % 10;
-                val /= 10;
-            }
-            return res;
+            res += freq[i] * (1 + i / 8);
         }
+        return res;
     }
 }
