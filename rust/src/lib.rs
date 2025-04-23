@@ -5,33 +5,37 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_of_pairs(n: i32, x: i32, y: i32) -> Vec<i32> {
-    use itertools::Itertools;
-    let n = 1 + n as usize;
-    let [x, y] = [x, y].map(|v| v as usize);
-    let mut adj = vec![vec![i32::MAX; n]; n];
+pub fn count_of_pairs(n: i32, x: i32, y: i32) -> Vec<i64> {
+    let [x, y] = [x.min(y) as usize, x.max(y) as usize];
+    let n = n as usize;
+    let mut diff = vec![0i64; n];
+    // This i is the house
+    for i in 1..=n {
+        // Every i can go left or right
+        diff[0] += 2;
+        // From here on, i is distance k
+        // To go left to 1, take either
+        // 1) direct route i-1
+        // 2) shortcut i->y->x->1
+        //    2.1) Since x<=y, i->x->y->1 is always an longer path
+        // Any path longer is invalid; discount it from diff array
+        diff[(i - 1).min(i.abs_diff(y) + x)] -= 1;
+        // Similarly, go right to n
+        diff[(n - i).min(i.abs_diff(x) + n + 1 - y)] -= 1;
+        // Possible shortcuts
+        diff[i.abs_diff(x).min(i.abs_diff(y) + 1)] += 1;
+        diff[(i.abs_diff(x) + 1).min(i.abs_diff(y))] += 1;
+        // min dist to x or y
+        // it's 0 if x<=i<=y
+        let min_dist = x.saturating_sub(i) + i.saturating_sub(y);
+        // Reduce 2 counts when crossing x.midpoint(y)
+        diff[min_dist + (y - x + 0) / 2] -= 1;
+        diff[min_dist + (y - x + 1) / 2] -= 1;
+    }
     for i in 1..n {
-        adj[i][i] = 0;
+        diff[i] += diff[i - 1]
     }
-    for i in 1..n - 1 {
-        adj[i][1 + i] = 1;
-        adj[1 + i][i] = 1;
-    }
-    adj[x][y] = adj[x][y].min(1);
-    adj[y][x] = adj[y][x].min(1);
-    for mid in 1..n {
-        for a in 1..n {
-            for b in 1..n {
-                if adj[a][mid] < i32::MAX && adj[mid][b] < i32::MAX {
-                    adj[a][b] = adj[a][b].min(adj[a][mid] + adj[mid][b]);
-                }
-            }
-        }
-    }
-    let map = adj.into_iter().flatten().counts();
-    (1..n)
-        .map(|k| *map.get(&(k as i32)).unwrap_or(&0) as i32)
-        .collect()
+    diff
 }
 
 #[cfg(test)]
@@ -64,7 +68,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(count_of_pairs(3, 1, 3), [6, 0, 0]);
+        assert_eq!(count_of_pairs(5, 2, 4), [10, 8, 2, 0, 0]);
+        assert_eq!(count_of_pairs(4, 1, 1), [6, 4, 2, 0]);
+    }
 
     #[test]
     fn test() {}
