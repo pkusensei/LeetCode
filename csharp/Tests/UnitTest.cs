@@ -10,11 +10,8 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(2, 5, 10)]
-    [DataRow(5, 3, 11)]
-    public void TestMethod1(int n, int maxValue, int exp)
+    public void TestMethod1()
     {
-        Assert.AreEqual(exp, sol.IdealArrays(n, maxValue));
     }
 
     [TestMethod]

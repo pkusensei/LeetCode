@@ -7,26 +7,26 @@ namespace Solution;
 
 public class Solution
 {
-    public int IdealArrays(int n, int maxValue)
+    public int CountLargestGroup(int n)
     {
-        const long M = 1_000_000_007;
-        var freq = Enumerable.Range(1, maxValue).Select(v => (v, 1L)).ToDictionary();
-        long res = 0;
-        long comb = 1;
-        for (int i = 0; i < n; i++)
+        Dictionary<int, int> dict = [];
+        for (int i = 1; i <= n; i++)
         {
-            Dictionary<int, long> curr = [];
-            foreach (var (k, count) in freq)
-            {
-                for (int key = 2 * k; key <= maxValue; key += k)
-                {
-                    if (!curr.TryAdd(key, count)) { curr[key] += count; }
-                }
-            }
-            res = (res + comb * freq.Values.Sum()) % M;
-            comb = comb * (n - i - 1) % M * ModPow(1 + i, M - 2, M) % M;
-            freq = curr;
+            int sum = SumDigit(i);
+            if (!dict.TryAdd(sum, 1)) { dict[sum] += 1; }
         }
-        return (int)res;
+        int max = dict.Values.Max();
+        return dict.Values.Where(v => v == max).Count();
+
+        static int SumDigit(int val)
+        {
+            int res = 0;
+            while (val > 0)
+            {
+                res += val % 10;
+                val /= 10;
+            }
+            return res;
+        }
     }
 }
