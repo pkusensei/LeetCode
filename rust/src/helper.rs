@@ -123,3 +123,19 @@ pub const fn mod_pow_rec(base: i64, exp: i64, modu: i64) -> i64 {
         base * mod_pow_rec(base * base % modu, exp >> 1, modu) % modu
     }
 }
+
+pub fn kmp<T: PartialEq>(s: &[T]) -> Vec<usize> {
+    let n = s.len();
+    let mut lps = vec![0; n];
+    let mut len = 0;
+    for idx in 1..n {
+        while len > 0 && s[idx] != s[len] {
+            len -= 1;
+        }
+        if s[idx] == s[len] {
+            len += 1;
+        }
+        lps[idx] = len;
+    }
+    lps
+}
