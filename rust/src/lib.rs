@@ -5,52 +5,31 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_operations(nums: Vec<i32>) -> i32 {
+pub fn max_selected_elements(mut nums: Vec<i32>) -> i32 {
     let n = nums.len();
-    if n <= 3 {
-        return 1;
+    nums.sort_unstable();
+    // [no_increase, increase]
+    let mut dp = vec![[1, 1]; n];
+    let mut res = 1;
+    for right in 1..n {
+        for left in (0..right).rev() {
+            match nums[right] - nums[left] {
+                0 => {
+                    // [2, 2] => interchangable
+                    // Or increase current to [3]
+                    dp[right][1] = dp[right][1].max(dp[left][1]).max(1 + dp[left][0]);
+                    dp[right][0] = dp[right][0].max(dp[left][0]);
+                }
+                1 => {
+                    dp[right][1] = dp[right][1].max(1 + dp[left][1]);
+                    dp[right][0] = dp[right][0].max(1 + dp[left][0]);
+                }
+                2 => dp[right][0] = dp[right][0].max(1 + dp[left][1]), // [1, 3]
+                _ => break,
+            }
+            res = res.max(dp[right][0]).max(dp[right][1]);
+        }
     }
-    1 + dfs(
-        &nums,
-        nums[0] + nums[1],
-        2,
-        n - 1,
-        &mut vec![vec![-1; n]; n],
-    )
-    .max(dfs(
-        &nums,
-        nums[n - 2] + nums[n - 1],
-        0,
-        n - 3,
-        &mut vec![vec![-1; n]; n],
-    ))
-    .max(dfs(
-        &nums,
-        nums[0] + nums[n - 1],
-        1,
-        n - 2,
-        &mut vec![vec![-1; n]; n],
-    ))
-}
-
-fn dfs(nums: &[i32], sum: i32, left: usize, right: usize, memo: &mut [Vec<i32>]) -> i32 {
-    if left >= right {
-        return 0;
-    }
-    if memo[left][right] > -1 {
-        return memo[left][right];
-    }
-    let mut res = 0;
-    if nums[left] + nums[1 + left] == sum {
-        res = res.max(1 + dfs(nums, sum, 2 + left, right, memo));
-    }
-    if nums[right - 1] + nums[right] == sum {
-        res = res.max(1 + dfs(nums, sum, left, right.saturating_sub(2), memo));
-    }
-    if nums[left] + nums[right] == sum {
-        res = res.max(1 + dfs(nums, sum, 1 + left, right - 1, memo));
-    }
-    memo[left][right] = res;
     res
 }
 
@@ -84,10 +63,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(max_selected_elements(vec![2, 1, 5, 1, 1]), 3);
+        assert_eq!(max_selected_elements(vec![1, 4, 7, 10]), 1);
+    }
 
     #[test]
-    fn test() {
-        assert_eq!(max_operations(vec![1, 1, 1, 1, 1, 1]), 3);
-    }
+    fn test() {}
 }
