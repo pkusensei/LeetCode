@@ -5,32 +5,46 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_selected_elements(mut nums: Vec<i32>) -> i32 {
-    let n = nums.len();
-    nums.sort_unstable();
-    // [no_increase, increase]
-    let mut dp = vec![[1, 1]; n];
-    let mut res = 1;
-    for right in 1..n {
-        for left in (0..right).rev() {
-            match nums[right] - nums[left] {
-                0 => {
-                    // [2, 2] => interchangable
-                    // Or increase current to [3]
-                    dp[right][1] = dp[right][1].max(dp[left][1]).max(1 + dp[left][0]);
-                    dp[right][0] = dp[right][0].max(dp[left][0]);
-                }
-                1 => {
-                    dp[right][1] = dp[right][1].max(1 + dp[left][1]);
-                    dp[right][0] = dp[right][0].max(1 + dp[left][0]);
-                }
-                2 => dp[right][0] = dp[right][0].max(1 + dp[left][1]), // [1, 3]
-                _ => break,
-            }
-            res = res.max(dp[right][0]).max(dp[right][1]);
+pub fn longest_common_prefix(arr1: Vec<i32>, arr2: Vec<i32>) -> i32 {
+    let mut trie = Trie::default();
+    for &num in &arr1 {
+        trie.insert(num.to_string().bytes());
+    }
+    arr2.into_iter()
+        .map(|num| trie.find(num.to_string().bytes()))
+        .max()
+        .unwrap_or(0)
+}
+
+#[derive(Default)]
+struct Trie {
+    nodes: [Option<Box<Trie>>; 10],
+    len: i32,
+}
+
+impl Trie {
+    fn insert(&mut self, it: impl Iterator<Item = u8>) {
+        let mut curr = self;
+        let mut len = 1;
+        for i in it.map(|b| usize::from(b - b'0')) {
+            curr = curr.nodes[i].get_or_insert(Default::default());
+            curr.len = len;
+            len += 1;
         }
     }
-    res
+
+    fn find(&self, it: impl Iterator<Item = u8>) -> i32 {
+        let mut curr = self;
+        let mut res = 0;
+        for i in it.map(|b| usize::from(b - b'0')) {
+            let Some(ref v) = curr.nodes[i] else {
+                break;
+            };
+            curr = v;
+            res = res.max(curr.len);
+        }
+        res
+    }
 }
 
 #[cfg(test)]
@@ -63,10 +77,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(max_selected_elements(vec![2, 1, 5, 1, 1]), 3);
-        assert_eq!(max_selected_elements(vec![1, 4, 7, 10]), 1);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
