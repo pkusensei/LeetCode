@@ -5,26 +5,15 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_subarray_sum(nums: &[i32], k: i32) -> i64 {
-    use std::collections::HashMap;
-    let mut map: HashMap<i32, i64> = HashMap::new();
-    let mut prefix = 0;
-    let mut res = i64::MIN;
-    for &num in nums.iter() {
-        if let Some(v) = map.get_mut(&num) {
-            *v = (*v).min(prefix);
-        } else {
-            map.insert(num, prefix);
-        }
-        prefix += i64::from(num);
-        if let Some(&v) = map.get(&(num - k)) {
-            res = res.max(prefix - v);
-        }
-        if let Some(&v) = map.get(&(num + k)) {
-            res = res.max(prefix - v);
+pub fn minimum_time_to_initial_state(word: &str, k: i32) -> i32 {
+    let (s, n) = (word.as_bytes(), word.len());
+    let k = k as usize;
+    for idx in (k..n).step_by(k) {
+        if s.starts_with(&s[idx..]) {
+            return (idx / k) as i32;
         }
     }
-    if res == i64::MIN { 0 } else { res }
+    n.div_ceil(k) as i32
 }
 
 #[cfg(test)]
@@ -58,13 +47,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(maximum_subarray_sum(&[1, 2, 3, 4, 5, 6], 1), 11);
-        assert_eq!(maximum_subarray_sum(&[-1, 3, 2, 4, 5], 3), 11);
-        assert_eq!(maximum_subarray_sum(&[-1, -2, -3, -4], 2), -6);
+        assert_eq!(minimum_time_to_initial_state("abacaba", 3), 2);
+        assert_eq!(minimum_time_to_initial_state("abacaba", 4), 1);
+        assert_eq!(minimum_time_to_initial_state("abcbabcd", 2), 4);
     }
 
     #[test]
-    fn test() {
-        assert_eq!(maximum_subarray_sum(&[1, 5], 2), 0);
-    }
+    fn test() {}
 }
