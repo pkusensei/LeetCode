@@ -5,31 +5,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_time_to_initial_state(word: &str, k: i32) -> i32 {
-    let n = word.len();
-    let k = k as usize;
-    let lps = kmp(word.as_bytes());
-    let mut len = lps[n - 1];
-    while len > 0 && (n - len) % k > 0 {
-        len = lps[len - 1];
-    }
-    (n - len).div_ceil(k) as i32
-}
-
-fn kmp(s: &[u8]) -> Vec<usize> {
-    let n = s.len();
-    let mut lps = vec![0; n];
-    let mut len = 0;
-    for idx in 1..n {
-        while len > 0 && s[idx] != s[len] {
-            len = lps[len - 1];
+pub fn modified_matrix(matrix: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
+    let cols = matrix[0].len();
+    let mut res = matrix.clone();
+    for c in 0..cols {
+        let mut max = 0;
+        for row in matrix.iter() {
+            max = max.max(row[c]);
         }
-        if s[idx] == s[len] {
-            len += 1;
+        for rows in res.iter_mut() {
+            if rows[c] < 0 {
+                rows[c] = max;
+            }
         }
-        lps[idx] = len;
     }
-    lps
+    res
 }
 
 #[cfg(test)]
@@ -62,11 +52,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(minimum_time_to_initial_state("abacaba", 3), 2);
-        assert_eq!(minimum_time_to_initial_state("abacaba", 4), 1);
-        assert_eq!(minimum_time_to_initial_state("abcbabcd", 2), 4);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
