@@ -7,18 +7,22 @@ namespace Solution;
 
 public class Solution
 {
-    public int MinimumPushes(string word)
+    public int CountCompleteSubarrays(int[] nums)
     {
-        Span<int> freq = stackalloc int[26];
-        foreach (var c in word)
-        {
-            freq[c - 'a'] += 1;
-        }
-        freq.Sort((x, y) => y - x);
+        int unique = nums.Distinct().Count();
         int res = 0;
-        for (int i = 0; i < 26; i++)
+        int left = 0;
+        Dictionary<int, int> dict = [];
+        for (int right = 0; right < nums.Length; right++)
         {
-            res += freq[i] * (1 + i / 8);
+            if (!dict.TryAdd(nums[right], 1)) { dict[nums[right]] += 1; }
+            while (dict.Count == unique)
+            {
+                res += nums.Length - right;
+                dict[nums[left]] -= 1;
+                if (dict[nums[left]] == 0) { dict.Remove(nums[left]); }
+                left += 1;
+            }
         }
         return res;
     }
