@@ -2,57 +2,37 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn most_frequent_prime(mat: Vec<Vec<i32>>) -> i32 {
-    use std::collections::HashMap;
-    let [rows, cols] = get_dimensions(&mat);
-    let mut map = HashMap::new();
-    for r in 0..rows {
-        for c in 0..cols {
-            for dir in ALL_DIRS {
-                for v in build_num(&mat, r as i32, c as i32, dir) {
-                    *map.entry(v).or_insert(0) += 1;
-                }
-            }
-        }
-    }
-    let Some(&max_f) = map.values().max() else {
-        return -1;
-    };
-    map.into_iter()
-        .filter_map(|(num, freq)| if freq == max_f { Some(num) } else { None })
-        .max()
-        .unwrap_or(-1)
-}
-
-fn build_num(mat: &[Vec<i32>], mut r: i32, mut c: i32, dir: [i32; 2]) -> Vec<i32> {
-    let [rows, cols] = get_dimensions(mat);
-    let mut res = vec![];
-    let mut curr = 0;
-    while r >= 0 && c >= 0 && rows > r as usize && cols > c as usize {
-        curr = curr * 10 + mat[r as usize][c as usize];
-        r += dir[0];
-        c += dir[1];
-        if curr > 10 && is_prime(curr) {
-            res.push(curr);
-        }
+pub fn count_prefix_suffix_pairs(words: &[&str]) -> i64 {
+    let mut res = 0;
+    let mut trie = Trie::default();
+    for s in words {
+        res += trie.insert(s.bytes().zip(s.bytes().rev()));
     }
     res
 }
 
-fn is_prime(num: i32) -> bool {
-    if num < 2 {
-        return false;
-    }
-    let root = num.isqrt();
-    for p in 2..=root {
-        if num % p == 0 {
-            return false;
+#[derive(Default)]
+struct Trie {
+    nodes: HashMap<[u8; 2], Trie>,
+    count: i64,
+}
+
+impl Trie {
+    fn insert(&mut self, it: impl Iterator<Item = (u8, u8)>) -> i64 {
+        let mut curr = self;
+        let mut res = 0;
+        for (b1, b2) in it {
+            curr = curr.nodes.entry([b1, b2]).or_default();
+            res += curr.count;
         }
+        curr.count += 1;
+        res
     }
-    true
 }
 
 #[cfg(test)]
@@ -85,7 +65,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(count_prefix_suffix_pairs(&["a", "aba", "ababa", "aa"]), 4);
+        assert_eq!(count_prefix_suffix_pairs(&["pa", "papa", "ma", "mama"]), 2);
+        assert_eq!(count_prefix_suffix_pairs(&["abab", "ab"]), 0);
+    }
 
     #[test]
     fn test() {}
