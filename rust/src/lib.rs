@@ -5,40 +5,33 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_matching_subarrays(nums: &[i32], pattern: &[i32]) -> i32 {
-    let lps = kmp(pattern);
-    let diff: Vec<_> = nums.windows(2).map(|w| (w[1] - w[0]).signum()).collect();
+pub fn max_palindromes_after_operations(words: &[&str]) -> i32 {
+    let mut lens = vec![];
+    let mut freq = [0; 26];
+    for s in words.iter() {
+        lens.push(s.len() as i32);
+        for b in s.bytes() {
+            freq[usize::from(b - b'a')] += 1;
+        }
+    }
+    let [mut even_char, mut odd_char] = [0, 0];
+    for v in freq {
+        even_char += v / 2 * 2;
+        odd_char += v & 1;
+    }
+    lens.sort_unstable();
     let mut res = 0;
-    let mut len = 0;
-    for &d in &diff {
-        while len > 0 && d != pattern[len] {
-            len = lps[len - 1];
-        }
-        if d == pattern[len] {
-            len += 1;
-        }
-        if len == pattern.len() {
-            res += 1;
-            len = lps[len - 1];
+    let mut deficit = 0;
+    for val in lens {
+        even_char -= val / 2 * 2;
+        if even_char >= 0 {
+            res += i32::from(val & 1 == 0);
+            deficit += val & 1;
+        } else {
+            break;
         }
     }
-    res
-}
-
-fn kmp(s: &[i32]) -> Vec<usize> {
-    let n = s.len();
-    let mut lps = vec![0; n];
-    let mut len = 0;
-    for idx in 1..n {
-        while len > 0 && s[len] != s[idx] {
-            len = lps[len - 1];
-        }
-        if s[len] == s[idx] {
-            len += 1;
-        }
-        lps[idx] = len;
-    }
-    lps
+    res + deficit.min(odd_char + even_char.max(0))
 }
 
 #[cfg(test)]
@@ -72,11 +65,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(count_matching_subarrays(&[1, 2, 3, 4, 5, 6], &[1, 1]), 4);
-        assert_eq!(
-            count_matching_subarrays(&[1, 4, 4, 1, 3, 5, 5, 3], &[1, 0, -1]),
-            2
-        );
+        assert_eq!(max_palindromes_after_operations(&["cd", "ef", "a"]), 1);
+        assert_eq!(max_palindromes_after_operations(&["abbb", "ba", "aa"]), 3);
+        assert_eq!(max_palindromes_after_operations(&["abc", "ab"]), 2);
     }
 
     #[test]
