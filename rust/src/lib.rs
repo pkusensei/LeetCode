@@ -5,30 +5,53 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn last_non_empty_string(s: String) -> String {
-    use itertools::Itertools;
-    let mut freq = [0; 26];
-    let mut latest = [0; 26];
-    for (i, b) in s.bytes().enumerate() {
-        let pos = usize::from(b - b'a');
-        freq[pos] += 1;
-        latest[pos] = i;
+pub fn max_operations(nums: Vec<i32>) -> i32 {
+    let n = nums.len();
+    if n <= 3 {
+        return 1;
     }
-    let max = freq.into_iter().max().unwrap_or(1);
-    let res = latest
-        .into_iter()
-        .enumerate()
-        .filter_map(|(b, pos)| {
-            if freq[b] == max {
-                Some((pos, b as u8 + b'a'))
-            } else {
-                None
-            }
-        })
-        .sorted_unstable_by_key(|(pos, _b)| *pos)
-        .map(|(_, b)| b)
-        .collect_vec();
-    String::from_utf8(res).unwrap()
+    1 + dfs(
+        &nums,
+        nums[0] + nums[1],
+        2,
+        n - 1,
+        &mut vec![vec![-1; n]; n],
+    )
+    .max(dfs(
+        &nums,
+        nums[n - 2] + nums[n - 1],
+        0,
+        n - 3,
+        &mut vec![vec![-1; n]; n],
+    ))
+    .max(dfs(
+        &nums,
+        nums[0] + nums[n - 1],
+        1,
+        n - 2,
+        &mut vec![vec![-1; n]; n],
+    ))
+}
+
+fn dfs(nums: &[i32], sum: i32, left: usize, right: usize, memo: &mut [Vec<i32>]) -> i32 {
+    if left >= right {
+        return 0;
+    }
+    if memo[left][right] > -1 {
+        return memo[left][right];
+    }
+    let mut res = 0;
+    if nums[left] + nums[1 + left] == sum {
+        res = res.max(1 + dfs(nums, sum, 2 + left, right, memo));
+    }
+    if nums[right - 1] + nums[right] == sum {
+        res = res.max(1 + dfs(nums, sum, left, right.saturating_sub(2), memo));
+    }
+    if nums[left] + nums[right] == sum {
+        res = res.max(1 + dfs(nums, sum, 1 + left, right - 1, memo));
+    }
+    memo[left][right] = res;
+    res
 }
 
 #[cfg(test)]
@@ -64,5 +87,7 @@ mod tests {
     fn basics() {}
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(max_operations(vec![1, 1, 1, 1, 1, 1]), 3);
+    }
 }
