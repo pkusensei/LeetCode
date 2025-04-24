@@ -5,33 +5,30 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_palindromes_after_operations(words: &[&str]) -> i32 {
-    let mut lens = vec![];
+pub fn last_non_empty_string(s: String) -> String {
+    use itertools::Itertools;
     let mut freq = [0; 26];
-    for s in words.iter() {
-        lens.push(s.len() as i32);
-        for b in s.bytes() {
-            freq[usize::from(b - b'a')] += 1;
-        }
+    let mut latest = [0; 26];
+    for (i, b) in s.bytes().enumerate() {
+        let pos = usize::from(b - b'a');
+        freq[pos] += 1;
+        latest[pos] = i;
     }
-    let [mut even_char, mut odd_char] = [0, 0];
-    for v in freq {
-        even_char += v / 2 * 2;
-        odd_char += v & 1;
-    }
-    lens.sort_unstable();
-    let mut res = 0;
-    let mut deficit = 0;
-    for val in lens {
-        even_char -= val / 2 * 2;
-        if even_char >= 0 {
-            res += i32::from(val & 1 == 0);
-            deficit += val & 1;
-        } else {
-            break;
-        }
-    }
-    res + deficit.min(odd_char + even_char.max(0))
+    let max = freq.into_iter().max().unwrap_or(1);
+    let res = latest
+        .into_iter()
+        .enumerate()
+        .filter_map(|(b, pos)| {
+            if freq[b] == max {
+                Some((pos, b as u8 + b'a'))
+            } else {
+                None
+            }
+        })
+        .sorted_unstable_by_key(|(pos, _b)| *pos)
+        .map(|(_, b)| b)
+        .collect_vec();
+    String::from_utf8(res).unwrap()
 }
 
 #[cfg(test)]
@@ -64,11 +61,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(max_palindromes_after_operations(&["cd", "ef", "a"]), 1);
-        assert_eq!(max_palindromes_after_operations(&["abbb", "ba", "aa"]), 3);
-        assert_eq!(max_palindromes_after_operations(&["abc", "ab"]), 2);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
