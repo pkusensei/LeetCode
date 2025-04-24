@@ -130,7 +130,7 @@ pub fn kmp<T: PartialEq>(s: &[T]) -> Vec<usize> {
     let mut len = 0;
     for idx in 1..n {
         while len > 0 && s[idx] != s[len] {
-            len -= 1;
+            len = lps[len - 1];
         }
         if s[idx] == s[len] {
             len += 1;

@@ -5,21 +5,40 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn modified_matrix(matrix: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
-    let cols = matrix[0].len();
-    let mut res = matrix.clone();
-    for c in 0..cols {
-        let mut max = 0;
-        for row in matrix.iter() {
-            max = max.max(row[c]);
+pub fn count_matching_subarrays(nums: &[i32], pattern: &[i32]) -> i32 {
+    let lps = kmp(pattern);
+    let diff: Vec<_> = nums.windows(2).map(|w| (w[1] - w[0]).signum()).collect();
+    let mut res = 0;
+    let mut len = 0;
+    for &d in &diff {
+        while len > 0 && d != pattern[len] {
+            len = lps[len - 1];
         }
-        for rows in res.iter_mut() {
-            if rows[c] < 0 {
-                rows[c] = max;
-            }
+        if d == pattern[len] {
+            len += 1;
+        }
+        if len == pattern.len() {
+            res += 1;
+            len = lps[len - 1];
         }
     }
     res
+}
+
+fn kmp(s: &[i32]) -> Vec<usize> {
+    let n = s.len();
+    let mut lps = vec![0; n];
+    let mut len = 0;
+    for idx in 1..n {
+        while len > 0 && s[len] != s[idx] {
+            len = lps[len - 1];
+        }
+        if s[len] == s[idx] {
+            len += 1;
+        }
+        lps[idx] = len;
+    }
+    lps
 }
 
 #[cfg(test)]
@@ -52,7 +71,13 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(count_matching_subarrays(&[1, 2, 3, 4, 5, 6], &[1, 1]), 4);
+        assert_eq!(
+            count_matching_subarrays(&[1, 4, 4, 1, 3, 5, 5, 3], &[1, 0, -1]),
+            2
+        );
+    }
 
     #[test]
     fn test() {}
