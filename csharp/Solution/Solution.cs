@@ -7,22 +7,20 @@ namespace Solution;
 
 public class Solution
 {
-    public int CountCompleteSubarrays(int[] nums)
+    public long CountInterestingSubarrays(IList<int> nums, int modulo, int k)
     {
-        int unique = nums.Distinct().Count();
-        int res = 0;
-        int left = 0;
-        Dictionary<int, int> dict = [];
-        for (int right = 0; right < nums.Length; right++)
+        List<int> prefix = [.. nums.Select(v => v % modulo == k ? 1 : 0)];
+        for (int i = 1; i < nums.Count; i++)
         {
-            if (!dict.TryAdd(nums[right], 1)) { dict[nums[right]] += 1; }
-            while (dict.Count == unique)
-            {
-                res += nums.Length - right;
-                dict[nums[left]] -= 1;
-                if (dict[nums[left]] == 0) { dict.Remove(nums[left]); }
-                left += 1;
-            }
+            prefix[i] += prefix[i - 1];
+        }
+        Dictionary<int, int> dict = new() { { 0, 1 } };
+        long res = 0;
+        foreach (var item in prefix)
+        {
+            if (dict.TryGetValue((item + modulo - k) % modulo, out var v)) { res += v; }
+            int key = item % modulo;
+            if (!dict.TryAdd(key, 1)) { dict[key] += 1; }
         }
         return res;
     }
