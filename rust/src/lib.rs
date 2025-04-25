@@ -5,20 +5,25 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn result_array(nums: Vec<i32>) -> Vec<i32> {
-    let [mut arr1, mut arr2] = [vec![nums[0]], vec![nums[1]]];
-    let [mut prev1, mut prev2] = [nums[0], nums[1]];
-    for &num in &nums[2..] {
-        if prev1 > prev2 {
-            arr1.push(num);
-            prev1 = num;
-        } else {
-            arr2.push(num);
-            prev2 = num;
+pub fn count_submatrices(grid: Vec<Vec<i32>>, k: i32) -> i32 {
+    let mut prefix = vec![];
+    for row in grid.iter() {
+        let mut curr = row.iter().fold(vec![], |mut acc, &v| {
+            acc.push(i64::from(v) + acc.last().unwrap_or(&0));
+            acc
+        });
+        if let Some(up) = prefix.last() {
+            for (v, old) in curr.iter_mut().zip(up) {
+                *v += old
+            }
         }
+        prefix.push(curr);
     }
-    arr1.extend(arr2);
-    arr1
+    prefix
+        .iter()
+        .flatten()
+        .filter(|&&v| v <= i64::from(k))
+        .count() as i32
 }
 
 #[cfg(test)]
