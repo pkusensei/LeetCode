@@ -5,28 +5,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_value_sum(nums: Vec<i32>, k: i32, _edges: Vec<Vec<i32>>) -> i64 {
-    let mut sum_xor = 0;
-    let mut min_inc = i32::MAX;
-    let mut count = 0;
-    let mut sum = 0;
-    let mut min_dec = i32::MAX;
-    for &num in nums.iter() {
-        let xor = num ^ k;
-        if xor > num {
-            sum_xor += i64::from(xor);
-            count += 1;
-            min_inc = min_inc.min(xor - num);
+pub fn result_array(nums: Vec<i32>) -> Vec<i32> {
+    let [mut arr1, mut arr2] = [vec![nums[0]], vec![nums[1]]];
+    let [mut prev1, mut prev2] = [nums[0], nums[1]];
+    for &num in &nums[2..] {
+        if prev1 > prev2 {
+            arr1.push(num);
+            prev1 = num;
         } else {
-            sum += i64::from(num);
-            min_dec = min_dec.min(num - xor);
+            arr2.push(num);
+            prev2 = num;
         }
     }
-    if count & 1 == 0 {
-        sum + sum_xor
-    } else {
-        (sum_xor - i64::from(min_inc) + sum).max(sum_xor + sum - i64::from(min_dec))
-    }
+    arr1.extend(arr2);
+    arr1
 }
 
 #[cfg(test)]
