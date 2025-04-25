@@ -2,67 +2,39 @@ mod dsu;
 mod helper;
 mod trie;
 
-use std::{
-    cmp::Reverse,
-    collections::{BinaryHeap, HashMap},
-};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn earliest_second_to_mark_indices(nums: &[i32], change_indices: &[i32]) -> i32 {
-    let n = nums.len();
-    let m = change_indices.len();
-    if m < n {
-        return -1;
-    }
-    let mut earliest = HashMap::new();
-    for (i, &val) in change_indices.iter().enumerate() {
-        earliest.entry(val).or_insert(i);
-    }
-    let mut left = 0;
-    let mut right = m - 1;
-    let mut res = -1;
-    while left <= right {
-        let mid = left + (right - left) / 2;
-        if check(nums, change_indices, &earliest, mid) {
-            res = 1 + mid as i32;
-            let Some(v) = mid.checked_sub(1) else {
-                break;
-            };
-            right = v;
-        } else {
-            left = mid + 1;
-        }
-    }
-    res
+pub fn count_pairs_of_connectable_servers(edges: &[[i32; 3]], signal_speed: i32) -> Vec<i32> {
+    let n = 1 + edges.len();
+    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
+        let [a, b] = [0, 1].map(|i| e[i] as usize);
+        acc[a].push((b, e[2]));
+        acc[b].push((a, e[2]));
+        acc
+    });
+    (0..n)
+        .map(|node| dfs(&adj, signal_speed, node, n, 0))
+        .collect()
 }
 
-fn check(nums: &[i32], change_indices: &[i32], earliest: &HashMap<i32, usize>, mid: usize) -> bool {
-    let mut sum: i64 = nums.iter().map(|&v| i64::from(v)).sum();
-    let mut heap = BinaryHeap::new();
-    let mut marked = 1; // available operations
-    for (i, &val) in change_indices[..mid].iter().enumerate().rev() {
-        let idx = val as usize - 1;
-        if nums[idx] == 0 {
-            marked += 1;
-        } else if earliest.get(&val).is_some_and(|&ei| ei == i) {
-            // By this time, [idx] has to be zeroed
-            // Save it for optimal reduction
-            heap.push(Reverse(nums[idx]));
-            marked -= 1;
-            sum -= i64::from(nums[idx]);
-            if marked < 0 {
-                // Back to 1; 2 ops, zeroing and marking
-                marked += 2;
-                // This records the ops of decrementing by 1
-                sum += i64::from(heap.pop().unwrap_or_default().0);
+fn dfs(adj: &[Vec<(usize, i32)>], signal: i32, node: usize, prev: usize, dist: i32) -> i32 {
+    let mut sum = 0;
+    let mut subtree = vec![];
+    for &(next, weight) in adj[node].iter() {
+        if next != prev {
+            let v = dfs(adj, signal, next, node, dist + weight);
+            sum += v;
+            if dist == 0 {
+                subtree.push(v);
             }
-        } else {
-            marked += 1;
         }
     }
-    (nums.len() + heap.len()) as i64 + sum <= 1 + mid as i64
+    if dist == 0 {
+        subtree.iter().map(|v| (sum - v) * v).sum::<i32>() / 2
+    } else {
+        sum + i32::from(dist % signal == 0)
+    }
 }
 
 #[cfg(test)]
@@ -97,18 +69,43 @@ mod tests {
     #[test]
     fn basics() {
         assert_eq!(
-            earliest_second_to_mark_indices(&[3, 2, 3], &[1, 3, 2, 2, 2, 2, 3],),
-            6
+            count_pairs_of_connectable_servers(
+                &[[0, 1, 1], [1, 2, 5], [2, 3, 13], [3, 4, 9], [4, 5, 2]],
+                1
+            ),
+            [0, 4, 6, 6, 4, 0]
         );
         assert_eq!(
-            earliest_second_to_mark_indices(&[0, 0, 1, 2], &[1, 2, 1, 2, 1, 2, 1, 2]),
-            7
+            count_pairs_of_connectable_servers(
+                &[
+                    [0, 6, 3],
+                    [6, 5, 3],
+                    [0, 3, 1],
+                    [3, 2, 7],
+                    [3, 1, 6],
+                    [3, 4, 2]
+                ],
+                3
+            ),
+            [2, 0, 0, 0, 0, 0, 2]
         );
-        assert_eq!(earliest_second_to_mark_indices(&[1, 2, 3], &[1, 2, 3]), -1);
     }
 
     #[test]
     fn test() {
-        assert_eq!(earliest_second_to_mark_indices(&[0], &[1]), 1);
+        assert_eq!(
+            count_pairs_of_connectable_servers(
+                &[
+                    [1, 0, 1],
+                    [2, 1, 1],
+                    [3, 2, 4],
+                    [4, 0, 3],
+                    [5, 4, 1],
+                    [6, 5, 3]
+                ],
+                2
+            ),
+            [2, 0, 2, 0, 1, 0, 0]
+        );
     }
 }
