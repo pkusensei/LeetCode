@@ -5,35 +5,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_pairs_of_connectable_servers(edges: &[[i32; 3]], signal_speed: i32) -> Vec<i32> {
-    let n = 1 + edges.len();
-    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
-        let [a, b] = [0, 1].map(|i| e[i] as usize);
-        acc[a].push((b, e[2]));
-        acc[b].push((a, e[2]));
-        acc
-    });
-    (0..n)
-        .map(|node| dfs(&adj, signal_speed, node, n, 0))
-        .collect()
-}
-
-fn dfs(adj: &[Vec<(usize, i32)>], signal: i32, node: usize, prev: usize, dist: i32) -> i32 {
+pub fn maximum_value_sum(nums: Vec<i32>, k: i32, _edges: Vec<Vec<i32>>) -> i64 {
+    let mut sum_xor = 0;
+    let mut min_inc = i32::MAX;
+    let mut count = 0;
     let mut sum = 0;
-    let mut subtree = vec![];
-    for &(next, weight) in adj[node].iter() {
-        if next != prev {
-            let v = dfs(adj, signal, next, node, dist + weight);
-            sum += v;
-            if dist == 0 {
-                subtree.push(v);
-            }
+    let mut min_dec = i32::MAX;
+    for &num in nums.iter() {
+        let xor = num ^ k;
+        if xor > num {
+            sum_xor += i64::from(xor);
+            count += 1;
+            min_inc = min_inc.min(xor - num);
+        } else {
+            sum += i64::from(num);
+            min_dec = min_dec.min(num - xor);
         }
     }
-    if dist == 0 {
-        subtree.iter().map(|v| (sum - v) * v).sum::<i32>() / 2
+    if count & 1 == 0 {
+        sum + sum_xor
     } else {
-        sum + i32::from(dist % signal == 0)
+        (sum_xor - i64::from(min_inc) + sum).max(sum_xor + sum - i64::from(min_dec))
     }
 }
 
@@ -67,45 +59,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(
-            count_pairs_of_connectable_servers(
-                &[[0, 1, 1], [1, 2, 5], [2, 3, 13], [3, 4, 9], [4, 5, 2]],
-                1
-            ),
-            [0, 4, 6, 6, 4, 0]
-        );
-        assert_eq!(
-            count_pairs_of_connectable_servers(
-                &[
-                    [0, 6, 3],
-                    [6, 5, 3],
-                    [0, 3, 1],
-                    [3, 2, 7],
-                    [3, 1, 6],
-                    [3, 4, 2]
-                ],
-                3
-            ),
-            [2, 0, 0, 0, 0, 0, 2]
-        );
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(
-            count_pairs_of_connectable_servers(
-                &[
-                    [1, 0, 1],
-                    [2, 1, 1],
-                    [3, 2, 4],
-                    [4, 0, 3],
-                    [5, 4, 1],
-                    [6, 5, 3]
-                ],
-                2
-            ),
-            [2, 0, 2, 0, 1, 0, 0]
-        );
-    }
+    fn test() {}
 }
