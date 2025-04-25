@@ -2,45 +2,67 @@ mod dsu;
 mod helper;
 mod trie;
 
+use std::{
+    cmp::Reverse,
+    collections::{BinaryHeap, HashMap},
+};
+
 #[allow(unused_imports)]
 use helper::*;
 
 pub fn earliest_second_to_mark_indices(nums: &[i32], change_indices: &[i32]) -> i32 {
-    let m = change_indices.len() as i32;
-    let sum: i32 = nums.iter().sum();
-    let mut left = sum;
-    let mut right = 1 + change_indices.len() as i32;
-    while left < right {
+    let n = nums.len();
+    let m = change_indices.len();
+    if m < n {
+        return -1;
+    }
+    let mut earliest = HashMap::new();
+    for (i, &val) in change_indices.iter().enumerate() {
+        earliest.entry(val).or_insert(i);
+    }
+    let mut left = 0;
+    let mut right = m - 1;
+    let mut res = -1;
+    while left <= right {
         let mid = left + (right - left) / 2;
-        if check(nums, change_indices, mid) {
-            right = mid;
+        if check(nums, change_indices, &earliest, mid) {
+            res = 1 + mid as i32;
+            let Some(v) = mid.checked_sub(1) else {
+                break;
+            };
+            right = v;
         } else {
             left = mid + 1;
         }
     }
-    if left <= m { left } else { -1 }
+    res
 }
 
-fn check(nums: &[i32], change_indices: &[i32], mid: i32) -> bool {
-    let mut latest = vec![-1; nums.len()];
-    for i in 0..mid {
-        latest[change_indices[i as usize] as usize - 1] = i;
-    }
-    let mut marked = 0;
-    let mut decrement = 0;
-    for i in 0..mid {
-        let idx = change_indices[i as usize] as usize - 1;
-        if i == latest[idx] {
-            if decrement < nums[idx] {
-                return false;
-            }
+fn check(nums: &[i32], change_indices: &[i32], earliest: &HashMap<i32, usize>, mid: usize) -> bool {
+    let mut sum: i64 = nums.iter().map(|&v| i64::from(v)).sum();
+    let mut heap = BinaryHeap::new();
+    let mut marked = 1; // available operations
+    for (i, &val) in change_indices[..mid].iter().enumerate().rev() {
+        let idx = val as usize - 1;
+        if nums[idx] == 0 {
             marked += 1;
-            decrement -= nums[idx];
+        } else if earliest.get(&val).is_some_and(|&ei| ei == i) {
+            // By this time, [idx] has to be zeroed
+            // Save it for optimal reduction
+            heap.push(Reverse(nums[idx]));
+            marked -= 1;
+            sum -= i64::from(nums[idx]);
+            if marked < 0 {
+                // Back to 1; 2 ops, zeroing and marking
+                marked += 2;
+                // This records the ops of decrementing by 1
+                sum += i64::from(heap.pop().unwrap_or_default().0);
+            }
         } else {
-            decrement += 1;
+            marked += 1;
         }
     }
-    marked as usize == nums.len()
+    (nums.len() + heap.len()) as i64 + sum <= 1 + mid as i64
 }
 
 #[cfg(test)]
@@ -75,25 +97,18 @@ mod tests {
     #[test]
     fn basics() {
         assert_eq!(
-            earliest_second_to_mark_indices(&[2, 2, 0], &[2, 2, 2, 2, 3, 2, 2, 1],),
-            8
-        );
-        assert_eq!(
-            earliest_second_to_mark_indices(&[1, 3], &[1, 1, 1, 2, 1, 1, 1]),
+            earliest_second_to_mark_indices(&[3, 2, 3], &[1, 3, 2, 2, 2, 2, 3],),
             6
         );
-        assert_eq!(earliest_second_to_mark_indices(&[0, 1], &[2, 2, 2]), -1);
+        assert_eq!(
+            earliest_second_to_mark_indices(&[0, 0, 1, 2], &[1, 2, 1, 2, 1, 2, 1, 2]),
+            7
+        );
+        assert_eq!(earliest_second_to_mark_indices(&[1, 2, 3], &[1, 2, 3]), -1);
     }
 
     #[test]
     fn test() {
-        assert_eq!(
-            earliest_second_to_mark_indices(&[0, 2, 3, 0], &[2, 4, 1, 3, 3, 3, 3, 3, 3, 2, 1]),
-            10
-        );
-        assert_eq!(
-            earliest_second_to_mark_indices(&[1, 0, 3], &[1, 1, 3, 2]),
-            -1
-        )
+        assert_eq!(earliest_second_to_mark_indices(&[0], &[1]), 1);
     }
 }
