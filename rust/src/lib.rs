@@ -5,25 +5,42 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn largest_square_area(bottom_left: &[[i32; 2]], top_right: &[[i32; 2]]) -> i64 {
-    use itertools::{Itertools, izip};
-    let mut res = 0;
-    for [(bl1, tr1), (bl2, tr2)] in
-        izip!(bottom_left.iter(), top_right.iter()).array_combinations::<2>()
-    {
-        let [x1, y1] = bl1[..] else { unreachable!() };
-        let [x2, y2] = tr1[..] else { unreachable!() };
-        let [x3, y3] = bl2[..] else { unreachable!() };
-        let [x4, y4] = tr2[..] else { unreachable!() };
-        let dx = x2.min(x4) - x1.max(x3);
-        let dy = y2.min(y4) - y1.max(y3);
-        let side = dx.min(dy);
-        if side < 0 {
-            continue;
+pub fn earliest_second_to_mark_indices(nums: &[i32], change_indices: &[i32]) -> i32 {
+    let m = change_indices.len() as i32;
+    let sum: i32 = nums.iter().sum();
+    let mut left = sum;
+    let mut right = 1 + change_indices.len() as i32;
+    while left < right {
+        let mid = left + (right - left) / 2;
+        if check(nums, change_indices, mid) {
+            right = mid;
+        } else {
+            left = mid + 1;
         }
-        res = res.max(i64::from(side).pow(2));
     }
-    res
+    if left <= m { left } else { -1 }
+}
+
+fn check(nums: &[i32], change_indices: &[i32], mid: i32) -> bool {
+    let mut latest = vec![-1; nums.len()];
+    for i in 0..mid {
+        latest[change_indices[i as usize] as usize - 1] = i;
+    }
+    let mut marked = 0;
+    let mut decrement = 0;
+    for i in 0..mid {
+        let idx = change_indices[i as usize] as usize - 1;
+        if i == latest[idx] {
+            if decrement < nums[idx] {
+                return false;
+            }
+            marked += 1;
+            decrement -= nums[idx];
+        } else {
+            decrement += 1;
+        }
+    }
+    marked as usize == nums.len()
 }
 
 #[cfg(test)]
@@ -58,11 +75,25 @@ mod tests {
     #[test]
     fn basics() {
         assert_eq!(
-            largest_square_area(&[[1, 1], [1, 3], [1, 5]], &[[5, 5], [5, 7], [5, 9]]),
-            4
+            earliest_second_to_mark_indices(&[2, 2, 0], &[2, 2, 2, 2, 3, 2, 2, 1],),
+            8
         );
+        assert_eq!(
+            earliest_second_to_mark_indices(&[1, 3], &[1, 1, 1, 2, 1, 1, 1]),
+            6
+        );
+        assert_eq!(earliest_second_to_mark_indices(&[0, 1], &[2, 2, 2]), -1);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(
+            earliest_second_to_mark_indices(&[0, 2, 3, 0], &[2, 4, 1, 3, 3, 3, 3, 3, 3, 2, 1]),
+            10
+        );
+        assert_eq!(
+            earliest_second_to_mark_indices(&[1, 0, 3], &[1, 1, 3, 2]),
+            -1
+        )
+    }
 }
