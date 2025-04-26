@@ -6,19 +6,40 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn sum_of_encrypted_int(nums: Vec<i32>) -> i32 {
-    nums.iter().map(|&v| largest(v)).sum()
-}
-
-fn largest(mut num: i32) -> i32 {
-    let mut maxd = 0;
-    let mut len = 0;
-    while num > 0 {
-        maxd = maxd.max(num % 10);
-        num /= 10;
-        len = len * 10 + 1;
+pub fn unmarked_sum_array(nums: Vec<i32>, queries: Vec<Vec<i32>>) -> Vec<i64> {
+    use std::{cmp::Reverse, collections::BinaryHeap};
+    let mut sum: i64 = nums.iter().map(|&v| i64::from(v)).sum();
+    let mut seen = vec![false; nums.len()];
+    let mut heap: BinaryHeap<_> = nums
+        .iter()
+        .enumerate()
+        .map(|(i, &v)| Reverse((v, i)))
+        .collect();
+    let mut res = vec![];
+    for q in queries {
+        let [i, mut k] = q[..] else {
+            unreachable!();
+        };
+        if !seen[i as usize] {
+            sum -= i64::from(nums[i as usize]);
+            seen[i as usize] = true
+        }
+        if k > 0 {
+            while let Some(Reverse((v, i))) = heap.pop() {
+                if seen[i] {
+                    continue;
+                }
+                seen[i] = true;
+                sum -= i64::from(v);
+                k -= 1;
+                if k <= 0 {
+                    break;
+                }
+            }
+        }
+        res.push(sum);
     }
-    maxd * len
+    res
 }
 
 #[cfg(test)]
