@@ -1,43 +1,66 @@
 mod dsu;
+mod fenwick_tree;
 mod helper;
 mod trie;
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_operations_to_write_y(grid: &[&[i32]]) -> i32 {
-    let n = grid.len();
-    let [mut fin, mut fout] = [vec![0; 3], vec![0; 3]];
-    let [mut cin, mut cout] = [0, 0];
-    for (r, row) in grid.iter().enumerate() {
-        for (c, &v) in row.iter().enumerate() {
-            if in_y(n, r, c) {
-                fin[v as usize] += 1;
-                cin += 1;
-            } else {
-                fout[v as usize] += 1;
-                cout += 1;
+pub fn result_array(nums: &[i32]) -> Vec<i32> {
+    use itertools::Itertools;
+    use std::collections::HashMap;
+    let sorted = nums.iter().copied().sorted().dedup().collect_vec();
+    // 1-based indexing
+    let map: HashMap<_, _> = sorted
+        .iter()
+        .enumerate()
+        .map(|(i, &v)| (v, 1 + i))
+        .collect();
+    let len = sorted.len();
+    let mut arr1 = Arr::new(len, map[&nums[0]]);
+    let mut arr2 = Arr::new(len, map[&nums[1]]);
+    for &num in &nums[2..] {
+        let val = map[&num];
+        match arr1.count_greater(val).cmp(&arr2.count_greater(val)) {
+            std::cmp::Ordering::Less => arr2.push(val),
+            std::cmp::Ordering::Equal => {
+                if arr1.nums.len() <= arr2.nums.len() {
+                    arr1.push(val);
+                } else {
+                    arr2.push(val);
+                }
             }
+            std::cmp::Ordering::Greater => arr1.push(val),
         }
     }
-    let mut res = (n as i32).pow(2);
-    for y in 0..3 {
-        let mut curr = cin - fin[y];
-        let mut max = 0;
-        for out in (0..3).filter(|&v| v != y) {
-            max = max.max(fout[out]);
-        }
-        curr += cout - max;
-        res = res.min(curr);
-    }
-    res
+    // offset 1-based indexing
+    arr1.nums
+        .into_iter()
+        .chain(arr2.nums)
+        .map(|i| sorted[i - 1])
+        .collect()
 }
 
-const fn in_y(n: usize, r: usize, c: usize) -> bool {
-    if r <= n / 2 {
-        r == c || r + c + 1 == n
-    } else {
-        c == n / 2
+struct Arr {
+    ft: fenwick_tree::FenwickTree,
+    nums: Vec<usize>,
+}
+
+impl Arr {
+    fn new(max_val: usize, init: usize) -> Self {
+        let nums = vec![init];
+        let mut ft = fenwick_tree::FenwickTree::new(max_val);
+        ft.update(init, 1);
+        Self { ft, nums }
+    }
+
+    fn push(&mut self, val: usize) {
+        self.ft.update(val, 1);
+        self.nums.push(val);
+    }
+
+    fn count_greater(&self, val: usize) -> i32 {
+        self.nums.len() as i32 - self.ft.query(val)
     }
 }
 
@@ -72,10 +95,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            minimum_operations_to_write_y(&[&[1, 2, 2], &[1, 1, 0], &[0, 1, 0]]),
-            3
-        );
+        assert_eq!(result_array(&[2, 1, 3, 3]), [2, 3, 1, 3]);
+        // assert_eq!(result_array(&[5, 14, 3, 1, 2]), [5, 3, 1, 2, 14]);
+        // assert_eq!(result_array(&[3, 3, 3, 3]), [3, 3, 3, 3]);
     }
 
     #[test]
