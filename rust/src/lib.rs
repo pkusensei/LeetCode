@@ -6,35 +6,33 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn shortest_substrings(arr: Vec<String>) -> Vec<String> {
-    use std::collections::HashSet;
-    let mut res = vec![];
-    for (i1, a) in arr.iter().enumerate() {
-        let n = a.len();
-        let mut set = HashSet::new();
-        for left in 0..n {
-            for right in 1 + left..=n {
-                set.insert(&a[left..right]);
-            }
-        }
-        let mut seen = HashSet::new();
-        for (i2, b) in arr.iter().enumerate() {
-            if i2 == i1 {
-                continue;
-            }
-            for s in &set {
-                if b.contains(s) {
-                    seen.insert(*s);
-                }
-            }
-        }
-        res.push(
-            set.difference(&seen)
-                .min_by(|a, b| a.len().cmp(&b.len()).then(a.cmp(b)))
-                .map(|s| s.to_string())
-                .unwrap_or_default(),
-        );
+pub fn maximum_strength(nums: &[i32], k: i32) -> i64 {
+    let n = nums.len();
+    let mut memo = vec![vec![[i64::MIN; 2]; 1 + k as usize]; n];
+    dfs(&nums, k.into(), 0, 1, &mut memo)
+}
+
+fn dfs(nums: &[i32], k: i64, idx: usize, fresh: usize, memo: &mut [Vec<[i64; 2]>]) -> i64 {
+    let n = nums.len();
+    if k == 0 {
+        return 0;
     }
+    if idx >= n || n - idx < k as usize {
+        return i64::MIN / 2;
+    }
+    if memo[idx][k as usize][fresh] > i64::MIN {
+        return memo[idx][k as usize][fresh];
+    }
+    let skip = if fresh == 1 {
+        dfs(nums, k, 1 + idx, 1, memo)
+    } else {
+        i64::MIN / 2
+    };
+    let curr = i64::from(nums[idx]) * if k & 1 == 1 { k } else { -k };
+    let extend_old = curr + dfs(nums, k, 1 + idx, 0, memo);
+    let start_new = curr + dfs(nums, k - 1, 1 + idx, 1, memo);
+    let res = skip.max(extend_old).max(start_new);
+    memo[idx][k as usize][fresh] = res;
     res
 }
 
@@ -68,8 +66,14 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(maximum_strength(&[1, 2, 3, -1, 2], 3), 22);
+        assert_eq!(maximum_strength(&[12, -2, -2, -2, -2], 5), 64);
+        assert_eq!(maximum_strength(&[-1, -2, -3], 1), -1);
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(maximum_strength(&[-99, 85], 1), 85);
+    }
 }
