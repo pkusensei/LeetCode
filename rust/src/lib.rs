@@ -6,13 +6,36 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_happiness_sum(mut happiness: Vec<i32>, k: i32) -> i64 {
-    happiness.sort_unstable_by(|a, b| b.cmp(a));
-    happiness[..k as usize]
-        .iter()
-        .enumerate()
-        .map(|(i, &v)| (i64::from(v) - i as i64).max(0))
-        .sum()
+pub fn shortest_substrings(arr: Vec<String>) -> Vec<String> {
+    use std::collections::HashSet;
+    let mut res = vec![];
+    for (i1, a) in arr.iter().enumerate() {
+        let n = a.len();
+        let mut set = HashSet::new();
+        for left in 0..n {
+            for right in 1 + left..=n {
+                set.insert(&a[left..right]);
+            }
+        }
+        let mut seen = HashSet::new();
+        for (i2, b) in arr.iter().enumerate() {
+            if i2 == i1 {
+                continue;
+            }
+            for s in &set {
+                if b.contains(s) {
+                    seen.insert(*s);
+                }
+            }
+        }
+        res.push(
+            set.difference(&seen)
+                .min_by(|a, b| a.len().cmp(&b.len()).then(a.cmp(b)))
+                .map(|s| s.to_string())
+                .unwrap_or_default(),
+        );
+    }
+    res
 }
 
 #[cfg(test)]
