@@ -10,11 +10,11 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(new[] { 3, 2, 4 }, 2, 1, 3)]
-    [DataRow(new[] { 3, 1, 9, 6 }, 3, 0, 2)]
-    public void TestMethod1(int[] nums, int modulo, int k, int exp)
+    [DataRow(new[] { 1, 3, 5, 2, 7, 5 }, 1, 5, 2)]
+    [DataRow(new[] { 1, 1, 1, 1 }, 1, 1, 10)]
+    public void TestMethod1(int[] nums, int minK, int maxK, int exp)
     {
-        Assert.AreEqual(exp, sol.CountInterestingSubarrays(nums, modulo, k));
+        Assert.AreEqual(exp, sol.CountSubarrays(nums, minK, maxK));
     }
 
     [TestMethod]

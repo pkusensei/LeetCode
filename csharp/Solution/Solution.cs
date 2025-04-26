@@ -7,20 +7,27 @@ namespace Solution;
 
 public class Solution
 {
-    public long CountInterestingSubarrays(IList<int> nums, int modulo, int k)
+    public long CountSubarrays(int[] nums, int minK, int maxK)
     {
-        List<int> prefix = [.. nums.Select(v => v % modulo == k ? 1 : 0)];
-        for (int i = 1; i < nums.Count; i++)
-        {
-            prefix[i] += prefix[i - 1];
-        }
-        Dictionary<int, int> dict = new() { { 0, 1 } };
+        int prev_min = -1;
+        int prev_max = -1;
+        int start = 0;
         long res = 0;
-        foreach (var item in prefix)
+        for (int i = 0; i < nums.Length; i += 1)
         {
-            if (dict.TryGetValue((item + modulo - k) % modulo, out var v)) { res += v; }
-            int key = item % modulo;
-            if (!dict.TryAdd(key, 1)) { dict[key] += 1; }
+            int num = nums[i];
+            if (num < minK || maxK < num)
+            {
+                prev_min = -1;
+                prev_max = -1;
+                start = 1 + i;
+            }
+            if (num == minK) { prev_min = i; }
+            if (num == maxK) { prev_max = i; }
+            if (prev_min > -1 && prev_max > -1)
+            {
+                res += Math.Min(prev_min, prev_max) - start + 1;
+            }
         }
         return res;
     }
