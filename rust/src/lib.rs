@@ -6,20 +6,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_substring_present(s: String) -> bool {
-    let n = s.len();
-    if n < 2 {
-        return false;
-    }
-    let s = s.as_bytes();
-    for i1 in 0..n - 1 {
-        for i2 in (1 + i1..n).rev() {
-            if s[i1] == s[i2] && s[1 + i1] == s[i2 - 1] {
-                return true;
-            }
+pub fn count_substrings(s: String, c: char) -> i64 {
+    let mut res = 0;
+    let mut curr = 0;
+    for ch in s.chars() {
+        if ch == c {
+            curr += 1;
+            res += curr
         }
     }
-    false
+    res
 }
 
 #[cfg(test)]
