@@ -6,16 +6,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_substrings(s: String, c: char) -> i64 {
+pub fn minimum_deletions(word: &str, k: i32) -> i32 {
+    use itertools::Itertools;
+    let freq = word
+        .bytes()
+        .fold([0; 26], |mut acc, b| {
+            acc[usize::from(b - b'a')] += 1;
+            acc
+        })
+        .into_iter()
+        .filter(|&v| v > 0)
+        .sorted_unstable()
+        .collect_vec();
     let mut res = 0;
-    let mut curr = 0;
-    for ch in s.chars() {
-        if ch == c {
-            curr += 1;
-            res += curr
+    for (i, &v) in freq.iter().enumerate() {
+        let mut curr = 0;
+        for &f in &freq[i..] {
+            curr += (v + k).min(f);
         }
+        res = res.max(curr);
     }
-    res
+    word.len() as i32 - res
 }
 
 #[cfg(test)]
