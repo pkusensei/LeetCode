@@ -6,30 +6,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_moves(nums: &[i32], k: i32, max_changes: i32) -> i64 {
-    let prefix = nums.iter().enumerate().fold(vec![0], |mut acc, (i, &v)| {
-        if v > 0 {
-            acc.push(i as i64 + acc.last().unwrap_or(&0));
+pub fn maximum_length_substring(s: String) -> i32 {
+    let s = s.as_bytes();
+    let mut freq = [0; 26];
+    let mut res = 0;
+    let mut left = 0;
+    for (right, &b) in s.iter().enumerate() {
+        freq[usize::from(b - b'a')] += 1;
+        while freq.iter().any(|&v| v > 2) {
+            freq[usize::from(s[left] - b'a')] -= 1;
+            left += 1;
         }
-        acc
-    });
-    let n = prefix.len() - 1;
-    // the least number of 1's picked with swap
-    let need = (k - max_changes).max(0) as usize;
-    let mut res = i64::MAX;
-    for left in need..=(k as usize).min(3 + need).min(n) {
-        for i in 0..=n - left {
-            let mid1 = i + left / 2;
-            let mid2 = i + left - left / 2;
-            // sum of right cost + sum of left cost
-            // On right, cost = i-mid
-            // On left, cost = mid-i
-            // right_indices - mid_indices + mid_indices - left_indices
-            let curr = prefix[i + left] - prefix[mid2] - (prefix[mid1] - prefix[i]);
-            res = res.min(curr + (i64::from(k) - left as i64) * 2);
-        }
+        res = res.max(right + 1 - left);
     }
-    res
+    res as i32
 }
 
 #[cfg(test)]
@@ -62,10 +52,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(minimum_moves(&[1, 1, 0, 0, 0, 1, 1, 0, 0, 1], 3, 1), 3);
-        assert_eq!(minimum_moves(&[0, 0, 0, 0], 2, 3), 4);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
