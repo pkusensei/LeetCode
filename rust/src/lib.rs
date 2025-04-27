@@ -6,20 +6,15 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_length_substring(s: String) -> i32 {
-    let s = s.as_bytes();
-    let mut freq = [0; 26];
-    let mut res = 0;
-    let mut left = 0;
-    for (right, &b) in s.iter().enumerate() {
-        freq[usize::from(b - b'a')] += 1;
-        while freq.iter().any(|&v| v > 2) {
-            freq[usize::from(s[left] - b'a')] -= 1;
-            left += 1;
-        }
-        res = res.max(right + 1 - left);
+pub fn min_operations(k: i32) -> i32 {
+    let root = k.isqrt();
+    if root.pow(2) == k {
+        2 * (root - 1)
+    } else if root * (1 + root) >= k {
+        2 * root - 1
+    } else {
+        2 * root
     }
-    res as i32
 }
 
 #[cfg(test)]
