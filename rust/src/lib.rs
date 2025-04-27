@@ -6,27 +6,30 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_deletions(word: &str, k: i32) -> i32 {
-    use itertools::Itertools;
-    let freq = word
-        .bytes()
-        .fold([0; 26], |mut acc, b| {
-            acc[usize::from(b - b'a')] += 1;
-            acc
-        })
-        .into_iter()
-        .filter(|&v| v > 0)
-        .sorted_unstable()
-        .collect_vec();
-    let mut res = 0;
-    for (i, &v) in freq.iter().enumerate() {
-        let mut curr = 0;
-        for &f in &freq[i..] {
-            curr += (v + k).min(f);
+pub fn minimum_moves(nums: &[i32], k: i32, max_changes: i32) -> i64 {
+    let prefix = nums.iter().enumerate().fold(vec![0], |mut acc, (i, &v)| {
+        if v > 0 {
+            acc.push(i as i64 + acc.last().unwrap_or(&0));
         }
-        res = res.max(curr);
+        acc
+    });
+    let n = prefix.len() - 1;
+    // the least number of 1's picked with swap
+    let need = (k - max_changes).max(0) as usize;
+    let mut res = i64::MAX;
+    for left in need..=(k as usize).min(3 + need).min(n) {
+        for i in 0..=n - left {
+            let mid1 = i + left / 2;
+            let mid2 = i + left - left / 2;
+            // sum of right cost + sum of left cost
+            // On right, cost = i-mid
+            // On left, cost = mid-i
+            // right_indices - mid_indices + mid_indices - left_indices
+            let curr = prefix[i + left] - prefix[mid2] - (prefix[mid1] - prefix[i]);
+            res = res.min(curr + (i64::from(k) - left as i64) * 2);
+        }
     }
-    word.len() as i32 - res
+    res
 }
 
 #[cfg(test)]
@@ -59,7 +62,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(minimum_moves(&[1, 1, 0, 0, 0, 1, 1, 0, 0, 1], 3, 1), 3);
+        assert_eq!(minimum_moves(&[0, 0, 0, 0], 2, 3), 4);
+    }
 
     #[test]
     fn test() {}
