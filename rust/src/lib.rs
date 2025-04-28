@@ -5,36 +5,22 @@ mod trie;
 
 #[allow(unused_imports)]
 use helper::*;
+use itertools::Itertools;
 
-pub fn min_operations_to_make_median_k(mut nums: Vec<i32>, k: i32) -> i64 {
-    let n = nums.len();
-    nums.sort_unstable();
-    let med = nums[n / 2];
-    match med.cmp(&k) {
-        std::cmp::Ordering::Less => {
-            let mut res = 0;
-            for &num in &nums[n / 2..] {
-                if num < k {
-                    res += i64::from(k - num);
-                } else {
-                    break;
-                }
-            }
-            res
-        }
-        std::cmp::Ordering::Equal => 0,
-        std::cmp::Ordering::Greater => {
-            let mut res = 0;
-            for &num in nums[..=n / 2].iter().rev() {
-                if num > k {
-                    res += i64::from(num - k);
-                } else {
-                    break;
-                }
-            }
-            res
+pub fn min_rectangles_to_cover_points(points: Vec<Vec<i32>>, w: i32) -> i32 {
+    if points.len() < 2 {
+        return 1;
+    }
+    let nums = points.iter().map(|p| p[0]).sorted_unstable().collect_vec();
+    let mut prev = nums[0];
+    let mut res = 1;
+    for &num in &nums[1..] {
+        if num - prev > w {
+            prev = num;
+            res += 1;
         }
     }
+    res
 }
 
 #[cfg(test)]
