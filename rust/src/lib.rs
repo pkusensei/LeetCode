@@ -6,34 +6,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_subarray_length(nums: &[i32], k: i32) -> i32 {
-    let mut freq = [0; 6];
-    let mut res = 51;
-    let mut left = 0;
-    for (right, &num) in nums.iter().enumerate() {
-        for (bit, v) in freq.iter_mut().enumerate() {
-            if num & (1 << bit) > 0 {
-                *v += 1;
-            }
+pub fn minimum_levels(mut possible: Vec<i32>) -> i32 {
+    let mut sum = 0;
+    for v in possible.iter_mut() {
+        if *v == 0 {
+            *v = -1;
         }
-        while left <= right
-            && k <= freq.iter().enumerate().fold(
-                0,
-                |acc, (bit, &f)| {
-                    if f > 0 { acc | (1 << bit) } else { acc }
-                },
-            )
-        {
-            res = res.min(1 + right - left);
-            for (bit, v) in freq.iter_mut().enumerate() {
-                if nums[left] & (1 << bit) > 0 {
-                    *v -= 1;
-                }
-            }
-            left += 1;
+        sum += *v;
+    }
+    let mut prefix = 0;
+    for (i, &v) in possible.iter().enumerate() {
+        prefix += v;
+        sum -= v;
+        if prefix > sum && i < possible.len() - 1 {
+            return 1 + i as i32;
         }
     }
-    if res < 51 { res as i32 } else { -1 }
+    -1
 }
 
 #[cfg(test)]
@@ -70,6 +59,6 @@ mod tests {
 
     #[test]
     fn test() {
-        assert_eq!(minimum_subarray_length(&[32, 1, 25, 11, 2], 59), 4);
+        assert_eq!(minimum_levels(vec![0, 1, 0]), 2);
     }
 }
