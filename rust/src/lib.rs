@@ -6,62 +6,34 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn string_indices(words_container: Vec<String>, words_query: Vec<String>) -> Vec<i32> {
-    let mut trie = Trie::new();
-    for (i, s) in words_container.iter().enumerate() {
-        trie.insert(s.bytes().rev(), i, s.len());
-    }
-    let mut res = vec![];
-    for q in words_query.iter() {
-        res.push(trie.find(q.bytes().rev()) as i32);
-    }
-    res
-}
-
-struct Trie {
-    nodes: [Option<Box<Trie>>; 26],
-    shortest: usize,
-    str_idx: usize,
-}
-
-impl Trie {
-    fn new() -> Self {
-        Self {
-            nodes: [const { None }; 26],
-            shortest: 10_001,
-            str_idx: 10_001,
-        }
-    }
-
-    fn insert(&mut self, it: impl Iterator<Item = u8>, idx: usize, len: usize) {
-        let mut curr = self;
-        if curr.shortest > len {
-            curr.shortest = len;
-            curr.str_idx = idx;
-        }
-        for b in it {
-            let ci = usize::from(b - b'a');
-            curr = curr.nodes[ci].get_or_insert(Box::new(Self::new()));
-            if curr.shortest > len {
-                curr.shortest = len;
-                curr.str_idx = idx;
+pub fn minimum_subarray_length(nums: &[i32], k: i32) -> i32 {
+    let mut freq = [0; 6];
+    let mut res = 51;
+    let mut left = 0;
+    for (right, &num) in nums.iter().enumerate() {
+        for (bit, v) in freq.iter_mut().enumerate() {
+            if num & (1 << bit) > 0 {
+                *v += 1;
             }
         }
-    }
-
-    fn find(&self, it: impl Iterator<Item = u8>) -> usize {
-        let mut curr = self;
-        let mut res = self.str_idx;
-        for b in it {
-            let idx = usize::from(b - b'a');
-            let Some(ref v) = curr.nodes[idx] else {
-                break;
-            };
-            curr = v;
-            res = curr.str_idx;
+        while left <= right
+            && k <= freq.iter().enumerate().fold(
+                0,
+                |acc, (bit, &f)| {
+                    if f > 0 { acc | (1 << bit) } else { acc }
+                },
+            )
+        {
+            res = res.min(1 + right - left);
+            for (bit, v) in freq.iter_mut().enumerate() {
+                if nums[left] & (1 << bit) > 0 {
+                    *v -= 1;
+                }
+            }
+            left += 1;
         }
-        res
     }
+    if res < 51 { res as i32 } else { -1 }
 }
 
 #[cfg(test)]
@@ -97,5 +69,7 @@ mod tests {
     fn basics() {}
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(minimum_subarray_length(&[32, 1, 25, 11, 2], 59), 4);
+    }
 }
