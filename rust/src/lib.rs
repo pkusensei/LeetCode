@@ -6,15 +6,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub const fn max_bottles_drunk(mut num_bottles: i32, mut num_exchange: i32) -> i32 {
-    let mut res = 0;
-    while num_bottles >= num_exchange {
-        res += num_exchange;
-        num_bottles -= num_exchange;
-        num_bottles += 1;
-        num_exchange += 1
+pub fn count_alternating_subarrays(nums: Vec<i32>) -> i64 {
+    let n = nums.len();
+    let mut prev = 1;
+    let mut res = 1;
+    for i in 1..n {
+        let mut curr = 1;
+        if nums[i] == 1 - nums[i - 1] {
+            curr += prev;
+        }
+        res += curr;
+        prev = curr;
     }
-    res + num_bottles
+    res
 }
 
 #[cfg(test)]
