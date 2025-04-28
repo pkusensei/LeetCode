@@ -7,27 +7,20 @@ namespace Solution;
 
 public class Solution
 {
-    public long CountSubarrays(int[] nums, int minK, int maxK)
+    public long CountSubarrays(int[] nums, long k)
     {
-        int prev_min = -1;
-        int prev_max = -1;
-        int start = 0;
+        int left = 0;
+        long window = 0;
         long res = 0;
-        for (int i = 0; i < nums.Length; i += 1)
+        for (int right = 0; right < nums.Length; right++)
         {
-            int num = nums[i];
-            if (num < minK || maxK < num)
+            window += nums[right];
+            while (window * (right + 1 - left) >= k)
             {
-                prev_min = -1;
-                prev_max = -1;
-                start = 1 + i;
+                window -= nums[left];
+                left += 1;
             }
-            if (num == minK) { prev_min = i; }
-            if (num == maxK) { prev_max = i; }
-            if (prev_min > -1 && prev_max > -1)
-            {
-                res += Math.Min(prev_min, prev_max) - start + 1;
-            }
+            res += right + 1 - left;
         }
         return res;
     }
