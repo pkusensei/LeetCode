@@ -6,22 +6,14 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_latest_time(s: String) -> String {
-    let m = match &s.as_bytes()[3..] {
-        b"??" => "59".to_string(),
-        &[b'?', v] => String::from_utf8(vec![b'5', v]).unwrap(),
-        &[v, b'?'] => String::from_utf8(vec![v, b'9']).unwrap(),
-        v => String::from_utf8(v.to_vec()).unwrap(),
-    };
-    let h = match &s.as_bytes()[..2] {
-        b"??" => "11".to_string(),
-        &[b'?', v] if v > b'1' => String::from_utf8(vec![b'0', v]).unwrap(),
-        &[b'?', v] => String::from_utf8(vec![b'1', v]).unwrap(),
-        &[b'0', b'?'] => "09".to_string(),
-        &[b'1', b'?'] => "11".to_string(),
-        v => String::from_utf8(v.to_vec()).unwrap(),
-    };
-    format!("{h}:{m}")
+pub fn maximum_prime_difference(nums: Vec<i32>) -> i32 {
+    const P: [i32; 25] = [
+        2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89,
+        97,
+    ];
+    let left = nums.iter().position(|v| P.contains(v)).unwrap_or(0);
+    let right = nums.iter().rposition(|v| P.contains(v)).unwrap_or(0);
+    (right - left) as i32
 }
 
 #[cfg(test)]
