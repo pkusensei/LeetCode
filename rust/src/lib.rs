@@ -6,14 +6,45 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_prime_difference(nums: Vec<i32>) -> i32 {
-    const P: [i32; 25] = [
-        2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89,
-        97,
-    ];
-    let left = nums.iter().position(|v| P.contains(v)).unwrap_or(0);
-    let right = nums.iter().rposition(|v| P.contains(v)).unwrap_or(0);
-    (right - left) as i32
+pub fn find_kth_smallest(coins: &[i32], k: i32) -> i64 {
+    let k = i64::from(k);
+    let [mut left, mut right] = [1, i64::MAX / 2];
+    while left < right {
+        let mid = left + (right - left) / 2;
+        if count(&coins, mid) < k {
+            left = 1 + mid;
+        } else {
+            right = mid;
+        }
+    }
+    left
+}
+
+fn count(nums: &[i32], mid: i64) -> i64 {
+    let n = nums.len();
+    let mut res = 0;
+    // bitmask as subset
+    for mask in 1_i32..(1 << n) {
+        let mut curr_lcm = 1;
+        for (i, &num) in nums.iter().enumerate() {
+            if mask & (1 << i) > 0 {
+                curr_lcm = lcm(curr_lcm, num.into());
+            }
+        }
+        if mask.count_ones() & 1 == 0 {
+            res -= mid / curr_lcm;
+        } else {
+            res += mid / curr_lcm;
+        }
+    }
+    res
+}
+
+const fn lcm(a: i64, b: i64) -> i64 {
+    const fn gcd(a: i64, b: i64) -> i64 {
+        if a == 0 { b } else { gcd(b % a, a) }
+    }
+    a / gcd(a, b) * b
 }
 
 #[cfg(test)]
@@ -46,7 +77,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(find_kth_smallest(&[3, 6, 9], 3), 9);
+        assert_eq!(find_kth_smallest(&[5, 2], 7), 12);
+    }
 
     #[test]
     fn test() {}
