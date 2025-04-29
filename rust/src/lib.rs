@@ -7,16 +7,22 @@ mod trie;
 use helper::*;
 
 pub fn number_of_special_chars(word: String) -> i32 {
-    let mut up: i32 = 0;
-    let mut low = 0;
-    for b in word.bytes() {
+    let mut up = [None; 26];
+    let mut low = [None; 26];
+    for (idx, b) in word.bytes().enumerate() {
         if b.is_ascii_uppercase() {
-            up |= 1 << (b - b'A');
+            let i = usize::from(b - b'A');
+            if up[i].is_none() {
+                up[i] = Some(idx);
+            }
         } else {
-            low |= 1 << (b - b'a');
+            low[usize::from(b - b'a')] = Some(idx);
         }
     }
-    (up & low).count_ones() as i32
+    up.into_iter()
+        .zip(low)
+        .filter(|(first_up, last_low)| first_up.zip(*last_low).is_some_and(|(a, b)| a > b))
+        .count() as i32
 }
 
 #[cfg(test)]
