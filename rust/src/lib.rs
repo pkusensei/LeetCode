@@ -6,23 +6,28 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn number_of_special_chars(word: String) -> i32 {
-    let mut up = [None; 26];
-    let mut low = [None; 26];
-    for (idx, b) in word.bytes().enumerate() {
-        if b.is_ascii_uppercase() {
-            let i = usize::from(b - b'A');
-            if up[i].is_none() {
-                up[i] = Some(idx);
-            }
-        } else {
-            low[usize::from(b - b'a')] = Some(idx);
+pub fn minimum_operations(grid: &[&[i32]]) -> i32 {
+    let [rows, cols] = get_dimensions(&grid);
+    // min op counts per column
+    let mut freq = vec![[rows; 10]; cols];
+    for row in grid.iter() {
+        for (c, &v) in row.iter().enumerate() {
+            freq[c][v as usize] -= 1;
         }
     }
-    up.into_iter()
-        .zip(low)
-        .filter(|(first_up, last_low)| first_up.zip(*last_low).is_some_and(|(a, b)| a > b))
-        .count() as i32
+    let mut dp = freq[0];
+    for col in &freq[1..] {
+        let mut curr = [1_000_000; 10];
+        for curr_v in 0..10 {
+            for prev in 0..10 {
+                if prev != curr_v {
+                    curr[curr_v] = curr[curr_v].min(col[curr_v] + dp[prev])
+                }
+            }
+        }
+        dp = curr;
+    }
+    dp.into_iter().min().unwrap() as i32
 }
 
 #[cfg(test)]
@@ -55,7 +60,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(minimum_operations(&[&[1, 1, 1], &[0, 0, 0]]), 3);
+        assert_eq!(minimum_operations(&[&[1, 0, 2], &[1, 0, 2]]), 0);
+        assert_eq!(minimum_operations(&[&[1], &[2], &[3]]), 2);
+    }
 
     #[test]
     fn test() {}
