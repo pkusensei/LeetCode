@@ -6,21 +6,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn number_of_subarrays(nums: &[i32]) -> i64 {
-    let mut st: Vec<(i32, i64)> = vec![];
-    let mut res = 0;
-    for &num in nums.iter() {
-        while st.last().is_some_and(|&(v, _count)| v < num) {
-            st.pop();
-        }
-        if st.last().is_none_or(|&(v, _)| v > num) {
-            st.push((num, 1));
-        } else if let Some((_, count)) = st.last_mut() {
-            *count += 1;
-        }
-        res += st.last().map(|&(_, count)| count).unwrap_or(0);
-    }
-    res
+pub fn find_latest_time(s: String) -> String {
+    let m = match &s.as_bytes()[3..] {
+        b"??" => "59".to_string(),
+        &[b'?', v] => String::from_utf8(vec![b'5', v]).unwrap(),
+        &[v, b'?'] => String::from_utf8(vec![v, b'9']).unwrap(),
+        v => String::from_utf8(v.to_vec()).unwrap(),
+    };
+    let h = match &s.as_bytes()[..2] {
+        b"??" => "11".to_string(),
+        &[b'?', v] if v > b'1' => String::from_utf8(vec![b'0', v]).unwrap(),
+        &[b'?', v] => String::from_utf8(vec![b'1', v]).unwrap(),
+        &[b'0', b'?'] => "09".to_string(),
+        &[b'1', b'?'] => "11".to_string(),
+        v => String::from_utf8(v.to_vec()).unwrap(),
+    };
+    format!("{h}:{m}")
 }
 
 #[cfg(test)]
@@ -53,11 +54,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(number_of_subarrays(&[1, 4, 3, 3, 2]), 6);
-        assert_eq!(number_of_subarrays(&[3, 3, 3]), 6);
-        assert_eq!(number_of_subarrays(&[1]), 1);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
