@@ -6,44 +6,30 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-use itertools::Itertools;
-use std::collections::HashMap;
-
-pub fn median_of_uniqueness_array(nums: &[i32]) -> i32 {
-    let n = nums.len();
-    let size = n * (1 + n) / 2;
-    let median = (size + 1) / 2;
-    let mut left = 1;
-    let mut right = nums.iter().unique().count();
-    while left < right {
-        let mid = left.midpoint(right);
-        if count(nums, mid) < median {
-            left = mid + 1;
-        } else {
-            right = mid;
-        }
+pub fn is_valid(word: String) -> bool {
+    if word.len() < 3 {
+        return false;
     }
-    left as i32
-}
-
-fn count(nums: &[i32], unique: usize) -> usize {
-    let mut res = 0;
-    let mut left = 0;
-    let mut map = HashMap::new();
-    for (right, &num) in nums.iter().enumerate() {
-        *map.entry(num).or_insert(0) += 1;
-        while map.len() > unique {
-            let v = map.entry(nums[left]).or_insert(0);
-            if *v == 1 {
-                map.remove(&nums[left]);
+    let [mut v, mut c] = [false; 2];
+    for b in word.bytes() {
+        if b.is_ascii_digit() {
+        } else if b.is_ascii_lowercase() {
+            if b"aeiou".contains(&b) {
+                v = true;
             } else {
-                *v -= 1;
+                c = true;
             }
-            left += 1;
+        } else if b.is_ascii_uppercase() {
+            if b"AEIOU".contains(&b) {
+                v = true;
+            } else {
+                c = true;
+            }
+        } else {
+            return false;
         }
-        res += right + 1 - left
     }
-    res
+    v && c
 }
 
 #[cfg(test)]
@@ -76,11 +62,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(median_of_uniqueness_array(&[1, 2, 3]), 1);
-        assert_eq!(median_of_uniqueness_array(&[3, 4, 3, 4, 5]), 2);
-        assert_eq!(median_of_uniqueness_array(&[4, 3, 5, 4]), 2);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
