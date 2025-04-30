@@ -8,24 +8,24 @@ namespace Solution;
 
 public class Solution
 {
-    public long CountSubarrays(int[] nums, int k)
+    public long MinEnd(int n, int x)
     {
-        int max = nums.Max();
-        int left = 0;
-        long res = 0;
-        int count = 0;
-        for (int right = 0; right < nums.Length; right += 1)
+        var sb = new StringBuilder(Convert.ToString(x, 2), 64);
+        var val = Convert.ToString(n - 1, 2);
+        int i2 = val.Length - 1;
+        for (int i1 = sb.Length - 1; i1 >= 0; i1 -= 1)
         {
-            count += nums[right] == max ? 1 : 0;
-            while (count > k)
-            {
-                count -= nums[left] == max ? 1 : 0;
-                left += 1;
-            }
-            res += right + 1 - left;
+            if (sb[i1] == '1') { continue; }
+            sb[i1] = val[i2];
+            i2 -= 1;
+            if (i2 < 0) { break; }
         }
-        long n = nums.Length;
-        return n * (1 + n) / 2 - res;
+        while (i2 >= 0)
+        {
+            sb.Insert(0, val[i2]);
+            i2 -= 1;
+        }
+        return Convert.ToInt64(sb.ToString(), 2);
     }
 }
 
