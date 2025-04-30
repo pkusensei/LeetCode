@@ -6,30 +6,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_valid(word: String) -> bool {
-    if word.len() < 3 {
-        return false;
-    }
-    let [mut v, mut c] = [false; 2];
-    for b in word.bytes() {
-        if b.is_ascii_digit() {
-        } else if b.is_ascii_lowercase() {
-            if b"aeiou".contains(&b) {
-                v = true;
-            } else {
-                c = true;
-            }
-        } else if b.is_ascii_uppercase() {
-            if b"AEIOU".contains(&b) {
-                v = true;
-            } else {
-                c = true;
-            }
-        } else {
-            return false;
-        }
-    }
-    v && c
+pub fn minimum_operations_to_make_k_periodic(word: String, k: i32) -> i32 {
+    use itertools::Itertools;
+    let k = k as usize;
+    let max_freq = word
+        .as_bytes()
+        .chunks_exact(k)
+        .counts()
+        .into_values()
+        .max()
+        .unwrap_or(1);
+    (word.len() / k - max_freq) as i32
 }
 
 #[cfg(test)]
