@@ -6,17 +6,35 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_operations_to_make_k_periodic(word: String, k: i32) -> i32 {
+pub fn min_anagram_length(s: &str) -> i32 {
     use itertools::Itertools;
-    let k = k as usize;
-    let max_freq = word
-        .as_bytes()
-        .chunks_exact(k)
-        .counts()
-        .into_values()
-        .max()
-        .unwrap_or(1);
-    (word.len() / k - max_freq) as i32
+    let n = s.len();
+    let func = |mut acc: [i32; 26], b| {
+        acc[usize::from(b - b'a')] += 1;
+        acc
+    };
+    let freq = s
+        .bytes()
+        .fold([0; 26], func)
+        .into_iter()
+        .filter(|&v| v > 0)
+        .collect_vec();
+    let gcd_ = freq.iter().fold(freq[0], |acc, &v| gcd(acc, v));
+    let window = freq.iter().map(|&v| v / gcd_).sum::<i32>() as usize;
+    for curr in (window..n).step_by(window) {
+        if s.as_bytes()
+            .chunks(curr)
+            .map(|w| w.iter().copied().fold([0; 26], func))
+            .all_equal()
+        {
+            return curr as i32;
+        }
+    }
+    n as i32
+}
+
+const fn gcd(a: i32, b: i32) -> i32 {
+    if a == 0 { b } else { gcd(b % a, a) }
 }
 
 #[cfg(test)]
@@ -52,5 +70,7 @@ mod tests {
     fn basics() {}
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(min_anagram_length("ccccaaaa"), 8);
+    }
 }
