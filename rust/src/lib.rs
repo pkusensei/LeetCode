@@ -7,9 +7,38 @@ mod trie;
 use helper::*;
 
 pub fn number_of_stable_arrays(zero: i32, one: i32, limit: i32) -> i32 {
+    // dp[zero][one][0 or 1]
+    let [zero, one, limit] = [zero, one, limit].map(|v| v as usize);
+    let mut dp = vec![vec![[0_i64; 2]; 1 + one]; 1 + zero];
+    for ze in 0..=zero.min(limit) {
+        dp[ze][0][0] = 1;
+    }
+    for on in 0..=one.min(limit) {
+        dp[0][on][1] = 1;
+    }
+    for ze in 1..=zero {
+        for on in 1..=one {
+            dp[ze][on][0] = (dp[ze - 1][on][0] + dp[ze - 1][on][1]
+                - ze.checked_sub(limit + 1)
+                    .map(|prev| dp[prev][on][1])
+                    .unwrap_or(0))
+            .rem_euclid(M);
+            dp[ze][on][1] = (dp[ze][on - 1][1] + dp[ze][on - 1][0]
+                - on.checked_sub(1 + limit)
+                    .map(|prev| dp[ze][prev][0])
+                    .unwrap_or(0))
+            .rem_euclid(M)
+        }
+    }
+    ((dp[zero][one][0] + dp[zero][one][1]) % M) as i32
+}
+
+const M: i64 = 1_000_000_007;
+
+pub fn top_down(zero: i32, one: i32, limit: i32) -> i32 {
     let mut memo =
         vec![vec![vec![vec![-1; 1 + limit as usize]; 3]; 1 + one as usize]; 1 + zero as usize];
-    dfs(zero, one, limit, 2, 0, &mut memo)
+    dfs(zero, one, limit, 2, 0, &mut memo) as i32
 }
 
 fn dfs(
@@ -18,11 +47,10 @@ fn dfs(
     limit: i32,
     prev: i32,
     count: i32,
-    memo: &mut [Vec<Vec<Vec<i32>>>],
-) -> i32 {
-    const M: i32 = 1_000_000_007;
+    memo: &mut [Vec<Vec<Vec<i64>>>],
+) -> i64 {
     if num_zero == 0 && num_one == 0 {
-        return i32::from(count <= limit);
+        return i64::from(count <= limit);
     }
     if num_zero < 0 || num_one < 0 || count > limit {
         return 0;
@@ -83,6 +111,10 @@ mod tests {
         assert_eq!(number_of_stable_arrays(1, 1, 2), 2);
         assert_eq!(number_of_stable_arrays(1, 2, 1), 1);
         assert_eq!(number_of_stable_arrays(3, 3, 2), 14);
+
+        assert_eq!(top_down(1, 1, 2), 2);
+        assert_eq!(top_down(1, 2, 1), 1);
+        assert_eq!(top_down(3, 3, 2), 14);
     }
 
     #[test]
