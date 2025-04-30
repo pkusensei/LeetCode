@@ -6,19 +6,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn can_make_square(grid: Vec<Vec<char>>) -> bool {
-    for r in 0..=1 {
-        for c in 0..=1 {
-            let curr = i32::from(grid[r][c] == 'B')
-                + i32::from(grid[1 + r][c] == 'B')
-                + i32::from(grid[r][1 + c] == 'B')
-                + i32::from(grid[1 + r][1 + c] == 'B');
-            if curr != 2 {
-                return true;
+pub fn number_of_right_triangles(grid: Vec<Vec<i32>>) -> i64 {
+    let cols = grid[0].len();
+    let row_sums: Vec<_> = grid
+        .iter()
+        .map(|r| r.iter().map(|&v| i64::from(v)).sum::<i64>())
+        .collect();
+    let col_sums: Vec<_> = (0..cols)
+        .map(|c| grid.iter().map(|r| i64::from(r[c])).sum::<i64>())
+        .collect();
+    let mut res = 0;
+    for (r, row) in grid.iter().enumerate() {
+        for (c, &v) in row.iter().enumerate() {
+            if v == 1 {
+                res += (row_sums[r] - 1) * (col_sums[c] - 1);
             }
         }
     }
-    false
+    res
 }
 
 #[cfg(test)]
