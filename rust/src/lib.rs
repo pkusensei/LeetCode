@@ -6,25 +6,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_cost_to_equalize_array(nums: &[i32], cost1: i32, cost2: i32) -> i32 {
-    const M: i64 = 1_000_000_007;
-    let n = nums.len();
-    let [cost1, cost2] = [cost1, cost2].map(i64::from);
-    let min = nums.iter().map(|&v| i64::from(v)).min().unwrap_or(1);
-    let max = nums.iter().map(|&v| i64::from(v)).max().unwrap_or(1);
-    let sum = nums.iter().map(|&v| i64::from(v)).sum::<i64>();
-    if cost2 >= 2 * cost1 || n < 3 {
-        return (cost1 * (n as i64 * max - sum) % M) as i32;
+    pub fn satisfies_conditions(grid: Vec<Vec<i32>>) -> bool {
+        let [rows, cols] = get_dimensions(&grid);
+        for r in 0..rows {
+            for c in 0..cols {
+                if (r < rows - 1 && grid[r][c] != grid[1 + r][c])
+                    || (c < cols - 1 && grid[r][c] == grid[r][1 + c])
+                {
+                    return false;
+                }
+            }
+        }
+        true
     }
-    let mut res = i64::MAX;
-    for target in max..2 * max {
-        let diff = target - min;
-        let total_diff = target * n as i64 - sum;
-        let pairs = (total_diff / 2).min(total_diff - diff);
-        res = res.min(cost1 * (total_diff - 2 * pairs) + cost2 * pairs);
-    }
-    (res % M) as i32
-}
 
 #[cfg(test)]
 mod tests {
@@ -56,11 +50,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(min_cost_to_equalize_array(&[4, 1], 5, 2), 15);
-        assert_eq!(min_cost_to_equalize_array(&[2, 3, 3, 3, 5], 2, 1), 6);
-        assert_eq!(min_cost_to_equalize_array(&[3, 5, 3], 1, 3), 4);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
