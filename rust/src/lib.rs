@@ -6,31 +6,33 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_points_inside_square(points: &[[i32; 2]], s: &str) -> i32 {
-    use itertools::{Itertools, izip};
-    use std::collections::BTreeMap;
-    let arr = izip!(points.iter(), s.bytes())
-        .map(|(p, b)| {
-            let [x, y] = p[..] else { unreachable!() };
-            (x.abs().max(y.abs()), b - b'a')
-        })
-        .sorted_unstable_by_key(|&(dist, _tag)| dist)
-        .collect_vec();
-    let mut map = BTreeMap::new();
-    let mut mask: i32 = 0;
-    for (i, &(dist, tag)) in arr.iter().enumerate() {
-        mask |= 1 << tag;
-        map.insert(dist, (mask, 1 + i as u32));
-    }
-    let mut res = 0;
-    for &(mask, count) in map.values() {
-        if mask.count_ones() == count {
-            res = res.max(count)
-        } else {
-            break;
+pub fn minimum_substrings_in_partition(s: &str) -> i32 {
+    let (s, n) = (s.as_bytes(), s.len());
+    let mut dp = vec![n as i32; n];
+    for right in 0..n {
+        let mut freq = [0; 26];
+        for left in (0..=right).rev() {
+            freq[usize::from(s[left] - b'a')] += 1;
+            if check(&freq) {
+                if left > 0 {
+                    dp[right] = dp[right].min(1 + dp[left - 1]);
+                } else {
+                    dp[right] = 1;
+                }
+            }
         }
     }
-    res as i32
+    dp[n - 1]
+}
+
+fn check(freq: &[i32; 26]) -> bool {
+    let mut min = i32::MAX;
+    let mut max = 0;
+    for &f in freq.iter().filter(|&&v| v > 0) {
+        min = min.min(f);
+        max = max.max(f);
+    }
+    min == max
 }
 
 #[cfg(test)]
@@ -64,18 +66,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            max_points_inside_square(&[[2, 2], [-1, -2], [-4, 4], [-3, 1], [3, -3]], "abdca"),
-            2
-        );
-        assert_eq!(
-            max_points_inside_square(&[[1, 1], [-2, -2], [-2, 2]], "abb"),
-            1
-        );
-        assert_eq!(
-            max_points_inside_square(&[[1, 1], [-1, -1], [2, -2]], "ccd"),
-            0
-        );
+        assert_eq!(minimum_substrings_in_partition("fabccddg"), 3);
+        assert_eq!(minimum_substrings_in_partition("abababaccddb"), 2);
     }
 
     #[test]
