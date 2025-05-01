@@ -6,35 +6,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_anagram_length(s: &str) -> i32 {
-    use itertools::Itertools;
-    let n = s.len();
-    let func = |mut acc: [i32; 26], b| {
-        acc[usize::from(b - b'a')] += 1;
-        acc
-    };
-    let freq = s
-        .bytes()
-        .fold([0; 26], func)
-        .into_iter()
-        .filter(|&v| v > 0)
-        .collect_vec();
-    let gcd_ = freq.iter().fold(freq[0], |acc, &v| gcd(acc, v));
-    let window = freq.iter().map(|&v| v / gcd_).sum::<i32>() as usize;
-    for curr in (window..n).step_by(window) {
-        if s.as_bytes()
-            .chunks(curr)
-            .map(|w| w.iter().copied().fold([0; 26], func))
-            .all_equal()
-        {
-            return curr as i32;
-        }
+pub fn min_cost_to_equalize_array(nums: &[i32], cost1: i32, cost2: i32) -> i32 {
+    const M: i64 = 1_000_000_007;
+    let n = nums.len();
+    let [cost1, cost2] = [cost1, cost2].map(i64::from);
+    let min = nums.iter().map(|&v| i64::from(v)).min().unwrap_or(1);
+    let max = nums.iter().map(|&v| i64::from(v)).max().unwrap_or(1);
+    let sum = nums.iter().map(|&v| i64::from(v)).sum::<i64>();
+    if cost2 >= 2 * cost1 || n < 3 {
+        return (cost1 * (n as i64 * max - sum) % M) as i32;
     }
-    n as i32
-}
-
-const fn gcd(a: i32, b: i32) -> i32 {
-    if a == 0 { b } else { gcd(b % a, a) }
+    let mut res = i64::MAX;
+    for target in max..2 * max {
+        let diff = target - min;
+        let total_diff = target * n as i64 - sum;
+        let pairs = (total_diff / 2).min(total_diff - diff);
+        res = res.min(cost1 * (total_diff - 2 * pairs) + cost2 * pairs);
+    }
+    (res % M) as i32
 }
 
 #[cfg(test)]
@@ -67,10 +56,12 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(min_cost_to_equalize_array(&[4, 1], 5, 2), 15);
+        assert_eq!(min_cost_to_equalize_array(&[2, 3, 3, 3, 5], 2, 1), 6);
+        assert_eq!(min_cost_to_equalize_array(&[3, 5, 3], 1, 3), 4);
+    }
 
     #[test]
-    fn test() {
-        assert_eq!(min_anagram_length("ccccaaaa"), 8);
-    }
+    fn test() {}
 }
