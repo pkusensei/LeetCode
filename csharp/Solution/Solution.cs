@@ -8,54 +8,38 @@ namespace Solution;
 
 public class Solution
 {
-    public int MaxTaskAssign(int[] tasks, int[] workers, int pills, int strength)
+    public string PushDominoes(string dominoes)
     {
-        Array.Sort(tasks);
-        Array.Sort(workers, (a, b) => b.CompareTo(a));
-        int left = 0;
-        int right = tasks.Length;
-        while (left < right)
+        int[] arr = new int[dominoes.Length];
+        int curr = 0;
+        foreach (var (i, c) in dominoes.Select((c, i) => (i, c)))
         {
-            int mid = left + (right + 1 - left) / 2;
-            if (Check(mid, pills)) { left = mid; }
-            else { right = mid - 1; }
-        }
-        return left;
-
-        bool Check(int mid, int pills)
-        {
-            if (mid > workers.Length) { return false; }
-            int taski = 0;
-            List<int> deque = new(mid);
-            // worker[i] goes from mid-1 to 0; least to most
-            for (int i = mid - 1; i >= 0; i -= 1)
+            curr = c switch
             {
-                if (deque.Count == 0 && taski < mid)
-                {
-                    deque.Insert(0, tasks[taski]);
-                    taski += 1;
-                }
-                if (deque.Last() <= workers[i])
-                {
-                    deque.RemoveAt(deque.Count - 1); // worker[i] finished last in deque
-                }
-                else
-                {
-                    if (pills == 0) { return false; }
-                    if (deque.Last() > workers[i] + strength) { return false; }
-                    // Add all thats possible with worker[i] and pill
-                    while (taski < mid && tasks[taski] <= workers[i] + strength)
-                    {
-                        deque.Insert(0, tasks[taski]);
-                        taski += 1;
-                    }
-                    // worker[i] finishes first in queue with pill
-                    deque.RemoveAt(0);
-                    pills -= 1;
-                }
-            }
-            return true;
+                'R' => dominoes.Length,
+                'L' => 0,
+                _ => Math.Max(curr - 1, 0)
+            };
+            arr[i] = curr;
         }
+        curr = 0;
+        foreach (var (i, c) in dominoes.Select((c, i) => (i, c)).Reverse())
+        {
+            curr = c switch
+            {
+                'L' => dominoes.Length,
+                'R' => 0,
+                _ => Math.Max(curr - 1, 0)
+            };
+            arr[i] -= curr;
+        }
+        char[] chs = [.. arr.Select(v =>
+        {
+            if (v > 0) { return 'R'; }
+            else if (v < 0) { return 'L'; }
+            else { return '.'; }
+        })];
+        return new(chs);
     }
 }
 
