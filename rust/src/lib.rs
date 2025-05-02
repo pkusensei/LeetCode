@@ -6,14 +6,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_permutation_difference(s: String, t: String) -> i32 {
-    let [a, b] = [&s, &t].map(|v| {
-        v.bytes().enumerate().fold([0; 26], |mut acc, (i, ch)| {
-            acc[usize::from(ch - b'a')] = i as i32;
-            acc
-        })
-    });
-    a.iter().zip(b).map(|(v1, v2)| (v1 - v2).abs()).sum()
+pub fn maximum_energy(energy: &[i32], k: i32) -> i32 {
+    let n = energy.len();
+    let k = k as usize;
+    let mut dp = vec![0; n];
+    let mut res = -100_000;
+    for i in 0..n {
+        if i + k < n {
+            dp[i + k] = dp[i + k].max(dp[i] + energy[i]);
+        } else {
+            res = res.max(dp[i] + energy[i])
+        }
+    }
+    res
 }
 
 #[cfg(test)]
@@ -46,8 +51,13 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(maximum_energy(&[5, 2, -10, -5, 1], 3), 3);
+        assert_eq!(maximum_energy(&[-2, -3, -1], 2), -1);
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(maximum_energy(&[5, -10, 4, 3, 5, -9, 9, -7], 2), 23);
+    }
 }
