@@ -101,6 +101,9 @@ where
 }
 
 pub const fn mod_pow(mut base: i64, mut exp: i64, modu: i64) -> i64 {
+    if exp == 1 {
+        return 0;
+    }
     let mut res = 1;
     base %= modu;
     while exp > 0 {
@@ -114,6 +117,9 @@ pub const fn mod_pow(mut base: i64, mut exp: i64, modu: i64) -> i64 {
 }
 
 pub const fn mod_pow_rec(base: i64, exp: i64, modu: i64) -> i64 {
+    if exp == 1 {
+        return 0;
+    }
     if exp == 0 {
         return 1;
     }
