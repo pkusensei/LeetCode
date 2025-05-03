@@ -8,38 +8,30 @@ namespace Solution;
 
 public class Solution
 {
-    public string PushDominoes(string dominoes)
+    public int MinDominoRotations(int[] tops, int[] bottoms)
     {
-        int[] arr = new int[dominoes.Length];
-        int curr = 0;
-        foreach (var (i, c) in dominoes.Select((c, i) => (i, c)))
+        if (tops.Length != bottoms.Length) { return -1; }
+        int a = Solve(tops[0]);
+        int b = Solve(bottoms[0]);
+        return (a == -1, b == -1) switch
         {
-            curr = c switch
+            (true, true) => -1,
+            (true, false) => b,
+            (false, true) => a,
+            _ => Math.Min(a, b)
+        };
+
+        int Solve(int target)
+        {
+            int count1 = 0;
+            int count2 = 0;
+            foreach (var (a, b) in tops.Zip(bottoms))
             {
-                'R' => dominoes.Length,
-                'L' => 0,
-                _ => Math.Max(curr - 1, 0)
-            };
-            arr[i] = curr;
+                if (target != a && target != b) { return -1; }
+                else if (target == a && target != b) { count2 += 1; }
+                else if (target != a && target == b) { count1 += 1; }
+            }
+            return Math.Min(count1, count2);
         }
-        curr = 0;
-        foreach (var (i, c) in dominoes.Select((c, i) => (i, c)).Reverse())
-        {
-            curr = c switch
-            {
-                'L' => dominoes.Length,
-                'R' => 0,
-                _ => Math.Max(curr - 1, 0)
-            };
-            arr[i] -= curr;
-        }
-        char[] chs = [.. arr.Select(v =>
-        {
-            if (v > 0) { return 'R'; }
-            else if (v < 0) { return 'L'; }
-            else { return '.'; }
-        })];
-        return new(chs);
     }
 }
-
