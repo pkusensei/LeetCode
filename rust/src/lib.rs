@@ -3,24 +3,30 @@ mod fenwick_tree;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn sum_digit_differences(nums: &[i32]) -> i64 {
-    let n = nums.len();
-    let mut res = 0;
-    for pow in 0.. {
-        if nums[0] < 10_i32.pow(pow) {
-            break;
-        }
-        let mut freq = [0; 10];
-        for &num in nums.iter() {
-            let d = (num / 10i32.pow(pow)) % 10;
-            freq[d as usize] += 1;
-        }
-        res += freq.into_iter().map(|v| v * (n - v)).sum::<usize>() / 2;
+pub fn ways_to_reach_stair(k: i32) -> i32 {
+    dfs(k, 1, 0, true, &mut HashMap::new())
+}
+
+fn dfs(k: i32, curr: i32, jump: u32, dec: bool, memo: &mut HashMap<(i32, u32, bool), i32>) -> i32 {
+    if curr > 1 + k {
+        return 0;
     }
-    res as i64
+    let key = (curr, jump, dec);
+    if let Some(&v) = memo.get(&key) {
+        return v;
+    }
+    let mut res = i32::from(k == curr);
+    res += dfs(k, curr + 2_i32.pow(jump), 1 + jump, true, memo);
+    if dec && curr > 0 {
+        res += dfs(k, curr - 1, jump, false, memo);
+    }
+    memo.insert(key, res);
+    res
 }
 
 #[cfg(test)]
@@ -54,11 +60,10 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(sum_digit_differences(&[13, 23, 12]), 4);
+        assert_eq!(ways_to_reach_stair(0), 2);
+        assert_eq!(ways_to_reach_stair(1), 4);
     }
 
     #[test]
-    fn test() {
-        assert_eq!(sum_digit_differences(&[50, 28, 48]), 5);
-    }
+    fn test() {}
 }
