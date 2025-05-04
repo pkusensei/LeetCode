@@ -6,16 +6,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_energy(energy: &[i32], k: i32) -> i32 {
-    let n = energy.len();
-    let k = k as usize;
-    let mut dp = vec![0; n];
-    let mut res = -100_000;
-    for i in 0..n {
-        if i + k < n {
-            dp[i + k] = dp[i + k].max(dp[i] + energy[i]);
-        } else {
-            res = res.max(dp[i] + energy[i])
+pub fn max_score(grid: &[&[i32]]) -> i32 {
+    let n = grid[0].len();
+    let mut curr = vec![i32::MAX; n];
+    let mut res = i32::MIN;
+    for row in grid.iter() {
+        for (c, &v) in row.iter().enumerate() {
+            if c > 0 {
+                curr[c] = curr[c].min(curr[c - 1]);
+            }
+            res = res.max(v - curr[c]);
+            curr[c] = curr[c].min(v);
         }
     }
     res
@@ -52,12 +53,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(maximum_energy(&[5, 2, -10, -5, 1], 3), 3);
-        assert_eq!(maximum_energy(&[-2, -3, -1], 2), -1);
+        assert_eq!(
+            max_score(&[&[9, 5, 7, 3], &[8, 9, 6, 1], &[6, 7, 14, 3], &[2, 5, 3, 1]]),
+            9
+        );
+        assert_eq!(max_score(&[&[4, 3, 2], &[3, 2, 1]]), -1);
     }
 
     #[test]
-    fn test() {
-        assert_eq!(maximum_energy(&[5, -10, 4, 3, 5, -9, 9, -7], 2), 23);
-    }
+    fn test() {}
 }
