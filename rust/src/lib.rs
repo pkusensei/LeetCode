@@ -6,16 +6,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn duplicate_numbers_xor(nums: Vec<i32>) -> i32 {
-    let mut res = 0;
-    let mut mask = 0_i64;
-    for &num in &nums {
-        if mask & (1 << num) > 0 {
-            res ^= num;
+pub fn occurrences_of_element(nums: Vec<i32>, queries: Vec<i32>, x: i32) -> Vec<i32> {
+    let mut arr = vec![];
+    for (i, &num) in nums.iter().enumerate() {
+        if num == x {
+            arr.push(i as i32);
         }
-        mask |= 1 << num
     }
-    res
+    queries
+        .iter()
+        .map(|&v| *arr.get(v as usize - 1).unwrap_or(&-1))
+        .collect()
 }
 
 #[cfg(test)]
