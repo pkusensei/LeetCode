@@ -6,42 +6,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_permutation(nums: &[i32]) -> Vec<i32> {
+pub fn sum_digit_differences(nums: &[i32]) -> i64 {
     let n = nums.len();
-    let mut vals = vec![vec![0; 1 << n]; n];
-    dfs(nums, 0, 1, &mut vec![vec![-1; 1 << n]; n], &mut vals);
-    let mut res = vec![0];
-    let mut mask = 1;
-    let mut prev = 0;
-    while res.len() < n {
-        let curr = vals[prev][mask];
-        res.push(curr);
-        mask |= 1 << curr;
-        prev = curr as usize;
-    }
-    res
-}
-
-fn dfs(nums: &[i32], prev: i32, mask: usize, memo: &mut [Vec<i32>], vals: &mut [Vec<i32>]) -> i32 {
-    let n = nums.len();
-    if n == mask.count_ones() as usize {
-        return (prev - nums[0]).abs();
-    }
-    if memo[prev as usize][mask] > -1 {
-        return memo[prev as usize][mask];
-    }
-    memo[prev as usize][mask] = i32::MAX;
-    for bit in 1..n {
-        if mask & (1 << bit) == 0 {
-            let curr =
-                (prev - nums[bit]).abs() + dfs(nums, bit as i32, mask | (1 << bit), memo, vals);
-            if curr < memo[prev as usize][mask] {
-                memo[prev as usize][mask] = curr;
-                vals[prev as usize][mask] = bit as i32;
-            }
+    let mut res = 0;
+    for pow in 0.. {
+        if nums[0] < 10_i32.pow(pow) {
+            break;
         }
+        let mut freq = [0; 10];
+        for &num in nums.iter() {
+            let d = (num / 10i32.pow(pow)) % 10;
+            freq[d as usize] += 1;
+        }
+        res += freq.into_iter().map(|v| v * (n - v)).sum::<usize>() / 2;
     }
-    memo[prev as usize][mask]
+    res as i64
 }
 
 #[cfg(test)]
@@ -75,10 +54,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(find_permutation(&[1, 0, 2]), [0, 1, 2]);
-        assert_eq!(find_permutation(&[0, 2, 1]), [0, 2, 1]);
+        assert_eq!(sum_digit_differences(&[13, 23, 12]), 4);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(sum_digit_differences(&[50, 28, 48]), 5);
+    }
 }
