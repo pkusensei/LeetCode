@@ -6,16 +6,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_days(days: i32, mut meetings: Vec<Vec<i32>>) -> i32 {
-    meetings.sort_unstable();
-    let mut end = 0;
-    let mut res = 0;
-    for m in meetings {
-        res += (m[0] - end - 1).max(0);
-        end = end.max(m[1]);
+pub fn clear_stars(s: String) -> String {
+    use itertools::Itertools;
+    use std::{cmp::Reverse, collections::BinaryHeap};
+    let mut heap = BinaryHeap::new();
+    for (i, b) in s.bytes().enumerate() {
+        if b == b'*' {
+            heap.pop();
+        } else {
+            heap.push((Reverse(b), i));
+        }
     }
-    res += (days - end).max(0);
-    res
+    heap.into_iter()
+        .sorted_unstable_by_key(|v| v.1)
+        .map(|v| char::from(v.0.0))
+        .collect()
 }
 
 #[cfg(test)]
