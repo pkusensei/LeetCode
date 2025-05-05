@@ -6,21 +6,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn clear_stars(s: String) -> String {
-    use itertools::Itertools;
-    use std::{cmp::Reverse, collections::BinaryHeap};
-    let mut heap = BinaryHeap::new();
-    for (i, b) in s.bytes().enumerate() {
-        if b == b'*' {
-            heap.pop();
-        } else {
-            heap.push((Reverse(b), i));
+pub fn minimum_difference(mut nums: Vec<i32>, k: i32) -> i32 {
+    let n = nums.len();
+    let mut res = i32::MAX;
+    for right in 0..n {
+        res = res.min((nums[right] - k).abs());
+        let Some(mut left) = right.checked_sub(1) else {
+            continue;
+        };
+        // Add bits on right to all left numbers
+        // Once [left]|[right]==[left]
+        // This [right] does not add any more to any accumulated [left]
+        while nums[left] | nums[right] != nums[left] {
+            nums[left] |= nums[right];
+            res = res.min((nums[left] - k).abs());
+            if left == 0 {
+                break;
+            }
+            left -= 1;
         }
     }
-    heap.into_iter()
-        .sorted_unstable_by_key(|v| v.1)
-        .map(|v| char::from(v.0.0))
-        .collect()
+    res
 }
 
 #[cfg(test)]
@@ -53,7 +59,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(minimum_difference(vec![1, 2, 4, 5], 3), 0);
+        assert_eq!(minimum_difference(vec![1, 3, 1, 3], 2), 1);
+        assert_eq!(minimum_difference(vec![1], 10), 9);
+    }
 
     #[test]
     fn test() {}
