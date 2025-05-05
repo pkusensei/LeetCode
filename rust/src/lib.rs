@@ -6,18 +6,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn compressed_string(word: String) -> String {
-    let mut res = String::new();
-    for ch in word.as_bytes().chunk_by(|a, b| a == b) {
-        for _ in 0..ch.len() / 9 {
-            res.push('9');
-            res.push(char::from(ch[0]));
-        }
-        if ch.len() % 9 > 0 {
-            res.push_str(&format!("{}{}", ch.len() % 9, char::from(ch[0])));
+pub fn number_of_pairs(nums1: Vec<i32>, nums2: Vec<i32>, k: i32) -> i64 {
+    use std::collections::HashMap;
+    let mut map = HashMap::new();
+    for &num in &nums1 {
+        for v in 1..=num.isqrt() {
+            if num % v == 0 {
+                *map.entry(v).or_insert(0) += 1;
+                if num / v != v {
+                    *map.entry(num / v).or_insert(0) += 1;
+                }
+            }
         }
     }
-    res
+    nums2
+        .iter()
+        .map(|num| i64::from(*map.get(&(num * k)).unwrap_or(&0)))
+        .sum()
 }
 
 #[cfg(test)]
