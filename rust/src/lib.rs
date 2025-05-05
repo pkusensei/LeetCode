@@ -6,23 +6,56 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn number_of_pairs(nums1: Vec<i32>, nums2: Vec<i32>, k: i32) -> i64 {
-    use std::collections::HashMap;
-    let mut map = HashMap::new();
-    for &num in &nums1 {
-        for v in 1..=num.isqrt() {
-            if num % v == 0 {
-                *map.entry(v).or_insert(0) += 1;
-                if num / v != v {
-                    *map.entry(num / v).or_insert(0) += 1;
-                }
-            }
-        }
+pub fn maximum_sum_subsequence(nums: Vec<i32>, queries: &[[i32; 2]]) -> i32 {
+    const M: i64 = 1_000_000_007;
+    let mut res = 0;
+    let mut tree = SegmentTree::build(&nums);
+    for q in queries {
+        res += tree.insert(0, 0, nums.len(), q[0] as usize, q[1])[3];
     }
-    nums2
-        .iter()
-        .map(|num| i64::from(*map.get(&(num * k)).unwrap_or(&0)))
-        .sum()
+    (res % M) as i32
+}
+
+struct SegmentTree {
+    tree: Vec<[i64; 4]>,
+}
+
+impl SegmentTree {
+    fn build(nums: &[i32]) -> Self {
+        let n = nums.len();
+        let mut s = Self {
+            tree: vec![[0; 4]; 4 * n],
+        };
+        for (i, &num) in nums.iter().enumerate() {
+            s.insert(0, 0, n, i, num);
+        }
+        s
+    }
+
+    fn insert(&mut self, node: usize, left: usize, right: usize, idx: usize, val: i32) -> [i64; 4] {
+        if left == right {
+            self.tree[node][3] = val.into();
+            return self.tree[node];
+        }
+        let mid = left.midpoint(right);
+        self.tree[node] = if idx <= mid {
+            let v = self.insert(2 * node + 1, left, mid, idx, val);
+            Self::merge(v, self.tree[2 * node + 2])
+        } else {
+            let v = self.insert(2 * node + 2, 1 + mid, right, idx, val);
+            Self::merge(self.tree[2 * node + 1], v)
+        };
+        self.tree[node]
+    }
+
+    fn merge(a: [i64; 4], b: [i64; 4]) -> [i64; 4] {
+        [
+            (a[1] + b[0]).max(a[0] + b[2]), // _XX + _X_, _X_ + XX_
+            (a[1] + b[1]).max(a[0] + b[3]), // _XX + _XX, _X_ + XXX
+            (a[3] + b[0]).max(a[2] + b[2]), // XXX + _XX, XX_ + XX_
+            (a[3] + b[1]).max(a[2] + b[3]), // XXX + _XX, XX_ + XXX
+        ]
+    }
 }
 
 #[cfg(test)]
@@ -55,7 +88,13 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(
+            maximum_sum_subsequence(vec![3, 5, 9], &[[1, -2], [0, -3]]),
+            21
+        );
+        assert_eq!(maximum_sum_subsequence(vec![0, -1], &[[0, -5]]), 0);
+    }
 
     #[test]
     fn test() {}
