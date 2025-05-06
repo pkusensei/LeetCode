@@ -6,27 +6,30 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_difference(mut nums: Vec<i32>, k: i32) -> i32 {
-    let n = nums.len();
-    let mut res = i32::MAX;
-    for right in 0..n {
-        res = res.min((nums[right] - k).abs());
-        let Some(mut left) = right.checked_sub(1) else {
-            continue;
-        };
-        // Add bits on right to all left numbers
-        // Once [left]|[right]==[left]
-        // This [right] does not add any more to any accumulated [left]
-        while nums[left] | nums[right] != nums[left] {
-            nums[left] |= nums[right];
-            res = res.min((nums[left] - k).abs());
-            if left == 0 {
-                break;
-            }
-            left -= 1;
+pub fn find_winning_player(skills: Vec<i32>, k: i32) -> i32 {
+    let n = skills.len();
+    if n <= k as usize {
+        return skills
+            .iter()
+            .enumerate()
+            .max_by_key(|&(_i, &v)| v)
+            .map(|(i, _)| i as i32)
+            .unwrap();
+    }
+    let mut curr = 0;
+    let mut count = 0;
+    for (i, &num) in skills.iter().enumerate().skip(1) {
+        if skills[curr] >= num {
+            count += 1;
+        } else {
+            curr = i;
+            count = 1;
+        }
+        if count == k {
+            return curr as i32;
         }
     }
-    res
+    -1
 }
 
 #[cfg(test)]
@@ -59,11 +62,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(minimum_difference(vec![1, 2, 4, 5], 3), 0);
-        assert_eq!(minimum_difference(vec![1, 3, 1, 3], 2), 1);
-        assert_eq!(minimum_difference(vec![1], 10), 9);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
