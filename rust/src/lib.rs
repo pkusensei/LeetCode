@@ -6,17 +6,35 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn value_after_k_seconds(n: i32, k: i32) -> i32 {
-    let n = n as usize;
-    let mut curr = vec![1; n];
-    for _ in 0..k {
-        let prefix = curr.iter().fold(Vec::with_capacity(n), |mut acc, &v| {
-            acc.push((v + acc.last().unwrap_or(&0)) % 1_000_000_007);
-            acc
-        });
-        curr = prefix;
+pub fn max_total_reward(mut reward_values: Vec<i32>) -> i32 {
+    reward_values.sort_unstable();
+    reward_values.dedup();
+    let mut set = std::collections::HashSet::from([0]);
+    for num in reward_values {
+        for score in set.clone() {
+            if score < num {
+                set.insert(num + score);
+            }
+        }
     }
-    curr[n - 1]
+    set.into_iter().max().unwrap()
+    // let sum: i32 = reward_values.iter().sum();
+    // let mut dp = vec![false; 1 + sum as usize];
+    // dp[0] = true;
+    // let mut res = 0;
+    // for &num in reward_values.iter() {
+    //     let num = num as usize;
+    //     let mut curr = dp.clone();
+    //     curr[num] = true;
+    //     for val in num..(2 * num).min(1 + sum as usize) {
+    //         curr[val] |= dp[val - num];
+    //         if curr[val] {
+    //             res = res.max(val);
+    //         }
+    //     }
+    //     dp = curr;
+    // }
+    // res as i32
 }
 
 #[cfg(test)]
@@ -49,8 +67,13 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(max_total_reward(vec![1, 1, 3, 3]), 4);
+        assert_eq!(max_total_reward(vec![1, 6, 4, 3, 2]), 11);
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(max_total_reward(vec![6, 13, 9, 19]), 34);
+    }
 }
