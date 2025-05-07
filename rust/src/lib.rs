@@ -6,20 +6,36 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_complete_day_pairs(hours: Vec<i32>) -> i32 {
-    use std::collections::HashMap;
-    let mut map = HashMap::new();
-    let mut res = 0;
-    for &num in &hours {
-        let rem = num % 24;
-        if rem == 0 {
-            res += map.get(&0).unwrap_or(&0);
-        } else {
-            res += map.get(&(24 - rem)).unwrap_or(&0);
+pub fn maximum_total_damage(mut power: Vec<i32>) -> i64 {
+    power.sort_unstable();
+    let mut dp = [0; 3];
+    dp[0] = i64::from(power[0]);
+    for (idx, &num) in power.iter().enumerate().skip(1) {
+        let mut curr = [0; 3];
+        match num - power[idx - 1] {
+            0 => {
+                curr = dp;
+            }
+            1 => {
+                // 1 2 3 +4
+                curr[0] = dp[2];
+                curr[1] = dp[0];
+                curr[2] = dp[1].max(dp[2]);
+            }
+            2 => {
+                // 1 2 3 +5
+                curr[1..].fill(dp.into_iter().max().unwrap());
+                curr[0] = dp[1].max(dp[2]);
+            }
+            _ => {
+                // 1 2 3 +6
+                curr.fill(dp.into_iter().max().unwrap());
+            }
         }
-        *map.entry(num % 24).or_insert(0) += 1;
+        curr[0] += i64::from(num);
+        dp = curr;
     }
-    res
+    dp.into_iter().max().unwrap()
 }
 
 #[cfg(test)]
@@ -52,8 +68,13 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(maximum_total_damage(vec![1, 1, 3, 4]), 6);
+        assert_eq!(maximum_total_damage(vec![7, 1, 6, 6]), 13);
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(maximum_total_damage(vec![7, 1, 6, 3]), 10);
+    }
 }
