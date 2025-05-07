@@ -9,32 +9,30 @@ use helper::*;
 pub fn max_total_reward(mut reward_values: Vec<i32>) -> i32 {
     reward_values.sort_unstable();
     reward_values.dedup();
-    let mut set = std::collections::HashSet::from([0]);
-    for num in reward_values {
-        for score in set.clone() {
-            if score < num {
-                set.insert(num + score);
+    // let mut set = std::collections::HashSet::from([0]);
+    // for num in reward_values {
+    //     for score in set.clone() {
+    //         if score < num {
+    //             set.insert(num + score);
+    //         }
+    //     }
+    // }
+    // set.into_iter().max().unwrap()
+    let n = reward_values.len();
+    let max = reward_values[n - 1];
+    let mut dp = vec![0; max as usize];
+    for (idx, &val) in reward_values.iter().enumerate() {
+        let temp = val as usize; // With this value
+        if idx.checked_sub(1).is_none_or(|v| v != temp) {
+            // Find all previous processed values and their subset sums
+            let limit = temp.min(max as usize - temp);
+            for left in 0..limit {
+                let prev = dp[left] as usize;
+                dp[temp + prev] = (temp + prev) as i32;
             }
         }
     }
-    set.into_iter().max().unwrap()
-    // let sum: i32 = reward_values.iter().sum();
-    // let mut dp = vec![false; 1 + sum as usize];
-    // dp[0] = true;
-    // let mut res = 0;
-    // for &num in reward_values.iter() {
-    //     let num = num as usize;
-    //     let mut curr = dp.clone();
-    //     curr[num] = true;
-    //     for val in num..(2 * num).min(1 + sum as usize) {
-    //         curr[val] |= dp[val - num];
-    //         if curr[val] {
-    //             res = res.max(val);
-    //         }
-    //     }
-    //     dp = curr;
-    // }
-    // res as i32
+    max + dp.iter().max().unwrap()
 }
 
 #[cfg(test)]
