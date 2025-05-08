@@ -6,20 +6,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_area(grid: Vec<Vec<i32>>) -> i32 {
-    let [mut min_r, mut min_c] = [usize::MAX; 2];
-    let [mut max_r, mut max_c] = [0; 2];
-    for (r, row) in grid.iter().enumerate() {
-        for (c, &v) in row.iter().enumerate() {
-            if v == 1 {
-                min_r = min_r.min(r);
-                min_c = min_c.min(c);
-                max_r = max_r.max(r);
-                max_c = max_c.max(c);
-            }
-        }
+pub fn maximum_total_cost(nums: &[i32]) -> i64 {
+    if nums.len() < 2 {
+        return nums[0].into();
     }
-    ((max_r - min_r + 1) * (max_c - min_c + 1)) as i32
+    let [mut keep, mut flip] = [nums[0]; 2].map(i64::from);
+    keep += i64::from(nums[1]);
+    flip -= i64::from(nums[1]);
+    for &num in nums[2..].iter() {
+        let nkeep = keep.max(flip) + i64::from(num); // can always start new subarr
+        let nflip = keep - i64::from(num); // but can only flip following +1
+        [keep, flip] = [nkeep, nflip];
+    }
+    keep.max(flip)
 }
 
 #[cfg(test)]
@@ -52,7 +51,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(maximum_total_cost(&[1, -1, 1, -1]), 4);
+        assert_eq!(maximum_total_cost(&[1, -2, 3, 4]), 10);
+        assert_eq!(maximum_total_cost(&[0]), 0);
+    }
 
     #[test]
     fn test() {}
