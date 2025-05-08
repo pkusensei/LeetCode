@@ -13,21 +13,21 @@ public class UnitTest
     public void TestMethod1()
     {
         int[][] m = [[0, 4], [4, 4]];
-        Assert.AreEqual(6, sol.MinTimeToReach(m));
+        Assert.AreEqual(7, sol.MinTimeToReach(m));
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        int[][] m = [[0, 0, 0], [0, 0, 0]];
-        Assert.AreEqual(3, sol.MinTimeToReach(m));
+        int[][] m = [[0, 0, 0, 0], [0, 0, 0, 0]];
+        Assert.AreEqual(6, sol.MinTimeToReach(m));
     }
 
     [TestMethod]
     public void TestMethod3()
     {
         int[][] m = [[0, 1], [1, 2]];
-        Assert.AreEqual(3, sol.MinTimeToReach(m));
+        Assert.AreEqual(4, sol.MinTimeToReach(m));
     }
 
     [TestMethod]

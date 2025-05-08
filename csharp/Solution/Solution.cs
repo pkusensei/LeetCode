@@ -20,11 +20,11 @@ public class Solution
                 dists[r, c] = int.MaxValue;
             }
         }
-        PriorityQueue<(int, int), int> pq = new();
-        pq.Enqueue((0, 0), 0);
+        PriorityQueue<(int, int, int), int> pq = new();
+        pq.Enqueue((0, 0, 1), 0);
         while (pq.TryDequeue(out var item, out var dist))
         {
-            (var r, var c) = item;
+            (var r, var c, var cost) = item;
             if (r == rows - 1 && c == cols - 1) { return dist; }
             if (dist > dists[r, c]) { continue; }
             foreach (var (dr, dc) in new[] { (0, -1), (0, 1), (-1, 0), (1, 0) })
@@ -33,11 +33,11 @@ public class Solution
                 int nc = c + dc;
                 if (0 <= nr && nr < rows && 0 <= nc && nc < cols)
                 {
-                    int next_d = 1 + Math.Max(dist, moveTime[nr][nc]);
+                    int next_d = cost + Math.Max(dist, moveTime[nr][nc]);
                     if (next_d < dists[nr, nc])
                     {
                         dists[nr, nc] = next_d;
-                        pq.Enqueue((nr, nc), next_d);
+                        pq.Enqueue((nr, nc, 3 - cost), next_d);
                     }
                 }
             }
