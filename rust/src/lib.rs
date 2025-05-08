@@ -6,15 +6,13 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_length(nums: Vec<i32>, k: i32) -> i32 {
+pub fn number_of_alternating_groups(colors: Vec<i32>) -> i32 {
+    let n = colors.len();
     let mut res = 0;
-    for val in 0..k {
-        let mut dp = vec![0; k as usize];
-        for &num in &nums {
-            let prev = (k + val - num % k) % k;
-            dp[(num % k) as usize] = 1 + dp[prev as usize];
-            res = res.max(dp[(num % k) as usize]);
-        }
+    for i in 0..n {
+        let left = i.checked_sub(1).unwrap_or(n - 1);
+        let right = (1 + i) % n;
+        res += i32::from(colors[left] != colors[i] && colors[i] != colors[right]);
     }
     res
 }
@@ -50,7 +48,7 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(maximum_length(vec![1, 2, 3, 4, 5], 2), 5);
+        assert_eq!(number_of_alternating_groups(vec![0, 1, 0, 0, 1]), 3);
     }
 
     #[test]
