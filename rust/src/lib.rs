@@ -6,22 +6,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_length(nums: Vec<i32>) -> i32 {
-    let [mut even, mut odd, mut even_odd, mut odd_even] = [0; 4];
-    for &num in &nums {
-        let mut new_even_odd = even_odd;
-        let mut new_odd_even = odd_even;
-        if num & 1 == 0 {
-            even += 1;
-            new_odd_even = even_odd + 1;
-        } else {
-            odd += 1;
-            new_even_odd = odd_even + 1;
+pub fn maximum_length(nums: Vec<i32>, k: i32) -> i32 {
+    let mut res = 0;
+    for val in 0..k {
+        let mut dp = vec![0; k as usize];
+        for &num in &nums {
+            let prev = (k + val - num % k) % k;
+            dp[(num % k) as usize] = 1 + dp[prev as usize];
+            res = res.max(dp[(num % k) as usize]);
         }
-        even_odd = new_even_odd;
-        odd_even = new_odd_even;
     }
-    even.max(odd).max(even_odd).max(odd_even)
+    res
 }
 
 #[cfg(test)]
@@ -54,7 +49,9 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(maximum_length(vec![1, 2, 3, 4, 5], 2), 5);
+    }
 
     #[test]
     fn test() {}
