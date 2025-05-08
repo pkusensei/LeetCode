@@ -6,24 +6,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_height_of_triangle(red: i32, blue: i32) -> i32 {
-    solve(red, blue).max(solve(blue, red))
-}
-
-fn solve(mut num1: i32, mut num2: i32) -> i32 {
-    let mut res = 0;
-    for i in 1.. {
-        if i & 1 == 1 {
-            num1 -= i;
+pub fn maximum_length(nums: Vec<i32>) -> i32 {
+    let [mut even, mut odd, mut even_odd, mut odd_even] = [0; 4];
+    for &num in &nums {
+        let mut new_even_odd = even_odd;
+        let mut new_odd_even = odd_even;
+        if num & 1 == 0 {
+            even += 1;
+            new_odd_even = even_odd + 1;
         } else {
-            num2 -= i;
+            odd += 1;
+            new_even_odd = odd_even + 1;
         }
-        if num1 < 0 || num2 < 0 {
-            break;
-        }
-        res += 1;
+        even_odd = new_even_odd;
+        odd_even = new_odd_even;
     }
-    res
+    even.max(odd).max(even_odd).max(odd_even)
 }
 
 #[cfg(test)]
