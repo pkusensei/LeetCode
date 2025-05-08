@@ -12,22 +12,22 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
-        int[][] m = [[0, 4], [4, 4]];
-        Assert.AreEqual(7, sol.MinTimeToReach(m));
+        int[][] a = [[0, 1], [0, 2], [0, 3]];
+        int[][] b = [[0, 1]];
+        Assert.AreEqual(3, sol.MinimumDiameterAfterMerge(a, b));
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        int[][] m = [[0, 0, 0, 0], [0, 0, 0, 0]];
-        Assert.AreEqual(6, sol.MinTimeToReach(m));
+        int[][] a = [[0, 1], [0, 2], [0, 3], [2, 4], [2, 5], [3, 6], [2, 7]];
+        int[][] b = [[0, 1], [0, 2], [0, 3], [2, 4], [2, 5], [3, 6], [2, 7]];
+        Assert.AreEqual(5, sol.MinimumDiameterAfterMerge(a, b));
     }
 
     [TestMethod]
     public void TestMethod3()
     {
-        int[][] m = [[0, 1], [1, 2]];
-        Assert.AreEqual(4, sol.MinTimeToReach(m));
     }
 
     [TestMethod]
