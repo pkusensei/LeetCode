@@ -6,19 +6,13 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_subarrays(nums: Vec<i32>, k: i32) -> i64 {
-    use std::collections::HashMap;
-    let mut map = HashMap::new();
-    let mut res = 0;
-    for &num in &nums {
-        let mut curr = HashMap::new();
-        *curr.entry(num).or_insert(0) += 1;
-        for (val, c) in map {
-            let and = val & num;
-            *curr.entry(and).or_insert(0) += c;
-        }
-        res += curr.get(&k).unwrap_or(&0);
-        map = curr;
+pub fn get_encrypted_string(s: String, k: i32) -> String {
+    let s = s.as_bytes();
+    let n = s.len();
+    let k = k as usize;
+    let mut res = String::with_capacity(n);
+    for i in 0..n {
+        res.push(char::from(s[(i + k) % n]));
     }
     res
 }
@@ -53,14 +47,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(count_subarrays(vec![1, 1, 1], 1), 6);
-        assert_eq!(count_subarrays(vec![1, 1, 2], 1), 3);
-        assert_eq!(count_subarrays(vec![1, 2, 3], 2), 2);
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(count_subarrays(vec![85, 14, 26, 17, 86, 94], 14), 1);
-    }
+    fn test() {}
 }
