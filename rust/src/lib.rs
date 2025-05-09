@@ -6,17 +6,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_points(mut enemy_energies: Vec<i32>, current_energy: i32) -> i64 {
-    enemy_energies.sort_unstable();
-    if current_energy < enemy_energies[0] {
-        return 0;
+pub fn count_subarrays(nums: Vec<i32>, k: i32) -> i64 {
+    use std::collections::HashMap;
+    let mut map = HashMap::new();
+    let mut res = 0;
+    for &num in &nums {
+        let mut curr = HashMap::new();
+        *curr.entry(num).or_insert(0) += 1;
+        for (val, c) in map {
+            let and = val & num;
+            *curr.entry(and).or_insert(0) += c;
+        }
+        res += curr.get(&k).unwrap_or(&0);
+        map = curr;
     }
-    let sum = enemy_energies[1..]
-        .iter()
-        .map(|v| i64::from(*v))
-        .sum::<i64>()
-        + i64::from(current_energy);
-    sum / i64::from(enemy_energies[0])
+    res
 }
 
 #[cfg(test)]
@@ -49,8 +53,14 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(count_subarrays(vec![1, 1, 1], 1), 6);
+        assert_eq!(count_subarrays(vec![1, 1, 2], 1), 3);
+        assert_eq!(count_subarrays(vec![1, 2, 3], 2), 2);
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(count_subarrays(vec![85, 14, 26, 17, 86, 94], 14), 1);
+    }
 }
