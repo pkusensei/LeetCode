@@ -6,15 +6,25 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn get_encrypted_string(s: String, k: i32) -> String {
-    let s = s.as_bytes();
-    let n = s.len();
-    let k = k as usize;
-    let mut res = String::with_capacity(n);
-    for i in 0..n {
-        res.push(char::from(s[(i + k) % n]));
-    }
+pub fn valid_strings(n: i32) -> Vec<String> {
+    let mut res = vec![];
+    backtrack(n, &mut Vec::with_capacity(n as usize), &mut res);
     res
+}
+
+fn backtrack(n: i32, curr: &mut Vec<u8>, res: &mut Vec<String>) {
+    if n == 0 {
+        res.push(curr.iter().map(|&b| char::from(b)).collect());
+        return;
+    }
+    curr.push(b'1');
+    backtrack(n - 1, curr, res);
+    curr.pop();
+    if curr.last().is_none_or(|&v| v == b'1') {
+        curr.push(b'0');
+        backtrack(n - 1, curr, res);
+        curr.pop();
+    }
 }
 
 #[cfg(test)]
