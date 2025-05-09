@@ -100,6 +100,19 @@ where
     if a == false.into() { b } else { gcd(b % a, a) }
 }
 
+pub fn fact_inv(n: usize, m: i64) -> (Vec<i64>, Vec<i64>) {
+    let mut fact = vec![1];
+    for i in 1..=n {
+        fact.push(fact[i - 1] * i as i64 % m);
+    }
+    let mut invf = vec![0; 1 + n];
+    invf[n] = mod_pow(fact[n], m - 2, m);
+    for i in (0..n).rev() {
+        invf[i] = invf[1 + i] * (1 + i) as i64 % m;
+    }
+    (fact, invf)
+}
+
 pub const fn mod_pow(mut base: i64, mut exp: i64, modu: i64) -> i64 {
     if exp == 1 {
         return 0;
