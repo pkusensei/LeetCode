@@ -6,25 +6,33 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn valid_strings(n: i32) -> Vec<String> {
-    let mut res = vec![];
-    backtrack(n, &mut Vec::with_capacity(n as usize), &mut res);
+pub fn number_of_submatrices(grid: Vec<Vec<char>>) -> i32 {
+    let mut prev: Vec<[i32; 2]> = vec![];
+    let mut res = 0;
+    for row in grid.iter() {
+        let mut curr = vec![];
+        for (c, &v) in row.iter().enumerate() {
+            let mut temp = *curr.last().unwrap_or(&[0, 0]);
+            if v == 'X' {
+                temp[0] += 1;
+            }
+            if v == 'Y' {
+                temp[1] += 1;
+            }
+            if let Some(up) = prev.get(c) {
+                temp[0] += up[0];
+                temp[1] += up[1];
+                if c > 0 {
+                    temp[0] -= prev[c - 1][0];
+                    temp[1] -= prev[c - 1][1]
+                }
+            }
+            res += i32::from(temp[0] > 0 && temp[0] == temp[1]);
+            curr.push(temp);
+        }
+        prev = curr;
+    }
     res
-}
-
-fn backtrack(n: i32, curr: &mut Vec<u8>, res: &mut Vec<String>) {
-    if n == 0 {
-        res.push(curr.iter().map(|&b| char::from(b)).collect());
-        return;
-    }
-    curr.push(b'1');
-    backtrack(n - 1, curr, res);
-    curr.pop();
-    if curr.last().is_none_or(|&v| v == b'1') {
-        curr.push(b'0');
-        backtrack(n - 1, curr, res);
-        curr.pop();
-    }
 }
 
 #[cfg(test)]
@@ -57,7 +65,12 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(
+            number_of_submatrices(vec![vec!['X', 'Y', '.'], vec!['Y', '.', '.']]),
+            3
+        );
+    }
 
     #[test]
     fn test() {}
