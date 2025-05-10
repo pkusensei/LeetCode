@@ -5,76 +5,36 @@ mod trie;
 
 #[allow(unused_imports)]
 use helper::*;
-use itertools::Itertools;
 
-pub fn minimum_cost(m: i32, n: i32, horizontal_cut: &[i32], vertical_cut: &[i32]) -> i32 {
-    let [hors, vers] = [&horizontal_cut, &vertical_cut].map(|v| {
-        v.iter()
-            .copied()
-            .enumerate()
-            .sorted_unstable_by_key(|&(_i, v)| v)
-            .map(|(i, v)| (1 + i, v))
-            .collect_vec()
-    });
-    let ymax = m as usize;
-    let xmax = n as usize;
-    let mut memo = vec![vec![vec![vec![-1; 1 + xmax]; 1 + xmax]; 1 + ymax]; 1 + ymax];
-    dfs([0, ymax], [0, xmax], hors, vers, &mut memo)
-}
-
-fn dfs(
-    ys: [usize; 2],
-    xs: [usize; 2],
-    hors: Vec<(usize, i32)>,
-    vers: Vec<(usize, i32)>,
-    memo: &mut [Vec<Vec<Vec<i32>>>],
-) -> i32 {
-    if memo[ys[0]][ys[1]][xs[0]][xs[1]] > -1 {
-        return memo[ys[0]][ys[1]][xs[0]][xs[1]];
-    }
-    let res = if ys[1] - ys[0] == 1 {
-        if xs[1] - xs[0] == 1 {
-            return 0;
+pub fn minimum_cost(
+    _m: i32,
+    _n: i32,
+    mut horizontal_cut: Vec<i32>,
+    mut vertical_cut: Vec<i32>,
+) -> i64 {
+    horizontal_cut.sort_unstable();
+    vertical_cut.sort_unstable();
+    let mut h_count = 1;
+    let mut v_count = 1;
+    let mut res = 0;
+    while let Some((&hor, &ver)) = horizontal_cut.last().zip(vertical_cut.last()) {
+        if hor > ver {
+            horizontal_cut.pop();
+            res += i64::from(hor * v_count);
+            h_count += 1;
+        } else {
+            vertical_cut.pop();
+            res += i64::from(ver * h_count);
+            v_count += 1;
         }
-        let (pos, cost, v1, v2) = cut(xs, vers);
-        cost + dfs(ys, [xs[0], pos], hors.clone(), v1, memo) + dfs(ys, [pos, xs[1]], hors, v2, memo)
-    } else if xs[1] - xs[0] == 1 {
-        let (pos, cost, v1, v2) = cut(ys, hors);
-        cost + dfs([ys[0], pos], xs, v1, vers.clone(), memo) + dfs([pos, ys[1]], xs, v2, vers, memo)
-    } else {
-        let (pos1, cost1, v1, v2) = cut(xs, vers.clone());
-        let curr = cost1
-            + dfs(ys, [xs[0], pos1], hors.clone(), v1, memo)
-            + dfs(ys, [pos1, xs[1]], hors.clone(), v2, memo);
-        let (pos2, cost2, v11, v22) = cut(ys, hors);
-        curr.min(
-            cost2
-                + dfs([ys[0], pos2], xs, v11, vers.clone(), memo)
-                + dfs([pos2, ys[1]], xs, v22, vers, memo),
-        )
-    };
-    memo[ys[0]][ys[1]][xs[0]][xs[1]] = res;
+    }
+    while let Some(h) = horizontal_cut.pop() {
+        res += i64::from(h * v_count);
+    }
+    while let Some(v) = vertical_cut.pop() {
+        res += i64::from(v * h_count);
+    }
     res
-}
-
-fn cut(
-    [c1, c2]: [usize; 2],
-    mut arr: Vec<(usize, i32)>,
-) -> (usize, i32, Vec<(usize, i32)>, Vec<(usize, i32)>) {
-    let Some((pos, cost)) = arr.pop() else {
-        unreachable!()
-    };
-    let v1 = arr
-        .iter()
-        .copied()
-        .filter(|(c, _)| (c1..pos).contains(c))
-        .collect_vec();
-    let v2 = arr
-        .iter()
-        .copied()
-        .filter(|(c, _)| (pos..c2).contains(c))
-        .collect_vec();
-    (pos, cost, v1, v2)
 }
 
 #[cfg(test)]
@@ -108,8 +68,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(minimum_cost(3, 2, &[1, 3], &[5]), 13);
-        assert_eq!(minimum_cost(2, 2, &[7], &[4]), 15);
+        assert_eq!(minimum_cost(3, 2, vec![1, 3], vec![5]), 13);
+        assert_eq!(minimum_cost(2, 2, vec![7], vec![4]), 15);
     }
 
     #[test]
