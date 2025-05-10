@@ -7,17 +7,29 @@ namespace Solution;
 
 public class Solution
 {
-    public int NumberOfAlternatingGroups(int[] colors, int k)
+    public long MinSum(int[] nums1, int[] nums2)
     {
-        int curr = 1;
-        int res = 0;
-        int n = colors.Length;
-        for (int i = 1; i < n + k - 1; i++)
+        (var sum1, var zero1) = Count(nums1);
+        (var sum2, var zero2) = Count(nums2);
+        if (zero1 < zero2)
         {
-            if (colors[i % n] != colors[(i - 1) % n]) { curr += 1; }
-            else { curr = 1; }
-            res += curr >= k ? 1 : 0;
+            (sum1, sum2) = (sum2, sum1);
+            (zero1, zero2) = (zero2, zero1);
         }
-        return res;
+        if (zero1 == 0) { return sum1 == sum2 ? sum1 : -1; }
+        else if (zero2 == 0) { return sum1 + zero1 <= sum2 ? sum2 : -1; }
+        else { return Math.Max(sum1 + zero1, sum2 + zero2); }
+
+        static (long sum, int zeros) Count(int[] nums)
+        {
+            long sum = 0;
+            int zeros = 0;
+            foreach (var item in nums)
+            {
+                sum += item;
+                if (item == 0) { zeros += 1; }
+            }
+            return (sum, zeros);
+        }
     }
 }
