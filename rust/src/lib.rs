@@ -6,18 +6,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_changes(mut n: i32, mut k: i32) -> i32 {
-        let mut res = 0;
-        while n > 0 || k > 0 {
-            match (n & 1, k & 1) {
-                (1, 0) => res += 1,
-                (0, 1) => return -1,
-                _ => (),
+pub fn max_operations(s: String) -> i32 {
+    let mut res = 0;
+    let mut one = 0;
+    let mut fresh = false;
+    for b in s.bytes() {
+        if b == b'1' {
+            one += 1;
+            fresh = true;
+        } else {
+            if fresh {
+                res += one;
             }
-            n >>= 1;
-            k >>= 1;
+            fresh = false
         }
-        res
+    }
+    res
 }
 
 #[cfg(test)]
