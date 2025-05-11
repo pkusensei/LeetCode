@@ -6,41 +6,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_score(grid: Vec<Vec<i32>>) -> i64 {
-    let n = grid.len();
-    if n == 1 {
-        return 0;
-    }
-    let mut prev_pick = vec![0; 1 + n]; // paint prev col
-    let mut prev_skip = vec![0; 1 + n]; // keep it white
-    for col in 1..n {
-        let mut curr_pick = vec![0; 1 + n];
-        let mut curr_skip = vec![0; 1 + n];
-        for row in 0..=n {
-            let mut prev_white = 0;
-            let mut curr_black = 0;
-            for painted in 0..row {
-                curr_black += i64::from(grid[painted][col]);
+pub fn min_changes(mut n: i32, mut k: i32) -> i32 {
+        let mut res = 0;
+        while n > 0 || k > 0 {
+            match (n & 1, k & 1) {
+                (1, 0) => res += 1,
+                (0, 1) => return -1,
+                _ => (),
             }
-            for black in 0..=n {
-                if (1..=row).contains(&black) {
-                    curr_black -= i64::from(grid[black - 1][col]);
-                }
-                if black > row {
-                    prev_white += i64::from(grid[black - 1][col - 1]);
-                }
-                curr_pick[black] = curr_pick[black]
-                    .max(curr_black + prev_pick[row])
-                    .max(curr_black + prev_white + prev_skip[row]);
-                curr_skip[black] = curr_skip[black]
-                    .max(prev_white + prev_skip[row])
-                    .max(prev_pick[row]);
-            }
+            n >>= 1;
+            k >>= 1;
         }
-        prev_pick = curr_pick;
-        prev_skip = curr_skip;
-    }
-    prev_pick.into_iter().max().unwrap_or(0)
+        res
 }
 
 #[cfg(test)]
@@ -73,28 +50,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(
-            maximum_score(vec![
-                vec![0, 0, 0, 0, 0],
-                vec![0, 0, 3, 0, 0],
-                vec![0, 1, 0, 0, 0],
-                vec![5, 0, 0, 3, 0],
-                vec![0, 0, 0, 0, 2]
-            ]),
-            11
-        );
-        assert_eq!(
-            maximum_score(vec![
-                vec![10, 9, 0, 0, 15],
-                vec![7, 1, 0, 8, 0],
-                vec![5, 20, 0, 11, 0],
-                vec![0, 0, 0, 1, 2],
-                vec![8, 12, 1, 10, 3]
-            ]),
-            94
-        );
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
