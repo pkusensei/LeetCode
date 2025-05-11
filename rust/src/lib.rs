@@ -6,47 +6,41 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_changes(nums: Vec<i32>, k: i32) -> i32 {
-    let n = nums.len();
-    let mut freq = vec![0; 1 + k as usize];
-    for left in 0..n / 2 {
-        let right = n - left - 1;
-        let v = nums[left].abs_diff(nums[right]);
-        freq[v as usize] += 1;
+pub fn maximum_score(grid: Vec<Vec<i32>>) -> i64 {
+    let n = grid.len();
+    if n == 1 {
+        return 0;
     }
-    let [mut maxf1, mut maxf2] = [0, 0];
-    let [mut x1, mut x2] = [0, 0];
-    for (x, &f) in freq.iter().enumerate() {
-        if f > maxf1 {
-            (maxf2, x2) = (maxf1, x1);
-            (maxf1, x1) = (f, x);
-        } else if f > maxf2 {
-            (maxf2, x2) = (f, x);
-        }
-    }
-    solve(&nums, k, x1 as i32).min(solve(&nums, k, x2 as i32))
-}
-
-fn solve(nums: &[i32], k: i32, x: i32) -> i32 {
-    let n = nums.len();
-    let mut res = 0;
-    for left in 0..n / 2 {
-        let right = n - left - 1;
-        let a = nums[left].min(nums[right]);
-        let b = nums[left].max(nums[right]);
-        match (b - a).cmp(&x) {
-            std::cmp::Ordering::Less => {
-                if (0..=k).contains(&(a + x)) || (0..=k).contains(&(b - x)) {
-                    res += 1;
-                } else {
-                    res += 2;
-                }
+    let mut prev_pick = vec![0; 1 + n]; // paint prev col
+    let mut prev_skip = vec![0; 1 + n]; // keep it white
+    for col in 1..n {
+        let mut curr_pick = vec![0; 1 + n];
+        let mut curr_skip = vec![0; 1 + n];
+        for row in 0..=n {
+            let mut prev_white = 0;
+            let mut curr_black = 0;
+            for painted in 0..row {
+                curr_black += i64::from(grid[painted][col]);
             }
-            std::cmp::Ordering::Equal => (),
-            std::cmp::Ordering::Greater => res += 1,
+            for black in 0..=n {
+                if (1..=row).contains(&black) {
+                    curr_black -= i64::from(grid[black - 1][col]);
+                }
+                if black > row {
+                    prev_white += i64::from(grid[black - 1][col - 1]);
+                }
+                curr_pick[black] = curr_pick[black]
+                    .max(curr_black + prev_pick[row])
+                    .max(curr_black + prev_white + prev_skip[row]);
+                curr_skip[black] = curr_skip[black]
+                    .max(prev_white + prev_skip[row])
+                    .max(prev_pick[row]);
+            }
         }
+        prev_pick = curr_pick;
+        prev_skip = curr_skip;
     }
-    res
+    prev_pick.into_iter().max().unwrap_or(0)
 }
 
 #[cfg(test)]
@@ -80,15 +74,28 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_changes(vec![0, 1, 2, 3, 3, 6, 5, 4], 6), 2);
-        assert_eq!(min_changes(vec![1, 0, 1, 2, 4, 3], 4), 2);
+        assert_eq!(
+            maximum_score(vec![
+                vec![0, 0, 0, 0, 0],
+                vec![0, 0, 3, 0, 0],
+                vec![0, 1, 0, 0, 0],
+                vec![5, 0, 0, 3, 0],
+                vec![0, 0, 0, 0, 2]
+            ]),
+            11
+        );
+        assert_eq!(
+            maximum_score(vec![
+                vec![10, 9, 0, 0, 15],
+                vec![7, 1, 0, 8, 0],
+                vec![5, 20, 0, 11, 0],
+                vec![0, 0, 0, 1, 2],
+                vec![8, 12, 1, 10, 3]
+            ]),
+            94
+        );
     }
 
     #[test]
-    fn test() {
-        assert_eq!(
-            min_changes(vec![3, 1, 7, 7, 8, 7, 0, 5, 8, 0, 6, 7, 0, 2, 6, 6], 8),
-            6
-        );
-    }
+    fn test() {}
 }
