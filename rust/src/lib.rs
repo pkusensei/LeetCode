@@ -6,22 +6,29 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn non_special_count(l: i32, r: i32) -> i32 {
-    let [root1, root2] = [l, r].map(|v| v.isqrt());
-    let mut sieve = vec![true; 1 + root2 as usize];
-    sieve[..2].fill(false);
-    for p in 2..=root2 as usize {
-        if sieve[p] {
-            for val in (p * p..=root2 as usize).step_by(p) {
-                sieve[val] = false;
+pub fn number_of_substrings(s: &str) -> i32 {
+    let (s, n) = (s.as_bytes(), s.len());
+    let mut res = 0;
+    for zeros in 0..=n.isqrt() {
+        let mut curr = [0, 0];
+        let mut left = 0;
+        let mut prev = 0; // first zero in window
+        for (right, &b) in s.iter().enumerate() {
+            curr[usize::from(b - b'0')] += 1;
+            while curr[0] > zeros {
+                curr[usize::from(s[left] - b'0')] -= 1;
+                left += 1;
+            }
+            if curr[0] == zeros && curr[1] >= zeros.pow(2) && curr[1] > 0 {
+                prev = prev.max(left);
+                while prev < right && s[prev] == b'1' {
+                    prev += 1;
+                }
+                res += 1 + (prev - left).min(curr[1] - curr[0].pow(2));
             }
         }
     }
-    let mut special = (root1..=root2).filter(|&v| sieve[v as usize]).count();
-    if root1.pow(2) < l && sieve[root1 as usize] {
-        special = special.saturating_sub(1);
-    }
-    r - l + 1 - special as i32
+    res as i32
 }
 
 #[cfg(test)]
@@ -55,12 +62,10 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(non_special_count(4, 16), 11);
+        assert_eq!(number_of_substrings("00011"), 5);
+        assert_eq!(number_of_substrings("101101"), 16);
     }
 
     #[test]
-    fn test() {
-        assert_eq!(non_special_count(5, 25), 19);
-        assert_eq!(non_special_count(1, 4), 3);
-    }
+    fn test() {}
 }
