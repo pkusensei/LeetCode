@@ -7,29 +7,33 @@ namespace Solution;
 
 public class Solution
 {
-    public long MinSum(int[] nums1, int[] nums2)
+    public int[] FindEvenNumbers(int[] digits)
     {
-        (var sum1, var zero1) = Count(nums1);
-        (var sum2, var zero2) = Count(nums2);
-        if (zero1 < zero2)
+        Span<int> freq = stackalloc int[10];
+        foreach (var d in digits)
         {
-            (sum1, sum2) = (sum2, sum1);
-            (zero1, zero2) = (zero2, zero1);
+            freq[d] += 1;
         }
-        if (zero1 == 0) { return sum1 == sum2 ? sum1 : -1; }
-        else if (zero2 == 0) { return sum1 + zero1 <= sum2 ? sum2 : -1; }
-        else { return Math.Max(sum1 + zero1, sum2 + zero2); }
-
-        static (long sum, int zeros) Count(int[] nums)
+        Span<int> curr = stackalloc int[10];
+        List<int> res = [];
+        for (int num = 100; num < 1000; num += 2)
         {
-            long sum = 0;
-            int zeros = 0;
-            foreach (var item in nums)
+            int val = num;
+            freq.CopyTo(curr);
+            bool valid = true;
+            while (val > 0)
             {
-                sum += item;
-                if (item == 0) { zeros += 1; }
+                int d = val % 10;
+                val /= 10;
+                curr[d] -= 1;
+                if (curr[d] < 0)
+                {
+                    valid = false;
+                    break;
+                }
             }
-            return (sum, zeros);
+            if (valid) { res.Add(num); }
         }
+        return res.ToArray();
     }
 }
