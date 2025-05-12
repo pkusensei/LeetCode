@@ -6,23 +6,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_operations(nums: &[i32], target: &[i32]) -> i64 {
-    let mut res = 0;
-    let mut prev_sign = 0;
-    let mut prev_abs = 0;
-    for delta in nums
-        .iter()
-        .zip(target.iter())
-        .map(|(a, b)| i64::from(a - b))
-    {
-        if prev_sign * delta < 0 {
-            prev_abs = 0; // end greedy streak
+pub fn non_special_count(l: i32, r: i32) -> i32 {
+    let [root1, root2] = [l, r].map(|v| v.isqrt());
+    let mut sieve = vec![true; 1 + root2 as usize];
+    sieve[..2].fill(false);
+    for p in 2..=root2 as usize {
+        if sieve[p] {
+            for val in (p * p..=root2 as usize).step_by(p) {
+                sieve[val] = false;
+            }
         }
-        res += (delta.abs() - prev_abs).max(0);
-        prev_abs = delta.abs();
-        prev_sign = delta.signum();
     }
-    res
+    let mut special = (root1..=root2).filter(|&v| sieve[v as usize]).count();
+    if root1.pow(2) < l && sieve[root1 as usize] {
+        special = special.saturating_sub(1);
+    }
+    r - l + 1 - special as i32
 }
 
 #[cfg(test)]
@@ -56,10 +55,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(minimum_operations(&[3, 5, 1, 2], &[4, 6, 2, 4]), 2);
-        assert_eq!(minimum_operations(&[1, 3, 2], &[2, 1, 4]), 5);
+        assert_eq!(non_special_count(4, 16), 11);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(non_special_count(5, 25), 19);
+        assert_eq!(non_special_count(1, 4), 3);
+    }
 }
