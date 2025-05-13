@@ -3,62 +3,39 @@ mod fenwick_tree;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-struct NeighborSum {
-    grid: Vec<Vec<i32>>,
-    map: HashMap<i32, [i32; 2]>,
-    rows: i32,
-    cols: i32,
-}
-
-impl NeighborSum {
-    fn new(grid: Vec<Vec<i32>>) -> Self {
-        let mut map = HashMap::new();
-        let [mut rows, mut cols] = [0, 0];
-        for (r, row) in grid.iter().enumerate() {
-            for (c, &v) in row.iter().enumerate() {
-                map.insert(v, [r as i32, c as i32]);
-                rows = rows.max(1 + r as i32);
-                cols = cols.max(1 + c as i32);
-            }
+pub fn shortest_distance_after_queries(n: i32, queries: &[[i32; 2]]) -> Vec<i32> {
+    use std::collections::BTreeMap;
+    let mut dist = n - 1;
+    let mut map = BTreeMap::<i32, i32>::new();
+    let mut res = vec![];
+    for q in queries.iter() {
+        let [a, b] = q[..] else {
+            continue;
+        };
+        if map.range(..=a).next_back().is_some_and(|(_k, &v)| b <= v) {
+            // [1..4] in map
+            // [2..3] is covered
+            res.push(dist);
+            continue;
         }
-        Self {
-            grid,
-            map,
-            rows,
-            cols,
+        // [2..3] in map
+        // [1..4] is being added
+        let del: Vec<_> = map
+            .range(a..)
+            .filter_map(|(&k, &v)| if v <= b { Some(k) } else { None })
+            .collect();
+        for k in del {
+            let span = map.remove(&k).map(|v| v - k).unwrap_or(0);
+            dist += span - 1;
         }
+        map.insert(a, b);
+        dist += 1 - (b - a);
+        res.push(dist);
     }
-
-    fn adjacent_sum(&self, value: i32) -> i32 {
-        let [r, c] = self.map[&value];
-        let mut res = 0;
-        for [dr, dc] in [[-1, 0], [1, 0], [0, -1], [0, 1]] {
-            let rr = r + dr;
-            let cc = c + dc;
-            if (0..self.rows).contains(&rr) && (0..self.cols).contains(&cc) {
-                res += self.grid[rr as usize][cc as usize];
-            }
-        }
-        res
-    }
-
-    fn diagonal_sum(&self, value: i32) -> i32 {
-        let [r, c] = self.map[&value];
-        let mut res = 0;
-        for [dr, dc] in [[-1, -1], [1, 1], [1, -1], [-1, 1]] {
-            let rr = r + dr;
-            let cc = c + dc;
-            if (0..self.rows).contains(&rr) && (0..self.cols).contains(&cc) {
-                res += self.grid[rr as usize][cc as usize];
-            }
-        }
-        res
-    }
+    res
 }
 
 #[cfg(test)]
@@ -91,7 +68,16 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(
+            shortest_distance_after_queries(5, &[[2, 4], [0, 2], [0, 4]]),
+            [3, 2, 1]
+        );
+        assert_eq!(
+            shortest_distance_after_queries(4, &[[0, 3], [0, 2]]),
+            [1, 1]
+        );
+    }
 
     #[test]
     fn test() {}
