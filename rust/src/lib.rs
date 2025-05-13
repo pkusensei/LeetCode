@@ -6,20 +6,44 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn length_after_transformations(s: &str, t: i32) -> i32 {
-    const M: i32 = 1_000_000_007;
-    let mut freq = s.bytes().fold([0; 26], |mut acc, b| {
-        acc[usize::from(b - b'a')] += 1;
-        acc
-    });
-    for _ in 0..t {
-        let mut curr = [0; 26];
-        curr[1..].copy_from_slice(&freq[..25]);
-        curr[0] = freq[25];
-        curr[1] = (curr[1] + freq[25]) % M;
-        freq = curr;
+pub fn min_flips(grid: Vec<Vec<i32>>) -> i32 {
+    let [rows, cols] = get_dimensions(&grid);
+    let mut res = 0;
+    for r in 0..rows / 2 {
+        for c in 0..cols / 2 {
+            let curr = grid[r][c]
+                + grid[rows - 1 - r][c]
+                + grid[r][cols - 1 - c]
+                + grid[rows - 1 - r][cols - 1 - c];
+            res += curr.min(4 - curr);
+        }
     }
-    freq.into_iter().fold(0, |acc, v| (acc + v) % M)
+    let mut changes = 0;
+    let mut one_paris = 0;
+    if rows & 1 == 1 {
+        let row = &grid[rows / 2];
+        for (&a, &b) in row.iter().zip(row.iter().rev()).take(cols / 2) {
+            res += a ^ b;
+            changes += a ^ b;
+            one_paris += (a + b) >> 1;
+        }
+    }
+    if cols & 1 == 1 {
+        for r in 0..rows / 2 {
+            let a = grid[r][cols / 2];
+            let b = grid[rows - 1 - r][cols / 2];
+            res += a ^ b;
+            changes += a ^ b;
+            one_paris += (a + b) >> 1;
+        }
+    }
+    if one_paris & 1 == 1 && changes == 0 {
+        res += 2;
+    }
+    if rows & 1 == 1 && cols & 1 == 1 {
+        res += grid[rows / 2][cols / 2]
+    }
+    res
 }
 
 #[cfg(test)]
@@ -52,10 +76,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(length_after_transformations("abcyy", 2), 7);
-        assert_eq!(length_after_transformations("azbk", 1), 5);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
