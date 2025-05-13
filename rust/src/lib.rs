@@ -3,72 +3,62 @@ mod fenwick_tree;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn time_taken(edges: &[[i32; 2]]) -> Vec<i32> {
-    let n = 1 + edges.len();
-    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
-        let [a, b] = [0, 1].map(|i| e[i] as usize);
-        acc[a].push(b);
-        acc[b].push(a);
-        acc
-    });
-    // max and second max to visit substree
-    let mut subtree = vec![[0, 0]; n];
-    mark(&adj, 0, n, &mut subtree);
-    let mut dp = vec![[0, 0]; n];
-    dp[0] = subtree[0];
-    for &next in &adj[0] {
-        dfs(&adj, next, 0, &subtree, &mut dp);
-    }
-    dp.iter().map(|v| v[0]).collect()
+struct NeighborSum {
+    grid: Vec<Vec<i32>>,
+    map: HashMap<i32, [i32; 2]>,
+    rows: i32,
+    cols: i32,
 }
 
-fn dfs(adj: &[Vec<usize>], node: usize, prev: usize, subtree: &[[i32; 2]], dp: &mut [[i32; 2]]) {
-    let [prev_max1, prev_max2] = dp[prev];
-    let [curr_max1, curr_max2] = subtree[node];
-    let prev_time = if curr_max1 + delta(node) == prev_max1 {
-        // If curr contributed to subtree at prev,
-        // curr must be excluded to avoid double counting
-        prev_max2
-    } else {
-        prev_max1
-    };
-    let prev_rerooted = prev_time + delta(prev);
-    if curr_max1 >= prev_rerooted {
-        dp[node][0] = curr_max1;
-        dp[node][1] = curr_max2.max(prev_rerooted);
-    } else {
-        dp[node] = [prev_rerooted, curr_max1];
-    }
-    for &next in &adj[node] {
-        if next != prev {
-            dfs(adj, next, node, subtree, dp);
-        }
-    }
-}
-
-#[inline]
-const fn delta(node: usize) -> i32 {
-    if node & 1 == 1 { 1 } else { 2 }
-}
-
-fn mark(adj: &[Vec<usize>], node: usize, prev: usize, subtree: &mut [[i32; 2]]) -> i32 {
-    let [mut max1, mut max2] = [0, 0];
-    for &next in &adj[node] {
-        if next != prev {
-            let curr = mark(adj, next, node, subtree) + delta(next);
-            if curr >= max1 {
-                max2 = max1;
-                max1 = curr;
-            } else if curr > max2 {
-                max2 = curr;
+impl NeighborSum {
+    fn new(grid: Vec<Vec<i32>>) -> Self {
+        let mut map = HashMap::new();
+        let [mut rows, mut cols] = [0, 0];
+        for (r, row) in grid.iter().enumerate() {
+            for (c, &v) in row.iter().enumerate() {
+                map.insert(v, [r as i32, c as i32]);
+                rows = rows.max(1 + r as i32);
+                cols = cols.max(1 + c as i32);
             }
         }
+        Self {
+            grid,
+            map,
+            rows,
+            cols,
+        }
     }
-    subtree[node] = [max1, max2];
-    max1
+
+    fn adjacent_sum(&self, value: i32) -> i32 {
+        let [r, c] = self.map[&value];
+        let mut res = 0;
+        for [dr, dc] in [[-1, 0], [1, 0], [0, -1], [0, 1]] {
+            let rr = r + dr;
+            let cc = c + dc;
+            if (0..self.rows).contains(&rr) && (0..self.cols).contains(&cc) {
+                res += self.grid[rr as usize][cc as usize];
+            }
+        }
+        res
+    }
+
+    fn diagonal_sum(&self, value: i32) -> i32 {
+        let [r, c] = self.map[&value];
+        let mut res = 0;
+        for [dr, dc] in [[-1, -1], [1, 1], [1, -1], [-1, 1]] {
+            let rr = r + dr;
+            let cc = c + dc;
+            if (0..self.rows).contains(&rr) && (0..self.cols).contains(&cc) {
+                res += self.grid[rr as usize][cc as usize];
+            }
+        }
+        res
+    }
 }
 
 #[cfg(test)]
@@ -101,14 +91,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(time_taken(&[[0, 1], [0, 2]]), [2, 4, 3]);
-        assert_eq!(time_taken(&[[0, 1]]), [1, 2]);
-        assert_eq!(
-            time_taken(&[[2, 4], [0, 1], [2, 3], [0, 2]]),
-            [4, 6, 3, 5, 5]
-        );
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
