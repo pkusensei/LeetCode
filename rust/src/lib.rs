@@ -6,29 +6,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_flips(grid: Vec<Vec<i32>>) -> i32 {
-    let [rows, cols] = get_dimensions(&grid);
-    let mut a = 0;
-    for row in grid.iter() {
-        let mut left = 0;
-        let mut right = cols - 1;
-        while left < right {
-            a += i32::from(row[left] != row[right]);
-            left += 1;
-            right -= 1;
-        }
+pub fn length_after_transformations(s: &str, t: i32) -> i32 {
+    const M: i32 = 1_000_000_007;
+    let mut freq = s.bytes().fold([0; 26], |mut acc, b| {
+        acc[usize::from(b - b'a')] += 1;
+        acc
+    });
+    for _ in 0..t {
+        let mut curr = [0; 26];
+        curr[1..].copy_from_slice(&freq[..25]);
+        curr[0] = freq[25];
+        curr[1] = (curr[1] + freq[25]) % M;
+        freq = curr;
     }
-    let mut b = 0;
-    for c in 0..cols {
-        let mut up = 0;
-        let mut down = rows - 1;
-        while up < down {
-            b += i32::from(grid[up][c] != grid[down][c]);
-            up += 1;
-            down -= 1;
-        }
-    }
-    a.min(b)
+    freq.into_iter().fold(0, |acc, v| (acc + v) % M)
 }
 
 #[cfg(test)]
@@ -61,7 +52,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(length_after_transformations("abcyy", 2), 7);
+        assert_eq!(length_after_transformations("azbk", 1), 5);
+    }
 
     #[test]
     fn test() {}
