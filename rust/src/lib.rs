@@ -6,62 +6,210 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn length_after_transformations(s: &str, t: i32, nums: &[i32]) -> i32 {
-    let freq = s.bytes().fold([0; 26], |mut acc, b| {
-        acc[usize::from(b - b'a')] += 1;
-        acc
-    });
-    let mut mat = Mat::default();
-    for (idx, &num) in nums.iter().enumerate() {
-        for val in 1..=num {
-            mat[(idx + val as usize) % N][idx] += 1; // mat[to][from]
-        }
-    }
-    mat = mat_pow(&mat, t);
-    let mut res = [0; N];
-    for i in 0..N {
-        for j in 0..N {
-            res[i] += mat[i][j] * freq[j] % M;
-            res[i] %= M;
-        }
-    }
-    res.iter().fold(0, |acc, v| (acc + v) % M) as i32
-}
+use std::collections::BTreeSet;
 
-const N: usize = 26;
-const M: i64 = 1_000_000_007;
-type Mat = [[i64; N]; N];
+pub fn number_of_alternating_groups(mut colors: Vec<i32>, queries: Vec<Vec<i32>>) -> Vec<i32> {
+    let n = colors.len();
+    let mut tree = FenwickTree::new(n);
+    let mut spans = BTreeSet::new();
 
-fn mat_mul(a: &Mat, b: &Mat) -> Mat {
-    let mut res = Mat::default();
-    for i in 0..N {
-        for j in 0..N {
-            for k in 0..N {
-                res[i][j] += a[i][k] * b[k][j] % M;
-                res[i][j] %= M;
+    if let Some(start) = (0..n).position(|i| colors[(i + n - 1) % n] == colors[i]) {
+        let mut left = start; // start of any range
+        loop {
+            spans.insert(left); // add the start of the interval
+            // find end of interval
+            let mut right = (left + 1) % n;
+            while colors[right] != colors[(right + n - 1) % n] {
+                right = (right + 1) % n;
             }
+            let len = (right + n - left) % n;
+            tree.update(if len == 0 { n } else { len }, 1);
+            left = right;
+            if left == start {
+                break;
+            }
+        }
+    } else {
+        // a single consecutive interval, this is a special case
+        spans.insert(0);
+        tree.update(n, 1);
+    }
+    let mut res = vec![];
+    for q in queries.iter() {
+        if let [1, size] = q[..] {
+            res.push(query(size as usize, &tree, &spans));
+        } else if let [2, i, c] = q[..] {
+            toggle(&mut tree, &mut spans, &mut colors, i as usize, c);
         }
     }
     res
 }
 
-fn mat_pow(mat: &Mat, power: i32) -> Mat {
-    let mut res = Mat::default();
-    for i in 0..N {
-        res[i][i] = 1; // identity matrix
+fn toggle(
+    tree: &mut FenwickTree,
+    spans: &mut BTreeSet<usize>,
+    colors: &mut [i32],
+    i: usize,
+    c: i32,
+) {
+    if colors[i] == c {
+        return;
     }
-    if power == 0 {
-        return res;
-    }
-    if power == 1 {
-        return *mat;
-    }
-    let half = mat_pow(mat, power >> 1);
-    let squared = mat_mul(&half, &half);
-    if power & 1 == 0 {
-        squared
+    // switch color
+    colors[i] = c;
+    // find the interval [a,b) containing i
+    let n = colors.len();
+    let [a, b] = find_containing_interval(spans, i);
+    let s = (b + n - a) % n;
+    if a == b {
+        // there is only one interval (of size n) -> special case
+        if n & 1 == 1 {
+            // odd cycle
+            if (i + 1) % n == a {
+                // odd cycle, the non-matching end is shifted by -1, the number of intervals does not change
+                spans.clear();
+                spans.insert(i);
+            } else if i == a {
+                // odd cycle, the non-matching end is shifted by +1, the number of intervals does not change
+                spans.clear();
+                spans.insert((i + 1) % n);
+            } else {
+                // insert a singleton, splitting the rest
+                spans.insert(i);
+                spans.insert((i + 1) % n);
+                let left_s = (i + n - a) % n;
+                let right_s = (b + n - (i + 1)) % n;
+                tree.update(n, -1);
+                tree.update(left_s, 1);
+                tree.update(right_s, 1);
+            }
+        } else {
+            // even cycle
+            tree.update(n, -1);
+            tree.update(n - 1, 1);
+            tree.update(1, 1);
+            spans.clear();
+            spans.insert(i);
+            spans.insert((i + 1) % n);
+        }
+    } else if s == 1 {
+        // i is currently a singleton, switching its color connects *both* adjacent intervals
+        // we simply remove both boundaries
+        spans.remove(&a);
+        spans.remove(&b);
+        if spans.is_empty() {
+            // special case, this was the last singleton!!
+            spans.insert(0);
+            tree.update(1, -1);
+            tree.update(n - 1, -1);
+            tree.update(n, 1);
+            return;
+        }
+        let [new_a, new_b] = find_containing_interval(spans, i);
+        let left_s = (i + n - new_a) % n;
+        let right_s = (new_b + n - (i + 1)) % n;
+        let mut new_s = (new_b + n - new_a) % n;
+        if new_s == 0 {
+            // special case: only one interval remaining
+            new_s = n
+        };
+        tree.update(1, -1);
+        tree.update(left_s, -1);
+        tree.update(right_s, -1);
+        tree.update(new_s, 1);
+    } else if i == a {
+        // i is at the left boundary
+        // i switches to the interval to the left
+        let [left_a, left_b] = find_containing_interval(spans, (i + n - 1) % n);
+        let left_s = (left_b + n - left_a) % n;
+        tree.update(s, -1);
+        tree.update(left_s, -1);
+        tree.update(s - 1, 1);
+        tree.update(left_s + 1, 1);
+        spans.remove(&i);
+        spans.insert((i + 1) % n);
+    } else if (i + 1) % n == b {
+        // i is at the right boundary
+        // i switches to the interval to the right
+        let [right_a, right_b] = find_containing_interval(spans, (i + 1) % n);
+        let right_s = (right_b + n - right_a) % n;
+        tree.update(s, -1);
+        tree.update(right_s, -1);
+        tree.update(s - 1, 1);
+        tree.update(right_s + 1, 1);
+        spans.remove(&((i + 1) % n));
+        spans.insert(i);
     } else {
-        mat_mul(&squared, mat)
+        // is in the middle of [a,b)
+        // this will split the interval in two halfs [a,i), [i+1, b) and one singleton [i,i+1)
+        let left_s = (i + n - a) % n;
+        let right_s = (b + n - (i + 1)) % n;
+        tree.update(s, -1);
+        tree.update(1, 1);
+        tree.update(left_s, 1);
+        tree.update(right_s, 1);
+        spans.insert(i);
+        spans.insert((i + 1) % n);
+    }
+}
+
+fn find_containing_interval(spans: &BTreeSet<usize>, i: usize) -> [usize; 2] {
+    let left = *spans
+        .range(..=i)
+        .next_back()
+        .or_else(|| spans.last())
+        .unwrap();
+    let right = *spans
+        .range(i + 1..)
+        .next()
+        .or_else(|| spans.first())
+        .unwrap();
+    [left, right]
+}
+
+fn query(i: usize, tree: &FenwickTree, spans: &BTreeSet<usize>) -> i32 {
+    if tree.n & 1 == 0 && spans.len() <= 1 {
+        return tree.n as i32;
+    }
+    let p1 = tree.prefix(tree.n);
+    let p2 = tree.prefix(i - 1);
+    let y = p1[1] - p2[1];
+    let x = p1[0] - p2[0];
+    y - (i - 1) as i32 * x
+}
+
+struct FenwickTree {
+    tree: Vec<[i32; 2]>,
+    n: usize,
+}
+
+impl FenwickTree {
+    fn new(n: usize) -> FenwickTree {
+        FenwickTree {
+            tree: vec![[0, 0]; n + 1],
+            n,
+        }
+    }
+
+    fn update(&mut self, i: usize, val: i32) {
+        let mut idx = i;
+        while idx < self.tree.len() {
+            self.tree[idx][0] += val;
+            self.tree[idx][1] += val * i as i32;
+            idx += idx & idx.wrapping_neg();
+        }
+    }
+
+    // Return A(0,i]
+    fn prefix(&self, mut idx: usize) -> [i32; 2] {
+        let mut sum0 = 0;
+        let mut sum1 = 0;
+        while idx > 0 {
+            sum0 += self.tree[idx][0];
+            sum1 += self.tree[idx][1];
+            idx -= idx & idx.wrapping_neg();
+        }
+        [sum0, sum1]
     }
 }
 
@@ -97,24 +245,15 @@ mod tests {
     #[test]
     fn basics() {
         assert_eq!(
-            length_after_transformations(
-                "abcyy",
-                2,
-                &[
-                    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2
-                ]
-            ),
-            7
+            number_of_alternating_groups(vec![0, 1, 1, 0, 1], vec![vec![2, 1, 0], vec![1, 4]]),
+            [2]
         );
         assert_eq!(
-            length_after_transformations(
-                "azbk",
-                1,
-                &[
-                    2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2
-                ]
+            number_of_alternating_groups(
+                vec![0, 0, 1, 0, 1, 1],
+                vec![vec![1, 3], vec![2, 3, 0], vec![1, 5]]
             ),
-            8
+            [2, 0]
         );
     }
 
