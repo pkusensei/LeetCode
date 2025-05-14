@@ -5,32 +5,29 @@ mod trie;
 
 #[allow(unused_imports)]
 use helper::*;
-use itertools::Itertools;
 
-pub fn count_good_nodes(edges: Vec<Vec<i32>>) -> i32 {
-    let n = 1 + edges.len();
-    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
-        let [a, b] = [0, 1].map(|i| e[i] as usize);
-        acc[a].push(b);
-        acc[b].push(a);
-        acc
-    });
-    let mut res = 0;
-    dfs(&adj, 0, n, &mut res);
-    res
+pub fn count_of_pairs(nums: Vec<i32>) -> i32 {
+    let n = nums.len();
+    dfs(&nums, 0, 0, i32::MAX, &mut vec![[-1; 51]; n])
 }
 
-fn dfs(adj: &[Vec<usize>], node: usize, prev: usize, res: &mut i32) -> i32 {
-    let mut subs = vec![];
-    for &next in &adj[node] {
-        if next != prev {
-            subs.push(dfs(adj, next, node, res));
+fn dfs(nums: &[i32], idx: usize, prev1: i32, prev2: i32, memo: &mut [[i32; 51]]) -> i32 {
+    if idx >= nums.len() {
+        return 1;
+    }
+    if memo[idx][prev1 as usize] > -1 {
+        return memo[idx][prev1 as usize];
+    }
+    let mut res = 0;
+    for val1 in prev1..=nums[idx] {
+        let val2 = nums[idx] - val1;
+        if val2 <= prev2 {
+            res += dfs(nums, 1 + idx, val1, val2, memo);
+            res %= 1_000_000_007;
         }
     }
-    if subs.iter().all_equal() {
-        *res += 1
-    }
-    1 + subs.iter().sum::<i32>()
+    memo[idx][prev1 as usize] = res;
+    res
 }
 
 #[cfg(test)]
@@ -63,7 +60,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(count_of_pairs(vec![2, 3, 2]), 4);
+        assert_eq!(count_of_pairs(vec![5, 5, 5, 5]), 126);
+    }
 
     #[test]
     fn test() {}
