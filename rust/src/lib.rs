@@ -6,20 +6,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_k_constraint_substrings(s: String, k: i32) -> i32 {
-    let s = s.as_bytes();
-    let mut res = 0;
-    let mut left = 0;
-    let mut count = [0, 0];
-    for (right, &b) in s.iter().enumerate() {
-        count[usize::from(b - b'0')] += 1;
-        while count[0] > k && count[1] > k {
-            count[usize::from(s[left] - b'0')] -= 1;
-            left += 1;
-        }
-        res += right - left + 1;
+pub fn max_energy_boost(energy_drink_a: Vec<i32>, energy_drink_b: Vec<i32>) -> i64 {
+    let n = energy_drink_a.len();
+    let mut dp = vec![[0, 0]; n];
+    dp[0] = [energy_drink_a[0], energy_drink_b[0]].map(i64::from);
+    dp[1][0] = dp[0][0] + i64::from(energy_drink_a[1]);
+    dp[1][1] = dp[0][1] + i64::from(energy_drink_b[1]);
+    for (i, (&a, &b)) in energy_drink_a
+        .iter()
+        .zip(energy_drink_b.iter())
+        .enumerate()
+        .skip(2)
+    {
+        dp[i][0] = dp[i - 1][0].max(dp[i - 2][1]) + i64::from(a);
+        dp[i][1] = dp[i - 1][1].max(dp[i - 2][0]) + i64::from(b);
     }
-    res as i32
+    dp[n - 1][0].max(dp[n - 1][1])
 }
 
 #[cfg(test)]
