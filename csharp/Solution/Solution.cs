@@ -7,33 +7,18 @@ namespace Solution;
 
 public class Solution
 {
-    public int[] FindEvenNumbers(int[] digits)
+    public IList<string> GetLongestSubsequence(string[] words, int[] groups)
     {
-        Span<int> freq = stackalloc int[10];
-        foreach (var d in digits)
+        List<string> res = [];
+        int prev = -1;
+        foreach (var (s, num) in words.Zip(groups))
         {
-            freq[d] += 1;
-        }
-        Span<int> curr = stackalloc int[10];
-        List<int> res = [];
-        for (int num = 100; num < 1000; num += 2)
-        {
-            int val = num;
-            freq.CopyTo(curr);
-            bool valid = true;
-            while (val > 0)
+            if (num != prev)
             {
-                int d = val % 10;
-                val /= 10;
-                curr[d] -= 1;
-                if (curr[d] < 0)
-                {
-                    valid = false;
-                    break;
-                }
+                prev = num;
+                res.Add(s);
             }
-            if (valid) { res.Add(num); }
         }
-        return res.ToArray();
+        return res;
     }
 }
