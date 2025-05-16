@@ -3,52 +3,28 @@ mod fenwick_tree;
 mod helper;
 mod trie;
 
-use std::collections::{HashMap, HashSet};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_pairs(nums: Vec<i32>) -> i32 {
-    let n = nums.iter().map(|v| 1 + v.ilog10()).max().unwrap_or(1);
-    let mut map = HashMap::new();
-    let mut set = HashSet::new();
+pub fn generate_key(num1: i32, num2: i32, num3: i32) -> i32 {
+    let [a, b, c] = [num1, num2, num3].map(f);
     let mut res = 0;
-    for &num in &nums {
-        two_swaps(num, n as _, &mut set);
-        for val in &set {
-            res += map.get(val).unwrap_or(&0);
-        }
-        *map.entry(num).or_insert(0) += 1;
+    for pow in 0..a.len().min(b.len()).min(c.len()) {
+        let ad = *a.get(pow).unwrap_or(&9);
+        let bd = *b.get(pow).unwrap_or(&9);
+        let cd = *c.get(pow).unwrap_or(&9);
+        res += ad.min(bd).min(cd) * 10i32.pow(pow as _);
     }
     res
 }
 
-fn two_swaps(num: i32, n: usize, set: &mut HashSet<i32>) {
-    set.clear();
-    set.insert(num);
-    one_swap(num, n, set);
-    for val in set.clone() {
-        one_swap(val, n, set);
-    }
-}
-
-fn one_swap(mut num: i32, n: usize, set: &mut HashSet<i32>) {
-    let mut ds = Vec::with_capacity(n);
+fn f(mut num: i32) -> Vec<i32> {
+    let mut ds = Vec::with_capacity(4);
     while num > 0 {
         ds.push(num % 10);
         num /= 10;
     }
-    while ds.len() < n {
-        ds.push(0);
-    }
-    ds.reverse();
-    for a in 0..n {
-        for b in 1 + a..n {
-            ds.swap(a, b);
-            set.insert(ds.iter().fold(0, |acc, v| acc * 10 + v));
-            ds.swap(a, b);
-        }
-    }
+    ds
 }
 
 #[cfg(test)]
