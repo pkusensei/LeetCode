@@ -10,8 +10,10 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1(int[] digits, string exp)
+    [DataRow(new[] { "bab", "dab", "cab" }, new[] { 1, 2, 2 }, new[] { "bab", "dab" })]
+    public void TestMethod1(string[] w, int[] g, string[] e)
     {
+        Assert.AreEqual(e.Print(), sol.GetWordsInLongestSubsequence(w, g).Print());
     }
 
     [TestMethod]
