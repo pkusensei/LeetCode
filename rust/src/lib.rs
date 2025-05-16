@@ -3,50 +3,51 @@ mod fenwick_tree;
 mod helper;
 mod trie;
 
+use std::collections::{HashMap, HashSet};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn get_final_state(nums: Vec<i32>, mut k: i32, multiplier: i32) -> Vec<i32> {
-    use std::{cmp::Reverse, collections::BinaryHeap};
-    const M: i64 = 1_000_000_007;
-    if multiplier == 1 {
-        return nums;
-    }
-    let n = nums.len();
-    let mult = i64::from(multiplier);
-    let mut heap = BinaryHeap::with_capacity(n);
-    let mut max = i64::MIN;
-    for (i, &v) in nums.iter().enumerate() {
-        let v = i64::from(v);
-        max = max.max(v);
-        heap.push(Reverse((v, i)));
-    }
-    while k > 0 && heap.peek().is_some_and(|&Reverse((v, _))| v * mult <= max) {
-        let Reverse((v, i)) = heap.pop().unwrap();
-        heap.push(Reverse((v * mult % M, i)));
-        k -= 1;
-    }
-    let mult2 = mod_pow(mult, (k as usize / n) as i64, M);
-    let mut res = vec![0; n];
-    while let Some(Reverse((mut v, i))) = heap.pop() {
-        v = v * mult2 % M;
-        if usize::try_from(k).is_ok_and(|_k| _k % n > 0) {
-            v = v * mult % M;
-            k -= 1;
+pub fn count_pairs(nums: Vec<i32>) -> i32 {
+    let n = nums.iter().map(|v| 1 + v.ilog10()).max().unwrap_or(1);
+    let mut map = HashMap::new();
+    let mut set = HashSet::new();
+    let mut res = 0;
+    for &num in &nums {
+        two_swaps(num, n as _, &mut set);
+        for val in &set {
+            res += map.get(val).unwrap_or(&0);
         }
-        res[i] = v as i32;
+        *map.entry(num).or_insert(0) += 1;
     }
     res
 }
 
-const fn mod_pow(b: i64, exp: i64, m: i64) -> i64 {
-    if exp == 0 {
-        return 1;
+fn two_swaps(num: i32, n: usize, set: &mut HashSet<i32>) {
+    set.clear();
+    set.insert(num);
+    one_swap(num, n, set);
+    for val in set.clone() {
+        one_swap(val, n, set);
     }
-    if exp & 1 == 0 {
-        mod_pow(b * b % m, exp >> 1, m)
-    } else {
-        mod_pow(b * b % m, exp >> 1, m) * b % m
+}
+
+fn one_swap(mut num: i32, n: usize, set: &mut HashSet<i32>) {
+    let mut ds = Vec::with_capacity(n);
+    while num > 0 {
+        ds.push(num % 10);
+        num /= 10;
+    }
+    while ds.len() < n {
+        ds.push(0);
+    }
+    ds.reverse();
+    for a in 0..n {
+        for b in 1 + a..n {
+            ds.swap(a, b);
+            set.insert(ds.iter().fold(0, |acc, v| acc * 10 + v));
+            ds.swap(a, b);
+        }
     }
 }
 
@@ -80,13 +81,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(get_final_state(vec![2, 1, 3, 5, 6], 5, 2), [8, 4, 6, 5, 6]);
-        assert_eq!(
-            get_final_state(vec![100000, 2000], 2, 1000000),
-            [999999307, 999999993]
-        );
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
