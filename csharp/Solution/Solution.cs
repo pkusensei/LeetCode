@@ -7,46 +7,44 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<string> GetWordsInLongestSubsequence(string[] words, int[] groups)
+    public long CountGoodIntegers(int n, int k)
     {
-        int n = words.Length;
-        Span<int> dp = stackalloc int[n];
-        dp.Fill(1);
-        Span<int> prev = stackalloc int[n];
-        prev.Fill(-1);
-        (int max, int maxi) = (0, 0);
-        for (int right = 1; right < n; right++)
+        int half = (1 + n) / 2;
+        int min = (int)Math.Pow(10, half - 1);
+        int max = (int)Math.Pow(10, half);
+        HashSet<string> seen = [];
+        Span<int> freq = stackalloc int[10];
+        long res = 0;
+        for (int val = min; val < max; val++)
         {
-            for (int left = 0; left < right; left++)
+            freq.Clear();
+            string left = val.ToString();
+            StringBuilder sb = new(left);
+            var ca = left.ToCharArray();
+            Array.Reverse(ca);
+            sb.Append(ca[(n & 1)..]);
+            string s = sb.ToString();
+            if (!long.TryParse(s, out var parsed) || parsed % k != 0)
             {
-                if (Check(left, right) && dp[left] + 1 > dp[right])
-                {
-                    dp[right] = 1 + dp[left];
-                    prev[right] = left;
-                    if (dp[right] > max)
-                    {
-                        max = dp[right];
-                        maxi = right;
-                    }
-                }
+                continue;
             }
+            ca = s.ToCharArray();
+            Array.Sort(ca);
+            s = new(ca);
+            if (!seen.Add(s)) { continue; }
+            foreach (var item in s)
+            {
+                freq[item - '0'] += 1;
+            }
+            int perm = (n - freq[0]) * Fact(n - 1);
+            foreach (var item in freq)
+            {
+                if (item > 1) { perm /= Fact(item); }
+            }
+            res += perm;
         }
-        List<string> res = new(max);
-        while (maxi >= 0)
-        {
-            res.Add(words[maxi]);
-            maxi = prev[maxi];
-        }
-        res.Reverse();
         return res;
 
-        bool Check(int left, int right)
-        {
-            var a = words[left];
-            var b = words[right];
-            return groups[left] != groups[right]
-                && a.Length == b.Length
-                && a.Zip(b).Count(p => p.First != p.Second) == 1;
-        }
+        static int Fact(int n) => n < 2 ? 1 : n * Fact(n - 1);
     }
 }

@@ -10,10 +10,12 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(new[] { "bab", "dab", "cab" }, new[] { 1, 2, 2 }, new[] { "bab", "dab" })]
-    public void TestMethod1(string[] w, int[] g, string[] e)
+    [DataRow(3, 5, 27)]
+    [DataRow(1, 4, 2)]
+    [DataRow(5, 6, 2468)]
+    public void TestMethod1(int n, int k, long exp)
     {
-        Assert.AreEqual(e.Print(), sol.GetWordsInLongestSubsequence(w, g).Print());
+        Assert.AreEqual(exp, sol.CountGoodIntegers(n, k));
     }
 
     [TestMethod]
