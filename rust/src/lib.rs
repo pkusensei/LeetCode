@@ -6,14 +6,28 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn string_hash(s: String, k: i32) -> String {
-    s.as_bytes()
-        .chunks(k as usize)
-        .map(|ch| {
-            let sum: u32 = ch.iter().map(|b| u32::from(b - b'a')).sum();
-            char::from((sum % 26) as u8 + b'a')
-        })
-        .collect()
+pub fn sort_colors(nums: &mut Vec<i32>) {
+    let n = nums.len();
+    if n == 1 {
+        return;
+    }
+    let [mut left, mut right] = [0, n - 1];
+    let mut i = 0;
+    while i <= right {
+        if nums[i] == 0 {
+            nums.swap(left, i);
+            left += 1;
+            i += 1;
+        } else if nums[i] == 2 {
+            nums.swap(right, i);
+            if right == 0 {
+                break;
+            }
+            right -= 1;
+        } else {
+            i += 1
+        }
+    }
 }
 
 #[cfg(test)]
@@ -46,8 +60,16 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        let mut v = vec![2, 0, 1];
+        sort_colors(&mut v);
+        assert_eq!(v, [0, 1, 2]);
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        let mut v = vec![2, 2];
+        sort_colors(&mut v);
+        assert_eq!(v, [2, 2]);
+    }
 }
