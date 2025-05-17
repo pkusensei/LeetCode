@@ -6,20 +6,12 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_damage(power: i32, damage: Vec<i32>, health: Vec<i32>) -> i64 {
-    use itertools::Itertools;
-    let n = damage.len();
-    let mut res = 0;
-    let mut days = 0;
-    for i in (0..n).sorted_unstable_by(|&a, &b| {
-        let [aa, bb] =
-            [a, b].map(|i| f64::from(damage[i]) / f64::from((health[i] + power - 1) / power));
-        bb.total_cmp(&aa)
-    }) {
-        days += i64::from((health[i] + power - 1) / power);
-        res += days * i64::from(damage[i]);
-    }
-    res
+pub fn check_two_chessboards(coordinate1: String, coordinate2: String) -> bool {
+    let [a, b] = [&coordinate1, &coordinate2].map(|s| {
+        let s = s.as_bytes();
+        (s[0] - b'a' + s[1] - b'0') & 1
+    });
+    a == b
 }
 
 #[cfg(test)]
