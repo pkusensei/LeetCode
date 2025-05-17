@@ -5,23 +5,38 @@ mod trie;
 
 #[allow(unused_imports)]
 use helper::*;
+use itertools::Itertools;
+use std::collections::{HashMap, HashSet};
 
-pub fn results_array(queries: Vec<Vec<i32>>, k: i32) -> Vec<i32> {
-    use std::collections::BinaryHeap;
-    let mut res = vec![];
-    let mut heap = BinaryHeap::new();
-    let k = k as usize;
-    for q in queries {
-        heap.push(q[0].abs() + q[1].abs());
-        if heap.len() > k {
-            heap.pop();
-        }
-        if heap.len() < k {
-            res.push(-1);
-        } else {
-            res.push(*heap.peek().unwrap());
+pub fn max_score(grid: &[&[i32]]) -> i32 {
+    let rows = grid.len();
+    let mut map = HashMap::<_, HashSet<_>>::new();
+    for (num, r) in grid
+        .iter()
+        .enumerate()
+        .flat_map(|(r, row)| row.iter().map(move |&v| (v, r)))
+    {
+        map.entry(num).or_default().insert(r);
+    }
+    let arr = map.into_iter().collect_vec();
+    dfs(&arr, 0, 0, &mut vec![vec![-1; 1 << rows]; arr.len()])
+}
+
+fn dfs(arr: &[(i32, HashSet<usize>)], idx: usize, mask: usize, memo: &mut [Vec<i32>]) -> i32 {
+    if idx >= arr.len() {
+        return 0;
+    }
+    if memo[idx][mask] > -1 {
+        return memo[idx][mask];
+    }
+    let mut res = dfs(arr, 1 + idx, mask, memo);
+    let (val, set) = &arr[idx];
+    for &row in set {
+        if (mask >> row) & 1 == 0 {
+            res = res.max(val + dfs(arr, 1 + idx, mask | (1 << row), memo))
         }
     }
+    memo[idx][mask] = res;
     res
 }
 
@@ -55,7 +70,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(max_score(&[&[1, 2, 3], &[4, 3, 2], &[1, 1, 1]]), 8);
+        assert_eq!(max_score(&[&[8, 7, 6], &[8, 3, 2]]), 15);
+    }
 
     #[test]
     fn test() {}
