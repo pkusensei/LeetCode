@@ -6,12 +6,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn check_two_chessboards(coordinate1: String, coordinate2: String) -> bool {
-    let [a, b] = [&coordinate1, &coordinate2].map(|s| {
-        let s = s.as_bytes();
-        (s[0] - b'a' + s[1] - b'0') & 1
-    });
-    a == b
+pub fn results_array(queries: Vec<Vec<i32>>, k: i32) -> Vec<i32> {
+    use std::collections::BinaryHeap;
+    let mut res = vec![];
+    let mut heap = BinaryHeap::new();
+    let k = k as usize;
+    for q in queries {
+        heap.push(q[0].abs() + q[1].abs());
+        if heap.len() > k {
+            heap.pop();
+        }
+        if heap.len() < k {
+            res.push(-1);
+        } else {
+            res.push(*heap.peek().unwrap());
+        }
+    }
+    res
 }
 
 #[cfg(test)]
