@@ -6,28 +6,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn sort_colors(nums: &mut Vec<i32>) {
-    let n = nums.len();
-    if n == 1 {
-        return;
+pub fn min_damage(power: i32, damage: Vec<i32>, health: Vec<i32>) -> i64 {
+    use itertools::Itertools;
+    let n = damage.len();
+    let mut res = 0;
+    let mut days = 0;
+    for i in (0..n).sorted_unstable_by(|&a, &b| {
+        let [aa, bb] =
+            [a, b].map(|i| f64::from(damage[i]) / f64::from((health[i] + power - 1) / power));
+        bb.total_cmp(&aa)
+    }) {
+        days += i64::from((health[i] + power - 1) / power);
+        res += days * i64::from(damage[i]);
     }
-    let [mut left, mut right] = [0, n - 1];
-    let mut i = 0;
-    while i <= right {
-        if nums[i] == 0 {
-            nums.swap(left, i);
-            left += 1;
-            i += 1;
-        } else if nums[i] == 2 {
-            nums.swap(right, i);
-            if right == 0 {
-                break;
-            }
-            right -= 1;
-        } else {
-            i += 1
-        }
-    }
+    res
 }
 
 #[cfg(test)]
@@ -60,16 +52,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        let mut v = vec![2, 0, 1];
-        sort_colors(&mut v);
-        assert_eq!(v, [0, 1, 2]);
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        let mut v = vec![2, 2];
-        sort_colors(&mut v);
-        assert_eq!(v, [2, 2]);
-    }
+    fn test() {}
 }
