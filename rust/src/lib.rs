@@ -5,38 +5,27 @@ mod trie;
 
 #[allow(unused_imports)]
 use helper::*;
-use itertools::Itertools;
-use std::collections::{HashMap, HashSet};
 
-pub fn max_score(grid: &[&[i32]]) -> i32 {
-    let rows = grid.len();
-    let mut map = HashMap::<_, HashSet<_>>::new();
-    for (num, r) in grid
+pub fn maximum_subarray_xor(nums: &[i32], queries: &[[i32; 2]]) -> Vec<i32> {
+    let n = nums.len();
+    let mut memo = vec![vec![None; n]; n];
+    queries
         .iter()
-        .enumerate()
-        .flat_map(|(r, row)| row.iter().map(move |&v| (v, r)))
-    {
-        map.entry(num).or_default().insert(r);
-    }
-    let arr = map.into_iter().collect_vec();
-    dfs(&arr, 0, 0, &mut vec![vec![-1; 1 << rows]; arr.len()])
+        .map(|q| dfs(nums, q[0] as usize, q[1] as usize, &mut memo)[1])
+        .collect()
 }
 
-fn dfs(arr: &[(i32, HashSet<usize>)], idx: usize, mask: usize, memo: &mut [Vec<i32>]) -> i32 {
-    if idx >= arr.len() {
-        return 0;
+fn dfs(nums: &[i32], left: usize, right: usize, memo: &mut [Vec<Option<[i32; 2]>>]) -> [i32; 2] {
+    if left == right {
+        return [nums[left]; 2];
     }
-    if memo[idx][mask] > -1 {
-        return memo[idx][mask];
+    if let Some(v) = memo[left][right] {
+        return v;
     }
-    let mut res = dfs(arr, 1 + idx, mask, memo);
-    let (val, set) = &arr[idx];
-    for &row in set {
-        if (mask >> row) & 1 == 0 {
-            res = res.max(val + dfs(arr, 1 + idx, mask | (1 << row), memo))
-        }
-    }
-    memo[idx][mask] = res;
+    let [xor1, max1] = dfs(nums, left, right - 1, memo);
+    let [xor2, max2] = dfs(nums, 1 + left, right, memo);
+    let res = [xor1 ^ xor2, (xor1 ^ xor2).max(max1).max(max2)];
+    memo[left][right] = Some(res);
     res
 }
 
@@ -71,8 +60,17 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_score(&[&[1, 2, 3], &[4, 3, 2], &[1, 1, 1]]), 8);
-        assert_eq!(max_score(&[&[8, 7, 6], &[8, 3, 2]]), 15);
+        assert_eq!(
+            maximum_subarray_xor(&[2, 8, 4, 32, 16, 1], &[[0, 2], [1, 4], [0, 5]]),
+            [12, 60, 60]
+        );
+        assert_eq!(
+            maximum_subarray_xor(
+                &[0, 7, 3, 2, 8, 5, 1],
+                &[[0, 3], [1, 5], [2, 4], [2, 6], [5, 6]]
+            ),
+            [7, 14, 11, 14, 5]
+        );
     }
 
     #[test]
