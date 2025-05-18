@@ -10,12 +10,12 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(3, 5, 27)]
-    [DataRow(1, 4, 2)]
-    [DataRow(5, 6, 2468)]
-    public void TestMethod1(int n, int k, long exp)
+    [DataRow(1, 1, 3)]
+    [DataRow(1, 2, 6)]
+    [DataRow(5, 5, 580986)]
+    public void TestMethod1(int m, int n, long exp)
     {
-        Assert.AreEqual(exp, sol.CountGoodIntegers(n, k));
+        Assert.AreEqual(exp, sol.ColorTheGrid(m, n));
     }
 
     [TestMethod]
