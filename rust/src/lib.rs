@@ -6,31 +6,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_possible_score(mut start: Vec<i32>, d: i32) -> i32 {
-    start.sort_unstable();
+pub fn find_maximum_score(nums: Vec<i32>) -> i64 {
+    let n = nums.len();
     let mut left = 0;
-    let mut right = i32::MAX - 1;
-    while left < right {
-        let mid = left + (right - left + 1) / 2;
-        if chech(&start, d, mid) {
-            left = mid
-        } else {
-            right = mid - 1
+    let mut res = 0;
+    for (right, &num) in nums.iter().enumerate() {
+        if num > nums[left] {
+            res += (right - left) as i64 * i64::from(nums[left]);
+            left = right;
         }
     }
-    left
-}
-
-fn chech(nums: &[i32], d: i32, mid: i32) -> bool {
-    let mut prev = nums[0];
-    for &num in &nums[1..] {
-        let curr = (prev + mid).max(num);
-        if curr > num + d {
-            return false;
-        }
-        prev = curr;
-    }
-    true
+    res += (n - 1).saturating_sub(left) as i64 * i64::from(nums[left]);
+    res
 }
 
 #[cfg(test)]
@@ -63,16 +50,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(max_possible_score(vec![2, 6, 13, 13], 5), 5);
-        assert_eq!(max_possible_score(vec![6, 0, 3], 2), 4);
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(
-            max_possible_score(vec![1000000000, 0], 1000000000),
-            2000000000
-        );
-    }
+    fn test() {}
 }
