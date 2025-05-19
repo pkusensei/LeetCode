@@ -143,7 +143,7 @@ pub const fn mod_pow_rec(base: i64, exp: i64, modu: i64) -> i64 {
     }
 }
 
-pub fn kmp<T: PartialEq>(s: &[T]) -> Vec<usize> {
+pub fn kmp<T: PartialEq>(s: &[T], t: &[T]) -> [Vec<usize>; 2] {
     let n = s.len();
     let mut lps = vec![0; n];
     let mut len = 0;
@@ -156,5 +156,94 @@ pub fn kmp<T: PartialEq>(s: &[T]) -> Vec<usize> {
         }
         lps[idx] = len;
     }
-    lps
+    len = 0;
+    // Prefix s[..arr[i]], its length==arr[i]
+    // is matched on substr ending on t[i]
+    // A better name is matched_lengths
+    let mut arr = Vec::with_capacity(t.len());
+    for val in t {
+        while len > 0 && (len == n || val != &s[len]) {
+            len = lps[len - 1];
+        }
+        if s.get(len).is_some_and(|v| v == val) {
+            len += 1;
+        }
+        arr.push(len);
+    }
+    [lps, arr]
+}
+
+#[cfg(test)]
+mod kmp_tests {
+    use super::kmp;
+
+    #[test]
+    fn test_basic_match() {
+        let s = b"ab";
+        let t = b"ababcab";
+        let [lps, arr] = kmp(s, t);
+
+        assert_eq!(lps, vec![0, 0]);
+        assert_eq!(arr, vec![1, 2, 1, 2, 0, 1, 2]);
+    }
+
+    #[test]
+    fn test_no_match() {
+        let s = b"abc";
+        let t = b"defgh";
+        let [lps, arr] = kmp(s, t);
+
+        assert_eq!(lps, vec![0, 0, 0]);
+        assert_eq!(arr, vec![0, 0, 0, 0, 0]);
+    }
+
+    #[test]
+    fn test_partial_overlap() {
+        let s = b"abab";
+        let t = b"abababab";
+        let [lps, arr] = kmp(s, t);
+
+        assert_eq!(lps, vec![0, 0, 1, 2]); // 'ab' repeat
+        assert_eq!(arr, vec![1, 2, 3, 4, 3, 4, 3, 4]);
+    }
+
+    #[test]
+    fn test_single_char() {
+        let s = b"a";
+        let t = b"aaaa";
+        let [lps, arr] = kmp(s, t);
+
+        assert_eq!(lps, vec![0]);
+        assert_eq!(arr, vec![1, 1, 1, 1]);
+    }
+
+    #[test]
+    fn test_empty_pattern() {
+        let s: &[u8] = b"";
+        let t: &[u8] = b"abcde";
+        let [lps, arr] = kmp(s, t);
+
+        assert_eq!(lps, vec![]);
+        assert_eq!(arr, vec![0, 0, 0, 0, 0]);
+    }
+
+    #[test]
+    fn test_empty_text() {
+        let s: &[u8] = b"abc";
+        let t: &[u8] = b"";
+        let [lps, arr] = kmp(s, t);
+
+        assert_eq!(lps, vec![0, 0, 0]);
+        assert_eq!(arr, vec![]);
+    }
+
+    #[test]
+    fn test_both_empty() {
+        let s: &[u8] = b"";
+        let t: &[u8] = b"";
+        let [lps, arr] = kmp(s, t);
+
+        assert_eq!(lps, vec![]);
+        assert_eq!(arr, vec![]);
+    }
 }
