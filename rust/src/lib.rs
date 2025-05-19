@@ -6,43 +6,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_number_of_seconds(mountain_height: i32, worker_times: Vec<i32>) -> i64 {
-    let mt = mountain_height as u128;
-    let mut left = 1;
-    let mut right = 10_u128.pow(17);
-    while left < right {
-        let mid = left + (right - left) / 2;
-        if check(mt, &worker_times, mid) {
-            right = mid;
-        } else {
-            left = 1 + mid;
-        }
-    }
-    left as i64
-}
-
-fn check(mut mt: u128, times: &[i32], mid: u128) -> bool {
-    for &t in times {
-        let Some(v) = mt.checked_sub(reduce(t as _, mid)) else {
-            return true;
-        };
-        mt = v;
-    }
-    mt == 0
-}
-
-fn reduce(t: u128, max: u128) -> u128 {
+pub fn valid_substring_count(word1: &str, word2: &str) -> i64 {
+    let freq = word2.bytes().fold([0; 26], |mut acc, b| {
+        acc[usize::from(b - b'a')] += 1;
+        acc
+    });
+    let (s, n) = (word1.as_bytes(), word1.len());
     let mut left = 0;
-    let mut right = max;
-    while left < right {
-        let mid = left + (right - left + 1) / 2;
-        if (1 + mid) * mid / 2 * t > max {
-            right = mid - 1;
-        } else {
-            left = mid;
+    let mut curr = [0; 26];
+    let mut invalid = 0;
+    for (right, &b) in s.iter().enumerate() {
+        curr[usize::from(b - b'a')] += 1;
+        while curr.iter().zip(freq).all(|(&a, b)| a >= b) {
+            curr[usize::from(s[left] - b'a')] -= 1;
+            left += 1;
         }
+        invalid += right + 1 - left;
     }
-    left
+    (n * (1 + n) / 2 - invalid) as i64
 }
 
 #[cfg(test)]
@@ -76,13 +57,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_number_of_seconds(4, vec![2, 1, 1]), 3);
-        assert_eq!(min_number_of_seconds(10, vec![3, 2, 2, 4]), 12);
-        assert_eq!(min_number_of_seconds(5, vec![1]), 15);
+        assert_eq!(valid_substring_count("bcca", "abc"), 1);
+        assert_eq!(valid_substring_count("abcabc", "abc"), 10);
+        assert_eq!(valid_substring_count("abcabc", "aaabc"), 0);
     }
 
     #[test]
-    fn test() {
-        assert_eq!(min_number_of_seconds(1, vec![5]), 5);
-    }
+    fn test() {}
 }
