@@ -6,27 +6,46 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_safe_walk(grid: Vec<Vec<i32>>, health: i32) -> bool {
-    use std::collections::VecDeque;
-    let [rows, cols] = get_dimensions(&grid);
-    let mut queue = VecDeque::from([(0, 0, health - grid[0][0])]);
-    let mut seen = vec![vec![false; cols]; rows];
-    while let Some((r, c, h)) = queue.pop_front() {
-        if r == rows - 1 && c == cols - 1 {
-            return h > 0;
-        }
-        for [nr, nc] in neighbors([r, c]) {
-            if nr < rows && nc < cols && !seen[nr][nc] {
-                seen[nr][nc] = true;
-            }
-            if grid[nr][nc] == 0 {
-                queue.push_front((nr, nc, h));
-            } else if h > 1 {
-                queue.push_back((nr, nc, h - 1));
+pub fn max_value(mut nums: Vec<i32>, k: i32) -> i32 {
+    let n = nums.len();
+    let k = k as usize;
+    let [mut memo1, mut memo2] = [0, 1].map(|_| vec![vec![[None; 128]; 1 + k]; n]);
+    dfs(&nums, k, 0, 0, 0, &mut memo1);
+    nums.reverse();
+    dfs(&nums, k, 0, 0, 0, &mut memo2);
+    let mut res = 0;
+    for idx in k..=n - k {
+        for or1 in 0..128 {
+            for or2 in 0..128 {
+                if let Some((true, true)) = memo1[idx][k][or1].zip(memo2[n - idx][k][or2]) {
+                    res = res.max(or1 ^ or2);
+                }
             }
         }
     }
-    false
+    res as i32
+}
+
+fn dfs(
+    nums: &[i32],
+    k: usize,
+    idx: usize,
+    len: usize,
+    orv: usize,
+    memo: &mut [Vec<[Option<bool>; 128]>],
+) -> bool {
+    if idx >= nums.len() {
+        return len == k;
+    }
+    if let Some(v) = memo[idx][len][orv] {
+        return v;
+    }
+    let mut res = dfs(nums, k, 1 + idx, len, orv, memo); // skip
+    if len < k {
+        res |= dfs(nums, k, 1 + idx, 1 + len, orv | nums[idx] as usize, memo);
+    }
+    memo[idx][len][orv] = Some(res);
+    res
 }
 
 #[cfg(test)]
@@ -59,7 +78,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(max_value(vec![2, 6, 7], 1), 5);
+        assert_eq!(max_value(vec![4, 2, 5, 6, 7], 2), 2);
+    }
 
     #[test]
     fn test() {}
