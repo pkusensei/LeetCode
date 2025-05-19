@@ -7,47 +7,47 @@ mod trie;
 use helper::*;
 
 pub fn min_valid_strings(words: &[&str], target: &str) -> i32 {
-    let mut trie = Trie::default();
-    for s in words.iter() {
-        trie.insert(s.bytes());
-    }
     let (s, n) = (target.as_bytes(), target.len());
+    let mut vals = vec![0; n];
+    for pat in words.iter() {
+        for (idx, len) in kmp(pat.as_bytes(), s).into_iter().enumerate() {
+            vals[idx] = vals[idx].max(len);
+        }
+    }
     let mut dp = vec![i32::MAX / 2; 1 + n];
-    dp[0] = 0;
-    for left in 0..n {
-        if dp[left] >= i32::MAX / 2 {
-            continue;
-        }
-        let mut node = &trie;
-        for right in left..n {
-            let Some(v) = node.get(s[right]) else {
-                break;
-            };
-            node = v;
-            dp[1 + right] = dp[1 + right].min(1 + dp[left]);
-        }
+    dp[n] = 0;
+    for right in (0..n).rev() {
+        let len = vals[right];
+        dp[right + 1 - len] = dp[right + 1 - len].min(1 + dp[1 + right]);
     }
-    if dp[n] >= i32::MAX / 2 { -1 } else { dp[n] }
+    if dp[0] >= i32::MAX / 2 { -1 } else { dp[0] }
 }
 
-#[derive(Default)]
-struct Trie {
-    nodes: [Option<Box<Trie>>; 26],
-}
-
-impl Trie {
-    fn insert(&mut self, it: impl Iterator<Item = u8>) {
-        let mut curr = self;
-        for b in it {
-            let idx = usize::from(b - b'a');
-            curr = curr.nodes[idx].get_or_insert_default();
+fn kmp(pat: &[u8], target: &[u8]) -> Vec<usize> {
+    let n = pat.len();
+    let mut lps = vec![0];
+    let mut len = 0;
+    for idx in 1..n {
+        while len > 0 && pat[len] != pat[idx] {
+            len = lps[len - 1];
         }
+        if pat[len] == pat[idx] {
+            len += 1;
+        }
+        lps.push(len);
     }
-
-    fn get(&self, b: u8) -> Option<&Trie> {
-        let idx = usize::from(b - b'a');
-        self.nodes[idx].as_deref()
+    len = 0;
+    let mut res = vec![];
+    for &b in target {
+        while len > 0 && (len == pat.len() || pat[len] != b) {
+            len = lps[len - 1];
+        }
+        if pat[len] == b {
+            len += 1;
+        }
+        res.push(len);
     }
+    res
 }
 
 #[cfg(test)]
