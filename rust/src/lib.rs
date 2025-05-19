@@ -6,48 +6,43 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_valid_strings(words: &[&str], target: &str) -> i32 {
-    let (s, n) = (target.as_bytes(), target.len());
-    let mut vals = vec![0; n];
-    for pat in words.iter() {
-        for (idx, len) in kmp(pat.as_bytes(), s).into_iter().enumerate() {
-            vals[idx] = vals[idx].max(len);
+pub fn min_number_of_seconds(mountain_height: i32, worker_times: Vec<i32>) -> i64 {
+    let mt = mountain_height as u128;
+    let mut left = 1;
+    let mut right = 10_u128.pow(17);
+    while left < right {
+        let mid = left + (right - left) / 2;
+        if check(mt, &worker_times, mid) {
+            right = mid;
+        } else {
+            left = 1 + mid;
         }
     }
-    let mut dp = vec![i32::MAX / 2; 1 + n];
-    dp[n] = 0;
-    for right in (0..n).rev() {
-        let len = vals[right];
-        dp[right + 1 - len] = dp[right + 1 - len].min(1 + dp[1 + right]);
-    }
-    if dp[0] >= i32::MAX / 2 { -1 } else { dp[0] }
+    left as i64
 }
 
-fn kmp(pat: &[u8], target: &[u8]) -> Vec<usize> {
-    let n = pat.len();
-    let mut lps = vec![0];
-    let mut len = 0;
-    for idx in 1..n {
-        while len > 0 && pat[len] != pat[idx] {
-            len = lps[len - 1];
-        }
-        if pat[len] == pat[idx] {
-            len += 1;
-        }
-        lps.push(len);
+fn check(mut mt: u128, times: &[i32], mid: u128) -> bool {
+    for &t in times {
+        let Some(v) = mt.checked_sub(reduce(t as _, mid)) else {
+            return true;
+        };
+        mt = v;
     }
-    len = 0;
-    let mut res = vec![];
-    for &b in target {
-        while len > 0 && (len == pat.len() || pat[len] != b) {
-            len = lps[len - 1];
+    mt == 0
+}
+
+fn reduce(t: u128, max: u128) -> u128 {
+    let mut left = 0;
+    let mut right = max;
+    while left < right {
+        let mid = left + (right - left + 1) / 2;
+        if (1 + mid) * mid / 2 * t > max {
+            right = mid - 1;
+        } else {
+            left = mid;
         }
-        if pat[len] == b {
-            len += 1;
-        }
-        res.push(len);
     }
-    res
+    left
 }
 
 #[cfg(test)]
@@ -81,11 +76,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_valid_strings(&["abc", "aaaaa", "bcdef"], "aabcdabc"), 3);
-        assert_eq!(min_valid_strings(&["abababab", "ab"], "ababaababa"), 2);
-        assert_eq!(min_valid_strings(&["abcdef"], "xyz"), -1);
+        assert_eq!(min_number_of_seconds(4, vec![2, 1, 1]), 3);
+        assert_eq!(min_number_of_seconds(10, vec![3, 2, 2, 4]), 12);
+        assert_eq!(min_number_of_seconds(5, vec![1]), 15);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(min_number_of_seconds(1, vec![5]), 5);
+    }
 }
