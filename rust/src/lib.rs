@@ -6,34 +6,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_path_length(coordinates: &[[i32; 2]], k: i32) -> i32 {
-    let [kx, ky] = [0, 1].map(|i| coordinates[k as usize][i]);
-    let [mut left, mut right] = [vec![], vec![]];
-    for c in coordinates.iter() {
-        let [x, y] = c[..] else { unreachable!() };
-        if x < kx && y < ky {
-            left.push([x, y]);
-        } else if x > kx && y > ky {
-            right.push([x, y]);
+pub fn get_sneaky_numbers(nums: Vec<i32>) -> Vec<i32> {
+    let mut mask = 0_i128;
+    let mut res = Vec::with_capacity(2);
+    for num in nums {
+        if mask & (1 << num) > 0 {
+            res.push(num);
         }
+        mask |= 1 << num;
     }
-    let func = |a: &[i32; 2], b: &[i32; 2]| a[0].cmp(&b[0]).then(b[1].cmp(&a[1]));
-    left.sort_unstable_by(func);
-    right.sort_unstable_by(func);
-    (lis(&left) + lis(&right) + 1) as i32
-}
-
-fn lis(nums: &[[i32; 2]]) -> usize {
-    let mut arr = vec![];
-    for &[_, y] in nums {
-        let i = arr.partition_point(|&v| v < y);
-        if i == arr.len() {
-            arr.push(y);
-        } else {
-            arr[i] = y; // useless?
-        }
-    }
-    arr.len()
+    res
 }
 
 #[cfg(test)]
@@ -66,16 +48,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(
-            max_path_length(&[[3, 1], [2, 2], [4, 1], [0, 0], [5, 3]], 1),
-            3
-        );
-        assert_eq!(max_path_length(&[[2, 1], [7, 0], [5, 6]], 2), 2);
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(max_path_length(&[[2, 1], [5, 4], [9, 8]], 0), 3);
-    }
+    fn test() {}
 }
