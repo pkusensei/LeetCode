@@ -6,26 +6,48 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_score(a: &[i32], b: &[i32]) -> i64 {
-    let n = b.len();
-    dfs(a, b, 0, 0, &mut vec![vec![None; n]; 4])
+pub fn min_valid_strings(words: &[&str], target: &str) -> i32 {
+    let mut trie = Trie::default();
+    for s in words.iter() {
+        trie.insert(s.bytes());
+    }
+    let (s, n) = (target.as_bytes(), target.len());
+    let mut dp = vec![i32::MAX / 2; 1 + n];
+    dp[0] = 0;
+    for left in 0..n {
+        if dp[left] >= i32::MAX / 2 {
+            continue;
+        }
+        let mut node = &trie;
+        for right in left..n {
+            let Some(v) = node.get(s[right]) else {
+                break;
+            };
+            node = v;
+            dp[1 + right] = dp[1 + right].min(1 + dp[left]);
+        }
+    }
+    if dp[n] >= i32::MAX / 2 { -1 } else { dp[n] }
 }
 
-fn dfs(a: &[i32], b: &[i32], i1: usize, i2: usize, memo: &mut [Vec<Option<i64>>]) -> i64 {
-    if i1 >= a.len() {
-        return 0;
+#[derive(Default)]
+struct Trie {
+    nodes: [Option<Box<Trie>>; 26],
+}
+
+impl Trie {
+    fn insert(&mut self, it: impl Iterator<Item = u8>) {
+        let mut curr = self;
+        for b in it {
+            let idx = usize::from(b - b'a');
+            curr = curr.nodes[idx].get_or_insert_default();
+        }
     }
-    if i2 >= b.len() {
-        return i64::MIN / 2;
+
+    fn get(&self, b: u8) -> Option<&Trie> {
+        let idx = usize::from(b - b'a');
+        self.nodes[idx].as_deref()
     }
-    if let Some(v) = memo[i1][i2] {
-        return v;
-    }
-    let take = i64::from(a[i1]) * i64::from(b[i2]) + dfs(a, b, 1 + i1, 1 + i2, memo);
-    let skip = dfs(a, b, i1, 1 + i2, memo);
-    let res = take.max(skip);
-    memo[i1][i2] = Some(res);
-    res
 }
 
 #[cfg(test)]
@@ -59,8 +81,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_score(&[3, 2, 5, 6], &[2, -6, 4, -5, -3, 2, -7]), 26);
-        assert_eq!(max_score(&[-1, 4, 5, -2], &[-5, -1, -3, -2, -4]), -1);
+        assert_eq!(min_valid_strings(&["abc", "aaaaa", "bcdef"], "aabcdabc"), 3);
+        assert_eq!(min_valid_strings(&["abababab", "ab"], "ababaababa"), 2);
+        assert_eq!(min_valid_strings(&["abcdef"], "xyz"), -1);
     }
 
     #[test]
