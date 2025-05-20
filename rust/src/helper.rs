@@ -173,6 +173,25 @@ pub fn kmp<T: PartialEq>(s: &[T], t: &[T]) -> [Vec<usize>; 2] {
     [lps, arr]
 }
 
+pub fn z_function<T: PartialEq>(s: &[T]) -> Vec<usize> {
+    let n = s.len();
+    let [mut left, mut right] = [0, 0];
+    let mut z = vec![0; n];
+    for i in 1..n {
+        if i <= right {
+            z[i] = (right + 1 - i).min(z[i - left]);
+        }
+        while i + z[i] < n && s[z[i]] == s[i + z[i]] {
+            z[i] += 1;
+        }
+        if i + z[i] - 1 > right {
+            left = i;
+            right = i + z[i] - 1;
+        }
+    }
+    z
+}
+
 #[cfg(test)]
 mod kmp_tests {
     use super::kmp;
