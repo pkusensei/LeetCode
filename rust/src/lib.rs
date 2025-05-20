@@ -6,25 +6,33 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_of_substrings(word: &str, k: i32) -> i32 {
-        let (s, n) = (word.as_bytes(), word.len());
-        let mut res = 0;
-        for left in 0..=(n - 5 - k as usize) {
-            let mut freq = [0; 5];
-            let mut cons = 0;
-            for right in left..n {
-                if let Some(i) = find(s[right]) {
-                    freq[i] += 1;
-                } else {
-                    cons += 1;
-                }
-                res += i32::from(cons == k && freq.iter().all(|&v| v >= 1));
-                if cons > k {
-                    break;
-                }
-            }
+pub fn count_of_substrings(word: &str, k: i32) -> i64 {
+    at_least(word.as_bytes(), k) - at_least(word.as_bytes(), 1 + k)
+}
+
+fn at_least(s: &[u8], k: i32) -> i64 {
+    let n = s.len();
+    let mut res = 0;
+    let mut left = 0;
+    let mut freq = [0; 5];
+    let mut cons = 0;
+    for (right, &b) in s.iter().enumerate() {
+        if let Some(i) = find(b) {
+            freq[i] += 1;
+        } else {
+            cons += 1;
         }
-        res
+        while freq.iter().all(|&v| v >= 1) && cons >= k {
+            res += n - right;
+            if let Some(i) = find(s[left]) {
+                freq[i] -= 1;
+            } else {
+                cons -= 1;
+            }
+            left += 1;
+        }
+    }
+    res as _
 }
 
 fn find(b: u8) -> Option<usize> {
