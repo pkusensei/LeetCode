@@ -6,19 +6,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_total_sum(mut maximum_height: Vec<i32>) -> i64 {
-    maximum_height.sort_unstable_by(|a, b| b.cmp(a));
-    let mut prev = maximum_height[0];
-    let mut res = i64::from(prev);
-    for &num in &maximum_height[1..] {
-        let curr = (prev - 1).min(num);
-        if curr <= 0 {
-            return -1;
-        }
-        res += i64::from(curr);
-        prev = curr;
+pub fn is_zero_array(nums: &[i32], queries: &[[i32; 2]]) -> bool {
+    let n = nums.len();
+    let mut diff = vec![0; 1 + n];
+    for q in queries.iter() {
+        let [a, b] = [0, 1].map(|i| q[i] as usize);
+        diff[a] += 1;
+        diff[1 + b] -= 1;
     }
-    res
+    for i in 1..=n {
+        diff[i] += diff[i - 1];
+    }
+    nums.iter().zip(diff).all(|(&a, b)| a <= b)
 }
 
 #[cfg(test)]
@@ -51,7 +50,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert!(is_zero_array(&[1, 0, 1], &[[0, 2]]));
+        assert!(!is_zero_array(&[4, 3, 2, 1], &[[1, 3], [0, 2]]));
+    }
 
     #[test]
     fn test() {}
