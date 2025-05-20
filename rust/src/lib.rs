@@ -6,38 +6,38 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn valid_sequence(word1: &str, word2: &str) -> Vec<i32> {
-    let [(s1, _n1), (s2, n2)] = [&word1, &word2].map(|w| (w.as_bytes(), w.len()));
-    let mut last = vec![-1; n2];
-    let mut i2 = n2 - 1;
-    // latest pos of any b2 in s1
-    for (i1, &b1) in s1.iter().enumerate().rev() {
-        if b1 == s2[i2] {
-            last[i2] = i1 as i32;
-            if i2 == 0 {
-                break;
-            }
-            i2 -= 1;
+pub fn min_starting_index(s: &str, pattern: &str) -> i32 {
+    let n1 = s.len();
+    let n2 = pattern.len();
+    let z1 = z_function(format!("{}{}", pattern, s).as_bytes());
+    let mut combined = format!("{}{}", s, pattern).into_bytes();
+    combined.reverse();
+    let z2 = z_function(&combined);
+    for i in 0..=(n1 - n2) {
+        if z1[i + n2] + 1 + z2[n1 - i] >= n2 {
+            return i as i32;
         }
     }
-    i2 = 0;
-    let mut skipped = false;
-    let mut res = Vec::with_capacity(n2);
-    for (i1, &b1) in s1.iter().enumerate() {
-        let b2 = s2[i2];
-        // Greedy pick
-        // 1) b1==b2
-        // 2) skip early when next b2 is able to be picked up
-        if b1 == b2 || (!skipped && last.get(1 + i2).is_none_or(|&v| (i1 as i32) < v)) {
-            res.push(i1 as i32);
-            skipped |= b1 != b2;
-            i2 += 1;
-            if i2 == n2 {
-                break;
-            }
+    -1
+}
+
+fn z_function(s: &[u8]) -> Vec<usize> {
+    let n = s.len();
+    let [mut left, mut right] = [0, 0];
+    let mut z = vec![0; n];
+    for i in 1..n {
+        if i <= right {
+            z[i] = (right + 1 - i).min(z[i - left]);
+        }
+        while i + z[i] < n && s[z[i]] == s[i + z[i]] {
+            z[i] += 1;
+        }
+        if i + z[i] - 1 > right {
+            left = i;
+            right = i + z[i] - 1;
         }
     }
-    if i2 == n2 { res } else { vec![] }
+    z
 }
 
 #[cfg(test)]
@@ -71,14 +71,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(valid_sequence("vbcca", "abc"), [0, 1, 2]);
-        assert_eq!(valid_sequence("bacdc", "abc"), [1, 2, 4]);
-        assert_eq!(valid_sequence("aaaaaa", "aaabc"), []);
+        assert_eq!(min_starting_index("abcdefg", "bcdffg"), 1);
+        assert_eq!(min_starting_index("ababbababa", "bacaba"), 4);
+        assert_eq!(min_starting_index("abcd", "dba"), -1);
+        assert_eq!(min_starting_index("dde", "d"), 0);
     }
 
     #[test]
-    fn test() {
-        assert_eq!(valid_sequence("ccbccccbcc", "b"), [0]);
-        assert_eq!(valid_sequence("bbeigiibhjafjig", "iihhj"), [3, 5, 6, 8, 9]);
-    }
+    fn test() {}
 }
