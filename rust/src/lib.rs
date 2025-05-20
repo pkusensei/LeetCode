@@ -6,37 +6,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_of_substrings(word: &str, k: i32) -> i64 {
-    at_least(word.as_bytes(), k) - at_least(word.as_bytes(), 1 + k)
-}
-
-fn at_least(s: &[u8], k: i32) -> i64 {
-    let n = s.len();
-    let mut res = 0;
-    let mut left = 0;
-    let mut freq = [0; 5];
-    let mut cons = 0;
-    for (right, &b) in s.iter().enumerate() {
-        if let Some(i) = find(b) {
-            freq[i] += 1;
-        } else {
-            cons += 1;
-        }
-        while freq.iter().all(|&v| v >= 1) && cons >= k {
-            res += n - right;
-            if let Some(i) = find(s[left]) {
-                freq[i] -= 1;
-            } else {
-                cons -= 1;
-            }
-            left += 1;
+pub fn kth_character(k: i64, operations: &[i32]) -> char {
+    let mut k = i128::from(k);
+    let n = operations.len();
+    let mut len = 1_i128 << n;
+    let mut count = 0;
+    for &op in operations.iter().rev() {
+        len >>= 1;
+        if k > len {
+            count += op;
+            k -= len;
         }
     }
-    res as _
-}
-
-fn find(b: u8) -> Option<usize> {
-    b"aeiou".iter().position(|&v| v == b)
+    char::from(b'a' + (count % 26) as u8)
 }
 
 #[cfg(test)]
@@ -69,10 +51,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(kth_character(10, &[0, 1, 0, 1]), 'b');
+    }
 
     #[test]
-    fn test() {
-        assert_eq!(count_of_substrings("iqeaouqi", 2), 3)
-    }
+    fn test() {}
 }
