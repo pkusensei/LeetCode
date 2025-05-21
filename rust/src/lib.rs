@@ -5,58 +5,88 @@ mod trie;
 
 #[allow(unused_imports)]
 use helper::*;
+use itertools::Itertools;
+use std::collections::{HashMap, VecDeque};
 
-pub fn remaining_methods(n: i32, k: i32, invocations: &[[i32; 2]]) -> Vec<i32> {
-    let [n, k] = [n, k].map(|v| v as usize);
-    let [mut forward, mut backward] = [0, 1].map(|_| vec![vec![]; n]);
-    for e in invocations.iter() {
+pub fn construct_grid_layout(n: i32, edges: &[[i32; 2]]) -> Vec<Vec<i32>> {
+    let n = n as usize;
+    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
         let [a, b] = [0, 1].map(|i| e[i] as usize);
-        forward[a].push(b);
-        backward[b].push(a);
-    }
-    let mut mark = bfs(&forward, k);
-    let mut seen = vec![false; n];
-    for i in 0..n {
-        if mark[i] && !dfs(&backward, i, &mut mark, &mut seen) {
-            mark.fill(false);
-            break;
+        acc[a].push(b);
+        acc[b].push(a);
+        acc
+    });
+    if let Some(i) = adj.iter().position(|v| v.len() == 1) {
+        build_1d(&adj, i)
+    } else {
+        let start = adj.iter().position(|v| v.len() == 2).unwrap();
+        let first_row = find_1d(&adj, start);
+        let cols = first_row.len();
+        let rows = n / cols;
+        let mut res = vec![vec![-1; cols]; rows];
+        let mut seen = vec![false; n];
+        let mut queue = VecDeque::new();
+        for (i, &v) in first_row.iter().enumerate() {
+            res[0][i] = v as i32;
+            seen[v] = true;
+            queue.push_back((0, i, v)); // (row, col, val)
         }
+        while let Some((r, c, v)) = queue.pop_front() {
+            let Ok([nr, nc]) = neighbors([r, c])
+                .filter(|&[nr, nc]| {
+                    res.get(nr)
+                        .is_some_and(|row| row.get(nc).is_some_and(|&v| v == -1))
+                })
+                .exactly_one()
+            else {
+                break;
+            };
+            let Ok(&val) = adj[v].iter().filter(|&&next| !seen[next]).exactly_one() else {
+                break;
+            };
+            res[nr][nc] = val as i32;
+            seen[val] = true;
+            queue.push_back((nr, nc, val));
+        }
+        res
     }
-    mark.iter()
-        .enumerate()
-        .filter_map(|(i, &v)| if !v { Some(i as i32) } else { None })
-        .collect()
 }
 
-fn bfs(adj: &[Vec<usize>], start: usize) -> Vec<bool> {
-    use std::collections::VecDeque;
-    let n = adj.len();
+fn find_1d(adj: &[Vec<usize>], start: usize) -> Vec<usize> {
     let mut queue = VecDeque::from([start]);
-    let mut mark = vec![false; n];
-    mark[start] = true;
+    let mut prev = HashMap::new();
     while let Some(node) = queue.pop_front() {
+        if node != start && adj[node].len() == 2 {
+            let mut res = vec![node];
+            let mut curr = node;
+            while curr != start {
+                curr = prev[&curr];
+                res.push(curr);
+            }
+            return res;
+        }
         for &next in &adj[node] {
-            if !mark[next] {
-                mark[next] = true;
+            if !prev.contains_key(&next) {
+                prev.insert(next, node);
                 queue.push_back(next);
             }
         }
     }
-    mark
+    unreachable!()
 }
 
-fn dfs(adj: &[Vec<usize>], node: usize, mark: &mut [bool], seen: &mut [bool]) -> bool {
-    if seen[node] || !mark[node] {
-        return mark[node];
-    }
-    seen[node] = true;
-    for &next in &adj[node] {
-        if !seen[next] && !dfs(adj, next, mark, seen) {
-            mark[node] = false;
-            return false;
+fn build_1d(adj: &[Vec<usize>], start: usize) -> Vec<Vec<i32>> {
+    let mut res = vec![];
+    let mut queue = VecDeque::from([start]);
+    while let Some(node) = queue.pop_front() {
+        for &next in &adj[node] {
+            if res.last().is_none_or(|&v| v as usize != next) {
+                queue.push_back(next);
+            }
         }
+        res.push(node as i32);
     }
-    true
+    vec![res]
 }
 
 #[cfg(test)]
@@ -90,23 +120,36 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(remaining_methods(3, 2, &[[1, 2], [0, 1], [2, 0]]), []);
         assert_eq!(
-            remaining_methods(4, 1, &[[1, 2], [0, 1], [3, 2]]),
-            [0, 1, 2, 3]
+            construct_grid_layout(4, &[[0, 1], [0, 2], [1, 3], [2, 3]]),
+            [[1, 0], [3, 2]]
         );
         assert_eq!(
-            remaining_methods(5, 0, &[[1, 2], [0, 2], [0, 1], [3, 4]]),
-            [3, 4]
+            construct_grid_layout(5, &[[0, 1], [1, 3], [2, 3], [2, 4]]),
+            [[0, 1, 3, 2, 4]]
+        );
+        assert_eq!(
+            construct_grid_layout(
+                9,
+                &[
+                    [0, 1],
+                    [0, 4],
+                    [0, 5],
+                    [1, 7],
+                    [2, 3],
+                    [2, 4],
+                    [2, 5],
+                    [3, 6],
+                    [4, 6],
+                    [4, 7],
+                    [6, 8],
+                    [7, 8]
+                ]
+            ),
+            [[5, 0, 1], [2, 4, 7], [3, 6, 8]]
         );
     }
 
     #[test]
-    fn test() {
-        assert_eq!(
-            remaining_methods(4, 1, &[[2, 3], [2, 0], [3, 2], [0, 1], [1, 2]]),
-            []
-        );
-        assert_eq!(remaining_methods(3, 2, &[[1, 0], [2, 0]]), [0, 1, 2]);
-    }
+    fn test() {}
 }
