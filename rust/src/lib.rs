@@ -6,30 +6,29 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn gcd_values(nums: &[i32], queries: &[i64]) -> Vec<i32> {
-    let max = *nums.iter().max().unwrap_or(&1) as usize;
-    let mut gcd = vec![0_i64; 1 + max];
-    let freq = nums.iter().fold(vec![0; 1 + max], |mut acc, &v| {
-        acc[v as usize] += 1;
-        acc
-    });
-    for div in (1..=max).rev() {
-        let mut count = 0;
-        for mult in (div..=max).step_by(div) {
-            count += freq[mult]; // Every multiple of div
-        }
-        gcd[div] += count * (count - 1) / 2;
-        for i in (2 * div..=max).step_by(div) {
-            gcd[div] -= gcd[i]; // exclude double count
+pub fn min_bitwise_array(nums: &[i32]) -> Vec<i32> {
+    let mut res = vec![];
+    for &num in nums.iter() {
+        if num == 2 {
+            res.push(-1);
+        } else if (1 + num).count_ones() == 1 {
+            res.push(num >> 1); // all 1's
+        } else {
+            // 23 => 0b10111
+            // find 0b111 => shift right by 1 => 0b11
+            // 0b11 | (1+ 0b11) = 0b111
+            // bitor it back onto 0b10000
+            let mut val = num;
+            let mut count = 0;
+            while val & 1 == 1 {
+                count += 1;
+                val >>= 1;
+            }
+            let lower_bits = ((1 << count) - 1) >> 1;
+            res.push(((num >> count) << count) | lower_bits);
         }
     }
-    for i in 1..=max as usize {
-        gcd[i] += gcd[i - 1];
-    }
-    queries
-        .iter()
-        .map(|&q| gcd.partition_point(|&v| v <= q) as i32)
-        .collect()
+    res
 }
 
 #[cfg(test)]
@@ -63,8 +62,7 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(gcd_values(&[2, 3, 4], &[0, 2, 2]), [1, 2, 2]);
-        assert_eq!(gcd_values(&[4, 4, 2, 1], &[5, 3, 1, 0]), [4, 2, 1, 1]);
+        assert_eq!(min_bitwise_array(&[2, 3, 5, 7]), [-1, 1, 4, 3]);
     }
 
     #[test]
