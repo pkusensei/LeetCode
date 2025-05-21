@@ -5,20 +5,18 @@ mod trie;
 
 #[allow(unused_imports)]
 use helper::*;
+use itertools::Itertools;
 
-pub fn kth_character(k: i64, operations: &[i32]) -> char {
-    let mut k = i128::from(k);
-    let n = operations.len();
-    let mut len = 1_i128 << n;
-    let mut count = 0;
-    for &op in operations.iter().rev() {
-        len >>= 1;
-        if k > len {
-            count += op;
-            k -= len;
-        }
-    }
-    char::from(b'a' + (count % 26) as u8)
+pub fn max_good_number(nums: Vec<i32>) -> i32 {
+    nums.iter()
+        .permutations(3)
+        .map(|v| {
+            let [a, b, c] = v[..] else { unreachable!() };
+            let ab = (a << (1 + b.ilog2())) | b;
+            (ab << (1 + c.ilog2())) | c
+        })
+        .max()
+        .unwrap()
 }
 
 #[cfg(test)]
@@ -51,9 +49,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(kth_character(10, &[0, 1, 0, 1]), 'b');
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
