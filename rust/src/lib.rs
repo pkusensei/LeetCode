@@ -5,88 +5,31 @@ mod trie;
 
 #[allow(unused_imports)]
 use helper::*;
-use itertools::Itertools;
-use std::collections::{HashMap, VecDeque};
 
-pub fn construct_grid_layout(n: i32, edges: &[[i32; 2]]) -> Vec<Vec<i32>> {
-    let n = n as usize;
-    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
-        let [a, b] = [0, 1].map(|i| e[i] as usize);
-        acc[a].push(b);
-        acc[b].push(a);
+pub fn gcd_values(nums: &[i32], queries: &[i64]) -> Vec<i32> {
+    let max = *nums.iter().max().unwrap_or(&1) as usize;
+    let mut gcd = vec![0_i64; 1 + max];
+    let freq = nums.iter().fold(vec![0; 1 + max], |mut acc, &v| {
+        acc[v as usize] += 1;
         acc
     });
-    if let Some(i) = adj.iter().position(|v| v.len() == 1) {
-        build_1d(&adj, i)
-    } else {
-        let start = adj.iter().position(|v| v.len() == 2).unwrap();
-        let first_row = find_1d(&adj, start);
-        let cols = first_row.len();
-        let rows = n / cols;
-        let mut res = vec![vec![-1; cols]; rows];
-        let mut seen = vec![false; n];
-        let mut queue = VecDeque::new();
-        for (i, &v) in first_row.iter().enumerate() {
-            res[0][i] = v as i32;
-            seen[v] = true;
-            queue.push_back((0, i, v)); // (row, col, val)
+    for div in (1..=max).rev() {
+        let mut count = 0;
+        for mult in (div..=max).step_by(div) {
+            count += freq[mult]; // Every multiple of div
         }
-        while let Some((r, c, v)) = queue.pop_front() {
-            let Ok([nr, nc]) = neighbors([r, c])
-                .filter(|&[nr, nc]| {
-                    res.get(nr)
-                        .is_some_and(|row| row.get(nc).is_some_and(|&v| v == -1))
-                })
-                .exactly_one()
-            else {
-                break;
-            };
-            let Ok(&val) = adj[v].iter().filter(|&&next| !seen[next]).exactly_one() else {
-                break;
-            };
-            res[nr][nc] = val as i32;
-            seen[val] = true;
-            queue.push_back((nr, nc, val));
-        }
-        res
-    }
-}
-
-fn find_1d(adj: &[Vec<usize>], start: usize) -> Vec<usize> {
-    let mut queue = VecDeque::from([start]);
-    let mut prev = HashMap::new();
-    while let Some(node) = queue.pop_front() {
-        if node != start && adj[node].len() == 2 {
-            let mut res = vec![node];
-            let mut curr = node;
-            while curr != start {
-                curr = prev[&curr];
-                res.push(curr);
-            }
-            return res;
-        }
-        for &next in &adj[node] {
-            if !prev.contains_key(&next) {
-                prev.insert(next, node);
-                queue.push_back(next);
-            }
+        gcd[div] += count * (count - 1) / 2;
+        for i in (2 * div..=max).step_by(div) {
+            gcd[div] -= gcd[i]; // exclude double count
         }
     }
-    unreachable!()
-}
-
-fn build_1d(adj: &[Vec<usize>], start: usize) -> Vec<Vec<i32>> {
-    let mut res = vec![];
-    let mut queue = VecDeque::from([start]);
-    while let Some(node) = queue.pop_front() {
-        for &next in &adj[node] {
-            if res.last().is_none_or(|&v| v as usize != next) {
-                queue.push_back(next);
-            }
-        }
-        res.push(node as i32);
+    for i in 1..=max as usize {
+        gcd[i] += gcd[i - 1];
     }
-    vec![res]
+    queries
+        .iter()
+        .map(|&q| gcd.partition_point(|&v| v <= q) as i32)
+        .collect()
 }
 
 #[cfg(test)]
@@ -120,34 +63,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            construct_grid_layout(4, &[[0, 1], [0, 2], [1, 3], [2, 3]]),
-            [[1, 0], [3, 2]]
-        );
-        assert_eq!(
-            construct_grid_layout(5, &[[0, 1], [1, 3], [2, 3], [2, 4]]),
-            [[0, 1, 3, 2, 4]]
-        );
-        assert_eq!(
-            construct_grid_layout(
-                9,
-                &[
-                    [0, 1],
-                    [0, 4],
-                    [0, 5],
-                    [1, 7],
-                    [2, 3],
-                    [2, 4],
-                    [2, 5],
-                    [3, 6],
-                    [4, 6],
-                    [4, 7],
-                    [6, 8],
-                    [7, 8]
-                ]
-            ),
-            [[5, 0, 1], [2, 4, 7], [3, 6, 8]]
-        );
+        assert_eq!(gcd_values(&[2, 3, 4], &[0, 2, 2]), [1, 2, 2]);
+        assert_eq!(gcd_values(&[4, 4, 2, 1], &[5, 3, 1, 0]), [4, 2, 1, 1]);
     }
 
     #[test]
