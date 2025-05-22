@@ -6,29 +6,28 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_bitwise_array(nums: &[i32]) -> Vec<i32> {
-    let mut res = vec![];
-    for &num in nums.iter() {
-        if num == 2 {
-            res.push(-1);
-        } else if (1 + num).count_ones() == 1 {
-            res.push(num >> 1); // all 1's
-        } else {
-            // 23 => 0b10111
-            // find 0b111 => shift right by 1 => 0b11
-            // 0b11 | (1+ 0b11) = 0b111
-            // bitor it back onto 0b10000
-            let mut val = num;
-            let mut count = 0;
-            while val & 1 == 1 {
-                count += 1;
-                val >>= 1;
+pub fn max_removal(nums: &[i32], mut queries: Vec<[i32; 2]>) -> i32 {
+    use std::{cmp::Reverse, collections::BinaryHeap};
+    queries.sort_unstable_by_key(|&q| Reverse(q));
+    let mut candids = BinaryHeap::new();
+    let mut used = BinaryHeap::<Reverse<usize>>::new();
+    for (idx, &num) in nums.iter().enumerate() {
+        while queries.last().is_some_and(|&q| (q[0] as usize) <= idx) {
+            let [_, right] = queries.pop().unwrap();
+            candids.push(right as usize);
+        }
+        while used.peek().is_some_and(|&Reverse(v)| v < idx) {
+            used.pop();
+        }
+        while (num as usize) > used.len() {
+            let Some(v) = candids.pop() else { return -1 };
+            if v < idx {
+                return -1;
             }
-            let lower_bits = ((1 << count) - 1) >> 1;
-            res.push(((num >> count) << count) | lower_bits);
+            used.push(Reverse(v));
         }
     }
-    res
+    candids.len() as i32
 }
 
 #[cfg(test)]
@@ -62,7 +61,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_bitwise_array(&[2, 3, 5, 7]), [-1, 1, 4, 3]);
+        assert_eq!(max_removal(&[2, 0, 2], vec![[0, 2], [0, 2], [1, 1]]), 1);
+        assert_eq!(
+            max_removal(&[1, 1, 1, 1], vec![[1, 3], [0, 2], [1, 3], [1, 2]]),
+            2
+        );
+        assert_eq!(max_removal(&[1, 2, 3, 4], vec![[0, 3]]), -1);
     }
 
     #[test]
