@@ -3,31 +3,58 @@ mod fenwick_tree;
 mod helper;
 mod trie;
 
+use std::collections::HashSet;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_removal(nums: &[i32], mut queries: Vec<[i32; 2]>) -> i32 {
-    use std::{cmp::Reverse, collections::BinaryHeap};
-    queries.sort_unstable_by_key(|&q| Reverse(q));
-    let mut candids = BinaryHeap::new();
-    let mut used = BinaryHeap::<Reverse<usize>>::new();
-    for (idx, &num) in nums.iter().enumerate() {
-        while queries.last().is_some_and(|&q| (q[0] as usize) <= idx) {
-            let [_, right] = queries.pop().unwrap();
-            candids.push(right as usize);
-        }
-        while used.peek().is_some_and(|&Reverse(v)| v < idx) {
-            used.pop();
-        }
-        while (num as usize) > used.len() {
-            let Some(v) = candids.pop() else { return -1 };
-            if v < idx {
-                return -1;
+pub fn max_removals(source: String, pattern: String, target_indices: Vec<i32>) -> i32 {
+    let (s1, n1) = (source.as_bytes(), source.len());
+    let (s2, n2) = (pattern.as_bytes(), pattern.len());
+    // let target: HashSet<_> = target_indices.into_iter().map(|v| v as usize).collect();
+    // dfs(s1, s2, &target, 0, 0, &mut vec![vec![-1; n2]; n1])
+    let mut target = vec![0; n1];
+    for i in target_indices {
+        target[i as usize] += 1;
+    }
+    let mut dp = vec![i32::MIN; 1 + n2];
+    dp[n2] = 0;
+    for i1 in (0..n1).rev() {
+        for i2 in 0..=n2 {
+            dp[i2] += target[i1];
+            if i2 < n2 && s1[i1] == s2[i2] {
+                dp[i2] = dp[i2].max(dp[1 + i2]);
             }
-            used.push(Reverse(v));
         }
     }
-    candids.len() as i32
+    dp[0]
+}
+
+// tle's
+fn dfs(
+    s1: &[u8],
+    s2: &[u8],
+    target: &HashSet<usize>,
+    i1: usize,
+    i2: usize,
+    memo: &mut [Vec<i32>],
+) -> i32 {
+    if memo[i1][i2] > -1 {}
+    if i1 >= s1.len() {
+        return if i2 >= s2.len() { 0 } else { i32::MIN };
+    }
+    if i2 >= s2.len() {
+        return i32::from(target.contains(&i1)) + dfs(s1, s2, target, 1 + i1, i2, memo);
+    }
+    if memo[i1][i2] > -1 {
+        return memo[i1][i2];
+    }
+    let mut res = i32::from(target.contains(&i1)) + dfs(s1, s2, target, 1 + i1, i2, memo); // skip 
+    if s1[i1] == s2[i2] {
+        res = res.max(dfs(s1, s2, target, 1 + i1, 1 + i2, memo));
+    }
+    memo[i1][i2] = res;
+    res
 }
 
 #[cfg(test)]
@@ -60,14 +87,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(max_removal(&[2, 0, 2], vec![[0, 2], [0, 2], [1, 1]]), 1);
-        assert_eq!(
-            max_removal(&[1, 1, 1, 1], vec![[1, 3], [0, 2], [1, 3], [1, 2]]),
-            2
-        );
-        assert_eq!(max_removal(&[1, 2, 3, 4], vec![[0, 3]]), -1);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
