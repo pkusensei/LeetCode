@@ -3,58 +3,61 @@ mod fenwick_tree;
 mod helper;
 mod trie;
 
-use std::collections::HashSet;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_removals(source: String, pattern: String, target_indices: Vec<i32>) -> i32 {
-    let (s1, n1) = (source.as_bytes(), source.len());
-    let (s2, n2) = (pattern.as_bytes(), pattern.len());
-    // let target: HashSet<_> = target_indices.into_iter().map(|v| v as usize).collect();
-    // dfs(s1, s2, &target, 0, 0, &mut vec![vec![-1; n2]; n1])
-    let mut target = vec![0; n1];
-    for i in target_indices {
-        target[i as usize] += 1;
+pub fn number_of_ways(n: i32, x: i32, y: i32) -> i32 {
+    let mut res = 0;
+    let [comb, dp] = &MATS;
+    for st in 1..=n.min(x) as usize {
+        // Fix stage number st
+        // Each stage can be assigned 1..=y, i.e pow(y, st)
+        // To pick st out of x =>  comb[x][st]
+        // Put all n onto st stages => dp[n][st]
+        res += mod_pow(y as usize, st, MOD) * comb[x as usize][st] % MOD
+            * dp[n as usize][st as usize]
+            % MOD;
+        res %= MOD;
     }
-    let mut dp = vec![i32::MIN; 1 + n2];
-    dp[n2] = 0;
-    for i1 in (0..n1).rev() {
-        for i2 in 0..=n2 {
-            dp[i2] += target[i1];
-            if i2 < n2 && s1[i1] == s2[i2] {
-                dp[i2] = dp[i2].max(dp[1 + i2]);
-            }
-        }
-    }
-    dp[0]
+    res as i32
 }
 
-// tle's
-fn dfs(
-    s1: &[u8],
-    s2: &[u8],
-    target: &HashSet<usize>,
-    i1: usize,
-    i2: usize,
-    memo: &mut [Vec<i32>],
-) -> i32 {
-    if memo[i1][i2] > -1 {}
-    if i1 >= s1.len() {
-        return if i2 >= s2.len() { 0 } else { i32::MIN };
+const N: usize = 1001;
+const MOD: usize = 1_000_000_007;
+const MATS: [[[usize; N]; N]; 2] = precompute();
+
+const fn precompute() -> [[[usize; N]; N]; 2] {
+    let [mut comb, mut dp] = [[[0; N]; N]; 2];
+    comb[0][0] = 1; // comb[all_rooms][picked_rooms]
+    dp[0][0] = 1; // dp[performer][room]
+    let mut row = 1;
+    while row < N {
+        comb[row][0] = 1;
+        let mut col = 1;
+        while col <= row {
+            // Pascal triangle
+            comb[row][col] = (comb[row - 1][col - 1] + comb[row - 1][col]) % MOD;
+            // 1) Start with one less performer and same rooms, dp[row-1][col]
+            //    The new performer can join any room.
+            // 2) One less performer and one less room, dp[row-1][col-1]
+            //    New performer can start any room, and they are labelled.
+            dp[row][col] = col * (dp[row - 1][col - 1] + dp[row - 1][col]) % MOD;
+            col += 1;
+        }
+        row += 1;
     }
-    if i2 >= s2.len() {
-        return i32::from(target.contains(&i1)) + dfs(s1, s2, target, 1 + i1, i2, memo);
+    [comb, dp]
+}
+
+const fn mod_pow(b: usize, exp: usize, m: usize) -> usize {
+    if exp == 0 {
+        return 1;
     }
-    if memo[i1][i2] > -1 {
-        return memo[i1][i2];
+    if exp & 1 == 0 {
+        mod_pow(b * b % m, exp >> 1, m)
+    } else {
+        mod_pow(b * b % m, exp >> 1, m) * b % m
     }
-    let mut res = i32::from(target.contains(&i1)) + dfs(s1, s2, target, 1 + i1, i2, memo); // skip 
-    if s1[i1] == s2[i2] {
-        res = res.max(dfs(s1, s2, target, 1 + i1, 1 + i2, memo));
-    }
-    memo[i1][i2] = res;
-    res
 }
 
 #[cfg(test)]
@@ -87,7 +90,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(number_of_ways(1, 2, 3), 6);
+        assert_eq!(number_of_ways(5, 2, 1), 32);
+        assert_eq!(number_of_ways(3, 3, 4), 684);
+    }
 
     #[test]
     fn test() {}
