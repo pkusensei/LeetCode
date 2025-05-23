@@ -3,33 +3,42 @@ mod fenwick_tree;
 mod helper;
 mod trie;
 
-use std::{
-    cmp::Reverse,
-    collections::{BinaryHeap, HashMap},
-};
+use std::collections::HashMap;
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_x_sum(nums: &[i32], k: i32, x: i32) -> Vec<i32> {
-    let (n, k, x) = (nums.len(), k as usize, x as usize);
-    (0..=n - k).map(|i| x_sum(&nums[i..i + k], x)).collect()
+pub fn count_winning_sequences(s: &str) -> i32 {
+    dfs(s.as_bytes(), 0, 0, 0, &mut HashMap::new())
 }
 
-fn x_sum(nums: &[i32], x: usize) -> i32 {
-    let mut heap: BinaryHeap<_> = nums
-        .iter()
-        .fold(HashMap::new(), |mut acc, &v| {
-            *acc.entry(v).or_insert(0) += 1;
-            acc
-        })
-        .into_iter()
-        .map(|(num, count)| Reverse((count, num)))
-        .collect();
-    while heap.len() > x {
-        heap.pop();
+fn dfs(
+    s: &[u8],
+    idx: usize,
+    prev: u8,
+    score: i32,
+    memo: &mut HashMap<(usize, u8, i32), i32>,
+) -> i32 {
+    if idx >= s.len() {
+        return i32::from(score < 0);
     }
-    heap.iter().map(|Reverse((num, count))| num * count).sum()
+    let k = (idx, prev, score);
+    if let Some(&v) = memo.get(&k) {
+        return v;
+    }
+    let mut res = 0;
+    for b in [b'E', b'F', b'W'].into_iter().filter(|&v| v != prev) {
+        let new_score = score
+            + match [s[idx], b] {
+                [b'F', b'E'] | [b'W', b'F'] | [b'E', b'W'] => 1,
+                [b'E', b'F'] | [b'F', b'W'] | [b'W', b'E'] => -1,
+                _ => 0,
+            };
+        res += dfs(s, 1 + idx, b, new_score, memo);
+        res %= 1_000_000_007;
+    }
+    memo.insert(k, res);
+    res
 }
 
 #[cfg(test)]
@@ -63,7 +72,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(find_x_sum(&[1, 1, 2, 2, 3, 4, 2, 3], 6, 2), [6, 10, 12]);
+        assert_eq!(count_winning_sequences("FFF"), 3);
+        assert_eq!(count_winning_sequences("FWEFW"), 18);
     }
 
     #[test]
