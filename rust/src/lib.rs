@@ -3,61 +3,33 @@ mod fenwick_tree;
 mod helper;
 mod trie;
 
+use std::{
+    cmp::Reverse,
+    collections::{BinaryHeap, HashMap},
+};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn number_of_ways(n: i32, x: i32, y: i32) -> i32 {
-    let mut res = 0;
-    let [comb, dp] = &MATS;
-    for st in 1..=n.min(x) as usize {
-        // Fix stage number st
-        // Each stage can be assigned 1..=y, i.e pow(y, st)
-        // To pick st out of x =>  comb[x][st]
-        // Put all n onto st stages => dp[n][st]
-        res += mod_pow(y as usize, st, MOD) * comb[x as usize][st] % MOD
-            * dp[n as usize][st as usize]
-            % MOD;
-        res %= MOD;
-    }
-    res as i32
+pub fn find_x_sum(nums: &[i32], k: i32, x: i32) -> Vec<i32> {
+    let (n, k, x) = (nums.len(), k as usize, x as usize);
+    (0..=n - k).map(|i| x_sum(&nums[i..i + k], x)).collect()
 }
 
-const N: usize = 1001;
-const MOD: usize = 1_000_000_007;
-const MATS: [[[usize; N]; N]; 2] = precompute();
-
-const fn precompute() -> [[[usize; N]; N]; 2] {
-    let [mut comb, mut dp] = [[[0; N]; N]; 2];
-    comb[0][0] = 1; // comb[all_rooms][picked_rooms]
-    dp[0][0] = 1; // dp[performer][room]
-    let mut row = 1;
-    while row < N {
-        comb[row][0] = 1;
-        let mut col = 1;
-        while col <= row {
-            // Pascal triangle
-            comb[row][col] = (comb[row - 1][col - 1] + comb[row - 1][col]) % MOD;
-            // 1) Start with one less performer and same rooms, dp[row-1][col]
-            //    The new performer can join any room.
-            // 2) One less performer and one less room, dp[row-1][col-1]
-            //    New performer can start any room, and they are labelled.
-            dp[row][col] = col * (dp[row - 1][col - 1] + dp[row - 1][col]) % MOD;
-            col += 1;
-        }
-        row += 1;
+fn x_sum(nums: &[i32], x: usize) -> i32 {
+    let mut heap: BinaryHeap<_> = nums
+        .iter()
+        .fold(HashMap::new(), |mut acc, &v| {
+            *acc.entry(v).or_insert(0) += 1;
+            acc
+        })
+        .into_iter()
+        .map(|(num, count)| Reverse((count, num)))
+        .collect();
+    while heap.len() > x {
+        heap.pop();
     }
-    [comb, dp]
-}
-
-const fn mod_pow(b: usize, exp: usize, m: usize) -> usize {
-    if exp == 0 {
-        return 1;
-    }
-    if exp & 1 == 0 {
-        mod_pow(b * b % m, exp >> 1, m)
-    } else {
-        mod_pow(b * b % m, exp >> 1, m) * b % m
-    }
+    heap.iter().map(|Reverse((num, count))| num * count).sum()
 }
 
 #[cfg(test)]
@@ -91,9 +63,7 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(number_of_ways(1, 2, 3), 6);
-        assert_eq!(number_of_ways(5, 2, 1), 32);
-        assert_eq!(number_of_ways(3, 3, 4), 684);
+        assert_eq!(find_x_sum(&[1, 1, 2, 2, 3, 4, 2, 3], 6, 2), [6, 10, 12]);
     }
 
     #[test]
