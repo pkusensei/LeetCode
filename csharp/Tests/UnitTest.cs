@@ -12,8 +12,6 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
-        int[][] mat = [[0, 1, 2, 0], [3, 4, 5, 2], [1, 3, 1, 5]];
-        sol.SetZeroes(mat);
     }
 
     [TestMethod]

@@ -7,52 +7,28 @@ namespace Solution;
 
 public class Solution
 {
-    public void SetZeroes(int[][] matrix)
+    public long MaximumValueSum(int[] nums, int k, int[][] edges)
     {
-        int rows = matrix.Length;
-        int cols = matrix[0].Length;
-        bool first_row = false;
-        bool first_col = false;
-        for (int r = 0; r < rows; r++)
+        long sum = 0;
+        long min_inc = long.MaxValue;
+        long min_dec = long.MaxValue;
+        int count = 0;
+        foreach (var item in nums)
         {
-            for (int c = 0; c < cols; c++)
+            int xor_val = item ^ k;
+            if (xor_val > item)
             {
-                if (matrix[r][c] == 0)
-                {
-                    matrix[0][c] = 0;
-                    matrix[r][0] = 0;
-                    first_row |= r == 0;
-                    first_col |= c == 0;
-                }
+                sum += xor_val;
+                count += 1;
+                min_inc = Math.Min(min_inc, xor_val - item);
+            }
+            else
+            {
+                sum += item;
+                min_dec = Math.Min(min_dec, item - xor_val);
             }
         }
-        for (int c = 1; c < cols; c++)
-        {
-            if (matrix[0][c] == 0)
-            {
-                for (int r = 0; r < rows; r++)
-                {
-                    matrix[r][c] = 0;
-                }
-            }
-        }
-        for (int r = 1; r < rows; r++)
-        {
-            if (matrix[r][0] == 0)
-            {
-                for (int c = 0; c < cols; c++)
-                {
-                    matrix[r][c] = 0;
-                }
-            }
-        }
-        if (first_row) { Array.Fill(matrix[0], 0); }
-        if (first_col)
-        {
-            for (int r = 0; r < rows; r++)
-            {
-                matrix[r][0] = 0;
-            }
-        }
+        if ((count & 1) == 0) { return sum; }
+        return sum - Math.Min(min_dec, min_inc);
     }
 }
