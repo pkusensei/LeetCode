@@ -7,28 +7,25 @@ namespace Solution;
 
 public class Solution
 {
-    public long MaximumValueSum(int[] nums, int k, int[][] edges)
+    public int KthLargestPerfectSubtree(TreeNode root, int k)
     {
-        long sum = 0;
-        long min_inc = long.MaxValue;
-        long min_dec = long.MaxValue;
-        int count = 0;
-        foreach (var item in nums)
+        List<int> sizes = [];
+        Dfs(root);
+        sizes.Sort((a, b) => b - a);
+        return k <= sizes.Count ? sizes[k - 1] : -1;
+
+        int? Dfs(TreeNode node)
         {
-            int xor_val = item ^ k;
-            if (xor_val > item)
+            if (node is null) { return 0; }
+            var left = Dfs(node.left);
+            var right = Dfs(node.right);
+            if (left.HasValue && right.HasValue && left.Value == right.Value)
             {
-                sum += xor_val;
-                count += 1;
-                min_inc = Math.Min(min_inc, xor_val - item);
+                int val = 1 + 2 * left.Value;
+                sizes.Add(val);
+                return val;
             }
-            else
-            {
-                sum += item;
-                min_dec = Math.Min(min_dec, item - xor_val);
-            }
+            else { return null; }
         }
-        if ((count & 1) == 0) { return sum; }
-        return sum - Math.Min(min_dec, min_inc);
     }
 }
