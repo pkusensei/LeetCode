@@ -8,6 +8,92 @@ use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 #[allow(unused_imports)]
 use helper::*;
 
+pub fn find_x_sum1(nums: &[i32], k: i32, x: i32) -> Vec<i64> {
+    let [k, x] = [k, x].map(|v| v as usize);
+    let mut res = vec![];
+    let mut freq = HashMap::new();
+
+    #[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd)]
+    struct Element {
+        count: i64,
+        value: i64,
+    }
+    let mut top = BTreeSet::new();
+    let mut bot = BTreeSet::new();
+    let mut x_sum: i64 = 0;
+    for (idx, &num) in nums.iter().enumerate() {
+        let count = *freq.get(&num).unwrap_or(&0);
+        // Remove existing entry if present
+        if count > 0 {
+            let elem = Element {
+                count: i64::from(count),
+                value: i64::from(num),
+            };
+            // If in bot, no need to adjust running_sum
+            // Otherwise..
+            if !bot.remove(&elem) {
+                top.remove(&elem);
+                x_sum -= i64::from(count) * i64::from(num);
+            }
+        }
+        // Insert with new count
+        let new_count = count + 1;
+        freq.insert(num, new_count);
+        let new_elem = Element {
+            count: i64::from(new_count),
+            value: i64::from(num),
+        };
+        top.insert(new_elem);
+        x_sum += i64::from(new_count) * i64::from(num);
+        // Maintain top x elements
+        if top.len() > x {
+            if let Some(&elem) = top.iter().next() {
+                x_sum -= elem.count * elem.value;
+                top.remove(&elem);
+                bot.insert(elem);
+            }
+        }
+        // Handle window sliding
+        if idx >= k {
+            let old_num = nums[idx - k];
+            let old_count = *freq.get(&old_num).unwrap();
+            let old_elem = Element {
+                count: i64::from(old_count),
+                value: i64::from(old_num),
+            };
+            if !bot.remove(&old_elem) {
+                // Was in bot, no need to adjust running_sum
+                top.remove(&old_elem);
+                x_sum -= i64::from(old_count) * i64::from(old_num);
+            }
+            // Decrement count
+            if old_count > 1 {
+                freq.insert(old_num, old_count - 1);
+                let new_elem = Element {
+                    count: i64::from(old_count - 1),
+                    value: i64::from(old_num),
+                };
+                bot.insert(new_elem);
+            } else {
+                freq.remove(&old_num);
+            }
+            // Maintain top x elements
+            if top.len() < x {
+                if let Some(&elem) = bot.iter().next_back() {
+                    x_sum += elem.count * elem.value;
+                    bot.remove(&elem);
+                    top.insert(elem);
+                }
+            }
+        }
+        // Record result
+        if idx + 1 >= k {
+            res.push(x_sum);
+        }
+    }
+    res
+}
+
 pub fn find_x_sum(nums: &[i32], k: i32, x: i32) -> Vec<i64> {
     let [k, x] = [k, x].map(|v| v as usize);
     let mut num_freqs = nums[..k].iter().fold(HashMap::new(), |mut acc, &v| {
@@ -139,6 +225,9 @@ mod tests {
     fn basics() {
         assert_eq!(find_x_sum(&[1, 1, 2, 2, 3, 4, 2, 3], 6, 2), [6, 10, 12]);
         assert_eq!(find_x_sum(&[3, 8, 7, 8, 7, 5], 2, 2), [11, 15, 15, 15, 12]);
+
+        assert_eq!(find_x_sum1(&[1, 1, 2, 2, 3, 4, 2, 3], 6, 2), [6, 10, 12]);
+        assert_eq!(find_x_sum1(&[3, 8, 7, 8, 7, 5], 2, 2), [11, 15, 15, 15, 12]);
     }
 
     #[test]
