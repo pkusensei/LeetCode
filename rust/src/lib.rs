@@ -6,22 +6,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn string_sequence(target: String) -> Vec<String> {
-    let mut res = vec![];
-    let mut curr = vec![];
-    for b in target.bytes() {
-        let n = curr.len();
-        curr.push(b'a');
-        res.push(String::from_utf8(curr.clone()).unwrap());
-        while curr[n] != b {
-            curr[n] += 1;
-            if curr[n] > b'z' {
-                curr[n] = b'a'
-            }
-            res.push(String::from_utf8(curr.clone()).unwrap());
+pub fn number_of_substrings(s: String, k: i32) -> i32 {
+    let (s, n) = (s.as_bytes(), s.len());
+    let mut freq = [0; 26];
+    let mut count = 0;
+    let mut left = 0;
+    for (right, &b) in s.iter().enumerate() {
+        freq[usize::from(b - b'a')] += 1;
+        while freq.iter().any(|&v| v >= k) {
+            freq[usize::from(s[left] - b'a')] -= 1;
+            left += 1;
         }
+        count += right + 1 - left;
     }
-    res
+    (n * (1 + n) / 2 - count) as i32
 }
 
 #[cfg(test)]
