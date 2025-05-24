@@ -6,20 +6,29 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn number_of_substrings(s: String, k: i32) -> i32 {
-    let (s, n) = (s.as_bytes(), s.len());
-    let mut freq = [0; 26];
-    let mut count = 0;
-    let mut left = 0;
-    for (right, &b) in s.iter().enumerate() {
-        freq[usize::from(b - b'a')] += 1;
-        while freq.iter().any(|&v| v >= k) {
-            freq[usize::from(s[left] - b'a')] -= 1;
-            left += 1;
+pub fn min_operations(nums: Vec<i32>) -> i32 {
+    let mut prev = *nums.last().unwrap();
+    let mut res = 0;
+    for &num in nums.iter().rev().skip(1) {
+        if num <= prev {
+            prev = num;
+        } else {
+            let mut curr = num;
+            for p in 2..num {
+                if num % p == 0 {
+                    curr = p;
+                    break;
+                }
+            }
+            if curr <= prev {
+                prev = curr;
+                res += 1;
+            } else {
+                return -1;
+            }
         }
-        count += right + 1 - left;
     }
-    (n * (1 + n) / 2 - count) as i32
+    res
 }
 
 #[cfg(test)]
