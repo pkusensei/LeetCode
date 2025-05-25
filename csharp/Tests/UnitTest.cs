@@ -12,7 +12,6 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
-        Assert.AreEqual(6, sol.LongestPalindrome(["lc", "cl", "gg"]));
     }
 
     [TestMethod]

@@ -7,24 +7,59 @@ namespace Solution;
 
 public class Solution
 {
-    public int LongestPalindrome(string[] words)
+    public int LengthAfterTransformations(string s, int t, IList<int> nums)
     {
-        Dictionary<char, int> same_dict = [];
-        Dictionary<(char, char), (int, int)> diff_dict = [];
-        foreach (var w in words)
+        const int N = 26;
+        const long M = 1_000_000_007;
+
+        Span<int> freq = stackalloc int[N];
+        foreach (var ch in s) { freq[ch - 'a'] += 1; }
+        long[,] mat = new long[N, N]; // mat[to, from]
+        for (int i = 0; i < N; i++)
         {
-            if (w[0] == w[1] && !same_dict.TryAdd(w[0], 1)) { same_dict[w[0]] += 1; }
-            else if (diff_dict.TryGetValue((w[1], w[0]), out var v)) { diff_dict[(w[1], w[0])] = (v.Item1, 1 + v.Item2); }
-            else if (!diff_dict.TryAdd((w[0], w[1]), (1, 0)))
+            for (int delta = 1; delta <= nums[i]; delta++)
             {
-                var val = diff_dict[(w[0], w[1])];
-                diff_dict[(w[0], w[1])] = (1 + val.Item1, val.Item2);
+                mat[(i + delta) % N, i] += 1;
             }
         }
-        int res = diff_dict.Values.Select(v => 2 * Math.Min(v.Item1, v.Item2)).Sum();
-        res += same_dict.Values.Sum();
-        int odd = same_dict.Values.Where(v => (v & 1) == 1).Count();
-        if (odd > 0) { res -= odd - 1; }
-        return 2 * res;
+        mat = MatPow(mat, t);
+        long[] res = new long[N];
+        for (int i = 0; i < N; i++)
+        {
+            for (int j = 0; j < N; j++)
+            {
+                res[i] = (res[i] + mat[i, j] * freq[j]) % M;
+            }
+        }
+        return (int)res.Aggregate(0L, (a, b) => (a + b) % M);
+
+        static long[,] MatPow(long[,] mat, int pow)
+        {
+            var id = new long[N, N];
+            for (int i = 0; i < N; i++) { id[i, i] = 1; }
+            if (pow == 0) { return id; }
+            if (pow == 1) { return mat; }
+            var half = MatPow(mat, pow >> 1);
+            var squared = MatMul(half, half);
+            if ((pow & 1) == 0) { return squared; }
+            else { return MatMul(squared, mat); }
+        }
+
+        static long[,] MatMul(long[,] a, long[,] b)
+        {
+            long[,] res = new long[N, N];
+            for (int i = 0; i < N; i++)
+            {
+                for (int j = 0; j < N; j++)
+                {
+                    for (int k = 0; k < N; k++)
+                    {
+                        res[i, j] += a[i, k] * b[k, j];
+                        res[i, j] %= M;
+                    }
+                }
+            }
+            return res;
+        }
     }
 }
