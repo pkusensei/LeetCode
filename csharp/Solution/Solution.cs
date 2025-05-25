@@ -7,25 +7,24 @@ namespace Solution;
 
 public class Solution
 {
-    public int KthLargestPerfectSubtree(TreeNode root, int k)
+    public int LongestPalindrome(string[] words)
     {
-        List<int> sizes = [];
-        Dfs(root);
-        sizes.Sort((a, b) => b - a);
-        return k <= sizes.Count ? sizes[k - 1] : -1;
-
-        int? Dfs(TreeNode node)
+        Dictionary<char, int> same_dict = [];
+        Dictionary<(char, char), (int, int)> diff_dict = [];
+        foreach (var w in words)
         {
-            if (node is null) { return 0; }
-            var left = Dfs(node.left);
-            var right = Dfs(node.right);
-            if (left.HasValue && right.HasValue && left.Value == right.Value)
+            if (w[0] == w[1] && !same_dict.TryAdd(w[0], 1)) { same_dict[w[0]] += 1; }
+            else if (diff_dict.TryGetValue((w[1], w[0]), out var v)) { diff_dict[(w[1], w[0])] = (v.Item1, 1 + v.Item2); }
+            else if (!diff_dict.TryAdd((w[0], w[1]), (1, 0)))
             {
-                int val = 1 + 2 * left.Value;
-                sizes.Add(val);
-                return val;
+                var val = diff_dict[(w[0], w[1])];
+                diff_dict[(w[0], w[1])] = (1 + val.Item1, val.Item2);
             }
-            else { return null; }
         }
+        int res = diff_dict.Values.Select(v => 2 * Math.Min(v.Item1, v.Item2)).Sum();
+        res += same_dict.Values.Sum();
+        int odd = same_dict.Values.Where(v => (v & 1) == 1).Count();
+        if (odd > 0) { res -= odd - 1; }
+        return 2 * res;
     }
 }
