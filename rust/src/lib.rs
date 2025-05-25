@@ -6,21 +6,57 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_score(n: i32, k: i32, stay_score: &[&[i32]], travel_score: &[&[i32]]) -> i32 {
-    let [n, k] = [n, k].map(|v| v as usize);
-    let mut dp = vec![0; n];
-    for i in 0..k {
-        let mut curr = vec![0; n];
-        for dest in 0..n {
-            curr[dest] = curr[dest].max(dp[dest] + stay_score[i][dest]);
-            for city in 0..n {
-                curr[dest] = curr[dest].max(dp[city] + travel_score[city][dest]);
-            }
-        }
-        dp = curr;
+pub fn possible_string_count(word: &str, k: i32) -> i32 {
+    const M: i64 = 1_000_000_007;
+    let mut nums = vec![];
+    let mut prod = 1;
+    for len in word
+        .as_bytes()
+        .chunk_by(|a, b| a == b)
+        .map(|ch| ch.len() as i64)
+    {
+        nums.push(len);
+        prod = prod * len % M;
     }
-    dp.into_iter().max().unwrap()
+    let (n, k) = (nums.len(), k as usize);
+    if k <= n {
+        return prod as i32;
+    }
+    let mut dp = vec![0; k];
+    dp[0] = 1;
+    for idx in 1..=n {
+        let prefix = dp.into_iter().fold(vec![0], |mut acc, v| {
+            acc.push((v + acc.last().unwrap_or(&0)) % M);
+            acc
+        });
+        dp = vec![0; k];
+        for len in idx..k {
+            let prev = len - (nums[idx - 1] as usize).min(len + 1 - idx);
+            dp[len] = (prefix[len] - prefix[prev]).rem_euclid(M);
+        }
+    }
+    let less_than_k = dp.iter().fold(0, |acc, v| (acc + v) % M);
+    (prod - less_than_k).rem_euclid(M) as i32
 }
+
+// fn dfs(nums: &[usize], k: usize, idx: usize, memo: &mut [Vec<Option<usize>>]) -> usize {
+//     if k == 0 {
+//         return nums[idx..].iter().fold(1, |acc, v| acc * v % M);
+//     }
+//     if idx >= nums.len() {
+//         return 0;
+//     }
+//     if let Some(v) = memo[idx][k] {
+//         return v;
+//     }
+//     let mut res = 0;
+//     for curr in 1..=nums[idx] {
+//         res += dfs(nums, k.saturating_sub(curr), 1 + idx, memo);
+//         res %= M
+//     }
+//     memo[idx][k] = Some(res);
+//     res
+// }
 
 #[cfg(test)]
 mod tests {
@@ -53,16 +89,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_score(2, 1, &[&[2, 3]], &[&[0, 2], &[1, 0]]), 3);
-        assert_eq!(
-            max_score(
-                3,
-                2,
-                &[&[3, 4, 2], &[2, 1, 2]],
-                &[&[0, 2, 1], &[2, 0, 4], &[3, 2, 0]]
-            ),
-            8
-        );
+        assert_eq!(possible_string_count("aabbccdd", 7), 5);
+        assert_eq!(possible_string_count("aabbccdd", 8), 1);
+        assert_eq!(possible_string_count("aaabbb", 3), 8);
     }
 
     #[test]
