@@ -6,56 +6,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_subtree_sizes(mut parent: Vec<i32>, s: &str) -> Vec<i32> {
-    let n = parent.len();
-    let mut adj = build(&parent);
-    dfs1(&adj, s.as_bytes(), 0, &mut [None; 26], &mut parent);
-    adj = build(&parent);
-    let mut res = vec![0; n];
-    dfs2(&adj, 0, &mut res);
-    res
-}
-
-fn build(parent: &[i32]) -> Vec<Vec<usize>> {
-    let n = parent.len();
-    let adj = parent
-        .iter()
-        .enumerate()
-        .fold(vec![vec![]; n], |mut acc, (i, &v)| {
-            if i > 0 {
-                acc[v as usize].push(i);
+pub fn max_score(n: i32, k: i32, stay_score: &[&[i32]], travel_score: &[&[i32]]) -> i32 {
+    let [n, k] = [n, k].map(|v| v as usize);
+    let mut dp = vec![0; n];
+    for i in 0..k {
+        let mut curr = vec![0; n];
+        for dest in 0..n {
+            curr[dest] = curr[dest].max(dp[dest] + stay_score[i][dest]);
+            for city in 0..n {
+                curr[dest] = curr[dest].max(dp[city] + travel_score[city][dest]);
             }
-            acc
-        });
-    adj
-}
-
-fn dfs1(
-    adj: &[Vec<usize>],
-    s: &[u8],
-    node: usize,
-    last: &mut [Option<i32>; 26],
-    parent: &mut [i32],
-) {
-    let idx = usize::from(s[node] - b'a');
-    let old = last[idx];
-    if let Some(v) = last[idx] {
-        parent[node] = v
+        }
+        dp = curr;
     }
-    last[idx] = Some(node as i32);
-    for &next in &adj[node] {
-        dfs1(adj, s, next, last, parent);
-    }
-    last[idx] = old;
-}
-
-fn dfs2(adj: &[Vec<usize>], node: usize, res: &mut [i32]) -> i32 {
-    let mut sz = 1;
-    for &next in &adj[node] {
-        sz += dfs2(adj, next, res);
-    }
-    res[node] = sz;
-    sz
+    dp.into_iter().max().unwrap()
 }
 
 #[cfg(test)]
@@ -89,9 +53,15 @@ mod tests {
 
     #[test]
     fn basics() {
+        assert_eq!(max_score(2, 1, &[&[2, 3]], &[&[0, 2], &[1, 0]]), 3);
         assert_eq!(
-            find_subtree_sizes(vec![-1, 0, 4, 0, 1], "abbba"),
-            [5, 2, 1, 1, 1]
+            max_score(
+                3,
+                2,
+                &[&[3, 4, 2], &[2, 1, 2]],
+                &[&[0, 2, 1], &[2, 0, 4], &[3, 2, 0]]
+            ),
+            8
         );
     }
 
