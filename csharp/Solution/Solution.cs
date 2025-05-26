@@ -7,48 +7,87 @@ namespace Solution;
 
 public class Solution
 {
-    public int LargestPathValue(string colors, int[][] edges)
+    public int CountBalancedPermutations(string num)
     {
-        int n = colors.Length;
-        int[] degs = new int[n];
-        List<int>[] adj = [.. Enumerable.Range(0, n).Select(_ => new List<int>())];
-        foreach (var e in edges)
+        Span<int> freq = stackalloc int[10];
+        int sum = 0;
+        foreach (var c in num)
         {
-            (int from, int to) = (e[0], e[1]);
-            adj[to].Add(from);
-            degs[from] += 1;
+            freq[c - '0'] += 1;
+            sum += c - '0';
         }
-        Queue<int> queue = [];
-        int[,] dp = new int[n, 26];
-        for (int i = 0; i < n; i++)
+        if ((sum & 1) == 1) { return 0; }
+        int n = num.Length;
+        long[,,] memo = new long[n, 1 + n / 2, 1 + sum / 2];
+        for (int a = 0; a < n; a++)
         {
-            if (degs[i] == 0)
+            for (int b = 0; b < 1 + n / 2; b++)
             {
-                dp[i, colors[i] - 'a'] += 1;
-                queue.Enqueue(i);
-            }
-        }
-        if (queue.Count == 0) { return -1; }
-        int res = 1;
-        while (queue.TryDequeue(out var node))
-        {
-            foreach (var next in adj[node])
-            {
-                for (int c = 0; c < 26; c++)
+                for (int c = 0; c < 1 + sum / 2; c++)
                 {
-                    dp[next, c] = Math.Max(dp[next, c], dp[node, c]);
-                }
-                degs[next] -= 1;
-                if (degs[next] == 0)
-                {
-                    int c = colors[next] - 'a';
-                    dp[next, c] += 1;
-                    res = Math.Max(res, dp[next, c]);
-                    queue.Enqueue(next);
+                    memo[a, b, c] = -1; // set to -1 is necessary to avoid tle
                 }
             }
         }
-        if (degs.Any(v => v > 0)) { return -1; }
-        return res;
+        long res = Dfs(0, n / 2, sum / 2) * Fact[n / 2] % MOD * Fact[n - n / 2] % MOD;
+        foreach (var f in freq)
+        {
+            res = res * InvF[f] % MOD;
+        }
+        return (int)res;
+
+        long Dfs(int idx, int count, int sum)
+        {
+            if (count == 0) { return sum == 0 ? 1 : 0; }
+            if (idx >= n || sum < 0) { return 0; }
+            if (memo[idx, count, sum] > -1) { return memo[idx, count, sum]; }
+            long res = (Dfs(1 + idx, count, sum) + Dfs(1 + idx, count - 1, sum - (num[idx] - '0'))) % MOD;
+            memo[idx, count, sum] = res;
+            return res;
+        }
+    }
+
+    const int N = 81;
+    const long MOD = 1_000_000_007;
+    static long[] _fact;
+    static long[] _invf;
+    static long[] Fact
+    {
+        get
+        {
+            if (_fact is null)
+            {
+                _fact = new long[N];
+                _fact[0] = 1;
+                for (int i = 1; i < N; i++)
+                {
+                    _fact[i] = i * _fact[i - 1] % MOD;
+                }
+            }
+            return _fact;
+        }
+    }
+    static long[] InvF
+    {
+        get
+        {
+            if (_invf is null)
+            {
+                _invf = new long[N];
+                _invf[N - 1] = ModPow(Fact[N - 1], MOD - 2, MOD);
+                for (int i = N - 2; i >= 0; i -= 1)
+                {
+                    _invf[i] = (1 + i) * _invf[1 + i] % MOD;
+                }
+            }
+            return _invf;
+        }
+    }
+
+    static long ModPow(long b, long exp, long m)
+    {
+        if (exp == 0) { return 1; }
+        if ((exp & 1) == 0) { return ModPow(b * b % m, exp >> 1, m); }
+        return ModPow(b * b % m, exp >> 1, m) * b % m;
     }
 }
