@@ -3,54 +3,29 @@ mod fenwick_tree;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn subsequence_pair_count(nums: &[i32]) -> i32 {
-    dfs(nums, 0, 0, 0, &mut HashMap::new())
-}
-
-fn dfs(
-    nums: &[i32],
-    idx: usize,
-    gcd1: i32,
-    gcd2: i32,
-    memo: &mut HashMap<(usize, i32, i32), i32>,
-) -> i32 {
-    const M: i32 = 1_000_000_007;
-    if idx >= nums.len() {
-        return i32::from(gcd1 > 0 && gcd1 == gcd2);
+pub fn max_frequency(nums: &[i32], k: i32, num_operations: i32) -> i32 {
+    use std::collections::{BTreeMap, BTreeSet, HashMap};
+    let mut freq = HashMap::new();
+    let mut line = BTreeMap::new();
+    let mut candids = BTreeSet::new();
+    for &num in nums.iter() {
+        *freq.entry(num).or_insert(0) += 1;
+        *line.entry(num - k).or_insert(0) += 1;
+        *line.entry(num + k + 1).or_insert(0) -= 1;
+        candids.extend([num, num - k, num + k + 1]);
     }
-    let k = (idx, gcd1, gcd2);
-    if let Some(&v) = memo.get(&k) {
-        return v;
+    let mut prefix = 0;
+    let mut res = 1;
+    for num in candids {
+        let f = *freq.get(&num).unwrap_or(&0);
+        prefix += line.get(&num).unwrap_or(&0);
+        let change = num_operations.min(prefix - f);
+        res = res.max(f + change)
     }
-    let val = nums[idx];
-    let mut res = (dfs(nums, 1 + idx, gcd1, gcd2, memo)
-        + dfs(
-            nums,
-            1 + idx,
-            if gcd1 > 0 { gcd(gcd1, val) } else { val },
-            gcd2,
-            memo,
-        ))
-        % M
-        + dfs(
-            nums,
-            1 + idx,
-            gcd1,
-            if gcd2 > 0 { gcd(gcd2, val) } else { val },
-            memo,
-        );
-    res %= M;
-    memo.insert(k, res);
     res
-}
-
-const fn gcd(a: i32, b: i32) -> i32 {
-    if a == 0 { b } else { gcd(b % a, a) }
 }
 
 #[cfg(test)]
@@ -84,8 +59,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(subsequence_pair_count(&[1, 2, 3, 4]), 10);
-        assert_eq!(subsequence_pair_count(&[10, 20, 30]), 2);
+        assert_eq!(max_frequency(&[1, 4, 5], 1, 2), 2);
+        assert_eq!(max_frequency(&[5, 11, 20, 20], 5, 1), 2);
     }
 
     #[test]
