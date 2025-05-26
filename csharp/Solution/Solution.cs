@@ -7,59 +7,48 @@ namespace Solution;
 
 public class Solution
 {
-    public int LengthAfterTransformations(string s, int t, IList<int> nums)
+    public int LargestPathValue(string colors, int[][] edges)
     {
-        const int N = 26;
-        const long M = 1_000_000_007;
-
-        Span<int> freq = stackalloc int[N];
-        foreach (var ch in s) { freq[ch - 'a'] += 1; }
-        long[,] mat = new long[N, N]; // mat[to, from]
-        for (int i = 0; i < N; i++)
+        int n = colors.Length;
+        int[] degs = new int[n];
+        List<int>[] adj = [.. Enumerable.Range(0, n).Select(_ => new List<int>())];
+        foreach (var e in edges)
         {
-            for (int delta = 1; delta <= nums[i]; delta++)
+            (int from, int to) = (e[0], e[1]);
+            adj[to].Add(from);
+            degs[from] += 1;
+        }
+        Queue<int> queue = [];
+        int[,] dp = new int[n, 26];
+        for (int i = 0; i < n; i++)
+        {
+            if (degs[i] == 0)
             {
-                mat[(i + delta) % N, i] += 1;
+                dp[i, colors[i] - 'a'] += 1;
+                queue.Enqueue(i);
             }
         }
-        mat = MatPow(mat, t);
-        long[] res = new long[N];
-        for (int i = 0; i < N; i++)
+        if (queue.Count == 0) { return -1; }
+        int res = 1;
+        while (queue.TryDequeue(out var node))
         {
-            for (int j = 0; j < N; j++)
+            foreach (var next in adj[node])
             {
-                res[i] = (res[i] + mat[i, j] * freq[j]) % M;
-            }
-        }
-        return (int)res.Aggregate(0L, (a, b) => (a + b) % M);
-
-        static long[,] MatPow(long[,] mat, int pow)
-        {
-            var id = new long[N, N];
-            for (int i = 0; i < N; i++) { id[i, i] = 1; }
-            if (pow == 0) { return id; }
-            if (pow == 1) { return mat; }
-            var half = MatPow(mat, pow >> 1);
-            var squared = MatMul(half, half);
-            if ((pow & 1) == 0) { return squared; }
-            else { return MatMul(squared, mat); }
-        }
-
-        static long[,] MatMul(long[,] a, long[,] b)
-        {
-            long[,] res = new long[N, N];
-            for (int i = 0; i < N; i++)
-            {
-                for (int j = 0; j < N; j++)
+                for (int c = 0; c < 26; c++)
                 {
-                    for (int k = 0; k < N; k++)
-                    {
-                        res[i, j] += a[i, k] * b[k, j];
-                        res[i, j] %= M;
-                    }
+                    dp[next, c] = Math.Max(dp[next, c], dp[node, c]);
+                }
+                degs[next] -= 1;
+                if (degs[next] == 0)
+                {
+                    int c = colors[next] - 'a';
+                    dp[next, c] += 1;
+                    res = Math.Max(res, dp[next, c]);
+                    queue.Enqueue(next);
                 }
             }
-            return res;
         }
+        if (degs.Any(v => v > 0)) { return -1; }
+        return res;
     }
 }
