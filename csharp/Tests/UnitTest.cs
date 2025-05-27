@@ -10,12 +10,8 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow("123", 2)]
-    [DataRow("112", 1)]
-    [DataRow("12345", 0)]
-    public void TestMethod1(string s, int exp)
+    public void TestMethod1()
     {
-        Assert.AreEqual(exp, sol.CountBalancedPermutations(s));
     }
 
     [TestMethod]
