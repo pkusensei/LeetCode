@@ -6,25 +6,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_increasing_subarrays(nums: &[i32]) -> i32 {
-    let n = nums.len();
-    let mut res = 1;
-    let mut left = 0;
-    let mut prev = 0;
-    for (right, &num) in nums.iter().enumerate().skip(1) {
-        if num > nums[right - 1] {
-            continue;
-        }
-        let a = prev.min(right - left);
-        let b = (right - left) / 2;
-        prev = right - left;
-        res = res.max(a).max(b);
-        left = right;
+pub fn sum_of_good_subsequences(nums: &[i32]) -> i32 {
+    use std::collections::HashMap;
+    const M: i64 = 1_000_000_007;
+    let mut sums = HashMap::<i64, i64>::new();
+    let mut freqs = HashMap::<i64, i64>::new();
+    for &num in nums.iter() {
+        let num = i64::from(num);
+        let a = num - 1;
+        let b = num + 1;
+        let freq = 1 + freqs.get(&a).unwrap_or(&0) + freqs.get(&b).unwrap_or(&0);
+        let v = freqs.entry(num).or_insert(0);
+        *v = (*v + freq) % M;
+        let sum = (sums.get(&a).unwrap_or(&0) + sums.get(&b).unwrap_or(&0) + freq * num) % M;
+        let v = sums.entry(num).or_insert(0);
+        *v = (*v + sum) % M;
     }
-    let a = prev.min(n - left);
-    let b = (n - left) / 2;
-    res = res.max(a).max(b);
-    res as i32
+    sums.into_values().fold(0, |acc, v| (acc + v) % M) as i32
 }
 
 #[cfg(test)]
@@ -58,11 +56,10 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_increasing_subarrays(&[2, 5, 7, 8, 9, 2, 3, 4, 3, 1]), 3);
+        assert_eq!(sum_of_good_subsequences(&[1, 2, 1]), 14);
+        assert_eq!(sum_of_good_subsequences(&[3, 4, 5]), 40);
     }
 
     #[test]
-    fn test() {
-        assert_eq!(max_increasing_subarrays(&[5, 8, -2, -1]), 2);
-    }
+    fn test() {}
 }
