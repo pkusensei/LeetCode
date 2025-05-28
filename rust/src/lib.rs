@@ -6,24 +6,51 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_possible_to_rearrange(s: String, t: String, k: i32) -> bool {
-    use std::collections::HashMap;
-    let k = k as usize;
-    let sz = s.len() / k;
-    let mut freq = s.as_bytes().chunks(sz).fold(HashMap::new(), |mut acc, ch| {
-        *acc.entry(ch).or_insert(0) += 1;
-        acc
-    });
-    for ch in t.as_bytes().chunks(sz) {
-        let Some(v) = freq.get_mut(&ch) else {
-            return false;
-        };
-        if *v <= 0 {
-            return false;
-        }
-        *v -= 1;
+pub fn min_array_sum(nums: Vec<i32>, k: i32, op1: i32, op2: i32) -> i32 {
+    let n = nums.len();
+    let [op1, op2] = [op1, op2].map(|v| v as usize);
+    dfs(
+        &nums,
+        k,
+        0,
+        op1,
+        op2,
+        &mut vec![vec![vec![-1; 1 + op2]; 1 + op1]; n],
+    )
+}
+
+fn dfs(
+    nums: &[i32],
+    k: i32,
+    idx: usize,
+    op1: usize,
+    op2: usize,
+    memo: &mut [Vec<Vec<i32>>],
+) -> i32 {
+    if idx >= nums.len() {
+        return 0;
     }
-    true
+    if memo[idx][op1][op2] > -1 {
+        return memo[idx][op1][op2];
+    }
+    let val = nums[idx];
+    let mut res = val + dfs(nums, k, 1 + idx, op1, op2, memo); // skip
+    if op1 > 0 {
+        let curr = (1 + val) / 2;
+        res = res.min(curr + dfs(nums, k, 1 + idx, op1 - 1, op2, memo));
+        if curr >= k && op2 > 0 {
+            res = res.min(curr - k + dfs(nums, k, 1 + idx, op1 - 1, op2 - 1, memo));
+        }
+    }
+    if op2 > 0 && val >= k {
+        let curr = val - k;
+        res = res.min(curr + dfs(nums, k, 1 + idx, op1, op2 - 1, memo));
+        if op1 > 0 {
+            res = res.min((1 + curr) / 2 + dfs(nums, k, 1 + idx, op1 - 1, op2 - 1, memo));
+        }
+    }
+    memo[idx][op1][op2] = res;
+    res
 }
 
 #[cfg(test)]
