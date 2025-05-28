@@ -6,51 +6,37 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_array_sum(nums: Vec<i32>, k: i32, op1: i32, op2: i32) -> i32 {
-    let n = nums.len();
-    let [op1, op2] = [op1, op2].map(|v| v as usize);
-    dfs(
-        &nums,
-        k,
-        0,
-        op1,
-        op2,
-        &mut vec![vec![vec![-1; 1 + op2]; 1 + op1]; n],
-    )
+pub fn maximize_sum_of_weights(edges: &[[i32; 3]], k: i32) -> i64 {
+    let n = 1 + edges.len();
+    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
+        let [a, b] = [0, 1].map(|i| e[i] as usize);
+        acc[a].push((b, i64::from(e[2])));
+        acc[b].push((a, i64::from(e[2])));
+        acc
+    });
+    dfs(&adj, k as usize, 0, n)[1]
 }
 
-fn dfs(
-    nums: &[i32],
-    k: i32,
-    idx: usize,
-    op1: usize,
-    op2: usize,
-    memo: &mut [Vec<Vec<i32>>],
-) -> i32 {
-    if idx >= nums.len() {
-        return 0;
-    }
-    if memo[idx][op1][op2] > -1 {
-        return memo[idx][op1][op2];
-    }
-    let val = nums[idx];
-    let mut res = val + dfs(nums, k, 1 + idx, op1, op2, memo); // skip
-    if op1 > 0 {
-        let curr = (1 + val) / 2;
-        res = res.min(curr + dfs(nums, k, 1 + idx, op1 - 1, op2, memo));
-        if curr >= k && op2 > 0 {
-            res = res.min(curr - k + dfs(nums, k, 1 + idx, op1 - 1, op2 - 1, memo));
+// sum with [at most k-1 children, at most k]
+fn dfs(adj: &[Vec<(usize, i64)>], k: usize, node: usize, prev: usize) -> [i64; 2] {
+    let mut res = 0;
+    let mut diff = vec![];
+    for &(next, w) in &adj[node] {
+        if next == prev {
+            continue;
         }
+        let [a, b] = dfs(adj, k, next, node);
+        res += b; // Assume subtree with k children -- no connection
+        // For each child, what if current `w` is picked?
+        // i.e try find a "upgrade" with this edge
+        diff.push((a + w - b).max(0));
     }
-    if op2 > 0 && val >= k {
-        let curr = val - k;
-        res = res.min(curr + dfs(nums, k, 1 + idx, op1, op2 - 1, memo));
-        if op1 > 0 {
-            res = res.min((1 + curr) / 2 + dfs(nums, k, 1 + idx, op1 - 1, op2 - 1, memo));
-        }
+    if diff.len() >= k {
+        diff.select_nth_unstable_by(k - 1, |a, b| b.cmp(a)); // big first
     }
-    memo[idx][op1][op2] = res;
-    res
+    res += diff.iter().take(k - 1).sum::<i64>();
+    let res2 = res + diff.get(k - 1).unwrap_or(&0);
+    [res, res2]
 }
 
 #[cfg(test)]
@@ -83,7 +69,26 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(
+            maximize_sum_of_weights(&[[0, 1, 4], [0, 2, 2], [2, 3, 12], [2, 4, 6]], 2),
+            22
+        );
+        assert_eq!(
+            maximize_sum_of_weights(
+                &[
+                    [0, 1, 5],
+                    [1, 2, 10],
+                    [0, 3, 15],
+                    [3, 4, 20],
+                    [3, 5, 5],
+                    [0, 6, 10]
+                ],
+                3
+            ),
+            65
+        );
+    }
 
     #[test]
     fn test() {}
