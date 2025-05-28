@@ -6,25 +6,55 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn shift_distance(s: &str, t: &str, next_cost: &[i32], previous_cost: &[i32]) -> i64 {
-    const N: usize = 26;
-    let mut nexts = [0; N];
-    let mut prevs = [0; N];
-    nexts[0] = i64::from(next_cost[N - 1]);
-    prevs[N - 1] = i64::from(previous_cost[0]);
-    for i in 1..N {
-        nexts[i] = nexts[i - 1] + i64::from(next_cost[i - 1]);
-        prevs[N - 1 - i] = prevs[N - i] + i64::from(previous_cost[N - i]);
+pub fn max_collected_fruits(fruits: &[&[i32]]) -> i32 {
+    let n = fruits.len();
+    let mut memo = vec![vec![-1; n]; n];
+    let mut res = dfs1(&fruits, 0, n - 1, &mut memo) + dfs2(&fruits, n - 1, 0, &mut memo);
+    res += (0..n).map(|i| fruits[i][i]).sum::<i32>();
+    res
+}
+
+fn dfs1(grid: &[&[i32]], r: usize, c: usize, memo: &mut [Vec<i32>]) -> i32 {
+    let n = grid.len();
+    if r == n - 1 && c == n - 1 {
+        return 0;
+    }
+    if r >= c {
+        return 0;
+    }
+    if memo[r][c] > -1 {
+        return memo[r][c];
     }
     let mut res = 0;
-    for (b1, b2) in s.bytes().zip(t.bytes()) {
-        let [i1, i2] = [b1, b2].map(|b| usize::from(b - b'a'));
-        res += if b1 < b2 {
-            (nexts[i2] - nexts[i1]).min(prevs[0] + prevs[i2] - prevs[i1])
-        } else {
-            (prevs[i2] - prevs[i1]).min(nexts[N - 1] + nexts[i2] - nexts[i1])
-        };
+    for nc in [c.saturating_sub(1), c, 1 + c] {
+        if nc < n {
+            res = res.max(dfs1(grid, 1 + r, nc, memo));
+        }
     }
+    res += grid[r][c];
+    memo[r][c] = res;
+    res
+}
+
+fn dfs2(grid: &[&[i32]], r: usize, c: usize, memo: &mut [Vec<i32>]) -> i32 {
+    let n = grid.len();
+    if r == n - 1 && c == n - 1 {
+        return 0;
+    }
+    if c >= r {
+        return 0;
+    }
+    if memo[r][c] > -1 {
+        return memo[r][c];
+    }
+    let mut res = 0;
+    for nr in [r.saturating_sub(1), r, 1 + r] {
+        if nr < n {
+            res = res.max(dfs2(grid, nr, 1 + c, memo));
+        }
+    }
+    res += grid[r][c];
+    memo[r][c] = res;
     res
 }
 
@@ -58,8 +88,29 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(
+            max_collected_fruits(&[
+                &[1, 2, 3, 4],
+                &[5, 6, 8, 7],
+                &[9, 10, 11, 12],
+                &[13, 14, 15, 16]
+            ]),
+            100
+        );
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(
+            max_collected_fruits(&[
+                &[8, 5, 0, 17, 15],
+                &[6, 0, 15, 6, 0],
+                &[7, 19, 16, 8, 18],
+                &[11, 3, 2, 12, 13],
+                &[17, 15, 15, 4, 6]
+            ]),
+            145
+        );
+    }
 }
