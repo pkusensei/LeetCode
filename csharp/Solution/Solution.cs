@@ -7,37 +7,34 @@ namespace Solution;
 
 public class Solution
 {
-    public int MinZeroArray(int[] nums, int[][] queries)
+    public int MaxRemoval(int[] nums, int[][] queries)
     {
-        int n = nums.Length;
-        int[] diff = new int[1 + n];
-        int left = 0;
-        int right = queries.Length;
-        if (!Check(right)) { return -1; }
-        while (left < right)
+        Array.Sort(queries, (a, b) =>
         {
-            int mid = left + (right - left) / 2;
-            if (Check(mid)) { right = mid; }
-            else { left = 1 + mid; }
-        }
-        return left;
-
-        bool Check(int count)
+            if (a[0] == b[0]) { return a[1].CompareTo(b[1]); }
+            return a[0].CompareTo(b[0]);
+        });
+        int qidx = 0;
+        PriorityQueue<int, int> candids = new();
+        PriorityQueue<int, int> curr = new();
+        for (int i = 0; i < nums.Length; i += 1)
         {
-            Array.Fill(diff, 0);
-            foreach (var q in queries.Take(count))
+            while (qidx < queries.Length && queries[qidx][0] <= i)
             {
-                diff[q[0]] += q[2];
-                diff[1 + q[1]] -= q[2];
+                int end = queries[qidx][1];
+                candids.Enqueue(end, -end);
+                qidx += 1;
             }
-            int prefix = 0;
-            foreach (var item in nums.Zip(diff))
+            while (curr.TryPeek(out int top, out _) && top < i)
             {
-                (var num, var d) = item;
-                prefix += d;
-                if (prefix < num) { return false; }
+                curr.Dequeue();
             }
-            return true;
+            while (curr.Count < nums[i])
+            {
+                if (!candids.TryDequeue(out int top, out _) || top < i) { return -1; }
+                curr.Enqueue(top, top);
+            }
         }
+        return candids.Count;
     }
 }
