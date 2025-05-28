@@ -6,39 +6,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_sum_subarray(nums: Vec<i32>, l: i32, r: i32) -> i32 {
-    let n = nums.len();
-    let [l, r] = [l, r].map(|v| v as usize);
-    let prefix = nums
-        .iter()
-        .take(r)
-        .fold(Vec::with_capacity(r), |mut acc, &v| {
-            acc.push(v + acc.last().unwrap_or(&0));
-            acc
-        });
-    let mut res = None::<i32>;
-    for len in l..=r {
-        let mut curr = prefix[len - 1];
-        if curr > 0 {
-            if let Some(v) = res {
-                res = Some(v.min(curr));
-            } else {
-                res = Some(curr)
-            }
+pub fn is_possible_to_rearrange(s: String, t: String, k: i32) -> bool {
+    use std::collections::HashMap;
+    let k = k as usize;
+    let sz = s.len() / k;
+    let mut freq = s.as_bytes().chunks(sz).fold(HashMap::new(), |mut acc, ch| {
+        *acc.entry(ch).or_insert(0) += 1;
+        acc
+    });
+    for ch in t.as_bytes().chunks(sz) {
+        let Some(v) = freq.get_mut(&ch) else {
+            return false;
+        };
+        if *v <= 0 {
+            return false;
         }
-        for i in len..n {
-            curr += nums[i];
-            curr -= nums[i - len];
-            if curr > 0 {
-                if let Some(v) = res {
-                    res = Some(v.min(curr));
-                } else {
-                    res = Some(curr)
-                }
-            }
-        }
+        *v -= 1;
     }
-    res.unwrap_or(-1)
+    true
 }
 
 #[cfg(test)]
