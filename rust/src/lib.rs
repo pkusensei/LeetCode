@@ -6,42 +6,26 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_target_nodes(edges1: Vec<Vec<i32>>, edges2: Vec<Vec<i32>>, k: i32) -> Vec<i32> {
-    let t1 = build(&edges1, k);
-    let t2 = build(&edges2, k - 1).into_iter().max().unwrap_or(0);
-    t1.into_iter().map(|v| v + t2).collect()
-}
-
-fn build(edges: &[Vec<i32>], k: i32) -> Vec<i32> {
-    use std::collections::VecDeque;
-    let n = 1 + edges.len();
-    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
-        let [a, b] = [0, 1].map(|i| e[i] as usize);
-        acc[a].push(b);
-        acc[b].push(a);
-        acc
-    });
-    let mut counts = Vec::with_capacity(n);
-    for start in 0..n {
-        let mut queue = VecDeque::from([(start, 0)]);
-        let mut seen = vec![false; n];
-        seen[start] = true;
-        let mut count = 0;
-        while let Some((node, dist)) = queue.pop_front() {
-            if dist > k {
-                continue;
-            }
-            count += 1;
-            for &next in &adj[node] {
-                if !seen[next] {
-                    seen[next] = true;
-                    queue.push_back((next, 1 + dist));
-                }
-            }
-        }
-        counts.push(count);
+pub fn shift_distance(s: &str, t: &str, next_cost: &[i32], previous_cost: &[i32]) -> i64 {
+    const N: usize = 26;
+    let mut nexts = [0; N];
+    let mut prevs = [0; N];
+    nexts[0] = i64::from(next_cost[N - 1]);
+    prevs[N - 1] = i64::from(previous_cost[0]);
+    for i in 1..N {
+        nexts[i] = nexts[i - 1] + i64::from(next_cost[i - 1]);
+        prevs[N - 1 - i] = prevs[N - i] + i64::from(previous_cost[N - i]);
     }
-    counts
+    let mut res = 0;
+    for (b1, b2) in s.bytes().zip(t.bytes()) {
+        let [i1, i2] = [b1, b2].map(|b| usize::from(b - b'a'));
+        res += if b1 < b2 {
+            (nexts[i2] - nexts[i1]).min(prevs[0] + prevs[i2] - prevs[i1])
+        } else {
+            (prevs[i2] - prevs[i1]).min(nexts[N - 1] + nexts[i2] - nexts[i1])
+        };
+    }
+    res
 }
 
 #[cfg(test)]
