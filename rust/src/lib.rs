@@ -6,78 +6,63 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_operations(n: i32, m: i32) -> i32 {
-    use std::{cmp::Reverse, collections::BinaryHeap};
-    let [n, m] = [n, m].map(|v| v as usize);
-    if SIEVE[n] || SIEVE[m] {
-        return -1;
-    }
-    let mut heap = BinaryHeap::from([(Reverse(n), n)]);
-    let mut seen = [false; N];
-    seen[n] = true;
-    while let Some((Reverse(cost), num)) = heap.pop() {
-        if num == m {
-            return cost as i32;
+pub fn count_components(nums: Vec<i32>, threshold: i32) -> i32 {
+    let k = threshold as usize;
+    let mut dsu = DSU::new(1 + k);
+    for &num in &nums {
+        let num = num as usize;
+        for v in (num..=k).step_by(num) {
+            dsu.union(num, v);
         }
-        for next in step(num) {
-            if !seen[next] {
-                seen[next] = true;
-                heap.push((Reverse(cost + next), next));
+    }
+    let mut seen = std::collections::HashSet::new();
+    let mut res = 0;
+    for &num in &nums {
+        let num = num as usize;
+        if num <= k {
+            seen.insert(dsu.find(num as usize));
+        } else {
+            res += 1
+        }
+    }
+    seen.len() as i32 + res
+}
+
+struct DSU {
+    parent: Vec<usize>,
+    rank: Vec<i32>,
+}
+
+impl DSU {
+    fn new(n: usize) -> Self {
+        Self {
+            parent: (0..n).collect(),
+            rank: vec![0; n],
+        }
+    }
+
+    fn find(&mut self, v: usize) -> usize {
+        if self.parent[v] != v {
+            self.parent[v] = self.find(self.parent[v])
+        }
+        self.parent[v]
+    }
+
+    fn union(&mut self, x: usize, y: usize) {
+        let [rx, ry] = [x, y].map(|v| self.find(v));
+        if rx == ry {
+            return;
+        }
+        match self.rank[rx].cmp(&self.rank[ry]) {
+            std::cmp::Ordering::Less => self.parent[rx] = ry,
+            std::cmp::Ordering::Equal => {
+                self.rank[rx] += 1;
+                self.parent[ry] = rx;
             }
+            std::cmp::Ordering::Greater => self.parent[ry] = rx,
         }
-    }
-    -1
-}
-
-fn step(mut num: usize) -> Vec<usize> {
-    let mut ds = vec![];
-    while num > 0 {
-        ds.push(num % 10);
-        num /= 10;
-    }
-    ds.reverse();
-    let n = ds.len();
-    let mut res = vec![];
-    for i in 0..n {
-        if ds[i] < 9 {
-            ds[i] += 1;
-            check(&ds, &mut res);
-            ds[i] -= 1;
-        }
-        if (i == 0 && ds[i] > 1) || (i > 0 && ds[i] > 0) {
-            ds[i] -= 1;
-            check(&ds, &mut res);
-            ds[i] += 1;
-        }
-    }
-    res
-}
-
-fn check(ds: &[usize], res: &mut Vec<usize>) {
-    let v = ds.iter().fold(0, |acc, d| acc * 10 + d);
-    if !SIEVE[v] {
-        res.push(v);
     }
 }
-
-const N: usize = 10_000;
-const SIEVE: [bool; N] = {
-    let mut sieve = [true; N];
-    sieve[0] = false;
-    sieve[1] = false;
-    let mut p = 2;
-    while p < N {
-        if sieve[p] {
-            let mut val = p * p;
-            while val < N {
-                sieve[val] = false;
-                val += p;
-            }
-        }
-        p += 1;
-    }
-    sieve
-};
 
 #[cfg(test)]
 mod tests {
@@ -109,9 +94,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(min_operations(10, 12), 85);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
