@@ -6,62 +6,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_components(nums: Vec<i32>, threshold: i32) -> i32 {
-    let k = threshold as usize;
-    let mut dsu = DSU::new(1 + k);
-    for &num in &nums {
-        let num = num as usize;
-        for v in (num..=k).step_by(num) {
-            dsu.union(num, v);
-        }
-    }
-    let mut seen = std::collections::HashSet::new();
-    let mut res = 0;
-    for &num in &nums {
-        let num = num as usize;
-        if num <= k {
-            seen.insert(dsu.find(num as usize));
-        } else {
-            res += 1
-        }
-    }
-    seen.len() as i32 + res
-}
-
-struct DSU {
-    parent: Vec<usize>,
-    rank: Vec<i32>,
-}
-
-impl DSU {
-    fn new(n: usize) -> Self {
-        Self {
-            parent: (0..n).collect(),
-            rank: vec![0; n],
-        }
-    }
-
-    fn find(&mut self, v: usize) -> usize {
-        if self.parent[v] != v {
-            self.parent[v] = self.find(self.parent[v])
-        }
-        self.parent[v]
-    }
-
-    fn union(&mut self, x: usize, y: usize) {
-        let [rx, ry] = [x, y].map(|v| self.find(v));
-        if rx == ry {
-            return;
-        }
-        match self.rank[rx].cmp(&self.rank[ry]) {
-            std::cmp::Ordering::Less => self.parent[rx] = ry,
-            std::cmp::Ordering::Equal => {
-                self.rank[rx] += 1;
-                self.parent[ry] = rx;
+pub fn construct_transformed_array(nums: Vec<i32>) -> Vec<i32> {
+    let n = nums.len();
+    let mut res = nums.clone();
+    for (i, &num) in nums.iter().enumerate() {
+        match num.cmp(&0) {
+            std::cmp::Ordering::Less => {
+                res[i] = nums[(i as i32 + num).rem_euclid(n as i32) as usize]
             }
-            std::cmp::Ordering::Greater => self.parent[ry] = rx,
+            std::cmp::Ordering::Equal => res[i] = num,
+            std::cmp::Ordering::Greater => res[i] = nums[(i + num as usize) % n],
         }
     }
+    res
 }
 
 #[cfg(test)]
