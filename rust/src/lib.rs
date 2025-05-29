@@ -6,19 +6,29 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn construct_transformed_array(nums: Vec<i32>) -> Vec<i32> {
-    let n = nums.len();
-    let mut res = nums.clone();
-    for (i, &num) in nums.iter().enumerate() {
-        match num.cmp(&0) {
-            std::cmp::Ordering::Less => {
-                res[i] = nums[(i as i32 + num).rem_euclid(n as i32) as usize]
+pub fn max_rectangle_area(points: Vec<Vec<i32>>) -> i32 {
+    use std::collections::HashSet;
+    let set: HashSet<_> = points.iter().map(|p| [p[0], p[1]]).collect();
+    let mut res = 0;
+    for (i, p1) in points.iter().enumerate() {
+        let [x1, y1] = p1[..] else { unreachable!() };
+        for p2 in points.iter().skip(1 + i) {
+            let [x2, y2] = p2[..] else { unreachable!() };
+            if x1 == x2 || y1 == y2 {
+                continue;
+            };
+            if set.contains(&[x1, y2])
+                && set.contains(&[x2, y1])
+                && set.iter().all(|&[x, y]| {
+                    [[x1, y1], [x2, y2], [x2, y1], [x1, y2]].contains(&[x, y])
+                        || ((x - x1) * (x - x2) > 0 || (y - y1) * (y - y2) > 0)
+                })
+            {
+                res = res.max((x1 - x2).abs() * (y1 - y2).abs());
             }
-            std::cmp::Ordering::Equal => res[i] = num,
-            std::cmp::Ordering::Greater => res[i] = nums[(i + num as usize) % n],
         }
     }
-    res
+    if res > 0 { res } else { -1 }
 }
 
 #[cfg(test)]
