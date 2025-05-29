@@ -6,29 +6,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_rectangle_area(points: Vec<Vec<i32>>) -> i32 {
-    use std::collections::HashSet;
-    let set: HashSet<_> = points.iter().map(|p| [p[0], p[1]]).collect();
-    let mut res = 0;
-    for (i, p1) in points.iter().enumerate() {
-        let [x1, y1] = p1[..] else { unreachable!() };
-        for p2 in points.iter().skip(1 + i) {
-            let [x2, y2] = p2[..] else { unreachable!() };
-            if x1 == x2 || y1 == y2 {
-                continue;
-            };
-            if set.contains(&[x1, y2])
-                && set.contains(&[x2, y1])
-                && set.iter().all(|&[x, y]| {
-                    [[x1, y1], [x2, y2], [x2, y1], [x1, y2]].contains(&[x, y])
-                        || ((x - x1) * (x - x2) > 0 || (y - y1) * (y - y2) > 0)
-                })
-            {
-                res = res.max((x1 - x2).abs() * (y1 - y2).abs());
-            }
-        }
+pub fn max_subarray_sum(nums: &[i32], k: i32) -> i64 {
+    let k = k as usize;
+    let mut vals = vec![i64::MAX / 2; k];
+    vals[k - 1] = 0; // Before any num added, base case prefix sum == 0
+    let mut res = i64::MIN / 2;
+    let mut prefix = 0;
+    for (i, &num) in nums.iter().enumerate() {
+        let num = i64::from(num);
+        prefix += num;
+        res = res.max(prefix - vals[i % k]);
+        vals[i % k] = vals[i % k].min(prefix);
     }
-    if res > 0 { res } else { -1 }
+    res
 }
 
 #[cfg(test)]
@@ -61,7 +51,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(max_subarray_sum(&[1, 2], 1), 3);
+        assert_eq!(max_subarray_sum(&[-1, -2, -3, -4, -5], 4), -10);
+        assert_eq!(max_subarray_sum(&[-5, 1, 2, -3, 4], 2), 4);
+    }
 
     #[test]
     fn test() {}
