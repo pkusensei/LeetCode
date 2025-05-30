@@ -3,34 +3,89 @@ mod fenwick_tree;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn beautiful_splits(nums: &[i32]) -> i32 {
-    let n = nums.len();
-    let mut lcp = vec![vec![0; 1 + n]; 1 + n];
-    for i1 in (0..n).rev() {
-        for i2 in i1..n {
-            if nums[i1] == nums[i2] {
-                lcp[i1][i2] = 1 + lcp[1 + i1][1 + i2];
+pub fn bottom_up(s: &str) -> i32 {
+    let freq = s.bytes().fold([0; 26], |mut acc, b| {
+        acc[usize::from(b - b'a')] += 1;
+        acc
+    });
+    let max = *freq.iter().max().unwrap_or(&1);
+    let mut res = s.len() as i32;
+    for target in 0..=max {
+        // min cost so far, assuming change-to-next is allowed
+        let mut curr_cost = 0;
+        // total cost with only deletions
+        let mut del_cost = s.len() as i32;
+        // Excess chars deleted in previous round
+        // potentially for reuse in next round
+        let mut save = 0;
+        for &val in &freq {
+            if val >= target {
+                curr_cost += val - target;
+                del_cost = curr_cost;
+                save = val - target;
+            } else {
+                // To fill the diff (target-val)
+                // 1) pure addition
+                // 2) reuse save from previous round
+                let diff = target - val;
+                let increment = (curr_cost + diff).min(del_cost + (diff - save).max(0));
+                // delete all
+                let remove = curr_cost + val;
+                curr_cost = increment.min(remove);
+                del_cost = remove;
+                // Potentially delete all and reuse
+                save = val;
             }
         }
+        res = res.min(curr_cost);
     }
-    let mut res = 0;
-    for i1 in 1..n {
-        for i2 in 1 + i1..n {
-            // split between nums1 and nums2, i.e [0..i1) and [i1..i2)
-            // This length must be >= i1, len(nums1)
-            // Or
-            // split between nums2 and nums3, i.e [i1..i2) and [i2..n)
-            // length must be >= (i2-i1), len(nums2)
-            if lcp[0][i1].min(i1).min(i2 - i1) >= i1
-                || lcp[i1][i2].min(i2 - i1).min(n - i2) >= i2 - i1
-            {
-                res += 1;
-            }
-        }
+    res
+}
+
+pub fn make_string_good(s: &str) -> i32 {
+    let freq = s.bytes().fold([0; 26], |mut acc, b| {
+        acc[usize::from(b - b'a')] += 1;
+        acc
+    });
+    let max = *freq.iter().max().unwrap_or(&1);
+    let mut res = s.len() as i32;
+    for target in 0..=max {
+        res = res.min(dfs(&freq, target, 0, 0, &mut HashMap::new()));
     }
+    res
+}
+
+fn dfs(
+    freq: &[i32; 26],
+    target: i32,
+    idx: usize,
+    del: i32,
+    memo: &mut HashMap<(usize, i32), i32>,
+) -> i32 {
+    if idx >= 26 {
+        return 0;
+    }
+    if let Some(&v) = memo.get(&(idx, del)) {
+        return v;
+    }
+    let val = freq[idx];
+    let res = if val > target {
+        val - target + dfs(freq, target, 1 + idx, val - target, memo)
+    } else {
+        // delete all [idx]
+        let remove = val + dfs(freq, target, 1 + idx, val, memo);
+        // Possible increases using op3, i.e decrease [idx-1] and increase [idx]
+        // The remaining increment is done by (target-val-op3)
+        let op3 = del.min(target - val);
+        let increment = target - val - op3 + dfs(freq, target, 1 + idx, 0, memo);
+        remove.min(increment)
+    };
+    memo.insert((idx, del), res);
     res
 }
 
@@ -65,8 +120,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(beautiful_splits(&[1, 1, 2, 1]), 2);
-        assert_eq!(beautiful_splits(&[1, 2, 3, 4]), 0);
+        assert_eq!(make_string_good("acab"), 1);
+        assert_eq!(make_string_good("wddw"), 0);
+        assert_eq!(make_string_good("aaabc"), 2);
+
+        assert_eq!(bottom_up("acab"), 1);
+        assert_eq!(bottom_up("wddw"), 0);
+        assert_eq!(bottom_up("aaabc"), 2);
     }
 
     #[test]
