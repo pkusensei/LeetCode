@@ -6,35 +6,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_paths_with_xor_value(grid: Vec<Vec<i32>>, k: i32) -> i32 {
-    let [rows, cols] = get_dimensions(&grid);
-    let k = k as usize;
-    dfs(&grid, k, 0, 0, 0, &mut vec![vec![vec![-1; 17]; cols]; rows])
+pub fn check_valid_cuts(_n: i32, rectangles: Vec<Vec<i32>>) -> bool {
+    let [mut xs, mut ys] = [vec![], vec![]];
+    for r in &rectangles {
+        let [x1, y1, x2, y2] = r[..] else {
+            unreachable!()
+        };
+        xs.push([x1, x2]);
+        ys.push([y1, y2]);
+    }
+    solve(xs) || solve(ys)
 }
 
-fn dfs(
-    grid: &[Vec<i32>],
-    k: usize,
-    r: usize,
-    c: usize,
-    val: usize,
-    memo: &mut [Vec<Vec<i32>>],
-) -> i32 {
-    let [rows, cols] = get_dimensions(grid);
-    if r >= rows || c >= cols {
-        return 0;
+fn solve(mut arr: Vec<[i32; 2]>) -> bool {
+    arr.sort_unstable();
+    let mut count = 0;
+    let mut end = arr[0][1];
+    for &[x1, x2] in &arr[1..] {
+        count += i32::from(x1 >= end);
+        end = end.max(x2);
     }
-    if memo[r][c][val] > -1 {
-        return memo[r][c][val];
-    }
-    let curr = val ^ grid[r][c] as usize;
-    if r == rows - 1 && c == cols - 1 {
-        return i32::from(k == curr);
-    }
-    let res =
-        (dfs(grid, k, 1 + r, c, curr, memo) + dfs(grid, k, r, 1 + c, curr, memo)) % 1_000_000_007;
-    memo[r][c][val] = res;
-    res
+    count >= 2
 }
 
 #[cfg(test)]
@@ -67,12 +59,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(
-            count_paths_with_xor_value(vec![vec![2, 1, 5], vec![7, 10, 0], vec![12, 6, 4]], 11),
-            3
-        );
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
