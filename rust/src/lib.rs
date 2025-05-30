@@ -6,18 +6,34 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_distinct_elements(mut nums: Vec<i32>, k: i32) -> i32 {
-    nums.sort_unstable();
-    let mut prev = i32::MIN;
-    let mut res = 0;
-    for &num in &nums {
-        if prev >= num + k {
-            continue;
+pub fn min_length(s: &str, num_ops: i32) -> i32 {
+    let mut left = 1;
+    let mut right = s.len();
+    while left < right {
+        let mid = left.midpoint(right);
+        if check(s.as_bytes(), num_ops as usize, mid) {
+            right = mid;
+        } else {
+            left = 1 + mid;
         }
-        res += 1;
-        prev = (prev + 1).max(num - k); // increment by 1 or jump
     }
-    res
+    left as i32
+}
+
+fn check(s: &[u8], ops: usize, mid: usize) -> bool {
+    if mid == 1 {
+        let sum: usize = s
+            .iter()
+            .enumerate()
+            .map(|(i, &b)| (i & 1 ^ usize::from(b & 1)))
+            .sum();
+        sum.min(s.len() - sum) <= ops
+    } else {
+        s.chunk_by(|a, b| a == b)
+            .map(|ch| ch.len() / (1 + mid))
+            .sum::<usize>()
+            <= ops
+    }
 }
 
 #[cfg(test)]
@@ -51,10 +67,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_distinct_elements(vec![1, 2, 2, 3, 3, 4], 2), 6);
-        assert_eq!(max_distinct_elements(vec![4, 4, 4, 4], 1), 3);
+        assert_eq!(min_length("000001", 1), 2);
+        assert_eq!(min_length("0000", 2), 1);
+        assert_eq!(min_length("0101", 0), 1);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(min_length("1001", 1), 2);
+    }
 }
