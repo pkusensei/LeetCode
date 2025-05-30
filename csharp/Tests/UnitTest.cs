@@ -12,8 +12,6 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
-        int[][] queries = [[0, 2], [0, 2], [1, 1]];
-        Assert.AreEqual(1, sol.MaxRemoval([2, 0, 2], queries));
     }
 
     [TestMethod]

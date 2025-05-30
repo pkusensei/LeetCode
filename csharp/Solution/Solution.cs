@@ -7,34 +7,45 @@ namespace Solution;
 
 public class Solution
 {
-    public int MaxRemoval(int[] nums, int[][] queries)
+    public int ClosestMeetingNode(int[] edges, int node1, int node2)
     {
-        Array.Sort(queries, (a, b) =>
+        var arr1 = Bfs(node1);
+        var arr2 = Bfs(node2);
+        int min_dist = int.MaxValue;
+        int res = -1;
+        for (int i = 0; i < edges.Length; i++)
         {
-            if (a[0] == b[0]) { return a[1].CompareTo(b[1]); }
-            return a[0].CompareTo(b[0]);
-        });
-        int qidx = 0;
-        PriorityQueue<int, int> candids = new();
-        PriorityQueue<int, int> curr = new();
-        for (int i = 0; i < nums.Length; i += 1)
-        {
-            while (qidx < queries.Length && queries[qidx][0] <= i)
+            if (arr1[i] > -1 && arr2[i] > -1)
             {
-                int end = queries[qidx][1];
-                candids.Enqueue(end, -end);
-                qidx += 1;
-            }
-            while (curr.TryPeek(out int top, out _) && top < i)
-            {
-                curr.Dequeue();
-            }
-            while (curr.Count < nums[i])
-            {
-                if (!candids.TryDequeue(out int top, out _) || top < i) { return -1; }
-                curr.Enqueue(top, top);
+                int d = Math.Max(arr1[i], arr2[i]);
+                if (d < min_dist)
+                {
+                    min_dist = d;
+                    res = i;
+                }
             }
         }
-        return candids.Count;
+        return res;
+
+        int[] Bfs(int start)
+        {
+            int n = edges.Length;
+            int[] res = new int[n];
+            Array.Fill(res, -1);
+            res[start] = 0;
+            Queue<(int, int)> queue = [];
+            queue.Enqueue((start, 0));
+            while (queue.TryDequeue(out var item))
+            {
+                (var node, var dist) = item;
+                int next = edges[node];
+                if (next > -1 && res[next] == -1)
+                {
+                    res[next] = 1 + dist;
+                    queue.Enqueue((next, 1 + dist));
+                }
+            }
+            return res;
+        }
     }
 }
