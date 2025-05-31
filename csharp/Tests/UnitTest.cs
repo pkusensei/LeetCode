@@ -12,6 +12,8 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
+        int[][] b = [[-1, -1, -1, -1, -1, -1], [-1, -1, -1, -1, -1, -1], [-1, -1, -1, -1, -1, -1], [-1, 35, -1, -1, 13, -1], [-1, -1, -1, -1, -1, -1], [-1, 15, -1, -1, -1, -1]];
+        Assert.AreEqual(4, sol.SnakesAndLadders(b));
     }
 
     [TestMethod]

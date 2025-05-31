@@ -7,45 +7,51 @@ namespace Solution;
 
 public class Solution
 {
-    public int ClosestMeetingNode(int[] edges, int node1, int node2)
+    public int SnakesAndLadders(int[][] board)
     {
-        var arr1 = Bfs(node1);
-        var arr2 = Bfs(node2);
-        int min_dist = int.MaxValue;
-        int res = -1;
-        for (int i = 0; i < edges.Length; i++)
+        int n = board.Length;
+        Array.Reverse(board);
+        Queue<(int, int, int)> queue = [];
+        queue.Enqueue((0, 0, 0));
+        bool[,] seen = new bool[n, n];
+        seen[0, 0] = true;
+        while (queue.TryDequeue(out var item))
         {
-            if (arr1[i] > -1 && arr2[i] > -1)
+            (var row, var col, var dist) = item;
+            if (n * n == CoordToLabel(row, col)) { return dist; }
+            foreach (var (nr, nc) in Next(row, col))
             {
-                int d = Math.Max(arr1[i], arr2[i]);
-                if (d < min_dist)
+                if (!seen[nr, nc])
                 {
-                    min_dist = d;
-                    res = i;
+                    seen[nr, nc] = true;
+                    queue.Enqueue((nr, nc, 1 + dist));
                 }
             }
         }
-        return res;
+        return -1;
 
-        int[] Bfs(int start)
+        int CoordToLabel(int row, int col)
         {
-            int n = edges.Length;
-            int[] res = new int[n];
-            Array.Fill(res, -1);
-            res[start] = 0;
-            Queue<(int, int)> queue = [];
-            queue.Enqueue((start, 0));
-            while (queue.TryDequeue(out var item))
+            if ((row & 1) == 0) { return n * row + col + 1; }
+            return n * (1 + row) - col;
+        }
+
+        (int, int) LabelToCoord(int label)
+        {
+            int row = (label - 1) / n;
+            int col = (row & 1) == 0 ? (label - 1) % n : n - 1 - (label - 1) % n;
+            return (row, col);
+        }
+
+        IEnumerable<(int, int)> Next(int row, int col)
+        {
+            int label = CoordToLabel(row, col);
+            for (int node = 1 + label; node <= Math.Min(label + 6, n * n); node += 1)
             {
-                (var node, var dist) = item;
-                int next = edges[node];
-                if (next > -1 && res[next] == -1)
-                {
-                    res[next] = 1 + dist;
-                    queue.Enqueue((next, 1 + dist));
-                }
+                (int nr, int nc) = LabelToCoord(node);
+                if (board[nr][nc] == -1) { yield return (nr, nc); }
+                else { yield return LabelToCoord(board[nr][nc]); }
             }
-            return res;
         }
     }
 }
