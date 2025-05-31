@@ -6,17 +6,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_operations(grid: Vec<Vec<i32>>) -> i32 {
-    let [rows, cols] = get_dimensions(&grid);
-    let mut res = 0;
-    for c in 0..cols {
-        let mut prev = grid[0][c];
-        for r in 1..rows {
-            res += (prev + 1 - grid[r][c]).max(0);
-            prev = (prev + 1).max(grid[r][c]);
-        }
+pub fn answer_string(word: String, num_friends: i32) -> String {
+    if num_friends <= 1 {
+        return word;
     }
-    res
+    let (s, n) = (word.as_bytes(), word.len());
+    let len = n + 1 - num_friends as usize;
+    let mut res = "".as_bytes();
+    for idx in 0..n {
+        let curr = &s[idx..(idx + len).min(n)];
+        res = res.max(curr);
+    }
+    String::from_utf8(res.to_vec()).unwrap()
 }
 
 #[cfg(test)]
