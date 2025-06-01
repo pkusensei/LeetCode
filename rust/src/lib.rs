@@ -3,35 +3,37 @@ mod fenwick_tree;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-// p*r == q*s
-// p/q == s/r
-pub fn number_of_subsequences(nums: &[i32]) -> i64 {
-    let n = nums.len();
-    let mut res = 0;
-    let mut map: HashMap<[i32; 2], i64> = HashMap::new();
-    for r in 4..n - 2 {
-        let q = r - 2;
-        for p in 0..q - 1 {
-            let [a, b] = [p, q].map(|i| nums[i]);
-            let gcd_ = gcd(a, b);
-            *map.entry([a / gcd_, b / gcd_]).or_insert(0) += 1;
-        }
-        for s in 2 + r..n {
-            let [a, b] = [s, r].map(|i| nums[i]);
-            let gcd_ = gcd(a, b);
-            res += map.get(&[a / gcd_, b / gcd_]).unwrap_or(&0);
-        }
-    }
-    res as i64
+pub fn count_good_arrays(n: i32, m: i32, k: i32) -> i32 {
+    let [n, m, k] = [n, m, k].map(i64::from);
+    let comb = n_choose_k(n - 1, k);
+    (comb * mod_pow(m - 1, n - k - 1, MOD) % MOD * m % MOD) as i32
 }
 
-const fn gcd(a: i32, b: i32) -> i32 {
-    if a == 0 { b } else { gcd(b % a, a) }
+const MOD: i64 = 1_000_000_007;
+
+fn n_choose_k(n: i64, k: i64) -> i64 {
+    if k > n {
+        return 0;
+    }
+    let k = k.min(n - k);
+    let f = |acc, v| acc * v % MOD;
+    let numerator = (n + 1 - k..=n).fold(1, f);
+    let denominator = (1..=k).fold(1, f);
+    numerator * mod_pow(denominator, MOD - 2, MOD) % MOD
+}
+
+const fn mod_pow(b: i64, exp: i64, m: i64) -> i64 {
+    if exp == 0 {
+        return 1;
+    }
+    if exp & 1 == 0 {
+        mod_pow(b * b % m, exp >> 1, m)
+    } else {
+        mod_pow(b * b % m, exp >> 1, m) * b % m
+    }
 }
 
 #[cfg(test)]
@@ -65,7 +67,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(number_of_subsequences(&[1, 2, 3, 4, 3, 6, 1]), 1);
+        assert_eq!(count_good_arrays(3, 2, 1), 4);
+        assert_eq!(count_good_arrays(4, 2, 2), 6);
+        assert_eq!(count_good_arrays(5, 2, 0), 2);
     }
 
     #[test]
