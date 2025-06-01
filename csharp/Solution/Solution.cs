@@ -7,51 +7,32 @@ namespace Solution;
 
 public class Solution
 {
-    public int SnakesAndLadders(int[][] board)
+    public long DistributeCandies(int n, int limit)
     {
-        int n = board.Length;
-        Array.Reverse(board);
-        Queue<(int, int, int)> queue = [];
-        queue.Enqueue((0, 0, 0));
-        bool[,] seen = new bool[n, n];
-        seen[0, 0] = true;
-        while (queue.TryDequeue(out var item))
+        long res = 0;
+        // Fix a
+        for (int a = 0; a <= Math.Min(n, limit); a++)
         {
-            (var row, var col, var dist) = item;
-            if (n * n == CoordToLabel(row, col)) { return dist; }
-            foreach (var (nr, nc) in Next(row, col))
-            {
-                if (!seen[nr, nc])
-                {
-                    seen[nr, nc] = true;
-                    queue.Enqueue((nr, nc, 1 + dist));
-                }
-            }
+            // b = 0;
+            int c_max = Math.Min(n - a, limit);
+            // b = limit
+            int c_min = Math.Max(n - a - limit, 0);
+            res += Math.Max(c_max - c_min + 1, 0);
         }
-        return -1;
+        return res;
+    }
 
-        int CoordToLabel(int row, int col)
-        {
-            if ((row & 1) == 0) { return n * row + col + 1; }
-            return n * (1 + row) - col;
-        }
+    public long PIE(int n, int limit)
+    {
+        // All possible distribution 
+        // minus: at least one receives more than limit
+        // plus: at least two receive more than limit
+        // minus: all receive more than limit
+        return NChoose2(2 + n)
+               - 3 * NChoose2(n + 1 - limit)
+               + 3 * NChoose2(n - (1 + limit) * 2 + 2)
+               - NChoose2(n - 3 * (1 + limit) + 2);
 
-        (int, int) LabelToCoord(int label)
-        {
-            int row = (label - 1) / n;
-            int col = (row & 1) == 0 ? (label - 1) % n : n - 1 - (label - 1) % n;
-            return (row, col);
-        }
-
-        IEnumerable<(int, int)> Next(int row, int col)
-        {
-            int label = CoordToLabel(row, col);
-            for (int node = 1 + label; node <= Math.Min(label + 6, n * n); node += 1)
-            {
-                (int nr, int nc) = LabelToCoord(node);
-                if (board[nr][nc] == -1) { yield return (nr, nc); }
-                else { yield return LabelToCoord(board[nr][nc]); }
-            }
-        }
+        long NChoose2(long x) => x <= 1 ? 0 : x * (x - 1) / 2;
     }
 }

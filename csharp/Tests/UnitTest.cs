@@ -10,10 +10,12 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow(5, 2, 3)]
+    [DataRow(3, 3, 10)]
+    public void TestMethod1(int n, int limit, int exp)
     {
-        int[][] b = [[-1, -1, -1, -1, -1, -1], [-1, -1, -1, -1, -1, -1], [-1, -1, -1, -1, -1, -1], [-1, 35, -1, -1, 13, -1], [-1, -1, -1, -1, -1, -1], [-1, 15, -1, -1, -1, -1]];
-        Assert.AreEqual(4, sol.SnakesAndLadders(b));
+        Assert.AreEqual(exp, sol.DistributeCandies(n, limit));
+        Assert.AreEqual(exp, sol.PIE(n, limit));
     }
 
     [TestMethod]
