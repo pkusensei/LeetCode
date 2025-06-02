@@ -3,142 +3,37 @@ mod fenwick_tree;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_subarray_sum(nums: &[i32]) -> i64 {
-    let mut map = HashMap::<_, Vec<usize>>::new();
-    let mut sum = 0;
-    let mut max = i64::MIN;
-    for (idx, &num) in nums.iter().enumerate() {
-        let num = i64::from(num);
-        sum += num;
-        max = max.max(num);
-        if num < 0 {
-            map.entry(num).or_default().push(idx);
-        }
-    }
-    if max < 0 {
-        return max;
-    }
-    if map.is_empty() {
-        return sum;
-    }
-    let mut tree = SegmentTree::new(nums);
-    let mut res = i64::MIN;
-    for (num, idx) in map {
-        for &i in &idx {
-            tree.update(i, 0);
-        }
-        res = res.max(tree.tree[1].max_sum);
-        for i in idx {
-            tree.update(i, num);
+pub fn max_length(nums: &[i32]) -> i32 {
+    const MAX: i64 = 3_628_800;
+    let mut res = 1;
+    'outer: for (left, &num) in nums.iter().enumerate() {
+        let [mut prod, mut gcd_, mut lcm_] = [i64::from(num); 3];
+        let mut count = 1;
+        for &num in &nums[1 + left..] {
+            prod *= i64::from(num);
+            if prod > MAX {
+                continue 'outer;
+            }
+            gcd_ = gcd(gcd_, num.into());
+            lcm_ = lcm(lcm_, num.into());
+            if prod == gcd_ * lcm_ {
+                count += 1;
+                res = res.max(count);
+            }
         }
     }
     res
 }
 
-#[derive(Default, Clone, Copy)]
-struct Node {
-    subarr_sum: i64,
-    max_sum: i64,
-    max_pref: i64,
-    max_suf: i64,
+const fn gcd(a: i64, b: i64) -> i64 {
+    if a == 0 { b } else { gcd(b % a, a) }
 }
 
-impl Node {
-    fn new(val: i64) -> Self {
-        Self {
-            subarr_sum: val,
-            max_sum: val,
-            max_pref: val,
-            max_suf: val,
-        }
-    }
-}
-
-struct SegmentTree {
-    tree: Vec<Node>,
-    n: usize,
-}
-
-impl SegmentTree {
-    fn new(nums: &[i32]) -> Self {
-        let n = nums.len();
-        let mut tree = Self {
-            tree: vec![Node::default(); 4 * n],
-            n,
-        };
-        for (idx, &num) in nums.iter().enumerate() {
-            tree.update(idx, num.into());
-        }
-        tree
-    }
-
-    fn update(&mut self, idx: usize, val: i64) {
-        self.update_impl(1, 0, self.n - 1, idx, val);
-    }
-
-    fn update_impl(&mut self, pos: usize, left: usize, right: usize, idx: usize, val: i64) {
-        if left == right {
-            self.tree[pos] = Node::new(val);
-            return;
-        }
-        let mid = left.midpoint(right);
-        if idx <= mid {
-            self.update_impl(2 * pos, left, mid, idx, val);
-        } else {
-            self.update_impl(2 * pos + 1, 1 + mid, right, idx, val);
-        }
-        let node1 = self.tree[2 * pos];
-        let node2 = self.tree[2 * pos + 1];
-        let subarr_sum = node1.subarr_sum + node2.subarr_sum;
-        let max_sum = node1
-            .max_sum
-            .max(node2.max_sum)
-            .max(node1.max_suf + node2.max_pref);
-        let max_pref = node1.max_pref.max(node1.subarr_sum + node2.max_pref);
-        let max_suf = node2.max_suf.max(node2.subarr_sum + node1.max_suf);
-        self.tree[pos] = Node {
-            subarr_sum,
-            max_sum,
-            max_pref,
-            max_suf,
-        };
-    }
-}
-
-pub fn kadanes(nums: &[i32]) -> i64 {
-    let mut res = i64::MIN;
-    // minimum possible prefix linked to a number that could be removed
-    // i.e remove num, and delete this prefix to get max result
-    // zero => no removal
-    let mut map = HashMap::from([(0_i64, 0_i64)]);
-    let mut prefix = 0;
-    let mut lowest = 0;
-    for &num in nums {
-        let num = i64::from(num);
-        prefix += num;
-        res = res.max(prefix - lowest); // Kadane's
-        if num < 0 {
-            // When encountering a negative number
-            let curr = *map.get(&num).unwrap_or(&0);
-            let zero = *map.get(&0).unwrap_or(&0);
-            // Try updating a new min prefix that could be deleted
-            // if this number were to be removed
-            let val = num + curr.min(zero);
-            let v = map.entry(num).or_insert(0);
-            *v = (*v).min(val);
-            lowest = lowest.min(val);
-        }
-        // Always update no-removal case
-        let zero = map.entry(0).or_insert(0);
-        *zero = (*zero).min(prefix);
-        lowest = lowest.min(*zero);
-    }
-    res
+const fn lcm(a: i64, b: i64) -> i64 {
+    a / gcd(a, b) * b
 }
 
 #[cfg(test)]
@@ -171,17 +66,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(max_subarray_sum(&[-3, 2, -2, -1, 3, -2, 3]), 7);
-        assert_eq!(max_subarray_sum(&[1, 2, 3, 4]), 10);
-
-        assert_eq!(kadanes(&[-3, 2, -2, -1, 3, -2, 3]), 7);
-        assert_eq!(kadanes(&[1, 2, 3, 4]), 10);
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(max_subarray_sum(&[-2, -2, -2]), -2);
-        assert_eq!(kadanes(&[-2, -2, -2]), -2);
-    }
+    fn test() {}
 }
