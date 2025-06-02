@@ -6,14 +6,25 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn has_match(s: String, p: String) -> bool {
-    let Some((a, b)) = p.split_once('*') else {
-        return false;
-    };
-    let (Some(i1), Some(i2)) = (s.find(a), s.rfind(b)) else {
-        return false;
-    };
-    i1 + a.len() <= i2
+pub fn candy(ratings: &[i32]) -> i32 {
+    let n = ratings.len();
+    let mut arr = vec![1; n];
+    arr[0] = 1;
+    for i in 1..n {
+        if ratings[i] > ratings[i - 1] {
+            arr[i] = 1 + arr[i - 1]
+        }
+    }
+    let mut res = arr[n - 1];
+    for i in (0..n - 1).rev() {
+        if ratings[i] > ratings[1 + i] {
+            arr[i] = arr[i].max(1 + arr[1 + i]);
+        } else {
+            arr[i] = arr[i].max(1);
+        }
+        res += arr[i];
+    }
+    res
 }
 
 #[cfg(test)]
@@ -46,8 +57,14 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(candy(&[1, 2, 2]), 4);
+        assert_eq!(candy(&[1, 0, 2]), 5);
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(candy(&[1, 3, 4, 5, 2]), 11);
+        assert_eq!(candy(&[1, 2, 87, 87, 87, 2, 1]), 13);
+    }
 }
