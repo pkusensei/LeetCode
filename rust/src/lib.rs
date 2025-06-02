@@ -6,25 +6,79 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn candy(ratings: &[i32]) -> i32 {
-    let n = ratings.len();
-    let mut arr = vec![1; n];
-    arr[0] = 1;
-    for i in 1..n {
-        if ratings[i] > ratings[i - 1] {
-            arr[i] = 1 + arr[i - 1]
+use std::collections::{BTreeMap, HashMap};
+
+struct TaskManager {
+    t_up: HashMap<i32, [i32; 2]>,             // task-[user,prio]
+    p_t_u: BTreeMap<i32, BTreeMap<i32, i32>>, // prio-task-user
+}
+
+impl TaskManager {
+    fn new(tasks: Vec<Vec<i32>>) -> Self {
+        let mut t_up = HashMap::new();
+        let mut p_t_u = BTreeMap::<_, BTreeMap<_, _>>::new();
+        for task in tasks {
+            let [uid, tid, prio] = task[..] else {
+                unreachable!()
+            };
+            t_up.insert(tid, [uid, prio]);
+            p_t_u.entry(prio).or_default().insert(tid, uid);
+        }
+        Self { t_up, p_t_u }
+    }
+
+    fn add(&mut self, user_id: i32, task_id: i32, priority: i32) {
+        self.t_up.insert(task_id, [user_id, priority]);
+        self.p_t_u
+            .entry(priority)
+            .or_default()
+            .insert(task_id, user_id);
+    }
+
+    fn edit(&mut self, task_id: i32, new_priority: i32) {
+        let Some(&[u_id, old_prio]) = self.t_up.get(&task_id) else {
+            return;
+        };
+        let Some(old_p_map) = self.p_t_u.get_mut(&old_prio) else {
+            return;
+        };
+        old_p_map.remove(&task_id);
+        if old_p_map.is_empty() {
+            self.p_t_u.remove(&old_prio);
+        }
+        self.t_up.insert(task_id, [u_id, new_priority]);
+        self.p_t_u
+            .entry(new_priority)
+            .or_default()
+            .insert(task_id, u_id);
+    }
+
+    fn rmv(&mut self, task_id: i32) {
+        let Some([_uid, prio]) = self.t_up.remove(&task_id) else {
+            return;
+        };
+        let Some(t_u) = self.p_t_u.get_mut(&prio) else {
+            return;
+        };
+        t_u.remove(&task_id);
+        if t_u.is_empty() {
+            self.p_t_u.remove(&prio);
         }
     }
-    let mut res = arr[n - 1];
-    for i in (0..n - 1).rev() {
-        if ratings[i] > ratings[1 + i] {
-            arr[i] = arr[i].max(1 + arr[1 + i]);
-        } else {
-            arr[i] = arr[i].max(1);
+
+    fn exec_top(&mut self) -> i32 {
+        let Some(t_u) = self.p_t_u.values_mut().next_back() else {
+            return -1;
+        };
+        let Some((tid, uid)) = t_u.pop_last() else {
+            return -1;
+        };
+        if t_u.is_empty() {
+            self.p_t_u.pop_last();
         }
-        res += arr[i];
+        self.t_up.remove(&tid);
+        uid
     }
-    res
 }
 
 #[cfg(test)]
@@ -57,14 +111,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(candy(&[1, 2, 2]), 4);
-        assert_eq!(candy(&[1, 0, 2]), 5);
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(candy(&[1, 3, 4, 5, 2]), 11);
-        assert_eq!(candy(&[1, 2, 87, 87, 87, 2, 1]), 13);
-    }
+    fn test() {}
 }
