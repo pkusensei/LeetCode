@@ -6,57 +6,28 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn zigzag_traversal(grid: &[&[i32]]) -> Vec<i32> {
-    let [rows, cols] = get_dimensions(&grid);
-    let mut res = vec![];
-    let mut flag = true;
-    let it = Iter {
-        rows,
-        cols,
-        r: 0,
-        c: 0,
-    };
-    for [r, c] in it {
-        if flag {
-            res.push(grid[r][c]);
-        }
-        flag = !flag;
+pub fn maximum_amount(coins: Vec<Vec<i32>>) -> i32 {
+    let [rows, cols] = get_dimensions(&coins);
+    dfs(&coins, 0, 0, 2, &mut vec![vec![[None; 3]; cols]; rows])
+}
+
+fn dfs(grid: &[Vec<i32>], r: usize, c: usize, k: usize, memo: &mut [Vec<[Option<i32>; 3]>]) -> i32 {
+    let [rows, cols] = get_dimensions(grid);
+    if r >= rows || c >= cols {
+        return i32::MIN / 2;
     }
+    if r == rows - 1 && c == cols - 1 {
+        return if k > 0 { grid[r][c].max(0) } else { grid[r][c] };
+    }
+    if let Some(v) = memo[r][c][k] {
+        return v;
+    }
+    let mut res = grid[r][c] + dfs(grid, 1 + r, c, k, memo).max(dfs(grid, r, 1 + c, k, memo));
+    if k > 0 && grid[r][c] < 0 {
+        res = res.max(dfs(grid, 1 + r, c, k - 1, memo).max(dfs(grid, r, 1 + c, k - 1, memo)));
+    }
+    memo[r][c][k] = Some(res);
     res
-}
-
-struct Iter {
-    rows: usize,
-    cols: usize,
-    r: usize,
-    c: usize,
-}
-
-impl Iterator for Iter {
-    type Item = [usize; 2];
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let res = if self.r < self.rows && self.c < self.cols {
-            Some([self.r, self.c])
-        } else {
-            None
-        };
-        if self.r & 1 == 0 {
-            self.c += 1;
-            if self.c == self.cols {
-                self.r += 1;
-                self.c = self.cols - 1;
-            }
-        } else {
-            if let Some(v) = self.c.checked_sub(1) {
-                self.c = v
-            } else {
-                self.r += 1;
-                self.c = 0;
-            }
-        }
-        res
-    }
 }
 
 #[cfg(test)]
@@ -90,9 +61,22 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(zigzag_traversal(&[&[1, 2], &[3, 4]]), [1, 4]);
+        assert_eq!(
+            maximum_amount(vec![vec![0, 1, -1], vec![1, -2, 3], vec![2, -3, 4]]),
+            8
+        );
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(
+            maximum_amount(vec![
+                vec![-7, 12, 12, 13],
+                vec![-6, 19, 19, -6],
+                vec![9, -2, -10, 16],
+                vec![-4, 14, -10, -9]
+            ]),
+            60
+        );
+    }
 }
