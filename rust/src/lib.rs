@@ -6,44 +6,52 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_coins(mut coins: Vec<[i32; 3]>, k: i32) -> i64 {
-    let n = coins.len();
-    coins.sort_unstable_by_key(|c| c[0]);
-    let mut starts = Vec::with_capacity(n);
-    let mut ends = Vec::with_capacity(n);
-    let mut prefix = vec![0];
-    for c in coins.iter() {
-        let [left, right, v] = c[..] else {
-            unreachable!()
-        };
-        starts.push(left);
-        ends.push(right);
-        let val = i64::from(right + 1 - left) * i64::from(v);
-        prefix.push(val + prefix.last().unwrap_or(&0));
+use std::collections::{BTreeSet, HashMap};
+
+pub fn maximum_weight(mut intervals: Vec<[i32; 3]>) -> Vec<i32> {
+    let n = intervals.len();
+    let mut ids = HashMap::new();
+    for (i, &int) in intervals.iter().enumerate() {
+        ids.entry(int).or_insert(i);
     }
-    let mut res = 0;
-    // Left-aligned window [left, left + k - 1]
-    for (idx, &left) in starts.iter().enumerate() {
-        let target = left + k - 1;
-        let i = ends.partition_point(|&v| v < target);
-        let mut temp = prefix[i] - prefix[idx];
-        if i < n {
-            let overlap = (target - coins[i][0] + 1).max(0);
-            temp += i64::from(overlap) * i64::from(coins[i][2]);
-        }
-        res = res.max(temp);
+    intervals.sort_unstable();
+    let res = dfs(
+        &intervals,
+        &ids,
+        0,
+        4,
+        &mut vec![[const { (-1, BTreeSet::new()) }; 5]; n],
+    )
+    .1;
+    res.into_iter().map(|v| v as i32).collect()
+}
+
+fn dfs(
+    intervals: &[[i32; 3]],
+    ids: &HashMap<[i32; 3], usize>,
+    idx: usize,
+    k: usize,
+    memo: &mut [[(i64, BTreeSet<usize>); 5]],
+) -> (i64, BTreeSet<usize>) {
+    if k == 0 || idx >= intervals.len() {
+        return (0, BTreeSet::new());
     }
-    // Right-aligned window [right - k + 1, right]
-    for (idx, &right) in ends.iter().enumerate() {
-        let target = right - k + 1;
-        let i = starts.partition_point(|&v| v < target);
-        let mut curr = prefix[idx + 1] - prefix[i];
-        if i > 0 {
-            let overlap = (coins[i - 1][1] - target + 1).max(0);
-            curr += i64::from(overlap) * i64::from(coins[i - 1][2]);
-        }
-        res = res.max(curr);
+    if memo[idx][k].0 > -1 {
+        return memo[idx][k].clone();
     }
+    let skip = dfs(intervals, ids, idx + 1, k, memo);
+    // pick
+    let target = intervals[idx][1];
+    let i = intervals.partition_point(|&v| v[0] <= target);
+    let (mut pick_val, mut pick_ids) = dfs(intervals, ids, i, k - 1, memo);
+    pick_ids.insert(ids[&intervals[idx]]);
+    pick_val += i64::from(intervals[idx][2]);
+    let res = match pick_val.cmp(&skip.0) {
+        std::cmp::Ordering::Less => skip,
+        std::cmp::Ordering::Equal => (pick_val, pick_ids.min(skip.1)),
+        std::cmp::Ordering::Greater => (pick_val, pick_ids),
+    };
+    memo[idx][k] = res.clone();
     res
 }
 
@@ -78,10 +86,45 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(maximum_coins(vec![[8, 10, 1], [1, 3, 2], [5, 6, 4]], 4), 10);
-        assert_eq!(maximum_coins(vec![[1, 10, 3]], 2), 6);
+        assert_eq!(
+            maximum_weight(vec![
+                [1, 3, 2],
+                [4, 5, 2],
+                [1, 5, 5],
+                [6, 9, 3],
+                [6, 7, 1],
+                [8, 9, 1]
+            ]),
+            [2, 3]
+        );
+        assert_eq!(
+            maximum_weight(vec![
+                [5, 8, 1],
+                [6, 7, 7],
+                [4, 7, 3],
+                [9, 10, 6],
+                [7, 8, 2],
+                [11, 14, 3],
+                [3, 5, 5]
+            ]),
+            [1, 3, 5, 6]
+        );
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(
+            maximum_weight(vec![
+                [8, 15, 32],
+                [20, 21, 8],
+                [8, 16, 29],
+                [7, 12, 50],
+                [16, 25, 27],
+                [12, 17, 2],
+                [8, 12, 45],
+                [5, 10, 50]
+            ]),
+            [3, 4]
+        )
+    }
 }
