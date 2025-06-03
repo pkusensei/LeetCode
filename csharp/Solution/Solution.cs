@@ -7,32 +7,39 @@ namespace Solution;
 
 public class Solution
 {
-    public long DistributeCandies(int n, int limit)
+    public int MaxCandies(int[] status, int[] candies, int[][] keys, int[][] containedBoxes, int[] initialBoxes)
     {
-        long res = 0;
-        // Fix a
-        for (int a = 0; a <= Math.Min(n, limit); a++)
+        int n = status.Length;
+        Span<bool> available = stackalloc bool[n];
+        Queue<int> queue = [];
+        foreach (var item in initialBoxes)
         {
-            // b = 0;
-            int c_max = Math.Min(n - a, limit);
-            // b = limit
-            int c_min = Math.Max(n - a - limit, 0);
-            res += Math.Max(c_max - c_min + 1, 0);
+            if (status[item] > 0) { queue.Enqueue(item); }
+            else { available[item] = true; }
+        }
+        int res = 0;
+        while (queue.TryDequeue(out var node))
+        {
+            res += candies[node];
+            foreach (var item in keys[node])
+            {
+                status[item] = 1;
+                if (status[item] > 0 && available[item])
+                {
+                    queue.Enqueue(item);
+                    available[item] = false;
+                }
+            }
+            foreach (var item in containedBoxes[node])
+            {
+                available[item] = true;
+                if (status[item] > 0 && available[item])
+                {
+                    queue.Enqueue(item);
+                    available[item] = false;
+                }
+            }
         }
         return res;
-    }
-
-    public long PIE(int n, int limit)
-    {
-        // All possible distribution 
-        // minus: at least one receives more than limit
-        // plus: at least two receive more than limit
-        // minus: all receive more than limit
-        return NChoose2(2 + n)
-               - 3 * NChoose2(n + 1 - limit)
-               + 3 * NChoose2(n - (1 + limit) * 2 + 2)
-               - NChoose2(n - 3 * (1 + limit) + 2);
-
-        long NChoose2(long x) => x <= 1 ? 0 : x * (x - 1) / 2;
     }
 }
