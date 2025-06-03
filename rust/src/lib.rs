@@ -6,28 +6,35 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_amount(coins: Vec<Vec<i32>>) -> i32 {
-    let [rows, cols] = get_dimensions(&coins);
-    dfs(&coins, 0, 0, 2, &mut vec![vec![[None; 3]; cols]; rows])
+pub fn min_max_weight(n: i32, edges: Vec<Vec<i32>>, _threshold: i32) -> i32 {
+    let n = n as usize;
+    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
+        let [a, b] = [0, 1].map(|i| e[i] as usize);
+        acc[b].push((a, e[2]));
+        acc
+    });
+    let mut left = 1;
+    let mut right = 1_000_001;
+    while left < right {
+        let mid = left + (right - left) / 2;
+        let mut seen = vec![false; n];
+        dfs(&adj, mid, 0, &mut seen);
+        if seen.into_iter().all(|v| v) {
+            right = mid;
+        } else {
+            left = 1 + mid;
+        }
+    }
+    if left < 1_000_001 { left } else { -1 }
 }
 
-fn dfs(grid: &[Vec<i32>], r: usize, c: usize, k: usize, memo: &mut [Vec<[Option<i32>; 3]>]) -> i32 {
-    let [rows, cols] = get_dimensions(grid);
-    if r >= rows || c >= cols {
-        return i32::MIN / 2;
+fn dfs(adj: &[Vec<(usize, i32)>], mid: i32, node: usize, seen: &mut [bool]) {
+    seen[node] = true;
+    for &(next, w) in &adj[node] {
+        if !seen[next] && w <= mid {
+            dfs(adj, mid, next, seen);
+        }
     }
-    if r == rows - 1 && c == cols - 1 {
-        return if k > 0 { grid[r][c].max(0) } else { grid[r][c] };
-    }
-    if let Some(v) = memo[r][c][k] {
-        return v;
-    }
-    let mut res = grid[r][c] + dfs(grid, 1 + r, c, k, memo).max(dfs(grid, r, 1 + c, k, memo));
-    if k > 0 && grid[r][c] < 0 {
-        res = res.max(dfs(grid, 1 + r, c, k - 1, memo).max(dfs(grid, r, 1 + c, k - 1, memo)));
-    }
-    memo[r][c][k] = Some(res);
-    res
 }
 
 #[cfg(test)]
@@ -60,23 +67,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(
-            maximum_amount(vec![vec![0, 1, -1], vec![1, -2, 3], vec![2, -3, 4]]),
-            8
-        );
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(
-            maximum_amount(vec![
-                vec![-7, 12, 12, 13],
-                vec![-6, 19, 19, -6],
-                vec![9, -2, -10, 16],
-                vec![-4, 14, -10, -9]
-            ]),
-            60
-        );
-    }
+    fn test() {}
 }
