@@ -6,53 +6,57 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-use std::collections::{BTreeSet, HashMap};
-
-pub fn maximum_weight(mut intervals: Vec<[i32; 3]>) -> Vec<i32> {
-    let n = intervals.len();
-    let mut ids = HashMap::new();
-    for (i, &int) in intervals.iter().enumerate() {
-        ids.entry(int).or_insert(i);
+pub fn zigzag_traversal(grid: &[&[i32]]) -> Vec<i32> {
+    let [rows, cols] = get_dimensions(&grid);
+    let mut res = vec![];
+    let mut flag = true;
+    let it = Iter {
+        rows,
+        cols,
+        r: 0,
+        c: 0,
+    };
+    for [r, c] in it {
+        if flag {
+            res.push(grid[r][c]);
+        }
+        flag = !flag;
     }
-    intervals.sort_unstable();
-    let res = dfs(
-        &intervals,
-        &ids,
-        0,
-        4,
-        &mut vec![[const { (-1, BTreeSet::new()) }; 5]; n],
-    )
-    .1;
-    res.into_iter().map(|v| v as i32).collect()
+    res
 }
 
-fn dfs(
-    intervals: &[[i32; 3]],
-    ids: &HashMap<[i32; 3], usize>,
-    idx: usize,
-    k: usize,
-    memo: &mut [[(i64, BTreeSet<usize>); 5]],
-) -> (i64, BTreeSet<usize>) {
-    if k == 0 || idx >= intervals.len() {
-        return (0, BTreeSet::new());
+struct Iter {
+    rows: usize,
+    cols: usize,
+    r: usize,
+    c: usize,
+}
+
+impl Iterator for Iter {
+    type Item = [usize; 2];
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let res = if self.r < self.rows && self.c < self.cols {
+            Some([self.r, self.c])
+        } else {
+            None
+        };
+        if self.r & 1 == 0 {
+            self.c += 1;
+            if self.c == self.cols {
+                self.r += 1;
+                self.c = self.cols - 1;
+            }
+        } else {
+            if let Some(v) = self.c.checked_sub(1) {
+                self.c = v
+            } else {
+                self.r += 1;
+                self.c = 0;
+            }
+        }
+        res
     }
-    if memo[idx][k].0 > -1 {
-        return memo[idx][k].clone();
-    }
-    let skip = dfs(intervals, ids, idx + 1, k, memo);
-    // pick
-    let target = intervals[idx][1];
-    let i = intervals.partition_point(|&v| v[0] <= target);
-    let (mut pick_val, mut pick_ids) = dfs(intervals, ids, i, k - 1, memo);
-    pick_ids.insert(ids[&intervals[idx]]);
-    pick_val += i64::from(intervals[idx][2]);
-    let res = match pick_val.cmp(&skip.0) {
-        std::cmp::Ordering::Less => skip,
-        std::cmp::Ordering::Equal => (pick_val, pick_ids.min(skip.1)),
-        std::cmp::Ordering::Greater => (pick_val, pick_ids),
-    };
-    memo[idx][k] = res.clone();
-    res
 }
 
 #[cfg(test)]
@@ -86,45 +90,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            maximum_weight(vec![
-                [1, 3, 2],
-                [4, 5, 2],
-                [1, 5, 5],
-                [6, 9, 3],
-                [6, 7, 1],
-                [8, 9, 1]
-            ]),
-            [2, 3]
-        );
-        assert_eq!(
-            maximum_weight(vec![
-                [5, 8, 1],
-                [6, 7, 7],
-                [4, 7, 3],
-                [9, 10, 6],
-                [7, 8, 2],
-                [11, 14, 3],
-                [3, 5, 5]
-            ]),
-            [1, 3, 5, 6]
-        );
+        assert_eq!(zigzag_traversal(&[&[1, 2], &[3, 4]]), [1, 4]);
     }
 
     #[test]
-    fn test() {
-        assert_eq!(
-            maximum_weight(vec![
-                [8, 15, 32],
-                [20, 21, 8],
-                [8, 16, 29],
-                [7, 12, 50],
-                [16, 25, 27],
-                [12, 17, 2],
-                [8, 12, 45],
-                [5, 10, 50]
-            ]),
-            [3, 4]
-        )
-    }
+    fn test() {}
 }
