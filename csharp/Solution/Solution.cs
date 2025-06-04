@@ -7,38 +7,15 @@ namespace Solution;
 
 public class Solution
 {
-    public int MaxCandies(int[] status, int[] candies, int[][] keys, int[][] containedBoxes, int[] initialBoxes)
+    public string AnswerString(string word, int numFriends)
     {
-        int n = status.Length;
-        Span<bool> available = stackalloc bool[n];
-        Queue<int> queue = [];
-        foreach (var item in initialBoxes)
+        if (numFriends <= 1) { return word; }
+        int len = word.Length - numFriends + 1;
+        string res = "";
+        for (int i = 0; i < word.Length; i++)
         {
-            if (status[item] > 0) { queue.Enqueue(item); }
-            else { available[item] = true; }
-        }
-        int res = 0;
-        while (queue.TryDequeue(out var node))
-        {
-            res += candies[node];
-            foreach (var item in keys[node])
-            {
-                status[item] = 1;
-                if (status[item] > 0 && available[item])
-                {
-                    queue.Enqueue(item);
-                    available[item] = false;
-                }
-            }
-            foreach (var item in containedBoxes[node])
-            {
-                available[item] = true;
-                if (status[item] > 0 && available[item])
-                {
-                    queue.Enqueue(item);
-                    available[item] = false;
-                }
-            }
+            string curr = word[i..Math.Min(i + len, word.Length)];
+            res = curr.CompareTo(res) > 0 ? curr : res;
         }
         return res;
     }
