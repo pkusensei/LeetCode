@@ -6,40 +6,51 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_cost(n: i32, cost: &[[i32; 3]]) -> i64 {
-    dfs(cost, 0, 3, 3, &mut vec![[[-1; 4]; 4]; n as usize / 2])
+pub fn min_max_subarray_sum(nums: &[i32], k: i32) -> i64 {
+    let k = k as i64;
+    let [prev_smaller, next_smaller] = build(nums, |top, num| top > num);
+    let [prev_greater, next_greater] = build(nums, |top, num| top < num);
+    // nums[i] as local max + as local min
+    solve(nums, k, prev_smaller, next_smaller) + solve(nums, k, prev_greater, next_greater)
 }
 
-fn dfs(
-    cost: &[[i32; 3]],
-    idx: usize,
-    left_c: usize,
-    right_c: usize,
-    memo: &mut [[[i64; 4]; 4]],
-) -> i64 {
-    use itertools::Itertools;
-    let n = cost.len() / 2;
-    if idx >= n {
-        return 0;
+fn solve(nums: &[i32], k: i64, prev: Vec<Option<usize>>, next: Vec<Option<usize>>) -> i64 {
+    let n = nums.len();
+    let mut res = 0;
+    for (idx, &num) in nums.iter().enumerate() {
+        let num = i64::from(num);
+        let left = k.min(idx as i64 - prev[idx].map(|v| v as i64).unwrap_or(-1));
+        let right = k.min((next[idx].unwrap_or(n) - idx) as i64);
+        let extra = (left + right - 1 - k).max(0);
+        res += num * (left * right - extra * (1 + extra) / 2);
     }
-    if memo[idx][left_c][right_c] > -1 {
-        return memo[idx][left_c][right_c];
-    }
-    let left = n - idx - 1;
-    let right = n + idx;
-    let mut res = i64::MAX;
-    for [a, b] in (0..3).array_combinations() {
-        if a != left_c && b != right_c {
-            res =
-                res.min(i64::from(cost[left][a] + cost[right][b]) + dfs(cost, 1 + idx, a, b, memo));
-        }
-        if a != right_c && b != left_c {
-            res =
-                res.min(i64::from(cost[left][b] + cost[right][a]) + dfs(cost, 1 + idx, b, a, memo));
-        }
-    }
-    memo[idx][left_c][right_c] = res;
     res
+}
+
+fn build(nums: &[i32], f: fn(i32, i32) -> bool) -> [Vec<Option<usize>>; 2] {
+    let n = nums.len();
+    let mut next = vec![None; n];
+    let mut stack = vec![];
+    for (idx, &num) in nums.iter().enumerate() {
+        while stack.last().is_some_and(|&i| f(nums[i], num)) {
+            let top = stack.pop().unwrap();
+            next[top] = Some(idx);
+        }
+        stack.push(idx);
+    }
+    stack.clear();
+    let mut prev = vec![None; n];
+    for (idx, &num) in nums.iter().enumerate().rev() {
+        while stack
+            .last()
+            .is_some_and(|&i| f(nums[i], num) || nums[i] == num)
+        {
+            let top = stack.pop().unwrap();
+            prev[top] = Some(idx);
+        }
+        stack.push(idx);
+    }
+    [prev, next]
 }
 
 #[cfg(test)]
@@ -73,26 +84,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            min_cost(4, &[[3, 5, 7], [6, 2, 9], [4, 8, 1], [7, 3, 5]]),
-            9
-        );
-        assert_eq!(
-            min_cost(
-                6,
-                &[
-                    [2, 4, 6],
-                    [5, 3, 8],
-                    [7, 1, 9],
-                    [4, 6, 2],
-                    [3, 5, 7],
-                    [8, 2, 4]
-                ]
-            ),
-            18
-        );
+        assert_eq!(min_max_subarray_sum(&[1, 2, 3], 2), 20);
+        assert_eq!(min_max_subarray_sum(&[1, -3, 1], 2), -6);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(min_max_subarray_sum(&[-7, -7], 2), -42);
+        assert_eq!(min_max_subarray_sum(&[-7, 13], 1), 12);
+    }
 }
