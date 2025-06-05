@@ -6,31 +6,40 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_max_sums(mut nums: Vec<i32>, k: i32) -> i32 {
-    const M: usize = 1_000_000_007;
-    let n = nums.len();
-    let k = k as usize;
-    let mut comb = vec![vec![0; 1 + k]; 1 + n];
-    comb[0][0] = 1;
-    for row in 1..=n {
-        comb[row][0] = 1;
-        for col in 1..=k {
-            comb[row][col] = (comb[row - 1][col - 1] + comb[row - 1][col]) % M;
+pub fn min_cost(n: i32, cost: &[[i32; 3]]) -> i64 {
+    dfs(cost, 0, 3, 3, &mut vec![[[-1; 4]; 4]; n as usize / 2])
+}
+
+fn dfs(
+    cost: &[[i32; 3]],
+    idx: usize,
+    left_c: usize,
+    right_c: usize,
+    memo: &mut [[[i64; 4]; 4]],
+) -> i64 {
+    use itertools::Itertools;
+    let n = cost.len() / 2;
+    if idx >= n {
+        return 0;
+    }
+    if memo[idx][left_c][right_c] > -1 {
+        return memo[idx][left_c][right_c];
+    }
+    let left = n - idx - 1;
+    let right = n + idx;
+    let mut res = i64::MAX;
+    for [a, b] in (0..3).array_combinations() {
+        if a != left_c && b != right_c {
+            res =
+                res.min(i64::from(cost[left][a] + cost[right][b]) + dfs(cost, 1 + idx, a, b, memo));
+        }
+        if a != right_c && b != left_c {
+            res =
+                res.min(i64::from(cost[left][b] + cost[right][a]) + dfs(cost, 1 + idx, b, a, memo));
         }
     }
-    nums.sort_unstable();
-    let mut res = 0;
-    for i in 0..n {
-        let mut subseq = 0;
-        for pick in 0..k {
-            if pick <= i {
-                subseq = (subseq + comb[i][pick]) % M;
-            }
-        }
-        res += (nums[i] as usize + nums[n - 1 - i] as usize) * subseq % M;
-        res %= M;
-    }
-    res as i32
+    memo[idx][left_c][right_c] = res;
+    res
 }
 
 #[cfg(test)]
@@ -64,7 +73,24 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_max_sums(vec![1, 2, 3], 2), 24);
+        assert_eq!(
+            min_cost(4, &[[3, 5, 7], [6, 2, 9], [4, 8, 1], [7, 3, 5]]),
+            9
+        );
+        assert_eq!(
+            min_cost(
+                6,
+                &[
+                    [2, 4, 6],
+                    [5, 3, 8],
+                    [7, 1, 9],
+                    [4, 6, 2],
+                    [3, 5, 7],
+                    [8, 2, 4]
+                ]
+            ),
+            18
+        );
     }
 
     #[test]
