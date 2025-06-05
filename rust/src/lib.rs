@@ -6,43 +6,31 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn smallest_equivalent_string(s1: String, s2: String, base_str: String) -> String {
-    let mut dsu = DSU::new();
-    for (b1, b2) in s1.bytes().zip(s2.bytes()) {
-        dsu.union(usize::from(b1 - b'a'), usize::from(b2 - b'a'));
-    }
-    base_str
-        .bytes()
-        .map(|b| char::from(dsu.find(usize::from(b - b'a')) as u8 + b'a'))
-        .collect()
-}
-
-struct DSU {
-    parent: [usize; 26],
-}
-
-impl DSU {
-    fn new() -> Self {
-        let mut parent = [0; 26];
-        for (i, v) in parent.iter_mut().enumerate() {
-            *v = i;
+pub fn min_max_sums(mut nums: Vec<i32>, k: i32) -> i32 {
+    const M: usize = 1_000_000_007;
+    let n = nums.len();
+    let k = k as usize;
+    let mut comb = vec![vec![0; 1 + k]; 1 + n];
+    comb[0][0] = 1;
+    for row in 1..=n {
+        comb[row][0] = 1;
+        for col in 1..=k {
+            comb[row][col] = (comb[row - 1][col - 1] + comb[row - 1][col]) % M;
         }
-        Self { parent }
     }
-
-    fn find(&mut self, v: usize) -> usize {
-        if self.parent[v] != v {
-            self.parent[v] = self.find(self.parent[v]);
+    nums.sort_unstable();
+    let mut res = 0;
+    for i in 0..n {
+        let mut subseq = 0;
+        for pick in 0..k {
+            if pick <= i {
+                subseq = (subseq + comb[i][pick]) % M;
+            }
         }
-        self.parent[v]
+        res += (nums[i] as usize + nums[n - 1 - i] as usize) * subseq % M;
+        res %= M;
     }
-
-    fn union(&mut self, x: usize, y: usize) {
-        let [rx, ry] = [x, y].map(|v| self.find(v));
-        let r = rx.min(ry);
-        self.parent[rx] = r;
-        self.parent[ry] = r;
-    }
+    res as i32
 }
 
 #[cfg(test)]
@@ -75,7 +63,9 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(min_max_sums(vec![1, 2, 3], 2), 24);
+    }
 
     #[test]
     fn test() {}
