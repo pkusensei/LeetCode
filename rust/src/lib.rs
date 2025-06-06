@@ -6,51 +6,26 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_mentions(number_of_users: i32, mut events: Vec<Vec<String>>) -> Vec<i32> {
-    use std::{
-        cmp::Reverse,
-        collections::{BinaryHeap, HashSet},
-    };
-    let n = number_of_users as usize;
-    let mut on: HashSet<_> = (0..n).collect();
-    let mut off = BinaryHeap::new();
-    events.sort_unstable_by(|a, b| {
-        let [v1, v2] = [a, b].map(|v| v[1].parse::<i32>().unwrap_or(100_000));
-        v1.cmp(&v2).then(b[0].cmp(&a[0]))
+pub fn robot_with_string(s: &str) -> String {
+    let mut freq = s.bytes().fold([0; 26], |mut acc, b| {
+        acc[usize::from(b - b'a')] += 1;
+        acc
     });
-    let mut res = vec![0; n];
-    let mut all = 0;
-    for e in events {
-        let time = e[1].parse::<i32>().unwrap_or(100_000);
-        while off.peek().is_some_and(|&(Reverse(t), _)| t <= time) {
-            let (_, id) = off.pop().unwrap();
-            on.insert(id);
+    let mut t = vec![]; // stack
+    let mut res = vec![];
+    let mut upper = 0;
+    for b in s.bytes().map(|b| usize::from(b - b'a')) {
+        t.push(b);
+        freq[b] -= 1;
+        while freq.get(upper).is_some_and(|&v| v == 0) {
+            upper += 1; // Find big char still left in s
         }
-        if e[0] == "MESSAGE" {
-            match e[2].as_str() {
-                "ALL" => all += 1,
-                "HERE" => {
-                    for &i in &on {
-                        res[i] += 1;
-                    }
-                }
-                _ => {
-                    for s in e[2].split_ascii_whitespace() {
-                        let id = s[2..].parse::<usize>().unwrap_or(0);
-                        res[id] += 1;
-                    }
-                }
-            }
-        } else {
-            let id = e[2].parse::<usize>().unwrap_or(100);
-            on.remove(&id);
-            off.push((Reverse(time + 60), id));
+        while t.last().is_some_and(|&v| v <= upper) {
+            let byte = t.pop().unwrap() as u8 + b'a';
+            res.push(byte); // Append all smaller chars
         }
     }
-    for v in res.iter_mut() {
-        *v += all;
-    }
-    res
+    String::from_utf8(res).unwrap()
 }
 
 #[cfg(test)]
@@ -83,7 +58,9 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(robot_with_string("bdda"), "addb");
+    }
 
     #[test]
     fn test() {}
