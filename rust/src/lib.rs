@@ -6,18 +6,25 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_valid_pair(s: String) -> String {
-    let f = |b| usize::from(b - b'0');
-    let freq = s.bytes().fold([0; 10], |mut acc, b| {
-        acc[f(b)] += 1;
-        acc
-    });
-    for w in s.as_bytes().windows(2) {
-        if w[0] != w[1] && f(w[0]) == freq[f(w[0])] && f(w[1]) == freq[f(w[1])] {
-            return String::from_utf8(w.to_vec()).unwrap();
-        }
+pub fn max_free_time(event_time: i32, k: i32, start_time: Vec<i32>, end_time: Vec<i32>) -> i32 {
+    let mut prev = 0;
+    let mut gaps = vec![];
+    for (&s, &e) in start_time.iter().zip(end_time.iter()) {
+        gaps.push(s - prev);
+        prev = e;
     }
-    String::new()
+    gaps.push(event_time - prev);
+    let k = k as usize;
+    let mut res = 0;
+    let mut curr = 0;
+    for (idx, &num) in gaps.iter().enumerate() {
+        curr += num;
+        if idx >= k + 1 {
+            curr -= gaps[idx - k - 1];
+        }
+        res = res.max(curr);
+    }
+    res
 }
 
 #[cfg(test)]
