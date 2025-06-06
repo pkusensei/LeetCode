@@ -6,26 +6,29 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn robot_with_string(s: &str) -> String {
-    let mut freq = s.bytes().fold([0; 26], |mut acc, b| {
-        acc[usize::from(b - b'a')] += 1;
+pub fn max_frequency(nums: &[i32], k: i32) -> i32 {
+    use std::collections::HashMap;
+    let freq = nums.iter().fold(HashMap::new(), |mut acc, &v| {
+        *acc.entry(v).or_insert(0) += 1;
         acc
     });
-    let mut t = vec![]; // stack
-    let mut res = vec![];
-    let mut upper = 0;
-    for b in s.bytes().map(|b| usize::from(b - b'a')) {
-        t.push(b);
-        freq[b] -= 1;
-        while freq.get(upper).is_some_and(|&v| v == 0) {
-            upper += 1; // Find big char still left in s
-        }
-        while t.last().is_some_and(|&v| v <= upper) {
-            let byte = t.pop().unwrap() as u8 + b'a';
-            res.push(byte); // Append all smaller chars
+    let mut res = 0;
+    for &target in freq.keys() {
+        let mut curr = 0;
+        for &num in nums.iter() {
+            if num == k {
+                curr -= 1; // lose this native `k`
+            }
+            if num == target {
+                curr += 1; // target -> k
+            }
+            if curr < 0 {
+                curr = 0; // reset subarray
+            }
+            res = res.max(curr);
         }
     }
-    String::from_utf8(res).unwrap()
+    res + freq.get(&k).unwrap_or(&0)
 }
 
 #[cfg(test)]
@@ -59,7 +62,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(robot_with_string("bdda"), "addb");
+        assert_eq!(max_frequency(&[1, 2, 3, 4, 5, 6], 1), 2);
+        assert_eq!(max_frequency(&[10, 2, 3, 4, 5, 5, 4, 3, 2, 2], 10), 4);
     }
 
     #[test]
