@@ -6,20 +6,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_difference(s: String) -> i32 {
-    let freq = s.bytes().fold([0; 26], |mut acc, b| {
-        acc[usize::from(b - b'a')] += 1;
-        acc
-    });
-    let [mut odd, mut even] = [1, i32::MAX];
-    for f in freq {
-        if f & 1 == 1 {
-            odd = odd.max(f)
-        } else if f > 0 {
-            even = even.min(f);
+pub fn max_distance(s: String, k: i32) -> i32 {
+    let mut res = 0;
+    for dir in [b"NE", b"NW", b"SE", b"SW"] {
+        let mut curr = 0;
+        let mut k_ = k;
+        for b in s.bytes() {
+            if dir.contains(&b) {
+                curr += 1;
+            } else if k_ > 0 {
+                curr += 1;
+                k_ -= 1;
+            } else {
+                curr -= 1;
+            }
+            res = res.max(curr);
         }
     }
-    odd - even
+    res
 }
 
 #[cfg(test)]
