@@ -6,39 +6,88 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_free_time(event_time: i32, start_time: Vec<i32>, end_time: Vec<i32>) -> i32 {
-    use itertools::izip;
-    use std::collections::BTreeMap;
-    let mut prev = end_time[0];
-    let mut gaps = vec![];
-    let [mut left_map, mut right_map] = [const { BTreeMap::new() }; 2];
-    for (&s, &e) in start_time.iter().zip(end_time.iter()).skip(1) {
-        gaps.push(s - prev);
-        *right_map.entry(s - prev).or_insert(0) += 1;
-        prev = e;
+pub fn min_cost_good_caption(caption: &str) -> String {
+    let (s, n) = (caption.as_bytes(), caption.len());
+    if n < 3 {
+        return String::new();
     }
-    gaps.push(event_time - prev);
-    *right_map.entry(event_time - prev).or_insert(0) += 1;
-    let mut left_gap = start_time[0];
-    let mut res = 0;
-    for (&s, &e, right_gap) in izip!(start_time.iter(), end_time.iter(), gaps) {
-        let e_time = e - s;
-        let v = right_map.entry(right_gap).or_insert(0);
-        *v -= 1;
-        if *v == 0 {
-            right_map.remove(&right_gap);
-        }
-        res = res.max(left_gap + right_gap);
-        if [&left_map, &right_map]
-            .iter()
-            .any(|m| m.range(e_time..).next().is_some())
-        {
-            res = res.max(left_gap + right_gap + e_time);
-        }
-        *left_map.entry(left_gap).or_insert(0) += 1;
-        left_gap = right_gap;
+    let mut memo = vec![[[-1; 3]; 27]; n];
+    let cost = dfs(s, 0, 26, 2, &mut memo);
+    if cost >= INF {
+        return String::new();
     }
+    let mut res = build(s, &memo, 0, 26, 2, cost);
+    res.reverse();
+    String::from_utf8(res).unwrap()
+}
+
+const INF: i32 = i32::MAX / 2;
+fn dfs(s: &[u8], idx: usize, prev_b: usize, streak: usize, memo: &mut [[[i32; 3]; 27]]) -> i32 {
+    if idx >= s.len() {
+        return if streak == 2 { 0 } else { INF };
+    }
+    if memo[idx][prev_b][streak] > -1 {
+        return memo[idx][prev_b][streak];
+    }
+    let mut res = INF;
+    if streak == 2 {
+        // starts new chunk or stays in
+        for (bi, b) in (b'a'..=b'z').enumerate() {
+            let cost = i32::from(b.abs_diff(s[idx]));
+            res = res.min(cost + dfs(s, 1 + idx, bi, if bi == prev_b { 2 } else { 0 }, memo));
+        }
+    } else {
+        // expand previous chunk
+        let cost = i32::from((prev_b as u8 + b'a').abs_diff(s[idx]));
+        res = res.min(cost + dfs(s, 1 + idx, prev_b, 1 + streak, memo));
+    }
+    memo[idx][prev_b][streak] = res;
     res
+}
+
+fn build(
+    s: &[u8],
+    memo: &[[[i32; 3]; 27]],
+    idx: usize,
+    prev_b: usize,
+    streak: usize,
+    target: i32,
+) -> Vec<u8> {
+    let n = s.len();
+    if idx >= n {
+        return Vec::with_capacity(n);
+    }
+    if streak == 2 {
+        for (bi, b) in (b'a'..=b'z').enumerate() {
+            let cost = i32::from(b.abs_diff(s[idx]));
+            let next_streak = if bi == prev_b { 2 } else { 0 };
+            let next_cost = if 1 + idx >= n {
+                if next_streak == 2 { 0 } else { INF }
+            } else {
+                memo[1 + idx][bi][next_streak]
+            };
+            if cost + next_cost == target {
+                let mut res = build(s, memo, 1 + idx, bi, next_streak, next_cost);
+                res.push(b);
+                return res;
+            }
+        }
+    } else {
+        let b = prev_b as u8 + b'a';
+        let cost = i32::from(b.abs_diff(s[idx]));
+        let next_streak = 1 + streak;
+        let next_cost = if 1 + idx >= n {
+            if next_streak == 2 { 0 } else { INF }
+        } else {
+            memo[1 + idx][prev_b][next_streak]
+        };
+        if cost + next_cost == target {
+            let mut res = build(s, memo, 1 + idx, prev_b, next_streak, next_cost);
+            res.push(b);
+            return res;
+        }
+    }
+    vec![] // unreachable
 }
 
 #[cfg(test)]
@@ -71,7 +120,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(min_cost_good_caption("cdcd"), "cccc");
+        assert_eq!(min_cost_good_caption("aca"), "aaa");
+        assert_eq!(min_cost_good_caption("bc"), "");
+    }
 
     #[test]
     fn test() {}
