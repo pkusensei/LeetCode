@@ -7,16 +7,14 @@ namespace Solution;
 
 public class Solution
 {
-    public string AnswerString(string word, int numFriends)
+    public string ClearStars(string s)
     {
-        if (numFriends <= 1) { return word; }
-        int len = word.Length - numFriends + 1;
-        string res = "";
-        for (int i = 0; i < word.Length; i++)
+        PriorityQueue<(int, char), (char, int)> pq = new();
+        for (int i = 0; i < s.Length; i++)
         {
-            string curr = word[i..Math.Min(i + len, word.Length)];
-            res = curr.CompareTo(res) > 0 ? curr : res;
+            if (s[i] == '*') { pq.Dequeue(); }
+            else { pq.Enqueue((i, s[i]), (s[i], -i)); }
         }
-        return res;
+        return new([.. pq.UnorderedItems.OrderBy(p => p.Element.Item1).Select(p => p.Element.Item2)]);
     }
 }
