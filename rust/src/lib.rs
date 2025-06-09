@@ -6,42 +6,43 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_difference(s: &str, k: i32) -> i32 {
-    use itertools::Itertools;
-    use std::collections::HashMap;
-    const INF: i32 = i32::MAX >> 1;
-    let k = k as usize;
-    let mut res = i32::MIN;
-    for perm in (b'0'..=b'4').permutations(2) {
-        let [a, b] = perm[..] else { unreachable!() };
-        let mut seen = HashMap::new();
-        let [mut pref_a, mut pref_b] = [vec![0], vec![0]];
-        let mut left = 0;
-        for (right, byte) in s.bytes().enumerate() {
-            pref_a.push(*pref_a.last().unwrap_or(&0));
-            pref_b.push(*pref_b.last().unwrap_or(&0));
-            if byte == a {
-                pref_a[1 + right] += 1;
+pub fn sort_matrix(mut grid: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
+    let n = grid.len();
+    for col in 1..n {
+        let mut c = col;
+        let mut curr = vec![];
+        for r in 0..n {
+            curr.push(grid[r][c]);
+            c += 1;
+            if c == n {
+                break;
             }
-            if byte == b {
-                pref_b[1 + right] += 1;
-            }
-            while left + k - 1 <= right
-                && pref_a[left] < pref_a[1 + right]
-                && pref_b[left] < pref_b[1 + right]
-            {
-                let key = [pref_a[left] & 1, pref_b[left] & 1];
-                let diff = pref_a[left] - pref_b[left];
-                let v = seen.entry(key).or_insert(INF);
-                *v = (*v).min(diff); // keep min_diff
-                left += 1;
-            }
-            let key = [1 - (pref_a[1 + right] & 1), pref_b[1 + right] & 1];
-            let diff = pref_a[1 + right] - pref_b[1 + right];
-            res = res.max(diff - seen.get(&key).unwrap_or(&INF));
+        }
+        curr.sort_unstable();
+        c = col;
+        for (r, num) in curr.into_iter().enumerate() {
+            grid[r][c] = num;
+            c += 1;
         }
     }
-    res
+    for row in 0..n {
+        let mut r = row;
+        let mut curr = vec![];
+        for c in 0..n {
+            curr.push(grid[r][c]);
+            r += 1;
+            if r == n {
+                break;
+            }
+        }
+        curr.sort_unstable_by(|a, b| b.cmp(a));
+        r = row;
+        for (c, num) in curr.into_iter().enumerate() {
+            grid[r][c] = num;
+            r += 1;
+        }
+    }
+    grid
 }
 
 #[cfg(test)]
@@ -74,11 +75,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(max_difference("12233", 4), -1);
-        assert_eq!(max_difference("1122211", 3), 1);
-        assert_eq!(max_difference("110", 3), -1);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
