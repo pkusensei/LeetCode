@@ -7,14 +7,39 @@ namespace Solution;
 
 public class Solution
 {
-    public string ClearStars(string s)
+    public int FindKthNumber(int n, int k)
     {
-        PriorityQueue<(int, char), (char, int)> pq = new();
-        for (int i = 0; i < s.Length; i++)
+        int curr = 1;
+        k -= 1;
+        while (k > 0)
         {
-            if (s[i] == '*') { pq.Dequeue(); }
-            else { pq.Enqueue((i, s[i]), (s[i], -i)); }
+            // try moving to 1+curr
+            var steps = CountSteps(curr);
+            if (steps <= k)
+            { // success!
+                curr += 1;
+                k -= steps;
+            }
+            else
+            { // impossible! go deeper on this tree
+                curr *= 10;
+                k -= 1;
+            }
         }
-        return new([.. pq.UnorderedItems.OrderBy(p => p.Element.Item1).Select(p => p.Element.Item2)]);
+        return curr;
+
+        int CountSteps(long curr)
+        {
+            long num1 = curr;
+            long num2 = 1 + curr; // upper bound for this subtree
+            long res = 0;
+            while (num1 <= n)
+            {
+                res += Math.Min(1 + n, num2) - num1;
+                num1 *= 10;
+                num2 *= 10;
+            }
+            return (int)res;
+        }
     }
 }
