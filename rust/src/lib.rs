@@ -3,46 +3,57 @@ mod fenwick_tree;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn sort_matrix(mut grid: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
-    let n = grid.len();
-    for col in 1..n {
-        let mut c = col;
-        let mut curr = vec![];
-        for r in 0..n {
-            curr.push(grid[r][c]);
-            c += 1;
-            if c == n {
-                break;
-            }
+pub fn assign_elements(groups: &[i32], elements: &[i32]) -> Vec<i32> {
+    let map = elements
+        .iter()
+        .enumerate()
+        .fold(HashMap::new(), |mut acc, (i, &v)| {
+            acc.entry(v).or_insert(i as i32);
+            acc
+        });
+    groups
+        .iter()
+        .map(|&num| find(num, &map).unwrap_or(-1))
+        .collect()
+}
+
+fn find(num: i32, map: &HashMap<i32, i32>) -> Option<i32> {
+    let mut res = i32::MAX;
+    for v in 1..=num.isqrt() {
+        if num % v > 0 {
+            continue;
         }
-        curr.sort_unstable();
-        c = col;
-        for (r, num) in curr.into_iter().enumerate() {
-            grid[r][c] = num;
-            c += 1;
+        if let Some(&i) = map.get(&v) {
+            res = res.min(i)
         }
-    }
-    for row in 0..n {
-        let mut r = row;
-        let mut curr = vec![];
-        for c in 0..n {
-            curr.push(grid[r][c]);
-            r += 1;
-            if r == n {
-                break;
-            }
-        }
-        curr.sort_unstable_by(|a, b| b.cmp(a));
-        r = row;
-        for (c, num) in curr.into_iter().enumerate() {
-            grid[r][c] = num;
-            r += 1;
+        if let Some(&i) = map.get(&(num / v)) {
+            res = res.min(i)
         }
     }
-    grid
+    if res == i32::MAX { None } else { Some(res) }
+}
+
+pub fn with_sieve(groups: &[i32], elements: &[i32]) -> Vec<i32> {
+    let max = *groups.iter().max().unwrap();
+    let mut sieve = vec![-1; 1 + max as usize];
+    for (idx, &v) in elements.iter().enumerate() {
+        if v > max || sieve[v as usize] > -1 {
+            continue;
+        }
+        let mut curr = v;
+        while curr <= max {
+            if sieve[curr as usize] == -1 {
+                sieve[curr as usize] = idx as i32;
+            }
+            curr += v;
+        }
+    }
+    groups.iter().map(|&v| sieve[v as usize]).collect()
 }
 
 #[cfg(test)]
@@ -75,7 +86,15 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(assign_elements(&[8, 4, 3, 2, 4], &[4, 2]), [0, 0, -1, 1, 0]);
+        assert_eq!(assign_elements(&[2, 3, 5, 7], &[5, 3, 3]), [-1, 1, 0, -1]);
+        assert_eq!(assign_elements(&[10, 21, 30, 41], &[2, 1]), [0, 1, 0, 1]);
+
+        assert_eq!(with_sieve(&[8, 4, 3, 2, 4], &[4, 2]), [0, 0, -1, 1, 0]);
+        assert_eq!(with_sieve(&[2, 3, 5, 7], &[5, 3, 3]), [-1, 1, 0, -1]);
+        assert_eq!(with_sieve(&[10, 21, 30, 41], &[2, 1]), [0, 1, 0, 1]);
+    }
 
     #[test]
     fn test() {}
