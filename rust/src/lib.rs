@@ -6,48 +6,42 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_increments(nums: &[i32], target: &[i32]) -> i32 {
-    let n = target.len();
-    let mut mask_lcms = vec![1; 1 << n];
-    for mask in 1..1 << n {
-        let mut curr = 1;
-        for (i, &num) in target.iter().enumerate() {
-            if (mask >> i) & 1 == 1 {
-                curr = lcm(curr, num.into());
+pub fn max_difference(s: &str, k: i32) -> i32 {
+    use itertools::Itertools;
+    use std::collections::HashMap;
+    const INF: i32 = i32::MAX >> 1;
+    let k = k as usize;
+    let mut res = i32::MIN;
+    for perm in (b'0'..=b'4').permutations(2) {
+        let [a, b] = perm[..] else { unreachable!() };
+        let mut seen = HashMap::new();
+        let [mut pref_a, mut pref_b] = [vec![0], vec![0]];
+        let mut left = 0;
+        for (right, byte) in s.bytes().enumerate() {
+            pref_a.push(*pref_a.last().unwrap_or(&0));
+            pref_b.push(*pref_b.last().unwrap_or(&0));
+            if byte == a {
+                pref_a[1 + right] += 1;
             }
-        }
-        mask_lcms[mask] = curr;
-    }
-    let mut dp = vec![i64::MAX; 1 << n];
-    dp[0] = 0;
-    for &num in nums.iter() {
-        let num = i64::from(num);
-        let mut mask_costs = vec![0; 1 << n];
-        for (mask, &lcm_) in mask_lcms.iter().enumerate().skip(1) {
-            let rem = num % lcm_;
-            mask_costs[mask] = if rem == 0 { 0 } else { lcm_ - rem };
-        }
-        let mut curr = dp.clone();
-        for prev in 0..1 << n {
-            if dp[prev] == i64::MAX {
-                continue;
+            if byte == b {
+                pref_b[1 + right] += 1;
             }
-            for (mask, &cost) in mask_costs.iter().enumerate() {
-                let new_mask = prev | mask;
-                curr[new_mask] = curr[new_mask].min(dp[prev] + cost);
+            while left + k - 1 <= right
+                && pref_a[left] < pref_a[1 + right]
+                && pref_b[left] < pref_b[1 + right]
+            {
+                let key = [pref_a[left] & 1, pref_b[left] & 1];
+                let diff = pref_a[left] - pref_b[left];
+                let v = seen.entry(key).or_insert(INF);
+                *v = (*v).min(diff); // keep min_diff
+                left += 1;
             }
+            let key = [1 - (pref_a[1 + right] & 1), pref_b[1 + right] & 1];
+            let diff = pref_a[1 + right] - pref_b[1 + right];
+            res = res.max(diff - seen.get(&key).unwrap_or(&INF));
         }
-        dp = curr;
     }
-    let res = dp[(1 << n) - 1];
-    if res < i64::MAX { res as i32 } else { -1 }
-}
-
-const fn lcm(a: i64, b: i64) -> i64 {
-    const fn gcd(a: i64, b: i64) -> i64 {
-        if a == 0 { b } else { gcd(b % a, a) }
-    }
-    a / gcd(a, b) * b
+    res
 }
 
 #[cfg(test)]
@@ -81,9 +75,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(minimum_increments(&[1, 2, 3], &[4]), 1);
-        assert_eq!(minimum_increments(&[8, 4], &[10, 5]), 2);
-        assert_eq!(minimum_increments(&[7, 9, 10], &[7]), 0);
+        assert_eq!(max_difference("12233", 4), -1);
+        assert_eq!(max_difference("1122211", 3), 1);
+        assert_eq!(max_difference("110", 3), -1);
     }
 
     #[test]
