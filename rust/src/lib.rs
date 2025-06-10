@@ -6,21 +6,41 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_substrings(s: &str) -> i64 {
-    let mut dp = [[0; 10]; 10];
-    let mut res = 0;
-    for digit in s.bytes().map(|b| usize::from(b - b'0')) {
-        let mut curr = [[0; 10]; 10];
-        for den in 1..10 {
-            for rem in 0..10 {
-                curr[den][(rem * 10 + digit) % den] += dp[den][rem]
-            }
-            curr[den][digit % den] += 1; // start new substr
+pub fn max_score(points: &[i32], m: i32) -> i64 {
+    let mut left = 0;
+    let mut right = 10_i64.pow(15);
+    while left < right {
+        let mid = left + (right - left + 1) / 2;
+        if check(points, m.into(), mid) {
+            left = mid;
+        } else {
+            right = mid - 1;
         }
-        res += curr[digit][0];
-        dp = curr;
     }
-    res
+    left
+}
+
+fn check(points: &[i32], m: i64, min: i64) -> bool {
+    let [mut moves, mut prev] = [0, 0];
+    for (idx, num) in points.iter().map(|&v| i64::from(v)).enumerate() {
+        // number of increments to reach `min`
+        let need = (min + num - 1) / num - prev;
+        if need > 0 {
+            // back and forth, so that
+            // [idx] takes `need` moves
+            // [1+idx] takes `need-` moves
+            moves += 2 * need - 1;
+            prev = need - 1; // moves already spent on [1+idx]
+        } else if 1 + idx < points.len() {
+            // Current [idx] already satisfied, slide forward
+            moves += 1;
+            prev = 0;
+        }
+        if moves > m {
+            return false;
+        }
+    }
+    true
 }
 
 #[cfg(test)]
@@ -54,9 +74,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(count_substrings("1010101010"), 25);
-        assert_eq!(count_substrings("12936"), 11);
-        assert_eq!(count_substrings("5701283"), 18);
+        assert_eq!(max_score(&[2, 4], 3), 4);
+        assert_eq!(max_score(&[1, 2, 3], 5), 2);
     }
 
     #[test]
