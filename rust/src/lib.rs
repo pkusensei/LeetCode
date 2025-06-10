@@ -6,110 +6,94 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn separate_squares(squares: Vec<Vec<i32>>) -> f64 {
+pub fn shortest_matching_substring(s: &str, p: &str) -> i32 {
     use itertools::Itertools;
-    use std::collections::HashSet;
-    let mut events = vec![];
-    let mut xs = HashSet::new();
-    for sq in &squares {
-        let [x, y, side] = sq[..] else { unreachable!() };
-        events.push(YEvent {
-            y,
-            x1: x,
-            x2: x + side,
-            type_: 1,
-        });
-        events.push(YEvent {
-            y: y + side,
-            x1: x,
-            x2: x + side,
-            type_: -1,
-        });
-        xs.extend([x, x + side]);
-    }
-    events.sort_unstable();
-    let xs = xs.into_iter().sorted_unstable().collect_vec();
-
-    let mut tree = SegTree::new(&xs);
-    let mut total_area = 0.0;
-    let mut prev_y = events[0].y;
-    for &YEvent { y, x1, x2, type_ } in &events {
-        total_area += f64::from(tree.query()) * f64::from(y - prev_y);
-        tree.update(x1, x2, type_);
-        prev_y = y;
-    }
-
-    tree = SegTree::new(&xs);
-    let target = total_area / 2.0;
-    let mut curr_area = 0.0;
-    prev_y = events[0].y;
-    for &YEvent { y, x1, x2, type_ } in &events {
-        let width = f64::from(tree.query());
-        if curr_area + width * f64::from(y - prev_y) >= target {
-            return f64::from(prev_y) + (target - curr_area) / width;
+    let s = s.as_bytes();
+    let segs = p
+        .split('*')
+        .filter_map(|seg| {
+            if !seg.is_empty() {
+                Some(seg.as_bytes())
+            } else {
+                None
+            }
+        })
+        .collect_vec();
+    let mut res = i32::MAX;
+    match segs[..] {
+        [] => res = 0,
+        [seg] => {
+            let arr = kmp(s, seg);
+            if !arr.is_empty() {
+                res = segs[0].len() as i32;
+            }
         }
-        curr_area += width * f64::from(y - prev_y);
-        tree.update(x1, x2, type_);
-        prev_y = y;
+        [seg1, seg2] => {
+            let arr1 = kmp(s, seg1);
+            let arr2 = kmp(s, seg2);
+            if arr1.is_empty() || arr2.is_empty() {
+                return -1;
+            }
+            for start1 in arr1 {
+                let i = arr2.partition_point(|&v| v < start1 + segs[0].len());
+                let Some(&start2) = arr2.get(i) else {
+                    continue;
+                };
+                let len = start2 + segs[1].len() - start1;
+                res = res.min(len as i32);
+            }
+        }
+        _ => {
+            let arr1 = kmp(s, segs[0]);
+            let arr2 = kmp(s, segs[1]);
+            let arr3 = kmp(s, segs[2]);
+            if [&arr1, &arr2, &arr3].iter().any(|a| a.is_empty()) {
+                return -1;
+            }
+            for start1 in arr1 {
+                let i = arr2.partition_point(|&v| v < start1 + segs[0].len());
+                let Some(&start2) = arr2.get(i) else {
+                    continue;
+                };
+                let i = arr3.partition_point(|&v| v < start2 + segs[1].len());
+                let Some(&start3) = arr3.get(i) else {
+                    continue;
+                };
+                let len = start3 + segs[2].len() - start1;
+                res = res.min(len as i32);
+            }
+        }
     }
-    unreachable!()
+    if res < i32::MAX { res } else { -1 }
 }
 
-#[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-struct YEvent {
-    y: i32,
-    x1: i32,
-    x2: i32,
-    type_: i32,
-}
-
-struct SegTree<'a> {
-    xs: &'a [i32],
-    count: Vec<i32>,
-    covered: Vec<i32>,
-    n: usize,
-}
-
-impl<'a> SegTree<'a> {
-    fn new(xs: &'a [i32]) -> Self {
-        let n = xs.len() - 1;
-        let count = vec![0; 4 * n];
-        let covered = vec![0; 4 * n];
-        Self {
-            xs,
-            count,
-            covered,
-            n,
+fn kmp(hay: &[u8], needle: &[u8]) -> Vec<usize> {
+    let n = needle.len();
+    let mut lps = vec![0; n];
+    let mut len = 0;
+    for idx in 1..n {
+        while len > 0 && needle[idx] != needle[len] {
+            len = lps[len - 1];
+        }
+        if needle[idx] == needle[len] {
+            len += 1;
+        }
+        lps[idx] = len;
+    }
+    len = 0;
+    let mut matches = vec![];
+    for (idx, &val) in hay.iter().enumerate() {
+        while len > 0 && (len == n || val != needle[len]) {
+            len = lps[len - 1];
+        }
+        if needle.get(len).is_some_and(|&v| v == val) {
+            len += 1;
+        }
+        if len == n {
+            matches.push(idx + 1 - len);
         }
     }
-
-    fn query(&self) -> i32 {
-        self.covered[1]
-    }
-
-    fn update(&mut self, ql: i32, qr: i32, val: i32) {
-        self._update(1, 0, self.n - 1, ql, qr, val);
-    }
-
-    fn _update(&mut self, node: usize, left: usize, right: usize, ql: i32, qr: i32, val: i32) {
-        if self.xs[1 + right] <= ql || self.xs[left] >= qr {
-            return;
-        }
-        if ql <= self.xs[left] && self.xs[1 + right] <= qr {
-            self.count[node] += val;
-        } else {
-            let mid = left.midpoint(right);
-            self._update(2 * node, left, mid, ql, qr, val);
-            self._update(2 * node + 1, 1 + mid, right, ql, qr, val);
-        }
-        if self.count[node] > 0 {
-            self.covered[node] = self.xs[1 + right] - self.xs[left];
-        } else if left == right {
-            self.covered[node] = 0;
-        } else {
-            self.covered[node] = self.covered[2 * node] + self.covered[2 * node + 1];
-        }
-    }
+    matches
 }
 
 #[cfg(test)]
@@ -143,10 +127,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        float_eq!(separate_squares(vec![vec![0, 0, 1], vec![2, 2, 1]]), 1.0);
-        float_eq!(separate_squares(vec![vec![0, 0, 2], vec![1, 1, 1]]), 1.0);
+        assert_eq!(shortest_matching_substring("abaacbaecebce", "ba*c*ce"), 8);
+        assert_eq!(shortest_matching_substring("baccbaadbc", "cc*baa*adb"), -1);
+        assert_eq!(shortest_matching_substring("a", "**"), 0);
+        assert_eq!(shortest_matching_substring("madlogic", "*adlogi*"), 6)
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(shortest_matching_substring("srs", "r**s"), 2);
+    }
 }
