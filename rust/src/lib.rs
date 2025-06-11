@@ -6,62 +6,82 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn has_same_digits(s: &str) -> bool {
-    let n = s.len();
-    let [mut s1, mut s2] = [0, 0];
-    for (idx, w) in s.as_bytes().windows(2).enumerate() {
-        let val = bin_mod10(n - 2, idx); // C(n-2, idx) %10
-        let [d1, d2] = [0, 1].map(|i| usize::from(w[i] - b'0'));
-        s1 = (s1 + val * d1) % 10;
-        s2 = (s2 + val * d2) % 10;
-    }
-    s1 == s2
-}
-
-fn bin_mod10(n: usize, k: usize) -> usize {
-    let mod2 = bin_mod2(n, k);
-    let mod5 = bin_mod5(n, k);
-    (0..10)
-        .find(|&i| i % 2 == mod2 && i % 5 == mod5)
-        .unwrap_or(0)
-}
-
-const fn bin_mod2(mut n: usize, mut k: usize) -> usize {
-    while k > 0 {
-        if k & 1 > n & 1 {
-            return 0;
+pub fn max_distance(side: i32, points: &[[i32; 2]], k: i32) -> i32 {
+    use itertools::{Itertools, chain};
+    let [mut left, mut right, mut top, mut bot] = [const { vec![] }; 4];
+    for p in points.iter() {
+        let [x, y] = p[..] else { unreachable!() };
+        if x == 0 && y > 0 {
+            left.push([x, y]);
+        } else if x == side && y < side {
+            right.push([x, y]);
+        } else if x > 0 && y == side {
+            top.push([x, y]);
+        } else {
+            bot.push([x, y]);
         }
-        n >>= 1;
-        k >>= 1;
     }
-    1
-}
+    left.sort_unstable();
+    top.sort_unstable();
+    right.sort_unstable();
+    bot.sort_unstable();
+    let sorted = chain!(left, top, right.into_iter().rev(), bot.into_iter().rev()).collect_vec();
 
-fn bin_mod5(mut n: usize, mut k: usize) -> usize {
-    let mut res = 1;
-    while n > 0 || k > 0 {
-        let nd = n % 5;
-        let kd = k % 5;
-        if kd > nd {
-            return 0;
+    let mut low = 0;
+    let mut high = side;
+    while low < high {
+        let mid = low + (high - low + 1) / 2;
+        if pick(&sorted, mid) >= k {
+            low = mid;
+        } else {
+            high = mid - 1;
         }
-        res = res * bin_small(nd, kd) % 5;
-        n /= 5;
-        k /= 5;
     }
-    res
+    low
 }
 
-fn bin_small(n: usize, k: usize) -> usize {
-    // [0!, 1!, 2!, 3!, 4!] %5
-    const FACT: [usize; 5] = [1, 1, 2, 1, 4];
-    if k > n {
-        return 0;
+#[derive(Clone, Copy)]
+struct Item {
+    x1: i32,
+    y1: i32,
+    x2: i32,
+    y2: i32,
+    count: i32,
+}
+
+fn pick(sorted: &[[i32; 2]], mid: i32) -> i32 {
+    let mut queue = std::collections::VecDeque::from([Item {
+        x1: sorted[0][0],
+        y1: sorted[0][1],
+        x2: sorted[0][0],
+        y2: sorted[0][1],
+        count: 1,
+    }]);
+    let mut max_count = 1;
+    for &[x, y] in &sorted[1..] {
+        let [mut start_x, mut start_y] = [x, y];
+        let mut curr_count = 1;
+        while queue
+            .front()
+            .is_some_and(|&Item { x2, y2, .. }| (x - x2).abs() + (y - y2).abs() >= mid)
+        {
+            let Item { x1, y1, count, .. } = queue.pop_front().unwrap();
+            if (x - x1).abs() + (y - y1).abs() >= mid && count + 1 >= curr_count {
+                start_x = x1;
+                start_y = y1;
+                curr_count = count + 1;
+                max_count = max_count.max(curr_count)
+            }
+        }
+        queue.push_back(Item {
+            x1: start_x,
+            y1: start_y,
+            x2: x,
+            y2: y,
+            count: curr_count,
+        });
     }
-    let numerator = FACT[n];
-    let denominator = FACT[k] * FACT[n - k] % 5;
-    let den_inv = (0..5).find(|&i| (denominator * i) % 5 == 1).unwrap_or(0);
-    numerator * den_inv % 5
+    max_count
 }
 
 #[cfg(test)]
@@ -95,8 +115,19 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert!(has_same_digits("3902"));
-        assert!(!has_same_digits("34789"));
+        assert_eq!(max_distance(2, &[[0, 2], [2, 0], [2, 2], [0, 0]], 4), 2);
+        assert_eq!(
+            max_distance(2, &[[0, 0], [1, 2], [2, 0], [2, 2], [2, 1]], 4),
+            1
+        );
+        assert_eq!(
+            max_distance(
+                2,
+                &[[0, 0], [0, 1], [0, 2], [1, 2], [2, 0], [2, 2], [2, 1]],
+                5
+            ),
+            1
+        );
     }
 
     #[test]
