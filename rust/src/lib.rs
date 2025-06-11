@@ -6,41 +6,53 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_substring_length(s: &str, k: i32) -> bool {
-    use itertools::iproduct;
-    let mut left = [None; 26];
-    let mut right = [None; 26];
-    let mut freqs = [0; 26];
-    for (idx, bi) in s.bytes().map(|b| usize::from(b - b'a')).enumerate() {
-        left[bi].get_or_insert(idx);
-        right[bi] = Some(idx);
-        freqs[bi] += 1;
-    }
-    let mut spans = vec![];
-    for (i1, i2) in iproduct!(left, right) {
-        let Some((i1, i2)) = i1.zip(i2) else {
-            continue; // try all [start, end] combos
-        };
-        if i1 <= i2 {
-            let mut count = 0;
-            for bi in (0..26).filter(|&b| freqs[b] > 0) {
-                if left[bi].is_some_and(|v| i1 <= v) && right[bi].is_some_and(|v| v <= i2) {
-                    count += freqs[bi]; // All of this letter is in range
+pub fn len_of_v_diagonal(grid: Vec<Vec<i32>>) -> i32 {
+    let [rows, cols] = get_dimensions(&grid);
+    let mut memo = vec![vec![[[-1; 2]; 4]; cols]; rows];
+    let mut res = 0;
+    for (r, row) in (0..).zip(grid.iter()) {
+        for (c, &v) in (0..).zip(row.iter()) {
+            if v == 1 {
+                for dir in 0..4 {
+                    res = res.max(dfs(&grid, r, c, dir, 0, 1, &mut memo));
                 }
             }
-            if count == i2 + 1 - i1 && count < s.len() {
-                spans.push([i1, i2]); // Fulfills a substr
-            }
         }
     }
-    spans.sort_unstable_by_key(|s| s[1] - s[0]);
-    let mut res: Vec<[usize; 2]> = vec![];
-    for [left, right] in spans {
-        if res.iter().all(|&[x, y]| y < left || right < x) {
-            res.push([left, right]);
-        }
+    res
+}
+
+const DIRS: [[i32; 2]; 4] = [[1, 1], [1, -1], [-1, -1], [-1, 1]];
+
+fn dfs(
+    grid: &[Vec<i32>],
+    r: i32,
+    c: i32,
+    dir: usize,
+    turned: usize,
+    expect: i32,
+    memo: &mut [Vec<[[i32; 2]; 4]>],
+) -> i32 {
+    let [rows, cols] = get_dimensions(grid).map(|v| v as i32);
+    if !(0..rows).contains(&r) || !(0..cols).contains(&c) || grid[r as usize][c as usize] != expect
+    {
+        return 0;
     }
-    res.len() >= k as usize
+    if memo[r as usize][c as usize][dir][turned] > -1 {
+        return memo[r as usize][c as usize][dir][turned];
+    }
+    let next_expect = if expect < 2 { 2 } else { 0 };
+    let [dr, dc] = DIRS[dir];
+    // stay in dir
+    let mut res = dfs(grid, r + dr, c + dc, dir, turned, next_expect, memo);
+    if turned == 0 {
+        let next_dir = (1 + dir) % 4;
+        let [dr, dc] = DIRS[next_dir];
+        res = res.max(dfs(grid, r + dr, c + dc, next_dir, 1, next_expect, memo));
+    }
+    res += 1;
+    memo[r as usize][c as usize][dir][turned] = res;
+    res
 }
 
 #[cfg(test)]
@@ -74,13 +86,39 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert!(max_substring_length("abcdbaefab", 2));
-        assert!(!max_substring_length("cdefdc", 3));
-        assert!(max_substring_length("abeabe", 0));
+        assert_eq!(
+            len_of_v_diagonal(vec![
+                vec![2, 2, 1, 2, 2],
+                vec![2, 0, 2, 2, 0],
+                vec![2, 0, 1, 1, 0],
+                vec![1, 0, 2, 2, 2],
+                vec![2, 0, 0, 2, 2]
+            ]),
+            5
+        );
+        assert_eq!(
+            len_of_v_diagonal(vec![
+                vec![2, 2, 2, 2, 2],
+                vec![2, 0, 2, 2, 0],
+                vec![2, 0, 1, 1, 0],
+                vec![1, 0, 2, 2, 2],
+                vec![2, 0, 0, 2, 2]
+            ]),
+            4
+        );
+        assert_eq!(
+            len_of_v_diagonal(vec![
+                vec![1, 2, 2, 2, 2],
+                vec![2, 2, 2, 2, 0],
+                vec![2, 0, 0, 0, 0],
+                vec![0, 0, 2, 2, 2],
+                vec![2, 0, 0, 2, 0]
+            ]),
+            5
+        );
+        assert_eq!(len_of_v_diagonal(vec![vec![1]]), 1);
     }
 
     #[test]
-    fn test() {
-        assert!(max_substring_length("cjd", 3));
-    }
+    fn test() {}
 }
