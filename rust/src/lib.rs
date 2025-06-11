@@ -6,19 +6,41 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_weight(mut pizzas: Vec<i32>) -> i64 {
-    pizzas.sort_unstable();
-    let n = pizzas.len() / 4;
-    let odd = (1 + n) / 2;
-    let mut res = 0;
-    for _ in 0..odd {
-        res += i64::from(pizzas.pop().unwrap_or(0))
+pub fn max_substring_length(s: &str, k: i32) -> bool {
+    use itertools::iproduct;
+    let mut left = [None; 26];
+    let mut right = [None; 26];
+    let mut freqs = [0; 26];
+    for (idx, bi) in s.bytes().map(|b| usize::from(b - b'a')).enumerate() {
+        left[bi].get_or_insert(idx);
+        right[bi] = Some(idx);
+        freqs[bi] += 1;
     }
-    for _ in 0..n / 2 {
-        pizzas.pop();
-        res += i64::from(pizzas.pop().unwrap_or(0))
+    let mut spans = vec![];
+    for (i1, i2) in iproduct!(left, right) {
+        let Some((i1, i2)) = i1.zip(i2) else {
+            continue; // try all [start, end] combos
+        };
+        if i1 <= i2 {
+            let mut count = 0;
+            for bi in (0..26).filter(|&b| freqs[b] > 0) {
+                if left[bi].is_some_and(|v| i1 <= v) && right[bi].is_some_and(|v| v <= i2) {
+                    count += freqs[bi]; // All of this letter is in range
+                }
+            }
+            if count == i2 + 1 - i1 && count < s.len() {
+                spans.push([i1, i2]); // Fulfills a substr
+            }
+        }
     }
-    res
+    spans.sort_unstable_by_key(|s| s[1] - s[0]);
+    let mut res: Vec<[usize; 2]> = vec![];
+    for [left, right] in spans {
+        if res.iter().all(|&[x, y]| y < left || right < x) {
+            res.push([left, right]);
+        }
+    }
+    res.len() >= k as usize
 }
 
 #[cfg(test)]
@@ -51,8 +73,14 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert!(max_substring_length("abcdbaefab", 2));
+        assert!(!max_substring_length("cdefdc", 3));
+        assert!(max_substring_length("abeabe", 0));
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert!(max_substring_length("cjd", 3));
+    }
 }
