@@ -6,53 +6,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn len_of_v_diagonal(grid: Vec<Vec<i32>>) -> i32 {
-    let [rows, cols] = get_dimensions(&grid);
-    let mut memo = vec![vec![[[-1; 2]; 4]; cols]; rows];
-    let mut res = 0;
-    for (r, row) in (0..).zip(grid.iter()) {
-        for (c, &v) in (0..).zip(row.iter()) {
-            if v == 1 {
-                for dir in 0..4 {
-                    res = res.max(dfs(&grid, r, c, dir, 0, 1, &mut memo));
-                }
-            }
-        }
+pub fn has_same_digits(s: String) -> bool {
+    let mut v: Vec<_> = s
+        .into_bytes()
+        .into_iter()
+        .map(|b| i32::from(b - b'0'))
+        .collect();
+    while v.len() > 2 {
+        v = v.windows(2).map(|w| (w[0] + w[1]) % 10).collect();
     }
-    res
-}
-
-const DIRS: [[i32; 2]; 4] = [[1, 1], [1, -1], [-1, -1], [-1, 1]];
-
-fn dfs(
-    grid: &[Vec<i32>],
-    r: i32,
-    c: i32,
-    dir: usize,
-    turned: usize,
-    expect: i32,
-    memo: &mut [Vec<[[i32; 2]; 4]>],
-) -> i32 {
-    let [rows, cols] = get_dimensions(grid).map(|v| v as i32);
-    if !(0..rows).contains(&r) || !(0..cols).contains(&c) || grid[r as usize][c as usize] != expect
-    {
-        return 0;
-    }
-    if memo[r as usize][c as usize][dir][turned] > -1 {
-        return memo[r as usize][c as usize][dir][turned];
-    }
-    let next_expect = if expect < 2 { 2 } else { 0 };
-    let [dr, dc] = DIRS[dir];
-    // stay in dir
-    let mut res = dfs(grid, r + dr, c + dc, dir, turned, next_expect, memo);
-    if turned == 0 {
-        let next_dir = (1 + dir) % 4;
-        let [dr, dc] = DIRS[next_dir];
-        res = res.max(dfs(grid, r + dr, c + dc, next_dir, 1, next_expect, memo));
-    }
-    res += 1;
-    memo[r as usize][c as usize][dir][turned] = res;
-    res
+    v[0] == v[1]
 }
 
 #[cfg(test)]
@@ -85,39 +48,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(
-            len_of_v_diagonal(vec![
-                vec![2, 2, 1, 2, 2],
-                vec![2, 0, 2, 2, 0],
-                vec![2, 0, 1, 1, 0],
-                vec![1, 0, 2, 2, 2],
-                vec![2, 0, 0, 2, 2]
-            ]),
-            5
-        );
-        assert_eq!(
-            len_of_v_diagonal(vec![
-                vec![2, 2, 2, 2, 2],
-                vec![2, 0, 2, 2, 0],
-                vec![2, 0, 1, 1, 0],
-                vec![1, 0, 2, 2, 2],
-                vec![2, 0, 0, 2, 2]
-            ]),
-            4
-        );
-        assert_eq!(
-            len_of_v_diagonal(vec![
-                vec![1, 2, 2, 2, 2],
-                vec![2, 2, 2, 2, 0],
-                vec![2, 0, 0, 0, 0],
-                vec![0, 0, 2, 2, 2],
-                vec![2, 0, 0, 2, 0]
-            ]),
-            5
-        );
-        assert_eq!(len_of_v_diagonal(vec![vec![1]]), 1);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
