@@ -6,16 +6,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn has_same_digits(s: String) -> bool {
-    let mut v: Vec<_> = s
-        .into_bytes()
-        .into_iter()
-        .map(|b| i32::from(b - b'0'))
-        .collect();
-    while v.len() > 2 {
-        v = v.windows(2).map(|w| (w[0] + w[1]) % 10).collect();
+pub fn max_sum(mut grid: Vec<Vec<i32>>, limits: Vec<i32>, k: i32) -> i64 {
+    use std::{cmp::Reverse, collections::BinaryHeap};
+    let mut heap: BinaryHeap<i32> = BinaryHeap::new();
+    for (row, limit) in grid.iter_mut().zip(limits) {
+        if limit > 0 {
+            row.select_nth_unstable_by_key(limit as usize - 1, |&v| Reverse(v));
+            heap.extend(&row[..limit as usize]);
+        }
     }
-    v[0] == v[1]
+    let mut res = 0;
+    for _ in 0..k {
+        let Some(v) = heap.pop().map(i64::from) else {
+            break;
+        };
+        res += v;
+    }
+    res
 }
 
 #[cfg(test)]
