@@ -7,39 +7,39 @@ namespace Solution;
 
 public class Solution
 {
-    public int FindKthNumber(int n, int k)
+    public int MaxDifference(string s, int k)
     {
-        int curr = 1;
-        k -= 1;
-        while (k > 0)
+        const int INF = int.MaxValue / 2;
+        int res = int.MinValue;
+        foreach (var a in "01234")
         {
-            // try moving to 1+curr
-            var steps = CountSteps(curr);
-            if (steps <= k)
-            { // success!
-                curr += 1;
-                k -= steps;
-            }
-            else
-            { // impossible! go deeper on this tree
-                curr *= 10;
-                k -= 1;
-            }
-        }
-        return curr;
-
-        int CountSteps(long curr)
-        {
-            long num1 = curr;
-            long num2 = 1 + curr; // upper bound for this subtree
-            long res = 0;
-            while (num1 <= n)
+            foreach (var b in "01234")
             {
-                res += Math.Min(1 + n, num2) - num1;
-                num1 *= 10;
-                num2 *= 10;
+                if (a == b) { continue; }
+                List<int> prefa = [0];
+                List<int> prefb = [0];
+                Dictionary<(int, int), int> seen = [];
+                int left = 0;
+                for (int idx = 0; idx < s.Length; idx += 1)
+                {
+                    prefa.Add(prefa.Last());
+                    prefb.Add(prefb.Last());
+                    if (s[idx] == a) { prefa[1 + idx] += 1; }
+                    if (s[idx] == b) { prefb[1 + idx] += 1; }
+                    while (left + k - 1 <= idx && prefa[left] < prefa[1 + idx] && prefb[left] < prefb[1 + idx])
+                    {
+                        var key = (prefa[left] & 1, prefb[left] & 1);
+                        int diff = prefa[left] - prefb[left];
+                        if (!seen.TryAdd(key, diff)) { seen[key] = Math.Min(seen[key], diff); }
+                        left += 1;
+                    }
+                    var key_ = (1 - (prefa[1 + idx] & 1), prefb[1 + idx] & 1);
+                    int diff_ = prefa[1 + idx] - prefb[1 + idx];
+                    int prev = seen.GetValueOrDefault(key_, INF);
+                    res = Math.Max(res, diff_ - prev);
+                }
             }
-            return (int)res;
         }
+        return res;
     }
 }

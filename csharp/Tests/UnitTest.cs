@@ -10,12 +10,12 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(13, 2, 10)]
-    [DataRow(1, 1, 1)]
-    [DataRow(100, 10, 17)]
-    public void TestMethod1(int n, int k, int exp)
+    [DataRow("12233", 4, -1)]
+    [DataRow("1122211", 3, 1)]
+    [DataRow("110", 3, -1)]
+    public void TestMethod1(string s, int k, int exp)
     {
-        Assert.AreEqual(exp, sol.FindKthNumber(n, k));
+        Assert.AreEqual(exp, sol.MaxDifference(s, k));
     }
 
     [TestMethod]
