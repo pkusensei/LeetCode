@@ -6,25 +6,35 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn largest_integer(nums: Vec<i32>, k: i32) -> i32 {
-    use itertools::Itertools;
-    let n = nums.len();
-    let map = nums.iter().copied().counts();
-    if k == 1 {
-        map.into_iter()
-            .filter_map(|(num, c)| if c == 1 { Some(num) } else { None })
-            .max()
-            .unwrap_or(-1)
-    } else if k as usize == n {
-        nums.into_iter().max().unwrap_or(-1)
-    } else {
-        match [map[&nums[0]], map[&nums[n - 1]]] {
-            [1, 1] => nums[0].max(nums[n - 1]),
-            [1, _] => nums[0],
-            [_, 1] => nums[n - 1],
-            _ => -1,
-        }
+pub fn longest_palindromic_subsequence(s: &str, k: i32) -> i32 {
+    let n = s.len();
+    let k = k as usize;
+    let mut memo = vec![vec![vec![-1; 1 + k]; n]; n];
+    dfs(s.as_bytes(), 0, n - 1, k as _, &mut memo)
+}
+
+fn dfs(s: &[u8], left: usize, right: usize, k: usize, memo: &mut [Vec<Vec<i32>>]) -> i32 {
+    if left == right {
+        return 1;
     }
+    if left > right {
+        return 0;
+    }
+    if memo[left][right][k] > -1 {
+        return memo[left][right][k];
+    }
+    let mut res = dfs(s, 1 + left, right - 1, k, memo)
+        .max(dfs(s, 1 + left, right, k, memo))
+        .max(dfs(s, left, right - 1, k, memo));
+    let diff = {
+        let d = s[left].abs_diff(s[right]);
+        usize::from(d.min(26 - d))
+    };
+    if let Some(v) = k.checked_sub(diff) {
+        res = res.max(2 + dfs(s, 1 + left, right - 1, v, memo));
+    }
+    memo[left][right][k] = res;
+    res
 }
 
 #[cfg(test)]
@@ -57,7 +67,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(longest_palindromic_subsequence("abced", 2), 3);
+        assert_eq!(longest_palindromic_subsequence("aaazzz", 4), 6);
+    }
 
     #[test]
     fn test() {}
