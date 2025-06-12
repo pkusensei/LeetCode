@@ -6,35 +6,79 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn longest_palindromic_subsequence(s: &str, k: i32) -> i32 {
-    let n = s.len();
+pub fn max_sum(nums: &[i32], k: i32, m: i32) -> i32 {
+    let n = nums.len();
     let k = k as usize;
-    let mut memo = vec![vec![vec![-1; 1 + k]; n]; n];
-    dfs(s.as_bytes(), 0, n - 1, k as _, &mut memo)
+    let prefix = nums.iter().fold(vec![0], |mut acc, &num| {
+        acc.push(num + acc.last().unwrap_or(&0));
+        acc
+    });
+    let mut memo = vec![vec![[None; 2]; 1 + k]; n];
+    dfs(&nums, &prefix, m as usize, 0, k, 0, &mut memo)
 }
 
-fn dfs(s: &[u8], left: usize, right: usize, k: usize, memo: &mut [Vec<Vec<i32>>]) -> i32 {
-    if left == right {
-        return 1;
+fn dfs(
+    nums: &[i32],
+    prefix: &[i32],
+    m: usize,
+    idx: usize,
+    k: usize,
+    insub: usize,
+    memo: &mut [Vec<[Option<i32>; 2]>],
+) -> i32 {
+    let n = nums.len();
+    if idx >= n {
+        return if k == 0 { 0 } else { i32::MIN >> 1 };
     }
-    if left > right {
-        return 0;
+    if let Some(v) = memo[idx][k][insub] {
+        return v;
     }
-    if memo[left][right][k] > -1 {
-        return memo[left][right][k];
-    }
-    let mut res = dfs(s, 1 + left, right - 1, k, memo)
-        .max(dfs(s, 1 + left, right, k, memo))
-        .max(dfs(s, left, right - 1, k, memo));
-    let diff = {
-        let d = s[left].abs_diff(s[right]);
-        usize::from(d.min(26 - d))
+    let res = if insub == 1 {
+        // End subarr vs Extend subarr
+        dfs(nums, prefix, m, idx, k, 0, memo)
+            .max(nums[idx] + dfs(nums, prefix, m, 1 + idx, k, insub, memo))
+    } else {
+        let mut res = dfs(nums, prefix, m, 1 + idx, k, insub, memo); // skip
+        if idx + m <= n && 0 < k {
+            res = res
+                .max(prefix[idx + m] - prefix[idx] + dfs(nums, prefix, m, idx + m, k - 1, 1, memo));
+        }
+        res
     };
-    if let Some(v) = k.checked_sub(diff) {
-        res = res.max(2 + dfs(s, 1 + left, right - 1, v, memo));
-    }
-    memo[left][right][k] = res;
+    memo[idx][k][insub] = Some(res);
     res
+}
+
+pub fn bottom_up(nums: &[i32], k: i32, m: i32) -> i32 {
+    const INF: i32 = i32::MIN / 2;
+    let n = nums.len();
+    let [k, m] = [k, m].map(|v| v as usize);
+    let prefix = nums.iter().fold(vec![0], |mut acc, &num| {
+        acc.push(num + acc.last().unwrap_or(&0));
+        acc
+    });
+    let mut dp = vec![0; 1 + n];
+    let mk = m * k;
+    for subarr_idx in 0..k {
+        let mut curr_dp = vec![0; 1 + n];
+        let min_pos_after_curr = m * (1 + subarr_idx);
+        let min_pos_after_prev = m * subarr_idx;
+        let mut best_prev = INF;
+        for prev_end in m.max(min_pos_after_prev.saturating_sub(m))..min_pos_after_prev {
+            best_prev = best_prev.max(dp[prev_end] - prefix[prev_end]);
+        }
+        curr_dp[..min_pos_after_curr].fill(INF);
+        let mut best_curr = INF;
+        let mut prev_idx = min_pos_after_prev;
+        for curr_end in min_pos_after_curr..=n + min_pos_after_curr - mk {
+            best_prev = best_prev.max(dp[prev_idx] - prefix[prev_idx]);
+            prev_idx += 1;
+            best_curr = best_curr.max(best_prev + prefix[curr_end]);
+            curr_dp[curr_end] = best_curr
+        }
+        dp = curr_dp;
+    }
+    dp.into_iter().max().unwrap()
 }
 
 #[cfg(test)]
@@ -68,8 +112,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(longest_palindromic_subsequence("abced", 2), 3);
-        assert_eq!(longest_palindromic_subsequence("aaazzz", 4), 6);
+        assert_eq!(max_sum(&[1, 2, -1, 3, 3, 4], 2, 2), 13);
+        assert_eq!(max_sum(&[-10, 3, -1, -2], 4, 1), -10);
+
+        assert_eq!(bottom_up(&[1, 2, -1, 3, 3, 4], 2, 2), 13);
+        assert_eq!(bottom_up(&[-10, 3, -1, -2], 4, 1), -10);
     }
 
     #[test]
