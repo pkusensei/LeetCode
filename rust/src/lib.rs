@@ -6,38 +6,72 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn generate_string(str1: &str, str2: &str) -> String {
-    let (n1, n2) = (str1.len(), str2.len());
-    let mut res = vec![b'#'; n1 + n2 - 1];
-    let mut free = vec![true; n1 + n2 - 1];
-    for (idx, b1) in str1.bytes().enumerate() {
-        if b1 == b'T' {
-            if str2
-                .bytes()
-                .enumerate()
-                .any(|(i2, b2)| res[idx + i2] != b'#' && res[idx + i2] != b2)
-            {
-                return "".into();
+pub fn num_of_unplaced_fruits(fruits: &[i32], baskets: &[i32]) -> i32 {
+    let mut tree = SegTree::build(&baskets);
+    let mut res = 0;
+    for &f in fruits.iter() {
+        if !tree.query(f) {
+            res += 1;
+        }
+    }
+    res
+}
+
+struct SegTree {
+    tree: Vec<i32>,
+    n: usize,
+}
+
+impl SegTree {
+    fn build(nums: &[i32]) -> Self {
+        let n = nums.len();
+        let tree = vec![0; 4 * n];
+        let mut s = Self { tree, n };
+        for (idx, &val) in nums.iter().enumerate() {
+            s.update(idx, val);
+        }
+        s
+    }
+
+    fn update(&mut self, idx: usize, val: i32) {
+        self._update(1, 0, self.n - 1, idx, val);
+    }
+
+    fn _update(&mut self, node: usize, left: usize, right: usize, idx: usize, val: i32) {
+        if left == right {
+            self.tree[node] = val;
+            return;
+        }
+        let mid = left.midpoint(right);
+        if idx <= mid {
+            self._update(2 * node, left, mid, idx, val);
+        } else {
+            self._update(2 * node + 1, 1 + mid, right, idx, val);
+        }
+        self.tree[node] = self.tree[2 * node].max(self.tree[2 * node + 1]);
+    }
+
+    fn query(&mut self, val: i32) -> bool {
+        self._query(1, 0, self.n - 1, val)
+    }
+
+    fn _query(&mut self, node: usize, left: usize, right: usize, val: i32) -> bool {
+        if self.tree[node] < val {
+            return false;
+        }
+        if left == right {
+            if self.tree[node] >= val {
+                self.tree[node] = 0;
+                return true;
             }
-            res[idx..idx + n2].copy_from_slice(str2.as_bytes());
-            free[idx..idx + n2].fill(false);
+            return false;
         }
+        let mid = left.midpoint(right);
+        let res =
+            self._query(2 * node, left, mid, val) || self._query(2 * node + 1, 1 + mid, right, val);
+        self.tree[node] = self.tree[2 * node].max(self.tree[2 * node + 1]);
+        res
     }
-    for b in res.iter_mut().filter(|b| **b == b'#') {
-        *b = b'a';
-    }
-    for (idx, b1) in str1.bytes().enumerate() {
-        if b1 == b'F' && str2.bytes().enumerate().all(|(i2, b2)| res[idx + i2] == b2) {
-            // Found 'F' and a totally matched str2
-            // Seek rightmost free slot
-            let Some(i2) = (0..n2).rfind(|&i| free[idx + i]) else {
-                return "".into();
-            };
-            res[idx + i2] = b'b';
-            free[idx + i2] = false;
-        }
-    }
-    String::from_utf8(res).unwrap()
 }
 
 #[cfg(test)]
@@ -71,9 +105,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(generate_string("TFTF", "ab"), "ababa");
-        assert_eq!(generate_string("TFTF", "abc"), "");
-        assert_eq!(generate_string("F", "d"), "a");
+        assert_eq!(num_of_unplaced_fruits(&[4, 2, 5], &[3, 5, 4]), 1);
+        assert_eq!(num_of_unplaced_fruits(&[3, 6, 1], &[6, 4, 7]), 0);
     }
 
     #[test]
