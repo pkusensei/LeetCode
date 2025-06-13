@@ -3,50 +3,65 @@ mod fenwick_tree;
 mod helper;
 mod trie;
 
+use std::collections::BTreeMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-struct Spreadsheet {
-    grid: Vec<[i32; 26]>,
+pub fn longest_common_prefix(words: &[&str], k: i32) -> Vec<i32> {
+    let mut trie = Trie::default();
+    let mut freq = BTreeMap::new();
+    for s in words.iter() {
+        trie.insert(s.bytes(), k, &mut freq);
+    }
+    let mut res = vec![];
+    for s in words.iter() {
+        trie.remove(s.bytes(), k, &mut freq);
+        res.push(*freq.keys().last().unwrap_or(&0));
+        trie.insert(s.bytes(), k, &mut freq);
+    }
+    res
 }
 
-impl Spreadsheet {
-    fn new(rows: i32) -> Self {
-        Self {
-            grid: vec![[0; 26]; 1 + rows as usize],
+#[derive(Default)]
+struct Trie {
+    nodes: [Option<Box<Trie>>; 26],
+    count: i32,
+    depth: i32,
+}
+
+impl Trie {
+    fn insert(&mut self, it: impl Iterator<Item = u8>, k: i32, freq: &mut BTreeMap<i32, i32>) {
+        let mut curr = self;
+        let mut depth = 0;
+        for idx in it.map(|b| usize::from(b - b'a')) {
+            curr = curr.nodes[idx].get_or_insert_default();
+            depth += 1;
+            curr.depth = depth;
+            curr.count += 1;
+            if curr.count >= k {
+                *freq.entry(curr.depth).or_insert(0) += 1;
+            }
         }
     }
 
-    fn set_cell(&mut self, cell: String, value: i32) {
-        let [row, col] = get_dims(&cell);
-        self.grid[row][col] = value;
+    fn remove(&mut self, it: impl Iterator<Item = u8>, k: i32, freq: &mut BTreeMap<i32, i32>) {
+        let mut curr = self;
+        for idx in it.map(|b| usize::from(b - b'a')) {
+            let Some(v) = curr.nodes[idx].as_mut() else {
+                break;
+            };
+            curr = v;
+            if curr.count >= k {
+                let v = freq.entry(curr.depth).or_insert(0);
+                *v -= 1;
+                if *v <= 0 {
+                    freq.remove(&curr.depth);
+                }
+            }
+            curr.count -= 1;
+        }
     }
-
-    fn reset_cell(&mut self, cell: String) {
-        let [row, col] = get_dims(&cell);
-        self.grid[row][col] = 0;
-    }
-
-    fn get_value(&self, formula: String) -> i32 {
-        let Some((a, b)) = formula.split_once('+') else {
-            return 0;
-        };
-        [&a[1..], b]
-            .map(|s| {
-                s.parse::<i32>().unwrap_or_else(|_| {
-                    let [row, col] = get_dims(s);
-                    self.grid[row][col]
-                })
-            })
-            .iter()
-            .sum()
-    }
-}
-
-fn get_dims(cell: &str) -> [usize; 2] {
-    let col = usize::from(cell.as_bytes()[0] - b'A');
-    let row = cell[1..].parse::<usize>().unwrap_or(0);
-    [row, col]
 }
 
 #[cfg(test)]
@@ -79,7 +94,16 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(
+            longest_common_prefix(&["jump", "run", "run", "jump", "run"], 2),
+            [3, 4, 4, 3, 4]
+        );
+        assert_eq!(
+            longest_common_prefix(&["dog", "racer", "car"], 2),
+            [0, 0, 0]
+        );
+    }
 
     #[test]
     fn test() {}
