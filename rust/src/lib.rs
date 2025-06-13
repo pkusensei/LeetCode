@@ -6,66 +6,37 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_of_unplaced_fruits(fruits: &[i32], baskets: &[i32]) -> i32 {
-    let mut tree = SegTree::build(&baskets);
-    fruits.iter().map(|&f| i32::from(!tree.query(f))).sum()
-}
-
-struct SegTree {
-    tree: Vec<i32>,
-    n: usize,
-}
-
-impl SegTree {
-    fn build(nums: &[i32]) -> Self {
-        let n = nums.len();
-        let tree = vec![0; 4 * n];
-        let mut s = Self { tree, n };
-        for (idx, &val) in nums.iter().enumerate() {
-            s.update(idx, val);
-        }
-        s
-    }
-
-    fn update(&mut self, idx: usize, val: i32) {
-        self._update(1, 0, self.n - 1, idx, val);
-    }
-
-    fn _update(&mut self, node: usize, left: usize, right: usize, idx: usize, val: i32) {
-        if left == right {
-            self.tree[node] = val;
-            return;
-        }
-        let mid = left.midpoint(right);
-        if idx <= mid {
-            self._update(2 * node, left, mid, idx, val);
-        } else {
-            self._update(2 * node + 1, 1 + mid, right, idx, val);
-        }
-        self.tree[node] = self.tree[2 * node].max(self.tree[2 * node + 1]);
-    }
-
-    fn query(&mut self, val: i32) -> bool {
-        self._query(1, 0, self.n - 1, val)
-    }
-
-    fn _query(&mut self, node: usize, left: usize, right: usize, val: i32) -> bool {
-        if self.tree[node] < val {
-            return false;
-        }
-        if left == right {
-            if self.tree[node] >= val {
-                self.tree[node] = 0;
-                return true;
+pub fn max_subarrays(n: i32, conflicting_pairs: &[[i32; 2]]) -> i64 {
+    let n = n as usize;
+    // cps[right] = [lefts..]
+    let cps = conflicting_pairs
+        .iter()
+        .fold(vec![vec![]; 1 + n], |mut acc, c| {
+            let [a, b] = [0, 1].map(|i| c[i] as usize);
+            acc[a.max(b)].push(a.min(b));
+            acc
+        });
+    let [mut rightmost_left, mut second_rightmost_left] = [0, 0];
+    let mut res = 0;
+    let mut regains = vec![0; 1 + n];
+    for right in 1..=n {
+        for &v in &cps[right] {
+            if v > rightmost_left {
+                second_rightmost_left = rightmost_left;
+                rightmost_left = v
+            } else if v > second_rightmost_left {
+                second_rightmost_left = v
             }
-            return false;
         }
-        let mid = left.midpoint(right);
-        let res =
-            self._query(2 * node, left, mid, val) || self._query(2 * node + 1, 1 + mid, right, val);
-        self.tree[node] = self.tree[2 * node].max(self.tree[2 * node + 1]);
-        res
+        // valid subarrs: [1+left..right]
+        res += right - rightmost_left;
+        // Remove rightmost_left to recover
+        // [1+second_rightmost_left..right]
+        // [2+second_rightmost_left..right]
+        // ...
+        regains[rightmost_left] += rightmost_left - second_rightmost_left;
     }
+    (res + regains.into_iter().max().unwrap_or(0)) as i64
 }
 
 #[cfg(test)]
@@ -99,8 +70,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(num_of_unplaced_fruits(&[4, 2, 5], &[3, 5, 4]), 1);
-        assert_eq!(num_of_unplaced_fruits(&[3, 6, 1], &[6, 4, 7]), 0);
+        assert_eq!(max_subarrays(4, &[[2, 3], [1, 4]]), 9);
+        assert_eq!(max_subarrays(5, &[[1, 2], [2, 5], [3, 5]]), 12);
     }
 
     #[test]
