@@ -3,29 +3,50 @@ mod fenwick_tree;
 mod helper;
 mod trie;
 
-use std::collections::HashSet;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn total_numbers(digits: Vec<i32>) -> i32 {
-        let mut seen = HashSet::new();
-        dfs(&digits, 0, 0, &mut seen);
-        seen.len() as i32
+struct Spreadsheet {
+    grid: Vec<[i32; 26]>,
 }
 
-fn dfs(digits: &[i32], mask: i32, curr: i32, seen: &mut HashSet<i32>) {
-    if mask.count_ones() == 3 {
-        if curr & 1 == 0 {
-            seen.insert(curr);
-        }
-        return;
-    }
-    for (i, &d) in digits.iter().enumerate() {
-        if (mask >> i) & 1 == 0 && (d > 0 || mask > 0) {
-            dfs(digits, mask | (1 << i), 10 * curr + d, seen);
+impl Spreadsheet {
+    fn new(rows: i32) -> Self {
+        Self {
+            grid: vec![[0; 26]; 1 + rows as usize],
         }
     }
+
+    fn set_cell(&mut self, cell: String, value: i32) {
+        let [row, col] = get_dims(&cell);
+        self.grid[row][col] = value;
+    }
+
+    fn reset_cell(&mut self, cell: String) {
+        let [row, col] = get_dims(&cell);
+        self.grid[row][col] = 0;
+    }
+
+    fn get_value(&self, formula: String) -> i32 {
+        let Some((a, b)) = formula.split_once('+') else {
+            return 0;
+        };
+        [&a[1..], b]
+            .map(|s| {
+                s.parse::<i32>().unwrap_or_else(|_| {
+                    let [row, col] = get_dims(s);
+                    self.grid[row][col]
+                })
+            })
+            .iter()
+            .sum()
+    }
+}
+
+fn get_dims(cell: &str) -> [usize; 2] {
+    let col = usize::from(cell.as_bytes()[0] - b'A');
+    let row = cell[1..].parse::<usize>().unwrap_or(0);
+    [row, col]
 }
 
 #[cfg(test)]
