@@ -3,85 +3,35 @@ mod fenwick_tree;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn longest_special_path(edges: &[[i32; 3]], nums: &[i32]) -> Vec<i32> {
+pub fn solve_queries(nums: &[i32], queries: &[i32]) -> Vec<i32> {
+    use std::collections::HashMap;
     let n = nums.len();
-    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
-        let [a, b] = [0, 1].map(|i| e[i] as usize);
-        acc[a].push((b, e[2]));
-        acc[b].push((a, e[2]));
-        acc
-    });
-    let mut max_dist = 0;
-    let mut min_count = n as i32;
-    dfs(
-        &adj,
-        &nums,
-        0,
-        n,
-        0,
-        None,
-        &mut vec![0],
-        &mut HashMap::new(),
-        &mut max_dist,
-        &mut min_count,
-    );
-    vec![max_dist, min_count]
-}
-
-fn dfs(
-    adj: &[Vec<(usize, i32)>],
-    nums: &[i32],
-    node: usize,
-    prev: usize,
-    mut left: usize,
-    prev_dup: Option<usize>,
-    prefix: &mut Vec<i32>,
-    seen: &mut HashMap<i32, usize>,
-    max_dist: &mut i32,
-    min_count: &mut i32,
-) {
-    let curr_val = nums[node];
-    let depth = prefix.len();
-    let prev_depth = seen.insert(curr_val, depth);
-    if let Some((a, b)) = prev_depth.zip(prev_dup) {
-        left = left.max(a.min(b));
-    }
-    let curr_dist = prefix.last().unwrap_or(&0) - prefix[left];
-    let curr_count = (depth - left) as i32;
-    if curr_dist > *max_dist {
-        *max_dist = curr_dist;
-        *min_count = curr_count;
-    } else if curr_dist == *max_dist {
-        *min_count = (*min_count).min(curr_count);
-    }
-    for &(next, w) in &adj[node] {
-        if next != prev {
-            prefix.push(w + prefix.last().unwrap_or(&0));
-            dfs(
-                adj,
-                nums,
-                next,
-                node,
-                left,
-                prev_dup.max(prev_depth),
-                prefix,
-                seen,
-                max_dist,
-                min_count,
-            );
-            prefix.pop();
+    let map = nums
+        .iter()
+        .enumerate()
+        .fold(HashMap::<_, Vec<_>>::new(), |mut acc, (i, &num)| {
+            acc.entry(num).or_default().push(i);
+            acc
+        });
+    let mut res = vec![];
+    for q in queries.iter().map(|&q| q as usize) {
+        let num = nums[q];
+        let arr = &map[&num];
+        if arr.len() < 2 {
+            res.push(-1);
+        } else {
+            let i = arr.binary_search(&q).unwrap();
+            let prev = i.checked_sub(1).unwrap_or(arr.len() - 1);
+            let next = (1 + i) % arr.len();
+            let a = q.abs_diff(arr[prev]);
+            let b = q.abs_diff(arr[next]);
+            res.push(a.min(n - a).min(b.min(n - b)) as i32);
         }
     }
-    if let Some(p) = prev_depth {
-        seen.insert(curr_val, p);
-    } else {
-        seen.remove(&curr_val);
-    }
+    res
 }
 
 #[cfg(test)]
@@ -114,54 +64,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(
-            longest_special_path(
-                &[
-                    [0, 1, 1],
-                    [1, 2, 3],
-                    [1, 3, 1],
-                    [2, 4, 6],
-                    [4, 7, 2],
-                    [3, 5, 2],
-                    [3, 6, 5],
-                    [6, 8, 3]
-                ],
-                &[1, 1, 0, 3, 1, 2, 1, 1, 0]
-            ),
-            [9, 3]
-        );
-        assert_eq!(
-            longest_special_path(&[[1, 0, 3], [0, 2, 4], [0, 3, 5]], &[1, 1, 0, 2]),
-            [5, 2]
-        );
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(
-            longest_special_path(
-                &[
-                    [0, 3, 2],
-                    [1, 7, 10],
-                    [7, 5, 10],
-                    [5, 6, 9],
-                    [3, 6, 2],
-                    [3, 2, 5],
-                    [2, 4, 10],
-                    [4, 8, 5]
-                ],
-                &[3, 3, 1, 1, 2, 1, 4, 1, 2]
-            ),
-            [29, 4]
-        );
-        assert_eq!(
-            longest_special_path(&[[1, 0, 5], [2, 1, 3]], &[3, 1, 1]),
-            [8, 3]
-        );
-        assert_eq!(
-            longest_special_path(&[[0, 2, 4], [1, 2, 10], [3, 1, 5]], &[4, 5, 4, 5]),
-            [15, 3]
-        );
-    }
+    fn test() {}
 }
