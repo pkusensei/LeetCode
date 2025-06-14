@@ -7,31 +7,25 @@ namespace Solution;
 
 public class Solution
 {
-    public int MinimizeMax(int[] nums, int p)
+    public int MinMaxDifference(int num)
     {
-        Array.Sort(nums);
-        int left = 0;
-        int right = 1_000_000_001;
-        while (left < right)
+        var s = num.ToString();
+        int max = 0;
+        char target = '9';
+        foreach (var item in s)
         {
-            int mid = left + (right - left) / 2;
-            if (Count(mid) >= p) { right = mid; }
-            else { left = 1 + mid; }
+            if (target == '9' && item != '9') { target = item; }
+            max *= 10;
+            max += item == target ? 9 : item - '0';
         }
-        return left;
-
-        int Count(int mid)
+        int min = 0;
+        target = '0';
+        foreach (var item in s)
         {
-            int res = 0;
-            for (int i = 0; i < nums.Length - 1; i += 1)
-            {
-                if (nums[1 + i] - nums[i] <= mid)
-                {
-                    res += 1;
-                    i += 1;
-                }
-            }
-            return res;
+            if (target == '0' && item != '0') { target = item; }
+            min *= 10;
+            min += item == target ? 0 : item - '0';
         }
+        return max - min;
     }
 }
