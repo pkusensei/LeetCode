@@ -3,33 +3,70 @@ mod fenwick_tree;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn solve_queries(nums: &[i32], queries: &[i32]) -> Vec<i32> {
-    use std::collections::HashMap;
-    let n = nums.len();
-    let map = nums
-        .iter()
-        .enumerate()
-        .fold(HashMap::<_, Vec<_>>::new(), |mut acc, (i, &num)| {
-            acc.entry(num).or_default().push(i);
-            acc
-        });
-    let mut res = vec![];
-    for q in queries.iter().map(|&q| q as usize) {
-        let num = nums[q];
-        let arr = &map[&num];
-        if arr.len() < 2 {
-            res.push(-1);
+pub fn min_zero_array(nums: &[i32], queries: &[[i32; 3]]) -> i32 {
+    let mut res = -1;
+    for (pos, &num) in nums.iter().enumerate() {
+        if let Some(v) = dfs(queries, 0, num, pos, &mut HashMap::new()) {
+            res = res.max(v);
         } else {
-            let i = arr.binary_search(&q).unwrap();
-            let prev = i.checked_sub(1).unwrap_or(arr.len() - 1);
-            let next = (1 + i) % arr.len();
-            let a = q.abs_diff(arr[prev]);
-            let b = q.abs_diff(arr[next]);
-            res.push(a.min(n - a).min(b.min(n - b)) as i32);
+            return -1;
         }
+    }
+    res
+}
+
+fn dfs(
+    queries: &[[i32; 3]],
+    idx: usize,
+    curr: i32,
+    pos: usize,
+    memo: &mut HashMap<(usize, i32), Option<i32>>,
+) -> Option<i32> {
+    if curr == 0 {
+        return Some(0);
+    }
+    if curr < 0 || idx >= queries.len() {
+        return None;
+    }
+    if let Some(&v) = memo.get(&(idx, curr)) {
+        return v;
+    }
+    let mut res = dfs(queries, 1 + idx, curr, pos, memo).map(|v| 1 + v);
+    if (queries[idx][0] as usize..=queries[idx][1] as usize).contains(&pos) {
+        let take = dfs(queries, 1 + idx, curr - queries[idx][2], pos, memo).map(|v| 1 + v);
+        res = match (res, take) {
+            (Some(a), Some(b)) => Some(a.min(b)),
+            (Some(v), None) | (None, Some(v)) => Some(v),
+            _ => None,
+        };
+    }
+    memo.insert((idx, curr), res);
+    res
+}
+
+pub fn jump(nums: &[i32], queries: &[[i32; 3]]) -> i32 {
+    let mut res = 0;
+    for (idx, &num) in nums.iter().enumerate() {
+        let mut reachable = vec![false; 1 + num as usize];
+        reachable[num as usize] = true;
+        let mut curr = 0;
+        while !reachable[0] {
+            let Some(&[left, right, val]) = queries.get(curr) else {
+                return -1;
+            };
+            if (left..=right).contains(&(idx as i32)) {
+                for x in 0..num {
+                    reachable[x as usize] |= x + val <= num && reachable[(x + val) as usize]
+                }
+            }
+            curr += 1;
+        }
+        res = res.max(curr as i32)
     }
     res
 }
@@ -64,7 +101,58 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(
+            min_zero_array(&[2, 0, 2], &[[0, 2, 1], [0, 2, 1], [1, 1, 3]]),
+            2
+        );
+        assert_eq!(min_zero_array(&[4, 3, 2, 1], &[[1, 3, 2], [0, 2, 1]]), -1);
+        assert_eq!(
+            min_zero_array(
+                &[1, 2, 3, 2, 1],
+                &[[0, 1, 1], [1, 2, 1], [2, 3, 2], [3, 4, 1], [4, 4, 1]]
+            ),
+            4
+        );
+        assert_eq!(
+            min_zero_array(
+                &[1, 2, 3, 2, 6],
+                &[
+                    [0, 1, 1],
+                    [0, 2, 1],
+                    [1, 4, 2],
+                    [4, 4, 4],
+                    [3, 4, 1],
+                    [4, 4, 5]
+                ]
+            ),
+            4
+        );
+
+        assert_eq!(jump(&[2, 0, 2], &[[0, 2, 1], [0, 2, 1], [1, 1, 3]]), 2);
+        assert_eq!(jump(&[4, 3, 2, 1], &[[1, 3, 2], [0, 2, 1]]), -1);
+        assert_eq!(
+            jump(
+                &[1, 2, 3, 2, 1],
+                &[[0, 1, 1], [1, 2, 1], [2, 3, 2], [3, 4, 1], [4, 4, 1]]
+            ),
+            4
+        );
+        assert_eq!(
+            jump(
+                &[1, 2, 3, 2, 6],
+                &[
+                    [0, 1, 1],
+                    [0, 2, 1],
+                    [1, 4, 2],
+                    [4, 4, 4],
+                    [3, 4, 1],
+                    [4, 4, 5]
+                ]
+            ),
+            4
+        );
+    }
 
     #[test]
     fn test() {}
