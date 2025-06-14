@@ -6,60 +6,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn number_of_components(properties: Vec<Vec<i32>>, k: i32) -> i32 {
-    use std::collections::HashSet;
-    let sets: Vec<_> = properties
-        .iter()
-        .map(|p| p.iter().copied().collect::<HashSet<_>>())
-        .collect();
-    let mut dsu = DSU::new(sets.len());
-    for (i1, a) in sets.iter().enumerate() {
-        for (i2, b) in sets.iter().enumerate().skip(1 + i1) {
-            if a.intersection(b).count() >= k as usize {
-                dsu.union(i1, i2);
-            }
+pub fn min_time(skill: &[i32], mana: &[i32]) -> i64 {
+    let n = skill.len();
+    let mut done = vec![0; 1 + n];
+    for &m in mana.iter() {
+        for (i, &s) in skill.iter().enumerate() {
+            // [1+i] starts woking on this potion when
+            // [i] finishes on it
+            // OR
+            // [1+i] finishes prev potion
+            done[1 + i] = done[1 + i].max(done[i]) + i64::from(m * s);
+        }
+        for (i, &s) in skill.iter().enumerate().rev() {
+            // Backtrack to find free time of [i]
+            done[i] = done[1 + i] - i64::from(s * m);
         }
     }
-    dsu.n as i32
-}
-
-struct DSU {
-    parent: Vec<usize>,
-    rank: Vec<i32>,
-    n: usize,
-}
-
-impl DSU {
-    fn new(n: usize) -> Self {
-        Self {
-            parent: (0..n).collect(),
-            rank: vec![0; n],
-            n,
-        }
-    }
-
-    fn find(&mut self, v: usize) -> usize {
-        if self.parent[v] != v {
-            self.parent[v] = self.find(self.parent[v])
-        }
-        self.parent[v]
-    }
-
-    fn union(&mut self, x: usize, y: usize) {
-        let [rx, ry] = [x, y].map(|v| self.find(v));
-        if rx == ry {
-            return;
-        }
-        self.n -= 1;
-        match self.rank[rx].cmp(&self.rank[ry]) {
-            std::cmp::Ordering::Less => self.parent[rx] = ry,
-            std::cmp::Ordering::Equal => {
-                self.rank[rx] += 1;
-                self.parent[ry] = rx
-            }
-            std::cmp::Ordering::Greater => self.parent[ry] = rx,
-        }
-    }
+    done[n]
 }
 
 #[cfg(test)]
@@ -92,7 +55,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(min_time(&[1, 5, 2, 4], &[5, 1, 4, 2]), 110);
+        assert_eq!(min_time(&[1, 1, 1], &[1, 1, 1]), 5);
+        assert_eq!(min_time(&[1, 2, 3, 4], &[1, 2]), 21);
+    }
 
     #[test]
     fn test() {}
