@@ -3,50 +3,63 @@ mod fenwick_tree;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn beautiful_numbers(l: i32, r: i32) -> i32 {
-    solve(r) - solve(l - 1)
+pub fn number_of_components(properties: Vec<Vec<i32>>, k: i32) -> i32 {
+    use std::collections::HashSet;
+    let sets: Vec<_> = properties
+        .iter()
+        .map(|p| p.iter().copied().collect::<HashSet<_>>())
+        .collect();
+    let mut dsu = DSU::new(sets.len());
+    for (i1, a) in sets.iter().enumerate() {
+        for (i2, b) in sets.iter().enumerate().skip(1 + i1) {
+            if a.intersection(b).count() >= k as usize {
+                dsu.union(i1, i2);
+            }
+        }
+    }
+    dsu.n as i32
 }
 
-fn solve(mut num: i32) -> i32 {
-    let mut ds = vec![];
-    while num > 0 {
-        ds.push(num % 10);
-        num /= 10;
-    }
-    ds.reverse();
-    dfs(&ds, 0, true, 1, 0, &mut HashMap::new())
+struct DSU {
+    parent: Vec<usize>,
+    rank: Vec<i32>,
+    n: usize,
 }
 
-fn dfs(
-    s: &[i32],
-    idx: usize,
-    tight: bool,
-    prod: i32,
-    sum: i32,
-    memo: &mut HashMap<(usize, bool, i32, i32), i32>,
-) -> i32 {
-    if idx >= s.len() {
-        return i32::from(sum > 0 && prod % sum == 0);
+impl DSU {
+    fn new(n: usize) -> Self {
+        Self {
+            parent: (0..n).collect(),
+            rank: vec![0; n],
+            n,
+        }
     }
-    let k = (idx, tight, prod, sum);
-    if let Some(&v) = memo.get(&k) {
-        return v;
+
+    fn find(&mut self, v: usize) -> usize {
+        if self.parent[v] != v {
+            self.parent[v] = self.find(self.parent[v])
+        }
+        self.parent[v]
     }
-    let upper = if tight { s[idx] } else { 9 };
-    let mut res = 0;
-    for d in 0..=upper {
-        let ntight = tight && d == upper;
-        let nsum = sum + d;
-        let nprod = if nsum > 0 { prod * d } else { prod };
-        res += dfs(s, 1 + idx, ntight, nprod, nsum, memo);
+
+    fn union(&mut self, x: usize, y: usize) {
+        let [rx, ry] = [x, y].map(|v| self.find(v));
+        if rx == ry {
+            return;
+        }
+        self.n -= 1;
+        match self.rank[rx].cmp(&self.rank[ry]) {
+            std::cmp::Ordering::Less => self.parent[rx] = ry,
+            std::cmp::Ordering::Equal => {
+                self.rank[rx] += 1;
+                self.parent[ry] = rx
+            }
+            std::cmp::Ordering::Greater => self.parent[ry] = rx,
+        }
     }
-    memo.insert(k, res);
-    res
 }
 
 #[cfg(test)]
@@ -79,13 +92,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(beautiful_numbers(10, 20), 2);
-        assert_eq!(beautiful_numbers(1, 15), 10);
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(beautiful_numbers(20, 100), 15);
-    }
+    fn test() {}
 }
