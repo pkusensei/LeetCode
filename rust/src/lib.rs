@@ -6,23 +6,30 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_time(skill: &[i32], mana: &[i32]) -> i64 {
-    let n = skill.len();
-    let mut done = vec![0; 1 + n];
-    for &m in mana.iter() {
-        for (i, &s) in skill.iter().enumerate() {
-            // [1+i] starts woking on this potion when
-            // [i] finishes on it
-            // OR
-            // [1+i] finishes prev potion
-            done[1 + i] = done[1 + i].max(done[i]) + i64::from(m * s);
+pub fn min_operations(queries: Vec<Vec<i32>>) -> i64 {
+    const P: [i64; 16] = {
+        let mut p = [1; 16];
+        let mut i = 1;
+        while i < 16 {
+            p[i] = 4 * p[i - 1];
+            i += 1;
         }
-        for (i, &s) in skill.iter().enumerate().rev() {
-            // Backtrack to find free time of [i]
-            done[i] = done[1 + i] - i64::from(s * m);
+        p
+    };
+    let mut res = 0;
+    for q in &queries {
+        let [left, right] = [0, 1].map(|i| i64::from(q[i]));
+        let mut sum = 0;
+        for pow in 1..16 {
+            let a = left.max(P[pow - 1]);
+            let b = right.min(P[pow] - 1);
+            if a <= b {
+                sum += pow as i64 * (b - a + 1);
+            }
         }
+        res += (1 + sum) / 2;
     }
-    done[n]
+    res
 }
 
 #[cfg(test)]
@@ -55,11 +62,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(min_time(&[1, 5, 2, 4], &[5, 1, 4, 2]), 110);
-        assert_eq!(min_time(&[1, 1, 1], &[1, 1, 1]), 5);
-        assert_eq!(min_time(&[1, 2, 3, 4], &[1, 2]), 21);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
