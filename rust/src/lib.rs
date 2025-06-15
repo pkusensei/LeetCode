@@ -6,30 +6,11 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_operations(queries: Vec<Vec<i32>>) -> i64 {
-    const P: [i64; 16] = {
-        let mut p = [1; 16];
-        let mut i = 1;
-        while i < 16 {
-            p[i] = 4 * p[i - 1];
-            i += 1;
-        }
-        p
-    };
-    let mut res = 0;
-    for q in &queries {
-        let [left, right] = [0, 1].map(|i| i64::from(q[i]));
-        let mut sum = 0;
-        for pow in 1..16 {
-            let a = left.max(P[pow - 1]);
-            let b = right.min(P[pow] - 1);
-            if a <= b {
-                sum += pow as i64 * (b - a + 1);
-            }
-        }
-        res += (1 + sum) / 2;
-    }
-    res
+pub fn reverse_degree(s: String) -> i32 {
+    (1..)
+        .zip(s.bytes())
+        .map(|(i, b)| i * i32::from(26 - (b - b'a')))
+        .sum()
 }
 
 #[cfg(test)]
