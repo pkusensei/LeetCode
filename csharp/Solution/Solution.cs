@@ -7,25 +7,34 @@ namespace Solution;
 
 public class Solution
 {
-    public int MinMaxDifference(int num)
+    public int MaxDiff(int num)
     {
-        var s = num.ToString();
-        int max = 0;
-        char target = '9';
-        foreach (var item in s)
+        List<int> ds = [];
+        int _num = num;
+        while (_num > 0)
         {
-            if (target == '9' && item != '9') { target = item; }
-            max *= 10;
-            max += item == target ? 9 : item - '0';
+            ds.Add(_num % 10);
+            _num /= 10;
         }
-        int min = 0;
-        target = '0';
-        foreach (var item in s)
+        ds.Reverse();
+        int min = num;
+        int max = num;
+        for (int x = 0; x < 10; x++)
         {
-            if (target == '0' && item != '0') { target = item; }
-            min *= 10;
-            min += item == target ? 0 : item - '0';
+            for (int y = 0; y < 10; y++)
+            {
+                var val = Change(x, y);
+                if (val[0] > 0)
+                {
+                    int v = val.Aggregate((acc, d) => acc * 10 + d);
+                    min = Math.Min(min, v);
+                    max = Math.Max(max, v);
+                }
+
+            }
         }
         return max - min;
+
+        List<int> Change(int x, int y) => [.. ds.Select(d => d == x ? y : d)];
     }
 }
