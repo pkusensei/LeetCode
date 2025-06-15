@@ -6,11 +6,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn reverse_degree(s: String) -> i32 {
-    (1..)
-        .zip(s.bytes())
-        .map(|(i, b)| i * i32::from(26 - (b - b'a')))
-        .sum()
+pub fn max_active_sections_after_trade(s: String) -> i32 {
+    use itertools::Itertools;
+    let nums = s
+        .as_bytes()
+        .chunk_by(|a, b| a == b)
+        .map(|ch| {
+            if ch[0] == b'1' {
+                ch.len() as i32
+            } else {
+                -(ch.len() as i32)
+            }
+        })
+        .collect_vec();
+    let mut max_window = 0;
+    for w in nums.windows(3).filter(|w| w[1] > 0) {
+        max_window = max_window.max((w[0] + w[2]).abs());
+    }
+    s.bytes().map(|b| i32::from(b - b'0')).sum::<i32>() + max_window
 }
 
 #[cfg(test)]
