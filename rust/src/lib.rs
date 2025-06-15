@@ -6,24 +6,61 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_active_sections_after_trade(s: String) -> i32 {
-    use itertools::Itertools;
-    let nums = s
-        .as_bytes()
-        .chunk_by(|a, b| a == b)
-        .map(|ch| {
-            if ch[0] == b'1' {
-                ch.len() as i32
-            } else {
-                -(ch.len() as i32)
-            }
-        })
-        .collect_vec();
-    let mut max_window = 0;
-    for w in nums.windows(3).filter(|w| w[1] > 0) {
-        max_window = max_window.max((w[0] + w[2]).abs());
+pub fn minimum_cost(nums: &[i32], cost: &[i32], k: i32) -> i64 {
+    let n = nums.len();
+    let f = |mut acc: Vec<i64>, &num| {
+        acc.push(i64::from(num) + acc.last().unwrap_or(&0));
+        acc
+    };
+    let prefn = nums.iter().fold(vec![0], f);
+    let prefc = cost.iter().fold(vec![0], f);
+    dfs(&prefn, &prefc, k.into(), 0, 0, &mut vec![-1; n])
+}
+
+fn dfs(
+    prefixn: &[i64],
+    prefixc: &[i64],
+    k: i64,
+    left: usize,
+    right: usize,
+    memo: &mut [i64],
+) -> i64 {
+    let n = prefixn.len();
+    if right == n - 1 {
+        return if left == n - 1 { 0 } else { i64::MAX >> 1 };
     }
-    s.bytes().map(|b| i32::from(b - b'0')).sum::<i32>() + max_window
+    if memo[left] > -1 {
+        return memo[left];
+    }
+    let num_sum = prefixn[1 + right] - prefixn[left];
+    let cost_sum = prefixc[n - 1] - prefixc[left];
+    let stay = dfs(prefixn, prefixc, k, left, 1 + right, memo);
+    let end = (num_sum + k) * cost_sum + dfs(prefixn, prefixc, k, 1 + right, 1 + right, memo);
+    memo[left] = stay.min(end);
+    // dbg!(left, right);
+    memo[left]
+}
+
+pub fn bottom_up(nums: &[i32], cost: &[i32], k: i32) -> i64 {
+    let n = nums.len();
+    let k = i64::from(k);
+    let f = |mut acc: Vec<i64>, &num| {
+        acc.push(i64::from(num) + acc.last().unwrap_or(&0));
+        acc
+    };
+    let prefn = nums.iter().fold(vec![0], f);
+    let prefc = cost.iter().fold(vec![0], f);
+    let ctotal = prefc[n];
+    let mut dp = vec![i64::MAX; 1 + n];
+    dp[0] = 0;
+    for right in 1..=n {
+        for left in 0..right {
+            let cost_sum = prefc[right] - prefc[left];
+            let curr = prefn[right] * cost_sum + k * (ctotal - prefc[left]);
+            dp[right] = dp[right].min(dp[left] + curr);
+        }
+    }
+    dp[n]
 }
 
 #[cfg(test)]
@@ -56,7 +93,27 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(minimum_cost(&[3, 1, 4], &[4, 6, 6], 1), 110);
+        assert_eq!(
+            minimum_cost(
+                &[4, 8, 5, 1, 14, 2, 2, 12, 1],
+                &[7, 2, 8, 4, 2, 2, 1, 1, 2],
+                7
+            ),
+            985
+        );
+
+        assert_eq!(bottom_up(&[3, 1, 4], &[4, 6, 6], 1), 110);
+        assert_eq!(
+            bottom_up(
+                &[4, 8, 5, 1, 14, 2, 2, 12, 1],
+                &[7, 2, 8, 4, 2, 2, 1, 1, 2],
+                7
+            ),
+            985
+        );
+    }
 
     #[test]
     fn test() {}
