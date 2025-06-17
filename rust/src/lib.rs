@@ -3,49 +3,57 @@ mod fenwick_tree;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_product(nums: &[i32], k: i32, limit: i32) -> i32 {
-    dfs(nums, k, limit, 1, 0, true, true, &mut HashMap::new())
-}
-
-fn dfs(
-    nums: &[i32],
-    k: i32,
-    limit: i32,
-    prod: i32,
-    idx: usize,
-    is_even: bool,
-    is_empty: bool,
-    memo: &mut HashMap<(i32, i32, usize, bool), i32>,
-) -> i32 {
-    if idx >= nums.len() {
-        if !is_empty && k == 0 && prod <= limit {
-            return prod;
+pub fn minimum_pair_removal(nums: &[i32]) -> i32 {
+    use std::collections::BTreeSet;
+    let n = nums.len();
+    let mut arr: Vec<_> = nums.iter().map(|&v| i64::from(v)).collect();
+    let mut set = BTreeSet::new();
+    let mut prev = vec![None; n];
+    let mut next = vec![n; n];
+    let mut unruly = 0;
+    for (i, w) in nums.windows(2).enumerate() {
+        unruly += i32::from(w[0] > w[1]);
+        let v = i64::from(w[0] + w[1]);
+        set.insert((v, i));
+        prev[1 + i] = Some(i);
+        next[i] = 1 + i;
+    }
+    let mut res = 0;
+    while unruly > 0 {
+        let Some((val, idx)) = set.pop_first() else {
+            break;
+        };
+        // left, idx, right, rright
+        let left = prev[idx];
+        let right = next[idx];
+        let rright = next[right];
+        unruly -= i32::from(arr[idx] > arr[right]);
+        if let Some(left) = left {
+            if arr[left] > arr[idx] && arr[left] <= val {
+                unruly -= 1;
+            } else if arr[left] <= arr[idx] && arr[left] > val {
+                unruly += 1;
+            }
+            set.remove(&(arr[left] + arr[idx], left));
+            set.insert((arr[left] + val, left));
         }
-        return -1;
+        if rright < n {
+            if arr[rright] >= arr[right] && arr[rright] < val {
+                unruly += 1;
+            } else if arr[rright] < arr[right] && arr[rright] >= val {
+                unruly -= 1;
+            }
+            set.remove(&(arr[right] + arr[rright], right));
+            set.insert((val + arr[rright], idx));
+            prev[rright] = Some(idx);
+        }
+        next[idx] = rright;
+        arr[idx] = val;
+        res += 1;
     }
-    let key = (k, prod, idx, is_even);
-    if let Some(&v) = memo.get(&key) {
-        return v;
-    }
-    let skip = dfs(nums, k, limit, prod, 1 + idx, is_even, is_empty, memo);
-    let sign = if is_even { 1 } else { -1 };
-    let take = dfs(
-        nums,
-        k - sign * nums[idx],
-        limit,
-        (prod * nums[idx]).min(1 + limit), // pruning
-        1 + idx,
-        !is_even,
-        false,
-        memo,
-    );
-    let res = skip.max(take);
-    memo.insert(key, res);
     res
 }
 
@@ -80,14 +88,10 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_product(&[1, 2, 3], 2, 10), 6);
-        assert_eq!(max_product(&[0, 2, 3], -5, 12), -1);
-        assert_eq!(max_product(&[2, 2, 3, 3], 0, 9), 9);
+        assert_eq!(minimum_pair_removal(&[5, 2, 3, 1]), 2);
+        assert_eq!(minimum_pair_removal(&[1, 2, 2]), 0);
     }
 
     #[test]
-    fn test() {
-        assert_eq!(max_product(&[1, 4, 7, 10], -3, 20), 4);
-        assert_eq!(max_product(&[6, 3, 3], 6, 20), 6);
-    }
+    fn test() {}
 }
