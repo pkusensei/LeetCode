@@ -3,73 +3,50 @@ mod fenwick_tree;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-use std::collections::{HashMap, HashSet, VecDeque};
-
-struct Router {
-    set: HashSet<Packet>,
-    queue: VecDeque<Packet>,
-    dst_times: HashMap<i32, VecDeque<Packet>>,
-    n: usize,
+pub fn max_product(nums: &[i32], k: i32, limit: i32) -> i32 {
+    dfs(nums, k, limit, 1, 0, true, true, &mut HashMap::new())
 }
 
-impl Router {
-    fn new(memoryLimit: i32) -> Self {
-        let n = memoryLimit as usize;
-        Self {
-            set: HashSet::with_capacity(n),
-            queue: VecDeque::with_capacity(n),
-            dst_times: HashMap::with_capacity(n),
-            n,
+fn dfs(
+    nums: &[i32],
+    k: i32,
+    limit: i32,
+    prod: i32,
+    idx: usize,
+    is_even: bool,
+    is_empty: bool,
+    memo: &mut HashMap<(i32, i32, usize, bool), i32>,
+) -> i32 {
+    if idx >= nums.len() {
+        if !is_empty && k == 0 && prod <= limit {
+            return prod;
         }
+        return -1;
     }
-
-    fn add_packet(&mut self, source: i32, destination: i32, timestamp: i32) -> bool {
-        let p = Packet {
-            time: timestamp,
-            src: source,
-            dst: destination,
-        };
-        if self.set.contains(&p) {
-            return false;
-        }
-        if self.queue.len() == self.n {
-            _ = self.forward_packet();
-        }
-        self.dst_times.entry(destination).or_default().push_back(p);
-        self.queue.push_back(p);
-        self.set.insert(p)
+    let key = (k, prod, idx, is_even);
+    if let Some(&v) = memo.get(&key) {
+        return v;
     }
-
-    fn forward_packet(&mut self) -> Vec<i32> {
-        let Some(p) = self.queue.pop_front() else {
-            return vec![];
-        };
-        self.set.remove(&p);
-        let packets = self.dst_times.entry(p.dst).or_default();
-        if packets.front().is_some_and(|&v| v == p) {
-            packets.pop_front();
-        }
-        vec![p.src, p.dst, p.time]
-    }
-
-    fn get_count(&self, destination: i32, start_time: i32, end_time: i32) -> i32 {
-        let Some(packets) = self.dst_times.get(&destination) else {
-            return 0;
-        };
-        let i1 = packets.partition_point(|p| p.time < start_time);
-        let i2 = packets.partition_point(|p| p.time <= end_time);
-        (i2 - i1) as i32
-    }
-}
-
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-struct Packet {
-    time: i32,
-    src: i32,
-    dst: i32,
+    let skip = dfs(nums, k, limit, prod, 1 + idx, is_even, is_empty, memo);
+    let sign = if is_even { 1 } else { -1 };
+    let take = dfs(
+        nums,
+        k - sign * nums[idx],
+        limit,
+        (prod * nums[idx]).min(1 + limit), // pruning
+        1 + idx,
+        !is_even,
+        false,
+        memo,
+    );
+    let res = skip.max(take);
+    memo.insert(key, res);
+    res
 }
 
 #[cfg(test)]
@@ -102,8 +79,15 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(max_product(&[1, 2, 3], 2, 10), 6);
+        assert_eq!(max_product(&[0, 2, 3], -5, 12), -1);
+        assert_eq!(max_product(&[2, 2, 3, 3], 0, 9), 9);
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(max_product(&[1, 4, 7, 10], -3, 20), 4);
+        assert_eq!(max_product(&[6, 3, 3], 6, 20), 6);
+    }
 }
