@@ -7,38 +7,29 @@ namespace Solution;
 
 public class Solution
 {
-    public int CountGoodArrays(int n, int m, int k)
+    public int MinimumPairRemoval(int[] nums)
     {
-        const long MOD = 1_000_000_007;
-        // From (n-1), find (n-k-1) indices where [i]!=[i-1]
-        var c = NChooseK(n - 1, n - k - 1);
-        // Fix first number (as one in 1..=m)
-        // these (n-k-1) indices have (m-1)^(n-k-1) choices
-        var pow = ModPow(m - 1, n - k - 1);
-        return (int)(c * pow % MOD * m % MOD);
-
-        static long NChooseK(long n, long k)
+        LinkedList<int> lst = new(nums);
+        int res = 0;
+        while (lst.Zip(lst.Skip(1)).Any(p => p.First > p.Second))
         {
-            if (k > n) { return 0; }
-            k = Math.Min(k, n - k);
-            long numerator = 1;
-            for (long i = n + 1 - k; i <= n; i++)
+            res += 1;
+            int min_sum = int.MaxValue;
+            var head = lst.First;
+            var node = head;
+            while (head.Next is not null)
             {
-                numerator = numerator * i % MOD;
+                int temp = head.Value + head.Next.Value;
+                if (temp < min_sum)
+                {
+                    min_sum = temp;
+                    node = head;
+                }
+                head = head.Next;
             }
-            long denominator = 1;
-            for (long i = 1; i <= k; i++)
-            {
-                denominator = denominator * i % MOD;
-            }
-            return numerator * ModPow(denominator, MOD - 2) % MOD;
+            lst.Remove(node.Next);
+            node.Value = min_sum;
         }
-
-        static long ModPow(long b, long exp)
-        {
-            if (exp == 0) { return 1; }
-            if ((exp & 1) == 0) { return ModPow(b * b % MOD, exp >> 1); }
-            else { return ModPow(b * b % MOD, exp >> 1) * b % MOD; }
-        }
+        return res;
     }
 }
