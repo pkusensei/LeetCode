@@ -7,12 +7,24 @@ mod trie;
 use helper::*;
 
 pub fn unique_xor_triplets(nums: Vec<i32>) -> i32 {
+    use std::collections::HashSet;
     let n = nums.len();
-    if n <= 2 {
-        n as i32
-    } else {
-        2i32.pow(1 + n.ilog2())
+    if n == 1 {
+        return 1;
     }
+    let mut doubles = HashSet::new();
+    for (i, a) in nums.iter().enumerate() {
+        for b in nums.iter().skip(1 + i) {
+            doubles.insert(a ^ b);
+        }
+    }
+    let mut triples = HashSet::new();
+    for &num in &nums {
+        for d in &doubles {
+            triples.insert(d ^ num);
+        }
+    }
+    triples.len() as i32
 }
 
 #[cfg(test)]
