@@ -10,8 +10,12 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow(3, 2, 1, 4)]
+    [DataRow(4, 2, 2, 6)]
+    [DataRow(5, 2, 0, 2)]
+    public void TestMethod1(int n, int m, int k, int exp)
     {
+        Assert.AreEqual(exp, sol.CountGoodArrays(n, m, k));
     }
 
     [TestMethod]

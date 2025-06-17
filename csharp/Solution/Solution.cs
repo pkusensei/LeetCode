@@ -7,34 +7,38 @@ namespace Solution;
 
 public class Solution
 {
-    public int MaxDiff(int num)
+    public int CountGoodArrays(int n, int m, int k)
     {
-        List<int> ds = [];
-        int _num = num;
-        while (_num > 0)
+        const long MOD = 1_000_000_007;
+        // From (n-1), find (n-k-1) indices where [i]!=[i-1]
+        var c = NChooseK(n - 1, n - k - 1);
+        // Fix first number (as one in 1..=m)
+        // these (n-k-1) indices have (m-1)^(n-k-1) choices
+        var pow = ModPow(m - 1, n - k - 1);
+        return (int)(c * pow % MOD * m % MOD);
+
+        static long NChooseK(long n, long k)
         {
-            ds.Add(_num % 10);
-            _num /= 10;
-        }
-        ds.Reverse();
-        int min = num;
-        int max = num;
-        for (int x = 0; x < 10; x++)
-        {
-            for (int y = 0; y < 10; y++)
+            if (k > n) { return 0; }
+            k = Math.Min(k, n - k);
+            long numerator = 1;
+            for (long i = n + 1 - k; i <= n; i++)
             {
-                var val = Change(x, y);
-                if (val[0] > 0)
-                {
-                    int v = val.Aggregate((acc, d) => acc * 10 + d);
-                    min = Math.Min(min, v);
-                    max = Math.Max(max, v);
-                }
-
+                numerator = numerator * i % MOD;
             }
+            long denominator = 1;
+            for (long i = 1; i <= k; i++)
+            {
+                denominator = denominator * i % MOD;
+            }
+            return numerator * ModPow(denominator, MOD - 2) % MOD;
         }
-        return max - min;
 
-        List<int> Change(int x, int y) => [.. ds.Select(d => d == x ? y : d)];
+        static long ModPow(long b, long exp)
+        {
+            if (exp == 0) { return 1; }
+            if ((exp & 1) == 0) { return ModPow(b * b % MOD, exp >> 1); }
+            else { return ModPow(b * b % MOD, exp >> 1) * b % MOD; }
+        }
     }
 }

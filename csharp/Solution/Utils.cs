@@ -20,4 +20,21 @@ public static class Utils
         if ((exp & T.One) == T.Zero) { return ModPow(b * b % mod, exp >> 1, mod); }
         else { return ModPow(b * b % mod, exp >> 1, mod) * b % mod; }
     }
+
+    public static T NChooseK<T>(T n, T k, T mod) where T : IBinaryInteger<T>
+    {
+        if (k > n) { return T.Zero; }
+        if (n - k < k) { k = n - k; }
+        T numerator = T.One;
+        for (T i = n - k + T.One; i <= n; i++)
+        {
+            numerator = numerator * i % mod;
+        }
+        T denominator = T.One;
+        for (T i = T.One; i <= k; i++)
+        {
+            denominator = denominator * i % mod;
+        }
+        return numerator * ModPow(denominator, mod - T.One - T.One, mod);
+    }
 }
