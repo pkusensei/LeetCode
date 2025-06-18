@@ -6,22 +6,13 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn calculate_score(instructions: Vec<String>, values: Vec<i32>) -> i64 {
-    use std::collections::HashSet;
+pub fn maximum_possible_size(nums: Vec<i32>) -> i32 {
     let mut res = 0;
-    let mut idx = 0;
-    let mut set = HashSet::new();
-    while let Some(s) = usize::try_from(idx).ok().and_then(|i| instructions.get(i)) {
-        if !set.insert(idx) {
-            break;
-        }
-        match s.as_str() {
-            "add" => {
-                res += i64::from(values[idx as usize]);
-                idx += 1;
-            }
-            "jump" => idx += values[idx as usize],
-            _ => unreachable!(),
+    let mut prev = 0;
+    for &num in nums.iter() {
+        if prev <= num {
+            prev = num;
+            res += 1;
         }
     }
     res
