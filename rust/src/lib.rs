@@ -6,78 +6,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_numbers(l: &str, r: &str, b: i32) -> i32 {
-    let mut s1 = parse(&l, b.into());
-    for v in s1.iter_mut().rev() {
-        if *v == 0 {
-            *v = b as u8 - 1;
-        } else {
-            *v -= 1;
+pub fn calculate_score(instructions: Vec<String>, values: Vec<i32>) -> i64 {
+    use std::collections::HashSet;
+    let mut res = 0;
+    let mut idx = 0;
+    let mut set = HashSet::new();
+    while let Some(s) = usize::try_from(idx).ok().and_then(|i| instructions.get(i)) {
+        if !set.insert(idx) {
             break;
         }
-    }
-    let s2 = parse(&r, b.into());
-    let a = solve(&s1, b as u8);
-    let b = solve(&s2, b as u8);
-    (b - a).rem_euclid(M)
-}
-
-const M: i32 = 1_000_000_007;
-
-fn parse(s: &str, b: i64) -> Vec<u8> {
-    let mut curr = vec![0];
-    for d in s.bytes().map(|ch| ch - b'0') {
-        let mut carry = 0;
-        for i in curr.iter_mut() {
-            let prod = (*i) * 10 + carry;
-            *i = prod % b;
-            carry = prod / b;
-        }
-        while carry > 0 {
-            curr.push(carry % b);
-            carry /= b;
-        }
-        carry = i64::from(d);
-        for i in curr.iter_mut() {
-            let sum = *i + carry;
-            *i = sum % b;
-            carry = sum / b;
-            if carry < 1 {
-                break;
+        match s.as_str() {
+            "add" => {
+                res += i64::from(values[idx as usize]);
+                idx += 1;
             }
-        }
-        while carry > 0 {
-            curr.push(carry % b);
-            carry /= b;
+            "jump" => idx += values[idx as usize],
+            _ => unreachable!(),
         }
     }
-    let mut res: Vec<u8> = curr.iter().rev().map(|&v| v as u8).collect();
-    if res.is_empty() {
-        res = vec![0]
-    }
-    res
-}
-
-fn solve(ds: &[u8], b: u8) -> i32 {
-    let n = ds.len();
-    dfs(ds, b, 0, true, 0, &mut vec![[[-1; 10]; 2]; n])
-}
-
-fn dfs(nums: &[u8], b: u8, idx: usize, tight: bool, prev: u8, memo: &mut [[[i32; 10]; 2]]) -> i32 {
-    if idx >= nums.len() {
-        return 1;
-    }
-    if memo[idx][usize::from(tight)][usize::from(prev)] > -1 {
-        return memo[idx][usize::from(tight)][usize::from(prev)];
-    }
-    let upper = if tight { nums[idx] } else { b - 1 };
-    let mut res = 0;
-    for d in prev..=upper {
-        let next_tight = tight && d == upper;
-        res += dfs(nums, b, 1 + idx, next_tight, d, memo);
-        res %= M;
-    }
-    memo[idx][usize::from(tight)][usize::from(prev)] = res;
     res
 }
 
@@ -111,16 +57,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(count_numbers("23", "28", 8), 3);
-        assert_eq!(count_numbers("2", "7", 2), 2);
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(
-            count_numbers("3017011", "6014684453239676968884889861183768278549", 4),
-            52032
-        );
-    }
+    fn test() {}
 }
