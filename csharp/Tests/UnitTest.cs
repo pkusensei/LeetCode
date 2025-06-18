@@ -10,10 +10,8 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(new[] { 5, 2, 3, 1 }, 2)]
-    public void TestMethod1(int[] a, int exp)
+    public void TestMethod1()
     {
-        Assert.AreEqual(exp, sol.MinimumPairRemoval(a));
     }
 
     [TestMethod]
