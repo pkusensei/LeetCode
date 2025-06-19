@@ -6,14 +6,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_possible_size(nums: Vec<i32>) -> i32 {
-    let mut res = 0;
-    let mut prev = 0;
+pub fn result_array(nums: Vec<i32>, k: i32) -> Vec<i64> {
+    let k = k as usize;
+    let mut dp = vec![0; k];
+    let mut res = vec![0; k];
     for &num in nums.iter() {
-        if prev <= num {
-            prev = num;
-            res += 1;
+        let mut curr = vec![0; k];
+        let rem = num as usize % k;
+        curr[rem] = 1;
+        for i in 0..k {
+            let val = rem * i % k;
+            curr[val] += dp[i];
         }
+        for (v, c) in res.iter_mut().zip(curr.iter()) {
+            *v += c;
+        }
+        dp = curr;
     }
     res
 }
