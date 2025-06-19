@@ -3,89 +3,51 @@ mod fenwick_tree;
 mod helper;
 mod trie;
 
-use std::collections::HashSet;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_cells(grid: &[&[char]], pattern: &str) -> i32 {
-    use itertools::Itertools;
-    let n = pattern.len();
-    if n == 1 {
-        return grid
-            .iter()
-            .flat_map(|row| row.iter().filter(|&&c| c as u8 == pattern.as_bytes()[0]))
-            .count() as i32;
+pub fn max_profit(n: i32, edges: &[[i32; 2]], score: &[i32]) -> i32 {
+    let n = n as usize;
+    let mut indegs = vec![0; n];
+    let mut adj = vec![vec![]; n];
+    for e in edges.iter() {
+        let [a, b] = [0, 1].map(|i| e[i] as usize);
+        adj[a].push(b);
+        indegs[b] += 1;
     }
-    let lps = kmp(pattern.as_bytes());
-    let h = grid
-        .iter()
-        .enumerate()
-        .flat_map(|(r, row)| row.iter().enumerate().map(move |(c, &ch)| (ch as u8, r, c)))
-        .collect_vec();
-    let h_set = merge(&h, &search(&h, pattern.as_bytes(), &lps), n);
-    let mut v = vec![];
-    let [rows, cols] = get_dimensions(&grid);
-    for c in 0..cols {
-        for r in 0..rows {
-            v.push((grid[r][c] as u8, r, c));
-        }
-    }
-    let v_set = merge(&v, &search(&v, pattern.as_bytes(), &lps), n);
-    h_set.intersection(&v_set).count() as i32
+    dfs(&adj, score, &mut indegs, 0, &mut vec![-1; 1 << n])
 }
 
-fn merge(hay: &[(u8, usize, usize)], matched: &[usize], n: usize) -> HashSet<(usize, usize)> {
-    let mut start = 0;
-    let mut end = 0;
-    let mut set = HashSet::new();
-    for &i in matched {
-        if i > end {
-            if start != end {
-                set.extend(hay[start..=end].iter().map(|&(_, r, c)| (r, c)));
+fn dfs(
+    adj: &[Vec<usize>],
+    score: &[i32],
+    indegs: &mut [i32],
+    mask: usize,
+    memo: &mut [i32],
+) -> i32 {
+    let n = score.len();
+    if n == mask.count_ones() as usize {
+        return 0;
+    }
+    if memo[mask] > -1 {
+        return memo[mask];
+    }
+    let mut res = 0;
+    for i in 0..n {
+        if (mask >> i) & 1 == 0 && indegs[i] == 0 {
+            for &node in &adj[i] {
+                indegs[node] -= 1;
             }
-            start = i;
-        }
-        end = i + n - 1;
-    }
-    if start != end {
-        set.extend(hay[start..=end].iter().map(|&(_, r, c)| (r, c)));
-    }
-    set
-}
-
-fn search(hay: &[(u8, usize, usize)], needle: &[u8], lps: &[usize]) -> Vec<usize> {
-    let n = needle.len();
-    let mut len = 0;
-    let mut matched = vec![];
-    for (idx, &(b, _, _)) in hay.iter().enumerate() {
-        while len > 0 && (len == n || b != needle[len]) {
-            len = lps[len - 1];
-        }
-        if b == needle[len] {
-            len += 1;
-        }
-        if len == n {
-            matched.push(idx + 1 - len);
+            let next = mask | (1 << i);
+            res =
+                res.max(next.count_ones() as i32 * score[i] + dfs(adj, score, indegs, next, memo));
+            for &node in &adj[i] {
+                indegs[node] += 1;
+            }
         }
     }
-    matched
-}
-
-fn kmp(s: &[u8]) -> Vec<usize> {
-    let n = s.len();
-    let mut lps = vec![0; n];
-    let mut len = 0;
-    for idx in 1..n {
-        while len > 0 && s[idx] != s[len] {
-            len = lps[len - 1]
-        }
-        if s[idx] == s[len] {
-            len += 1
-        }
-        lps[idx] = len;
-    }
-    lps
+    memo[mask] = res;
+    res
 }
 
 #[cfg(test)]
@@ -119,19 +81,7 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            count_cells(
-                &[
-                    &['a', 'a', 'c', 'c'],
-                    &['b', 'b', 'b', 'c'],
-                    &['a', 'a', 'b', 'a'],
-                    &['c', 'a', 'a', 'c'],
-                    &['a', 'a', 'b', 'a']
-                ],
-                "abaca"
-            ),
-            1
-        );
+        assert_eq!(max_profit(3, &[[0, 1], [0, 2]], &[1, 6, 3]), 25);
     }
 
     #[test]
