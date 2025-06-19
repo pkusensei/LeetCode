@@ -6,19 +6,28 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_common_response(responses: Vec<Vec<String>>) -> String {
-    use itertools::Itertools;
-    use std::collections::HashSet;
-    responses
-        .into_iter()
-        .map(|row| row.into_iter().collect::<HashSet<_>>())
-        .flatten()
-        .counts()
-        .into_iter()
-        .sorted_unstable_by(|a, b| b.1.cmp(&a.1).then(a.0.cmp(&b.0)))
-        .next()
-        .unwrap()
-        .0
+pub fn base_unit_conversions(conversions: Vec<Vec<i32>>) -> Vec<i32> {
+    use std::collections::VecDeque;
+    const M: i64 = 1_000_000_007;
+    let n = 1 + conversions.len();
+    let mut queue = VecDeque::from([(0, 1)]);
+    let mut adj = vec![vec![]; n];
+    for c in conversions.iter() {
+        let [src, dst, f] = c[..] else { unreachable!() };
+        adj[src as usize].push((dst as usize, f));
+    }
+    let mut res = vec![0; n];
+    res[0] = 1;
+    while let Some((node, val)) = queue.pop_front() {
+        for &(next, f) in &adj[node] {
+            if res[next] == 0 {
+                let curr = val * i64::from(f) % M;
+                res[next] = curr as i32;
+                queue.push_back((next, curr));
+            }
+        }
+    }
+    res
 }
 
 #[cfg(test)]
