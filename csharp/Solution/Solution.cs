@@ -7,15 +7,19 @@ namespace Solution;
 
 public class Solution
 {
-    public int[][] DivideArray(int[] nums, int k)
+    public int PartitionArray(int[] nums, int k)
     {
         Array.Sort(nums);
-        List<int[]> res = [];
-        foreach (var ch in nums.Chunk(3))
+        int res = 1;
+        int left = 0;
+        for (int i = 0; i < nums.Length; i++)
         {
-            if (ch[2] - ch[0] <= k) { res.Add(ch); }
-            else { return []; }
+            if (nums[i] - nums[left] > k)
+            {
+                res += 1;
+                left = i;
+            }
         }
-        return [.. res];
+        return res;
     }
 }
