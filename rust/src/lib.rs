@@ -6,47 +6,31 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_profit(n: i32, edges: &[[i32; 2]], score: &[i32]) -> i32 {
-    let n = n as usize;
-    let mut indegs = vec![0; n];
-    let mut adj = vec![vec![]; n];
-    for e in edges.iter() {
-        let [a, b] = [0, 1].map(|i| e[i] as usize);
-        adj[a].push(b);
-        indegs[b] += 1;
-    }
-    dfs(&adj, score, &mut indegs, 0, &mut vec![-1; 1 << n])
-}
-
-fn dfs(
-    adj: &[Vec<usize>],
-    score: &[i32],
-    indegs: &mut [i32],
-    mask: usize,
-    memo: &mut [i32],
-) -> i32 {
-    let n = score.len();
-    if n == mask.count_ones() as usize {
-        return 0;
-    }
-    if memo[mask] > -1 {
-        return memo[mask];
+pub fn count_covered_buildings(_n: i32, buildings: &[[i32; 2]]) -> i32 {
+    use std::collections::HashMap;
+    let mut col_minrs = HashMap::new();
+    let mut col_maxrs = HashMap::new();
+    let mut row_mincs = HashMap::new();
+    let mut row_maxcs = HashMap::new();
+    for b in buildings.iter() {
+        let [x, y] = b[..] else { unreachable!() };
+        let v = col_minrs.entry(x).or_insert(y);
+        *v = (*v).min(y);
+        let v = col_maxrs.entry(x).or_insert(y);
+        *v = (*v).max(y);
+        let v = row_mincs.entry(y).or_insert(x);
+        *v = (*v).min(x);
+        let v = row_maxcs.entry(y).or_insert(x);
+        *v = (*v).max(x);
     }
     let mut res = 0;
-    for i in 0..n {
-        if (mask >> i) & 1 == 0 && indegs[i] == 0 {
-            for &node in &adj[i] {
-                indegs[node] -= 1;
-            }
-            let next = mask | (1 << i);
-            res =
-                res.max(next.count_ones() as i32 * score[i] + dfs(adj, score, indegs, next, memo));
-            for &node in &adj[i] {
-                indegs[node] += 1;
-            }
-        }
+    for b in buildings.iter() {
+        let [x, y] = b[..] else { unreachable!() };
+        res += i32::from(
+            (1 + col_minrs[&x]..col_maxrs[&x]).contains(&y)
+                && (1 + row_mincs[&y]..row_maxcs[&y]).contains(&x),
+        )
     }
-    memo[mask] = res;
     res
 }
 
@@ -81,7 +65,10 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_profit(3, &[[0, 1], [0, 2]], &[1, 6, 3]), 25);
+        assert_eq!(
+            count_covered_buildings(5, &[[1, 3], [3, 2], [3, 3], [3, 5], [5, 3]]),
+            1
+        );
     }
 
     #[test]
