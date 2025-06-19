@@ -6,32 +6,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_covered_buildings(_n: i32, buildings: &[[i32; 2]]) -> i32 {
-    use std::collections::HashMap;
-    let mut col_minrs = HashMap::new();
-    let mut col_maxrs = HashMap::new();
-    let mut row_mincs = HashMap::new();
-    let mut row_maxcs = HashMap::new();
-    for b in buildings.iter() {
-        let [x, y] = b[..] else { unreachable!() };
-        let v = col_minrs.entry(x).or_insert(y);
-        *v = (*v).min(y);
-        let v = col_maxrs.entry(x).or_insert(y);
-        *v = (*v).max(y);
-        let v = row_mincs.entry(y).or_insert(x);
-        *v = (*v).min(x);
-        let v = row_maxcs.entry(y).or_insert(x);
-        *v = (*v).max(x);
+pub fn path_existence_queries(
+    n: i32,
+    nums: Vec<i32>,
+    max_diff: i32,
+    queries: Vec<Vec<i32>>,
+) -> Vec<bool> {
+    let n = n as usize;
+    let mut root: Vec<_> = (0..n).collect();
+    for (i, w) in nums.windows(2).enumerate() {
+        if w[1] - w[0] <= max_diff {
+            root[i + 1] = root[i];
+        }
     }
-    let mut res = 0;
-    for b in buildings.iter() {
-        let [x, y] = b[..] else { unreachable!() };
-        res += i32::from(
-            (1 + col_minrs[&x]..col_maxrs[&x]).contains(&y)
-                && (1 + row_mincs[&y]..row_maxcs[&y]).contains(&x),
-        )
-    }
-    res
+    queries
+        .iter()
+        .map(|q| root[q[0] as usize] == root[q[1] as usize])
+        .collect()
 }
 
 #[cfg(test)]
@@ -64,12 +55,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(
-            count_covered_buildings(5, &[[1, 3], [3, 2], [3, 3], [3, 5], [5, 3]]),
-            1
-        );
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
