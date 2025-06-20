@@ -6,20 +6,36 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_product(mut n: i32) -> i32 {
-    let mut max1 = 0;
-    let mut max2 = 0;
-    while n > 0 {
-        let d = n % 10;
-        n /= 10;
-        if d >= max1 {
-            max2 = max1;
-            max1 = d;
-        } else if d > max2 {
-            max2 = d;
-        }
+pub fn special_grid(n: i32) -> Vec<Vec<i32>> {
+    dfs(n)
+}
+
+fn dfs(n: i32) -> Vec<Vec<i32>> {
+    if n == 0 {
+        return vec![vec![0]];
     }
-    max1 * max2
+    let top_right = dfs(n - 1);
+    let delta = 2_i32.pow(n as u32).pow(2) / 4;
+    let bot_right = increment(&top_right, delta);
+    let mut bot_left = increment(&bot_right, delta);
+    // top_left
+    let mut res = increment(&bot_left, delta);
+    for (row, right) in res.iter_mut().zip(top_right) {
+        row.extend(right);
+    }
+    for (row, right) in bot_left.iter_mut().zip(bot_right) {
+        row.extend(right);
+    }
+    res.extend(bot_left);
+    res
+}
+
+fn increment(grid: &[Vec<i32>], delta: i32) -> Vec<Vec<i32>> {
+    let mut res = grid.to_vec();
+    for v in res.iter_mut().flat_map(|row| row.iter_mut()) {
+        *v += delta;
+    }
+    res
 }
 
 #[cfg(test)]
@@ -52,7 +68,12 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(
+            special_grid(2),
+            [[15, 12, 3, 0], [14, 13, 2, 1], [11, 8, 7, 4], [10, 9, 6, 5]]
+        );
+    }
 
     #[test]
     fn test() {}
