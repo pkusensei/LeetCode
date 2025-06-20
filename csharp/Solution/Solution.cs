@@ -7,18 +7,23 @@ namespace Solution;
 
 public class Solution
 {
-    public int PartitionArray(int[] nums, int k)
+    public int MaxDistance(string s, int k)
     {
-        Array.Sort(nums);
-        int res = 1;
-        int left = 0;
-        for (int i = 0; i < nums.Length; i++)
+        int res = 0;
+        int leftright = 0;
+        int updown = 0;
+        for (int i = 0; i < s.Length; i++)
         {
-            if (nums[i] - nums[left] > k)
+            switch (s[i])
             {
-                res += 1;
-                left = i;
+                case 'E': leftright += 1; break;
+                case 'W': leftright -= 1; break;
+                case 'N': updown += 1; break;
+                case 'S': updown -= 1; break;
+                default: break;
             }
+            int curr = Math.Min(1 + i, Math.Abs(leftright) + Math.Abs(updown) + 2 * k);
+            res = Math.Max(res, curr);
         }
         return res;
     }
