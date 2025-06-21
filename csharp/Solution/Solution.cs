@@ -7,24 +7,29 @@ namespace Solution;
 
 public class Solution
 {
-    public int MaxDistance(string s, int k)
+    public int MinimumDeletions(string word, int k)
     {
-        int res = 0;
-        int leftright = 0;
-        int updown = 0;
-        for (int i = 0; i < s.Length; i++)
+        Span<int> _freq = stackalloc int[26];
+        foreach (var item in word)
         {
-            switch (s[i])
+            _freq[item - 'a'] += 1;
+        }
+        List<int> freq = [];
+        for (int i = 0; i < 26; i++)
+        {
+            if (_freq[i] > 0) { freq.Add(_freq[i]); }
+        }
+        freq.Sort();
+        int res = 0; // resulting length
+        for (int i = 0; i < freq.Count; i++)
+        {
+            int curr = 0;
+            foreach (var f in freq[i..])
             {
-                case 'E': leftright += 1; break;
-                case 'W': leftright -= 1; break;
-                case 'N': updown += 1; break;
-                case 'S': updown -= 1; break;
-                default: break;
+                curr += Math.Min(freq[i] + k, f);
             }
-            int curr = Math.Min(1 + i, Math.Abs(leftright) + Math.Abs(updown) + 2 * k);
             res = Math.Max(res, curr);
         }
-        return res;
+        return word.Length - res;
     }
 }
