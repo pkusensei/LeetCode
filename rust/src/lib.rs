@@ -6,21 +6,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_freq_sum(s: String) -> i32 {
-    let freq = s.bytes().fold([0; 26], |mut acc, b| {
-        acc[usize::from(b - b'a')] += 1;
-        acc
-    });
-    let mut v = 0;
-    let mut c = 0;
-    for (i, &f) in freq.iter().enumerate() {
-        if b"aeiou".contains(&(i as u8 + b'a')) {
-            v = v.max(f)
-        } else {
-            c = c.max(f);
+pub fn min_operations(nums: &[i32]) -> i32 {
+    let mut res = 0;
+    let mut st = vec![]; // an increasing stack
+    for &num in nums.iter() {
+        if num == 0 {
+            st.clear(); // start new section
+            continue;
         }
+        while st.last().is_some_and(|&v| v > num) {
+            st.pop(); // bigger values are cleared by this point
+        }
+        if st.last().is_some_and(|&v| v == num) {
+            continue; // equal nums are cleared in the same batch
+        }
+        st.push(num);
+        res += 1;
     }
-    v + c
+    res
 }
 
 #[cfg(test)]
@@ -53,7 +56,9 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(min_operations(&[3, 1, 2, 1]), 3);
+    }
 
     #[test]
     fn test() {}
