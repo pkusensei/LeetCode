@@ -6,35 +6,46 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn special_grid(n: i32) -> Vec<Vec<i32>> {
-    dfs(n)
+pub fn min_travel_time(_l: i32, n: i32, k: i32, position: &[i32], time: &[i32]) -> i32 {
+    let [n, k] = [n, k].map(|v| v as usize);
+    let prefix = time.iter().fold(Vec::with_capacity(n), |mut acc, &v| {
+        acc.push(v + acc.last().unwrap_or(&0));
+        acc
+    });
+    dfs(
+        position,
+        &prefix,
+        0,
+        k,
+        0,
+        &mut vec![vec![vec![-1; 1 + n]; 1 + k]; n],
+    )
 }
 
-fn dfs(n: i32) -> Vec<Vec<i32>> {
-    if n == 0 {
-        return vec![vec![0]];
+fn dfs(
+    position: &[i32],
+    prefix: &[i32],
+    idx: usize,
+    k: usize,
+    last: usize,
+    memo: &mut [Vec<Vec<i32>>],
+) -> i32 {
+    let n = position.len();
+    if idx == position.len() - 1 {
+        return if k == 0 { 0 } else { i32::MAX >> 1 };
     }
-    let top_right = dfs(n - 1);
-    let delta = 2_i32.pow(n as u32).pow(2) / 4;
-    let bot_right = increment(&top_right, delta);
-    let mut bot_left = increment(&bot_right, delta);
-    // top_left
-    let mut res = increment(&bot_left, delta);
-    for (row, right) in res.iter_mut().zip(top_right) {
-        row.extend(right);
+    if memo[idx][k][last] > -1 {
+        return memo[idx][k][last];
     }
-    for (row, right) in bot_left.iter_mut().zip(bot_right) {
-        row.extend(right);
+    let time = prefix[idx] - if last > 0 { prefix[last - 1] } else { 0 };
+    let end = (n - 1).min(idx + k + 1);
+    let mut res = i32::MAX;
+    for next in 1 + idx..=end {
+        let dist = position[next] - position[idx];
+        let curr = dist * time + dfs(position, prefix, next, k - (next - idx - 1), 1 + idx, memo);
+        res = res.min(curr);
     }
-    res.extend(bot_left);
-    res
-}
-
-fn increment(grid: &[Vec<i32>], delta: i32) -> Vec<Vec<i32>> {
-    let mut res = grid.to_vec();
-    for v in res.iter_mut().flat_map(|row| row.iter_mut()) {
-        *v += delta;
-    }
+    memo[idx][k][last] = res;
     res
 }
 
@@ -69,9 +80,10 @@ mod tests {
 
     #[test]
     fn basics() {
+        assert_eq!(min_travel_time(10, 4, 1, &[0, 3, 8, 10], &[5, 8, 3, 6]), 62);
         assert_eq!(
-            special_grid(2),
-            [[15, 12, 3, 0], [14, 13, 2, 1], [11, 8, 7, 4], [10, 9, 6, 5]]
+            min_travel_time(5, 5, 1, &[0, 1, 2, 3, 5], &[8, 3, 9, 3, 3]),
+            34
         );
     }
 
