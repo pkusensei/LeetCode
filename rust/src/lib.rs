@@ -6,47 +6,76 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_travel_time(_l: i32, n: i32, k: i32, position: &[i32], time: &[i32]) -> i32 {
-    let [n, k] = [n, k].map(|v| v as usize);
-    let prefix = time.iter().fold(Vec::with_capacity(n), |mut acc, &v| {
-        acc.push(v + acc.last().unwrap_or(&0));
-        acc
-    });
-    dfs(
-        position,
-        &prefix,
-        0,
-        k,
-        0,
-        &mut vec![vec![vec![-1; 1 + n]; 1 + k]; n],
-    )
+pub fn magical_sum(m: i32, k: i32, nums: &[i32]) -> i32 {
+    let m = m as usize;
+    let comb = n_choose_k(m, m);
+    let mut memo = vec![vec![vec![vec![-1; 1 + m]; nums.len()]; 1 + k as usize]; 1 + m];
+    dfs(nums, &comb, m, k, 0, 0, &mut memo) as i32
 }
 
+const M: i64 = 1_000_000_007;
+
 fn dfs(
-    position: &[i32],
-    prefix: &[i32],
+    nums: &[i32],
+    comb: &[Vec<i64>],
+    m: usize,
+    k: i32,
     idx: usize,
-    k: usize,
-    last: usize,
-    memo: &mut [Vec<Vec<i32>>],
-) -> i32 {
-    let n = position.len();
-    if idx == position.len() - 1 {
-        return if k == 0 { 0 } else { i32::MAX >> 1 };
+    carry: i32,
+    memo: &mut [Vec<Vec<Vec<i64>>>],
+) -> i64 {
+    if k < 0 || (m + carry.count_ones() as usize) < k as usize {
+        return 0;
     }
-    if memo[idx][k][last] > -1 {
-        return memo[idx][k][last];
+    if m == 0 {
+        return i64::from(carry.count_ones() as i32 == k);
     }
-    let time = prefix[idx] - if last > 0 { prefix[last - 1] } else { 0 };
-    let end = (n - 1).min(idx + k + 1);
-    let mut res = i32::MAX;
-    for next in 1 + idx..=end {
-        let dist = position[next] - position[idx];
-        let curr = dist * time + dfs(position, prefix, next, k - (next - idx - 1), 1 + idx, memo);
-        res = res.min(curr);
+    if idx >= nums.len() {
+        return 0;
     }
-    memo[idx][k][last] = res;
+    if memo[m][k as usize][idx][carry as usize] > -1 {
+        return memo[m][k as usize][idx][carry as usize];
+    }
+    let mut res = 0;
+    for count in 0..=m {
+        let c = comb[m][count] * mod_pow(nums[idx].into(), count as _) % M;
+        let ncarry = carry + count as i32;
+        res += c * dfs(
+            nums,
+            comb,
+            m - count,
+            k - (ncarry & 1),
+            1 + idx,
+            ncarry >> 1,
+            memo,
+        );
+        res %= M;
+    }
+    memo[m][k as usize][idx][carry as usize] = res;
     res
+}
+
+fn n_choose_k(n: usize, k: usize) -> Vec<Vec<i64>> {
+    let mut res = vec![vec![0; 1 + k]; 1 + n];
+    res[0][0] = 1;
+    for row in 1..=n {
+        res[row][0] = 1;
+        for col in 1..=row {
+            res[row][col] = (res[row - 1][col - 1] + res[row - 1][col]) % M;
+        }
+    }
+    res
+}
+
+const fn mod_pow(b: i64, exp: i64) -> i64 {
+    if exp == 0 {
+        return 1;
+    }
+    if exp & 1 == 0 {
+        mod_pow(b * b % M, exp >> 1)
+    } else {
+        mod_pow(b * b % M, exp >> 1) * b % M
+    }
 }
 
 #[cfg(test)]
@@ -80,11 +109,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_travel_time(10, 4, 1, &[0, 3, 8, 10], &[5, 8, 3, 6]), 62);
-        assert_eq!(
-            min_travel_time(5, 5, 1, &[0, 1, 2, 3, 5], &[8, 3, 9, 3, 3]),
-            34
-        );
+        assert_eq!(magical_sum(5, 5, &[1, 10, 100, 10000, 1000000]), 991600007);
+        assert_eq!(magical_sum(2, 2, &[5, 4, 3, 2, 1]), 170);
     }
 
     #[test]
