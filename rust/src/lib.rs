@@ -6,55 +6,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn subtree_inversion_sum(edges: &[[i32; 2]], nums: &[i32], k: i32) -> i64 {
-    let n = nums.len();
-    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
-        let [a, b] = [0, 1].map(|i| e[i] as usize);
-        acc[a].push(b);
-        acc[b].push(a);
+pub fn min_deletion(s: String, k: i32) -> i32 {
+    let mut freq = s.bytes().fold(vec![0; 26], |mut acc, b| {
+        acc[usize::from(b - b'a')] += 1;
         acc
     });
-    dfs(
-        &adj,
-        nums,
-        k,
-        0,
-        n,
-        k,
-        true,
-        &mut vec![vec![[None; 2]; 1 + k as usize]; n],
-    )
-}
-
-fn dfs(
-    adj: &[Vec<usize>],
-    nums: &[i32],
-    k: i32,
-    node: usize,
-    prev: usize,
-    dist: i32,
-    sign: bool,
-    memo: &mut [Vec<[Option<i64>; 2]>],
-) -> i64 {
-    if let Some(v) = memo[node][dist as usize][usize::from(sign)] {
-        return v;
+    freq.sort_unstable_by(|a, b| b.cmp(a));
+    let mut res = 0;
+    while freq.len() > k as usize {
+        res += freq.pop().unwrap_or(0);
     }
-    let curr_val = i64::from(nums[node]) * if sign { 1 } else { -1 };
-    let mut nonflip = 0;
-    let mut flip = 0;
-    for &next in &adj[node] {
-        if next != prev {
-            nonflip += dfs(adj, nums, k, next, node, (1 + dist).min(k), sign, memo);
-            if dist >= k {
-                flip += dfs(adj, nums, k, next, node, 1, !sign, memo);
-            }
-        }
-    }
-    let mut res = nonflip + curr_val;
-    if dist >= k {
-        res = res.max(flip - curr_val);
-    }
-    memo[node][dist as usize][usize::from(sign)] = Some(res);
     res
 }
 
@@ -88,24 +49,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(subtree_inversion_sum(&[[0, 1], [0, 2]], &[0, -1, -2], 3), 3);
-        assert_eq!(
-            subtree_inversion_sum(
-                &[[0, 1], [0, 2], [1, 3], [1, 4], [2, 5], [2, 6]],
-                &[4, -8, -6, 3, 7, -2, 5],
-                2
-            ),
-            27
-        );
-        assert_eq!(
-            subtree_inversion_sum(&[[0, 1], [1, 2], [2, 3], [3, 4]], &[-1, 3, -2, 4, -5], 2),
-            9
-        );
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(subtree_inversion_sum(&[[0, 1]], &[4, -2], 47), 6);
-    }
+    fn test() {}
 }
