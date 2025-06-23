@@ -6,17 +6,33 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_deletion(s: String, k: i32) -> i32 {
-    let mut freq = s.bytes().fold(vec![0; 26], |mut acc, b| {
-        acc[usize::from(b - b'a')] += 1;
-        acc
-    });
-    freq.sort_unstable_by(|a, b| b.cmp(a));
-    let mut res = 0;
-    while freq.len() > k as usize {
-        res += freq.pop().unwrap_or(0);
+pub fn can_partition_grid(grid: Vec<Vec<i32>>) -> bool {
+    let [rows, cols] = get_dimensions(&grid);
+    let mut prefix: Vec<Vec<i64>> = Vec::with_capacity(rows);
+    for row in &grid {
+        let mut curr = row.iter().fold(Vec::with_capacity(cols), |mut acc, &v| {
+            acc.push(i64::from(v) + acc.last().unwrap_or(&0));
+            acc
+        });
+        if let Some(prev) = prefix.last() {
+            for (v, p) in curr.iter_mut().zip(prev) {
+                *v += p;
+            }
+        }
+        prefix.push(curr);
     }
-    res
+    let sum = prefix[rows - 1][cols - 1];
+    for r in 0..rows - 1 {
+        if 2 * prefix[r][cols - 1] == sum {
+            return true;
+        }
+    }
+    for c in 0..cols - 1 {
+        if 2 * prefix[rows - 1][c] == sum {
+            return true;
+        }
+    }
+    false
 }
 
 #[cfg(test)]
