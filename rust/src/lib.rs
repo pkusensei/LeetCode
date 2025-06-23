@@ -6,33 +6,9 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn can_partition_grid(grid: Vec<Vec<i32>>) -> bool {
-    let [rows, cols] = get_dimensions(&grid);
-    let mut prefix: Vec<Vec<i64>> = Vec::with_capacity(rows);
-    for row in &grid {
-        let mut curr = row.iter().fold(Vec::with_capacity(cols), |mut acc, &v| {
-            acc.push(i64::from(v) + acc.last().unwrap_or(&0));
-            acc
-        });
-        if let Some(prev) = prefix.last() {
-            for (v, p) in curr.iter_mut().zip(prev) {
-                *v += p;
-            }
-        }
-        prefix.push(curr);
-    }
-    let sum = prefix[rows - 1][cols - 1];
-    for r in 0..rows - 1 {
-        if 2 * prefix[r][cols - 1] == sum {
-            return true;
-        }
-    }
-    for c in 0..cols - 1 {
-        if 2 * prefix[rows - 1][c] == sum {
-            return true;
-        }
-    }
-    false
+pub fn max_score(n: i32, edges: &[[i32; 2]]) -> i64 {
+    let n = i64::from(n);
+    (((2 * n + 3) * n - 11) * n + 6) / 6 + 2 * i64::from(edges.len() == n as usize)
 }
 
 #[cfg(test)]
@@ -65,8 +41,16 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(
+            max_score(6, &[[0, 3], [4, 5], [2, 0], [1, 3], [2, 4], [1, 5]]),
+            82
+        );
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        //  3 - 0 - 4 - 1 - 2
+        assert_eq!(max_score(5, &[[2, 1], [1, 4], [4, 0], [0, 3]]), 46);
+    }
 }
