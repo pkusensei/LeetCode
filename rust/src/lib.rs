@@ -3,26 +3,54 @@ mod fenwick_tree;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_operations(nums: &[i32]) -> i32 {
-    let mut res = 0;
-    let mut st = vec![]; // an increasing stack
-    for &num in nums.iter() {
-        if num == 0 {
-            st.clear(); // start new section
-            continue;
-        }
-        while st.last().is_some_and(|&v| v > num) {
-            st.pop(); // bigger values are cleared by this point
-        }
-        if st.last().is_some_and(|&v| v == num) {
-            continue; // equal nums are cleared in the same batch
-        }
-        st.push(num);
-        res += 1;
+pub fn max_weight(n: i32, edges: &[[i32; 3]], k: i32, t: i32) -> i32 {
+    let n = n as usize;
+    let mut adj = vec![vec![]; n];
+    let mut indegs = vec![0; n];
+    for e in edges.iter() {
+        let [a, b] = [0, 1].map(|i| e[i] as usize);
+        adj[a].push((b, e[2]));
+        indegs[b] += 1;
     }
+    let mut res = -1;
+    let mut path = vec![0];
+    let mut memo = HashMap::new();
+    for (node, &d) in indegs.iter().enumerate() {
+        if d == 0 {
+            res = res.max(dfs(&adj, k as usize, t, node, &mut path, &mut memo))
+        }
+    }
+    res
+}
+
+fn dfs(
+    adj: &[Vec<(usize, i32)>],
+    k: usize,
+    t: i32,
+    node: usize,
+    path: &mut Vec<i32>,
+    memo: &mut HashMap<(usize, usize, i32), i32>,
+) -> i32 {
+    let dist = *path.last().unwrap();
+    let n = path.len(); // depth
+    if let Some(&v) = memo.get(&(node, n, dist)) {
+        return v;
+    }
+    let mut res = -1;
+    if n > k && (path[n - 1] - path[n - k - 1]) < t {
+        res = path[n - 1] - path[n - k - 1];
+    }
+    for &(next, w) in &adj[node] {
+        path.push(w + path.last().unwrap_or(&0));
+        res = res.max(dfs(adj, k, t, next, path, memo));
+        path.pop();
+    }
+    memo.insert((node, n, dist), res);
     res
 }
 
@@ -57,7 +85,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_operations(&[3, 1, 2, 1]), 3);
+        assert_eq!(max_weight(3, &[[0, 1, 1], [1, 2, 2]], 2, 4), 3);
+        assert_eq!(max_weight(3, &[[0, 1, 2], [0, 2, 3]], 1, 3), 2);
+        assert_eq!(max_weight(3, &[[0, 1, 6], [1, 2, 8]], 1, 6), -1);
     }
 
     #[test]
