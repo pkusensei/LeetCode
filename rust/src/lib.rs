@@ -3,54 +3,58 @@ mod fenwick_tree;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_weight(n: i32, edges: &[[i32; 3]], k: i32, t: i32) -> i32 {
-    let n = n as usize;
-    let mut adj = vec![vec![]; n];
-    let mut indegs = vec![0; n];
-    for e in edges.iter() {
+pub fn subtree_inversion_sum(edges: &[[i32; 2]], nums: &[i32], k: i32) -> i64 {
+    let n = nums.len();
+    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
         let [a, b] = [0, 1].map(|i| e[i] as usize);
-        adj[a].push((b, e[2]));
-        indegs[b] += 1;
-    }
-    let mut res = -1;
-    let mut path = vec![0];
-    let mut memo = HashMap::new();
-    for (node, &d) in indegs.iter().enumerate() {
-        if d == 0 {
-            res = res.max(dfs(&adj, k as usize, t, node, &mut path, &mut memo))
-        }
-    }
-    res
+        acc[a].push(b);
+        acc[b].push(a);
+        acc
+    });
+    dfs(
+        &adj,
+        nums,
+        k,
+        0,
+        n,
+        k,
+        true,
+        &mut vec![vec![[None; 2]; 1 + k as usize]; n],
+    )
 }
 
 fn dfs(
-    adj: &[Vec<(usize, i32)>],
-    k: usize,
-    t: i32,
+    adj: &[Vec<usize>],
+    nums: &[i32],
+    k: i32,
     node: usize,
-    path: &mut Vec<i32>,
-    memo: &mut HashMap<(usize, usize, i32), i32>,
-) -> i32 {
-    let dist = *path.last().unwrap();
-    let n = path.len(); // depth
-    if let Some(&v) = memo.get(&(node, n, dist)) {
+    prev: usize,
+    dist: i32,
+    sign: bool,
+    memo: &mut [Vec<[Option<i64>; 2]>],
+) -> i64 {
+    if let Some(v) = memo[node][dist as usize][usize::from(sign)] {
         return v;
     }
-    let mut res = -1;
-    if n > k && (path[n - 1] - path[n - k - 1]) < t {
-        res = path[n - 1] - path[n - k - 1];
+    let curr_val = i64::from(nums[node]) * if sign { 1 } else { -1 };
+    let mut nonflip = 0;
+    let mut flip = 0;
+    for &next in &adj[node] {
+        if next != prev {
+            nonflip += dfs(adj, nums, k, next, node, (1 + dist).min(k), sign, memo);
+            if dist >= k {
+                flip += dfs(adj, nums, k, next, node, 1, !sign, memo);
+            }
+        }
     }
-    for &(next, w) in &adj[node] {
-        path.push(w + path.last().unwrap_or(&0));
-        res = res.max(dfs(adj, k, t, next, path, memo));
-        path.pop();
+    let mut res = nonflip + curr_val;
+    if dist >= k {
+        res = res.max(flip - curr_val);
     }
-    memo.insert((node, n, dist), res);
+    memo[node][dist as usize][usize::from(sign)] = Some(res);
     res
 }
 
@@ -85,11 +89,23 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_weight(3, &[[0, 1, 1], [1, 2, 2]], 2, 4), 3);
-        assert_eq!(max_weight(3, &[[0, 1, 2], [0, 2, 3]], 1, 3), 2);
-        assert_eq!(max_weight(3, &[[0, 1, 6], [1, 2, 8]], 1, 6), -1);
+        assert_eq!(subtree_inversion_sum(&[[0, 1], [0, 2]], &[0, -1, -2], 3), 3);
+        assert_eq!(
+            subtree_inversion_sum(
+                &[[0, 1], [0, 2], [1, 3], [1, 4], [2, 5], [2, 6]],
+                &[4, -8, -6, 3, 7, -2, 5],
+                2
+            ),
+            27
+        );
+        assert_eq!(
+            subtree_inversion_sum(&[[0, 1], [1, 2], [2, 3], [3, 4]], &[-1, 3, -2, 4, -5], 2),
+            9
+        );
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(subtree_inversion_sum(&[[0, 1]], &[4, -2], 47), 6);
+    }
 }
