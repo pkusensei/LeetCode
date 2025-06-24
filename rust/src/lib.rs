@@ -1,3 +1,4 @@
+mod binary_lifting;
 mod dsu;
 mod fenwick_tree;
 mod helper;
@@ -5,6 +6,8 @@ mod trie;
 
 #[allow(unused_imports)]
 use helper::*;
+
+use binary_lifting::BinaryLifting;
 
 pub fn minimum_weight(edges: &[[i32; 3]], queries: &[[i32; 3]]) -> Vec<i32> {
     let n = 1 + edges.len();
@@ -51,53 +54,6 @@ fn dfs(
 fn distance(node1: usize, node2: usize, jump: &BinaryLifting, dist: &[i32]) -> i32 {
     let lca_ = jump.lca(node1, node2);
     dist[node1] + dist[node2] - 2 * dist[lca_]
-}
-
-struct BinaryLifting {
-    up: Vec<Vec<usize>>,
-    depth: Vec<i32>,
-    n: usize,
-    max_log: usize,
-}
-
-impl BinaryLifting {
-    fn new(n: usize, max_log: usize) -> Self {
-        Self {
-            up: vec![vec![0; max_log]; n],
-            depth: vec![0; n],
-            n,
-            max_log,
-        }
-    }
-
-    fn build(&mut self) {
-        for i2 in 1..self.max_log {
-            for i1 in 0..self.n {
-                self.up[i1][i2] = self.up[self.up[i1][i2 - 1]][i2 - 1];
-            }
-        }
-    }
-
-    fn lca(&self, mut node1: usize, mut node2: usize) -> usize {
-        if self.depth[node1] > self.depth[node2] {
-            std::mem::swap(&mut node1, &mut node2);
-        }
-        for i in 0..self.max_log {
-            if (self.depth[node2] - self.depth[node1]) >> i & 1 == 1 {
-                node2 = self.up[node2][i];
-            }
-        }
-        if node1 == node2 {
-            return node1;
-        }
-        for i in (0..self.max_log).rev() {
-            if self.up[node1][i] != self.up[node2][i] {
-                node1 = self.up[node1][i];
-                node2 = self.up[node2][i];
-            }
-        }
-        self.up[node1][0]
-    }
 }
 
 #[cfg(test)]
