@@ -6,45 +6,52 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_swaps(nums: &[i32]) -> i32 {
-    use itertools::Itertools;
-    use std::collections::HashMap;
-    let sorted = nums
-        .iter()
-        .copied()
-        .sorted_unstable_by_key(|&v| (f(v), v))
-        .collect_vec();
-    if sorted == nums {
-        return 0;
-    }
-    let map: HashMap<_, _> = sorted.iter().enumerate().map(|(i, &v)| (v, i)).collect();
-    let n = nums.len();
-    let mut seen = vec![false; n];
-    let mut res = 0;
-    for i in 0..n {
-        if i == map[&nums[i]] {
-            seen[i] = true;
-        } else if !seen[i] {
-            let mut curr = i;
-            let mut size = 0;
-            while !seen[curr] {
-                seen[curr] = true;
-                curr = map[&nums[curr]];
-                size += 1;
+pub fn min_moves(matrix: Vec<String>) -> i32 {
+    use std::collections::{HashMap, VecDeque};
+    let [rows, cols] = get_dimensions(&matrix);
+    let mut map = HashMap::<_, Vec<_>>::new();
+    let mut seen = vec![vec![false; cols]; rows];
+    for (r, s) in matrix.iter().enumerate() {
+        for (c, b) in s.bytes().enumerate() {
+            if b.is_ascii_alphabetic() {
+                map.entry(b).or_default().push([r, c]);
             }
-            res += (size - 1).max(0);
+            if b == b'#' {
+                seen[r][c] = true;
+            }
         }
     }
-    res
-}
-
-const fn f(mut n: i32) -> i32 {
-    let mut res = 0;
-    while n > 0 {
-        res += n % 10;
-        n /= 10;
+    let mut queue = VecDeque::from([(0, 0, 0)]);
+    if let Some(v) = map.get(&matrix[0].as_bytes()[0]) {
+        for &[r, c] in v {
+            queue.push_back((r, c, 0));
+            seen[r][c] = true;
+        }
+    } else {
+        queue.push_back((0, 0, 0));
     }
-    res
+    while let Some((r, c, step)) = queue.pop_front() {
+        if r == rows - 1 && c == cols - 1 {
+            return step;
+        }
+        for [nr, nc] in neighbors([r, c]) {
+            if seen
+                .get(nr)
+                .is_some_and(|rr| rr.get(nc).is_some_and(|&v| !v))
+            {
+                seen[nr][nc] = true;
+                if let Some(v) = map.get(&matrix[nr].as_bytes()[nc]) {
+                    for &[rr, cc] in v {
+                        queue.push_back((rr, cc, 1 + step));
+                        seen[rr][cc] = true;
+                    }
+                } else {
+                    queue.push_back((nr, nc, 1 + step));
+                }
+            }
+        }
+    }
+    -1
 }
 
 #[cfg(test)]
@@ -77,14 +84,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(min_swaps(&[37, 100]), 1);
-        assert_eq!(min_swaps(&[22, 14, 33, 7]), 0);
-        assert_eq!(min_swaps(&[18, 43, 34, 16]), 2);
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(min_swaps(&[588871835, 925173195, 162137399]), 1);
-    }
+    fn test() {}
 }
