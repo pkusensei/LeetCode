@@ -7,40 +7,35 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn sum_of_largest_primes(s: &str) -> i64 {
-    use std::collections::BTreeSet;
-    let n = s.len();
-    let mut seen = BTreeSet::new();
-    for a in 0..n {
-        for b in 1 + a..=n {
-            let Ok(v) = s[a..b].parse() else {
-                continue;
-            };
-            if is_prime(v) {
-                seen.insert(v);
+pub fn max_substrings(word: &str) -> i32 {
+    let mut freq = [const { vec![] }; 26];
+    for (i, b) in word.bytes().map(|b| usize::from(b - b'a')).enumerate() {
+        freq[b].push(i);
+    }
+    let mut spans = vec![];
+    for row in freq {
+        if row.len() < 2 {
+            continue;
+        }
+        for &left in &row {
+            let i = row.partition_point(|&v| v <= left || v - left < 3);
+            if let Some(&right) = row.get(i) {
+                spans.push([left, right]);
+            } else {
+                break;
             }
         }
     }
+    spans.sort_unstable_by_key(|&[_, e]| e);
     let mut res = 0;
-    for _ in 0..3 {
-        let Some(v) = seen.pop_last() else {
-            break;
-        };
-        res += v;
-    }
-    res
-}
-
-fn is_prime(n: i64) -> bool {
-    if n < 2 {
-        return false;
-    }
-    for p in 2..=n.isqrt() {
-        if n % p == 0 {
-            return false;
+    let mut last = None;
+    for [start, end] in spans {
+        if last.is_none_or(|v| v < start) {
+            res += 1;
+            last = Some(end);
         }
     }
-    true
+    res
 }
 
 #[cfg(test)]
@@ -74,10 +69,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(sum_of_largest_primes("12234"), 1469);
-        assert_eq!(sum_of_largest_primes("111"), 11);
+        assert_eq!(max_substrings("abcdeafdef"), 2);
+        assert_eq!(max_substrings("bcdaaaab"), 1);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(max_substrings("abcceaddba"), 1);
+    }
 }
