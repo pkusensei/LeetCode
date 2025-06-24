@@ -6,59 +6,45 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn can_partition_grid(mut grid: Vec<Vec<i32>>) -> bool {
-    let sum = grid
+pub fn min_swaps(nums: &[i32]) -> i32 {
+    use itertools::Itertools;
+    use std::collections::HashMap;
+    let sorted = nums
         .iter()
-        .flat_map(|r| r.iter().map(|&v| i64::from(v)))
-        .sum();
-    if check(&grid, sum) {
-        return true;
+        .copied()
+        .sorted_unstable_by_key(|&v| (f(v), v))
+        .collect_vec();
+    if sorted == nums {
+        return 0;
     }
-    let mut t = transpose(&grid);
-    if check(&t, sum) {
-        return true;
-    }
-    grid.reverse();
-    t.reverse();
-    if check(&grid, sum) || check(&t, sum) {
-        return true;
-    }
-    false
-}
-
-fn transpose(grid: &[Vec<i32>]) -> Vec<Vec<i32>> {
-    let [rows, cols] = get_dimensions(grid);
-    let mut res = vec![vec![0; rows]; cols];
-    for r in 0..rows {
-        for c in 0..cols {
-            res[c][r] = grid[r][c];
+    let map: HashMap<_, _> = sorted.iter().enumerate().map(|(i, &v)| (v, i)).collect();
+    let n = nums.len();
+    let mut seen = vec![false; n];
+    let mut res = 0;
+    for i in 0..n {
+        if i == map[&nums[i]] {
+            seen[i] = true;
+        } else if !seen[i] {
+            let mut curr = i;
+            let mut size = 0;
+            while !seen[curr] {
+                seen[curr] = true;
+                curr = map[&nums[curr]];
+                size += 1;
+            }
+            res += (size - 1).max(0);
         }
     }
     res
 }
 
-fn check(grid: &[Vec<i32>], sum: i64) -> bool {
-    let mut seen = std::collections::HashSet::new();
-    let mut top = 0;
-    for (r, row) in grid.iter().enumerate() {
-        for v in row.iter().map(|&v| i64::from(v)) {
-            top += v;
-            seen.insert(v);
-        }
-        let bot = sum - top;
-        let d = top - bot;
-        if d == 0
-            || d == i64::from(grid[0][0])
-            || d == i64::from(*grid[0].last().unwrap())
-            || d == i64::from(row[0])
-        {
-            return true;
-        }
-        if grid[0].len() > 1 && r > 0 && seen.contains(&d) {
-            return true;
-        }
+const fn f(mut n: i32) -> i32 {
+    let mut res = 0;
+    while n > 0 {
+        res += n % 10;
+        n /= 10;
     }
-    false
+    res
 }
 
 #[cfg(test)]
@@ -92,14 +78,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert!(can_partition_grid(vec![vec![1, 4], vec![2, 3]]));
-        assert!(can_partition_grid(vec![vec![1, 2], vec![3, 4]]));
-        assert!(!can_partition_grid(vec![vec![1, 2, 4], vec![2, 3, 5]]));
-        assert!(!can_partition_grid(vec![vec![4, 1, 8], vec![3, 2, 6]]));
+        assert_eq!(min_swaps(&[37, 100]), 1);
+        assert_eq!(min_swaps(&[22, 14, 33, 7]), 0);
+        assert_eq!(min_swaps(&[18, 43, 34, 16]), 2);
     }
 
     #[test]
     fn test() {
-        assert!(can_partition_grid(vec![vec![5, 5, 6, 2, 2, 2]]))
+        assert_eq!(min_swaps(&[588871835, 925173195, 162137399]), 1);
     }
 }
