@@ -7,19 +7,30 @@ pub struct BinaryLifting {
 
 #[allow(dead_code)]
 impl BinaryLifting {
-    pub fn new(n: usize, max_log: usize) -> Self {
-        Self {
+    fn new(adj: &[Vec<usize>]) -> Self {
+        let n = adj.len();
+        let max_log = 1 + n.ilog2() as usize;
+        let mut s = Self {
             up: vec![vec![0; max_log]; n],
             depth: vec![0; n],
             n,
             max_log,
+        };
+        s.dfs(adj, 0, n);
+        for i2 in 1..max_log {
+            for i1 in 0..n {
+                s.up[i1][i2] = s.up[s.up[i1][i2 - 1]][i2 - 1];
+            }
         }
+        s
     }
 
-    pub fn build(&mut self) {
-        for i2 in 1..self.max_log {
-            for i1 in 0..self.n {
-                self.up[i1][i2] = self.up[self.up[i1][i2 - 1]][i2 - 1];
+    fn dfs(&mut self, adj: &[Vec<usize>], node: usize, prev: usize) {
+        for &next in &adj[node] {
+            if next != prev {
+                self.up[next][0] = node;
+                self.depth[next] = 1 + self.depth[node];
+                self.dfs(adj, next, node);
             }
         }
     }
@@ -29,7 +40,7 @@ impl BinaryLifting {
             std::mem::swap(&mut node1, &mut node2);
         }
         for i in 0..self.max_log {
-            if (self.depth[node2] - self.depth[node1]) >> i & 1 == 1 {
+            if ((self.depth[node2] - self.depth[node1]) >> i) & 1 == 1 {
                 node2 = self.up[node2][i];
             }
         }
