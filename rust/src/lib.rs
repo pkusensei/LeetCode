@@ -7,27 +7,51 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_abs_diff(grid: Vec<Vec<i32>>, k: i32) -> Vec<Vec<i32>> {
+pub fn min_moves(classroom: &[&str], energy: i32) -> i32 {
+    use itertools::Itertools;
+    use std::collections::{HashMap, VecDeque};
+    let grid = classroom.iter().map(|s| s.as_bytes()).collect_vec();
     let [rows, cols] = get_dimensions(&grid);
-    let k = k as usize;
-    if k == 1 {
-        return vec![vec![0; cols]; rows];
-    }
-    let mut res = Vec::with_capacity(rows - k + 1);
-    for r in 0..=rows - k {
-        let mut curr_row = Vec::with_capacity(cols - k + 1);
-        for c in 0..=cols - k {
-            let mut sub = Vec::with_capacity(k * k);
-            for i in 0..k {
-                sub.extend(grid[r + i][c..c + k].iter().copied());
+    let mut l_ids = HashMap::new();
+    let mut start = [0, 0];
+    for (r, row) in grid.iter().enumerate() {
+        for (c, &v) in row.iter().enumerate() {
+            match v {
+                b'L' => {
+                    l_ids.insert([r, c], l_ids.len());
+                }
+                b'S' => start = [r, c],
+                _ => (),
             }
-            sub.sort_unstable();
-            sub.dedup();
-            curr_row.push(sub.windows(2).map(|w| w[1] - w[0]).min().unwrap_or(0));
         }
-        res.push(curr_row);
     }
-    res
+    let n = l_ids.len();
+    let mut best_energy = vec![vec![vec![-1; 1 << n]; cols]; rows];
+    let mut queue = VecDeque::from([(start, 0_usize, energy, 0)]);
+    best_energy[start[0]][start[1]][0] = energy;
+    while let Some(([r, c], mask, e, step)) = queue.pop_front() {
+        if mask == (1 << n) - 1 {
+            return step;
+        }
+        if e == 0 {
+            continue;
+        }
+        for [nr, nc] in neighbors([r, c]) {
+            if nr < rows && nc < cols && grid[nr][nc] != b'X' {
+                let ne = if grid[nr][nc] == b'R' { energy } else { e - 1 };
+                let nmask = if let Some(v) = l_ids.get(&[nr, nc]) {
+                    mask | (1 << v)
+                } else {
+                    mask
+                };
+                if ne > best_energy[nr][nc][mask] {
+                    best_energy[nr][nc][mask] = ne;
+                    queue.push_back(([nr, nc], nmask, ne, 1 + step));
+                }
+            }
+        }
+    }
+    -1
 }
 
 #[cfg(test)]
@@ -60,8 +84,14 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(min_moves(&["S.", "XL"], 2), 2);
+        assert_eq!(min_moves(&["L.S", "RXL"], 3), -1);
+        assert_eq!(min_moves(&["LS", "RL"], 4), 3);
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(min_moves(&["SLRX", "L.LR"], 3), 5);
+    }
 }
