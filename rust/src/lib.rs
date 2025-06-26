@@ -7,26 +7,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn check_equal_partitions(nums: &[i32], target: i64) -> bool {
-    let n = nums.len();
-    for mask in 1..(1 << n) - 1 {
-        let [mut v1, mut v2] = [1_i64, 1];
-        for (i, &num) in nums.iter().enumerate() {
-            let num = i64::from(num);
-            if (mask >> i) & 1 == 1 {
-                v1 *= num;
-            } else {
-                v2 *= num;
-            }
-            if v1 > target || v2 > target {
-                break;
-            }
-        }
-        if v1 == target && v2 == target {
-            return true;
-        }
+pub fn min_abs_diff(grid: Vec<Vec<i32>>, k: i32) -> Vec<Vec<i32>> {
+    let [rows, cols] = get_dimensions(&grid);
+    let k = k as usize;
+    if k == 1 {
+        return vec![vec![0; cols]; rows];
     }
-    false
+    let mut res = Vec::with_capacity(rows - k + 1);
+    for r in 0..=rows - k {
+        let mut curr_row = Vec::with_capacity(cols - k + 1);
+        for c in 0..=cols - k {
+            let mut sub = Vec::with_capacity(k * k);
+            for i in 0..k {
+                sub.extend(grid[r + i][c..c + k].iter().copied());
+            }
+            sub.sort_unstable();
+            sub.dedup();
+            curr_row.push(sub.windows(2).map(|w| w[1] - w[0]).min().unwrap_or(0));
+        }
+        res.push(curr_row);
+    }
+    res
 }
 
 #[cfg(test)]
@@ -59,9 +60,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert!(check_equal_partitions(&[3, 1, 6, 8, 4], 24));
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
