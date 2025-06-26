@@ -7,56 +7,25 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn lexicographically_smallest_string(s: &str) -> String {
-    let n = s.len();
-    let mut memo1 = vec![None; n];
-    let mut memo2 = vec![vec![None; n]; n];
-    let res = dfs(s.as_bytes(), 0, &mut memo1, &mut memo2);
-    String::from_utf8(res).unwrap_or_default()
-}
-
-fn dfs(
-    s: &[u8],
-    idx: usize,
-    memo1: &mut [Option<Vec<u8>>],
-    memo2: &mut [Vec<Option<bool>>],
-) -> Vec<u8> {
-    let n = s.len();
-    if idx >= n {
-        return vec![];
-    }
-    if let Some(ref v) = memo1[idx] {
-        return v.clone();
-    }
-    let mut res = vec![s[idx]];
-    res.extend(dfs(s, 1 + idx, memo1, memo2));
-    for right in (1 + idx..n).step_by(2) {
-        if can_remove(s, idx, right, memo2) {
-            res = res.min(dfs(s, 1 + right, memo1, memo2))
+pub fn check_equal_partitions(nums: &[i32], target: i64) -> bool {
+    let n = nums.len();
+    for mask in 1..(1 << n) - 1 {
+        let [mut v1, mut v2] = [1_i64, 1];
+        for (i, &num) in nums.iter().enumerate() {
+            let num = i64::from(num);
+            if (mask >> i) & 1 == 1 {
+                v1 *= num;
+            } else {
+                v2 *= num;
+            }
+            if v1 > target || v2 > target {
+                break;
+            }
         }
-    }
-    memo1[idx] = Some(res.clone());
-    res
-}
-
-fn can_remove(s: &[u8], left: usize, right: usize, memo: &mut [Vec<Option<bool>>]) -> bool {
-    if left > right {
-        return true;
-    }
-    if let Some(v) = memo[left][right] {
-        return v;
-    }
-    if [1, 25].contains(&s[left].abs_diff(s[right])) && can_remove(s, 1 + left, right - 1, memo) {
-        memo[left][right] = Some(true);
-        return true;
-    }
-    for mid in (1 + left..right).step_by(2) {
-        if can_remove(s, left, mid, memo) && can_remove(s, 1 + mid, right, memo) {
-            memo[left][right] = Some(true);
+        if v1 == target && v2 == target {
             return true;
         }
     }
-    memo[left][right] = Some(false);
     false
 }
 
@@ -91,9 +60,7 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(lexicographically_smallest_string("abc"), "a");
-        assert_eq!(lexicographically_smallest_string("bcda"), "");
-        assert_eq!(lexicographically_smallest_string("zdce"), "zdce");
+        assert!(check_equal_partitions(&[3, 1, 6, 8, 4], 24));
     }
 
     #[test]
