@@ -7,64 +7,57 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_profit(
-    n: i32,
-    present: &[i32],
-    future: &[i32],
-    hierarchy: &[[i32; 2]],
-    budget: i32,
-) -> i32 {
-    let n = n as usize;
-    let adj = hierarchy.iter().fold(vec![vec![]; n], |mut acc, e| {
-        let [a, b] = [0, 1].map(|i| e[i] as usize - 1);
-        acc[a].push(b);
-        acc
-    });
-    *dfs(&adj, present, future, budget as usize, 0, n)[0]
-        .iter()
-        .max()
-        .unwrap()
+pub fn lexicographically_smallest_string(s: &str) -> String {
+    let n = s.len();
+    let mut memo1 = vec![None; n];
+    let mut memo2 = vec![vec![None; n]; n];
+    let res = dfs(s.as_bytes(), 0, &mut memo1, &mut memo2);
+    String::from_utf8(res).unwrap_or_default()
 }
 
 fn dfs(
-    adj: &[Vec<usize>],
-    present: &[i32],
-    future: &[i32],
-    budget: usize,
-    node: usize,
-    prev: usize,
-) -> [Vec<i32>; 2] {
-    let mut dp0 = vec![0; 1 + budget];
-    let mut dp1 = vec![0; 1 + budget];
-    for &next in &adj[node] {
-        if next != prev {
-            let [res0, res1] = dfs(adj, present, future, budget, next, node);
-            dp0 = merge(&dp0, &res0);
-            dp1 = merge(&dp1, &res1);
+    s: &[u8],
+    idx: usize,
+    memo1: &mut [Option<Vec<u8>>],
+    memo2: &mut [Vec<Option<bool>>],
+) -> Vec<u8> {
+    let n = s.len();
+    if idx >= n {
+        return vec![];
+    }
+    if let Some(ref v) = memo1[idx] {
+        return v.clone();
+    }
+    let mut res = vec![s[idx]];
+    res.extend(dfs(s, 1 + idx, memo1, memo2));
+    for right in (1 + idx..n).step_by(2) {
+        if can_remove(s, idx, right, memo2) {
+            res = res.min(dfs(s, 1 + right, memo1, memo2))
         }
     }
-    let mut res0 = dp0.clone();
-    let mut res1 = dp0.clone();
-    let mut cost = present[node] as usize;
-    for b in cost..=budget {
-        res0[b] = res0[b].max(dp1[b - cost] + future[node] - cost as i32);
-    }
-    cost >>= 1;
-    for b in cost..=budget {
-        res1[b] = res1[b].max(dp1[b - cost] + future[node] - cost as i32);
-    }
-    [res0, res1]
+    memo1[idx] = Some(res.clone());
+    res
 }
 
-fn merge(a: &[i32], b: &[i32]) -> Vec<i32> {
-    let n = a.len();
-    let mut res = vec![i32::MIN; n];
-    for (i1, v1) in a.iter().enumerate() {
-        for (i2, v2) in b[..n - i1].iter().enumerate() {
-            res[i1 + i2] = res[i1 + i2].max(v1 + v2);
+fn can_remove(s: &[u8], left: usize, right: usize, memo: &mut [Vec<Option<bool>>]) -> bool {
+    if left > right {
+        return true;
+    }
+    if let Some(v) = memo[left][right] {
+        return v;
+    }
+    if [1, 25].contains(&s[left].abs_diff(s[right])) && can_remove(s, 1 + left, right - 1, memo) {
+        memo[left][right] = Some(true);
+        return true;
+    }
+    for mid in (1 + left..right).step_by(2) {
+        if can_remove(s, left, mid, memo) && can_remove(s, 1 + mid, right, memo) {
+            memo[left][right] = Some(true);
+            return true;
         }
     }
-    res
+    memo[left][right] = Some(false);
+    false
 }
 
 #[cfg(test)]
@@ -98,16 +91,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_profit(2, &[1, 2], &[4, 3], &[[1, 2]], 3), 5);
-        assert_eq!(max_profit(2, &[3, 4], &[5, 8], &[[1, 2]], 4), 4);
-        assert_eq!(
-            max_profit(3, &[5, 2, 3], &[8, 5, 6], &[[1, 2], [2, 3]], 7),
-            12
-        );
-        assert_eq!(
-            max_profit(3, &[4, 6, 8], &[7, 9, 11], &[[1, 2], [1, 3]], 10),
-            10
-        );
+        assert_eq!(lexicographically_smallest_string("abc"), "a");
+        assert_eq!(lexicographically_smallest_string("bcda"), "");
+        assert_eq!(lexicographically_smallest_string("zdce"), "zdce");
     }
 
     #[test]
