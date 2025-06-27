@@ -7,22 +7,40 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_sum_distinct_triplet(x: Vec<i32>, y: Vec<i32>) -> i32 {
-    use itertools::Itertools;
-    use std::collections::HashMap;
-    let mut map = HashMap::new();
-    for (&n1, &n2) in x.iter().zip(y.iter()) {
-        let v = map.entry(n1).or_insert(n2);
-        *v = (*v).max(n2);
+pub fn maximum_profit(prices: &[i32], k: i32) -> i64 {
+    let mut memo = vec![vec![[[-1; 2]; 2]; 1 + k as usize]; prices.len()];
+    dfs(prices, 0, k as usize, 0, 0, &mut memo)
+}
+
+fn dfs(
+    nums: &[i32],
+    idx: usize,
+    k: usize,
+    type_: usize,
+    running: usize,
+    memo: &mut [Vec<[[i64; 2]; 2]>],
+) -> i64 {
+    if k == 0 || idx >= nums.len() {
+        return if running == 0 { 0 } else { i64::MIN >> 1 };
     }
-    if map.len() < 3 {
-        -1
+    if memo[idx][k][type_][running] > -1 {
+        return memo[idx][k][type_][running];
+    }
+    let skip = dfs(nums, 1 + idx, k, type_, running, memo);
+    let val = i64::from(nums[idx]);
+    let take = if running == 0 {
+        let normal = -val + dfs(nums, 1 + idx, k, 0, 1, memo);
+        let short = val + dfs(nums, 1 + idx, k, 1, 1, memo);
+        normal.max(short)
     } else {
-        map.into_values()
-            .sorted_unstable_by(|a, b| b.cmp(a))
-            .take(3)
-            .sum()
-    }
+        if type_ == 0 {
+            val + dfs(nums, 1 + idx, k - 1, type_, 0, memo)
+        } else {
+            -val + dfs(nums, 1 + idx, k - 1, type_, 0, memo)
+        }
+    };
+    memo[idx][k][type_][running] = skip.max(take);
+    memo[idx][k][type_][running]
 }
 
 #[cfg(test)]
@@ -55,7 +73,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(maximum_profit(&[1, 7, 9, 8, 2], 2), 14);
+        assert_eq!(maximum_profit(&[12, 16, 19, 19, 8, 1, 19, 13, 9], 3), 36);
+    }
 
     #[test]
     fn test() {}
