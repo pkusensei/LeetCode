@@ -7,55 +7,19 @@ namespace Solution;
 
 public class Solution
 {
-    public string LongestSubsequenceRepeatedK(string s, int k)
+    public int[] MaxSubsequence(int[] nums, int k)
     {
-        Span<int> freq = stackalloc int[26];
-        foreach (var c in s)
+        PriorityQueue<(int i, int v), int> pq = new();
+        for (int i = 0; i < nums.Length; i++)
         {
-            freq[c - 'a'] += 1;
+            pq.Enqueue((i, nums[i]), -nums[i]);
         }
-        List<char> chs = [];
-        for (int i = 25; i >= 0; i -= 1)
+        List<(int i, int v)> arr = [];
+        while (arr.Count < k)
         {
-            chs.AddRange(Enumerable.Repeat((char)(i + 'a'), freq[i] / k));
+            arr.Add(pq.Dequeue());
         }
-        List<char> res = [];
-        Backtrack([], 0);
-        return new([.. res]);
-
-        void Backtrack(List<char> curr, int mask)
-        {
-            for (int i = 0; i < chs.Count; i++)
-            {
-                // 2 <= n < k*8
-                // n/k < 8
-                if (((mask >> i) & 1) == 1) { continue; }
-                curr.Add(chs[i]);
-                if (Find(curr, k))
-                {
-                    if (curr.Count > res.Count) { res = [.. curr]; }
-                    Backtrack(curr, mask | (1 << i));
-                }
-                curr.RemoveAt(curr.Count - 1);
-            }
-        }
-
-        bool Find(IList<char> curr, int k)
-        {
-            int i2 = 0;
-            for (int i1 = 0; i1 < s.Length && k > 0; i1++)
-            {
-                if (s[i1] == curr[i2])
-                {
-                    i2 += 1;
-                    if (i2 >= curr.Count)
-                    {
-                        k -= 1;
-                        i2 = 0;
-                    }
-                }
-            }
-            return k <= 0;
-        }
+        arr.Sort((a, b) => a.i.CompareTo(b.i));
+        return [.. arr.Select(p => p.v)];
     }
 }
