@@ -4,31 +4,57 @@ mod fenwick_tree;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_gcd_score(nums: &[i32], k: i32) -> i64 {
-    const fn gcd(a: i32, b: i32) -> i32 {
-        if a == 0 { b } else { gcd(b % a, a) }
-    }
+pub fn good_subtree_sum(vals: &[i32], par: &[i32]) -> i32 {
+    let n = vals.len();
+    let adj = par
+        .iter()
+        .enumerate()
+        .fold(vec![vec![]; n], |mut acc, (i, &v)| {
+            if v >= 0 {
+                acc[v as usize].push(i);
+            }
+            acc
+        });
+    dfs(&adj, &vals, 0).1
+}
+
+fn dfs(adj: &[Vec<usize>], vals: &[i32], node: usize) -> (HashMap<i32, i32>, i32) {
+    const M: i32 = 1_000_000_007;
+    let curr_mask = to_mask(vals[node]);
+    let curr_val = if curr_mask > 0 { vals[node] } else { 0 };
+    let mut dp = HashMap::from([(curr_mask, curr_val), (0, 0)]);
     let mut res = 0;
-    for (i1, &a) in nums.iter().enumerate() {
-        let mut gcd_ = a;
-        let mut count = 0;
-        let mut lowest = i32::MAX;
-        for (i2, &b) in nums.iter().enumerate().skip(i1) {
-            gcd_ = gcd(gcd_, b);
-            let low_bit = b & -b;
-            if lowest > low_bit {
-                lowest = low_bit;
-                count = 0;
+    for &next in &adj[node] {
+        let (ndp, nres) = dfs(adj, vals, next);
+        res = (res + nres) % M;
+        for (nmask, nv) in ndp {
+            for (mask, val) in dp.clone() {
+                if mask & nmask == 0 {
+                    let v = dp.entry(mask | nmask).or_insert(val + nv);
+                    *v = (*v).max(nv + val);
+                }
             }
-            if lowest == low_bit {
-                count += 1
-            }
-            let temp = i64::from(gcd_) * if count <= k { 2 } else { 1 };
-            res = res.max(temp * (i2 + 1 - i1) as i64);
         }
+    }
+    res = (res + dp.values().max().unwrap_or(&0)) % M;
+    (dp, res)
+}
+
+const fn to_mask(mut num: i32) -> i32 {
+    let mut res = 0;
+    while num > 0 {
+        let d = num % 10;
+        if res & (1 << d) == 0 {
+            res |= 1 << d
+        } else {
+            return 0;
+        }
+        num /= 10;
     }
     res
 }
@@ -64,9 +90,10 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_gcd_score(&[2, 4], 1), 8);
-        assert_eq!(max_gcd_score(&[3, 5, 7], 2), 14);
-        assert_eq!(max_gcd_score(&[5, 5, 5], 1), 15);
+        assert_eq!(good_subtree_sum(&[2, 3], &[-1, 0]), 8);
+        assert_eq!(good_subtree_sum(&[1, 5, 2], &[-1, 0, 0]), 15);
+        assert_eq!(good_subtree_sum(&[34, 1, 2], &[-1, 0, 1]), 42);
+        assert_eq!(good_subtree_sum(&[3, 22, 5], &[-1, 0, 1]), 18);
     }
 
     #[test]
