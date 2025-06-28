@@ -7,40 +7,30 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_profit(prices: &[i32], k: i32) -> i64 {
-    let mut memo = vec![vec![[[-1; 2]; 2]; 1 + k as usize]; prices.len()];
-    dfs(prices, 0, k as usize, 0, 0, &mut memo)
-}
-
-fn dfs(
-    nums: &[i32],
-    idx: usize,
-    k: usize,
-    type_: usize,
-    running: usize,
-    memo: &mut [Vec<[[i64; 2]; 2]>],
-) -> i64 {
-    if k == 0 || idx >= nums.len() {
-        return if running == 0 { 0 } else { i64::MIN >> 1 };
+pub fn max_gcd_score(nums: &[i32], k: i32) -> i64 {
+    const fn gcd(a: i32, b: i32) -> i32 {
+        if a == 0 { b } else { gcd(b % a, a) }
     }
-    if memo[idx][k][type_][running] > -1 {
-        return memo[idx][k][type_][running];
-    }
-    let skip = dfs(nums, 1 + idx, k, type_, running, memo);
-    let val = i64::from(nums[idx]);
-    let take = if running == 0 {
-        let normal = -val + dfs(nums, 1 + idx, k, 0, 1, memo);
-        let short = val + dfs(nums, 1 + idx, k, 1, 1, memo);
-        normal.max(short)
-    } else {
-        if type_ == 0 {
-            val + dfs(nums, 1 + idx, k - 1, type_, 0, memo)
-        } else {
-            -val + dfs(nums, 1 + idx, k - 1, type_, 0, memo)
+    let mut res = 0;
+    for (i1, &a) in nums.iter().enumerate() {
+        let mut gcd_ = a;
+        let mut count = 0;
+        let mut lowest = i32::MAX;
+        for (i2, &b) in nums.iter().enumerate().skip(i1) {
+            gcd_ = gcd(gcd_, b);
+            let low_bit = b & -b;
+            if lowest > low_bit {
+                lowest = low_bit;
+                count = 0;
+            }
+            if lowest == low_bit {
+                count += 1
+            }
+            let temp = i64::from(gcd_) * if count <= k { 2 } else { 1 };
+            res = res.max(temp * (i2 + 1 - i1) as i64);
         }
-    };
-    memo[idx][k][type_][running] = skip.max(take);
-    memo[idx][k][type_][running]
+    }
+    res
 }
 
 #[cfg(test)]
@@ -74,8 +64,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(maximum_profit(&[1, 7, 9, 8, 2], 2), 14);
-        assert_eq!(maximum_profit(&[12, 16, 19, 19, 8, 1, 19, 13, 9], 3), 36);
+        assert_eq!(max_gcd_score(&[2, 4], 1), 8);
+        assert_eq!(max_gcd_score(&[3, 5, 7], 2), 14);
+        assert_eq!(max_gcd_score(&[5, 5, 5], 1), 15);
     }
 
     #[test]
