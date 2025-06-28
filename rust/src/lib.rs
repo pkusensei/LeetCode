@@ -4,59 +4,30 @@ mod fenwick_tree;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn good_subtree_sum(vals: &[i32], par: &[i32]) -> i32 {
-    let n = vals.len();
-    let adj = par
+pub fn can_make_equal(nums: &[i32], k: i32) -> bool {
+    solve(nums, k, 1) || solve(nums, k, -1)
+}
+
+fn solve(nums: &[i32], mut k: i32, target: i32) -> bool {
+    use itertools::Itertools;
+    let arr = nums
         .iter()
         .enumerate()
-        .fold(vec![vec![]; n], |mut acc, (i, &v)| {
-            if v >= 0 {
-                acc[v as usize].push(i);
-            }
-            acc
-        });
-    dfs(&adj, &vals, 0).1
-}
-
-fn dfs(adj: &[Vec<usize>], vals: &[i32], node: usize) -> (HashMap<i32, i32>, i32) {
-    const M: i32 = 1_000_000_007;
-    let curr_mask = to_mask(vals[node]);
-    let curr_val = if curr_mask > 0 { vals[node] } else { 0 };
-    let mut dp = HashMap::from([(curr_mask, curr_val), (0, 0)]);
-    let mut res = 0;
-    for &next in &adj[node] {
-        let (ndp, nres) = dfs(adj, vals, next);
-        res = (res + nres) % M;
-        for (nmask, nv) in ndp {
-            for (mask, val) in dp.clone() {
-                if mask & nmask == 0 {
-                    let v = dp.entry(mask | nmask).or_insert(val + nv);
-                    *v = (*v).max(nv + val);
-                }
-            }
+        .filter_map(|(i, &v)| if v != target { Some(i) } else { None })
+        .collect_vec();
+    if arr.len() & 1 == 1 {
+        return false;
+    }
+    for ch in arr.chunks(2) {
+        k -= (ch[1] - ch[0]) as i32;
+        if k < 0 {
+            return false;
         }
     }
-    res = (res + dp.values().max().unwrap_or(&0)) % M;
-    (dp, res)
-}
-
-const fn to_mask(mut num: i32) -> i32 {
-    let mut res = 0;
-    while num > 0 {
-        let d = num % 10;
-        if res & (1 << d) == 0 {
-            res |= 1 << d
-        } else {
-            return 0;
-        }
-        num /= 10;
-    }
-    res
+    k >= 0
 }
 
 #[cfg(test)]
@@ -89,12 +60,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(good_subtree_sum(&[2, 3], &[-1, 0]), 8);
-        assert_eq!(good_subtree_sum(&[1, 5, 2], &[-1, 0, 0]), 15);
-        assert_eq!(good_subtree_sum(&[34, 1, 2], &[-1, 0, 1]), 42);
-        assert_eq!(good_subtree_sum(&[3, 22, 5], &[-1, 0, 1]), 18);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
