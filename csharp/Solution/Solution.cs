@@ -7,19 +7,28 @@ namespace Solution;
 
 public class Solution
 {
-    public int[] MaxSubsequence(int[] nums, int k)
+    public int NumSubseq(int[] nums, int target)
     {
-        PriorityQueue<(int i, int v), int> pq = new();
-        for (int i = 0; i < nums.Length; i++)
+        const int M = 1_000_000_007;
+        Array.Sort(nums);
+        int[] pow = new int[nums.Length];
+        pow[0] = 1;
+        for (int i = 1; i < nums.Length; i++)
         {
-            pq.Enqueue((i, nums[i]), -nums[i]);
+            pow[i] = 2 * pow[i - 1] % M;
         }
-        List<(int i, int v)> arr = [];
-        while (arr.Count < k)
+        int left = 0;
+        int right = nums.Length - 1;
+        int res = 0;
+        while (left <= right)
         {
-            arr.Add(pq.Dequeue());
+            if (nums[left] + nums[right] > target) { right -= 1; }
+            else
+            {
+                res = (res + pow[right - left]) % M;
+                left += 1;
+            }
         }
-        arr.Sort((a, b) => a.i.CompareTo(b.i));
-        return [.. arr.Select(p => p.v)];
+        return res;
     }
 }
