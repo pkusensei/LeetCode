@@ -7,22 +7,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn special_triplets(nums: Vec<i32>) -> i32 {
-    use std::collections::HashMap;
-    let mut m1 = HashMap::new();
-    let mut m2 = nums.iter().fold(HashMap::new(), |mut acc, &x| {
-        *acc.entry(x).or_insert(0i64) += 1;
-        acc
-    });
-    let mut res = 0;
-    for &num in nums.iter() {
-        m2.entry(num).and_modify(|v| *v -= 1);
-        let a = m1.get(&(2 * num)).unwrap_or(&0);
-        let b = m2.get(&(2 * num)).unwrap_or(&0);
-        res = (res + a * b) % 1_000_000_007;
-        *m1.entry(num).or_insert(0i64) += 1;
+pub fn maximum_product(nums: &[i32], m: i32) -> i64 {
+    let m = m as usize;
+    let mut left_max = i32::MIN;
+    let mut left_min = i32::MAX;
+    let mut res = i64::MIN;
+    for (i, &num) in nums.iter().enumerate() {
+        if i + 1 >= m {
+            let left = nums[i + 1 - m];
+            left_max = left_max.max(left);
+            left_min = left_min.min(left);
+            res = res
+                .max(i64::from(num) * i64::from(left_max))
+                .max(i64::from(num) * i64::from(left_min));
+        }
     }
-    res as i32
+    res
 }
 
 #[cfg(test)]
