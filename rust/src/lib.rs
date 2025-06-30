@@ -7,26 +7,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn generate_tag(caption: String) -> String {
-    let mut res = vec![b'#'];
-    'outer: for (i, s) in caption.split(' ').enumerate() {
-        let mut cap = i > 0 && res.len() > 1;
-        for b in s.bytes().filter(|&b| b.is_ascii_alphabetic()) {
-            if cap {
-                res.push(b.to_ascii_uppercase());
-                cap = false;
-            } else {
-                res.push(b.to_ascii_lowercase());
-            }
-            if res.len() >= 100 {
-                break 'outer;
-            }
-        }
+pub fn special_triplets(nums: Vec<i32>) -> i32 {
+    use std::collections::HashMap;
+    let mut m1 = HashMap::new();
+    let mut m2 = nums.iter().fold(HashMap::new(), |mut acc, &x| {
+        *acc.entry(x).or_insert(0i64) += 1;
+        acc
+    });
+    let mut res = 0;
+    for &num in nums.iter() {
+        m2.entry(num).and_modify(|v| *v -= 1);
+        let a = m1.get(&(2 * num)).unwrap_or(&0);
+        let b = m2.get(&(2 * num)).unwrap_or(&0);
+        res = (res + a * b) % 1_000_000_007;
+        *m1.entry(num).or_insert(0i64) += 1;
     }
-    while res.len() > 100 {
-        res.pop();
-    }
-    String::from_utf8(res).unwrap()
+    res as i32
 }
 
 #[cfg(test)]
