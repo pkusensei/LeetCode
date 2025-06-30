@@ -10,7 +10,7 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1(string s, int k, string exp)
+    public void TestMethod1()
     {
     }
 

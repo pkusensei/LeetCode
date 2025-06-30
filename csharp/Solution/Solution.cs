@@ -7,27 +7,15 @@ namespace Solution;
 
 public class Solution
 {
-    public int NumSubseq(int[] nums, int target)
+    public int FindLHS(int[] nums)
     {
-        const int M = 1_000_000_007;
         Array.Sort(nums);
-        int[] pow = new int[nums.Length];
-        pow[0] = 1;
-        for (int i = 1; i < nums.Length; i++)
-        {
-            pow[i] = 2 * pow[i - 1] % M;
-        }
-        int left = 0;
-        int right = nums.Length - 1;
         int res = 0;
-        while (left <= right)
+        int left = 0;
+        for (int right = 0; right < nums.Length; right++)
         {
-            if (nums[left] + nums[right] > target) { right -= 1; }
-            else
-            {
-                res = (res + pow[right - left]) % M;
-                left += 1;
-            }
+            while (nums[right] - nums[left] > 1) { left += 1; }
+            if (nums[right] - nums[left] == 1) { res = Math.Max(res, right + 1 - left); }
         }
         return res;
     }
