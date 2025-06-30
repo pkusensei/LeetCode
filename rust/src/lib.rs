@@ -4,76 +4,47 @@ mod fenwick_tree;
 mod helper;
 mod trie;
 
-use std::collections::{BTreeMap, VecDeque};
-
 #[allow(unused_imports)]
 use helper::*;
 
-const M: i32 = 1_000_000_007;
-
-pub fn count_partitions(nums: &[i32], k: i32) -> i32 {
-    let n = nums.len();
-    let mut dp = vec![0; 1 + n];
-    dp[0] = 1;
-    let mut window = 0;
-    let mut map = BTreeMap::new();
-    let mut left = 0;
-    for (right, &num) in nums.iter().enumerate() {
-        window = (window + dp[right]) % M;
-        *map.entry(num).or_insert(0) += 1;
-        while map
-            .keys()
-            .next()
-            .zip(map.keys().last())
-            .is_some_and(|(a, b)| b - a > k)
-        {
-            window = (window - dp[left]).rem_euclid(M);
-            let v = map.entry(nums[left]).or_insert(0);
-            *v -= 1;
-            if *v == 0 {
-                map.remove(&nums[left]);
-            }
-            left += 1;
+pub fn min_operations(word1: &str, word2: &str) -> i32 {
+    let (s1, s2) = (word1.as_bytes(), word2.as_bytes());
+    let n = word1.len();
+    let mut dp = vec![i32::MAX; 1 + n];
+    dp[0] = 0;
+    for right in 1..=n {
+        for left in 0..right {
+            let curr = solve(
+                s1[left..right].iter().copied(),
+                s2[left..right].iter().copied(),
+            )
+            .min(
+                1 + solve(
+                    s1[left..right].iter().rev().copied(),
+                    s2[left..right].iter().copied(),
+                ),
+            );
+            dp[right] = dp[right].min(dp[left] + curr);
         }
-        dp[1 + right] = window;
     }
     dp[n]
 }
 
-pub fn with_deque(nums: &[i32], k: i32) -> i32 {
-    let n = nums.len();
-    let mut dp = vec![0; 1 + n];
-    dp[0] = 1;
-    let mut acc: i32 = 1;
-    let mut left = 0;
-    let [mut minq, mut maxq] = [const { VecDeque::new() }; 2];
-    for (right, &num) in nums.iter().enumerate() {
-        while maxq.back().is_some_and(|(_, v)| *v < num) {
-            maxq.pop_back();
+fn solve(s1: impl Iterator<Item = u8>, s2: impl Iterator<Item = u8>) -> i32 {
+    let mut res = 0;
+    let mut freq = std::collections::HashMap::new();
+    for (a, b) in s1.zip(s2) {
+        if a == b {
+            continue;
         }
-        maxq.push_back((right, num));
-        while minq.back().is_some_and(|(_, v)| *v > num) {
-            minq.pop_back();
+        if freq.get(&[b, a]).is_some_and(|&v| v > 0) {
+            *freq.entry([b, a]).or_insert(0) -= 1; // offset swap
+        } else {
+            *freq.entry([a, b]).or_insert(0) += 1;
+            res += 1; // swap or replace
         }
-        minq.push_back((right, num));
-        while maxq
-            .front()
-            .zip(minq.front())
-            .is_some_and(|((_, a), (_, b))| a - b > k)
-        {
-            acc = (acc - dp[left]).rem_euclid(M);
-            left += 1;
-            if minq.front().is_some_and(|(i, _)| *i < left) {
-                minq.pop_front();
-            }
-            if maxq.front().is_some_and(|(i, _)| *i < left) {
-                maxq.pop_front();
-            }
-        }
-        dp[1 + right] = acc;
-        acc = (acc + dp[1 + right]) % M;
     }
-    dp[n]
+    res
 }
 
 #[cfg(test)]
@@ -107,13 +78,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(count_partitions(&[3, 3, 4], 0), 2);
-        assert_eq!(count_partitions(&[9, 4, 1, 3, 7], 4), 6);
-
-        assert_eq!(with_deque(&[3, 3, 4], 0), 2);
-        assert_eq!(with_deque(&[9, 4, 1, 3, 7], 4), 6);
+        assert_eq!(min_operations("abcdf", "dacbe"), 4);
+        assert_eq!(min_operations("abceded", "baecfef"), 4);
+        assert_eq!(min_operations("abcdef", "fedabc"), 2);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(min_operations("abcebc", "ecbade"), 3);
+    }
 }
