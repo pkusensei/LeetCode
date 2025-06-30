@@ -7,44 +7,26 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_operations(word1: &str, word2: &str) -> i32 {
-    let (s1, s2) = (word1.as_bytes(), word2.as_bytes());
-    let n = word1.len();
-    let mut dp = vec![i32::MAX; 1 + n];
-    dp[0] = 0;
-    for right in 1..=n {
-        for left in 0..right {
-            let curr = solve(
-                s1[left..right].iter().copied(),
-                s2[left..right].iter().copied(),
-            )
-            .min(
-                1 + solve(
-                    s1[left..right].iter().rev().copied(),
-                    s2[left..right].iter().copied(),
-                ),
-            );
-            dp[right] = dp[right].min(dp[left] + curr);
+pub fn generate_tag(caption: String) -> String {
+    let mut res = vec![b'#'];
+    'outer: for (i, s) in caption.split(' ').enumerate() {
+        let mut cap = i > 0 && res.len() > 1;
+        for b in s.bytes().filter(|&b| b.is_ascii_alphabetic()) {
+            if cap {
+                res.push(b.to_ascii_uppercase());
+                cap = false;
+            } else {
+                res.push(b.to_ascii_lowercase());
+            }
+            if res.len() >= 100 {
+                break 'outer;
+            }
         }
     }
-    dp[n]
-}
-
-fn solve(s1: impl Iterator<Item = u8>, s2: impl Iterator<Item = u8>) -> i32 {
-    let mut res = 0;
-    let mut freq = std::collections::HashMap::new();
-    for (a, b) in s1.zip(s2) {
-        if a == b {
-            continue;
-        }
-        if freq.get(&[b, a]).is_some_and(|&v| v > 0) {
-            *freq.entry([b, a]).or_insert(0) -= 1; // offset swap
-        } else {
-            *freq.entry([a, b]).or_insert(0) += 1;
-            res += 1; // swap or replace
-        }
+    while res.len() > 100 {
+        res.pop();
     }
-    res
+    String::from_utf8(res).unwrap()
 }
 
 #[cfg(test)]
@@ -77,14 +59,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(min_operations("abcdf", "dacbe"), 4);
-        assert_eq!(min_operations("abceded", "baecfef"), 4);
-        assert_eq!(min_operations("abcdef", "fedabc"), 2);
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(min_operations("abcebc", "ecbade"), 3);
-    }
+    fn test() {}
 }
