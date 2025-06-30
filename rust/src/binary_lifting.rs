@@ -1,8 +1,6 @@
 pub struct BinaryLifting {
     pub up: Vec<Vec<usize>>,
     pub depth: Vec<i32>,
-    n: usize,
-    max_log: usize,
 }
 
 #[allow(dead_code)]
@@ -13,8 +11,6 @@ impl BinaryLifting {
         let mut s = Self {
             up: vec![vec![0; max_log]; n],
             depth: vec![0; n],
-            n,
-            max_log,
         };
         s.dfs(adj, 0, n);
         for i2 in 1..max_log {
@@ -39,7 +35,8 @@ impl BinaryLifting {
         if self.depth[node1] > self.depth[node2] {
             std::mem::swap(&mut node1, &mut node2);
         }
-        for i in 0..self.max_log {
+        let max_log = 1 + self.depth.len().ilog2() as usize;
+        for i in 0..max_log {
             if ((self.depth[node2] - self.depth[node1]) >> i) & 1 == 1 {
                 node2 = self.up[node2][i];
             }
@@ -47,7 +44,7 @@ impl BinaryLifting {
         if node1 == node2 {
             return node1;
         }
-        for i in (0..self.max_log).rev() {
+        for i in (0..max_log).rev() {
             if self.up[node1][i] != self.up[node2][i] {
                 node1 = self.up[node1][i];
                 node2 = self.up[node2][i];
