@@ -7,19 +7,26 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn check_prime_frequency(nums: Vec<i32>) -> bool {
-    use std::collections::HashMap;
-    const P: [i32; 25] = [
-        2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89,
-        97,
-    ];
-    nums.into_iter()
-        .fold(HashMap::new(), |mut acc, n| {
-            *acc.entry(n).or_insert(0) += 1;
-            acc
-        })
-        .into_values()
-        .any(|v| P.contains(&v))
+pub fn find_coins(mut nums: Vec<i32>) -> Vec<i32> {
+    let n = nums.len();
+    nums.insert(0, 1);
+    let mut res = vec![];
+    for c in 1..=n {
+        if nums[c] == 0 {
+            continue;
+        }
+        if nums[c] > 1 {
+            return vec![];
+        }
+        res.push(c as i32);
+        for s in (c..=n).rev() {
+            nums[s] -= nums[s - c];
+            if nums[s] < 0 {
+                return vec![];
+            }
+        }
+    }
+    res
 }
 
 #[cfg(test)]
@@ -52,7 +59,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(find_coins(vec![0, 1, 0, 2, 0, 3, 0, 4, 0, 5]), [2, 4, 6]);
+        assert_eq!(find_coins(vec![1, 2, 2, 3, 4]), [1, 2, 5]);
+        assert_eq!(find_coins(vec![1, 2, 3, 4, 15]), []);
+    }
 
     #[test]
     fn test() {}
