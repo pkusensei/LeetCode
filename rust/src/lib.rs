@@ -4,42 +4,76 @@ mod fenwick_tree;
 mod helper;
 mod trie;
 
-use std::collections::HashMap;
+use std::{collections::BTreeMap, sync::LazyLock};
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_area(coords: Vec<Vec<i32>>) -> i64 {
-    let [mut x_axes, mut y_axes] = [HashMap::new(), HashMap::new()];
-    let [mut xmin, mut ymin] = [i32::MAX; 2];
-    let [mut xmax, mut ymax] = [i32::MIN; 2];
-    for c in coords.iter() {
-        let [x, y] = c[..] else { unreachable!() };
-        xmin = xmin.min(x);
-        xmax = xmax.max(x);
-        ymin = ymin.min(y);
-        ymax = ymax.max(y);
-        insert(&mut x_axes, x, y);
-        insert(&mut y_axes, y, x);
+pub fn prime_subarray(nums: &[i32], k: i32) -> i32 {
+    let mut res = 0;
+    let mut left = 0;
+    let mut ms = MultiSet::default();
+    let [mut prev, mut curr] = [0; 2];
+    for (right, &num) in nums.iter().enumerate() {
+        if S[num as usize] {
+            prev = curr;
+            curr = right;
+            ms.insert(num);
+        }
+        while ms.gap().is_some_and(|v| v > k) {
+            ms.remove(nums[left]);
+            left += 1;
+        }
+        if ms.count >= 2 {
+            res += prev - left + 1;
+        }
     }
-    let res = f(&x_axes, xmin, xmax).max(f(&y_axes, ymin, ymax));
-    if res > 0 { res } else { -1 }
+    res as i32
 }
 
-fn f(map: &HashMap<i32, [i32; 2]>, hmin: i32, hmax: i32) -> i64 {
-    let mut res = 0;
-    for (base, &[min, max]) in map.iter() {
-        res = res
-            .max(i64::from(max - min) * i64::from(base.abs_diff(hmin)))
-            .max(i64::from(max - min) * i64::from(base.abs_diff(hmax)));
+const MAX: usize = 50_001;
+static S: LazyLock<[bool; MAX]> = LazyLock::new(|| {
+    let mut res = [true; MAX];
+    res[..2].fill(false);
+    for p in 2..=MAX.isqrt() {
+        if res[p] {
+            for val in (p * p..MAX).step_by(p) {
+                res[val] = false;
+            }
+        }
     }
     res
+});
+
+#[derive(Default)]
+struct MultiSet {
+    map: BTreeMap<i32, i32>,
+    count: i32,
 }
 
-fn insert(map: &mut HashMap<i32, [i32; 2]>, a: i32, b: i32) {
-    let v = map.entry(a).or_insert([i32::MAX, i32::MIN]);
-    v[0] = v[0].min(b);
-    v[1] = v[1].max(b);
+impl MultiSet {
+    fn insert(&mut self, num: i32) {
+        *self.map.entry(num).or_insert(0) += 1;
+        self.count += 1;
+    }
+
+    fn remove(&mut self, num: i32) {
+        if let Some(v) = self.map.get_mut(&num) {
+            *v -= 1;
+            if *v == 0 {
+                self.map.remove(&num);
+            }
+            self.count -= 1;
+        }
+    }
+
+    fn gap(&self) -> Option<i32> {
+        self.map
+            .keys()
+            .next()
+            .zip(self.map.keys().last())
+            .map(|(a, b)| b - a)
+    }
 }
 
 #[cfg(test)]
@@ -72,7 +106,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(prime_subarray(&[1, 2, 3], 1), 2);
+        assert_eq!(prime_subarray(&[2, 3, 5, 7], 3), 4);
+    }
 
     #[test]
     fn test() {}
