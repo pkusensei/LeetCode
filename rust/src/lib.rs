@@ -4,36 +4,42 @@ mod fenwick_tree;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_swaps(nums: &[i32]) -> i32 {
-    let [mut odds, mut evens] = [vec![], vec![]];
-    for (i, &num) in nums.iter().enumerate() {
-        if num & 1 == 1 {
-            odds.push(i);
-        } else {
-            evens.push(i);
-        }
+pub fn max_area(coords: Vec<Vec<i32>>) -> i64 {
+    let [mut x_axes, mut y_axes] = [HashMap::new(), HashMap::new()];
+    let [mut xmin, mut ymin] = [i32::MAX; 2];
+    let [mut xmax, mut ymax] = [i32::MIN; 2];
+    for c in coords.iter() {
+        let [x, y] = c[..] else { unreachable!() };
+        xmin = xmin.min(x);
+        xmax = xmax.max(x);
+        ymin = ymin.min(y);
+        ymax = ymax.max(y);
+        insert(&mut x_axes, x, y);
+        insert(&mut y_axes, y, x);
     }
-    if odds.len().abs_diff(evens.len()) > 1 {
-        return -1;
-    }
-    let mut res = i32::MAX;
-    if evens.len() >= odds.len() {
-        res = res.min(f(&evens))
-    }
-    if odds.len() >= evens.len() {
-        res = res.min(f(&odds))
+    let res = f(&x_axes, xmin, xmax).max(f(&y_axes, ymin, ymax));
+    if res > 0 { res } else { -1 }
+}
+
+fn f(map: &HashMap<i32, [i32; 2]>, hmin: i32, hmax: i32) -> i64 {
+    let mut res = 0;
+    for (base, &[min, max]) in map.iter() {
+        res = res
+            .max(i64::from(max - min) * i64::from(base.abs_diff(hmin)))
+            .max(i64::from(max - min) * i64::from(base.abs_diff(hmax)));
     }
     res
 }
 
-fn f(arr: &[usize]) -> i32 {
-    arr.iter()
-        .enumerate()
-        .map(|(i, &v)| v.abs_diff(2 * i) as i32)
-        .sum()
+fn insert(map: &mut HashMap<i32, [i32; 2]>, a: i32, b: i32) {
+    let v = map.entry(a).or_insert([i32::MAX, i32::MIN]);
+    v[0] = v[0].min(b);
+    v[1] = v[1].max(b);
 }
 
 #[cfg(test)]
@@ -66,12 +72,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(min_swaps(&[2, 4, 6, 5, 7]), 3);
-        assert_eq!(min_swaps(&[2, 4, 5, 7]), 1);
-        assert_eq!(min_swaps(&[1, 2, 3]), 0);
-        assert_eq!(min_swaps(&[4, 5, 6, 8]), -1);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
