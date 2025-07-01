@@ -4,76 +4,55 @@ mod fenwick_tree;
 mod helper;
 mod trie;
 
-use std::{collections::BTreeMap, sync::LazyLock};
+use std::collections::BTreeSet;
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn prime_subarray(nums: &[i32], k: i32) -> i32 {
-    let mut res = 0;
-    let mut left = 0;
-    let mut ms = MultiSet::default();
-    let [mut prev, mut curr] = [0; 2];
-    for (right, &num) in nums.iter().enumerate() {
-        if S[num as usize] {
-            prev = curr;
-            curr = right;
-            ms.insert(num);
-        }
-        while ms.gap().is_some_and(|v| v > k) {
-            ms.remove(nums[left]);
-            left += 1;
-        }
-        if ms.count >= 2 {
-            res += prev - left + 1;
-        }
-    }
-    res as i32
-}
-
-const MAX: usize = 50_001;
-static S: LazyLock<[bool; MAX]> = LazyLock::new(|| {
-    let mut res = [true; MAX];
-    res[..2].fill(false);
-    for p in 2..=MAX.isqrt() {
-        if res[p] {
-            for val in (p * p..MAX).step_by(p) {
-                res[val] = false;
+pub fn kth_smallest(par: &[i32], vals: &[i32], queries: &[[i32; 2]]) -> Vec<i32> {
+    let n = par.len();
+    let adj = par
+        .iter()
+        .enumerate()
+        .fold(vec![vec![]; n], |mut acc, (i, &v)| {
+            if v >= 0 {
+                acc[v as usize].push(i);
             }
-        }
+            acc
+        });
+    let mut qs = vec![vec![]; n];
+    for (i, q) in queries.iter().enumerate() {
+        let [node, k] = [0, 1].map(|i| q[i] as usize);
+        qs[node].push((k - 1, i));
     }
+    let mut res = vec![0; queries.len()];
+    dfs(&adj, &vals, 0, 0, &qs, &mut res);
     res
-});
-
-#[derive(Default)]
-struct MultiSet {
-    map: BTreeMap<i32, i32>,
-    count: i32,
 }
 
-impl MultiSet {
-    fn insert(&mut self, num: i32) {
-        *self.map.entry(num).or_insert(0) += 1;
-        self.count += 1;
-    }
-
-    fn remove(&mut self, num: i32) {
-        if let Some(v) = self.map.get_mut(&num) {
-            *v -= 1;
-            if *v == 0 {
-                self.map.remove(&num);
-            }
-            self.count -= 1;
+fn dfs(
+    adj: &[Vec<usize>],
+    vals: &[i32],
+    node: usize,
+    mut path: i32,
+    qmap: &[Vec<(usize, usize)>],
+    res: &mut [i32],
+) -> BTreeSet<i32> {
+    path ^= vals[node];
+    let mut set = BTreeSet::from([path]);
+    for &next in &adj[node] {
+        let mut nset = dfs(adj, vals, next, path, qmap, res);
+        if nset.len() > set.len() {
+            nset.extend(set);
+            set = nset
+        } else {
+            set.extend(nset);
         }
     }
-
-    fn gap(&self) -> Option<i32> {
-        self.map
-            .keys()
-            .next()
-            .zip(self.map.keys().last())
-            .map(|(a, b)| b - a)
+    for &(k, i) in &qmap[node] {
+        res[i] = *set.iter().nth(k).unwrap_or(&-1);
     }
+    set
 }
 
 #[cfg(test)]
@@ -107,8 +86,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(prime_subarray(&[1, 2, 3], 1), 2);
-        assert_eq!(prime_subarray(&[2, 3, 5, 7], 3), 4);
+        assert_eq!(
+            kth_smallest(&[-1, 0, 0], &[1, 1, 1], &[[0, 1], [0, 2], [0, 3]]),
+            [0, 1, -1]
+        );
+        assert_eq!(
+            kth_smallest(&[-1, 0, 1], &[5, 2, 7], &[[0, 1], [1, 2], [1, 3], [2, 1]]),
+            [0, 7, -1, 0]
+        );
     }
 
     #[test]
