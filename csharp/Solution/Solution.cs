@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Security.Principal;
+using System.Text;
 using Solution.LList;
 using Solution.Tree;
 using static Solution.Utils;
@@ -7,16 +8,21 @@ namespace Solution;
 
 public class Solution
 {
-    public int FindLHS(int[] nums)
+    public int PossibleStringCount(string word)
     {
-        Array.Sort(nums);
-        int res = 0;
-        int left = 0;
-        for (int right = 0; right < nums.Length; right++)
+        char prev = ' ';
+        int res = 1;
+        int curr = 0;
+        foreach (var item in word)
         {
-            while (nums[right] - nums[left] > 1) { left += 1; }
-            if (nums[right] - nums[left] == 1) { res = Math.Max(res, right + 1 - left); }
+            if (item != prev)
+            {
+                res += Math.Max(0, curr - 1);
+                curr = 0;
+            }
+            prev = item;
+            curr += 1;
         }
-        return res;
+        return res + curr - 1;
     }
 }
