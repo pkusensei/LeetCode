@@ -10,14 +10,14 @@ use helper::*;
 pub fn max_stability(n: i32, edges: Vec<[i32; 4]>, k: i32) -> i32 {
     let n = n as usize;
     let mut dsu = DSU::new(n);
-    let mut mand_weights = vec![];
+    let mut mand_weight = i32::MAX;
     let mut opt_edges = vec![];
     for e in edges {
         if e[3] == 1 {
             if !dsu.union(e[0] as usize, e[1] as usize) {
                 return -1;
             }
-            mand_weights.push(e[2]);
+            mand_weight = mand_weight.min(e[2]);
         } else {
             opt_edges.push((e[0] as usize, e[1] as usize, e[2]));
         }
@@ -28,8 +28,7 @@ pub fn max_stability(n: i32, edges: Vec<[i32; 4]>, k: i32) -> i32 {
         if dsu.n == 1 {
             break;
         }
-        if dsu.find(e.0) != dsu.find(e.1) {
-            dsu.union(e.0, e.1);
+        if dsu.union(e.0, e.1) {
             opt_weights.push(e.2);
         }
     }
@@ -40,7 +39,10 @@ pub fn max_stability(n: i32, edges: Vec<[i32; 4]>, k: i32) -> i32 {
     for v in opt_weights.iter_mut().take(k as usize) {
         *v *= 2;
     }
-    mand_weights.into_iter().chain(opt_weights).min().unwrap()
+    std::iter::once(mand_weight)
+        .chain(opt_weights)
+        .min()
+        .unwrap()
 }
 
 struct DSU {
