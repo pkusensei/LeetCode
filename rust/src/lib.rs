@@ -7,49 +7,58 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn longest_common_prefix(words: Vec<String>) -> Vec<i32> {
-    use itertools::{Itertools, izip};
-    let arr = words
-        .windows(2)
-        .map(|w| {
-            izip!(w[0].bytes(), w[1].bytes())
-                .take_while(|(a, b)| a == b)
-                .count() as i32
-        })
-        .collect_vec();
-    let mut prefix = vec![0];
-    let mut curr = 0;
-    for &num in arr.iter() {
-        curr = curr.max(num);
-        prefix.push(curr);
+pub fn min_xor(nums: Vec<i32>, k: i32) -> i32 {
+    let n = nums.len();
+    let k = k as usize;
+    dfs(&nums, k, 0, &mut vec![vec![-1; n]; 1 + k])
+}
+
+fn dfs(nums: &[i32], k: usize, idx: usize, memo: &mut [Vec<i32>]) -> i32 {
+    let n = nums.len();
+    if idx >= n {
+        return if k == 0 { 0 } else { i32::MAX };
     }
-    let mut suffix = vec![0];
-    curr = 0;
-    for &num in arr.iter().rev() {
-        curr = curr.max(num);
-        suffix.push(curr);
+    if k == 0 {
+        return i32::MAX;
     }
-    suffix.reverse();
-    let n = words.len();
-    let mut res = Vec::with_capacity(n);
-    for i in 0..n {
-        let mut curr = 0;
-        if i > 0 {
-            curr = curr.max(prefix[i - 1]);
-        }
-        if i < n - 1 {
-            curr = curr.max(suffix[1 + i])
-        }
-        if (1..n - 1).contains(&i) {
-            curr = curr.max(
-                izip!(words[i - 1].bytes(), words[1 + i].bytes())
-                    .take_while(|(a, b)| a == b)
-                    .count() as i32,
-            )
-        }
-        res.push(curr);
+    if memo[k][idx] > -1 {
+        return memo[k][idx];
     }
+    let mut xor = 0;
+    let mut res = i32::MAX;
+    for right in idx..n {
+        xor ^= nums[right];
+        let val = dfs(nums, k - 1, 1 + right, memo);
+        if val < i32::MAX {
+            res = res.min(xor.max(val));
+        }
+    }
+    memo[k][idx] = res;
     res
+}
+
+pub fn bottom_up(nums: &[i32], k: i32) -> i32 {
+    let n = nums.len();
+    let k = k as usize;
+    let prefix = nums.iter().fold(vec![0], |mut acc, v| {
+        acc.push(v ^ acc.last().unwrap_or(&0));
+        acc
+    });
+    let mut dp = vec![vec![i32::MAX; n + 1]; k + 1];
+    for i in 1..=n {
+        dp[1][i] = prefix[i];
+    }
+    for split in 2..=k {
+        for right in split..=n {
+            let mut curr = i32::MAX;
+            for left in (split - 1)..right {
+                let val = dp[split - 1][left].max(prefix[right] ^ prefix[left]);
+                curr = curr.min(val);
+            }
+            dp[split][right] = curr;
+        }
+    }
+    dp[k][n]
 }
 
 #[cfg(test)]
