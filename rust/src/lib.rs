@@ -7,58 +7,80 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_xor(nums: Vec<i32>, k: i32) -> i32 {
-    let n = nums.len();
-    let k = k as usize;
-    dfs(&nums, k, 0, &mut vec![vec![-1; n]; 1 + k])
-}
-
-fn dfs(nums: &[i32], k: usize, idx: usize, memo: &mut [Vec<i32>]) -> i32 {
-    let n = nums.len();
-    if idx >= n {
-        return if k == 0 { 0 } else { i32::MAX };
-    }
-    if k == 0 {
-        return i32::MAX;
-    }
-    if memo[k][idx] > -1 {
-        return memo[k][idx];
-    }
-    let mut xor = 0;
-    let mut res = i32::MAX;
-    for right in idx..n {
-        xor ^= nums[right];
-        let val = dfs(nums, k - 1, 1 + right, memo);
-        if val < i32::MAX {
-            res = res.min(xor.max(val));
-        }
-    }
-    memo[k][idx] = res;
-    res
-}
-
-pub fn bottom_up(nums: &[i32], k: i32) -> i32 {
-    let n = nums.len();
-    let k = k as usize;
-    let prefix = nums.iter().fold(vec![0], |mut acc, v| {
-        acc.push(v ^ acc.last().unwrap_or(&0));
-        acc
-    });
-    let mut dp = vec![vec![i32::MAX; n + 1]; k + 1];
-    for i in 1..=n {
-        dp[1][i] = prefix[i];
-    }
-    for split in 2..=k {
-        for right in split..=n {
-            let mut curr = i32::MAX;
-            for left in (split - 1)..right {
-                let val = dp[split - 1][left].max(prefix[right] ^ prefix[left]);
-                curr = curr.min(val);
+pub fn max_stability(n: i32, edges: Vec<[i32; 4]>, k: i32) -> i32 {
+    let n = n as usize;
+    let mut dsu = DSU::new(n);
+    let mut mand_weights = vec![];
+    let mut opt_edges = vec![];
+    for e in edges {
+        if e[3] == 1 {
+            if !dsu.union(e[0] as usize, e[1] as usize) {
+                return -1;
             }
-            dp[split][right] = curr;
+            mand_weights.push(e[2]);
+        } else {
+            opt_edges.push((e[0] as usize, e[1] as usize, e[2]));
         }
     }
-    dp[k][n]
+    opt_edges.sort_unstable_by(|a, b| b.2.cmp(&a.2));
+    let mut opt_weights = vec![];
+    for e in opt_edges {
+        if dsu.n == 1 {
+            break;
+        }
+        if dsu.find(e.0) != dsu.find(e.1) {
+            dsu.union(e.0, e.1);
+            opt_weights.push(e.2);
+        }
+    }
+    if dsu.n > 1 {
+        return -1;
+    }
+    opt_weights.sort_unstable();
+    for v in opt_weights.iter_mut().take(k as usize) {
+        *v *= 2;
+    }
+    mand_weights.into_iter().chain(opt_weights).min().unwrap()
+}
+
+struct DSU {
+    parent: Vec<usize>,
+    rank: Vec<i32>,
+    n: usize,
+}
+
+impl DSU {
+    fn new(n: usize) -> Self {
+        Self {
+            parent: (0..n).collect(),
+            rank: vec![0; n],
+            n,
+        }
+    }
+
+    fn find(&mut self, v: usize) -> usize {
+        if self.parent[v] != v {
+            self.parent[v] = self.find(self.parent[v]);
+        }
+        self.parent[v]
+    }
+
+    fn union(&mut self, x: usize, y: usize) -> bool {
+        let [rx, ry] = [x, y].map(|v| self.find(v));
+        if rx == ry {
+            return false;
+        }
+        self.n -= 1;
+        match self.rank[rx].cmp(&self.rank[ry]) {
+            std::cmp::Ordering::Less => self.parent[rx] = ry,
+            std::cmp::Ordering::Equal => {
+                self.rank[rx] += 1;
+                self.parent[ry] = rx;
+            }
+            std::cmp::Ordering::Greater => self.parent[ry] = rx,
+        }
+        true
+    }
 }
 
 #[cfg(test)]
@@ -91,7 +113,17 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(max_stability(3, vec![[0, 1, 2, 1], [1, 2, 3, 0]], 1), 2);
+        assert_eq!(
+            max_stability(3, vec![[0, 1, 4, 0], [1, 2, 3, 0], [0, 2, 1, 0]], 2),
+            6
+        );
+        assert_eq!(
+            max_stability(3, vec![[0, 1, 1, 1], [1, 2, 1, 1], [2, 0, 1, 1]], 0),
+            -1
+        );
+    }
 
     #[test]
     fn test() {}
