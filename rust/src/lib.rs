@@ -7,25 +7,49 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn partition_string(s: String) -> Vec<String> {
-    use std::collections::HashSet;
-    let n = s.len();
-    let mut res = vec![];
-    let mut seen = HashSet::new();
-    let mut left = 0;
-    let mut right = 1;
-    while right <= n {
-        while right <= n && !seen.insert(&s[left..right]) {
-            right += 1;
-        }
-        if right > n {
-            break;
-        }
-        res.push(&s[left..right]);
-        left = right;
-        right += 1;
+pub fn longest_common_prefix(words: Vec<String>) -> Vec<i32> {
+    use itertools::{Itertools, izip};
+    let arr = words
+        .windows(2)
+        .map(|w| {
+            izip!(w[0].bytes(), w[1].bytes())
+                .take_while(|(a, b)| a == b)
+                .count() as i32
+        })
+        .collect_vec();
+    let mut prefix = vec![0];
+    let mut curr = 0;
+    for &num in arr.iter() {
+        curr = curr.max(num);
+        prefix.push(curr);
     }
-    res.into_iter().map(|s| s.to_owned()).collect()
+    let mut suffix = vec![0];
+    curr = 0;
+    for &num in arr.iter().rev() {
+        curr = curr.max(num);
+        suffix.push(curr);
+    }
+    suffix.reverse();
+    let n = words.len();
+    let mut res = Vec::with_capacity(n);
+    for i in 0..n {
+        let mut curr = 0;
+        if i > 0 {
+            curr = curr.max(prefix[i - 1]);
+        }
+        if i < n - 1 {
+            curr = curr.max(suffix[1 + i])
+        }
+        if (1..n - 1).contains(&i) {
+            curr = curr.max(
+                izip!(words[i - 1].bytes(), words[1 + i].bytes())
+                    .take_while(|(a, b)| a == b)
+                    .count() as i32,
+            )
+        }
+        res.push(curr);
+    }
+    res
 }
 
 #[cfg(test)]
