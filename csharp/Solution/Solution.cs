@@ -8,21 +8,25 @@ namespace Solution;
 
 public class Solution
 {
-    public char KthCharacter(int k)
+    public ListNode AddTwoNumbers(ListNode l1, ListNode l2)
     {
-        int len = (int)Math.Pow(2, Math.Ceiling(Math.Log2(k)));
-        return Dfs('a', k, len);
-
-        static char Dfs(char curr, int k, int len)
+        ListNode dummy = new(0);
+        var n1 = l1;
+        var n2 = l2;
+        int carry = 0;
+        var curr = dummy;
+        while (n1 is not null || n2 is not null)
         {
-            if (k == 1) { return curr; }
-            int half = len / 2;
-            if (k <= half) { return Dfs(curr, k, half); }
-            else
-            {
-                char next = curr == 'z' ? 'a' : (char)(curr + 1);
-                return Dfs(next, k - half, half);
-            }
+            int val = carry + (n1 is null ? 0 : n1.val)
+                            + (n2 is null ? 0 : n2.val);
+            carry = val / 10;
+            val %= 10;
+            curr.next = new(val);
+            curr = curr.next;
+            n1 = n1?.next;
+            n2 = n2?.next;
         }
+        if (carry > 0) { curr.next = new(carry); }
+        return dummy.next;
     }
 }
