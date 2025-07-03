@@ -8,25 +8,19 @@ namespace Solution;
 
 public class Solution
 {
-    public ListNode AddTwoNumbers(ListNode l1, ListNode l2)
+    public int LengthOfLongestSubstring(string s)
     {
-        ListNode dummy = new(0);
-        var n1 = l1;
-        var n2 = l2;
-        int carry = 0;
-        var curr = dummy;
-        while (n1 is not null || n2 is not null)
+        Span<int> last = stackalloc int[128];
+        last.Fill(-1);
+        int res = 0;
+        int left = 0;
+        for (int right = 0; right < s.Length; right++)
         {
-            int val = carry + (n1 is null ? 0 : n1.val)
-                            + (n2 is null ? 0 : n2.val);
-            carry = val / 10;
-            val %= 10;
-            curr.next = new(val);
-            curr = curr.next;
-            n1 = n1?.next;
-            n2 = n2?.next;
+            int last_ = last[s[right]];
+            last[s[right]] = right;
+            left = Math.Max(left, last_ + 1);
+            res = Math.Max(res, right + 1 - left);
         }
-        if (carry > 0) { curr.next = new(carry); }
-        return dummy.next;
+        return res;
     }
 }
