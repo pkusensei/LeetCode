@@ -10,12 +10,11 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow("aabbccdd", 7, 5)]
-    [DataRow("aabbccdd", 8, 1)]
-    [DataRow("aaabbb", 3, 8)]
-    public void TestMethod1(string s, int k, int exp)
+    [DataRow(5, 'b')]
+    [DataRow(10, 'c')]
+    public void TestMethod1(int k, char exp)
     {
-        Assert.AreEqual(exp, sol.PossibleStringCount(s, k));
+        Assert.AreEqual(exp, sol.KthCharacter(k));
     }
 
     [TestMethod]
