@@ -7,82 +7,81 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_stability(n: i32, edges: Vec<[i32; 4]>, k: i32) -> i32 {
-    let n = n as usize;
-    let mut dsu = DSU::new(n);
-    let mut mand_weight = i32::MAX;
-    let mut opt_edges = vec![];
-    for e in edges {
-        if e[3] == 1 {
-            if !dsu.union(e[0] as usize, e[1] as usize) {
-                return -1;
+pub fn find_median_sorted_arrays(nums1: &[i32], nums2: &[i32]) -> f64 {
+    fn dfs(
+        nums1: &[i32],
+        nums2: &[i32],
+        k: i32,
+        [start1, end1]: [i32; 2],
+        [start2, end2]: [i32; 2],
+    ) -> f64 {
+        if end1 < start1 {
+            return f64::from(nums2[(k - start1) as usize]);
+        }
+        if end2 < start2 {
+            return f64::from(nums1[(k - start2) as usize]);
+        }
+        let i1 = (start1 + end1) / 2;
+        let i2 = (start2 + end2) / 2;
+        if i1 + i2 < k {
+            if nums1[i1 as usize] > nums2[i2 as usize] {
+                dfs(nums1, nums2, k, [start1, end1], [1 + i2, end2])
+            } else {
+                dfs(nums1, nums2, k, [1 + i1, end1], [start2, end2])
             }
-            mand_weight = mand_weight.min(e[2]);
         } else {
-            opt_edges.push((e[0] as usize, e[1] as usize, e[2]));
-        }
-    }
-    opt_edges.sort_unstable_by(|a, b| b.2.cmp(&a.2));
-    let mut opt_weights = vec![];
-    for e in opt_edges {
-        if dsu.n == 1 {
-            break;
-        }
-        if dsu.union(e.0, e.1) {
-            opt_weights.push(e.2);
-        }
-    }
-    if dsu.n > 1 {
-        return -1;
-    }
-    opt_weights.sort_unstable();
-    for v in opt_weights.iter_mut().take(k as usize) {
-        *v *= 2;
-    }
-    std::iter::once(mand_weight)
-        .chain(opt_weights)
-        .min()
-        .unwrap()
-}
-
-struct DSU {
-    parent: Vec<usize>,
-    rank: Vec<i32>,
-    n: usize,
-}
-
-impl DSU {
-    fn new(n: usize) -> Self {
-        Self {
-            parent: (0..n).collect(),
-            rank: vec![0; n],
-            n,
-        }
-    }
-
-    fn find(&mut self, v: usize) -> usize {
-        if self.parent[v] != v {
-            self.parent[v] = self.find(self.parent[v]);
-        }
-        self.parent[v]
-    }
-
-    fn union(&mut self, x: usize, y: usize) -> bool {
-        let [rx, ry] = [x, y].map(|v| self.find(v));
-        if rx == ry {
-            return false;
-        }
-        self.n -= 1;
-        match self.rank[rx].cmp(&self.rank[ry]) {
-            std::cmp::Ordering::Less => self.parent[rx] = ry,
-            std::cmp::Ordering::Equal => {
-                self.rank[rx] += 1;
-                self.parent[ry] = rx;
+            if nums1[i1 as usize] > nums2[i2 as usize] {
+                dfs(nums1, nums2, k, [start1, i1 - 1], [start2, end2])
+            } else {
+                dfs(nums1, nums2, k, [start1, end1], [start2, i2 - 1])
             }
-            std::cmp::Ordering::Greater => self.parent[ry] = rx,
         }
-        true
     }
+
+    let (n1, n2) = (nums1.len() as i32, nums2.len() as i32);
+    let n = n1 + n2;
+    if n & 1 == 1 {
+        dfs(nums1, nums2, n / 2, [0, n1 - 1], [0, n2 - 1])
+    } else {
+        (dfs(nums1, nums2, n / 2, [0, n1 - 1], [0, n2 - 1])
+            + dfs(nums1, nums2, n / 2 - 1, [0, n1 - 1], [0, n2 - 1]))
+            / 2.0
+    }
+}
+
+pub fn with_binary_search(nums1: &[i32], nums2: &[i32]) -> f64 {
+    if nums1.len() > nums2.len() {
+        return with_binary_search(nums2, nums1);
+    }
+    let (n1, n2) = (nums1.len(), nums2.len());
+    let mut left = 0;
+    let mut right = n1;
+    while left <= right {
+        let partition_a = left.midpoint(right);
+        let partition_b = (1 + n1 + n2) / 2 - partition_a;
+        let max_left_a = partition_a
+            .checked_sub(1)
+            .map(|i| nums1[i])
+            .unwrap_or(i32::MIN);
+        let min_right_a = *nums1.get(partition_a).unwrap_or(&i32::MAX);
+        let max_left_b = partition_b
+            .checked_sub(1)
+            .map(|i| nums2[i])
+            .unwrap_or(i32::MIN);
+        let min_right_b = *nums2.get(partition_b).unwrap_or(&i32::MAX);
+        if max_left_a <= min_right_b && max_left_b <= min_right_a {
+            if (n1 + n2) & 1 == 0 {
+                return f64::from(max_left_a.max(max_left_b) + min_right_a.min(min_right_b)) / 2.0;
+            } else {
+                return max_left_a.max(max_left_b).into();
+            }
+        } else if max_left_a > max_left_b {
+            right = partition_a - 1;
+        } else {
+            left = 1 + partition_a;
+        }
+    }
+    0.0
 }
 
 #[cfg(test)]
@@ -116,15 +115,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_stability(3, vec![[0, 1, 2, 1], [1, 2, 3, 0]], 1), 2);
-        assert_eq!(
-            max_stability(3, vec![[0, 1, 4, 0], [1, 2, 3, 0], [0, 2, 1, 0]], 2),
-            6
-        );
-        assert_eq!(
-            max_stability(3, vec![[0, 1, 1, 1], [1, 2, 1, 1], [2, 0, 1, 1]], 0),
-            -1
-        );
+        assert_eq!(find_median_sorted_arrays(&[1, 3], &[2]), 2.0);
+        assert_eq!(find_median_sorted_arrays(&[1, 2], &[3, 4]), 2.5);
+
+        assert_eq!(with_binary_search(&[1, 3], &[2]), 2.0);
+        assert_eq!(with_binary_search(&[1, 2], &[3, 4]), 2.5);
     }
 
     #[test]
