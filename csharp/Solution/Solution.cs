@@ -7,18 +7,41 @@ namespace Solution;
 
 public class Solution
 {
-    public char KthCharacter(long k, int[] operations)
+    public string LongestPalindrome(string s)
     {
-        int count = 0;
-        for (int i = operations.Length - 1; i >= 0; i -= 1)
+        int n = s.Length;
+        bool[,] dp = new bool[n, n];
+        ReadOnlySpan<char> res = s.AsSpan(0, 1);
+        for (int i = 0; i < n; i++)
         {
-            // half_len = pow(2, i)
-            if (Math.Ceiling(Math.Log2(k)) >= i && k > Math.Pow(2, i))
+            dp[i, i] = true;
+            if (i < n - 1 && s[i] == s[1 + i])
             {
-                k -= (long)Math.Pow(2, i);
-                count += operations[i];
+                dp[i, 1 + i] = true;
+                if (res.Length < 2) { res = s.AsSpan(i, 2); }
             }
         }
-        return (char)('a' + count % 26);
+        for (int mid = 0; mid < n; mid++)
+        {
+            int left = mid - 1;
+            int right = 1 + mid;
+            while (0 <= left && right < n && s[left] == s[right] && dp[left + 1, right - 1])
+            {
+                dp[left, right] = true;
+                if (res.Length < right + 1 - left) { res = s.AsSpan(left, right + 1 - left); }
+                left -= 1;
+                right += 1;
+            }
+            left = mid - 1;
+            right = 2 + mid;
+            while (0 <= left && right < n && s[left] == s[right] && dp[left + 1, right - 1])
+            {
+                dp[left, right] = true;
+                if (res.Length < right + 1 - left) { res = s.AsSpan(left, right + 1 - left); }
+                left -= 1;
+                right += 1;
+            }
+        }
+        return new(res);
     }
 }

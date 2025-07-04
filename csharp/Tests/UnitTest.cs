@@ -10,11 +10,8 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(5, new[] { 0, 0, 0 }, 'a')]
-    [DataRow(10, new[] { 0, 1, 0, 1 }, 'b')]
-    public void TestMethod1(int k, int[] ops, char exp)
+    public void TestMethod1()
     {
-        Assert.AreEqual(exp, sol.KthCharacter(k, ops));
     }
 
     [TestMethod]
