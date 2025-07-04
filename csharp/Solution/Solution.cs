@@ -1,5 +1,4 @@
-﻿using System.Security.Principal;
-using System.Text;
+﻿using System.Text;
 using Solution.LList;
 using Solution.Tree;
 using static Solution.Utils;
@@ -8,19 +7,18 @@ namespace Solution;
 
 public class Solution
 {
-    public int LengthOfLongestSubstring(string s)
+    public char KthCharacter(long k, int[] operations)
     {
-        Span<int> last = stackalloc int[128];
-        last.Fill(-1);
-        int res = 0;
-        int left = 0;
-        for (int right = 0; right < s.Length; right++)
+        int count = 0;
+        for (int i = operations.Length - 1; i >= 0; i -= 1)
         {
-            int last_ = last[s[right]];
-            last[s[right]] = right;
-            left = Math.Max(left, last_ + 1);
-            res = Math.Max(res, right + 1 - left);
+            // half_len = pow(2, i)
+            if (Math.Ceiling(Math.Log2(k)) >= i && k > Math.Pow(2, i))
+            {
+                k -= (long)Math.Pow(2, i);
+                count += operations[i];
+            }
         }
-        return res;
+        return (char)('a' + count % 26);
     }
 }
