@@ -7,46 +7,18 @@ namespace Solution;
 
 public class Solution
 {
-    public bool IsMatch(string s, string p)
+    public int FindLucky(int[] arr)
     {
-        return Dfs(s, p);
-
-        static bool Dfs(ReadOnlySpan<char> hay, ReadOnlySpan<char> needle)
+        Span<int> freq = stackalloc int[501];
+        foreach (var item in arr)
         {
-            if (needle.Length == 0) { return hay.Length == 0; }
-            bool first = hay.Length > 0 && (hay[0] == needle[0] || needle[0] == '.');
-            if (needle.Length > 1 && needle[1] == '*')
-            {   // zero or more
-                return Dfs(hay, needle[2..]) || (first && Dfs(hay[1..], needle));
-            }
-            else
-            {
-                return first && Dfs(hay[1..], needle[1..]);
-            }
+            freq[item] += 1;
         }
-    }
-
-    public bool WithDp(string s, string p)
-    {
-        int n1 = s.Length;
-        int n2 = p.Length;
-        bool[,] dp = new bool[1 + n1, 1 + n2];
-        dp[n1, n2] = true;
-        for (int i1 = n1; i1 >= 0; i1 -= 1)
+        int res = -1;
+        for (int i = 1; i < 501; i++)
         {
-            for (int i2 = n2 - 1; i2 >= 0; i2 -= 1)
-            {
-                bool first = i1 < n1 && (s[i1] == p[i2] || p[i2] == '.');
-                if (1 + i2 < n2 && p[1 + i2] == '*')
-                {
-                    dp[i1, i2] = dp[i1, 2 + i2] || (first && dp[1 + i1, i2]);
-                }
-                else
-                {
-                    dp[i1, i2] = first && dp[1 + i1, 1 + i2];
-                }
-            }
+            if (i == freq[i]) { res = i; }
         }
-        return dp[0, 0];
+        return res;
     }
 }
