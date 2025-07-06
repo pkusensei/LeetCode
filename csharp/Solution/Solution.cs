@@ -5,42 +5,28 @@ using static Solution.Utils;
 
 namespace Solution;
 
-public class FindSumPairs
+public class Solution
 {
-    int[] Nums2 { get; init; }
-    Dictionary<int, int> Dict1 { get; init; }
-    Dictionary<int, int> Dict2 { get; init; }
-
-    public FindSumPairs(int[] nums1, int[] nums2)
+    public ListNode MergeTwoLists(ListNode list1, ListNode list2)
     {
-        Nums2 = nums2;
-        Dict1 = [];
-        Dict2 = [];
-        foreach (var item in nums1)
+        ListNode dummy = new(0);
+        var curr = dummy;
+        while (list1 is not null && list2 is not null)
         {
-            if (!Dict1.TryAdd(item, 1)) { Dict1[item] += 1; }
+            if (list1.val <= list2.val)
+            {
+                curr.next = list1;
+                list1 = list1.next;
+            }
+            else
+            {
+                curr.next = list2;
+                list2 = list2.next;
+            }
+            curr = curr.next;
         }
-        foreach (var item in nums2)
-        {
-            if (!Dict2.TryAdd(item, 1)) { Dict2[item] += 1; }
-        }
-    }
-
-    public void Add(int index, int val)
-    {
-        int oldval = Nums2[index];
-        Dict2[oldval] -= 1;
-        Nums2[index] += val;
-        if (!Dict2.TryAdd(Nums2[index], 1)) { Dict2[Nums2[index]] += 1; }
-    }
-
-    public int Count(int tot)
-    {
-        int res = 0;
-        foreach (var (n1, v1) in Dict1)
-        {
-            res += v1 * Dict2.GetValueOrDefault(tot - n1, 0);
-        }
-        return res;
+        if (list1 is not null) { curr.next = list1; }
+        if (list2 is not null) { curr.next = list2; }
+        return dummy.next;
     }
 }
