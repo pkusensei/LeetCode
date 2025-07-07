@@ -4,33 +4,55 @@ mod fenwick_tree;
 mod helper;
 mod trie;
 
+use std::collections::{BTreeSet, VecDeque};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn validate_coupons(
-    code: Vec<String>,
-    business_line: Vec<String>,
-    is_active: Vec<bool>,
-) -> Vec<String> {
-    use itertools::{Itertools, izip};
-    izip!(code, business_line, is_active)
-        .filter_map(|(c, b, act)| {
-            if !c.is_empty()
-                && c.bytes().all(|v| v.is_ascii_alphanumeric() || v == b'_')
-                && matches!(
-                    b.as_ref(),
-                    "electronics" | "grocery" | "pharmacy" | "restaurant"
-                )
-                && act
-            {
-                Some((b, c))
-            } else {
-                None
+pub fn process_queries(c: i32, connections: Vec<Vec<i32>>, queries: Vec<Vec<i32>>) -> Vec<i32> {
+    let n = c as usize;
+    let adj = connections.iter().fold(vec![vec![]; n], |mut acc, e| {
+        let [a, b] = [0, 1].map(|i| e[i] as usize - 1);
+        acc[a].push(b);
+        acc[b].push(a);
+        acc
+    });
+    let mut ids = vec![n; n];
+    let mut curr_id = 0;
+    for start in 0..n {
+        if ids[start] == n {
+            let mut queue = VecDeque::from([start]);
+            ids[start] = curr_id;
+            while let Some(node) = queue.pop_front() {
+                for &next in &adj[node] {
+                    if ids[next] == n {
+                        ids[next] = curr_id;
+                        queue.push_back(next);
+                    }
+                }
             }
-        })
-        .sorted_unstable()
-        .map(|(_, c)| c)
-        .collect()
+            curr_id += 1;
+        }
+    }
+    let mut sets = vec![BTreeSet::new(); curr_id];
+    for (node, &id) in ids.iter().enumerate() {
+        sets[id].insert(node);
+    }
+    let mut res = vec![];
+    for q in queries {
+        let node = q[1] as usize - 1;
+        let id = ids[node];
+        if q[0] == 1 {
+            if sets[id].contains(&node) {
+                res.push(q[1]);
+            } else {
+                res.push(sets[id].first().map(|v| 1 + *v as i32).unwrap_or(-1));
+            }
+        } else {
+            sets[id].remove(&(q[1] as usize - 1));
+        }
+    }
+    res
 }
 
 #[cfg(test)]
