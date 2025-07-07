@@ -7,62 +7,38 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_time(n: i32, mut edges: Vec<[i32; 3]>, k: i32) -> i32 {
-    edges.sort_unstable_by_key(|e| e[2]);
-    let mut left = 0;
-    let mut right = edges.last().map(|e| e[2]).unwrap_or(0);
-    while left < right {
-        let mid = left + (right - left) / 2;
-        let mut dsu = DSU::new(n as usize);
-        for e in edges.iter().rev().take_while(|e| e[2] > mid) {
-            dsu.union(e[0] as usize, e[1] as usize);
+pub const fn min_moves(sx: i32, sy: i32, mut tx: i32, mut ty: i32) -> i32 {
+    let mut res = 0;
+    while sx <= tx && sy <= ty {
+        if sx == tx && sy == ty {
+            return res;
         }
-        if dsu.n >= k as usize {
-            right = mid
-        } else {
-            left = 1 + mid;
-        }
-    }
-    left
-}
-
-struct DSU {
-    parent: Vec<usize>,
-    rank: Vec<i32>,
-    n: usize,
-}
-
-impl DSU {
-    fn new(n: usize) -> Self {
-        Self {
-            parent: (0..n).collect(),
-            rank: vec![0; n],
-            n,
-        }
-    }
-
-    fn find(&mut self, v: usize) -> usize {
-        if self.parent[v] != v {
-            self.parent[v] = self.find(self.parent[v]);
-        }
-        self.parent[v]
-    }
-
-    fn union(&mut self, x: usize, y: usize) {
-        let [rx, ry] = [x, y].map(|v| self.find(v));
-        if rx == ry {
-            return;
-        }
-        self.n -= 1;
-        match self.rank[rx].cmp(&self.rank[ry]) {
-            std::cmp::Ordering::Less => self.parent[rx] = ry,
-            std::cmp::Ordering::Equal => {
-                self.rank[rx] += 1;
-                self.parent[ry] = rx
+        res += 1;
+        if tx >= 2 * ty {
+            if tx & 1 == 1 {
+                break;
             }
-            std::cmp::Ordering::Greater => self.parent[ry] = rx,
+            tx /= 2;
+        } else if tx > ty {
+            tx -= ty
+        } else if ty >= 2 * tx {
+            if ty & 1 == 1 {
+                break;
+            }
+            ty /= 2
+        } else if ty > tx {
+            ty -= tx;
+        } else {
+            if sx == 0 {
+                tx = 0
+            } else if sy == 0 {
+                ty = 0
+            } else {
+                break;
+            }
         }
     }
+    -1
 }
 
 #[cfg(test)]
@@ -95,8 +71,12 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(min_moves(1, 2, 5, 4), 2);
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(min_moves(1, 0, 4480, 36448), 19);
+    }
 }
