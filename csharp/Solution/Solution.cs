@@ -7,32 +7,34 @@ namespace Solution;
 
 public class Solution
 {
-    public int MaxEvents(int[][] events)
+    public ListNode MergeKLists(ListNode[] lists)
     {
-        Array.Sort(events, (a, b) =>
+        if (lists.Length == 0) { return null; }
+        return Merge(lists, 0, lists.Length - 1);
+    }
+
+    static ListNode Merge(Span<ListNode> lists, int left, int right)
+    {
+        if (left == right) { return lists[left]; }
+        int mid = left + (right - left) / 2;
+        var a = Merge(lists, left, mid);
+        var b = Merge(lists, 1 + mid, right);
+        return Merge(a, b);
+    }
+
+    static ListNode Merge(ListNode a, ListNode b)
+    {
+        if (a is null) { return b; }
+        if (b is null) { return a; }
+        if (a.val <= b.val)
         {
-            if (a[0] == b[0]) { return a[1].CompareTo(b[1]); }
-            return a[0].CompareTo(b[0]);
-        });
-        int max = events.Select(e => e[1]).Max();
-        PriorityQueue<int, int> pq = new();
-        int res = 0;
-        int idx = 0;
-        // For each day
-        for (int day = 0; day <= max; day++)
-        {
-            while (pq.TryPeek(out int top, out _) && top < day)
-            {
-                pq.Dequeue(); // Pop all expired candidates
-            }
-            // Push in potential events
-            for (; idx < events.Length && events[idx][0] <= day; idx += 1)
-            {
-                pq.Enqueue(events[idx][1], events[idx][1]);
-            }
-            // Pick one to attend
-            if (pq.TryDequeue(out _, out _)) { res += 1; }
+            a.next = Merge(a.next, b);
+            return a;
         }
-        return res;
+        else
+        {
+            b.next = Merge(a, b.next);
+            return b;
+        }
     }
 }
