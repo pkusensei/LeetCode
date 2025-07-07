@@ -7,21 +7,40 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn concat_hex36(n: i32) -> String {
-    let mut a = convert(n.pow(2), 16);
-    a.extend(convert(n.pow(3), 36));
-    String::from_utf8(a).unwrap()
-}
-
-fn convert(mut num: i32, base: i32) -> Vec<u8> {
-    let mut res = vec![];
-    while num > 0 {
-        let d = (num % base) as u8;
-        num /= base;
-        res.push(if d < 10 { b'0' + d } else { b'A' + d - 10 });
+pub fn min_cost(m: i32, n: i32, wait_cost: &[&[i32]]) -> i64 {
+    use std::{
+        cmp::Reverse,
+        collections::{BinaryHeap, HashMap},
+    };
+    let mut heap = BinaryHeap::from([(Reverse(1), 0, 0, true)]);
+    let mut dists = HashMap::from([((0, 0, true), 1)]);
+    while let Some((Reverse(cost), r, c, odd)) = heap.pop() {
+        if r == m - 1 && c == n - 1 {
+            return cost;
+        }
+        if dists.get(&(r, c, odd)).is_some_and(|&v| v < cost) {
+            continue;
+        }
+        if odd {
+            for [nr, nc] in [[r + 1, c], [r, 1 + c]]
+                .into_iter()
+                .filter(|&[nr, nc]| nr < m && nc < n)
+            {
+                let ncost = cost + i64::from(1 + nr) * i64::from(1 + nc);
+                if dists.get(&(nr, nc, false)).is_none_or(|&v| v < ncost) {
+                    dists.insert((nr, nc, false), ncost);
+                    heap.push((Reverse(ncost), nr, nc, false));
+                }
+            }
+        } else {
+            let ncost = cost + i64::from(wait_cost[r as usize][c as usize]);
+            if dists.get(&(r, c, true)).is_none_or(|&v| v > ncost) {
+                dists.insert((r, c, true), ncost);
+                heap.push((Reverse(ncost), r, c, true));
+            }
+        }
     }
-    res.reverse();
-    res
+    -1
 }
 
 #[cfg(test)]
@@ -54,7 +73,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(min_cost(2, 2, &[&[3, 5], &[2, 4]]), 9);
+        assert_eq!(min_cost(2, 3, &[&[6, 1, 4], &[3, 2, 5]]), 16);
+    }
 
     #[test]
     fn test() {}
