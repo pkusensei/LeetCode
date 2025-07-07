@@ -10,10 +10,8 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(new[] { 1, 2, 4 }, new[] { 1, 3, 4 }, new[] { 1, 1, 2, 3, 4, 4 })]
-    public void TestMethod1(int[] a, int[] b, int[] exp)
+    public void TestMethod1()
     {
-        Assert.IsTrue(exp.SequenceEqual(sol.MergeTwoLists(ListNode.Make(a), ListNode.Make(b))));
     }
 
     [TestMethod]

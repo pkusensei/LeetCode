@@ -7,26 +7,32 @@ namespace Solution;
 
 public class Solution
 {
-    public ListNode MergeTwoLists(ListNode list1, ListNode list2)
+    public int MaxEvents(int[][] events)
     {
-        ListNode dummy = new(0);
-        var curr = dummy;
-        while (list1 is not null && list2 is not null)
+        Array.Sort(events, (a, b) =>
         {
-            if (list1.val <= list2.val)
+            if (a[0] == b[0]) { return a[1].CompareTo(b[1]); }
+            return a[0].CompareTo(b[0]);
+        });
+        int max = events.Select(e => e[1]).Max();
+        PriorityQueue<int, int> pq = new();
+        int res = 0;
+        int idx = 0;
+        // For each day
+        for (int day = 0; day <= max; day++)
+        {
+            while (pq.TryPeek(out int top, out _) && top < day)
             {
-                curr.next = list1;
-                list1 = list1.next;
+                pq.Dequeue(); // Pop all expired candidates
             }
-            else
+            // Push in potential events
+            for (; idx < events.Length && events[idx][0] <= day; idx += 1)
             {
-                curr.next = list2;
-                list2 = list2.next;
+                pq.Enqueue(events[idx][1], events[idx][1]);
             }
-            curr = curr.next;
+            // Pick one to attend
+            if (pq.TryDequeue(out _, out _)) { res += 1; }
         }
-        if (list1 is not null) { curr.next = list1; }
-        if (list2 is not null) { curr.next = list2; }
-        return dummy.next;
+        return res;
     }
 }
