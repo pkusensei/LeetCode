@@ -7,40 +7,90 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_time(n: i32, edges: &[[i32; 4]]) -> i32 {
-    use std::{cmp::Reverse, collections::BinaryHeap};
-
-    let n = n as usize;
-    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
-        let [a, b] = [0, 1].map(|i| e[i] as usize);
-        acc[a].push((b, e[2], e[3]));
-        acc
-    });
-    let mut seen = vec![i32::MAX; n];
-    seen[0] = 0;
-    let mut heap = BinaryHeap::from([(Reverse(0), 0)]);
-    while let Some((Reverse(cost), node)) = heap.pop() {
-        if node == n - 1 {
-            return cost;
-        }
-        if seen[node] < cost {
-            continue;
-        }
-        for &(next, start, end) in &adj[node] {
-            let ncost = if cost < start {
-                1 + start
-            } else if cost <= end {
-                1 + cost
-            } else {
-                continue;
-            };
-            if seen[next] > ncost {
-                seen[next] = ncost;
-                heap.push((Reverse(ncost), next));
-            }
+pub fn min_stable(nums: &[i32], max_c: i32) -> i32 {
+    let st = SegTree::new(&nums);
+    let mut left = 0;
+    let mut right = nums.len();
+    while left < right {
+        let mid = left.midpoint(right);
+        if check(&st, max_c, mid) {
+            right = mid;
+        } else {
+            left = 1 + mid;
         }
     }
-    -1
+    left as i32
+}
+
+fn check(st: &SegTree, mut max_c: i32, mid: usize) -> bool {
+    let len = 1 + mid;
+    if len > st.n {
+        return false;
+    }
+    let mut i = 0;
+    while i <= st.n - len {
+        if st.query(i, i + len - 1) >= 2 {
+            max_c -= 1;
+            if max_c < 0 {
+                return false;
+            }
+            i += len;
+        } else {
+            i += 1
+        }
+    }
+    max_c >= 0
+}
+
+struct SegTree {
+    tree: Vec<i32>,
+    n: usize,
+}
+
+impl SegTree {
+    fn new(nums: &[i32]) -> Self {
+        let n = nums.len();
+        let mut s = Self {
+            tree: vec![0; 4 * n],
+            n,
+        };
+        s.build(1, 0, n - 1, nums);
+        s
+    }
+
+    fn build(&mut self, node: usize, left: usize, right: usize, nums: &[i32]) {
+        if left == right {
+            self.tree[node] = nums[left];
+            return;
+        }
+        let mid = left.midpoint(right);
+        self.build(2 * node, left, mid, nums);
+        self.build(2 * node + 1, 1 + mid, right, nums);
+        self.tree[node] = gcd(self.tree[2 * node], self.tree[2 * node + 1])
+    }
+
+    fn query(&self, ql: usize, qr: usize) -> i32 {
+        self._query(1, 0, self.n - 1, ql, qr)
+    }
+
+    fn _query(&self, node: usize, left: usize, right: usize, ql: usize, qr: usize) -> i32 {
+        if right < ql || qr < left {
+            return 0; // ??
+        }
+        if ql <= left && right <= qr {
+            return self.tree[node];
+        }
+        let mid = left.midpoint(right);
+        gcd(
+            self._query(2 * node, left, mid, ql, qr),
+            self._query(2 * node + 1, 1 + mid, right, ql, qr),
+        )
+    }
+}
+
+fn gcd(a: i32, b: i32) -> i32 {
+    let [a, b] = [a.min(b), a.max(b)];
+    if a == 0 { b } else { gcd(b % a, a) }
 }
 
 #[cfg(test)]
@@ -73,8 +123,15 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(min_stable(&[3, 5, 10], 1), 1);
+        assert_eq!(min_stable(&[2, 6, 8], 2), 1);
+        assert_eq!(min_stable(&[2, 4, 9, 6], 1), 2);
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(min_stable(&[6, 5], 2), 0);
+        assert_eq!(min_stable(&[2, 2], 0), 2)
+    }
 }
