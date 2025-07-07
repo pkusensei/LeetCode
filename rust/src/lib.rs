@@ -7,36 +7,36 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_cost(m: i32, n: i32, wait_cost: &[&[i32]]) -> i64 {
-    use std::{
-        cmp::Reverse,
-        collections::{BinaryHeap, HashMap},
-    };
-    let mut heap = BinaryHeap::from([(Reverse(1), 0, 0, true)]);
-    let mut dists = HashMap::from([((0, 0, true), 1)]);
-    while let Some((Reverse(cost), r, c, odd)) = heap.pop() {
-        if r == m - 1 && c == n - 1 {
+pub fn min_time(n: i32, edges: &[[i32; 4]]) -> i32 {
+    use std::{cmp::Reverse, collections::BinaryHeap};
+
+    let n = n as usize;
+    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
+        let [a, b] = [0, 1].map(|i| e[i] as usize);
+        acc[a].push((b, e[2], e[3]));
+        acc
+    });
+    let mut seen = vec![i32::MAX; n];
+    seen[0] = 0;
+    let mut heap = BinaryHeap::from([(Reverse(0), 0)]);
+    while let Some((Reverse(cost), node)) = heap.pop() {
+        if node == n - 1 {
             return cost;
         }
-        if dists.get(&(r, c, odd)).is_some_and(|&v| v < cost) {
+        if seen[node] < cost {
             continue;
         }
-        if odd {
-            for [nr, nc] in [[r + 1, c], [r, 1 + c]]
-                .into_iter()
-                .filter(|&[nr, nc]| nr < m && nc < n)
-            {
-                let ncost = cost + i64::from(1 + nr) * i64::from(1 + nc);
-                if dists.get(&(nr, nc, false)).is_none_or(|&v| v < ncost) {
-                    dists.insert((nr, nc, false), ncost);
-                    heap.push((Reverse(ncost), nr, nc, false));
-                }
-            }
-        } else {
-            let ncost = cost + i64::from(wait_cost[r as usize][c as usize]);
-            if dists.get(&(r, c, true)).is_none_or(|&v| v > ncost) {
-                dists.insert((r, c, true), ncost);
-                heap.push((Reverse(ncost), r, c, true));
+        for &(next, start, end) in &adj[node] {
+            let ncost = if cost < start {
+                1 + start
+            } else if cost <= end {
+                1 + cost
+            } else {
+                continue;
+            };
+            if seen[next] > ncost {
+                seen[next] = ncost;
+                heap.push((Reverse(ncost), next));
             }
         }
     }
@@ -73,10 +73,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(min_cost(2, 2, &[&[3, 5], &[2, 4]]), 9);
-        assert_eq!(min_cost(2, 3, &[&[6, 1, 4], &[3, 2, 5]]), 16);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
