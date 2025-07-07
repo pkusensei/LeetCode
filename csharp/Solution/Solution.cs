@@ -7,34 +7,29 @@ namespace Solution;
 
 public class Solution
 {
-    public ListNode MergeKLists(ListNode[] lists)
+    public ListNode ReverseKGroup(ListNode head, int k)
     {
-        if (lists.Length == 0) { return null; }
-        return Merge(lists, 0, lists.Length - 1);
-    }
-
-    static ListNode Merge(Span<ListNode> lists, int left, int right)
-    {
-        if (left == right) { return lists[left]; }
-        int mid = left + (right - left) / 2;
-        var a = Merge(lists, left, mid);
-        var b = Merge(lists, 1 + mid, right);
-        return Merge(a, b);
-    }
-
-    static ListNode Merge(ListNode a, ListNode b)
-    {
-        if (a is null) { return b; }
-        if (b is null) { return a; }
-        if (a.val <= b.val)
+        var tail = head;
+        for (int _ = 0; _ < k; _++)
         {
-            a.next = Merge(a.next, b);
-            return a;
+            if (tail is null) { return head; }
+            tail = tail.next;
         }
-        else
+        var lst = Reverse(head, tail);
+        head.next = ReverseKGroup(tail, k);
+        return lst;
+
+        static ListNode Reverse(ListNode curr, ListNode tail)
         {
-            b.next = Merge(a, b.next);
-            return b;
+            ListNode prev = null;
+            while (curr != tail)
+            {
+                var next = curr.next;
+                curr.next = prev;
+                prev = curr;
+                curr = next;
+            }
+            return prev;
         }
     }
 }
