@@ -4,55 +4,65 @@ mod fenwick_tree;
 mod helper;
 mod trie;
 
-use std::collections::{BTreeSet, VecDeque};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn process_queries(c: i32, connections: Vec<Vec<i32>>, queries: Vec<Vec<i32>>) -> Vec<i32> {
-    let n = c as usize;
-    let adj = connections.iter().fold(vec![vec![]; n], |mut acc, e| {
-        let [a, b] = [0, 1].map(|i| e[i] as usize - 1);
-        acc[a].push(b);
-        acc[b].push(a);
-        acc
-    });
-    let mut ids = vec![n; n];
-    let mut curr_id = 0;
-    for start in 0..n {
-        if ids[start] == n {
-            let mut queue = VecDeque::from([start]);
-            ids[start] = curr_id;
-            while let Some(node) = queue.pop_front() {
-                for &next in &adj[node] {
-                    if ids[next] == n {
-                        ids[next] = curr_id;
-                        queue.push_back(next);
-                    }
-                }
-            }
-            curr_id += 1;
+pub fn min_time(n: i32, mut edges: Vec<[i32; 3]>, k: i32) -> i32 {
+    edges.sort_unstable_by_key(|e| e[2]);
+    let mut left = 0;
+    let mut right = edges.last().map(|e| e[2]).unwrap_or(0);
+    while left < right {
+        let mid = left + (right - left) / 2;
+        let mut dsu = DSU::new(n as usize);
+        for e in edges.iter().rev().take_while(|e| e[2] > mid) {
+            dsu.union(e[0] as usize, e[1] as usize);
         }
-    }
-    let mut sets = vec![BTreeSet::new(); curr_id];
-    for (node, &id) in ids.iter().enumerate() {
-        sets[id].insert(node);
-    }
-    let mut res = vec![];
-    for q in queries {
-        let node = q[1] as usize - 1;
-        let id = ids[node];
-        if q[0] == 1 {
-            if sets[id].contains(&node) {
-                res.push(q[1]);
-            } else {
-                res.push(sets[id].first().map(|v| 1 + *v as i32).unwrap_or(-1));
-            }
+        if dsu.n >= k as usize {
+            right = mid
         } else {
-            sets[id].remove(&(q[1] as usize - 1));
+            left = 1 + mid;
         }
     }
-    res
+    left
+}
+
+struct DSU {
+    parent: Vec<usize>,
+    rank: Vec<i32>,
+    n: usize,
+}
+
+impl DSU {
+    fn new(n: usize) -> Self {
+        Self {
+            parent: (0..n).collect(),
+            rank: vec![0; n],
+            n,
+        }
+    }
+
+    fn find(&mut self, v: usize) -> usize {
+        if self.parent[v] != v {
+            self.parent[v] = self.find(self.parent[v]);
+        }
+        self.parent[v]
+    }
+
+    fn union(&mut self, x: usize, y: usize) {
+        let [rx, ry] = [x, y].map(|v| self.find(v));
+        if rx == ry {
+            return;
+        }
+        self.n -= 1;
+        match self.rank[rx].cmp(&self.rank[ry]) {
+            std::cmp::Ordering::Less => self.parent[rx] = ry,
+            std::cmp::Ordering::Equal => {
+                self.rank[rx] += 1;
+                self.parent[ry] = rx
+            }
+            std::cmp::Ordering::Greater => self.parent[ry] = rx,
+        }
+    }
 }
 
 #[cfg(test)]
