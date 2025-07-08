@@ -7,32 +7,25 @@ namespace Solution;
 
 public class Solution
 {
-    public int LongestValidParentheses(string s)
+    public int Search(int[] nums, int target)
     {
-        bool[] bits = new bool[s.Length];
-        Stack<int> st = [];
-        for (int i = 0; i < s.Length; i++)
+        if (nums[0] <= nums.Last())
         {
-            if (st.Count == 0 || s[i] == '(') { st.Push(i); }
-            else if (st.TryPeek(out var top) && s[top] == '(')
-            {
-                st.Pop();
-                bits[i] = true;
-                bits[top] = true;
-            }
-            else { st.Push(i); }
+            int val = Array.BinarySearch(nums, target);
+            return val >= 0 ? val : -1;
         }
-        int curr = 0;
-        int res = 0;
-        foreach (var item in bits)
+        int left = 0;
+        int right = nums.Length - 1;
+        while (left < right)
         {
-            if (item)
-            {
-                curr += 1;
-                res = Math.Max(res, curr);
-            }
-            else { curr = 0; }
+            int mid = left + (right - left) / 2;
+            if (nums[mid] < nums.Last()) { right = mid - 1; }
+            else { left = mid + 1; }
         }
-        return res;
+        int pivot = nums[left] > nums.Last() ? left + 1 : left;
+        int res;
+        if (target >= nums[0]) { res = Array.BinarySearch(nums, 0, pivot, target); }
+        else { res = Array.BinarySearch(nums, pivot, nums.Length - pivot, target); }
+        return res >= 0 ? res : -1;
     }
 }
