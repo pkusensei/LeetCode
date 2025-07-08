@@ -7,12 +7,12 @@ namespace Solution;
 
 public class Solution
 {
-    public int RemoveDuplicates(int[] nums)
+    public int RemoveElement(int[] nums, int val)
     {
         int curr = 0;
         for (int i = 0; i < nums.Length; i++)
         {
-            if (i < nums.Length - 1 && nums[i] == nums[1 + i]) { continue; }
+            if (nums[i] == val) { continue; }
             nums[curr] = nums[i];
             curr += 1;
         }
