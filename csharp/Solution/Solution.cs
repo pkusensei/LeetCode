@@ -7,15 +7,23 @@ namespace Solution;
 
 public class Solution
 {
-    public int RemoveElement(int[] nums, int val)
+    public int StrStr(string haystack, string needle)
     {
-        int curr = 0;
-        for (int i = 0; i < nums.Length; i++)
+        int[] lps = new int[needle.Length];
+        int len = 0;
+        for (int i = 1; i < needle.Length; i++)
         {
-            if (nums[i] == val) { continue; }
-            nums[curr] = nums[i];
-            curr += 1;
+            while (len > 0 && needle[i] != needle[len]) { len = lps[len - 1]; }
+            if (needle[i] == needle[len]) { len += 1; }
+            lps[i] = len;
         }
-        return curr;
+        len = 0;
+        for (int i = 0; i < haystack.Length; i += 1)
+        {
+            while (len > 0 && haystack[i] != needle[len]) { len = lps[len - 1]; }
+            if (needle[len] == haystack[i]) { len += 1; }
+            if (len == needle.Length) { return i - len + 1; }
+        }
+        return -1;
     }
 }
