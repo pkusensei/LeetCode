@@ -7,38 +7,25 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub const fn min_moves(sx: i32, sy: i32, mut tx: i32, mut ty: i32) -> i32 {
-    let mut res = 0;
-    while sx <= tx && sy <= ty {
-        if sx == tx && sy == ty {
-            return res;
-        }
-        res += 1;
-        if tx >= 2 * ty {
-            if tx & 1 == 1 {
-                break;
-            }
-            tx /= 2;
-        } else if tx > ty {
-            tx -= ty
-        } else if ty >= 2 * tx {
-            if ty & 1 == 1 {
-                break;
-            }
-            ty /= 2
-        } else if ty > tx {
-            ty -= tx;
-        } else {
-            if sx == 0 {
-                tx = 0
-            } else if sy == 0 {
-                ty = 0
-            } else {
-                break;
-            }
-        }
+pub fn max_value(mut events: Vec<Vec<i32>>, k: i32) -> i32 {
+    events.sort_unstable_by_key(|e| e[0]);
+    let n = events.len();
+    let k = k as usize;
+    dfs(&events, 0, k, &mut vec![vec![-1; 1 + k]; n])
+}
+
+fn dfs(arr: &[Vec<i32>], idx: usize, k: usize, memo: &mut [Vec<i32>]) -> i32 {
+    if idx >= arr.len() || k == 0 {
+        return 0;
     }
-    -1
+    if memo[idx][k] > -1 {
+        return memo[idx][k];
+    }
+    let skip = dfs(arr, 1 + idx, k, memo);
+    let i = arr.partition_point(|v| v[0] <= arr[idx][1]);
+    let take = arr[idx][2] + dfs(arr, i, k - 1, memo);
+    memo[idx][k] = skip.max(take);
+    memo[idx][k]
 }
 
 #[cfg(test)]
@@ -71,12 +58,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(min_moves(1, 2, 5, 4), 2);
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(min_moves(1, 0, 4480, 36448), 19);
-    }
+    fn test() {}
 }
