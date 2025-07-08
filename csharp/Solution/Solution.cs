@@ -7,32 +7,32 @@ namespace Solution;
 
 public class Solution
 {
-    public void NextPermutation(int[] nums)
+    public int LongestValidParentheses(string s)
     {
-        int left = -1;
-        for (int i = nums.Length - 2; i >= 0; i -= 1)
+        bool[] bits = new bool[s.Length];
+        Stack<int> st = [];
+        for (int i = 0; i < s.Length; i++)
         {
-            if (nums[i] < nums[1 + i])
+            if (st.Count == 0 || s[i] == '(') { st.Push(i); }
+            else if (st.TryPeek(out var top) && s[top] == '(')
             {
-                left = i;
-                break;
+                st.Pop();
+                bits[i] = true;
+                bits[top] = true;
             }
+            else { st.Push(i); }
         }
-        if (left == -1)
+        int curr = 0;
+        int res = 0;
+        foreach (var item in bits)
         {
-            Array.Sort(nums);
-            return;
-        }
-        int right = -1;
-        for (int i = nums.Length - 1; i > left; i -= 1)
-        {
-            if (nums[left] < nums[i])
+            if (item)
             {
-                right = i;
-                break;
+                curr += 1;
+                res = Math.Max(res, curr);
             }
+            else { curr = 0; }
         }
-        if (right != -1) { (nums[left], nums[right]) = (nums[right], nums[left]); }
-        Array.Reverse(nums, 1 + left, nums.Length - left - 1);
+        return res;
     }
 }
