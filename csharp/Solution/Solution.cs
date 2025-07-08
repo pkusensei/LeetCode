@@ -7,29 +7,15 @@ namespace Solution;
 
 public class Solution
 {
-    public ListNode ReverseKGroup(ListNode head, int k)
+    public int RemoveDuplicates(int[] nums)
     {
-        var tail = head;
-        for (int _ = 0; _ < k; _++)
+        int curr = 0;
+        for (int i = 0; i < nums.Length; i++)
         {
-            if (tail is null) { return head; }
-            tail = tail.next;
+            if (i < nums.Length - 1 && nums[i] == nums[1 + i]) { continue; }
+            nums[curr] = nums[i];
+            curr += 1;
         }
-        var lst = Reverse(head, tail);
-        head.next = ReverseKGroup(tail, k);
-        return lst;
-
-        static ListNode Reverse(ListNode curr, ListNode tail)
-        {
-            ListNode prev = null;
-            while (curr != tail)
-            {
-                var next = curr.next;
-                curr.next = prev;
-                prev = curr;
-                curr = next;
-            }
-            return prev;
-        }
+        return curr;
     }
 }
