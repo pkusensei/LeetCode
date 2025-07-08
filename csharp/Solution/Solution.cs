@@ -7,21 +7,48 @@ namespace Solution;
 
 public class Solution
 {
-    public int Divide(int dividend, int divisor)
+    public IList<int> FindSubstring(string s, string[] words)
     {
-        if (divisor == 0 || dividend == int.MinValue && divisor == -1) { return int.MaxValue; }
-        int sign = (dividend > 0) ^ (divisor > 0) ? -1 : 1;
-        int res = 0;
-        long top = Math.Abs((long)dividend);
-        long bot = Math.Abs((long)divisor);
-        while (top >= bot)
+        int word_len = words[0].Length;
+        int window_len = words.Length * word_len;
+        if (s.Length < window_len) { return []; }
+        Dictionary<string, int> _freq = [];
+        var freq = _freq.GetAlternateLookup<ReadOnlySpan<char>>();
+        foreach (var item in words)
         {
-            int shift = 0;
-            while (top >= (bot << shift)) { shift += 1; }
-            shift -= 1; // Offset last shift to ensure top >= bot
-            res += 1 << shift;
-            top -= bot << shift;
+            if (!freq.TryAdd(item, 1)) { freq[item] += 1; }
         }
-        return res * sign;
+        List<int> res = [];
+        for (int i = 0; i < word_len; i++)
+        {
+            Dictionary<string, int> _window = [];
+            var window = _window.GetAlternateLookup<ReadOnlySpan<char>>();
+            int left = i;
+            int count = 0;
+            for (int right = i; right + word_len <= s.Length; right += word_len)
+            {
+                var word = s.AsSpan(right, word_len);
+                if (freq.ContainsKey(word))
+                {
+                    if (!window.TryAdd(word, 1)) { window[word] += 1; }
+                    count += 1;
+                    while (window[word] > freq[word])
+                    {
+                        var left_span = s.AsSpan(left, word_len);
+                        window[left_span] -= 1;
+                        left += word_len;
+                        count -= 1;
+                    }
+                    if (count == words.Length) { res.Add(left); }
+                }
+                else
+                {
+                    _window.Clear();
+                    count = 0;
+                    left = right + word_len;
+                }
+            }
+        }
+        return res;
     }
 }
