@@ -7,25 +7,29 @@ namespace Solution;
 
 public class Solution
 {
-    public int Search(int[] nums, int target)
+    public int[] SearchRange(int[] nums, int target)
     {
-        if (nums[0] <= nums.Last())
-        {
-            int val = Array.BinarySearch(nums, target);
-            return val >= 0 ? val : -1;
-        }
+        int[] res = new int[2];
+        Array.Fill(res, -1);
+        if (nums.Length == 0) { return res; }
         int left = 0;
         int right = nums.Length - 1;
         while (left < right)
         {
             int mid = left + (right - left) / 2;
-            if (nums[mid] < nums.Last()) { right = mid - 1; }
-            else { left = mid + 1; }
+            if (nums[mid] < target) { left = 1 + mid; }
+            else { right = mid; }
         }
-        int pivot = nums[left] > nums.Last() ? left + 1 : left;
-        int res;
-        if (target >= nums[0]) { res = Array.BinarySearch(nums, 0, pivot, target); }
-        else { res = Array.BinarySearch(nums, pivot, nums.Length - pivot, target); }
-        return res >= 0 ? res : -1;
+        if (nums[left] != target) { return res; }
+        res[0] = left;
+        right = nums.Length - 1;
+        while (left < right)
+        {
+            int mid = left + (right - left + 1) / 2;
+            if (nums[mid] <= target) { left = mid; }
+            else { right = mid - 1; }
+        }
+        res[1] = left;
+        return res;
     }
 }
