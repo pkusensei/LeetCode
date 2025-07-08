@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Reflection.Metadata;
+using System.Text;
 using Solution.LList;
 using Solution.Tree;
 using static Solution.Utils;
@@ -7,29 +8,54 @@ namespace Solution;
 
 public class Solution
 {
-    public int[] SearchRange(int[] nums, int target)
+    public void SolveSudoku(char[][] board)
     {
-        int[] res = new int[2];
-        Array.Fill(res, -1);
-        if (nums.Length == 0) { return res; }
-        int left = 0;
-        int right = nums.Length - 1;
-        while (left < right)
+        Backtrack();
+
+        bool Backtrack()
         {
-            int mid = left + (right - left) / 2;
-            if (nums[mid] < target) { left = 1 + mid; }
-            else { right = mid; }
+            for (int r = 0; r < 9; r++)
+            {
+                for (int c = 0; c < 9; c++)
+                {
+                    if (board[r][c] == '.')
+                    {
+                        for (int ch = '1'; ch <= '9'; ch += 1)
+                        {
+                            if (Check(r, c, (char)ch))
+                            {
+                                board[r][c] = (char)ch;
+                                if (Backtrack()) { return true; }
+                                else { board[r][c] = '.'; }
+                            }
+                        }
+                        return false;
+                    }
+                }
+            }
+            return true;
         }
-        if (nums[left] != target) { return res; }
-        res[0] = left;
-        right = nums.Length - 1;
-        while (left < right)
+
+        bool Check(int r, int c, char ch)
         {
-            int mid = left + (right - left + 1) / 2;
-            if (nums[mid] <= target) { left = mid; }
-            else { right = mid - 1; }
+            for (int rr = 0; rr < 9; rr++)
+            {
+                if (board[rr][c] == ch) { return false; }
+            }
+            for (int cc = 0; cc < 9; cc++)
+            {
+                if (board[r][cc] == ch) { return false; }
+            }
+            int start_r = r / 3 * 3;
+            int start_c = c / 3 * 3;
+            for (int dr = 0; dr < 3; dr++)
+            {
+                for (int dc = 0; dc < 3; dc++)
+                {
+                    if (board[start_r + dr][start_c + dc] == ch) { return false; }
+                }
+            }
+            return true;
         }
-        res[1] = left;
-        return res;
     }
 }
