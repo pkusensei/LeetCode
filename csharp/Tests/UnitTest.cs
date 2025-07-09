@@ -10,13 +10,10 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(new[] { 1, 2, 0 }, 3)]
-    [DataRow(new[] { 3, 4, -1, 1 }, 2)]
-    [DataRow(new[] { 7, 8, 9, 11, 12 }, 1)]
-    public void TestMethod1(int[] nums, int exp)
+    [DataRow(new[] { 0, 1, 0, 2, 1, 0, 1, 3, 2, 1, 2, 1 }, 6)]
+    public void TestMethod1(int[] h, int exp)
     {
-        Assert.AreEqual(exp, sol.FirstMissingPositive([.. nums]));
-        Assert.AreEqual(exp, sol.WithCycleSort(nums));
+        Assert.AreEqual(exp, sol.Trap(h));
     }
 
     [TestMethod]

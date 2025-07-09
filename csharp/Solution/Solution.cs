@@ -1,5 +1,4 @@
-﻿using System.Reflection.Metadata;
-using System.Text;
+﻿using System.Text;
 using Solution.LList;
 using Solution.Tree;
 using static Solution.Utils;
@@ -8,47 +7,29 @@ namespace Solution;
 
 public class Solution
 {
-    public int FirstMissingPositive(int[] nums)
+    public int Trap(int[] height)
     {
-        int n = nums.Length;
-        bool has1 = false;
-        for (int i = 0; i < n; i++)
-        {
-            has1 |= nums[i] == 1;
-            if (nums[i] <= 0 || n < nums[i]) { nums[i] = 1; }
-        }
-        if (!has1) { return 1; }
-        for (int i = 0; i < n; i++)
-        {
-            int val = Math.Abs(nums[i]);
-            if (val == n) { nums[0] = -Math.Abs(nums[0]); }
-            else { nums[val] = -Math.Abs(nums[val]); }
-        }
+        int n = height.Length;
+        int[] left = new int[n];
+        int curr = height[0];
         for (int i = 1; i < n; i++)
         {
-            if (nums[i] > 0) { return i; }
+            curr = Math.Max(curr, height[i]);
+            left[i] = curr;
         }
-        if (nums[0] > 0) { return n; }
-        return 1 + n;
-    }
-
-    public int WithCycleSort(int[] nums)
-    {
-        int n = nums.Length;
-        int i = 0;
-        while (i < n)
+        int[] right = new int[n];
+        curr = height.Last();
+        for (int i = n - 2; i >= 0; i -= 1)
         {
-            int correct_idx = nums[i] - 1;
-            if (0 < nums[i] && nums[i] <= n && nums[i] != nums[correct_idx])
-            {
-                (nums[i], nums[correct_idx]) = (nums[correct_idx], nums[i]);
-            }
-            else { i += 1; }
+            curr = Math.Max(curr, height[i]);
+            right[i] = curr;
         }
-        for (i = 0; i < n; i++)
+        int res = 0;
+        for (int i = 0; i < n; i++)
         {
-            if (nums[i] != 1 + i) { return 1 + i; }
+            int val = Math.Min(left[i], right[i]) - height[i];
+            res += Math.Max(val, 0);
         }
-        return 1 + n;
+        return res;
     }
 }
