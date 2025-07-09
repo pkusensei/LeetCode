@@ -8,32 +8,47 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<IList<int>> CombinationSum2(int[] candidates, int target)
+    public int FirstMissingPositive(int[] nums)
     {
-        Array.Sort(candidates);
-        int n = candidates.Length;
-        List<IList<int>> res = [];
-        Dfs(candidates, target, []);
-        return res;
-
-        void Dfs(Span<int> nums, int target, List<int> curr)
+        int n = nums.Length;
+        bool has1 = false;
+        for (int i = 0; i < n; i++)
         {
-            if (target == 0)
-            {
-                res.Add([.. curr]);
-                return;
-            }
-            if (nums.IsEmpty) { return; }
-            if (nums[0] > target) { return; }
-            for (int i = 0; i < nums.Length; i++)
-            {
-                if (i == 0 || nums[i] != nums[i - 1])
-                {
-                    curr.Add(nums[i]);
-                    Dfs(nums[(1 + i)..], target - nums[i], curr);
-                    curr.RemoveAt(curr.Count - 1);
-                }
-            }
+            has1 |= nums[i] == 1;
+            if (nums[i] <= 0 || n < nums[i]) { nums[i] = 1; }
         }
+        if (!has1) { return 1; }
+        for (int i = 0; i < n; i++)
+        {
+            int val = Math.Abs(nums[i]);
+            if (val == n) { nums[0] = -Math.Abs(nums[0]); }
+            else { nums[val] = -Math.Abs(nums[val]); }
+        }
+        for (int i = 1; i < n; i++)
+        {
+            if (nums[i] > 0) { return i; }
+        }
+        if (nums[0] > 0) { return n; }
+        return 1 + n;
+    }
+
+    public int WithCycleSort(int[] nums)
+    {
+        int n = nums.Length;
+        int i = 0;
+        while (i < n)
+        {
+            int correct_idx = nums[i] - 1;
+            if (0 < nums[i] && nums[i] <= n && nums[i] != nums[correct_idx])
+            {
+                (nums[i], nums[correct_idx]) = (nums[correct_idx], nums[i]);
+            }
+            else { i += 1; }
+        }
+        for (i = 0; i < n; i++)
+        {
+            if (nums[i] != 1 + i) { return 1 + i; }
+        }
+        return 1 + n;
     }
 }
