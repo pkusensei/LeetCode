@@ -8,7 +8,7 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<IList<int>> CombinationSum(int[] candidates, int target)
+    public IList<IList<int>> CombinationSum2(int[] candidates, int target)
     {
         Array.Sort(candidates);
         int n = candidates.Length;
@@ -25,10 +25,15 @@ public class Solution
             }
             if (nums.IsEmpty) { return; }
             if (nums[0] > target) { return; }
-            Dfs(nums[1..], target, curr);
-            curr.Add(nums[0]);
-            Dfs(nums, target - nums[0], curr);
-            curr.RemoveAt(curr.Count - 1);
+            for (int i = 0; i < nums.Length; i++)
+            {
+                if (i == 0 || nums[i] != nums[i - 1])
+                {
+                    curr.Add(nums[i]);
+                    Dfs(nums[(1 + i)..], target - nums[i], curr);
+                    curr.RemoveAt(curr.Count - 1);
+                }
+            }
         }
     }
 }
