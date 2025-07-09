@@ -8,24 +8,27 @@ namespace Solution;
 
 public class Solution
 {
-    public int MaxFreeTime(int eventTime, int k, int[] startTime, int[] endTime)
+    public IList<IList<int>> CombinationSum(int[] candidates, int target)
     {
-        List<int> gaps = [];
-        int end = 0;
-        foreach (var (s, e) in startTime.Zip(endTime))
-        {
-            gaps.Add(s - end);
-            end = e;
-        }
-        gaps.Add(eventTime - end);
-        int res = 0;
-        int curr = 0;
-        for (int i = 0; i < gaps.Count; i++)
-        {
-            curr += gaps[i];
-            if (i >= 1 + k) { curr -= gaps[i - 1 - k]; }
-            res = Math.Max(res, curr);
-        }
+        Array.Sort(candidates);
+        int n = candidates.Length;
+        List<IList<int>> res = [];
+        Dfs(candidates, target, []);
         return res;
+
+        void Dfs(Span<int> nums, int target, List<int> curr)
+        {
+            if (target == 0)
+            {
+                res.Add([.. curr]);
+                return;
+            }
+            if (nums.IsEmpty) { return; }
+            if (nums[0] > target) { return; }
+            Dfs(nums[1..], target, curr);
+            curr.Add(nums[0]);
+            Dfs(nums, target - nums[0], curr);
+            curr.RemoveAt(curr.Count - 1);
+        }
     }
 }
