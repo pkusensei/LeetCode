@@ -7,29 +7,50 @@ namespace Solution;
 
 public class Solution
 {
-    public int Trap(int[] height)
+    public bool IsMatch(string s, string p)
     {
-        int n = height.Length;
-        int[] left = new int[n];
-        int curr = height[0];
-        for (int i = 1; i < n; i++)
+        int n1 = s.Length;
+        int n2 = p.Length;
+        byte[,] memo = new byte[1 + n1, 1 + n2];
+        return Dfs(s, p);
+
+        bool Dfs(ReadOnlySpan<char> hay, ReadOnlySpan<char> needle)
         {
-            curr = Math.Max(curr, height[i]);
-            left[i] = curr;
+            int n1 = hay.Length;
+            int n2 = needle.Length;
+            if (memo[n1, n2] > 0) { return memo[n1, n2] > 1; }
+            if (n1 == 0)
+            {
+                for (int i = 0; i < needle.Length; i++)
+                {
+                    if (needle[i] != '*')
+                    {
+                        memo[n1, n2] = 1;
+                        return false;
+                    }
+                }
+                memo[n1, n2] = 2;
+                return true;
+            }
+            if (n2 == 0)
+            {
+                memo[n1, n2] = 1;
+                return false;
+            }
+            if (hay[0] == needle[0] || needle[0] == '?') { return Dfs(hay[1..], needle[1..]); }
+            if (needle[0] == '*')
+            {
+                for (int i = 0; i <= hay.Length; i++)
+                {
+                    if (Dfs(hay[i..], needle[1..]))
+                    {
+                        memo[n1, n2] = 2;
+                        return true;
+                    }
+                }
+            }
+            memo[n1, n2] = 1;
+            return false;
         }
-        int[] right = new int[n];
-        curr = height.Last();
-        for (int i = n - 2; i >= 0; i -= 1)
-        {
-            curr = Math.Max(curr, height[i]);
-            right[i] = curr;
-        }
-        int res = 0;
-        for (int i = 0; i < n; i++)
-        {
-            int val = Math.Min(left[i], right[i]) - height[i];
-            res += Math.Max(val, 0);
-        }
-        return res;
     }
 }
