@@ -7,16 +7,26 @@ namespace Solution;
 
 public class Solution
 {
-    public bool CanJump(int[] nums)
+    public int[][] Merge(int[][] intervals)
     {
-        int n = nums.Length;
-        int rightmost = 0;
-        for (int i = 0; i < n; i++)
+        Array.Sort(intervals, (a, b) =>
         {
-            if (i > rightmost) { break; } // unreachable state
-            rightmost = int.Max(rightmost, i + nums[i]);
-            if (rightmost >= n - 1) { return true; }
+            if (a[0] == b[0]) { return a[1].CompareTo(b[1]); }
+            return a[0].CompareTo(b[0]);
+        });
+        List<int[]> res = [];
+        int start = intervals[0][0];
+        int end = intervals[0][1];
+        foreach (var item in intervals.Skip(1))
+        {
+            if (end < item[0])
+            {
+                res.Add([start, end]);
+                start = item[0];
+            }
+            end = int.Max(end, item[1]);
         }
-        return false;
+        res.Add([start, end]);
+        return [.. res];
     }
 }
