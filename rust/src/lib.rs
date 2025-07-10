@@ -7,25 +7,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_value(mut events: Vec<Vec<i32>>, k: i32) -> i32 {
-    events.sort_unstable_by_key(|e| e[0]);
-    let n = events.len();
-    let k = k as usize;
-    dfs(&events, 0, k, &mut vec![vec![-1; 1 + k]; n])
-}
-
-fn dfs(arr: &[Vec<i32>], idx: usize, k: usize, memo: &mut [Vec<i32>]) -> i32 {
-    if idx >= arr.len() || k == 0 {
-        return 0;
+pub fn group_anagrams(strs: Vec<String>) -> Vec<Vec<String>> {
+    use std::collections::HashMap;
+    fn count(s: &str) -> [u8; 26] {
+        s.bytes().fold([0; 26], |mut acc, b| {
+            acc[usize::from(b - b'a')] += 1;
+            acc
+        })
     }
-    if memo[idx][k] > -1 {
-        return memo[idx][k];
-    }
-    let skip = dfs(arr, 1 + idx, k, memo);
-    let i = arr.partition_point(|v| v[0] <= arr[idx][1]);
-    let take = arr[idx][2] + dfs(arr, i, k - 1, memo);
-    memo[idx][k] = skip.max(take);
-    memo[idx][k]
+    strs.into_iter()
+        .fold(HashMap::<_, Vec<_>>::new(), |mut acc, s| {
+            acc.entry(count(&s)).or_default().push(s);
+            acc
+        })
+        .into_values()
+        .collect()
 }
 
 #[cfg(test)]
