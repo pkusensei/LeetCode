@@ -7,15 +7,16 @@ namespace Solution;
 
 public class Solution
 {
-    public int MaxSubArray(int[] nums)
+    public bool CanJump(int[] nums)
     {
-        int res = int.MinValue;
-        int curr = 0;
-        foreach (var num in nums)
+        int n = nums.Length;
+        int rightmost = 0;
+        for (int i = 0; i < n; i++)
         {
-            curr = int.Max(num, curr + num);
-            res = int.Max(res, curr);
+            if (i > rightmost) { break; } // unreachable state
+            rightmost = int.Max(rightmost, i + nums[i]);
+            if (rightmost >= n - 1) { return true; }
         }
-        return res;
+        return false;
     }
 }
