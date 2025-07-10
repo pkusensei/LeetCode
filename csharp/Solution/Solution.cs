@@ -7,28 +7,24 @@ namespace Solution;
 
 public class Solution
 {
-    static int[] F => [1, 1, 2, 6, 24, 120, 720, 5040, 40320, 362880];
-
-    public string GetPermutation(int n, int k)
+    public int UniquePaths(int m, int n)
     {
-        List<char> cands = [.. Enumerable.Range(0, n).Select(i => (char)(i + '1'))];
-        List<char> res = [];
-        Dfs(res, cands, k);
-        return string.Concat(res);
-
-        static void Dfs(List<char> res, List<char> cands, int k)
+        int[,] dp = new int[m, n];
+        for (int c = 0; c < n; c++)
         {
-            if (cands.Count == 0) { return; }
-            int subtree = F[cands.Count - 1]; // e.g n=9, subtree=(8!)
-            int idx = 0;
-            while (k > subtree)
-            {
-                k -= subtree;
-                idx += 1;
-            }
-            res.Add(cands[idx]);
-            cands.RemoveAt(idx);
-            Dfs(res, cands, k);
+            dp[0, c] = 1;
         }
+        for (int r = 0; r < m; r++)
+        {
+            dp[r, 0] = 1;
+        }
+        for (int r = 1; r < m; r++)
+        {
+            for (int c = 1; c < n; c++)
+            {
+                dp[r, c] = dp[r - 1, c] + dp[r, c - 1];
+            }
+        }
+        return dp[m - 1, n - 1];
     }
 }
