@@ -7,38 +7,33 @@ namespace Solution;
 
 public class Solution
 {
-    public int MinPathSum(int[][] grid)
+    public bool IsNumber(string s)
     {
-        int rows = grid.Length;
-        int cols = grid[0].Length;
-        int[,] dp = new int[rows, cols];
-        for (int r = 0; r < rows; r++)
+        int exp_idx = s.LastIndexOfAny(['e', 'E']);
+        if (exp_idx == 0) { return false; }
+        if (exp_idx > 0 && s[(1 + exp_idx)..].Any(c => !char.IsAsciiDigit(c))) { return false; }
+
+        string left = exp_idx > 0 ? s[..exp_idx] : s;
+        int dot_idx = left.LastIndexOf('.');
+        int start_idx = 0;
+        while (left[start_idx] == '+' || left[start_idx] == '-')
         {
-            for (int c = 0; c < cols; c++)
+            start_idx += 1;
+        }
+        if (start_idx > 1) { return false; }
+        if (dot_idx < 0 && left[start_idx..].Any(c => !char.IsAsciiDigit(c))) { return false; }
+        if (dot_idx >= 0)
+        {
+            if (left.Length < 2) { return false; }
+            if (dot_idx > start_idx && left[start_idx..dot_idx].Any(c => !char.IsAsciiDigit(c)))
             {
-                dp[r, c] = int.MaxValue;
+                return false;
+            }
+            if (left[(1 + dot_idx)..].Length > 0 && left[(1 + dot_idx)..].Any(c => !char.IsAsciiDigit(c)))
+            {
+                return false;
             }
         }
-        for (int r = 0; r < rows; r++)
-        {
-            for (int c = 0; c < cols; c++)
-            {
-                if (r == 0 && c == 0) { dp[0, 0] = grid[0][0]; }
-                else if (r > 0 && c > 0)
-                {
-                    dp[r, c] = Math.Min(dp[r, c],
-                                    Math.Min(grid[r][c] + dp[r - 1, c], grid[r][c] + dp[r, c - 1]));
-                }
-                else if (r > 0)
-                {
-                    dp[r, c] = grid[r][c] + dp[r - 1, c];
-                }
-                else
-                {
-                    dp[r, c] = grid[r][c] + dp[r, c - 1];
-                }
-            }
-        }
-        return dp[rows - 1, cols - 1];
+        return true;
     }
 }

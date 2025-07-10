@@ -10,8 +10,11 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow("0", true)]
+    [DataRow(".", false)]
+    public void TestMethod1(string s, bool exp)
     {
+        Assert.AreEqual(exp, sol.IsNumber(s));
     }
 
     [TestMethod]
