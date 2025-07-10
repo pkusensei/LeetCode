@@ -7,24 +7,21 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<IList<int>> PermuteUnique(int[] nums)
+    public void Rotate(int[][] matrix)
     {
-        Dictionary<int, int> freq = nums.CountBy(_ => _).ToDictionary();
-        List<IList<int>> res = [];
-        Backtrack([]);
-        return res;
-
-        void Backtrack(List<int> curr)
+        int n = matrix.Length;
+        for (int r = 0; r < n; r++)
         {
-            if (curr.Count == nums.Length) { res.Add([.. curr]); }
-            foreach (var (k, v) in freq)
+            for (int c = 0; c < r; c++)
             {
-                if (v == 0) { continue; }
-                freq[k] -= 1;
-                curr.Add(k);
-                Backtrack(curr);
-                curr.RemoveAt(curr.Count - 1);
-                freq[k] += 1;
+                (matrix[r][c], matrix[c][r]) = (matrix[c][r], matrix[r][c]);
+            }
+        }
+        for (int r = 0; r < n; r++)
+        {
+            for (int c = 0; c < n / 2; c++)
+            {
+                (matrix[r][c], matrix[r][n - 1 - c]) = (matrix[r][n - 1 - c], matrix[r][c]);
             }
         }
     }
