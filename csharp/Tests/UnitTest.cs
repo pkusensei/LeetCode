@@ -12,6 +12,7 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
+        sol.SolveNQueens(4);
     }
 
     [TestMethod]

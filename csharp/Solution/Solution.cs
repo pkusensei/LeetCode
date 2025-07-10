@@ -7,18 +7,55 @@ namespace Solution;
 
 public class Solution
 {
-    public double MyPow(double x, int n)
+    public IList<IList<string>> SolveNQueens(int n)
     {
-        return Dfs(x, n);
-
-        static double Dfs(double x, long n)
+        List<IList<string>> res = [];
+        if (n == 1) { return [["Q"]]; }
+        if (n == 2 || n == 3) { return res; }
+        List<List<int>> board = [];
+        Backtrack(0, []);
+        foreach (var item in board)
         {
-            if (n == 0 || x == 1.0) { return 1.0; }
-            if (x == -1.0) { return (n & 1) == 0 ? 1.0 : -1.0; }
-            if (x == 0.0) { return 0.0; }
-            if (n < 0) { return Dfs(1.0 / x, -n); }
-            if ((n & 1) == 0) { return Dfs(x * x, n >> 1); }
-            return x * Dfs(x * x, n >> 1);
+            List<string> curr = [];
+            foreach (var col in item)
+            {
+                char[] chs = [.. Enumerable.Repeat('.', n)];
+                chs[col] = 'Q';
+                curr.Add(new(chs));
+            }
+            res.Add(curr);
+        }
+        return res;
+
+        void Backtrack(int row, List<int> cols)
+        {
+            if (row == n)
+            {
+                board.Add([.. cols]);
+                return;
+            }
+            for (int col = 0; col < n; col++)
+            {
+                if (Check(cols, col))
+                {
+                    cols.Add(col);
+                    Backtrack(1 + row, cols);
+                    cols.RemoveAt(cols.Count - 1);
+                }
+            }
+        }
+
+        static bool Check(List<int> cols, int col)
+        {
+            for (int row = 0; row < cols.Count; row += 1)
+            {
+                if (col == cols[row]
+                    || Math.Abs(row - cols.Count) == Math.Abs(col - cols[row]))
+                {
+                    return false;
+                }
+            }
+            return true;
         }
     }
 }
