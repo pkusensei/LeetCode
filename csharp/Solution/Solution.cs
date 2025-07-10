@@ -7,31 +7,19 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<IList<string>> SolveNQueens(int n)
+    public int TotalNQueens(int n)
     {
-        List<IList<string>> res = [];
-        if (n == 1) { return [["Q"]]; }
-        if (n == 2 || n == 3) { return res; }
-        List<List<int>> board = [];
+        if (n == 1) { return 1; }
+        if (n == 2 || n == 3) { return 0; }
+        int res = 0;
         Backtrack(0, []);
-        foreach (var item in board)
-        {
-            List<string> curr = [];
-            foreach (var col in item)
-            {
-                char[] chs = [.. Enumerable.Repeat('.', n)];
-                chs[col] = 'Q';
-                curr.Add(new(chs));
-            }
-            res.Add(curr);
-        }
         return res;
 
         void Backtrack(int row, List<int> cols)
         {
             if (row == n)
             {
-                board.Add([.. cols]);
+                res += 1;
                 return;
             }
             for (int col = 0; col < n; col++)
