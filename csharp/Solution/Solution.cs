@@ -7,20 +7,24 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<IList<int>> Permute(int[] nums)
+    public IList<IList<int>> PermuteUnique(int[] nums)
     {
+        Dictionary<int, int> freq = nums.CountBy(_ => _).ToDictionary();
         List<IList<int>> res = [];
-        Backtrack(nums);
+        Backtrack([]);
         return res;
 
-        void Backtrack(Span<int> span)
+        void Backtrack(List<int> curr)
         {
-            if (span.IsEmpty) { res.Add([.. nums]); }
-            for (int i = 0; i < span.Length; i++)
+            if (curr.Count == nums.Length) { res.Add([.. curr]); }
+            foreach (var (k, v) in freq)
             {
-                (span[0], span[i]) = (span[i], span[0]);
-                Backtrack(span[1..]);
-                (span[0], span[i]) = (span[i], span[0]);
+                if (v == 0) { continue; }
+                freq[k] -= 1;
+                curr.Add(k);
+                Backtrack(curr);
+                curr.RemoveAt(curr.Count - 1);
+                freq[k] += 1;
             }
         }
     }
