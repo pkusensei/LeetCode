@@ -7,18 +7,40 @@ namespace Solution;
 
 public class Solution
 {
-    public void SortColors(int[] nums)
+    public string MinWindow(string s, string t)
     {
-        Span<int> freq = stackalloc int[3];
-        foreach (var item in nums)
+        Span<int> freq = stackalloc int[52];
+        foreach (var c in t)
         {
-            freq[item] += 1;
+            Count(freq, c, -1);
         }
-        for (int i = 0; i < nums.Length; i++)
+        ReadOnlySpan<char> res = [];
+        int left = 0;
+        for (int right = 0; right < s.Length; right++)
         {
-            if (freq[0] > 0) { nums[i] = 0; freq[0] -= 1; }
-            else if (freq[1] > 0) { nums[i] = 1; freq[1] -= 1; }
-            else if (freq[2] > 0) { nums[i] = 2; freq[2] -= 1; }
+            Count(freq, s[right], 1);
+            while (Check(freq))
+            {
+                if (res.IsEmpty || res.Length > right + 1 - left) { res = s.AsSpan(left, right + 1 - left); }
+                Count(freq, s[left], -1);
+                left += 1;
+            }
+        }
+        return new(res);
+
+        static void Count(Span<int> freq, char c, int delta)
+        {
+            if (char.IsAsciiLetterUpper(c)) { freq[c - 'A'] += delta; }
+            else { freq[c - 'a' + 26] += delta; }
+        }
+
+        static bool Check(Span<int> freq)
+        {
+            for (int i = 0; i < 52; i++)
+            {
+                if (freq[i] < 0) { return false; }
+            }
+            return true;
         }
     }
 }
