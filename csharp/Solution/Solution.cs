@@ -7,19 +7,32 @@ namespace Solution;
 
 public class Solution
 {
-    public int RemoveDuplicates(int[] nums)
+    public ListNode DeleteDuplicates(ListNode head)
     {
-        int n = nums.Length;
-        if (n <= 2) { return n; }
-        int left = 2;
-        for (int right = 2; right < n; right++)
+        if (head is null) { return null; }
+        ListNode dummy = new(101, head);
+        ListNode prev = dummy;
+        var slow = head;
+        var fast = head.next;
+        while (fast is not null)
         {
-            if (nums[right] != nums[left - 2])
+            if (slow.val != fast.val)
             {
-                nums[left] = nums[right];
-                left += 1;
+                prev = slow;
+                slow = slow.next;
+                fast = fast.next;
+            }
+            else
+            {
+                while (fast is not null && fast.val == slow.val)
+                {
+                    fast = fast.next;
+                }
+                prev.next = fast;
+                slow = fast;
+                fast = fast?.next;
             }
         }
-        return left;
+        return dummy.next;
     }
 }

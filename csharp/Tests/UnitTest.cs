@@ -10,12 +10,8 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(new[] { 1, 1, 1, 2, 2, 2, 3, 3 }, new[] { 1, 1, 2, 2, 3, 3 })]
-    [DataRow(new[] { 1, 2, 3, 3, 3 }, new[] { 1, 2, 3, 3 })]
-    public void TestMethod1(int[] n, int[] exp)
+    public void TestMethod1()
     {
-        Assert.AreEqual(exp.Length, sol.RemoveDuplicates(n));
-        Assert.IsTrue(exp.SequenceEqual(n.Take(exp.Length)));
     }
 
     [TestMethod]
