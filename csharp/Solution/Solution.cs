@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using System.Text.RegularExpressions;
 using Solution.LList;
 using Solution.Tree;
 using static Solution.Utils;
@@ -8,80 +7,44 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<string> FullJustify(string[] words, int maxWidth)
+    public int MostBooked(int n, int[][] meetings)
     {
-        List<Line> lines = [];
-        Line curr = new(maxWidth);
-        foreach (var item in words)
+        Array.Sort(meetings, (a, b) =>
         {
-            if (curr.Empty || maxWidth - curr.SingleSpaceLen > item.Length)
+            if (a[0] == b[0]) { return a[1].CompareTo(b[1]); }
+            return a[0].CompareTo(b[0]);
+        });
+        PriorityQueue<int, int> free = new();
+        for (int i = 0; i < n; i++)
+        {
+            free.Enqueue(i, i);
+        }
+        PriorityQueue<int, (long end, int id)> inuse = new();
+        int[] rooms = [.. Enumerable.Range(0, n).Select(_ => 0)];
+        foreach (var meet in meetings)
+        {
+            int room;
+            while (inuse.TryPeek(out room, out var prio) && prio.end <= meet[0])
             {
-                curr.Add(item);
+                inuse.Dequeue();
+                free.Enqueue(room, room);
+            }
+            if (free.TryDequeue(out room, out _))
+            {
+                inuse.Enqueue(room, (meet[1], room));
             }
             else
             {
-                lines.Add(curr);
-                curr = new(maxWidth);
-                curr.Add(item);
+                inuse.TryDequeue(out room, out var prio);
+                inuse.Enqueue(room, (prio.end + meet[1] - meet[0], room));
             }
+            rooms[room] += 1;
         }
-        curr.IsLast = true;
-        lines.Add(curr);
-        return [.. lines.Select(v => v.ToString())];
-    }
-}
-
-internal class Line
-{
-    public int MaxWidth { get; }
-    public List<string> Words { get; }
-    public bool IsLast { get; set; }
-
-    public bool Empty => Words.Count == 0;
-    public int SingleSpaceLen => Words.Select(w => w.Length + 1).Sum() - 1;
-
-    public Line(int maxWidth, bool isLast = false)
-    {
-        MaxWidth = maxWidth;
-        Words = [];
-        IsLast = isLast;
-    }
-
-    public void Add(string s) => Words.Add(s);
-
-    public override string ToString()
-    {
-        StringBuilder sb = new();
-        if (Words.Count == 1)
+        int res = 0;
+        for (int i = 0; i < n; i++)
         {
-            sb.Append(Words[0]);
+            if (rooms[i] > rooms[res]) { res = i; }
         }
-        else if (IsLast)
-        {
-            foreach (var item in Words)
-            {
-                sb.Append($"{item} ");
-            }
-        }
-        else
-        {
-            int space = MaxWidth - Words.Select(w => w.Length).Sum();
-            int count = Words.Count - 1;
-            int ave = space / count;
-            int rem = space % count;
-            foreach (var item in Words)
-            {
-                sb.Append(item);
-                sb.Append(' ', ave);
-                if (rem > 0)
-                {
-                    sb.Append(' ');
-                    rem -= 1;
-                }
-            }
-        }
-        while (sb.Length > MaxWidth) { sb.Remove(sb.Length - 1, 1); }
-        while (sb.Length < MaxWidth) { sb.Append(' '); }
-        return sb.ToString();
+        return res;
     }
 }
