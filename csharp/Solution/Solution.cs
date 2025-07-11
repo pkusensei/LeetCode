@@ -7,40 +7,32 @@ namespace Solution;
 
 public class Solution
 {
-    public string MinWindow(string s, string t)
+    public IList<IList<int>> Combine(int n, int k)
     {
-        Span<int> freq = stackalloc int[52];
-        foreach (var c in t)
+        List<IList<int>> res = [];
+        for (int mask = 1; mask < (1 << n); mask++)
         {
-            Count(freq, c, -1);
-        }
-        ReadOnlySpan<char> res = [];
-        int left = 0;
-        for (int right = 0; right < s.Length; right++)
-        {
-            Count(freq, s[right], 1);
-            while (Check(freq))
+            if (BitCount(mask) == k)
             {
-                if (res.IsEmpty || res.Length > right + 1 - left) { res = s.AsSpan(left, right + 1 - left); }
-                Count(freq, s[left], -1);
-                left += 1;
+                List<int> curr = new(k);
+                for (int i = 0; i < n; i++)
+                {
+                    if (((mask >> i) & 1) == 1) { curr.Add(1 + i); }
+                }
+                res.Add(curr);
             }
         }
-        return new(res);
+        return res;
 
-        static void Count(Span<int> freq, char c, int delta)
+        static int BitCount(int v)
         {
-            if (char.IsAsciiLetterUpper(c)) { freq[c - 'A'] += delta; }
-            else { freq[c - 'a' + 26] += delta; }
-        }
-
-        static bool Check(Span<int> freq)
-        {
-            for (int i = 0; i < 52; i++)
+            int res = 0;
+            while (v > 0)
             {
-                if (freq[i] < 0) { return false; }
+                res += 1;
+                v &= v - 1;
             }
-            return true;
+            return res;
         }
     }
 }
