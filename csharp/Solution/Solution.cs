@@ -7,32 +7,38 @@ namespace Solution;
 
 public class Solution
 {
-    public ListNode DeleteDuplicates(ListNode head)
+    public int LargestRectangleArea(int[] heights)
     {
-        if (head is null) { return null; }
-        ListNode dummy = new(101, head);
-        ListNode prev = dummy;
-        var slow = head;
-        var fast = head.next;
-        while (fast is not null)
+        int n = heights.Length;
+        int[] right_smaller = new int[n];
+        Array.Fill(right_smaller, n);
+        Stack<int> st = [];
+        for (int i = 0; i < n; i++)
         {
-            if (slow.val != fast.val)
+            while (st.TryPeek(out int top) && heights[top] > heights[i])
             {
-                prev = slow;
-                slow = slow.next;
-                fast = fast.next;
+                st.Pop();
+                right_smaller[top] = i;
             }
-            else
-            {
-                while (fast is not null && fast.val == slow.val)
-                {
-                    fast = fast.next;
-                }
-                prev.next = fast;
-                slow = fast;
-                fast = fast?.next;
-            }
+            st.Push(i);
         }
-        return dummy.next;
+        st.Clear();
+        int[] left_smaller = new int[n];
+        Array.Fill(left_smaller, -1);
+        for (int i = n - 1; i >= 0; i -= 1)
+        {
+            while (st.TryPeek(out int top) && heights[top] > heights[i])
+            {
+                st.Pop();
+                left_smaller[top] = i;
+            }
+            st.Push(i);
+        }
+        int res = 0;
+        foreach (var ((h, right), left) in heights.Zip(right_smaller).Zip(left_smaller))
+        {
+            res = int.Max(res, h * (right - left - 1));
+        }
+        return res;
     }
 }
