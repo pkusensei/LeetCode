@@ -14,6 +14,17 @@ public static class Utils
         return sb.ToString();
     }
 
+    public static int BitCount<T>(T value) where T : IBinaryInteger<T>
+    {
+        int res = 0;
+        while (value != T.Zero)
+        {
+            res += 1;
+            value &= value - T.One;
+        }
+        return res;
+    }
+
     public static T ModPow<T>(T b, T exp, T mod) where T : IBinaryInteger<T>
     {
         if (exp == T.Zero) { return T.One; }
