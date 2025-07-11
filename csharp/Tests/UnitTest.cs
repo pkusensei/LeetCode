@@ -10,10 +10,10 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow("horse", "ros", 3)]
-    public void TestMethod1(string a, string b, int exp)
+    public void TestMethod1()
     {
-        Assert.AreEqual(exp, sol.MinDistance(a, b));
+        int[][] m = [[1, 3, 5, 7], [10, 11, 16, 20], [23, 30, 34, 60]];
+        Assert.IsTrue(sol.SearchMatrix(m, 3));
     }
 
     [TestMethod]
