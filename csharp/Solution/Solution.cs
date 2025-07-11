@@ -7,17 +7,18 @@ namespace Solution;
 
 public class Solution
 {
-    public int ClimbStairs(int n)
+    public string SimplifyPath(string path)
     {
-        if (n <= 1) { return 1; }
-        int dp0 = 1;
-        int dp1 = 1;
-        int dp2 = 0;
-        for (int i = 2; i <= n; i++)
+        Stack<string> st = [];
+        foreach (var item in path.Split('/', StringSplitOptions.RemoveEmptyEntries))
         {
-            dp2 = dp0 + dp1;
-            (dp0, dp1) = (dp1, dp2);
+            switch (item)
+            {
+                case ".": break;
+                case "..": st.TryPop(out _); break;
+                default: st.Push(item); break;
+            }
         }
-        return dp2;
+        return $"/{string.Join('/', st.Reverse())}";
     }
 }
