@@ -7,21 +7,18 @@ namespace Solution;
 
 public class Solution
 {
-    public bool SearchMatrix(int[][] matrix, int target)
+    public void SortColors(int[] nums)
     {
-        int rows = matrix.Length;
-        int cols = matrix[0].Length;
-        int left = 0;
-        int right = rows * cols - 1;
-        while (left <= right)
+        Span<int> freq = stackalloc int[3];
+        foreach (var item in nums)
         {
-            int mid = left + (right - left) / 2;
-            int r = mid / cols;
-            int c = mid % cols;
-            if (matrix[r][c] == target) { return true; }
-            else if (matrix[r][c] < target) { left = 1 + mid; }
-            else { right = mid - 1; }
+            freq[item] += 1;
         }
-        return false;
+        for (int i = 0; i < nums.Length; i++)
+        {
+            if (freq[0] > 0) { nums[i] = 0; freq[0] -= 1; }
+            else if (freq[1] > 0) { nums[i] = 1; freq[1] -= 1; }
+            else if (freq[2] > 0) { nums[i] = 2; freq[2] -= 1; }
+        }
     }
 }
