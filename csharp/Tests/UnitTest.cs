@@ -10,10 +10,10 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow("horse", "ros", 3)]
+    public void TestMethod1(string a, string b, int exp)
     {
-        int[][] m = [[0, 10], [1, 5], [2, 7], [3, 4]];
-        Assert.AreEqual(0, sol.MostBooked(2, m));
+        Assert.AreEqual(exp, sol.MinDistance(a, b));
     }
 
     [TestMethod]

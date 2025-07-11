@@ -7,18 +7,31 @@ namespace Solution;
 
 public class Solution
 {
-    public string SimplifyPath(string path)
+    public int MinDistance(string word1, string word2)
     {
-        Stack<string> st = [];
-        foreach (var item in path.Split('/', StringSplitOptions.RemoveEmptyEntries))
+        if (word1 == word2) { return 0; }
+        int n1 = word1.Length;
+        int n2 = word2.Length;
+        if (n1 * n2 == 0) { return int.Max(n1, n2); }
+        int[,] dp = new int[1 + n1, 1 + n2];
+        for (int i1 = 0; i1 <= n1; i1++)
         {
-            switch (item)
+            for (int i2 = 0; i2 <= n2; i2++)
             {
-                case ".": break;
-                case "..": st.TryPop(out _); break;
-                default: st.Push(item); break;
+                if (i1 == 0) { dp[i1, i2] = i2; }
+                else if (i2 == 0) { dp[i1, i2] = i1; }
+                else if (word1[i1 - 1] == word2[i2 - 1])
+                {
+                    dp[i1, i2] = dp[i1 - 1, i2 - 1];
+                }
+                else
+                {
+                    dp[i1, i2] = 1 + int.Min(dp[i1, i2 - 1], // insert
+                                     int.Min(dp[i1 - 1, i2], // delete
+                                             dp[i1 - 1, i2 - 1])); // replace
+                }
             }
         }
-        return $"/{string.Join('/', st.Reverse())}";
+        return dp[n1, n2];
     }
 }
