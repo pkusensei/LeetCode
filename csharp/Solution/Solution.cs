@@ -8,43 +8,80 @@ namespace Solution;
 
 public class Solution
 {
-    public bool IsNumber(string s)
+    public IList<string> FullJustify(string[] words, int maxWidth)
     {
-        s = s.Trim();
-        int n = s.Length;
-        char prev = '#';
-        bool seen_e = false;
-        bool seen_dot = false;
-        bool seen_sign = false;
-        for (int i = 0; i < n; i++)
+        List<Line> lines = [];
+        Line curr = new(maxWidth);
+        foreach (var item in words)
         {
-            switch (s[i])
+            if (curr.Empty || maxWidth - curr.SingleSpaceLen > item.Length)
             {
-                case char c when '0' <= c && c <= '9': prev = c; break;
-                case '+':
-                case '-':
-                    if ((prev != 'e' && prev != '#') || seen_sign || i == n - 1) { return false; }
-                    prev = s[i];
-                    seen_sign = true;
-                    break;
-                case 'e':
-                case 'E':
-                    if (seen_e || !char.IsAsciiDigit(prev) || i == n - 1) { return false; }
-                    prev = char.ToLower(s[i]);
-                    seen_e = true;
-                    seen_sign = false;
-                    break;
-                case '.':
-                    if (seen_dot || seen_e) { return false; }
-                    if (i == 0 && !(i < n - 1 && char.IsAsciiDigit(s[1 + i]))) { return false; }
-                    if (prev != '#' && !char.IsAsciiDigit(prev) && prev != '+' && prev != '-') { return false; }
-                    if ((prev == '+' || prev == '-') && !(i < n - 1 && char.IsAsciiDigit(s[1 + i]))) { return false; }
-                    seen_dot = true;
-                    seen_sign = false;
-                    break;
-                default: return false;
+                curr.Add(item);
+            }
+            else
+            {
+                lines.Add(curr);
+                curr = new(maxWidth);
+                curr.Add(item);
             }
         }
-        return true;
+        curr.IsLast = true;
+        lines.Add(curr);
+        return [.. lines.Select(v => v.ToString())];
+    }
+}
+
+internal class Line
+{
+    public int MaxWidth { get; }
+    public List<string> Words { get; }
+    public bool IsLast { get; set; }
+
+    public bool Empty => Words.Count == 0;
+    public int SingleSpaceLen => Words.Select(w => w.Length + 1).Sum() - 1;
+
+    public Line(int maxWidth, bool isLast = false)
+    {
+        MaxWidth = maxWidth;
+        Words = [];
+        IsLast = isLast;
+    }
+
+    public void Add(string s) => Words.Add(s);
+
+    public override string ToString()
+    {
+        StringBuilder sb = new();
+        if (Words.Count == 1)
+        {
+            sb.Append(Words[0]);
+        }
+        else if (IsLast)
+        {
+            foreach (var item in Words)
+            {
+                sb.Append($"{item} ");
+            }
+        }
+        else
+        {
+            int space = MaxWidth - Words.Select(w => w.Length).Sum();
+            int count = Words.Count - 1;
+            int ave = space / count;
+            int rem = space % count;
+            foreach (var item in Words)
+            {
+                sb.Append(item);
+                sb.Append(' ', ave);
+                if (rem > 0)
+                {
+                    sb.Append(' ');
+                    rem -= 1;
+                }
+            }
+        }
+        while (sb.Length > MaxWidth) { sb.Remove(sb.Length - 1, 1); }
+        while (sb.Length < MaxWidth) { sb.Append(' '); }
+        return sb.ToString();
     }
 }
