@@ -12,6 +12,8 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
+        char[][] m = [['1', '0', '1', '0', '0'], ['1', '0', '1', '1', '1'], ['1', '1', '1', '1', '1'], ['1', '0', '0', '1', '0']];
+        Assert.AreEqual(6, sol.MaximalRectangle(m));
     }
 
     [TestMethod]

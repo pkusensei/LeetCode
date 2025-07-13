@@ -7,21 +7,36 @@ namespace Solution;
 
 public class Solution
 {
-    public int MatchPlayersAndTrainers(int[] players, int[] trainers)
+    public int MaximalRectangle(char[][] matrix)
     {
-        Array.Sort(players);
-        Array.Sort(trainers);
-        int i = 0;
+        int cols = matrix[0].Length;
+        int[] arr = new int[1 + cols];
         int res = 0;
-        foreach (var p in players)
+        foreach (var line in matrix)
         {
-            while (i < trainers.Length && trainers[i] < p) { i += 1; }
-            if (i < trainers.Length)
+            for (int i = 0; i < cols; i++)
             {
-                res += 1;
-                i += 1;
+                if (line[i] == '1') { arr[i] += 1; }
+                else { arr[i] = 0; }
             }
-            else { break; }
+            Stack<int> st = new(1 + cols);
+            for (int i = 0; i <= cols; i++)
+            {
+                while (st.TryPop(out int top))
+                {
+                    if (arr[top] > arr[i]) // mono increasing stack
+                    {
+                        if (!st.TryPeek(out int prev)) { prev = -1; }
+                        res = int.Max(res, (i - prev - 1) * arr[top]);
+                    }
+                    else
+                    {
+                        st.Push(top);
+                        break;
+                    }
+                }
+                st.Push(i);
+            }
         }
         return res;
     }
