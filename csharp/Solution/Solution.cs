@@ -7,35 +7,26 @@ namespace Solution;
 
 public class Solution
 {
-    public void Merge(int[] nums1, int m, int[] nums2, int n)
+    public IList<IList<int>> SubsetsWithDup(int[] nums)
     {
-        int i1 = m - 1;
-        int i2 = n - 1;
-        for (int dst = m + n - 1; dst >= 0; dst -= 1)
+        Array.Sort(nums);
+        List<IList<int>> res = [];
+        Dfs(nums, []);
+        return res;
+
+        void Dfs(ReadOnlySpan<int> nums, List<int> curr)
         {
-            if (i1 >= 0 && i2 >= 0)
+            if (nums.IsEmpty)
             {
-                if (nums1[i1] > nums2[i2])
-                {
-                    nums1[dst] = nums1[i1];
-                    i1 -= 1;
-                }
-                else
-                {
-                    nums1[dst] = nums2[i2];
-                    i2 -= 1;
-                }
+                res.Add([.. curr]);
+                return;
             }
-            else if (i1 >= 0)
-            {
-                nums1[dst] = nums1[i1];
-                i1 -= 1;
-            }
-            else
-            {
-                nums1[dst] = nums2[i2];
-                i2 -= 1;
-            }
+            curr.Add(nums[0]);
+            Dfs(nums[1..], curr);
+            curr.RemoveAt(curr.Count - 1);
+            int i = 1;
+            while (i < nums.Length && nums[i] == nums[0]) { i += 1; }
+            Dfs(nums[i..], curr);
         }
     }
 }
