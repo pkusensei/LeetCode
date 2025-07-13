@@ -7,62 +7,38 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_cost(n: i32, mut edges: Vec<Vec<i32>>, k: i32) -> i32 {
-    edges.sort_unstable_by_key(|e| e[2]);
-    let mut left = 0;
-    let mut right = edges.last().map(|e| e[2]).unwrap_or(1_000_000);
-    while left < right {
-        let mid = left + (right - left) / 2;
-        let mut dsu = DSU::new(n as usize);
-        for e in edges.iter().take_while(|e| e[2] <= mid) {
-            dsu.union(e[0] as usize, e[1] as usize);
-        }
-        if dsu.n <= k as usize {
-            right = mid;
-        } else {
-            left = 1 + mid;
+pub fn process_str(s: &str, mut k: i64) -> char {
+    let mut len = 0_i64;
+    for b in s.bytes() {
+        match b {
+            b'*' => len = (len - 1).max(0),
+            b'#' => len *= 2,
+            b'%' => (),
+            _ => len += 1,
         }
     }
-    left
-}
-
-struct DSU {
-    parent: Vec<usize>,
-    rank: Vec<i32>,
-    n: usize,
-}
-
-impl DSU {
-    fn new(n: usize) -> Self {
-        Self {
-            parent: (0..n).collect(),
-            rank: vec![0; n],
-            n,
-        }
+    if k >= len {
+        return '.';
     }
-
-    fn find(&mut self, v: usize) -> usize {
-        if self.parent[v] != v {
-            self.parent[v] = self.find(self.parent[v]);
-        }
-        self.parent[v]
-    }
-
-    fn union(&mut self, x: usize, y: usize) {
-        let [rx, ry] = [x, y].map(|v| self.find(v));
-        if rx == ry {
-            return;
-        }
-        self.n -= 1;
-        match self.rank[rx].cmp(&self.rank[ry]) {
-            std::cmp::Ordering::Less => self.parent[rx] = ry,
-            std::cmp::Ordering::Equal => {
-                self.parent[ry] = rx;
-                self.rank[rx] += 1;
+    for ch in s.chars().rev() {
+        match ch {
+            '*' => len += 1,
+            '#' => {
+                len /= 2;
+                if k >= len {
+                    k -= len;
+                }
             }
-            std::cmp::Ordering::Greater => self.parent[ry] = rx,
+            '%' => k = len - k - 1,
+            _ => {
+                len -= 1;
+                if k == len {
+                    return ch;
+                }
+            }
         }
     }
+    '.'
 }
 
 #[cfg(test)]
@@ -95,8 +71,13 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(process_str("a#b%*", 1), 'a');
+        assert_eq!(process_str("cd%#*#", 3), 'd');
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(process_str("jio#*g", 1), 'i');
+    }
 }
