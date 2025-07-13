@@ -10,10 +10,12 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow("great", "rgeat", true)]
+    [DataRow("abcde", "caebd", false)]
+    [DataRow("abb", "bba", true)]
+    public void TestMethod1(string s1, string s2, bool exp)
     {
-        char[][] m = [['1', '0', '1', '0', '0'], ['1', '0', '1', '1', '1'], ['1', '1', '1', '1', '1'], ['1', '0', '0', '1', '0']];
-        Assert.AreEqual(6, sol.MaximalRectangle(m));
+        Assert.AreEqual(exp, sol.IsScramble(s1, s2));
     }
 
     [TestMethod]

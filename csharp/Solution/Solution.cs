@@ -7,37 +7,47 @@ namespace Solution;
 
 public class Solution
 {
-    public int MaximalRectangle(char[][] matrix)
+    public bool IsScramble(string s1, string s2)
     {
-        int cols = matrix[0].Length;
-        int[] arr = new int[1 + cols];
-        int res = 0;
-        foreach (var line in matrix)
+        int n = s1.Length;
+        if (n != s2.Length) { return false; }
+        byte[,,] memo = new byte[n, n, 1 + n];
+        return Dfs(0, 0, n);
+
+        bool Dfs(int i1, int i2, int len)
         {
-            for (int i = 0; i < cols; i++)
+            if (memo[i1, i2, len] > 0) { return memo[i1, i2, len] > 1; }
+            bool flag = true;
+            for (int i = 0; i < len; i++)
             {
-                if (line[i] == '1') { arr[i] += 1; }
-                else { arr[i] = 0; }
-            }
-            Stack<int> st = new(1 + cols);
-            for (int i = 0; i <= cols; i++)
-            {
-                while (st.TryPop(out int top))
+                if (s1[i1 + i] != s2[i2 + i])
                 {
-                    if (arr[top] > arr[i]) // mono increasing stack
-                    {
-                        if (!st.TryPeek(out int prev)) { prev = -1; }
-                        res = int.Max(res, (i - prev - 1) * arr[top]);
-                    }
-                    else
-                    {
-                        st.Push(top);
-                        break;
-                    }
+                    flag = false;
+                    break;
                 }
-                st.Push(i);
             }
+            if (flag)
+            {
+                memo[i1, i2, len] = 2;
+                return true;
+            }
+            for (int delta = 1; delta < len; delta++)
+            {
+                int len1 = delta;
+                int len2 = len - delta;
+                if (Dfs(i1, i2, len1) && Dfs(i1 + delta, i2 + delta, len2))
+                {
+                    memo[i1, i2, len] = 2;
+                    return true;
+                }
+                if (Dfs(i1, i2 + len2, len1) && Dfs(i1 + len1, i2, len2))
+                {
+                    memo[i1, i2, len] = 2;
+                    return true;
+                }
+            }
+            memo[i1, i2, len] = 1;
+            return false;
         }
-        return res;
     }
 }
