@@ -7,37 +7,21 @@ namespace Solution;
 
 public class Solution
 {
-    public int LargestRectangleArea(int[] heights)
+    public int MatchPlayersAndTrainers(int[] players, int[] trainers)
     {
-        int n = heights.Length;
-        int[] right_smaller = new int[n];
-        Array.Fill(right_smaller, n);
-        Stack<int> st = [];
-        for (int i = 0; i < n; i++)
-        {
-            while (st.TryPeek(out int top) && heights[top] > heights[i])
-            {
-                st.Pop();
-                right_smaller[top] = i;
-            }
-            st.Push(i);
-        }
-        st.Clear();
-        int[] left_smaller = new int[n];
-        Array.Fill(left_smaller, -1);
-        for (int i = n - 1; i >= 0; i -= 1)
-        {
-            while (st.TryPeek(out int top) && heights[top] > heights[i])
-            {
-                st.Pop();
-                left_smaller[top] = i;
-            }
-            st.Push(i);
-        }
+        Array.Sort(players);
+        Array.Sort(trainers);
+        int i = 0;
         int res = 0;
-        foreach (var ((h, right), left) in heights.Zip(right_smaller).Zip(left_smaller))
+        foreach (var p in players)
         {
-            res = int.Max(res, h * (right - left - 1));
+            while (i < trainers.Length && trainers[i] < p) { i += 1; }
+            if (i < trainers.Length)
+            {
+                res += 1;
+                i += 1;
+            }
+            else { break; }
         }
         return res;
     }
