@@ -7,47 +7,35 @@ namespace Solution;
 
 public class Solution
 {
-    public bool IsScramble(string s1, string s2)
+    public void Merge(int[] nums1, int m, int[] nums2, int n)
     {
-        int n = s1.Length;
-        if (n != s2.Length) { return false; }
-        byte[,,] memo = new byte[n, n, 1 + n];
-        return Dfs(0, 0, n);
-
-        bool Dfs(int i1, int i2, int len)
+        int i1 = m - 1;
+        int i2 = n - 1;
+        for (int dst = m + n - 1; dst >= 0; dst -= 1)
         {
-            if (memo[i1, i2, len] > 0) { return memo[i1, i2, len] > 1; }
-            bool flag = true;
-            for (int i = 0; i < len; i++)
+            if (i1 >= 0 && i2 >= 0)
             {
-                if (s1[i1 + i] != s2[i2 + i])
+                if (nums1[i1] > nums2[i2])
                 {
-                    flag = false;
-                    break;
+                    nums1[dst] = nums1[i1];
+                    i1 -= 1;
+                }
+                else
+                {
+                    nums1[dst] = nums2[i2];
+                    i2 -= 1;
                 }
             }
-            if (flag)
+            else if (i1 >= 0)
             {
-                memo[i1, i2, len] = 2;
-                return true;
+                nums1[dst] = nums1[i1];
+                i1 -= 1;
             }
-            for (int delta = 1; delta < len; delta++)
+            else
             {
-                int len1 = delta;
-                int len2 = len - delta;
-                if (Dfs(i1, i2, len1) && Dfs(i1 + delta, i2 + delta, len2))
-                {
-                    memo[i1, i2, len] = 2;
-                    return true;
-                }
-                if (Dfs(i1, i2 + len2, len1) && Dfs(i1 + len1, i2, len2))
-                {
-                    memo[i1, i2, len] = 2;
-                    return true;
-                }
+                nums1[dst] = nums2[i2];
+                i2 -= 1;
             }
-            memo[i1, i2, len] = 1;
-            return false;
         }
     }
 }
