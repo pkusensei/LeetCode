@@ -7,30 +7,23 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<string> RestoreIpAddresses(string s)
+    public IList<int> InorderTraversal(TreeNode root)
     {
-        List<string> res = [];
-        Backtrack(s, []);
-        return res;
-
-        void Backtrack(ReadOnlySpan<char> s, List<int> curr)
+        List<int> res = [];
+        if (root is null) { return res; }
+        Stack<TreeNode> st = [];
+        var curr = root;
+        while (curr is not null || st.Count > 0)
         {
-            if (s.IsEmpty && curr.Count == 4)
+            while (curr is not null)
             {
-                res.Add(string.Join('.', curr));
-                return;
+                st.Push(curr);
+                curr = curr.left;
             }
-            if (s.IsEmpty || curr.Count >= 4) { return; }
-            for (int len = 1; len <= int.Min(3, s.Length); len++)
-            {
-                int val = int.Parse(s[..len]);
-                if (len == 1 || (len > 1 && s[0] > '0' && val < 256))
-                {
-                    curr.Add(val);
-                    Backtrack(s[len..], curr);
-                    curr.RemoveAt(curr.Count - 1);
-                }
-            }
+            curr = st.Pop();
+            res.Add(curr.val);
+            curr = curr.right;
         }
+        return res;
     }
 }
