@@ -7,27 +7,23 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<TreeNode> GenerateTrees(int n)
+    public int NumTrees(int n)
     {
-        return Backtrack(1, n);
+        Span<int> memo = stackalloc int[1 + n];
+        memo[..2].Fill(1);
+        return Backtrack(n, memo);
 
-        static List<TreeNode> Backtrack(int left, int right)
+        static int Backtrack(int n, Span<int> memo)
         {
-            if (left > right) { return [null]; }
-            List<TreeNode> res = [];
-            for (int i = left; i <= right; i++)
+            if (memo[n] > 0) { return memo[n]; }
+            int res = 0;
+            for (int i = 0; i < n; i++)
             {
-                var left_trees = Backtrack(left, i - 1);
-                var right_trees = Backtrack(1 + i, right);
-                foreach (var a in left_trees)
-                {
-                    foreach (var b in right_trees)
-                    {
-                        TreeNode node = new(i, a, b);
-                        res.Add(node);
-                    }
-                }
+                var a = Backtrack(i, memo);
+                var b = Backtrack(n - 1 - i, memo);
+                res += a * b;
             }
+            memo[n] = res;
             return res;
         }
     }
