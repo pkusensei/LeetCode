@@ -7,26 +7,31 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<IList<int>> SubsetsWithDup(int[] nums)
+    public int NumDecodings(string s)
     {
-        Array.Sort(nums);
-        List<IList<int>> res = [];
-        Dfs(nums, []);
-        return res;
+        Span<int> memo = stackalloc int[1 + s.Length];
+        memo.Fill(-1);
+        return Dfs(s, memo);
 
-        void Dfs(ReadOnlySpan<int> nums, List<int> curr)
+        static int Dfs(ReadOnlySpan<char> s, Span<int> memo)
         {
-            if (nums.IsEmpty)
+            if (s.IsEmpty) { return 1; }
+            if (memo[s.Length] > -1) { return memo[s.Length]; }
+            int res = 0;
+            if (s[0] == '0') { res = 0; }
+            else if (s[0] == '1')
             {
-                res.Add([.. curr]);
-                return;
+                res = Dfs(s[1..], memo);
+                if (s.Length >= 2) { res += Dfs(s[2..], memo); }
             }
-            curr.Add(nums[0]);
-            Dfs(nums[1..], curr);
-            curr.RemoveAt(curr.Count - 1);
-            int i = 1;
-            while (i < nums.Length && nums[i] == nums[0]) { i += 1; }
-            Dfs(nums[i..], curr);
+            else if (s[0] == '2')
+            {
+                res = Dfs(s[1..], memo);
+                if (s.Length >= 2 && s[1] <= '6') { res += Dfs(s[2..], memo); }
+            }
+            else { res = Dfs(s[1..], memo); }
+            memo[s.Length] = res;
+            return res;
         }
     }
 }
