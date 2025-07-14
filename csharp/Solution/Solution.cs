@@ -7,23 +7,28 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<int> InorderTraversal(TreeNode root)
+    public IList<TreeNode> GenerateTrees(int n)
     {
-        List<int> res = [];
-        if (root is null) { return res; }
-        Stack<TreeNode> st = [];
-        var curr = root;
-        while (curr is not null || st.Count > 0)
+        return Backtrack(1, n);
+
+        static List<TreeNode> Backtrack(int left, int right)
         {
-            while (curr is not null)
+            if (left > right) { return [null]; }
+            List<TreeNode> res = [];
+            for (int i = left; i <= right; i++)
             {
-                st.Push(curr);
-                curr = curr.left;
+                var left_trees = Backtrack(left, i - 1);
+                var right_trees = Backtrack(1 + i, right);
+                foreach (var a in left_trees)
+                {
+                    foreach (var b in right_trees)
+                    {
+                        TreeNode node = new(i, a, b);
+                        res.Add(node);
+                    }
+                }
             }
-            curr = st.Pop();
-            res.Add(curr.val);
-            curr = curr.right;
+            return res;
         }
-        return res;
     }
 }
