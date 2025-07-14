@@ -7,31 +7,30 @@ namespace Solution;
 
 public class Solution
 {
-    public int NumDecodings(string s)
+    public IList<string> RestoreIpAddresses(string s)
     {
-        Span<int> memo = stackalloc int[1 + s.Length];
-        memo.Fill(-1);
-        return Dfs(s, memo);
+        List<string> res = [];
+        Backtrack(s, []);
+        return res;
 
-        static int Dfs(ReadOnlySpan<char> s, Span<int> memo)
+        void Backtrack(ReadOnlySpan<char> s, List<int> curr)
         {
-            if (s.IsEmpty) { return 1; }
-            if (memo[s.Length] > -1) { return memo[s.Length]; }
-            int res = 0;
-            if (s[0] == '0') { res = 0; }
-            else if (s[0] == '1')
+            if (s.IsEmpty && curr.Count == 4)
             {
-                res = Dfs(s[1..], memo);
-                if (s.Length >= 2) { res += Dfs(s[2..], memo); }
+                res.Add(string.Join('.', curr));
+                return;
             }
-            else if (s[0] == '2')
+            if (s.IsEmpty || curr.Count >= 4) { return; }
+            for (int len = 1; len <= int.Min(3, s.Length); len++)
             {
-                res = Dfs(s[1..], memo);
-                if (s.Length >= 2 && s[1] <= '6') { res += Dfs(s[2..], memo); }
+                int val = int.Parse(s[..len]);
+                if (len == 1 || (len > 1 && s[0] > '0' && val < 256))
+                {
+                    curr.Add(val);
+                    Backtrack(s[len..], curr);
+                    curr.RemoveAt(curr.Count - 1);
+                }
             }
-            else { res = Dfs(s[1..], memo); }
-            memo[s.Length] = res;
-            return res;
         }
     }
 }
