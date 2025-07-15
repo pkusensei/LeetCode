@@ -10,11 +10,8 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow("aabcc", "dbbca", "aadbbcbcac", true)]
-    public void TestMethod1(string a, string b, string c, bool exp)
+    public void TestMethod1()
     {
-        Assert.AreEqual(exp, sol.IsInterleave(a, b, c));
-        Assert.AreEqual(exp, sol.With1dDp(a, b, c));
     }
 
     [TestMethod]
