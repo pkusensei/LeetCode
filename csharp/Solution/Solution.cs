@@ -7,24 +7,29 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<IList<int>> PathSum(TreeNode root, int targetSum)
+    public void Flatten(TreeNode root)
     {
-        List<IList<int>> res = [];
-        Backtrack(root, targetSum, []);
-        return res;
+        Dfs(root);
 
-        void Backtrack(TreeNode node, int target, List<int> curr)
+        static (TreeNode head, TreeNode tail) Dfs(TreeNode node)
         {
-            if (node is null) { return; }
-            curr.Add(node.val);
-            target -= node.val;
-            if (node.left is null && node.right is null && 0 == target)
+            if (node is null) { return (null, null); }
+            var head = node;
+            var tail = node;
+            var left = Dfs(node.left);
+            head.left = null;
+            var right = Dfs(node.right);
+            if (left.head is not null)
             {
-                res.Add([.. curr]);
+                head.right = left.head;
+                tail = left.tail;
             }
-            Backtrack(node.left, target, curr);
-            Backtrack(node.right, target, curr);
-            curr.RemoveAt(curr.Count - 1);
+            if (right.tail is not null)
+            {
+                tail.right = right.head;
+                tail = right.tail;
+            }
+            return (head, tail);
         }
     }
 }
