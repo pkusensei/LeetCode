@@ -7,39 +7,27 @@ namespace Solution;
 
 public class Solution
 {
-    public bool IsSymmetric(TreeNode root)
+    public TreeNode BuildTree(int[] preorder, int[] inorder)
     {
-        if (root is null) { return true; }
-        return Dfs(root.left, root.right);
+        return Dfs(preorder, inorder);
 
-        static bool Dfs(TreeNode left, TreeNode right)
+        static TreeNode Dfs(ReadOnlySpan<int> pre, ReadOnlySpan<int> inorder)
         {
-            if (left is null && right is null) { return true; }
-            if (left is null ^ right is null) { return false; }
-            return left.val == right.val
-                   && Dfs(left.left, right.right)
-                   && Dfs(left.right, right.left);
+            if (pre.IsEmpty) { return null; }
+            TreeNode root = new(pre[0]);
+            if (pre.Length == 1) { return root; }
+            int root_idx = 0;
+            for (root_idx = 0; root_idx < inorder.Length; root_idx += 1)
+            {
+                if (inorder[root_idx] == pre[0]) { break; }
+            }
+            var left_in = inorder[..root_idx];
+            var right_in = inorder[(1 + root_idx)..];
+            var left_pre = pre[1..(1 + root_idx)];
+            var right_pre = pre[(1 + root_idx)..];
+            root.left = Dfs(left_pre, left_in);
+            root.right = Dfs(right_pre, right_in);
+            return root;
         }
-    }
-
-    public bool WithStack(TreeNode root)
-    {
-        if (root is null) { return true; }
-        Stack<TreeNode> st = [];
-        st.Push(root.left);
-        st.Push(root.right);
-        while (st.Count > 1)
-        {
-            var n1 = st.Pop();
-            var n2 = st.Pop();
-            if (n1 is null && n2 is null) { continue; }
-            if (n1 is null ^ n2 is null) { return false; }
-            if (n1.val != n2.val) { return false; }
-            st.Push(n1.left);
-            st.Push(n2.right);
-            st.Push(n1.right);
-            st.Push(n2.left);
-        }
-        return true;
     }
 }
