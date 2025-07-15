@@ -7,19 +7,20 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<int> GetRow(int rowIndex)
+    public int MinimumTotal(IList<IList<int>> triangle)
     {
-        List<int> res = [1];
-        for (int _ = 0; _ < rowIndex; _++)
+        int[] dp = [0];
+        foreach (var row in triangle)
         {
-            List<int> curr = [1];
-            for (int i = 0; i < res.Count - 1; i++)
+            int[] curr = new int[row.Count];
+            Array.Fill(curr, int.MaxValue);
+            for (int i = 0; i < curr.Length; i++)
             {
-                curr.Add(res[i] + res[1 + i]);
+                if (0 <= i - 1 && i - 1 < dp.Length) { curr[i] = int.Min(curr[i], row[i] + dp[i - 1]); }
+                if (0 <= i && i < dp.Length) { curr[i] = int.Min(curr[i], row[i] + dp[i]); }
             }
-            curr.Add(1);
-            res = curr;
+            dp = curr;
         }
-        return res;
+        return dp.Min();
     }
 }
