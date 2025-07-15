@@ -7,29 +7,32 @@ namespace Solution;
 
 public class Solution
 {
-    public void Flatten(TreeNode root)
+    public int NumDistinct(string s, string t)
     {
-        Dfs(root);
-
-        static (TreeNode head, TreeNode tail) Dfs(TreeNode node)
+        int n1 = s.Length;
+        int n2 = t.Length;
+        if (n1 < n2) { return 0; }
+        int[,] dp = new int[1 + n1, 1 + n2];
+        for (int i = 0; i <= n1; i++)
         {
-            if (node is null) { return (null, null); }
-            var head = node;
-            var tail = node;
-            var left = Dfs(node.left);
-            head.left = null;
-            var right = Dfs(node.right);
-            if (left.head is not null)
-            {
-                head.right = left.head;
-                tail = left.tail;
-            }
-            if (right.tail is not null)
-            {
-                tail.right = right.head;
-                tail = right.tail;
-            }
-            return (head, tail);
+            dp[i, 0] = 1;
         }
+        // for (int i1 = 1; i1 <= n1; i1++)
+        // {
+        //     for (int i2 = 1; i2 <= n2; i2++)
+        //     {
+        //         dp[i1, i2] = dp[i1 - 1, i2];
+        //         if (s[i1 - 1] == t[i2 - 1]) { dp[i1, i2] += dp[i1 - 1, i2 - 1]; }
+        //     }
+        // }
+        for (int i1 = 0; i1 < n1; i1++)
+        {
+            for (int i2 = 0; i2 < n2; i2++)
+            {
+                dp[1 + i1, 1 + i2] = dp[i1, 1 + i2];
+                if (s[i1] == t[i2]) { dp[1 + i1, 1 + i2] += dp[i1, i2]; }
+            }
+        }
+        return dp[n1, n2];
     }
 }

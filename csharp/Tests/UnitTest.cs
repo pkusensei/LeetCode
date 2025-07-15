@@ -10,8 +10,10 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow("rabbbit", "rabbit", 3)]
+    public void TestMethod1(string s, string t, int exp)
     {
+        Assert.AreEqual(exp, sol.NumDistinct(s, t));
     }
 
     [TestMethod]
