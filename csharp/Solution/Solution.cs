@@ -7,27 +7,24 @@ namespace Solution;
 
 public class Solution
 {
-    public TreeNode BuildTree(int[] preorder, int[] inorder)
+    public IList<IList<int>> PathSum(TreeNode root, int targetSum)
     {
-        return Dfs(preorder, inorder);
+        List<IList<int>> res = [];
+        Backtrack(root, targetSum, []);
+        return res;
 
-        static TreeNode Dfs(ReadOnlySpan<int> pre, ReadOnlySpan<int> inorder)
+        void Backtrack(TreeNode node, int target, List<int> curr)
         {
-            if (pre.IsEmpty) { return null; }
-            TreeNode root = new(pre[0]);
-            if (pre.Length == 1) { return root; }
-            int root_idx = 0;
-            for (root_idx = 0; root_idx < inorder.Length; root_idx += 1)
+            if (node is null) { return; }
+            curr.Add(node.val);
+            target -= node.val;
+            if (node.left is null && node.right is null && 0 == target)
             {
-                if (inorder[root_idx] == pre[0]) { break; }
+                res.Add([.. curr]);
             }
-            var left_in = inorder[..root_idx];
-            var right_in = inorder[(1 + root_idx)..];
-            var left_pre = pre[1..(1 + root_idx)];
-            var right_pre = pre[(1 + root_idx)..];
-            root.left = Dfs(left_pre, left_in);
-            root.right = Dfs(right_pre, right_in);
-            return root;
+            Backtrack(node.left, target, curr);
+            Backtrack(node.right, target, curr);
+            curr.RemoveAt(curr.Count - 1);
         }
     }
 }
