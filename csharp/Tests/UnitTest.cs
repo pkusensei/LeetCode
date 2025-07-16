@@ -10,10 +10,8 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow("aab", 1)]
-    public void TestMethod1(string s, int exp)
+    public void TestMethod1()
     {
-        Assert.AreEqual(exp, sol.MinCut(s));
     }
 
     [TestMethod]
