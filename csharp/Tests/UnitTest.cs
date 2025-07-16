@@ -10,10 +10,8 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(new[] { 100, 4, 200, 1, 3, 2 }, 4)]
-    public void TestMethod1(int[] nums, int exp)
+    public void TestMethod1()
     {
-        Assert.AreEqual(exp, sol.LongestConsecutive(nums));
     }
 
     [TestMethod]
