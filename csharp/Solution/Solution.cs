@@ -7,29 +7,48 @@ namespace Solution;
 
 public class Solution
 {
-    public int MaximumLength(int[] nums)
+    public int LongestConsecutive(int[] nums)
     {
-        int even = 0;
-        int odd = 0;
-        int even_odd = 0;
-        int odd_even = 0;
+        if (nums.Length < 1) { return 0; }
+        Dictionary<int, int> dict = [];
         foreach (var num in nums)
         {
-            int next_even_odd = even_odd;
-            int next_odd_even = odd_even;
-            if ((num & 1) == 0)
-            {
-                even += 1;
-                next_odd_even = 1 + even_odd;
-            }
-            else
-            {
-                odd += 1;
-                next_even_odd = 1 + odd_even;
-            }
-            even_odd = next_even_odd;
-            odd_even = next_odd_even;
+            dict.TryAdd(num, dict.Count);
         }
-        return int.Max(int.Max(even, odd), int.Max(even_odd, odd_even));
+        DSU dsu = new(dict.Count);
+        foreach (var (num, id) in dict)
+        {
+            if (dict.TryGetValue(num - 1, out var i)) { dsu.Union(id, i); }
+            if (dict.TryGetValue(1 + num, out i)) { dsu.Union(id, i); }
+        }
+        return dsu.Size.Max();
+    }
+}
+
+struct DSU
+{
+    public DSU(int n)
+    {
+        Parent = [.. Enumerable.Range(0, n)];
+        Size = [.. Enumerable.Repeat(1, n)];
+    }
+
+    public int[] Parent { get; }
+    public int[] Size { get; }
+
+    public readonly int Find(int v)
+    {
+        if (Parent[v] != v) { Parent[v] = Find(Parent[v]); }
+        return Parent[v];
+    }
+
+    public readonly void Union(int x, int y)
+    {
+        int rx = Find(x);
+        int ry = Find(y);
+        if (rx == ry) { return; }
+        if (Size[rx] < Size[ry]) { (rx, ry) = (ry, rx); }
+        Parent[ry] = rx;
+        Size[rx] += Size[ry];
     }
 }
