@@ -7,29 +7,40 @@ namespace Solution;
 
 public class Solution
 {
-    public ListNode DetectCycle(ListNode head)
+    public void ReorderList(ListNode head)
     {
-        if (head is null) { return null; }
-        bool cycle = false;
+        if (head is null || head.next is null) { return; }
         var slow = head;
         var fast = head;
-        while (fast is not null && fast.next is not null)
+        while (fast.next is not null && fast.next.next is not null)
         {
             slow = slow.next;
             fast = fast.next.next;
-            if (slow == fast)
-            {
-                cycle = true;
-                break;
-            }
         }
-        if (!cycle) { return null; }
-        slow = head;
-        while (slow != fast)
+        var tail = Reverse(slow.next);
+        slow.next = null;
+        while (tail is not null)
         {
-            slow = slow.next;
-            fast = fast.next;
+            var n1 = head.next;
+            var n2 = tail.next;
+            head.next = tail;
+            tail.next = n1;
+            head = n1;
+            tail = n2;
         }
-        return slow;
+
+        static ListNode Reverse(ListNode head)
+        {
+            ListNode prev = null;
+            ListNode curr = head;
+            while (curr is not null)
+            {
+                var temp = curr.next;
+                curr.next = prev;
+                prev = curr;
+                curr = temp;
+            }
+            return prev;
+        }
     }
 }

@@ -3,18 +3,72 @@ using System.Text;
 
 namespace Solution.LList;
 
-public class ListNodeBase<T> where T : ListNodeBase<T>
+public abstract class ListNodeBase<T> : IEnumerable<int>
+    where T : ListNodeBase<T>, IEnumerable<int>
 {
     public int val;
     public T next;
+
+    public T FindMiddleNode()
+    {
+        var curr = (T)this;
+        if (curr is null || curr.next is null) { return curr; }
+        (var slow, var fast) = (curr, curr);
+        while (fast.next is not null && fast.next.next is not null)
+        {
+            slow = slow.next;
+            fast = fast.next.next;
+        }
+        return slow;
+    }
+
+    public static T Reverse(T head)
+    {
+        T prev = null;
+        T curr = head;
+        while (curr is not null)
+        {
+            var temp = curr.next;
+            curr.next = prev;
+            prev = curr;
+            curr = temp;
+        }
+        return prev;
+    }
+
+    public IEnumerator<int> GetEnumerator()
+    {
+        var curr = this;
+        while (curr is not null)
+        {
+            yield return curr.val;
+            curr = curr.next;
+        }
+    }
+
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+    public override string ToString()
+    {
+        var curr = this;
+        var sb = new StringBuilder("[");
+        while (curr is not null)
+        {
+            sb.AppendFormat("{0},", curr.val);
+            curr = curr.next;
+        }
+        sb.Remove(sb.Length - 1, 1);
+        sb.Append(']');
+        return sb.ToString();
+    }
 }
 
-public class ListNode : ListNodeBase<ListNode>, IEnumerable<int>
+public class ListNode : ListNodeBase<ListNode>
 {
-    public ListNode(int val = 0, ListNode next = null)
+    public ListNode(int _val = 0, ListNode _next = null)
     {
-        this.val = val;
-        this.next = next;
+        val = _val;
+        next = _next;
     }
 
     public static ListNode Make(IEnumerable<int> nums)
@@ -46,49 +100,6 @@ public class ListNode : ListNodeBase<ListNode>, IEnumerable<int>
         }
         curr.next = loop;
         return dummy.next;
-    }
-
-    public ListNode FindMiddleNode()
-    {
-        var curr = this;
-        if (curr is null || curr.next is null) { return curr; }
-
-        (var slow, var fast) = (curr, curr);
-        while (fast.next is not null && fast.next.next is not null)
-        {
-            slow = slow.next;
-            fast = fast.next.next;
-        }
-        return slow;
-    }
-
-    public IEnumerator<int> GetEnumerator()
-    {
-        var curr = this;
-        while (curr is not null)
-        {
-            yield return curr.val;
-            curr = curr.next;
-        }
-    }
-
-    public override string ToString()
-    {
-        var curr = this;
-        var sb = new StringBuilder("[");
-        while (curr is ListNode n)
-        {
-            sb.AppendFormat("{0},", n.val);
-            curr = n.next;
-        }
-        sb.Remove(sb.Length - 1, 1);
-        sb.Append(']');
-        return sb.ToString();
-    }
-
-    IEnumerator IEnumerable.GetEnumerator()
-    {
-        return GetEnumerator();
     }
 }
 
