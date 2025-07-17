@@ -7,18 +7,18 @@ namespace Solution;
 
 public class Solution
 {
-    public int CanCompleteCircuit(int[] gas, int[] cost)
+    public int MaximumLength(int[] nums, int k)
     {
-        if (gas.Sum() < cost.Sum()) { return -1; }
         int res = 0;
-        int curr = 0;
-        for (int i = 0; i < gas.Length; i++)
+        int[] dp = new int[k];
+        for (int val = 0; val < k; val++)
         {
-            curr += gas[i] - cost[i];
-            if (curr < 0)
+            Array.Fill(dp, 0);
+            foreach (var num in nums)
             {
-                curr = 0;
-                res = 1 + i;
+                int prev = (k + val - num % k) % k;
+                dp[num % k] = 1 + dp[prev];
+                res = int.Max(res, dp[num % k]);
             }
         }
         return res;
