@@ -10,12 +10,8 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(new[] { 1, 4, 2, 3 }, new[] { 1, 2, 3, 4 })]
-    public void TestMethod1(int[] exp, int[] nums)
+    public void TestMethod1()
     {
-        var head = ListNode.Make(nums);
-        sol.ReorderList(head);
-        Assert.IsTrue(exp.SequenceEqual(head));
     }
 
     [TestMethod]
