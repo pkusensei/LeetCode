@@ -1,38 +1,45 @@
 ﻿using System.Text;
 using Solution.LList;
-using Solution.Tree;
+// using Solution.Tree;
 using static Solution.Utils;
 
 namespace Solution;
 
 public class Solution
 {
-    public int SingleNumber(int[] nums)
+    public Node CopyRandomList(Node head)
     {
-        int one = 0;
-        int two = 0;
-        foreach (var num in nums)
+        if (head is null) { return null; }
+        var curr = head;
+        while (curr is not null)
         {
-            for (int bit = 0; bit < 32; bit++)
+            Node new_node = new(curr.val)
             {
-                if (((num >> bit) & 1) == 1)
-                {
-                    if (((two >> bit) & 1) == 1)
-                    {
-                        two ^= 1 << bit;
-                    }
-                    else if (((one >> bit) & 1) == 1)
-                    {
-                        one ^= 1 << bit;
-                        two |= 1 << bit;
-                    }
-                    else
-                    {
-                        one |= 1 << bit;
-                    }
-                }
-            }
+                next = curr.next,
+                random = curr.random,
+            };
+            curr.next = new_node;
+            curr = new_node.next;
         }
-        return one;
+        curr = head.next;
+        while (curr is not null)
+        {
+            if (curr.random is not null)
+            {
+                curr.random = curr.random.next;
+            }
+            curr = curr.next?.next;
+        }
+        var old = head;
+        var res = head.next;
+        curr = res;
+        while (curr is not null)
+        {
+            old.next = curr.next;
+            old = old.next;
+            curr.next = curr.next?.next;
+            curr = curr.next;
+        }
+        return res;
     }
 }
