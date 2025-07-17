@@ -10,8 +10,10 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow(true, "leetcode", new[] { "leet", "code" })]
+    public void TestMethod1(bool exp, string s, string[] d)
     {
+        Assert.AreEqual(exp, sol.WordBreak(s, d));
     }
 
     [TestMethod]
