@@ -7,15 +7,28 @@ namespace Solution;
 
 public class Solution
 {
-    public bool WordBreak(string s, IList<string> wordDict)
+    public IList<string> WordBreak(string s, IList<string> wordDict)
     {
         Trie tr = new();
         foreach (var item in wordDict)
         {
             tr.Insert(item);
         }
-        byte[] memo = new byte[s.Length];
-        return tr.Dfs(s, 0, memo);
+        List<List<int>> res = [];
+        tr.Dfs(s, 0, [], res);
+        return res.Select(v =>
+        {
+            int prev = 0;
+            StringBuilder sb = new();
+            foreach (var end in v)
+            {
+                sb.Append(s[prev..end]);
+                sb.Append(' ');
+                prev = end;
+            }
+            sb.Remove(sb.Length - 1, 1);
+            return sb.ToString();
+        }).ToList();
     }
 }
 
@@ -40,19 +53,24 @@ class Trie
         curr.IsEnd = true;
     }
 
-    public bool Dfs(ReadOnlySpan<char> s, int idx, Span<byte> memo)
+    public void Dfs(ReadOnlySpan<char> s, int idx, List<int> indices, List<List<int>> res)
     {
-        if (idx == s.Length) { return true; }
-        if (memo[idx] > 0) { return memo[idx] > 1; }
+        if (idx == s.Length)
+        {
+            res.Add([.. indices]);
+            return;
+        }
         var curr = this;
-        bool res = false;
         for (int i = idx; i < s.Length; i++)
         {
             curr = curr.Nodes[s[i] - 'a'];
             if (curr is null) { break; }
-            if (curr.IsEnd) { res |= Dfs(s, 1 + i, memo); }
+            if (curr.IsEnd)
+            {
+                indices.Add(1 + i);
+                Dfs(s, 1 + i, indices, res);
+                indices.RemoveAt(indices.Count - 1);
+            }
         }
-        memo[idx] = (byte)(res ? 2 : 1);
-        return res;
     }
 }
