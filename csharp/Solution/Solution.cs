@@ -7,19 +7,32 @@ namespace Solution;
 
 public class Solution
 {
-    public int Candy(int[] ratings)
+    public int SingleNumber(int[] nums)
     {
-        int n = ratings.Length;
-        int[] nums = new int[n];
-        Array.Fill(nums, 1);
-        for (int i = 1; i < n; i++)
+        int one = 0;
+        int two = 0;
+        foreach (var num in nums)
         {
-            if (ratings[i] > ratings[i - 1]) { nums[i] = int.Max(nums[i], 1 + nums[i - 1]); }
+            for (int bit = 0; bit < 32; bit++)
+            {
+                if (((num >> bit) & 1) == 1)
+                {
+                    if (((two >> bit) & 1) == 1)
+                    {
+                        two ^= 1 << bit;
+                    }
+                    else if (((one >> bit) & 1) == 1)
+                    {
+                        one ^= 1 << bit;
+                        two |= 1 << bit;
+                    }
+                    else
+                    {
+                        one |= 1 << bit;
+                    }
+                }
+            }
         }
-        for (int i = n - 2; i >= 0; i -= 1)
-        {
-            if (ratings[i] > ratings[1 + i]) { nums[i] = int.Max(nums[i], 1 + nums[1 + i]); }
-        }
-        return nums.Sum();
+        return one;
     }
 }
