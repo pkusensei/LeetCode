@@ -7,60 +7,54 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_len(n: i32, edges: &[[i32; 2]], label: &str) -> i32 {
-    let n = n as usize;
-    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
-        let [a, b] = [0, 1].map(|i| e[i] as usize);
-        acc[a].push(b);
-        acc[b].push(a);
-        acc
-    });
-    let mut memo = vec![vec![vec![-1; n]; n]; 1 << n];
-    dfs(&adj, label.as_bytes(), 0, 0, 0, &mut memo)
+use std::collections::BTreeMap;
+struct LRUCache {
+    id_keys: BTreeMap<i32, usize>,
+    data: Vec<(i32, i32)>, // key - (id, val)
+    cap: usize,
+    len: usize,
+    id: i32,
 }
 
-fn dfs(
-    adj: &[Vec<usize>],
-    s: &[u8],
-    mask: usize,
-    left: usize,
-    right: usize,
-    memo: &mut [Vec<Vec<i32>>],
-) -> i32 {
-    let n = adj.len();
-    if memo[mask][left][right] > -1 {
-        return memo[mask][left][right];
-    }
-    let mut res = 0;
-    if mask == 0 {
-        for mid in 0..n {
-            res = res.max(1 + dfs(adj, s, 1 << mid, mid, mid, memo));
-            for &next in &adj[mid] {
-                if s[mid] == s[next] {
-                    res = res.max(2 + dfs(adj, s, (1 << mid) | (1 << next), mid, next, memo))
-                }
-            }
-        }
-    } else {
-        for &next1 in adj[left].iter().filter(|&&v| (mask >> v) & 1 == 0) {
-            for &next2 in adj[right].iter().filter(|&&v| (mask >> v) & 1 == 0) {
-                if next1 != next2 && s[next1] == s[next2] {
-                    res = res.max(
-                        2 + dfs(
-                            adj,
-                            s,
-                            mask | (1 << next1) | (1 << next2),
-                            next1,
-                            next2,
-                            memo,
-                        ),
-                    );
-                }
-            }
+impl LRUCache {
+    fn new(capacity: i32) -> Self {
+        let cap = capacity as usize;
+        Self {
+            id_keys: BTreeMap::new(),
+            data: vec![(-1, -1); 10_001],
+            cap,
+            len: 0,
+            id: 0,
         }
     }
-    memo[mask][left][right] = res;
-    res
+
+    fn get(&mut self, key: i32) -> i32 {
+        let key = key as usize;
+        if self.data[key].0 < 0 {
+            return -1;
+        }
+        let (id, res) = self.data[key];
+        self.data[key].0 = self.id;
+        self.id_keys.remove(&id);
+        self.id_keys.insert(self.id, key);
+        self.id += 1;
+        res
+    }
+
+    fn put(&mut self, key: i32, value: i32) {
+        let key = key as usize;
+        let (id, _) = self.data[key];
+        self.data[key] = (self.id, value);
+        self.id_keys.remove(&id);
+        self.id_keys.insert(self.id, key);
+        self.id += 1;
+        self.len += usize::from(id < 0); // neg => empty => new item
+        if self.len > self.cap {
+            let del = self.id_keys.pop_first().unwrap().1;
+            self.data[del] = (-1, -1);
+            self.len -= 1;
+        }
+    }
 }
 
 #[cfg(test)]
@@ -93,11 +87,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(max_len(3, &[[0, 1], [1, 2]], "aba"), 3);
-        assert_eq!(max_len(3, &[[0, 1], [0, 2]], "abc"), 1);
-        assert_eq!(max_len(4, &[[0, 2], [0, 3], [3, 1]], "bbac"), 3);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
