@@ -7,20 +7,19 @@ namespace Solution;
 
 public class Solution
 {
-    public int MaximumLength(int[] nums, int k)
+    public int Candy(int[] ratings)
     {
-        int res = 0;
-        int[] dp = new int[k];
-        for (int val = 0; val < k; val++)
+        int n = ratings.Length;
+        int[] nums = new int[n];
+        Array.Fill(nums, 1);
+        for (int i = 1; i < n; i++)
         {
-            Array.Fill(dp, 0);
-            foreach (var num in nums)
-            {
-                int prev = (k + val - num % k) % k;
-                dp[num % k] = 1 + dp[prev];
-                res = int.Max(res, dp[num % k]);
-            }
+            if (ratings[i] > ratings[i - 1]) { nums[i] = int.Max(nums[i], 1 + nums[i - 1]); }
         }
-        return res;
+        for (int i = n - 2; i >= 0; i -= 1)
+        {
+            if (ratings[i] > ratings[1 + i]) { nums[i] = int.Max(nums[i], 1 + nums[1 + i]); }
+        }
+        return nums.Sum();
     }
 }
