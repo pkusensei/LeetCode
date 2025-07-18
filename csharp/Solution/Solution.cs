@@ -7,52 +7,38 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<int> PreorderTraversal(TreeNode root)
+    public long MinimumDifference(int[] nums)
     {
-        if (root is null) { return []; }
-        List<int> res = [];
-        Stack<TreeNode> st = [];
-        st.Push(root);
-        while (st.TryPop(out var node))
+        int n = nums.Length / 3;
+        PriorityQueue<int, int> pq = new();
+        long sum = 0;
+        long[] left_min = new long[1 + n];
+        for (int i = 0; i < 2 * n; i++)
         {
-            if (node is not null)
+            sum += nums[i];
+            pq.Enqueue(nums[i], -nums[i]); // pop max
+            if (i >= n)
             {
-                res.Add(node.val);
-                st.Push(node.right);
-                st.Push(node.left);
+                int top = pq.Dequeue();
+                sum -= top;
             }
+            if (i >= n - 1) { left_min[i - n + 1] = sum; }
         }
-        return res;
-    }
-
-    public IList<int> PostorderTraversal(TreeNode root)
-    {
-        if (root is null) { return []; }
-        List<int> res = [];
-        Stack<TreeNode> st = [];
-        var curr = root;
-        TreeNode prev = null;
-        while (curr is not null || st.Count > 0)
+        pq.Clear();
+        sum = 0;
+        long[] right_max = new long[1 + n];
+        for (int i = 3 * n - 1; i >= n; i -= 1)
         {
-            if (curr is not null)
+            sum += nums[i];
+            pq.Enqueue(nums[i], nums[i]); // pop min
+            if (i < 2 * n)
             {
-                st.Push(curr);
-                curr = curr.left;
+                int top = pq.Dequeue();
+                sum -= top;
             }
-            else
-            {
-                var top = st.Peek();
-                if (top.right is not null && prev != top.right)
-                {
-                    curr = top.right;
-                }
-                else
-                {
-                    res.Add(top.val);
-                    prev = st.Pop();
-                }
-            }
+            if (i <= 2 * n) { right_max[2 * n - i] = sum; }
         }
-        return res;
+        Array.Reverse(right_max);
+        return left_min.Zip(right_max).Select(p => p.First - p.Second).Min();
     }
 }
