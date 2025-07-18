@@ -7,42 +7,46 @@ namespace Solution;
 
 public class Solution
 {
-    public ListNode SortList(ListNode head)
+    public int Kadanes(int[] nums)
     {
-        return MergeSort(head);
-
-        static ListNode MergeSort(ListNode head)
+        if (nums.Length < 2) { return nums.FirstOrDefault(); }
+        long res = nums[0];
+        long min = nums[0];
+        long max = nums[0];
+        foreach (var num in nums[1..])
         {
-            if (head is null || head.next is null) { return head; }
-            var slow = head;
-            var fast = head;
-            while (fast.next is not null && fast.next.next is not null)
+            if (num == 0)
             {
-                slow = slow.next;
-                fast = fast.next.next;
+                min = 1;
+                max = 1;
+                res = long.Max(res, 0);
             }
-            var n2 = MergeSort(slow.next);
-            slow.next = null;
-            var n1 = MergeSort(head);
-            ListNode dummy = new(int.MinValue);
-            var curr = dummy;
-            while (n1 is not null && n2 is not null)
+            else
             {
-                if (n1.val <= n2.val)
-                {
-                    curr.next = n1;
-                    n1 = n1.next;
-                }
-                else
-                {
-                    curr.next = n2;
-                    n2 = n2.next;
-                }
-                curr = curr.next;
+                long next_min = long.Min(num, long.Min(min * num, max * num));
+                long next_max = long.Max(num, long.Max(min * num, max * num));
+                (min, max) = (next_min, next_max);
+                res = long.Max(res, max);
             }
-            if (n1 is not null) { curr.next = n1; }
-            if (n2 is not null) { curr.next = n2; }
-            return dummy.next;
         }
+        return (int)res;
+    }
+
+    public int WithPrefSuf(int[] nums)
+    {
+        int n = nums.Length;
+        if (n < 2) { return nums.FirstOrDefault(); }
+        long res = nums[0];
+        long prod_left = 1;
+        long prod_right = 1;
+        for (int i = 0; i < n; i++)
+        {
+            if (prod_left == 0) { prod_left = 1; }
+            prod_left *= nums[i];
+            if (prod_right == 0) { prod_right = 1; }
+            prod_right *= nums[n - i - 1];
+            res = long.Max(res, long.Max(prod_left, prod_right));
+        }
+        return (int)res;
     }
 }

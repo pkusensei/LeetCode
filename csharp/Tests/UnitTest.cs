@@ -10,13 +10,13 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(new[] { 1, 2, 3, 4 }, new[] { 4, 2, 1, 3 })]
-    public void TestMethod1(int[] exp, int[] nums)
+    [DataRow(6, new[] { 2, 3, -2, 4 })]
+    [DataRow(0, new[] { -2, 0, -1 })]
+    [DataRow(960, new[] { -1, 4, -4, 5, -2, -1, -1, -2, -3 })]
+    public void TestMethod1(int exp, int[] nums)
     {
-        var head = ListNode.Make(nums);
-        head = sol.SortList(head);
-        Assert.AreEqual(exp.Print(), head.ToString());
-        Assert.IsTrue(exp.SequenceEqual(sol.SortList(head)));
+        Assert.AreEqual(exp, sol.Kadanes(nums));
+        Assert.AreEqual(exp, sol.WithPrefSuf(nums));
     }
 
     [TestMethod]
