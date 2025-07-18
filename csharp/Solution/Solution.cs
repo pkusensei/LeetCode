@@ -7,37 +7,42 @@ namespace Solution;
 
 public class Solution
 {
-    public long MinimumDifference(int[] nums)
+    public ListNode SortList(ListNode head)
     {
-        int n = nums.Length / 3;
-        PriorityQueue<int, int> pq = new();
-        long sum = 0;
-        long[] left_min = new long[1 + n];
-        for (int i = 0; i < 2 * n; i++)
+        return MergeSort(head);
+
+        static ListNode MergeSort(ListNode head)
         {
-            sum += nums[i];
-            pq.Enqueue(nums[i], -nums[i]); // pop max
-            if (i >= n)
+            if (head is null || head.next is null) { return head; }
+            var slow = head;
+            var fast = head;
+            while (fast.next is not null && fast.next.next is not null)
             {
-                int top = pq.Dequeue();
-                sum -= top;
+                slow = slow.next;
+                fast = fast.next.next;
             }
-            if (i >= n - 1) { left_min[i - n + 1] = sum; }
-        }
-        pq.Clear();
-        sum = 0;
-        long[] right_max = new long[1 + n];
-        for (int i = 3 * n - 1; i >= n; i -= 1)
-        {
-            sum += nums[i];
-            pq.Enqueue(nums[i], nums[i]); // pop min
-            if (i < 2 * n)
+            var n2 = MergeSort(slow.next);
+            slow.next = null;
+            var n1 = MergeSort(head);
+            ListNode dummy = new(int.MinValue);
+            var curr = dummy;
+            while (n1 is not null && n2 is not null)
             {
-                int top = pq.Dequeue();
-                sum -= top;
+                if (n1.val <= n2.val)
+                {
+                    curr.next = n1;
+                    n1 = n1.next;
+                }
+                else
+                {
+                    curr.next = n2;
+                    n2 = n2.next;
+                }
+                curr = curr.next;
             }
-            if (i <= 2 * n) { right_max[i - n] = sum; }
+            if (n1 is not null) { curr.next = n1; }
+            if (n2 is not null) { curr.next = n2; }
+            return dummy.next;
         }
-        return left_min.Zip(right_max).Min(p => p.First - p.Second);
     }
 }
