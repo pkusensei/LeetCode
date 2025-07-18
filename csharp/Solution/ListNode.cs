@@ -9,9 +9,9 @@ public abstract class ListNodeBase<T> : IEnumerable<int>
     public int val;
     public T next;
 
-    public T FindMiddleNode()
+    public static T FindMiddleNode(T head)
     {
-        var curr = (T)this;
+        var curr = head;
         if (curr is null || curr.next is null) { return curr; }
         (var slow, var fast) = (curr, curr);
         while (fast.next is not null && fast.next.next is not null)
@@ -57,8 +57,7 @@ public abstract class ListNodeBase<T> : IEnumerable<int>
             sb.AppendFormat("{0},", curr.val);
             curr = curr.next;
         }
-        sb.Remove(sb.Length - 1, 1);
-        sb.Append(']');
+        sb.Replace(',', ']', sb.Length - 1, 1);
         return sb.ToString();
     }
 }
