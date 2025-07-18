@@ -7,16 +7,19 @@ namespace Tests;
 [TestClass]
 public class UnitTest
 {
-    readonly Solution.Solution sol = new();
+    // readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(6, new[] { 2, 3, -2, 4 })]
-    [DataRow(0, new[] { -2, 0, -1 })]
-    [DataRow(960, new[] { -1, 4, -4, 5, -2, -1, -1, -2, -3 })]
-    public void TestMethod1(int exp, int[] nums)
+    public void TestMethod1()
     {
-        Assert.AreEqual(exp, sol.Kadanes(nums));
-        Assert.AreEqual(exp, sol.WithPrefSuf(nums));
+        var at = new MinStack();
+        at.Push(-2);
+        at.Push(0);
+        at.Push(-3);
+        Assert.AreEqual(-3, at.GetMin());
+        at.Pop();
+        Assert.AreEqual(0, at.Top());
+        Assert.AreEqual(-2, at.GetMin());
     }
 
     [TestMethod]
