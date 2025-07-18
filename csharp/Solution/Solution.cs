@@ -36,9 +36,8 @@ public class Solution
                 int top = pq.Dequeue();
                 sum -= top;
             }
-            if (i <= 2 * n) { right_max[2 * n - i] = sum; }
+            if (i <= 2 * n) { right_max[i - n] = sum; }
         }
-        Array.Reverse(right_max);
-        return left_min.Zip(right_max).Select(p => p.First - p.Second).Min();
+        return left_min.Zip(right_max).Min(p => p.First - p.Second);
     }
 }
