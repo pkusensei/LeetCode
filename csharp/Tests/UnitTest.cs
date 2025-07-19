@@ -10,10 +10,11 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(new[] { "/a", "/c/d", "/c/f" }, new[] { "/a", "/a/b", "/c/d", "/c/d/e", "/c/f" })]
-    public void TestMethod1(string[] exp, string[] f)
+    [DataRow(3, new[] { 3, 6, 9, 1 })]
+    [DataRow(4, new[] { 1, 1, 1, 1, 1, 5, 5, 5, 5, 5 })]
+    public void TestMethod1(int exp, int[] nums)
     {
-        Assert.IsTrue(exp.SequenceEqual(sol.RemoveSubfolders(f)));
+        Assert.AreEqual(exp, sol.MaximumGap(nums));
     }
 
     [TestMethod]

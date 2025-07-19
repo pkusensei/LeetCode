@@ -7,47 +7,30 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<string> RemoveSubfolders(string[] folder)
+    public int MaximumGap(int[] nums)
     {
-        Array.Sort(folder, (a, b) => a.Length.CompareTo(b.Length));
-        List<string> res = [];
-        Trie tr = new();
-        foreach (var s in folder)
+        int n = nums.Length;
+        int min_num = nums.Min();
+        int max_num = nums.Max();
+        if (n < 2 || min_num == max_num) { return max_num - min_num; }
+        int bucket_gap = int.Max(1, (max_num - min_num) / (n - 1));
+        int bucket_count = 1 + (max_num - min_num) / bucket_gap;
+        (int min, int max)[] buckets = new (int, int)[bucket_count];
+        Array.Fill(buckets, (int.MaxValue, int.MinValue));
+        foreach (var num in nums)
         {
-            if (tr.Insert(s)) { res.Add(s); }
+            int idx = (num - min_num) / bucket_gap;
+            buckets[idx].min = int.Min(buckets[idx].min, num);
+            buckets[idx].max = int.Max(buckets[idx].max, num);
+        }
+        int res = 0;
+        int prev_max = min_num;
+        foreach (var (buc_min, buc_max) in buckets)
+        {
+            if (buc_min == int.MaxValue) { continue; }
+            res = int.Max(res, buc_min - prev_max);
+            prev_max = buc_max;
         }
         return res;
-    }
-}
-
-internal class Trie
-{
-    public Trie()
-    {
-        Nodes = [];
-        IsEnd = false;
-    }
-
-    public Dictionary<string, Trie> Nodes { get; }
-    public bool IsEnd { get; private set; }
-
-    public bool Insert(string s)
-    {
-        var curr = this;
-        foreach (var seg in s.Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-        {
-            if (curr.Nodes.TryGetValue(seg, out var node))
-            {
-                if (node.IsEnd) { return false; }
-            }
-            else
-            {
-                node = new();
-                curr.Nodes.Add(seg, node);
-            }
-            curr = node;
-        }
-        curr.IsEnd = true;
-        return true;
     }
 }
