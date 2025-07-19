@@ -7,23 +7,18 @@ namespace Solution;
 
 public class Solution
 {
-    public int MajorityElement(int[] nums)
+    public int TrailingZeroes(int n)
     {
+        int div = 5;
         int res = 0;
-        int count = 0;
-        foreach (var num in nums)
+        while (n / div > 0)
         {
-            if (num == res) { count += 1; }
-            else
-            {
-                count -= 1;
-                if (count <= 0)
-                {
-                    res = num;
-                    count = 1;
-                }
-            }
+            res += n / div;
+            div *= 5;
         }
+        // first count in 5, 10, 15, .., 25, 30, ..
+        // then count 25, 50, 75, ..
+        // 125, 250, ..
         return res;
     }
 }
