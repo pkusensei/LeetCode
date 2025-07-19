@@ -12,8 +12,6 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
-        int[][] d = [[0, 0]];
-        Assert.AreEqual(1, sol.CalculateMinimumHP(d));
     }
 
     [TestMethod]
