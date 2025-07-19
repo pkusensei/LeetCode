@@ -7,30 +7,31 @@ namespace Solution;
 
 public class Solution
 {
-    public int MaximumGap(int[] nums)
+    public string FractionToDecimal(int numerator, int denominator)
     {
-        int n = nums.Length;
-        int min_num = nums.Min();
-        int max_num = nums.Max();
-        if (n < 2 || min_num == max_num) { return max_num - min_num; }
-        int bucket_gap = int.Max(1, (max_num - min_num) / (n - 1));
-        int bucket_count = 1 + (max_num - min_num) / bucket_gap;
-        (int min, int max)[] buckets = new (int, int)[bucket_count];
-        Array.Fill(buckets, (int.MaxValue, int.MinValue));
-        foreach (var num in nums)
+        if (numerator == 0) { return "0"; }
+        StringBuilder sb = new();
+        if (numerator < 0 ^ denominator < 0) { sb.Append('-'); }
+        long num = long.Abs(numerator);
+        long den = long.Abs(denominator);
+        sb.Append(num / den);
+        num %= den;
+        if (num == 0) { return sb.ToString(); }
+        sb.Append('.');
+        Dictionary<long, int> seen = [];
+        while (num > 0)
         {
-            int idx = (num - min_num) / bucket_gap;
-            buckets[idx].min = int.Min(buckets[idx].min, num);
-            buckets[idx].max = int.Max(buckets[idx].max, num);
+            if (seen.TryGetValue(num, out var idx))
+            {
+                sb.Insert(idx, '(');
+                sb.Append(')');
+                break;
+            }
+            seen.Add(num, sb.Length);
+            num *= 10;
+            sb.Append(num / den);
+            num %= den;
         }
-        int res = 0;
-        int prev_max = min_num;
-        foreach (var (buc_min, buc_max) in buckets)
-        {
-            if (buc_min == int.MaxValue) { continue; }
-            res = int.Max(res, buc_min - prev_max);
-            prev_max = buc_max;
-        }
-        return res;
+        return sb.ToString();
     }
 }
