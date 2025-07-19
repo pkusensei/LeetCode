@@ -5,20 +5,31 @@ using static Solution.Utils;
 
 namespace Solution;
 
-public class Solution
+public class BSTIterator
 {
-    public int TrailingZeroes(int n)
+    readonly Stack<TreeNode> st;
+
+    public BSTIterator(TreeNode root)
     {
-        int div = 5;
-        int res = 0;
-        while (n / div > 0)
+        st = [];
+        Push(root);
+    }
+
+    public int Next()
+    {
+        var node = st.Pop();
+        Push(node.right);
+        return node.val;
+    }
+
+    public bool HasNext() => st.Count > 0;
+
+    void Push(TreeNode node)
+    {
+        while (node is not null)
         {
-            res += n / div;
-            div *= 5;
+            st.Push(node);
+            node = node.left;
         }
-        // first count in 5, 10, 15, .., 25, 30, ..
-        // then count 25, 50, 75, ..
-        // 125, 250, ..
-        return res;
     }
 }
