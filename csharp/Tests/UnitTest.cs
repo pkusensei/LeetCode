@@ -7,11 +7,13 @@ namespace Tests;
 [TestClass]
 public class UnitTest
 {
-    // readonly Solution.Solution sol = new();
+    readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow(new[] { "/a", "/c/d", "/c/f" }, new[] { "/a", "/a/b", "/c/d", "/c/d/e", "/c/f" })]
+    public void TestMethod1(string[] exp, string[] f)
     {
+        Assert.IsTrue(exp.SequenceEqual(sol.RemoveSubfolders(f)));
     }
 
     [TestMethod]

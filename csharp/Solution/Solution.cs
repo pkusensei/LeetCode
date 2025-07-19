@@ -7,54 +7,47 @@ namespace Solution;
 
 public class Solution
 {
-    public ListNode GetIntersectionNode(ListNode headA, ListNode headB)
+    public IList<string> RemoveSubfolders(string[] folder)
     {
-        (var tail1, int len1) = FindTail(headA);
-        (var tail2, int len2) = FindTail(headB);
-        if (!ReferenceEquals(tail1, tail2)) { return null; }
-        if (len1 < len2)
+        Array.Sort(folder, (a, b) => a.Length.CompareTo(b.Length));
+        List<string> res = [];
+        Trie tr = new();
+        foreach (var s in folder)
         {
-            (headA, headB) = (headB, headA);
-            (len1, len2) = (len2, len1);
+            if (tr.Insert(s)) { res.Add(s); }
         }
-        var curr1 = headA;
-        while (len1 > len2)
-        {
-            curr1 = curr1.next;
-            len1 -= 1;
-        }
-        var curr2 = headB;
-        while (!ReferenceEquals(curr1, curr2))
-        {
-            curr1 = curr1.next;
-            curr2 = curr2.next;
-        }
-        return curr1;
+        return res;
+    }
+}
 
-        static (ListNode tail, int count) FindTail(ListNode head)
-        {
-            var curr = head;
-            int count = 0;
-            while (curr.next is not null)
-            {
-                curr = curr.next;
-                count += 1;
-            }
-            return (curr, count);
-        }
+internal class Trie
+{
+    public Trie()
+    {
+        Nodes = [];
+        IsEnd = false;
     }
 
-    public ListNode WithSinglePass(ListNode headA, ListNode headB)
+    public Dictionary<string, Trie> Nodes { get; }
+    public bool IsEnd { get; private set; }
+
+    public bool Insert(string s)
     {
-        if (headA is null || headB is null) { return null; }
-        var p1 = headA;
-        var p2 = headB;
-        // Either arrive at intersection or both at null
-        while (!ReferenceEquals(p1, p2))
+        var curr = this;
+        foreach (var seg in s.Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
         {
-            p1 = p1 is not null ? p1.next : headB;
-            p2 = p2 is not null ? p2.next : headA;
+            if (curr.Nodes.TryGetValue(seg, out var node))
+            {
+                if (node.IsEnd) { return false; }
+            }
+            else
+            {
+                node = new();
+                curr.Nodes.Add(seg, node);
+            }
+            curr = node;
         }
-        return p1;
+        curr.IsEnd = true;
+        return true;
     }
 }

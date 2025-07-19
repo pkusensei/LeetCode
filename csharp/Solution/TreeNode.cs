@@ -26,15 +26,6 @@ public abstract class TreeNodeBase<T> where T : TreeNodeBase<T>, new()
 
     public IEnumerable<T> InorderFlatten()
     {
-        void Push(Stack<T> stack, T node)
-        {
-            while (node is not null)
-            {
-                stack.Push(node);
-                node = node.left;
-            }
-        }
-
         var stack = new Stack<T>();
         var curr = (T)this;
         Push(stack, curr);
@@ -46,6 +37,15 @@ public abstract class TreeNodeBase<T> where T : TreeNodeBase<T>, new()
                 Push(stack, node.right);
             }
             else { yield return null; }
+        }
+
+        static void Push(Stack<T> stack, T node)
+        {
+            while (node is not null)
+            {
+                stack.Push(node);
+                node = node.left;
+            }
         }
     }
 
@@ -175,11 +175,11 @@ public abstract class TreeNodeBase<T> where T : TreeNodeBase<T>, new()
 public class TreeNode : TreeNodeBase<TreeNode>
 {
     public TreeNode() { }
-    public TreeNode(int val = 0, TreeNode left = null, TreeNode right = null)
+    public TreeNode(int _val = 0, TreeNode _left = null, TreeNode _right = null)
     {
-        this.val = val;
-        this.left = left;
-        this.right = right;
+        val = _val;
+        left = _left;
+        right = _right;
     }
 
     public static List<TreeNode> GenerateTrees(int n)
