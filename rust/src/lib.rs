@@ -7,20 +7,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn check_divisibility(n: i32) -> bool {
-        let mut x = n;
-        let mut sum = 0;
-        while x > 0 {
-            sum += x % 10;
-            x /= 10;
-        }
-        x = n;
-        let mut prod = 1;
-        while x > 0 {
-            prod *= x % 10;
-            x /= 10;
-        }
-        n % (sum + prod) == 0
+pub fn count_trapezoids(points: Vec<Vec<i32>>) -> i32 {
+    use std::collections::HashMap;
+    const M: i64 = 1_000_000_007;
+    let mut map = HashMap::new();
+    for p in &points {
+        *map.entry(p[1]).or_insert(0) += 1;
+    }
+    let mut sum = 0;
+    let mut res = 0;
+    for v in map.values() {
+        let count = v * (v - 1) / 2;
+        res = (res + sum * count) % M;
+        sum = (sum + count) % M;
+    }
+    res as i32
 }
 
 #[cfg(test)]
@@ -53,8 +54,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
