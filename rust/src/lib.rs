@@ -4,32 +4,42 @@ mod fenwick_tree;
 mod helper;
 mod trie;
 
+use std::collections::VecDeque;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn split_array(nums: Vec<i32>) -> i64 {
-    let n = nums.len();
-    if n <= 2 {
-        return nums.iter().map(|&v| i64::from(v)).sum::<i64>().abs();
-    }
-    let mut sieve = vec![true; n];
-    sieve[..2].fill(false);
-    for p in 2..=n.isqrt() {
-        if sieve[p] {
-            for val in (p * p..n).step_by(p) {
-                sieve[val] = false;
+pub fn count_islands(grid: Vec<Vec<i32>>, k: i32) -> i32 {
+    let [rows, cols] = get_dimensions(&grid);
+    let mut seen = vec![vec![false; cols]; rows];
+    let mut res = 0;
+    for (r, row) in grid.iter().enumerate() {
+        for (c, &v) in row.iter().enumerate() {
+            if v > 0 && !seen[r][c] {
+                res += bfs(&grid, k, r, c, &mut seen);
             }
         }
     }
-    let mut res = 0_i64;
-    for (i, &num) in nums.iter().enumerate() {
-        if sieve[i] {
-            res += i64::from(num)
-        } else {
-            res -= i64::from(num)
+    res
+}
+
+fn bfs(grid: &[Vec<i32>], k: i32, r: usize, c: usize, seen: &mut [Vec<bool>]) -> i32 {
+    let mut queue = VecDeque::from([[r, c]]);
+    let mut sum = grid[r][c];
+    seen[r][c] = true;
+    while let Some([r, c]) = queue.pop_front() {
+        for [nr, nc] in neighbors([r, c]).filter(|&[nr, nc]| {
+            grid.get(nr)
+                .is_some_and(|row| row.get(nc).is_some_and(|&v| v > 0))
+        }) {
+            if !seen[nr][nc] {
+                seen[nr][nc] = true;
+                queue.push_back([nr, nc]);
+                sum += grid[nr][nc];
+            }
         }
     }
-    res.abs()
+    i32::from(sum % k == 0)
 }
 
 #[cfg(test)]
