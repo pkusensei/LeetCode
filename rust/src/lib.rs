@@ -4,55 +4,67 @@ mod fenwick_tree;
 mod helper;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-use std::collections::BTreeMap;
-struct LRUCache {
-    id_keys: BTreeMap<i32, usize>,
-    data: Vec<(i32, i32)>, // key - (id, val)
-    cap: usize,
-    len: usize,
-    id: i32,
+pub fn delete_duplicate_folder(paths: Vec<Vec<String>>) -> Vec<Vec<String>> {
+    let mut trie = Trie::default();
+    for p in paths.iter() {
+        trie.add(p);
+    }
+    let mut freq = HashMap::new();
+    trie.construct(&mut freq);
+    let mut res = vec![];
+    trie.operate(&freq, &mut vec![], &mut res);
+    res
 }
 
-impl LRUCache {
-    fn new(capacity: i32) -> Self {
-        let cap = capacity as usize;
-        Self {
-            id_keys: BTreeMap::new(),
-            data: vec![(-1, -1); 10_001],
-            cap,
-            len: 0,
-            id: 0,
+#[derive(Default)]
+struct Trie {
+    serial: String,
+    nodes: HashMap<String, Trie>,
+}
+
+impl Trie {
+    fn add(&mut self, path: &[String]) {
+        let mut curr = self;
+        for p in path {
+            curr = curr.nodes.entry(p.clone()).or_default();
         }
     }
 
-    fn get(&mut self, key: i32) -> i32 {
-        let key = key as usize;
-        if self.data[key].0 < 0 {
-            return -1;
+    fn construct(&mut self, freq: &mut HashMap<String, i32>) {
+        if self.nodes.is_empty() {
+            return;
         }
-        let (id, res) = self.data[key];
-        self.data[key].0 = self.id;
-        self.id_keys.remove(&id);
-        self.id_keys.insert(self.id, key);
-        self.id += 1;
-        res
+        let mut v = vec![];
+        for (folder, node) in self.nodes.iter_mut() {
+            node.construct(freq);
+            v.push(format!("{}({})", folder, node.serial));
+        }
+        v.sort_unstable();
+        self.serial = v.join("");
+        *freq.entry(self.serial.clone()).or_insert(0) += 1;
     }
 
-    fn put(&mut self, key: i32, value: i32) {
-        let key = key as usize;
-        let (id, _) = self.data[key];
-        self.data[key] = (self.id, value);
-        self.id_keys.remove(&id);
-        self.id_keys.insert(self.id, key);
-        self.id += 1;
-        self.len += usize::from(id < 0); // neg => empty => new item
-        if self.len > self.cap {
-            let del = self.id_keys.pop_first().unwrap().1;
-            self.data[del] = (-1, -1);
-            self.len -= 1;
+    fn operate(
+        &self,
+        freq: &HashMap<String, i32>,
+        path: &mut Vec<String>,
+        res: &mut Vec<Vec<String>>,
+    ) {
+        if freq.get(&self.serial).unwrap_or(&0) > &1 {
+            return;
+        }
+        if !path.is_empty() {
+            res.push(path.clone());
+        }
+        for (folder, node) in self.nodes.iter() {
+            path.push(folder.clone());
+            node.operate(freq, path, res);
+            path.pop();
         }
     }
 }
