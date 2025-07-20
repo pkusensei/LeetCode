@@ -4,42 +4,61 @@ mod fenwick_tree;
 mod helper;
 mod trie;
 
-use std::collections::VecDeque;
+use std::{cmp::Reverse, collections::BinaryHeap};
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_islands(grid: Vec<Vec<i32>>, k: i32) -> i32 {
-    let [rows, cols] = get_dimensions(&grid);
-    let mut seen = vec![vec![false; cols]; rows];
-    let mut res = 0;
-    for (r, row) in grid.iter().enumerate() {
-        for (c, &v) in row.iter().enumerate() {
-            if v > 0 && !seen[r][c] {
-                res += bfs(&grid, k, r, c, &mut seen);
-            }
+pub fn find_max_path_score(edges: &[[i32; 3]], online: &[bool], k: i64) -> i32 {
+    let n = online.len();
+    let mut adj = vec![vec![]; n];
+    let mut max_e = 0;
+    for e in edges.iter() {
+        let [a, b] = [0, 1].map(|i| e[i] as usize);
+        if online[a] && online[b] {
+            adj[a].push((b, e[2]));
+            max_e = max_e.max(e[2]);
         }
     }
-    res
+    let mut left = 0;
+    let mut right = max_e + 1;
+    let mut reached = false;
+    while left < right {
+        let mid = left + (right - left + 1) / 2;
+        if check(&adj, k, mid) {
+            left = mid;
+            reached = true;
+        } else {
+            right = mid - 1;
+        }
+    }
+    if reached { left } else { -1 }
 }
 
-fn bfs(grid: &[Vec<i32>], k: i32, r: usize, c: usize, seen: &mut [Vec<bool>]) -> i32 {
-    let mut queue = VecDeque::from([[r, c]]);
-    let mut sum = grid[r][c];
-    seen[r][c] = true;
-    while let Some([r, c]) = queue.pop_front() {
-        for [nr, nc] in neighbors([r, c]).filter(|&[nr, nc]| {
-            grid.get(nr)
-                .is_some_and(|row| row.get(nc).is_some_and(|&v| v > 0))
-        }) {
-            if !seen[nr][nc] {
-                seen[nr][nc] = true;
-                queue.push_back([nr, nc]);
-                sum += grid[nr][nc];
+fn check(adj: &[Vec<(usize, i32)>], k: i64, mid: i32) -> bool {
+    let n = adj.len();
+    let mut heap = BinaryHeap::from([(Reverse(0), 0)]);
+    let mut dists = vec![1 + k; n];
+    dists[0] = 0;
+    while let Some((Reverse(total), node)) = heap.pop() {
+        if node == n - 1 && total <= k {
+            return true;
+        }
+        if total > dists[node] {
+            continue;
+        }
+        for &(next, cost) in &adj[node] {
+            if cost < mid {
+                continue;
+            }
+            let ntotal = total + i64::from(cost);
+            if ntotal < dists[next] {
+                dists[next] = ntotal;
+                heap.push((Reverse(ntotal), next));
             }
         }
     }
-    i32::from(sum % k == 0)
+    false
 }
 
 #[cfg(test)]
@@ -72,8 +91,34 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(
+            find_max_path_score(
+                &[[0, 1, 5], [1, 3, 10], [0, 2, 3], [2, 3, 4]],
+                &[true; 4],
+                10
+            ),
+            3
+        );
+        assert_eq!(
+            find_max_path_score(
+                &[
+                    [0, 1, 7],
+                    [1, 4, 5],
+                    [0, 2, 6],
+                    [2, 3, 6],
+                    [3, 4, 2],
+                    [2, 4, 6]
+                ],
+                &[true, true, true, false, true],
+                12
+            ),
+            6
+        );
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(find_max_path_score(&[[0, 1, 8]], &[true, true], 11), 8);
+    }
 }
