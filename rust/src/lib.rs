@@ -7,26 +7,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_profit(k: i32, prices: Vec<i32>) -> i32 {
-    let n = prices.len();
-    let k = k as usize;
-    let mut memo = vec![vec![[-1; 2]; 1 + k]; n];
-    dfs(&prices, 0, k, 1, &mut memo)
-}
-
-fn dfs(prices: &[i32], idx: usize, k: usize, buy: usize, memo: &mut [Vec<[i32; 2]>]) -> i32 {
-    if k == 0 || idx >= prices.len() {
-        return 0;
+pub fn rob(nums: &[i32]) -> i32 {
+    if nums.len() < 2 {
+        return *nums.get(0).unwrap_or(&0);
     }
-    if memo[idx][k][buy] > -1 {
-        return memo[idx][k][buy];
+    let mut dp0 = nums[0];
+    let mut dp1 = nums[1];
+    for &num in &nums[2..] {
+        let curr = dp1.max(num + dp0);
+        dp0 = dp0.max(dp1);
+        dp1 = curr;
     }
-    memo[idx][k][buy] = if buy == 1 {
-        (-prices[idx] + dfs(prices, 1 + idx, k, 0, memo)).max(dfs(prices, 1 + idx, k, buy, memo))
-    } else {
-        (prices[idx] + dfs(prices, 1 + idx, k - 1, 1, memo)).max(dfs(prices, 1 + idx, k, buy, memo))
-    };
-    memo[idx][k][buy]
+    dp0.max(dp1)
 }
 
 #[cfg(test)]
@@ -59,7 +51,9 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(rob(&[2, 1, 1, 2]), 4);
+    }
 
     #[test]
     fn test() {}
