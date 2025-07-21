@@ -7,33 +7,28 @@ namespace Solution;
 
 public class Solution
 {
-    public ListNode ReverseList(ListNode head)
+    public bool CanFinish(int n, int[][] prerequisites)
     {
-        ListNode left = null;
-        ListNode right = head;
-        while (right is not null)
+        List<int>[] adj = [.. Enumerable.Range(0, n).Select(_ => new List<int>())];
+        int[] degs = new int[n];
+        foreach (var p in prerequisites)
         {
-            var temp = right.next;
-            right.next = left;
-            left = right;
-            right = temp;
+            degs[p[0]] += 1;
+            adj[p[1]].Add(p[0]);
         }
-        return left;
-    }
-
-    public ListNode WithRecursion(ListNode head)
-    {
-        if (head is null || head.next is null) { return head; }
-        return Reverse(head).head;
-
-        static (ListNode head, ListNode tail) Reverse(ListNode node)
+        Queue<int> queue = [];
+        for (int i = 0; i < n; i++)
         {
-            if (node.next is null) { return (node, node); }
-            var next = node.next;
-            node.next = null;
-            (var head, var tail) = Reverse(next);
-            tail.next = node;
-            return (head, node);
+            if (degs[i] == 0) { queue.Enqueue(i); }
         }
+        while (queue.TryDequeue(out var node))
+        {
+            foreach (var next in adj[node])
+            {
+                degs[next] -= 1;
+                if (degs[next] == 0) { queue.Enqueue(next); }
+            }
+        }
+        return degs.All(v => v == 0);
     }
 }
