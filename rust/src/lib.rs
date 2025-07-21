@@ -7,52 +7,26 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_trapezoids(points: Vec<Vec<i32>>) -> i32 {
-    use itertools::Itertools;
-    use std::collections::HashMap;
-    let mut slopes = HashMap::new();
-    let mut lines = HashMap::new();
-    let mut mids = HashMap::new();
-    let mut midlines = HashMap::new();
-    for [p1, p2] in points.iter().array_combinations() {
-        let [x1, y1] = p1[..] else { unreachable!() };
-        let [x2, y2] = p2[..] else { unreachable!() };
-        let mut dx = x2 - x1;
-        let mut dy = y2 - y1;
-        let gcd_ = gcd(dx.abs(), dy.abs());
-        dx /= gcd_;
-        dy /= gcd_;
-        if dx < 0 || (dx == 0 && dy < 0) {
-            dx *= -1;
-            dy *= -1;
-        }
-        let intercept = dx * y1 - dy * x1;
-        *slopes.entry([dx, dy]).or_insert(0) += 1;
-        *lines.entry([dx, dy, intercept]).or_insert(0) += 1;
-        *mids.entry([x1 + x2, y1 + y2]).or_insert(0) += 1;
-        *midlines
-            .entry([x1 + x2, y1 + y2, dx, dy, intercept])
-            .or_insert(0) += 1;
+pub fn max_profit(k: i32, prices: Vec<i32>) -> i32 {
+    let n = prices.len();
+    let k = k as usize;
+    let mut memo = vec![vec![[-1; 2]; 1 + k]; n];
+    dfs(&prices, 0, k, 1, &mut memo)
+}
+
+fn dfs(prices: &[i32], idx: usize, k: usize, buy: usize, memo: &mut [Vec<[i32; 2]>]) -> i32 {
+    if k == 0 || idx >= prices.len() {
+        return 0;
     }
-    // count_all(slopes) - count_all(segments on each line)
-    // Then to subtract parallelograms
-    // count_all(line with specific length) - count_all(specific length on line)
-    let res =
-        sum_up(slopes.into_values()) - sum_up(lines.into_values()) - sum_up(mids.into_values())
-            + sum_up(midlines.into_values());
-    res as i32
-}
-
-fn sum_up(it: impl Iterator<Item = usize>) -> usize {
-    it.map(n_choose_2).sum()
-}
-
-const fn n_choose_2(n: usize) -> usize {
-    n * (n - 1) / 2
-}
-
-const fn gcd(a: i32, b: i32) -> i32 {
-    if a == 0 { b } else { gcd(b % a, a) }
+    if memo[idx][k][buy] > -1 {
+        return memo[idx][k][buy];
+    }
+    memo[idx][k][buy] = if buy == 1 {
+        (-prices[idx] + dfs(prices, 1 + idx, k, 0, memo)).max(dfs(prices, 1 + idx, k, buy, memo))
+    } else {
+        (prices[idx] + dfs(prices, 1 + idx, k - 1, 1, memo)).max(dfs(prices, 1 + idx, k, buy, memo))
+    };
+    memo[idx][k][buy]
 }
 
 #[cfg(test)]
