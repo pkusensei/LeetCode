@@ -7,14 +7,33 @@ namespace Solution;
 
 public class Solution
 {
-    public string MakeFancyString(string s)
+    public ListNode ReverseList(ListNode head)
     {
-        StringBuilder sb = new();
-        foreach (var ch in s)
+        ListNode left = null;
+        ListNode right = head;
+        while (right is not null)
         {
-            if (sb.Length >= 2 && sb[^1] == ch && sb[^2] == ch) { continue; }
-            else { sb.Append(ch); }
+            var temp = right.next;
+            right.next = left;
+            left = right;
+            right = temp;
         }
-        return sb.ToString();
+        return left;
+    }
+
+    public ListNode WithRecursion(ListNode head)
+    {
+        if (head is null || head.next is null) { return head; }
+        return Reverse(head).head;
+
+        static (ListNode head, ListNode tail) Reverse(ListNode node)
+        {
+            if (node.next is null) { return (node, node); }
+            var next = node.next;
+            node.next = null;
+            (var head, var tail) = Reverse(next);
+            tail.next = node;
+            return (head, node);
+        }
     }
 }
