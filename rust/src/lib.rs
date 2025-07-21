@@ -7,11 +7,46 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn range_bitwise_and(left: i32, mut right: i32) -> i32 {
-    while right > left {
-        right &= right - 1;
+#[derive(Default)]
+struct Trie {
+    nodes: [Option<Box<Trie>>; 26],
+    is_end: bool,
+}
+
+impl Trie {
+    fn new() -> Self {
+        Default::default()
     }
-    left & right
+
+    fn insert(&mut self, word: String) {
+        let mut curr = self;
+        for b in word.bytes() {
+            curr = curr.nodes[usize::from(b - b'a')].get_or_insert_default();
+        }
+        curr.is_end = true;
+    }
+
+    fn search(&self, word: String) -> bool {
+        let mut curr = self;
+        for b in word.bytes() {
+            let Some(node) = curr.nodes[usize::from(b - b'a')].as_ref() else {
+                return false;
+            };
+            curr = node;
+        }
+        curr.is_end
+    }
+
+    fn starts_with(&self, prefix: String) -> bool {
+        let mut curr = self;
+        for b in prefix.bytes() {
+            let Some(node) = curr.nodes[usize::from(b - b'a')].as_ref() else {
+                return false;
+            };
+            curr = node;
+        }
+        true
+    }
 }
 
 #[cfg(test)]
