@@ -1,34 +1,61 @@
-﻿using System.Text;
+﻿using System.ComponentModel.Design;
+using System.Text;
 using Solution.LList;
 using Solution.Tree;
 using static Solution.Utils;
 
 namespace Solution;
 
-public class Solution
+public class WordDictionary
 {
-    public bool CanFinish(int n, int[][] prerequisites)
+    public WordDictionary()
     {
-        List<int>[] adj = [.. Enumerable.Range(0, n).Select(_ => new List<int>())];
-        int[] degs = new int[n];
-        foreach (var p in prerequisites)
+        Tr = new();
+    }
+
+    public Trie Tr { get; }
+
+    public void AddWord(string word) => Tr.Add(word);
+
+    public bool Search(string word) => Tr.Check(word);
+}
+
+public class Trie
+{
+    public Trie()
+    {
+        Nodes = new Trie[26];
+        IsEnd = false;
+    }
+
+    public Trie[] Nodes { get; }
+    public bool IsEnd { get; private set; }
+
+    public void Add(ReadOnlySpan<char> s)
+    {
+        var curr = this;
+        foreach (var ch in s)
         {
-            degs[p[0]] += 1;
-            adj[p[1]].Add(p[0]);
+            curr = curr.Nodes[ch - 'a'] ??= new();
         }
-        Queue<int> queue = [];
-        for (int i = 0; i < n; i++)
+        curr.IsEnd = true;
+    }
+
+    public bool Check(ReadOnlySpan<char> s)
+    {
+        if (s.IsEmpty) { return IsEnd; }
+        if (s[0] == '.')
         {
-            if (degs[i] == 0) { queue.Enqueue(i); }
-        }
-        while (queue.TryDequeue(out var node))
-        {
-            foreach (var next in adj[node])
+            foreach (var node in Nodes)
             {
-                degs[next] -= 1;
-                if (degs[next] == 0) { queue.Enqueue(next); }
+                if (node is not null && node.Check(s[1..])) { return true; }
             }
         }
-        return degs.All(v => v == 0);
+        else
+        {
+            var node = Nodes[s[0] - 'a'];
+            if (node is not null) { return node.Check(s[1..]); }
+        }
+        return false;
     }
 }
