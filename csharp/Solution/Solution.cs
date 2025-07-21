@@ -1,23 +1,31 @@
-﻿using System.ComponentModel.Design;
-using System.Text;
+﻿using System.Text;
 using Solution.LList;
 using Solution.Tree;
 using static Solution.Utils;
 
 namespace Solution;
 
-public class WordDictionary
+public class Solution
 {
-    public WordDictionary()
+    public IList<string> FindWords(char[][] board, string[] words)
     {
-        Tr = new();
+        Trie trie = new();
+        foreach (var s in words)
+        {
+            trie.Add(s);
+        }
+        HashSet<string> res = [];
+        int rows = board.Length;
+        int cols = board[0].Length;
+        for (int r = 0; r < rows; r++)
+        {
+            for (int c = 0; c < cols; c++)
+            {
+                trie.Backtrack(board, r, c, new(), res);
+            }
+        }
+        return [.. res];
     }
-
-    public Trie Tr { get; }
-
-    public void AddWord(string word) => Tr.Add(word);
-
-    public bool Search(string word) => Tr.Check(word);
 }
 
 public class Trie
@@ -41,21 +49,25 @@ public class Trie
         curr.IsEnd = true;
     }
 
-    public bool Check(ReadOnlySpan<char> s)
+    public void Backtrack(char[][] board, int row, int col, StringBuilder sb, HashSet<string> res)
     {
-        if (s.IsEmpty) { return IsEnd; }
-        if (s[0] == '.')
+        if (IsEnd) { res.Add(sb.ToString()); }
+        int rows = board.Length;
+        int cols = board[0].Length;
+        if (0 <= row && row < rows && 0 <= col && col < cols && char.IsAsciiLetterLower(board[row][col]))
         {
-            foreach (var node in Nodes)
+            char temp = board[row][col];
+            sb.Append(board[row][col]);
+            board[row][col] = '.';
+            int idx = temp - 'a';
+            foreach (var (dr, dc) in new[] { (-1, 0), (1, 0), (0, -1), (0, 1) })
             {
-                if (node is not null && node.Check(s[1..])) { return true; }
+                int nr = row + dr;
+                int nc = col + dc;
+                Nodes[idx]?.Backtrack(board, nr, nc, sb, res);
             }
+            sb.Remove(sb.Length - 1, 1);
+            board[row][col] = temp;
         }
-        else
-        {
-            var node = Nodes[s[0] - 'a'];
-            if (node is not null) { return node.Check(s[1..]); }
-        }
-        return false;
     }
 }

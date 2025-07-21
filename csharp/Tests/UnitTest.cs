@@ -12,6 +12,8 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
+        char[][] b = [['a', 'b'], ['c', 'd']];
+        Assert.AreEqual(0, sol.FindWords(b, ["abcd"]).Count);
     }
 
     [TestMethod]
