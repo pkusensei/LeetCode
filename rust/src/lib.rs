@@ -7,18 +7,11 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn rob(nums: &[i32]) -> i32 {
-    if nums.len() < 2 {
-        return *nums.get(0).unwrap_or(&0);
+pub fn range_bitwise_and(left: i32, mut right: i32) -> i32 {
+    while right > left {
+        right &= right - 1;
     }
-    let mut dp0 = nums[0];
-    let mut dp1 = nums[1];
-    for &num in &nums[2..] {
-        let curr = dp1.max(num + dp0);
-        dp0 = dp0.max(dp1);
-        dp1 = curr;
-    }
-    dp0.max(dp1)
+    left & right
 }
 
 #[cfg(test)]
@@ -51,9 +44,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(rob(&[2, 1, 1, 2]), 4);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
