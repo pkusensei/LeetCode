@@ -10,10 +10,11 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(17, new[] { 4, 2, 4, 5, 6 })]
-    public void TestMethod1(int exp, int[] nums)
+    [DataRow("aaacecaaa", "aacecaaa")]
+    [DataRow("dcbabcd", "abcd")]
+    public void TestMethod1(string exp, string s)
     {
-        Assert.AreEqual(exp, sol.MaximumUniqueSubarray(nums));
+        Assert.AreEqual(exp, sol.ShortestPalindrome(s));
     }
 
     [TestMethod]
