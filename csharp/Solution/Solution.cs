@@ -7,39 +7,13 @@ namespace Solution;
 
 public class Solution
 {
-    public int MaximalSquare(char[][] matrix)
+    public int ComputeArea(int ax1, int ay1, int ax2, int ay2, int bx1, int by1, int bx2, int by2)
     {
-        int rows = matrix.Length;
-        int cols = matrix[0].Length;
-        int[,] dp = new int[rows, cols];
-        int res = 0;
-        for (int r = 0; r < rows; r++)
-        {
-            if (matrix[r][0] == '1')
-            {
-                dp[r, 0] = 1;
-                res = 1;
-            }
-        }
-        for (int c = 0; c < cols; c++)
-        {
-            if (matrix[0][c] == '1')
-            {
-                dp[0, c] = 1;
-                res = 1;
-            }
-        }
-        for (int r = 1; r < rows; r++)
-        {
-            for (int c = 1; c < cols; c++)
-            {
-                if (matrix[r][c] == '1')
-                {
-                    dp[r, c] = 1 + int.Min(dp[r - 1, c - 1], int.Min(dp[r - 1, c], dp[r, c - 1]));
-                    res = int.Max(res, dp[r, c]);
-                }
-            }
-        }
-        return res * res;
+        int cx1 = int.Max(ax1, bx1);
+        int cx2 = int.Min(ax2, bx2);
+        int cy1 = int.Max(ay1, by1);
+        int cy2 = int.Min(ay2, by2);
+        return (ax2 - ax1) * (ay2 - ay1) + (bx2 - bx1) * (by2 - by1)
+            - int.Max(cx2 - cx1, 0) * int.Max(cy2 - cy1, 0);
     }
 }
