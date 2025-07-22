@@ -7,22 +7,26 @@ namespace Solution;
 
 public class Solution
 {
-    public int Rob(int[] nums)
+    public int MaximumUniqueSubarray(int[] nums)
     {
-        if (nums.Length <= 2) { return nums.Max(); }
-        return int.Max(Solve(nums.AsSpan()[..^1]), Solve(nums.AsSpan()[1..]));
-
-        static int Solve(ReadOnlySpan<int> nums)
+        List<int> prefix = [];
+        Dictionary<int, int> seen = [];
+        int sum = 0;
+        int left = -1;
+        int res = 0;
+        for (int right = 0; right < nums.Length; right++)
         {
-            int dp0 = nums[0];
-            int dp1 = nums[1];
-            foreach (var num in nums[2..])
+            sum += nums[right];
+            prefix.Add(sum);
+            if (seen.TryGetValue(nums[right], out var prev))
             {
-                int curr = dp0 + num;
-                dp0 = int.Max(dp0, dp1);
-                dp1 = curr;
+                left = int.Max(left, prev);
             }
-            return int.Max(dp0, dp1);
+            int curr = sum;
+            if (left >= 0) { curr -= prefix[left]; }
+            res = int.Max(res, curr);
+            seen[nums[right]] = right;
         }
+        return res;
     }
 }
