@@ -16,7 +16,7 @@ public class Solution
             arr.Add((b[1], b[2]));
         }
         arr.Sort();
-        SortedDictionary<int, int> dict = [];
+        SortedList<int, int> dict = [];
         List<IList<int>> res = [];
         int prev = 0;
         foreach (var (x, y) in arr)
