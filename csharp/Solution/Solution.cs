@@ -7,29 +7,39 @@ namespace Solution;
 
 public class Solution
 {
-    public bool ContainsNearbyAlmostDuplicate(int[] nums, int indexDiff, int valueDiff)
+    public int MaximalSquare(char[][] matrix)
     {
-        Dictionary<int, int> window = [];
-        for (int i = 0; i < nums.Length; i++)
+        int rows = matrix.Length;
+        int cols = matrix[0].Length;
+        int[,] dp = new int[rows, cols];
+        int res = 0;
+        for (int r = 0; r < rows; r++)
         {
-            int buc = BucNum(nums[i], valueDiff);
-            if (!window.TryAdd(buc, nums[i])) { return true; }
-            if (window.TryGetValue(buc - 1, out var v) && nums[i] - v <= valueDiff) { return true; }
-            if (window.TryGetValue(buc + 1, out v) && v - nums[i] <= valueDiff) { return true; }
-            if (window.Count > indexDiff)
+            if (matrix[r][0] == '1')
             {
-                int num = nums[i - indexDiff];
-                buc = BucNum(num, valueDiff);
-                window.Remove(buc);
+                dp[r, 0] = 1;
+                res = 1;
             }
         }
-        return false;
-
-        static int BucNum(int num, int diff)
+        for (int c = 0; c < cols; c++)
         {
-            int b = num / (1 + diff);
-            if (num < 0) { b -= 1; }
-            return b;
+            if (matrix[0][c] == '1')
+            {
+                dp[0, c] = 1;
+                res = 1;
+            }
         }
+        for (int r = 1; r < rows; r++)
+        {
+            for (int c = 1; c < cols; c++)
+            {
+                if (matrix[r][c] == '1')
+                {
+                    dp[r, c] = 1 + int.Min(dp[r - 1, c - 1], int.Min(dp[r - 1, c], dp[r, c - 1]));
+                    res = int.Max(res, dp[r, c]);
+                }
+            }
+        }
+        return res * res;
     }
 }
