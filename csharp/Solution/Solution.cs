@@ -5,43 +5,26 @@ using static Solution.Utils;
 
 namespace Solution;
 
-public class Solution
+
+public class MyStack
 {
-    public int Calculate(string s)
+    public MyStack()
     {
-        Stack<(int num, int sign)> st = [];
-        int num = 0;
-        int sign = 1;
-        for (int i = 0; i < s.Length; i++)
-        {
-            switch (s[i])
-            {
-                case '-':
-                    sign *= -1;
-                    break;
-                case '(':
-                    st.Push((num, sign));
-                    num = 0;
-                    sign = 1;
-                    break;
-                case ')':
-                    var item = st.Pop();
-                    num = item.num + item.sign * num;
-                    break;
-                case char c when char.IsAsciiDigit(c):
-                    int curr = c - '0';
-                    while (1 + i < s.Length && char.IsAsciiDigit(s[1 + i]))
-                    {
-                        i += 1;
-                        curr = curr * 10 + (s[i] - '0');
-                    }
-                    num += curr * sign;
-                    sign = 1;
-                    break;
-                case '+':
-                default: break;
-            }
-        }
-        return num;
+        queue = [];
     }
+
+    readonly Queue<int> queue;
+
+    public void Push(int x)
+    {
+        queue.Enqueue(x);
+        for (int i = 0; i < queue.Count - 1; i++)
+        {
+            queue.Enqueue(queue.Dequeue());
+        }
+    }
+
+    public int Pop() => queue.Dequeue();
+    public int Top() => queue.Peek();
+    public bool Empty() => queue.Count == 0;
 }
