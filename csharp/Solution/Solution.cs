@@ -6,25 +6,46 @@ using static Solution.Utils;
 namespace Solution;
 
 
-public class MyStack
+public class Solution
 {
-    public MyStack()
+    public int Calculate(string s)
     {
-        queue = [];
-    }
-
-    readonly Queue<int> queue;
-
-    public void Push(int x)
-    {
-        queue.Enqueue(x);
-        for (int i = 0; i < queue.Count - 1; i++)
+        Stack<int> st = [];
+        int sign = 1;
+        char? op = null;
+        for (int i = 0; i < s.Length; i++)
         {
-            queue.Enqueue(queue.Dequeue());
+            switch (s[i])
+            {
+                case >= '0' and <= '9':
+                    int curr = s[i] - '0';
+                    while (i + 1 < s.Length && char.IsAsciiDigit(s[1 + i]))
+                    {
+                        i += 1;
+                        curr = 10 * curr + s[i] - '0';
+                    }
+                    curr *= sign;
+                    sign = 1;
+                    if (op.HasValue)
+                    {
+                        int top = st.Pop();
+                        if (op.Value == '*') { curr *= top; }
+                        else { curr = top / curr; }
+                        op = null;
+                    }
+                    st.Push(curr);
+                    break;
+                case '*':
+                case '/':
+                    op = s[i];
+                    break;
+                case '-':
+                    sign *= -1;
+                    break;
+                case '+':
+                default: break;
+            }
         }
+        return st.Sum();
     }
-
-    public int Pop() => queue.Dequeue();
-    public int Top() => queue.Peek();
-    public bool Empty() => queue.Count == 0;
 }
