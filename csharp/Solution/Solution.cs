@@ -7,31 +7,17 @@ namespace Solution;
 
 public class Solution
 {
-    public string ShortestPalindrome(string s)
+    public int FindKthLargest(int[] nums, int k)
     {
-        int len = KMP(s);
-        List<char> res = [.. s.Reverse().Take(s.Length - len)];
-        res.AddRange(s);
-        return string.Concat(res);
-
-        static int KMP(string s)
-        {
-            List<char> arr = [.. s];
-            arr.Add('#');
-            arr.AddRange(s.Reverse());
-            int n = arr.Count;
-            int[] lps = new int[n];
-            int len = 0;
-            for (int i = 1; i < n; i++)
-            {
-                while (len > 0 && arr[len] != arr[i])
-                {
-                    len = lps[len - 1];
-                }
-                if (arr[len] == arr[i]) { len += 1; }
-                lps[i] = len;
-            }
-            return lps[^1];
-        }
+        if (nums.Length == 0) { return 0; }
+        int pivot = nums[^k];
+        int[] left = [.. nums.Where(v => v > pivot)];
+        int[] mid = [.. nums.Where(v => v == pivot)];
+        int[] right = [.. nums.Where(v => v < pivot)];
+        int n1 = left.Length;
+        int n2 = mid.Length;
+        if (k <= n1) { return FindKthLargest(left, k); }
+        else if (n1 + n2 < k) { return FindKthLargest(right, k - n1 - n2); }
+        else return mid[0];
     }
 }
