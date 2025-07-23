@@ -10,12 +10,10 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(19, "cdbcbbaaabab", 4, 5)]
-    [DataRow(20, "aabbaaxybbaabb", 5, 4)]
-    public void TestMethod1(int exp, string s, int x, int y)
+    [DataRow(new[] { 0 }, new[] { 0, 0, 0 })]
+    public void TestMethod1(int[] exp, int[] nums)
     {
-        Assert.AreEqual(exp, sol.MaximumGain(s, x, y));
-        Assert.AreEqual(exp, sol.WithCounting(s, x, y));
+        Assert.IsTrue(exp.SequenceEqual(sol.MajorityElement(nums)));
     }
 
     [TestMethod]

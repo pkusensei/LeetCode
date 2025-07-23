@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using System.Text.RegularExpressions;
 using Solution.LList;
 using Solution.Tree;
 using static Solution.Utils;
@@ -9,66 +8,37 @@ namespace Solution;
 
 public class Solution
 {
-    public int MaximumGain(string s, int x, int y)
+    public IList<int> MajorityElement(int[] nums)
     {
-        (char left, char right) = x > y ? ('a', 'b') : ('b', 'a');
-        Stack<char> st = [];
-        int res = 0;
-        foreach (var ch in s)
+        int num1 = 0;
+        int num2 = 0;
+        int count1 = 0;
+        int count2 = 0;
+        foreach (var num in nums)
         {
-            if (ch == right && st.TryPeek(out var top) && top == left)
+            if (num == num1) { count1 += 1; }
+            else if (num == num2) { count2 += 1; }
+            else if (count1 == 0)
             {
-                st.Pop();
-                res += int.Max(x, y);
+                num1 = num;
+                count1 = 1;
             }
-            else { st.Push(ch); }
-        }
-        (left, right) = (right, left);
-        Stack<char> st2 = [];
-        foreach (var ch in st.Reverse())
-        {
-            if (ch == right && st2.TryPeek(out var top) && top == left)
+            else if (count2 == 0)
             {
-                st2.Pop();
-                res += int.Min(x, y);
+                num2 = num;
+                count2 = 1;
             }
-            else { st2.Push(ch); }
-        }
-        return res;
-    }
-
-    public int WithCounting(string s, int x, int y)
-    {
-        if (x < y)
-        {
-            (x, y) = (y, x); // always starts with "ab"
-            s = new([.. s.Reverse()]);
-        }
-        int a_count = 0;
-        int b_count = 0;
-        int res = 0;
-        foreach (var ch in s)
-        {
-            switch (ch)
+            else
             {
-                case 'a':
-                    a_count += 1;
-                    break;
-                case 'b' when a_count > 0:
-                    a_count -= 1;
-                    res += x;
-                    break;
-                case 'b':
-                    b_count += 1;
-                    break;
-                default: // compute all "ba"
-                    res += int.Min(a_count, b_count) * y;
-                    a_count = 0;
-                    b_count = 0;
-                    break;
+                count1 -= 1;
+                count2 -= 1;
             }
         }
-        res += int.Min(a_count, b_count) * y;
+        count1 = nums.Count(v => v == num1);
+        count2 = nums.Count(v => v == num2);
+        List<int> res = [];
+        if (count1 > nums.Length / 3) { res.Add(num1); }
+        if (count2 > nums.Length / 3 && num2 != num1) { res.Add(num2); }
         return res;
     }
 }
