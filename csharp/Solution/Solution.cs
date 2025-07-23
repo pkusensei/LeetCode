@@ -7,27 +7,18 @@ namespace Solution;
 
 public class Solution
 {
-    public int CountDigitOne(int n)
+    public TreeNode LowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q)
     {
-        string s = n.ToString();
-        int len = s.Length;
-        Dictionary<(int, bool, int), int> memo = [];
-        return Dfs(0, true, 0);
+        int min = int.Min(p.val, q.val);
+        int max = int.Max(p.val, q.val);
+        return Dfs(root, min, max);
 
-        int Dfs(int idx, bool tight, int count)
+        static TreeNode Dfs(TreeNode node, int min, int max)
         {
-            if (idx >= len) { return count; }
-            int res;
-            if (memo.TryGetValue((idx, tight, count), out res)) { return res; }
-            int max_d = tight ? s[idx] - '0' : 9;
-            for (int d = 0; d <= max_d; d++)
-            {
-                bool ntight = tight && d == max_d;
-                if (d == 1) { res += Dfs(1 + idx, ntight, 1 + count); }
-                else { res += Dfs(1 + idx, ntight, count); }
-            }
-            memo.Add((idx, tight, count), res);
-            return res;
+            int val = node.val;
+            if (min <= val && val <= max) { return node; }
+            if (val < min) { return Dfs(node.right, min, max); }
+            return Dfs(node.left, min, max);
         }
     }
 }
