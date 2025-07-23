@@ -7,11 +7,13 @@ namespace Tests;
 [TestClass]
 public class UnitTest
 {
-    // readonly Solution.Solution sol = new();
+    readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow(6, 13)]
+    public void TestMethod1(int exp, int n)
     {
+        Assert.AreEqual(exp, sol.CountDigitOne(n));
     }
 
     [TestMethod]

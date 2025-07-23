@@ -5,44 +5,29 @@ using static Solution.Utils;
 
 namespace Solution;
 
-
-public class MyQueue
+public class Solution
 {
-    readonly Stack<int> in_st;
-    readonly Stack<int> out_st;
-
-    public MyQueue()
+    public int CountDigitOne(int n)
     {
-        in_st = [];
-        out_st = [];
-    }
+        string s = n.ToString();
+        int len = s.Length;
+        Dictionary<(int, bool, int), int> memo = [];
+        return Dfs(0, true, 0);
 
-    public void Push(int x)
-    {
-        while (out_st.TryPop(out var num))
+        int Dfs(int idx, bool tight, int count)
         {
-            in_st.Push(num);
+            if (idx >= len) { return count; }
+            int res;
+            if (memo.TryGetValue((idx, tight, count), out res)) { return res; }
+            int max_d = tight ? s[idx] - '0' : 9;
+            for (int d = 0; d <= max_d; d++)
+            {
+                bool ntight = tight && d == max_d;
+                if (d == 1) { res += Dfs(1 + idx, ntight, 1 + count); }
+                else { res += Dfs(1 + idx, ntight, count); }
+            }
+            memo.Add((idx, tight, count), res);
+            return res;
         }
-        in_st.Push(x);
     }
-
-    public int Pop()
-    {
-        while (in_st.TryPop(out var num))
-        {
-            out_st.Push(num);
-        }
-        return out_st.Pop();
-    }
-
-    public int Peek()
-    {
-        while (in_st.TryPop(out var num))
-        {
-            out_st.Push(num);
-        }
-        return out_st.Peek();
-    }
-
-    public bool Empty() => in_st.Count == 0 && out_st.Count == 0;
 }
