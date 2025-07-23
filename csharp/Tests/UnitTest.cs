@@ -7,11 +7,15 @@ namespace Tests;
 [TestClass]
 public class UnitTest
 {
-    // readonly Solution.Solution sol = new();
+    readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow(19, "cdbcbbaaabab", 4, 5)]
+    [DataRow(20, "aabbaaxybbaabb", 5, 4)]
+    public void TestMethod1(int exp, string s, int x, int y)
     {
+        Assert.AreEqual(exp, sol.MaximumGain(s, x, y));
+        Assert.AreEqual(exp, sol.WithCounting(s, x, y));
     }
 
     [TestMethod]

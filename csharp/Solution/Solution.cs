@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using System.Text.RegularExpressions;
 using Solution.LList;
 using Solution.Tree;
 using static Solution.Utils;
@@ -8,44 +9,66 @@ namespace Solution;
 
 public class Solution
 {
-    public int Calculate(string s)
+    public int MaximumGain(string s, int x, int y)
     {
-        Stack<int> st = [];
-        int sign = 1;
-        char? op = null;
-        for (int i = 0; i < s.Length; i++)
+        (char left, char right) = x > y ? ('a', 'b') : ('b', 'a');
+        Stack<char> st = [];
+        int res = 0;
+        foreach (var ch in s)
         {
-            switch (s[i])
+            if (ch == right && st.TryPeek(out var top) && top == left)
             {
-                case >= '0' and <= '9':
-                    int curr = s[i] - '0';
-                    while (i + 1 < s.Length && char.IsAsciiDigit(s[1 + i]))
-                    {
-                        i += 1;
-                        curr = 10 * curr + s[i] - '0';
-                    }
-                    curr *= sign;
-                    sign = 1;
-                    if (op.HasValue)
-                    {
-                        int top = st.Pop();
-                        if (op.Value == '*') { curr *= top; }
-                        else { curr = top / curr; }
-                        op = null;
-                    }
-                    st.Push(curr);
+                st.Pop();
+                res += int.Max(x, y);
+            }
+            else { st.Push(ch); }
+        }
+        (left, right) = (right, left);
+        Stack<char> st2 = [];
+        foreach (var ch in st.Reverse())
+        {
+            if (ch == right && st2.TryPeek(out var top) && top == left)
+            {
+                st2.Pop();
+                res += int.Min(x, y);
+            }
+            else { st2.Push(ch); }
+        }
+        return res;
+    }
+
+    public int WithCounting(string s, int x, int y)
+    {
+        if (x < y)
+        {
+            (x, y) = (y, x); // always starts with "ab"
+            s = new([.. s.Reverse()]);
+        }
+        int a_count = 0;
+        int b_count = 0;
+        int res = 0;
+        foreach (var ch in s)
+        {
+            switch (ch)
+            {
+                case 'a':
+                    a_count += 1;
                     break;
-                case '*':
-                case '/':
-                    op = s[i];
+                case 'b' when a_count > 0:
+                    a_count -= 1;
+                    res += x;
                     break;
-                case '-':
-                    sign *= -1;
+                case 'b':
+                    b_count += 1;
                     break;
-                case '+':
-                default: break;
+                default: // compute all "ba"
+                    res += int.Min(a_count, b_count) * y;
+                    a_count = 0;
+                    b_count = 0;
+                    break;
             }
         }
-        return st.Sum();
+        res += int.Min(a_count, b_count) * y;
+        return res;
     }
 }
