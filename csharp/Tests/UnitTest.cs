@@ -10,10 +10,10 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(new[] { 0 }, new[] { 0, 0, 0 })]
-    public void TestMethod1(int[] exp, int[] nums)
+    public void TestMethod1()
     {
-        Assert.IsTrue(exp.SequenceEqual(sol.MajorityElement(nums)));
+        var a = TreeNode.Make([3, 1, 4, null, 2]);
+        Assert.AreEqual(1, sol.KthSmallest(a, 1));
     }
 
     [TestMethod]
