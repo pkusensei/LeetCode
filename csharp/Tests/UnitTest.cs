@@ -12,7 +12,6 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
-        sol.BinaryTreePaths(TreeNode.Make([1, 2, 3, null, 5]));
     }
 
     [TestMethod]

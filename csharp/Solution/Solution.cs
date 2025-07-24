@@ -7,23 +7,25 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<string> BinaryTreePaths(TreeNode root)
+    public int[] SingleNumber(int[] nums)
     {
-        List<string> res = [];
-        Dfs(root, []);
-        return res;
-
-        void Dfs(TreeNode node, List<int> curr)
+        int xor = nums.Aggregate((a, b) => a ^ b);
+        int target_bit = 0;
+        for (int i = 0; i < 32; i++)
         {
-            if (node is null) { return; }
-            curr.Add(node.val);
-            if (node.left is null && node.right is null)
+            if (((xor >> i) & 1) == 1)
             {
-                res.Add(string.Join("->", curr));
+                target_bit = i;
+                break;
             }
-            Dfs(node.left, curr);
-            Dfs(node.right, curr);
-            curr.RemoveAt(curr.Count - 1);
         }
+        int a = 0;
+        int b = 0;
+        foreach (var num in nums)
+        {
+            if (((num >> target_bit) & 1) == 1) { a ^= num; }
+            else { b ^= num; }
+        }
+        return [a, b];
     }
 }
