@@ -10,11 +10,10 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(new[] { 24, 12, 8, 6 }, new[] { 1, 2, 3, 4 })]
-    [DataRow(new[] { 0, 0, 9, 0, 0 }, new[] { -1, 1, 0, -3, 3 })]
-    public void TestMethod1(int[] exp, int[] nums)
+    [DataRow(new[] { 3, 3, 5, 5, 6, 7 }, new[] { 1, 3, -1, -3, 5, 3, 6, 7 }, 3)]
+    public void TestMethod1(int[] exp, int[] nums, int k)
     {
-        Assert.IsTrue(exp.SequenceEqual(sol.ProductExceptSelf(nums)));
+        Assert.IsTrue(exp.SequenceEqual(sol.MaxSlidingWindow(nums, k)));
     }
 
     [TestMethod]
