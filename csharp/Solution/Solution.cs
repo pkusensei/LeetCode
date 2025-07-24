@@ -25,4 +25,18 @@ public class Solution
         }
         return 0;
     }
+
+    public int HIndex_2(int[] citations)
+    {
+        int n = citations.Length;
+        int left = 0;
+        int right = n - 1;
+        while (left <= right)
+        {
+            int mid = left + (right - left) / 2;
+            if (citations[mid] >= n - mid) { right = mid - 1; }
+            else { left = 1 + mid; }
+        }
+        return n - left;
+    }
 }
