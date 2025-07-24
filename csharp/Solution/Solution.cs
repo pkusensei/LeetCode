@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Linq.Expressions;
+using System.Text;
 using Solution.LList;
 using Solution.Tree;
 using static Solution.Utils;
@@ -7,25 +8,30 @@ namespace Solution;
 
 public class Solution
 {
-    public int[] SingleNumber(int[] nums)
+    public int NthUglyNumber(int n)
     {
-        int xor = nums.Aggregate((a, b) => a ^ b);
-        int target_bit = 0;
-        for (int i = 0; i < 32; i++)
+        PriorityQueue<int, int> pq = new();
+        pq.Enqueue(1, 1);
+        HashSet<int> seen = [];
+        while (pq.TryDequeue(out var num, out _))
         {
-            if (((xor >> i) & 1) == 1)
+            if (seen.Add(num))
             {
-                target_bit = i;
-                break;
+                if (seen.Count == n) { return num; }
+                try
+                {
+                    checked
+                    {
+                        foreach (var p in new[] { 2, 3, 5 })
+                        {
+                            var curr = num * p;
+                            pq.Enqueue(curr, curr);
+                        }
+                    }
+                }
+                catch (OverflowException) { }
             }
         }
-        int a = 0;
-        int b = 0;
-        foreach (var num in nums)
-        {
-            if (((num >> target_bit) & 1) == 1) { a ^= num; }
-            else { b ^= num; }
-        }
-        return [a, b];
+        return -1;
     }
 }
