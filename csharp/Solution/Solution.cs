@@ -7,43 +7,23 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<int> DiffWaysToCompute(string expression)
+    public IList<string> BinaryTreePaths(TreeNode root)
     {
-        Dictionary<string, List<int>> memo = [];
-        var lookup = memo.GetAlternateLookup<ReadOnlySpan<char>>();
-        return Dfs(expression);
+        List<string> res = [];
+        Dfs(root, []);
+        return res;
 
-        List<int> Dfs(ReadOnlySpan<char> s)
+        void Dfs(TreeNode node, List<int> curr)
         {
-            List<int> res;
-            if (lookup.TryGetValue(s, out res)) { return res; }
-            res = [];
-            if (int.TryParse(s, out var val))
+            if (node is null) { return; }
+            curr.Add(node.val);
+            if (node.left is null && node.right is null)
             {
-                res.Add(val);
-                lookup.TryAdd(s, res);
-                return res;
+                res.Add(string.Join("->", curr));
             }
-            for (int i = 0; i < s.Length; i++)
-            {
-                if ("+-*".Contains(s[i]))
-                {
-                    var left = Dfs(s[..i]);
-                    var right = Dfs(s[(1 + i)..]);
-                    foreach (var (a, b) in left.SelectMany(a => right.Select(b => (a, b))))
-                    {
-                        switch (s[i])
-                        {
-                            case '+': res.Add(a + b); break;
-                            case '-': res.Add(a - b); break;
-                            case '*': res.Add(a * b); break;
-                            default: break;
-                        }
-                    }
-                }
-            }
-            lookup.TryAdd(s, res);
-            return res;
+            Dfs(node.left, curr);
+            Dfs(node.right, curr);
+            curr.RemoveAt(curr.Count - 1);
         }
     }
 }
