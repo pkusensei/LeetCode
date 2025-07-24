@@ -10,11 +10,11 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(0, new[] { 0 })]
-    [DataRow(3, new[] { 0, 1, 3, 5, 6 })]
-    public void TestMethod1(int exp, int[] c)
+    [DataRow(3, 12)]
+    [DataRow(2, 13)]
+    public void TestMethod1(int exp, int n)
     {
-        Assert.AreEqual(exp, sol.HIndex_2(c));
+        Assert.AreEqual(exp, sol.NumSquares(n));
     }
 
     [TestMethod]
