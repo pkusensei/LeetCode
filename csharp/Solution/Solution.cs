@@ -7,22 +7,48 @@ namespace Solution;
 
 public class Solution
 {
-    public int[] MaxSlidingWindow(int[] nums, int k)
+    public bool SearchMatrix(int[][] matrix, int target)
     {
-        int n = nums.Length;
-        if (n <= k) { return [nums.Max()]; }
-        LinkedList<int> deque = [];
-        List<int> res = [];
-        for (int i = 0; i < n; i++)
+        int rows = matrix.Length;
+        int cols = matrix[0].Length;
+        int left = 0;
+        int right = cols - 1;
+        while (left < right)
         {
-            while (deque.Count > 0 && deque.Last.Value < nums[i])
-            {
-                deque.RemoveLast(); // mono decreasing deque
-            }
-            deque.AddLast(nums[i]);
-            if (i >= k && deque.First.Value == nums[i - k]) { deque.RemoveFirst(); }
-            if (i >= k - 1) { res.Add(deque.First.Value); }
+            int mid = left + (right - left + 1) / 2;
+            if (matrix[0][mid] <= target) { left = mid; }
+            else { right = mid - 1; }
         }
-        return [.. res];
+        if (matrix[0][left] == target) { return true; }
+        int col = left;
+        for (int c = col; c >= 0; c -= 1)
+        {
+            left = 0;
+            right = rows - 1;
+            while (left <= right)
+            {
+                int mid = left + (right - left) / 2;
+                if (matrix[mid][c] < target) { left = 1 + mid; }
+                else if (matrix[mid][c] > target) { right = mid - 1; }
+                else { return true; }
+            }
+        }
+        return false;
+    }
+
+    public bool WithLinearTime(int[][] mat, int target)
+    {
+        int rows = mat.Length;
+        int cols = mat[0].Length;
+        int r = 0;
+        int c = cols - 1;
+        while (r < rows && c >= 0)
+        {
+            int val = mat[r][c];
+            if (val > target) { c -= 1; }
+            else if (val < target) { r += 1; }
+            else{ return true; }
+        }
+        return false;
     }
 }
