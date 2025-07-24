@@ -10,19 +10,16 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow(new[] { 24, 12, 8, 6 }, new[] { 1, 2, 3, 4 })]
+    [DataRow(new[] { 0, 0, 9, 0, 0 }, new[] { -1, 1, 0, -3, 3 })]
+    public void TestMethod1(int[] exp, int[] nums)
     {
-        int[] nums = [1, 5, 5, 4, 11];
-        int[][] edges = [[0, 1], [1, 2], [1, 3], [3, 4]];
-        Assert.AreEqual(9, sol.MinimumScore(nums, edges));
+        Assert.IsTrue(exp.SequenceEqual(sol.ProductExceptSelf(nums)));
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        int[] nums = [5, 5, 2, 4, 4, 2];
-        int[][] edges = [[0, 1], [1, 2], [5, 2], [4, 3], [1, 3]];
-        Assert.AreEqual(0, sol.MinimumScore(nums, edges));
     }
 
     [TestMethod]
