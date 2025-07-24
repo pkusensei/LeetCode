@@ -8,30 +8,11 @@ namespace Solution;
 
 public class Solution
 {
-    public int NthUglyNumber(int n)
+    public int MissingNumber(int[] nums)
     {
-        PriorityQueue<int, int> pq = new();
-        pq.Enqueue(1, 1);
-        HashSet<int> seen = [];
-        while (pq.TryDequeue(out var num, out _))
-        {
-            if (seen.Add(num))
-            {
-                if (seen.Count == n) { return num; }
-                try
-                {
-                    checked
-                    {
-                        foreach (var p in new[] { 2, 3, 5 })
-                        {
-                            var curr = num * p;
-                            pq.Enqueue(curr, curr);
-                        }
-                    }
-                }
-                catch (OverflowException) { }
-            }
-        }
-        return -1;
+        int n = nums.Length;
+        int xor = Enumerable.Range(0, 1 + n).Aggregate((a, b) => a ^ b);
+        int curr = nums.Aggregate((a, b) => a ^ b);
+        return xor ^ curr;
     }
 }
