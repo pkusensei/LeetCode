@@ -7,48 +7,43 @@ namespace Solution;
 
 public class Solution
 {
-    public bool SearchMatrix(int[][] matrix, int target)
+    public IList<int> DiffWaysToCompute(string expression)
     {
-        int rows = matrix.Length;
-        int cols = matrix[0].Length;
-        int left = 0;
-        int right = cols - 1;
-        while (left < right)
-        {
-            int mid = left + (right - left + 1) / 2;
-            if (matrix[0][mid] <= target) { left = mid; }
-            else { right = mid - 1; }
-        }
-        if (matrix[0][left] == target) { return true; }
-        int col = left;
-        for (int c = col; c >= 0; c -= 1)
-        {
-            left = 0;
-            right = rows - 1;
-            while (left <= right)
-            {
-                int mid = left + (right - left) / 2;
-                if (matrix[mid][c] < target) { left = 1 + mid; }
-                else if (matrix[mid][c] > target) { right = mid - 1; }
-                else { return true; }
-            }
-        }
-        return false;
-    }
+        Dictionary<string, List<int>> memo = [];
+        var lookup = memo.GetAlternateLookup<ReadOnlySpan<char>>();
+        return Dfs(expression);
 
-    public bool WithLinearTime(int[][] mat, int target)
-    {
-        int rows = mat.Length;
-        int cols = mat[0].Length;
-        int r = 0;
-        int c = cols - 1;
-        while (r < rows && c >= 0)
+        List<int> Dfs(ReadOnlySpan<char> s)
         {
-            int val = mat[r][c];
-            if (val > target) { c -= 1; }
-            else if (val < target) { r += 1; }
-            else{ return true; }
+            List<int> res;
+            if (lookup.TryGetValue(s, out res)) { return res; }
+            res = [];
+            if (int.TryParse(s, out var val))
+            {
+                res.Add(val);
+                lookup.TryAdd(s, res);
+                return res;
+            }
+            for (int i = 0; i < s.Length; i++)
+            {
+                if ("+-*".Contains(s[i]))
+                {
+                    var left = Dfs(s[..i]);
+                    var right = Dfs(s[(1 + i)..]);
+                    foreach (var (a, b) in left.SelectMany(a => right.Select(b => (a, b))))
+                    {
+                        switch (s[i])
+                        {
+                            case '+': res.Add(a + b); break;
+                            case '-': res.Add(a - b); break;
+                            case '*': res.Add(a * b); break;
+                            default: break;
+                        }
+                    }
+                }
+            }
+            lookup.TryAdd(s, res);
+            return res;
         }
-        return false;
     }
 }
