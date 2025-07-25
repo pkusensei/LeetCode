@@ -7,16 +7,10 @@ namespace Solution;
 
 public class Solution
 {
-    public int NumSquares(int n)
+    public int MaxSum(int[] nums)
     {
-        int[] dp = [.. Enumerable.Range(0, 1 + n)];
-        for (int i = 1; i <= n; i++)
-        {
-            for (int root = 1; root * root <= i; root++)
-            {
-                dp[i] = int.Min(dp[i], 1 + dp[i - root * root]);
-            }
-        }
-        return dp[n];
+        int max = nums.Max();
+        if (max <= 0) { return max; }
+        return nums.Where(v => v > 0).Distinct().Sum();
     }
 }
