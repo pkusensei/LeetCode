@@ -5,23 +5,28 @@ using static Solution.Utils;
 
 namespace Solution;
 
-public class Solution
+class PeekingIterator
 {
-    public void MoveZeroes(int[] nums)
+    IEnumerator<int> It { get; set; }
+
+    // iterators refers to the first element of the array.
+    public PeekingIterator(IEnumerator<int> iterator)
     {
-        for (int slow = 0; slow < nums.Length; slow++)
-        {
-            if (nums[slow] == 0)
-            {
-                for (int fast = 1 + slow; fast < nums.Length; fast++)
-                {
-                    if (nums[fast] != 0)
-                    {
-                        (nums[slow], nums[fast]) = (nums[fast], nums[slow]);
-                        break;
-                    }
-                }
-            }
-        }
+        // initialize any member here.
+        It = iterator;
     }
+
+    // Returns the next element in the iteration without advancing the iterator.
+    public int Peek() => It?.Current ?? -1;
+
+    // Returns the next element in the iteration and advances the iterator.
+    public int Next()
+    {
+        int val = It.Current;
+        if (!It.MoveNext()) { It = null; }
+        return val;
+    }
+
+    // Returns false if the iterator is refering to the end of the array of true otherwise.
+    public bool HasNext() => It is not null;
 }
