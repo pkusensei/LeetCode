@@ -5,28 +5,34 @@ using static Solution.Utils;
 
 namespace Solution;
 
-class PeekingIterator
+public class Solution
 {
-    IEnumerator<int> It { get; set; }
-
-    // iterators refers to the first element of the array.
-    public PeekingIterator(IEnumerator<int> iterator)
+    public int FindDuplicate(int[] nums)
     {
-        // initialize any member here.
-        It = iterator;
+        int slow = 0;
+        int fast = 0;
+        do
+        {
+            slow = nums[slow];
+            fast = nums[nums[fast]];
+        } while (slow != fast);
+        slow = 0;
+        do
+        {
+            slow = nums[slow];
+            fast = nums[fast];
+        } while (slow != fast);
+        return slow;
     }
 
-    // Returns the next element in the iteration without advancing the iterator.
-    public int Peek() => It?.Current ?? -1;
-
-    // Returns the next element in the iteration and advances the iterator.
-    public int Next()
+    public int WithFlip(int[] nums)
     {
-        int val = It.Current;
-        if (!It.MoveNext()) { It = null; }
-        return val;
+        for (int i = 0; i < nums.Length; i++)
+        {
+            int next = int.Abs(nums[i]);
+            if (nums[next] < 0) { return next; }
+            nums[next] *= -1;
+        }
+        return -1;
     }
-
-    // Returns false if the iterator is refering to the end of the array of true otherwise.
-    public bool HasNext() => It is not null;
 }

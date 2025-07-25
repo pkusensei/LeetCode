@@ -7,11 +7,16 @@ namespace Tests;
 [TestClass]
 public class UnitTest
 {
-    // readonly Solution.Solution sol = new();
+    readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow(2, new[] { 1, 3, 4, 2, 2 })]
+    [DataRow(3, new[] { 3, 1, 3, 4, 2 })]
+    [DataRow(3, new[] { 3, 3, 3, 3, 3 })]
+    public void TestMethod1(int exp, int[] nums)
     {
+        Assert.AreEqual(exp, sol.FindDuplicate(nums));
+        Assert.AreEqual(exp, sol.WithFlip(nums));
     }
 
     [TestMethod]
