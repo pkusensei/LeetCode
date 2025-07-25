@@ -7,50 +7,19 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<string> AddOperators(string num, int target)
+    public void MoveZeroes(int[] nums)
     {
-        List<string> res = [];
-        List<string> expr = [];
-        Backtrack(num, 0, 0);
-        return res;
-
-        void Backtrack(ReadOnlySpan<char> s, long value, long prev)
+        for (int slow = 0; slow < nums.Length; slow++)
         {
-            if (s.IsEmpty)
+            if (nums[slow] == 0)
             {
-                if (value == target) { res.Add(string.Join(string.Empty, expr)); }
-                return;
-            }
-            for (int i = 0; i < s.Length; i++)
-            {
-                if (s[0] == '0' && i > 0) { return; } // leading zero
-                long curr = long.Parse(s[..(1 + i)]);
-                string curr_str = new(s[..(1 + i)]);
-                if (s.Length == num.Length)
+                for (int fast = 1 + slow; fast < nums.Length; fast++)
                 {
-                    expr.Add(curr_str);
-                    Backtrack(s[(1 + i)..], curr, curr);
-                    expr.RemoveAt(expr.Count - 1);
-                }
-                else
-                {
-                    expr.Add("+");
-                    expr.Add(curr_str);
-                    Backtrack(s[(1 + i)..], value + curr, curr);
-                    expr.RemoveAt(expr.Count - 1);
-                    expr.RemoveAt(expr.Count - 1);
-
-                    expr.Add("-");
-                    expr.Add(curr_str);
-                    Backtrack(s[(1 + i)..], value - curr, -curr);
-                    expr.RemoveAt(expr.Count - 1);
-                    expr.RemoveAt(expr.Count - 1);
-
-                    expr.Add("*");
-                    expr.Add(curr_str);
-                    Backtrack(s[(1 + i)..], value - prev + prev * curr, prev * curr);
-                    expr.RemoveAt(expr.Count - 1);
-                    expr.RemoveAt(expr.Count - 1);
+                    if (nums[fast] != 0)
+                    {
+                        (nums[slow], nums[fast]) = (nums[fast], nums[slow]);
+                        break;
+                    }
                 }
             }
         }
