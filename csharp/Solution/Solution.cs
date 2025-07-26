@@ -7,47 +7,35 @@ namespace Solution;
 
 public class Solution
 {
-    public long MaxSubarrays(int n, int[][] conflictingPairs)
+    static (int, int)[] deltas = [.. Enumerable.Range(-1, 3)
+                                            .SelectMany(x => Enumerable.Range(-1, 3).Select(y => (x, y)))
+                                            .Where(p=>p.x!=0||p.y!=0)];
+
+    public void GameOfLife(int[][] board)
     {
-        List<int>[] cps = [.. Enumerable.Range(0, 1 + n).Select(_ => new List<int>())];
-        foreach (var cp in conflictingPairs)
+        int rows = board.Length;
+        int cols = board[0].Length;
+        for (int r = 0; r < rows; r++)
         {
-            int left = int.Min(cp[0], cp[1]);
-            int right = int.Max(cp[0], cp[1]);
-            cps[right].Add(left);
-        }
-        int rightmost_left1 = 0;
-        int rightmost_left2 = 0;
-        long res = 0;
-        long[] candids = new long[1 + n];
-        // For each right point in array
-        // Here we try to count all valid subarrs ending on `right`
-        // Only subarrays ends in [1+rightmotst_left1..=right] are valid
-        // Those are accumulated in `res`
-        // In addition, removing rightmost_left1 (as removing conflict pair)
-        // regains (r_left1 - r_left2) subarrs
-        // e.g
-        // 1  2  3  4, cps: [1,3], [2,3]
-        // l2 l1
-        // We first find all subarrs end on [3]
-        // Later for [4], the same increase/gain on l1=2 is counted again
-        for (int right = 1; right <= n; right++)
-        {
-            foreach (var item in cps[right])
+            for (int c = 0; c < cols; c++)
             {
-                if (item > rightmost_left1)
+                int around = deltas.Select(p =>
                 {
-                    rightmost_left2 = rightmost_left1;
-                    rightmost_left1 = item;
-                }
-                else if (item > rightmost_left2)
-                {
-                    rightmost_left2 = item;
-                }
+                    int nr = p.Item1 + r;
+                    int nc = p.Item2 + c;
+                    if (0 <= nr && nr < rows && 0 <= nc && nc < cols) { return board[nr][nc] & 1; }
+                    return 0;
+                }).Sum();
+                if (board[r][c] == 1 && (around == 2 || around == 3)) { board[r][c] += 2; }
+                else if (board[r][c] == 0 && around == 3) { board[r][c] += 2; }
             }
-            res += right - rightmost_left1;
-            candids[rightmost_left1] += rightmost_left1 - rightmost_left2;
         }
-        return res + candids.Max();
+        for (int r = 0; r < rows; r++)
+        {
+            for (int c = 0; c < cols; c++)
+            {
+                board[r][c] /= 2;
+            }
+        }
     }
 }
