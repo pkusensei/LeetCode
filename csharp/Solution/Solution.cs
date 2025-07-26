@@ -5,37 +5,48 @@ using static Solution.Utils;
 
 namespace Solution;
 
-public class Solution
+public class MedianFinder
 {
-    static (int, int)[] deltas = [.. Enumerable.Range(-1, 3)
-                                            .SelectMany(x => Enumerable.Range(-1, 3).Select(y => (x, y)))
-                                            .Where(p=>p.x!=0||p.y!=0)];
+    readonly PriorityQueue<int, int> small; // should be max heap
+    readonly PriorityQueue<int, int> large;
 
-    public void GameOfLife(int[][] board)
+    public MedianFinder()
     {
-        int rows = board.Length;
-        int cols = board[0].Length;
-        for (int r = 0; r < rows; r++)
+        small = new();
+        large = new();
+    }
+
+    public void AddNum(int num)
+    {
+        if (!small.TryPeek(out var mid, out _) || mid > num)
         {
-            for (int c = 0; c < cols; c++)
-            {
-                int around = deltas.Select(p =>
-                {
-                    int nr = p.Item1 + r;
-                    int nc = p.Item2 + c;
-                    if (0 <= nr && nr < rows && 0 <= nc && nc < cols) { return board[nr][nc] & 1; }
-                    return 0;
-                }).Sum();
-                if (board[r][c] == 1 && (around == 2 || around == 3)) { board[r][c] += 2; }
-                else if (board[r][c] == 0 && around == 3) { board[r][c] += 2; }
-            }
+            small.Enqueue(num, -num);
         }
-        for (int r = 0; r < rows; r++)
+        else
         {
-            for (int c = 0; c < cols; c++)
-            {
-                board[r][c] /= 2;
-            }
+            large.Enqueue(num, num);
+        }
+        if (small.Count > 1 + large.Count)
+        {
+            int top = small.Dequeue();
+            large.Enqueue(top, top);
+        }
+        if (small.Count < large.Count)
+        {
+            int top = large.Dequeue();
+            small.Enqueue(top, -top);
+        }
+    }
+
+    public double FindMedian()
+    {
+        if (small.Count == large.Count)
+        {
+            return (small.Peek() + large.Peek()) / 2.0;
+        }
+        else
+        {
+            return small.Peek();
         }
     }
 }
