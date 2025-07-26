@@ -12,9 +12,10 @@ impl FenwickTree {
         }
     }
 
-    pub fn update(&mut self, mut idx: usize, delta: i32) {
+    // !! 1-based index !!
+    pub fn update(&mut self, mut idx: usize, val: i32) {
         while idx <= self.size {
-            self.tree[idx] += delta;
+            self.tree[idx] += val;
             idx += idx & (!idx + 1); // same as wrapping_neg
         }
     }
