@@ -10,18 +10,17 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(2, new[] { 1, 3, 4, 2, 2 })]
-    [DataRow(3, new[] { 3, 1, 3, 4, 2 })]
-    [DataRow(3, new[] { 3, 3, 3, 3, 3 })]
-    public void TestMethod1(int exp, int[] nums)
+    public void TestMethod1()
     {
-        Assert.AreEqual(exp, sol.FindDuplicate(nums));
-        Assert.AreEqual(exp, sol.WithFlip(nums));
+        int[][] cp = [[2, 3], [1, 4]];
+        Assert.AreEqual(9, sol.MaxSubarrays(4, cp));
     }
 
     [TestMethod]
     public void TestMethod2()
     {
+        int[][] cp = [[1, 2], [2, 5], [3, 5]];
+        Assert.AreEqual(12, sol.MaxSubarrays(5, cp));
     }
 
     [TestMethod]
