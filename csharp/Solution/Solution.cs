@@ -5,54 +5,30 @@ using static Solution.Utils;
 
 namespace Solution;
 
-public class Solution
+public class NumMatrix
 {
-    public IList<string> RemoveInvalidParentheses(string s)
+    public NumMatrix(int[][] matrix)
     {
-        HashSet<string> res = [];
-        StringBuilder sb = new(s.Length);
-        int max_skip = s.Length;
-        Backtrack(s, 0, 0);
-        return [.. res];
-
-        void Backtrack(ReadOnlySpan<char> s, int open, int skip)
+        int rows = matrix.Length;
+        int cols = matrix[0].Length;
+        Prefix = new int[1 + rows, 1 + cols];
+        for (int r = 0; r < rows; r++)
         {
-            if (s.IsEmpty)
+            int sum = 0;
+            for (int c = 0; c < cols; c++)
             {
-                if (open == 0)
-                {
-                    if (max_skip > skip)
-                    {
-                        max_skip = skip;
-                        res.Clear();
-                    }
-                    if (skip == max_skip) { res.Add(sb.ToString()); }
-                }
-                return;
+                sum += matrix[r][c];
+                Prefix[1 + r, 1 + c] = sum + Prefix[r, 1 + c];
             }
-            if (open < 0 || max_skip < skip) { return; }
-            switch (s[0])
-            {
-                case '(':
-                    Backtrack(s[1..], open, 1 + skip);
-                    AddRemove(s, 1 + open, skip);
-                    break;
-                case ')':
-                    Backtrack(s[1..], open, 1 + skip);
-                    AddRemove(s, open - 1, skip);
-                    break;
-                default:
-                    AddRemove(s, open, skip);
-                    break;
-            }
-
         }
+    }
 
-        void AddRemove(ReadOnlySpan<char> s, int open, int skip)
-        {
-            sb.Append(s[0]);
-            Backtrack(s[1..], open, skip);
-            sb.Remove(sb.Length - 1, 1);
-        }
+    int[,] Prefix { get; }
+
+    public int SumRegion(int row1, int col1, int row2, int col2)
+    {
+        row2 += 1;
+        col2 += 1;
+        return Prefix[row2, col2] + Prefix[row1, col1] - Prefix[row2, col1] - Prefix[row1, col2];
     }
 }

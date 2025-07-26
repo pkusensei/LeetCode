@@ -7,15 +7,11 @@ namespace Tests;
 [TestClass]
 public class UnitTest
 {
-    readonly Solution.Solution sol = new();
+    // readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(new[] { "(())()", "()()()" }, "()())()")]
-    [DataRow(new[] { "(a())()", "(a)()()" }, "(a)())()")]
-    [DataRow(new[] { "" }, ")(")]
-    public void TestMethod1(string[] exp, string s)
+    public void TestMethod1()
     {
-        Assert.IsTrue(exp.Order().SequenceEqual(sol.RemoveInvalidParentheses(s).Order()));
     }
 
     [TestMethod]
