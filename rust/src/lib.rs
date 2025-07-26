@@ -7,46 +7,32 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-#[derive(Default)]
-struct Trie {
-    nodes: [Option<Box<Trie>>; 26],
-    is_end: bool,
+pub fn length_of_lis(nums: &[i32]) -> i32 {
+    let n = nums.len();
+    let mut dp = vec![1; n];
+    let mut res = 1;
+    for right in 1..n {
+        for left in 0..right {
+            if nums[left] < nums[right] {
+                dp[right] = dp[right].max(1 + dp[left]);
+                res = res.max(dp[right]);
+            }
+        }
+    }
+    res
 }
 
-impl Trie {
-    fn new() -> Self {
-        Default::default()
-    }
-
-    fn insert(&mut self, word: String) {
-        let mut curr = self;
-        for b in word.bytes() {
-            curr = curr.nodes[usize::from(b - b'a')].get_or_insert_default();
+pub fn with_bianry_search(nums: &[i32]) -> i32 {
+    let mut lis = vec![];
+    for &num in nums.iter() {
+        let i = lis.partition_point(|&v| v < num);
+        if i == lis.len() {
+            lis.push(num);
+        } else {
+            lis[i] = num;
         }
-        curr.is_end = true;
     }
-
-    fn search(&self, word: String) -> bool {
-        let mut curr = self;
-        for b in word.bytes() {
-            let Some(node) = curr.nodes[usize::from(b - b'a')].as_ref() else {
-                return false;
-            };
-            curr = node;
-        }
-        curr.is_end
-    }
-
-    fn starts_with(&self, prefix: String) -> bool {
-        let mut curr = self;
-        for b in prefix.bytes() {
-            let Some(node) = curr.nodes[usize::from(b - b'a')].as_ref() else {
-                return false;
-            };
-            curr = node;
-        }
-        true
-    }
+    lis.len() as i32
 }
 
 #[cfg(test)]
@@ -79,7 +65,15 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(length_of_lis(&[10, 9, 2, 5, 3, 7, 101, 18]), 4);
+        assert_eq!(length_of_lis(&[0, 1, 0, 3, 2, 3]), 4);
+        assert_eq!(length_of_lis(&[7, 7, 7, 7, 7, 7, 7]), 1);
+
+        assert_eq!(with_bianry_search(&[10, 9, 2, 5, 3, 7, 101, 18]), 4);
+        assert_eq!(with_bianry_search(&[0, 1, 0, 3, 2, 3]), 4);
+        assert_eq!(with_bianry_search(&[7, 7, 7, 7, 7, 7, 7]), 1);
+    }
 
     #[test]
     fn test() {}

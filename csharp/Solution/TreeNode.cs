@@ -323,16 +323,6 @@ public class Codec
     // Decodes your encoded data to tree.
     public static TreeNode Deserialize(string data) => TreeNode.Make(Parse(data));
 
-    static List<int?> Parse(string data) =>
-        data.Trim(['[', ']']).Split(',').Select(s =>
-        {
-            if (int.TryParse(s, out int v))
-            {
-                return v;
-            }
-            else
-            {
-                return (int?)null;
-            }
-        }).ToList();
+    static int?[] Parse(string data) => [.. data.Trim(['[', ']']).Split(',')
+                                                .Select(s => int.TryParse(s, out int v) ? v : (int?)null)];
 }
