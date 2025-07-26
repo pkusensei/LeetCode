@@ -5,69 +5,54 @@ using static Solution.Utils;
 
 namespace Solution;
 
-public class Codec
+public class Solution
 {
-    // Encodes a tree to a single string.
-    public string serialize(TreeNode root)
+    public IList<string> RemoveInvalidParentheses(string s)
     {
-        if (root is null) { return "[]"; }
-        StringBuilder sb = new();
-        sb.Append('[');
-        List<TreeNode> nodes = [.. LevelOrder(root)];
-        while (nodes.Count > 0 && nodes[^1] is null)
-        {
-            nodes.RemoveAt(nodes.Count - 1);
-        }
-        foreach (var node in nodes)
-        {
-            if (node is null) { sb.Append("null,"); }
-            else { sb.Append($"{node.val},"); }
-        }
-        sb.Replace(',', ']', sb.Length - 1, 1);
-        return sb.ToString();
+        HashSet<string> res = [];
+        StringBuilder sb = new(s.Length);
+        int max_skip = s.Length;
+        Backtrack(s, 0, 0);
+        return [.. res];
 
-        static IEnumerable<TreeNode> LevelOrder(TreeNode root)
+        void Backtrack(ReadOnlySpan<char> s, int open, int skip)
         {
-            Queue<TreeNode> queue = [];
-            queue.Enqueue(root);
-            while (queue.TryDequeue(out var node))
+            if (s.IsEmpty)
             {
-                yield return node;
-                if (node is not null)
+                if (open == 0)
                 {
-                    queue.Enqueue(node.left);
-                    queue.Enqueue(node.right);
+                    if (max_skip > skip)
+                    {
+                        max_skip = skip;
+                        res.Clear();
+                    }
+                    if (skip == max_skip) { res.Add(sb.ToString()); }
                 }
+                return;
             }
-        }
-    }
+            if (open < 0 || max_skip < skip) { return; }
+            switch (s[0])
+            {
+                case '(':
+                    Backtrack(s[1..], open, 1 + skip);
+                    AddRemove(s, 1 + open, skip);
+                    break;
+                case ')':
+                    Backtrack(s[1..], open, 1 + skip);
+                    AddRemove(s, open - 1, skip);
+                    break;
+                default:
+                    AddRemove(s, open, skip);
+                    break;
+            }
 
-    // Decodes your encoded data to tree.
-    public TreeNode deserialize(string data)
-    {
-        int?[] vals = [.. data.Trim(['[', ']'])
-                              .Split(',')
-                              .Select(s => int.TryParse(s, out int v) ? v : (int?)null)];
-        if (vals.FirstOrDefault() is null) { return null; }
-        TreeNode root = new(vals[0].Value);
-        Queue<TreeNode> queue = [];
-        queue.Enqueue(root);
-        int idx = 1;
-        while (queue.TryDequeue(out var node) && idx < vals.Length)
-        {
-            if (vals[idx] is int v)
-            {
-                node.left = new(v);
-                queue.Enqueue(node.left);
-            }
-            idx += 1;
-            if (idx < vals.Length && vals[idx] is int v2)
-            {
-                node.right = new(v2);
-                queue.Enqueue(node.right);
-            }
-            idx += 1;
         }
-        return root;
+
+        void AddRemove(ReadOnlySpan<char> s, int open, int skip)
+        {
+            sb.Append(s[0]);
+            Backtrack(s[1..], open, skip);
+            sb.Remove(sb.Length - 1, 1);
+        }
     }
 }
