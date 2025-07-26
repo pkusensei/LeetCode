@@ -7,11 +7,14 @@ namespace Tests;
 [TestClass]
 public class UnitTest
 {
-    // readonly Solution.Solution sol = new();
+    readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow(false, "1023")]
+    [DataRow(true, "199111992")]
+    public void TestMethod1(bool exp, string s)
     {
+        Assert.AreEqual(exp, sol.IsAdditiveNumber(s));
     }
 
     [TestMethod]

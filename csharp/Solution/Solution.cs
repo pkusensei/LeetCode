@@ -5,30 +5,31 @@ using static Solution.Utils;
 
 namespace Solution;
 
-public class NumMatrix
+public class Solution
 {
-    public NumMatrix(int[][] matrix)
+    public bool IsAdditiveNumber(string num)
     {
-        int rows = matrix.Length;
-        int cols = matrix[0].Length;
-        Prefix = new int[1 + rows, 1 + cols];
-        for (int r = 0; r < rows; r++)
+        if (num.Length < 3) { return false; }
+        int max_len = (num.Length + 1) / 2;
+        return Backtrack(num, -1, -1, 0);
+
+        bool Backtrack(ReadOnlySpan<char> s, long v1, long v2, int count)
         {
-            int sum = 0;
-            for (int c = 0; c < cols; c++)
+            if (s.IsEmpty) { return count >= 3; }
+            for (int i = 0; i < int.Min(max_len, s.Length); i++)
             {
-                sum += matrix[r][c];
-                Prefix[1 + r, 1 + c] = sum + Prefix[r, 1 + c];
+                if (i > 0 && s[0] == '0') { break; }
+                long curr = long.Parse(s[..(1 + i)]);
+                if (v1 >= 0 && v2 >= 0)
+                {
+                    if (curr == v1 + v2 && Backtrack(s[(1 + i)..], v2, curr, 1 + count))
+                    {
+                        return true;
+                    }
+                }
+                else if (Backtrack(s[(1 + i)..], v2, curr, 1 + count)) { return true; }
             }
+            return false;
         }
-    }
-
-    int[,] Prefix { get; }
-
-    public int SumRegion(int row1, int col1, int row2, int col2)
-    {
-        row2 += 1;
-        col2 += 1;
-        return Prefix[row2, col2] + Prefix[row1, col1] - Prefix[row2, col1] - Prefix[row1, col2];
     }
 }
