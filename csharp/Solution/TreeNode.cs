@@ -10,17 +10,16 @@ public abstract class TreeNodeBase<T> where T : TreeNodeBase<T>, new()
 
     public IEnumerable<T> LevelOrderFlatten()
     {
-        var queue = new Queue<T>();
+        Queue<T> queue = [];
         queue.Enqueue((T)this);
         while (queue.TryDequeue(out var node))
         {
+            yield return node;
             if (node is not null)
             {
-                yield return node;
                 queue.Enqueue(node.left);
                 queue.Enqueue(node.right);
             }
-            else { yield return null; }
         }
     }
 
@@ -95,23 +94,22 @@ public abstract class TreeNodeBase<T> where T : TreeNodeBase<T>, new()
 
     public static T Make(IList<int?> values)
     {
-        if (values.Count == 0 || !values[0].HasValue) { return null; }
-
+        if (values.FirstOrDefault() is null) { return null; }
         T root = new() { val = values[0].Value };
-        var queue = new Queue<T>();
+        Queue<T> queue = [];
         queue.Enqueue(root);
-        var i = 1;
+        int i = 1;
         while (queue.TryDequeue(out var curr) && i < values.Count)
         {
-            if (i < values.Count && values[i].HasValue)
+            if (values[i] is int v1)
             {
-                curr.left = new() { val = values[i].Value };
+                curr.left = new() { val = v1 };
                 queue.Enqueue(curr.left);
             }
             i += 1;
-            if (i < values.Count && values[i].HasValue)
+            if (i < values.Count && values[i] is int v2)
             {
-                curr.right = new() { val = values[i].Value };
+                curr.right = new() { val = v2 };
                 queue.Enqueue(curr.right);
             }
             i += 1;
@@ -122,18 +120,15 @@ public abstract class TreeNodeBase<T> where T : TreeNodeBase<T>, new()
     public static T MakeInt(IList<int> values)
     {
         if (values.Count == 0) { return null; }
-
         T root = new() { val = values[0] };
-        var queue = new Queue<T>();
+        Queue<T> queue = [];
         queue.Enqueue(root);
-        var i = 1;
+        int i = 1;
         while (queue.TryDequeue(out var curr) && i < values.Count)
         {
-            if (i < values.Count)
-            {
-                curr.left = new() { val = values[i] };
-                queue.Enqueue(curr.left);
-            }
+
+            curr.left = new() { val = values[i] };
+            queue.Enqueue(curr.left);
             i += 1;
             if (i < values.Count)
             {
@@ -150,24 +145,16 @@ public abstract class TreeNodeBase<T> where T : TreeNodeBase<T>, new()
         var sb = new StringBuilder();
         sb.Append('[');
         var nodes = LevelOrderFlatten().ToList();
-        while (nodes.Last() is null)
+        while (nodes.Count > 0 && nodes[^1] is null)
         {
             nodes.RemoveAt(nodes.Count - 1);
         }
-
         foreach (var item in nodes)
         {
-            if (item is not null)
-            {
-                sb.AppendFormat($"{item.val},");
-            }
-            else
-            {
-                sb.Append("null,");
-            }
+            if (item is null) { sb.Append("null,"); }
+            else { sb.Append($"{item.val},"); }
         }
         sb.Replace(',', ']', sb.Length - 1, 1);
-
         return sb.ToString();
     }
 }

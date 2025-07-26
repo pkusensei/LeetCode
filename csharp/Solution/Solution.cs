@@ -5,48 +5,69 @@ using static Solution.Utils;
 
 namespace Solution;
 
-public class MedianFinder
+public class Codec
 {
-    readonly PriorityQueue<int, int> small; // should be max heap
-    readonly PriorityQueue<int, int> large;
-
-    public MedianFinder()
+    // Encodes a tree to a single string.
+    public string serialize(TreeNode root)
     {
-        small = new();
-        large = new();
+        if (root is null) { return "[]"; }
+        StringBuilder sb = new();
+        sb.Append('[');
+        List<TreeNode> nodes = [.. LevelOrder(root)];
+        while (nodes.Count > 0 && nodes[^1] is null)
+        {
+            nodes.RemoveAt(nodes.Count - 1);
+        }
+        foreach (var node in nodes)
+        {
+            if (node is null) { sb.Append("null,"); }
+            else { sb.Append($"{node.val},"); }
+        }
+        sb.Replace(',', ']', sb.Length - 1, 1);
+        return sb.ToString();
+
+        static IEnumerable<TreeNode> LevelOrder(TreeNode root)
+        {
+            Queue<TreeNode> queue = [];
+            queue.Enqueue(root);
+            while (queue.TryDequeue(out var node))
+            {
+                yield return node;
+                if (node is not null)
+                {
+                    queue.Enqueue(node.left);
+                    queue.Enqueue(node.right);
+                }
+            }
+        }
     }
 
-    public void AddNum(int num)
+    // Decodes your encoded data to tree.
+    public TreeNode deserialize(string data)
     {
-        if (!small.TryPeek(out var mid, out _) || mid > num)
+        int?[] vals = [.. data.Trim(['[', ']'])
+                              .Split(',')
+                              .Select(s => int.TryParse(s, out int v) ? v : (int?)null)];
+        if (vals.FirstOrDefault() is null) { return null; }
+        TreeNode root = new(vals[0].Value);
+        Queue<TreeNode> queue = [];
+        queue.Enqueue(root);
+        int idx = 1;
+        while (queue.TryDequeue(out var node) && idx < vals.Length)
         {
-            small.Enqueue(num, -num);
+            if (vals[idx] is int v)
+            {
+                node.left = new(v);
+                queue.Enqueue(node.left);
+            }
+            idx += 1;
+            if (idx < vals.Length && vals[idx] is int v2)
+            {
+                node.right = new(v2);
+                queue.Enqueue(node.right);
+            }
+            idx += 1;
         }
-        else
-        {
-            large.Enqueue(num, num);
-        }
-        if (small.Count > 1 + large.Count)
-        {
-            int top = small.Dequeue();
-            large.Enqueue(top, top);
-        }
-        if (small.Count < large.Count)
-        {
-            int top = large.Dequeue();
-            small.Enqueue(top, -top);
-        }
-    }
-
-    public double FindMedian()
-    {
-        if (small.Count == large.Count)
-        {
-            return (small.Peek() + large.Peek()) / 2.0;
-        }
-        else
-        {
-            return small.Peek();
-        }
+        return root;
     }
 }
