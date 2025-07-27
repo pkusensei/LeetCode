@@ -7,39 +7,35 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<int> FindMinHeightTrees(int n, int[][] edges)
+    public int MaxCoins(int[] nums)
     {
-        if (n <= 2) { return [.. Enumerable.Range(0, n)]; }
-        int[] degs = new int[n];
-        List<int>[] adj = [.. Enumerable.Range(0, n).Select(_ => new List<int>())];
-        foreach (var e in edges)
+        List<int> arr = [1];
+        arr.AddRange(nums);
+        arr.Add(1);
+        int n = arr.Count;
+        int[,] memo = new int[n, n];
+        for (int i1 = 0; i1 < n; i1++)
         {
-            adj[e[0]].Add(e[1]);
-            adj[e[1]].Add(e[0]);
-            degs[e[0]] += 1;
-            degs[e[1]] += 1;
-        }
-        Queue<int> queue = [];
-        for (int i = 0; i < n; i++)
-        {
-            if (degs[i] == 1) { queue.Enqueue(i); }
-        }
-        List<int> res = [];
-        while (queue.Count > 0)
-        {
-            res.Clear();
-            int count = queue.Count;
-            for (int _ = 0; _ < count; _++)
+            for (int i2 = 0; i2 < n; i2++)
             {
-                int node = queue.Dequeue();
-                res.Add(node);
-                foreach (var next in adj[node])
-                {
-                    degs[next] -= 1;
-                    if (degs[next] == 1) { queue.Enqueue(next); }
-                }
+                memo[i1, i2] = -1;
             }
         }
-        return res;
+        return Dfs(1, n - 2);
+
+        int Dfs(int left, int right)
+        {
+            if (left > right) { return 0; }
+            if (memo[left, right] > -1) { return memo[left, right]; }
+            int res = 0;
+            for (int i = left; i <= right; i++)
+            {
+                int curr = arr[left - 1] * arr[i] * arr[1 + right];
+                curr += Dfs(left, i - 1) + Dfs(1 + i, right);
+                res = int.Max(res, curr);
+            }
+            memo[left, right] = res;
+            return res;
+        }
     }
 }
