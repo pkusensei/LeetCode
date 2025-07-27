@@ -4,38 +4,78 @@ mod fenwick_tree;
 mod helper;
 mod trie;
 
+use std::{
+    collections::{HashMap, VecDeque},
+    sync::LazyLock,
+};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_of_subsequences(s: &str) -> i64 {
-    let n = s.len();
-    if n < 2 {
-        return 0;
+pub fn min_jumps(nums: &[i32]) -> i32 {
+    let mut buckets = HashMap::<_, Vec<_>>::new();
+    for (idx, &num) in nums.iter().enumerate() {
+        precompute(&mut buckets, idx, num);
     }
-    let [mut prefix_l, mut suffix_t] = [vec![], vec![]];
-    for b in s.bytes() {
-        prefix_l.push(i64::from(b == b'L'));
-        suffix_t.push(i64::from(b == b'T'));
-    }
-    for i in 1..n {
-        prefix_l[i] += prefix_l[i - 1];
-    }
-    for i in (0..n - 1).rev() {
-        suffix_t[i] += suffix_t[1 + i];
-    }
-    let mut base = 0;
-    let [mut add_l, mut add_c, mut add_t] = [0; 3];
-    for (i, b) in s.bytes().enumerate() {
-        if b == b'C' {
-            base += prefix_l[i] * suffix_t[i];
-            add_l += suffix_t[i];
-            add_t += prefix_l[i];
-        } else {
-            add_c = add_c.max(prefix_l[i] * suffix_t[i]);
+    let n = nums.len();
+    let mut queue = VecDeque::from([(0, 0)]);
+    let mut seen = vec![false; n];
+    seen[0] = true;
+    while let Some((node, step)) = queue.pop_front() {
+        if node == n - 1 {
+            return step;
+        }
+        if node > 0 && !seen[node - 1] {
+            seen[node - 1] = true;
+            queue.push_back((node - 1, 1 + step));
+        }
+        if node < n - 1 && !seen[1 + node] {
+            seen[1 + node] = true;
+            queue.push_back((1 + node, 1 + step));
+        }
+        if S[nums[node] as usize]
+            && let Some(buc) = buckets.remove(&nums[node])
+        {
+            for next in buc {
+                if !seen[next] {
+                    seen[next] = true;
+                    queue.push_back((next, 1 + step));
+                }
+            }
         }
     }
-    base + add_l.max(add_c).max(add_t)
+    -1
 }
+
+fn precompute(buckets: &mut HashMap<i32, Vec<usize>>, idx: usize, mut num: i32) {
+    let mut p = 2;
+    while p * p <= num {
+        if S[p as usize] && num % p == 0 {
+            buckets.entry(p).or_default().push(idx);
+            while num % p == 0 {
+                num /= p;
+            }
+        }
+        p += 1;
+    }
+    if num > 1 {
+        buckets.entry(num).or_default().push(idx);
+    }
+}
+
+static S: LazyLock<Vec<bool>> = LazyLock::new(|| {
+    let n = 1_000_001;
+    let mut sieve = vec![true; n];
+    sieve[..2].fill(false);
+    for p in 2..=n.isqrt() {
+        if sieve[p] {
+            for val in (p * p..n).step_by(p) {
+                sieve[val] = false;
+            }
+        }
+    }
+    sieve
+});
 
 #[cfg(test)]
 mod tests {
@@ -67,12 +107,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(num_of_subsequences("LMCT"), 2);
-        assert_eq!(num_of_subsequences("LCCT"), 4);
-        assert_eq!(num_of_subsequences("L"), 0);
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(min_jumps(&[5, 2, 20, 1, 15]), 1);
+    }
 }
