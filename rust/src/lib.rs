@@ -7,20 +7,34 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_median_sum(mut nums: Vec<i32>) -> i64 {
-    nums.sort_unstable();
-    let mut left = 0;
-    let mut right = nums.len() - 2;
-    let mut res = 0;
-    while left < right {
-        res += i64::from(nums[right]);
-        left += 1;
-        let Some(v) = right.checked_sub(2) else {
-            break;
-        };
-        right = v;
+pub fn num_of_subsequences(s: &str) -> i64 {
+    let n = s.len();
+    if n < 2 {
+        return 0;
     }
-    res
+    let [mut prefix_l, mut suffix_t] = [vec![], vec![]];
+    for b in s.bytes() {
+        prefix_l.push(i64::from(b == b'L'));
+        suffix_t.push(i64::from(b == b'T'));
+    }
+    for i in 1..n {
+        prefix_l[i] += prefix_l[i - 1];
+    }
+    for i in (0..n - 1).rev() {
+        suffix_t[i] += suffix_t[1 + i];
+    }
+    let mut base = 0;
+    let [mut add_l, mut add_c, mut add_t] = [0; 3];
+    for (i, b) in s.bytes().enumerate() {
+        if b == b'C' {
+            base += prefix_l[i] * suffix_t[i];
+            add_l += suffix_t[i];
+            add_t += prefix_l[i];
+        } else {
+            add_c = add_c.max(prefix_l[i] * suffix_t[i]);
+        }
+    }
+    base + add_l.max(add_c).max(add_t)
 }
 
 #[cfg(test)]
@@ -53,7 +67,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(num_of_subsequences("LMCT"), 2);
+        assert_eq!(num_of_subsequences("LCCT"), 4);
+        assert_eq!(num_of_subsequences("L"), 0);
+    }
 
     #[test]
     fn test() {}
