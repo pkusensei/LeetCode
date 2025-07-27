@@ -4,78 +4,60 @@ mod fenwick_tree;
 mod helper;
 mod trie;
 
-use std::{
-    collections::{HashMap, VecDeque},
-    sync::LazyLock,
-};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_jumps(nums: &[i32]) -> i32 {
-    let mut buckets = HashMap::<_, Vec<_>>::new();
-    for (idx, &num) in nums.iter().enumerate() {
-        precompute(&mut buckets, idx, num);
-    }
+pub fn maximize_xor_and_xor(nums: &[i32]) -> i64 {
     let n = nums.len();
-    let mut queue = VecDeque::from([(0, 0)]);
-    let mut seen = vec![false; n];
-    seen[0] = true;
-    while let Some((node, step)) = queue.pop_front() {
-        if node == n - 1 {
-            return step;
+    let total_xor = nums.iter().fold(0, |acc, v| acc ^ v);
+    let mut res = 0;
+    for mask in 0..1 << n {
+        let mut select_and = i32::MAX;
+        let mut select_xor = 0;
+        for (i, &num) in nums.iter().enumerate() {
+            if (mask >> i) & 1 == 1 {
+                select_and &= num;
+                select_xor ^= num;
+            }
         }
-        if node > 0 && !seen[node - 1] {
-            seen[node - 1] = true;
-            queue.push_back((node - 1, 1 + step));
+        if select_and == i32::MAX {
+            select_and = 0;
         }
-        if node < n - 1 && !seen[1 + node] {
-            seen[1 + node] = true;
-            queue.push_back((1 + node, 1 + step));
-        }
-        if S[nums[node] as usize]
-            && let Some(buc) = buckets.remove(&nums[node])
-        {
-            for next in buc {
-                if !seen[next] {
-                    seen[next] = true;
-                    queue.push_back((next, 1 + step));
+        // With fixed select_and, we want max of
+        // x + unselect_xor ^ x == unselect_xor + 2*(x & inverted)
+        let unselect_xor = total_xor ^ select_xor;
+        // bit_not, i.e 0=>1 1=>0
+        // These are the bits that could be used
+        let inverted = !unselect_xor;
+        // Linear independence
+        // i.e for any a, b, c in basis, a^b != c
+        // Here it records all bit patterns of (x&inverted)
+        let mut basis = vec![];
+        for (i, &num) in nums.iter().enumerate() {
+            // For each number not in select_and group
+            if (mask >> i) & 1 == 0 {
+                // Simplify its bit form
+                let mut reduced = num & inverted;
+                // And further reduce any bit already recorded in basis
+                for b in &basis {
+                    reduced = reduced.min(reduced ^ b);
+                }
+                if reduced > 0 {
+                    basis.push(reduced);
                 }
             }
         }
-    }
-    -1
-}
-
-fn precompute(buckets: &mut HashMap<i32, Vec<usize>>, idx: usize, mut num: i32) {
-    let mut p = 2;
-    while p * p <= num {
-        if S[p as usize] && num % p == 0 {
-            buckets.entry(p).or_default().push(idx);
-            while num % p == 0 {
-                num /= p;
-            }
+        // To find max(x&inverted)
+        // Greedily pick the max xor combination of bit patterns
+        let mut max_xor = 0;
+        for b in &basis {
+            max_xor = max_xor.max(max_xor ^ b);
         }
-        p += 1;
+        let curr = i64::from(select_and) + i64::from(unselect_xor) + 2 * i64::from(max_xor);
+        res = res.max(curr);
     }
-    if num > 1 {
-        buckets.entry(num).or_default().push(idx);
-    }
+    res
 }
-
-static S: LazyLock<Vec<bool>> = LazyLock::new(|| {
-    let n = 1_000_001;
-    let mut sieve = vec![true; n];
-    sieve[..2].fill(false);
-    for p in 2..=n.isqrt() {
-        if sieve[p] {
-            for val in (p * p..n).step_by(p) {
-                sieve[val] = false;
-            }
-        }
-    }
-    sieve
-});
 
 #[cfg(test)]
 mod tests {
@@ -107,10 +89,12 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(maximize_xor_and_xor(&[2, 3]), 5);
+        assert_eq!(maximize_xor_and_xor(&[1, 3, 2]), 6);
+        assert_eq!(maximize_xor_and_xor(&[2, 3, 6, 7]), 15);
+    }
 
     #[test]
-    fn test() {
-        assert_eq!(min_jumps(&[5, 2, 20, 1, 15]), 1);
-    }
+    fn test() {}
 }
