@@ -7,65 +7,37 @@ namespace Solution;
 
 public class Solution
 {
-    public int MaxProfit(int[] prices)
+    public IList<int> FindMinHeightTrees(int n, int[][] edges)
     {
-        int buy = int.MinValue;
-        int sell = 0;
-        int cool = 0;
-        foreach (var num in prices)
+        if (n <= 2) { return [.. Enumerable.Range(0, n)]; }
+        int[] degs = new int[n];
+        List<int>[] adj = [.. Enumerable.Range(0, n).Select(_ => new List<int>())];
+        foreach (var e in edges)
         {
-            int b = int.Max(buy, cool - num);
-            int s = int.Max(sell, buy + num);
-            int c = int.Max(cool, sell);
-            (buy, sell, cool) = (b, s, c);
+            adj[e[0]].Add(e[1]);
+            adj[e[1]].Add(e[0]);
+            degs[e[0]] += 1;
+            degs[e[1]] += 1;
         }
-        return sell;
-    }
-
-    public int WithDfs(int[] prices)
-    {
-        int n = prices.Length;
-        int[,] memo = new int[n, 2];
+        Queue<int> queue = [];
         for (int i = 0; i < n; i++)
         {
-            memo[i, 0] = -1;
-            memo[i, 1] = -1;
+            if (degs[i] == 1) { queue.Enqueue(i); }
         }
-        return Dfs(prices, 1);
-
-        int Dfs(ReadOnlySpan<int> nums, int buy)
+        List<int> res = [];
+        while (queue.Count > 0)
         {
-            if (nums.IsEmpty) { return 0; }
-            int n = nums.Length;
-            if (memo[n, buy] != -1) { return memo[n, buy]; }
-            int res = Dfs(nums[1..], buy);
-            if (buy == 1)
+            res.Clear();
+            int count = queue.Count;
+            for (int _ = 0; _ < count; _++)
             {
-                res = int.Max(res, -nums[0] + Dfs(nums[1..], 0));
-            }
-            else
-            {
-                res = int.Max(res, nums[0] + Dfs(nums[int.Min(2, nums.Length)..], 1));
-            }
-            memo[n, buy] = res;
-            return res;
-        }
-    }
-
-    public int CountHillValley(int[] nums)
-    {
-        List<int> vals = [];
-        foreach (var num in nums)
-        {
-            if (vals.Count > 0 && vals[^1] == num) { continue; }
-            vals.Add(num);
-        }
-        int res = 0;
-        for (int i = 1; i < vals.Count - 1; i++)
-        {
-            if (int.Sign(vals[i] - vals[i - 1]) * int.Sign(vals[1 + i] - vals[i]) < 0)
-            {
-                res += 1;
+                int node = queue.Dequeue();
+                res.Add(node);
+                foreach (var next in adj[node])
+                {
+                    degs[next] -= 1;
+                    if (degs[next] == 1) { queue.Enqueue(next); }
+                }
             }
         }
         return res;
