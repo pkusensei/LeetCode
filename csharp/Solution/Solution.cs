@@ -7,49 +7,28 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<int> CountSmaller(int[] nums)
+    public string RemoveDuplicateLetters(string s)
     {
-        const int DIFF = 10_000;
-        int[] res = new int[nums.Length];
-        BIT tree = new(1 + 2 * DIFF);
-        for (int i = nums.Length - 1; i >= 0; i -= 1)
+        Span<int> last_idx = stackalloc int[26];
+        last_idx.Fill(-1);
+        for (int i = 0; i < s.Length; i++)
         {
-            int val = nums[i] + DIFF;
-            res[i] = tree.Query(val - 1);
-            tree.Insert(val, 1);
+            last_idx[s[i] - 'a'] = i;
         }
-        return res;
-    }
-}
-
-internal class BIT
-{
-    public BIT(int n)
-    {
-        Tree = new long[1 + n];
-        N = n;
-    }
-
-    public long[] Tree { get; }
-    public int N { get; }
-
-    public void Insert(int i, int val)
-    {
-        while (i <= N)
+        Stack<char> st = [];
+        int mask = 0;
+        for (int i = 0; i < s.Length; i++)
         {
-            Tree[i] += val;
-            i += i & -i;
+            int ci = s[i] - 'a';
+            if (((mask >> ci) & 1) == 1) { continue; }
+            while (st.TryPeek(out var top) && top > s[i] & last_idx[top - 'a'] > i)
+            {
+                st.Pop();
+                mask ^= 1 << (top - 'a');
+            }
+            st.Push(s[i]);
+            mask |= 1 << ci;
         }
-    }
-
-    public int Query(int i)
-    {
-        long res = 0;
-        while (i > 0)
-        {
-            res += Tree[i];
-            i -= i & -i;
-        }
-        return (int)res;
+        return string.Concat(st.Reverse());
     }
 }

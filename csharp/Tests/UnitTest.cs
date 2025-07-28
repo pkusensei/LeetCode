@@ -10,10 +10,11 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(new[] { 2, 1, 1, 0 }, new[] { 5, 2, 6, 1 })]
-    public void TestMethod1(int[] exp, int[] n)
+    [DataRow("abc", "bcabc")]
+    [DataRow("acdb", "cbacdcbc")]
+    public void TestMethod1(string exp, string s)
     {
-        Assert.IsTrue(exp.SequenceEqual(sol.CountSmaller(n)));
+        Assert.AreEqual(exp, sol.RemoveDuplicateLetters(s));
     }
 
     [TestMethod]
