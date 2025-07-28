@@ -7,60 +7,49 @@ namespace Solution;
 
 public class Solution
 {
-    public int NthSuperUglyNumber(int n, int[] primes)
+    public IList<int> CountSmaller(int[] nums)
     {
-        HashSet<int> seen = [];
-        PriorityQueue<int, int> pq = new();
-        pq.Enqueue(1, 1);
-        while (pq.TryDequeue(out int num, out _))
+        const int DIFF = 10_000;
+        int[] res = new int[nums.Length];
+        BIT tree = new(1 + 2 * DIFF);
+        for (int i = nums.Length - 1; i >= 0; i -= 1)
         {
-            if (seen.Add(num))
-            {
-                n -= 1;
-                if (n == 0) { return num; }
-                try
-                {
-                    checked
-                    {
-                        foreach (var p in primes)
-                        {
-                            pq.Enqueue(p * num, p * num);
-                        }
-                    }
-                }
-                catch (OverflowException) { }
-            }
+            int val = nums[i] + DIFF;
+            res[i] = tree.Query(val - 1);
+            tree.Insert(val, 1);
         }
-        return -1;
+        return res;
+    }
+}
+
+internal class BIT
+{
+    public BIT(int n)
+    {
+        Tree = new long[1 + n];
+        N = n;
     }
 
-    public int WithDp(int n, int[] primes)
+    public long[] Tree { get; }
+    public int N { get; }
+
+    public void Insert(int i, int val)
     {
-        if (n <= 1) { return 1; }
-        int[] ugly = new int[n];
-        ugly[0] = 1;
-        // Each ptr corresponds to one prime.
-        // ptrs[i] is the index in `ugly` array that primes[i] should multiply
-        int[] ptrs = new int[primes.Length];
-        // Each prime with multiplication produces these candidates
-        // init as prime*ugly[0]
-        long[] values = [.. primes];
-        for (int idx = 1; idx < n; idx++)
+        while (i <= N)
         {
-            long curr_min = values.Min();
-            ugly[idx] = (int)curr_min;
-            for (int i = 0; i < primes.Length; i++)
-            {
-                // This candidate has be "used"
-                if (values[i] == curr_min)
-                {
-                    // Its ptr has to be updated to next in ugly
-                    ptrs[i] += 1;
-                    // update new candidate
-                    values[i] = (long)ugly[ptrs[i]] * primes[i];
-                }
-            }
+            Tree[i] += val;
+            i += i & -i;
         }
-        return ugly[n - 1];
+    }
+
+    public int Query(int i)
+    {
+        long res = 0;
+        while (i > 0)
+        {
+            res += Tree[i];
+            i -= i & -i;
+        }
+        return (int)res;
     }
 }

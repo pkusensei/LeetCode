@@ -10,12 +10,10 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(32, 12, new[] { 2, 7, 13, 19 })]
-    [DataRow(1, 1, new[] { 2, 3, 5 })]
-    public void TestMethod1(int exp, int n, int[] p)
+    [DataRow(new[] { 2, 1, 1, 0 }, new[] { 5, 2, 6, 1 })]
+    public void TestMethod1(int[] exp, int[] n)
     {
-        Assert.AreEqual(exp, sol.NthSuperUglyNumber(n, p));
-        Assert.AreEqual(exp, sol.WithDp(n, p));
+        Assert.IsTrue(exp.SequenceEqual(sol.CountSmaller(n)));
     }
 
     [TestMethod]
