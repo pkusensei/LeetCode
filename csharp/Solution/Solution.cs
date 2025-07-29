@@ -7,24 +7,26 @@ namespace Solution;
 
 public class Solution
 {
-    public int MinPatches(int[] nums, int n)
+    public bool IsValidSerialization(string preorder)
     {
-        long curr = 0;
-        int res = 0;
-        int idx = 0;
-        while (curr < n)
+        string[] s = preorder.Split(',');
+        return Preorder(s, out var v) && v.IsEmpty;
+
+        bool Preorder(ReadOnlySpan<string> s, out ReadOnlySpan<string> next)
         {
-            if (idx < nums.Length && nums[idx] <= 1 + curr)
+            if (s.IsEmpty)
             {
-                curr += nums[idx]; // try reach next number
-                idx += 1;
+                next = [];
+                return false;
             }
-            else
+            if (s[0] == "#")
             {
-                curr = 1 + 2 * curr; // if not, jump by/fill in (1+curr)
-                res += 1;
+                next = s[1..];
+                return true;
             }
+            var res = Preorder(s[1..], out var right);
+            res = Preorder(right, out next);
+            return res;
         }
-        return res;
     }
 }

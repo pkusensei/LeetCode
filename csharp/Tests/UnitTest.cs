@@ -10,12 +10,12 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(1, new[] { 1, 3 }, 6)]
-    [DataRow(2, new[] { 1, 5, 10 }, 20)]
-    [DataRow(0, new[] { 1, 2, 2 }, 5)]
-    public void TestMethod1(int exp, int[] nums, int n)
+    [DataRow(true, "9,3,4,#,#,1,#,#,2,#,6,#,#")]
+    [DataRow(false, "1,#")]
+    [DataRow(false, "9,#,#,1")]
+    public void TestMethod1(bool exp, string s)
     {
-        Assert.AreEqual(exp, sol.MinPatches(nums, n));
+        Assert.AreEqual(exp, sol.IsValidSerialization(s));
     }
 
     [TestMethod]
