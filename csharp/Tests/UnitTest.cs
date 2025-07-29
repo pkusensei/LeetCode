@@ -10,12 +10,12 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(new[] { 1, 6, 1, 5, 1, 4 }, new[] { 1, 5, 1, 1, 6, 4 })]
-    [DataRow(new[] { 2, 3, 1, 3, 1, 2 }, new[] { 1, 3, 2, 2, 3, 1 })]
-    public void TestMethod1(int[] exp, int[] nums)
+    [DataRow(3, new[] { -2, 5, -1 }, -2, 2)]
+    [DataRow(1, new[] { 0 }, 0, 0)]
+    public void TestMethod1(int exp, int[] nums, int lower, int upper)
     {
-        sol.WiggleSort(nums);
-        Assert.IsTrue(exp.SequenceEqual(nums));
+        Assert.AreEqual(exp, sol.CountRangeSum(nums, lower, upper));
+        Assert.AreEqual(exp, sol.WithMergeSort(nums, lower, upper));
     }
 
     [TestMethod]
