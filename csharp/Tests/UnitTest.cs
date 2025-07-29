@@ -10,12 +10,12 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(3, new[] { -2, 5, -1 }, -2, 2)]
-    [DataRow(1, new[] { 0 }, 0, 0)]
-    public void TestMethod1(int exp, int[] nums, int lower, int upper)
+    [DataRow(1, new[] { 1, 3 }, 6)]
+    [DataRow(2, new[] { 1, 5, 10 }, 20)]
+    [DataRow(0, new[] { 1, 2, 2 }, 5)]
+    public void TestMethod1(int exp, int[] nums, int n)
     {
-        Assert.AreEqual(exp, sol.CountRangeSum(nums, lower, upper));
-        Assert.AreEqual(exp, sol.WithMergeSort(nums, lower, upper));
+        Assert.AreEqual(exp, sol.MinPatches(nums, n));
     }
 
     [TestMethod]
