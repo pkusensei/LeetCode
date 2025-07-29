@@ -7,20 +7,19 @@ namespace Solution;
 
 public class Solution
 {
-    public int CoinChange(int[] coins, int amount)
+    public int[] SmallestSubarrays(int[] nums)
     {
-        if (amount < 0) { return 0; }
-        int[] dp = new int[1 + amount];
-        Array.Fill(dp, 1 + amount);
-        dp[0] = 0;
-        for (int right = 1; right <= amount; right++)
+        Span<int> next = stackalloc int[32];
+        int[] res = new int[nums.Length];
+        for (int i = nums.Length - 1; i >= 0; i -= 1)
         {
-            foreach (var c in coins)
+            res[i] = 1;
+            for (int bit = 0; bit < 32; bit++)
             {
-                int left = right - c;
-                if (left >= 0) { dp[right] = int.Min(dp[right], 1 + dp[left]); }
+                if (((nums[i] >> bit) & 1) == 1) { next[bit] = i; }
+                res[i] = int.Max(res[i], next[bit] + 1 - i);
             }
         }
-        return dp[amount] > amount ? -1 : dp[amount];
+        return res;
     }
 }
