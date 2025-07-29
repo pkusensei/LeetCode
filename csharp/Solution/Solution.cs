@@ -7,19 +7,31 @@ namespace Solution;
 
 public class Solution
 {
-    public int[] SmallestSubarrays(int[] nums)
+    public void WiggleSort(int[] nums)
     {
-        Span<int> next = stackalloc int[32];
-        int[] res = new int[nums.Length];
-        for (int i = nums.Length - 1; i >= 0; i -= 1)
+        int[] freq = new int[5001];
+        foreach (var num in nums)
         {
-            res[i] = 1;
-            for (int bit = 0; bit < 32; bit++)
-            {
-                if (((nums[i] >> bit) & 1) == 1) { next[bit] = i; }
-                res[i] = int.Max(res[i], next[bit] + 1 - i);
-            }
+            freq[num] += 1;
         }
-        return res;
+        int fi = 5001;
+        for (int i = 1; i < nums.Length; i += 2)
+        {
+            while (fi > 0 && freq[fi - 1] == 0)
+            {
+                fi -= 1;
+            }
+            nums[i] = fi - 1;
+            freq[fi - 1] -= 1;
+        }
+        for (int i = 0; i < nums.Length; i += 2)
+        {
+            while (fi > 0 && freq[fi - 1] == 0)
+            {
+                fi -= 1;
+            }
+            nums[i] = fi - 1;
+            freq[fi - 1] -= 1;
+        }
     }
 }
