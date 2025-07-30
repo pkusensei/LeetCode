@@ -7,20 +7,32 @@ namespace Solution;
 
 public class Solution
 {
-    public int LongestSubarray(int[] nums)
+    public IList<string> FindItinerary(IList<IList<string>> tickets)
     {
-        int max = nums.Max();
-        int res = 1;
-        for (int left = 0; left < nums.Length; left++)
+        Dictionary<string, List<string>> adj = [];
+        foreach (var t in tickets)
         {
-            if (nums[left] < max) { continue; }
-            int right = left;
-            for (; right < nums.Length && nums[right] == max; right++)
-            {
-                res = int.Max(res, right - left + 1);
-            }
-            left = right;
+            if (!adj.TryAdd(t[0], [t[1]])) { adj[t[0]].Add(t[1]); }
         }
+        foreach (var v in adj.Values)
+        {
+            v.Sort((a, b) => b.CompareTo(a));
+        }
+        var lookup = adj.GetAlternateLookup<ReadOnlySpan<char>>();
+        List<string> res = [];
+        Dfs("JFK");
+        res.Reverse();
         return res;
+
+        void Dfs(ReadOnlySpan<char> curr)
+        {
+            while (lookup.TryGetValue(curr, out var tos) && tos.Count > 0)
+            {
+                var next = tos[^1];
+                tos.RemoveAt(tos.Count - 1);
+                Dfs(next);
+            }
+            res.Add(new(curr));
+        }
     }
 }
