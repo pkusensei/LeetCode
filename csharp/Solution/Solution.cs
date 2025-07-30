@@ -7,26 +7,20 @@ namespace Solution;
 
 public class Solution
 {
-    public bool IsValidSerialization(string preorder)
+    public int LongestSubarray(int[] nums)
     {
-        string[] s = preorder.Split(',');
-        return Preorder(s, out var v) && v.IsEmpty;
-
-        bool Preorder(ReadOnlySpan<string> s, out ReadOnlySpan<string> next)
+        int max = nums.Max();
+        int res = 1;
+        for (int left = 0; left < nums.Length; left++)
         {
-            if (s.IsEmpty)
+            if (nums[left] < max) { continue; }
+            int right = left;
+            for (; right < nums.Length && nums[right] == max; right++)
             {
-                next = [];
-                return false;
+                res = int.Max(res, right - left + 1);
             }
-            if (s[0] == "#")
-            {
-                next = s[1..];
-                return true;
-            }
-            var res = Preorder(s[1..], out var right);
-            res = Preorder(right, out next);
-            return res;
+            left = right;
         }
+        return res;
     }
 }

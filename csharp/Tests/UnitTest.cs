@@ -10,12 +10,8 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(true, "9,3,4,#,#,1,#,#,2,#,6,#,#")]
-    [DataRow(false, "1,#")]
-    [DataRow(false, "9,#,#,1")]
-    public void TestMethod1(bool exp, string s)
+    public void TestMethod1()
     {
-        Assert.AreEqual(exp, sol.IsValidSerialization(s));
     }
 
     [TestMethod]
