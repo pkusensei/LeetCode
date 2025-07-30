@@ -7,32 +7,17 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<string> FindItinerary(IList<IList<string>> tickets)
+    public bool IncreasingTriplet(int[] nums)
     {
-        Dictionary<string, List<string>> adj = [];
-        foreach (var t in tickets)
+        if (nums.Length < 3) { return false; }
+        int n1 = int.MaxValue;
+        int n2 = int.MaxValue;
+        foreach (var num in nums)
         {
-            if (!adj.TryAdd(t[0], [t[1]])) { adj[t[0]].Add(t[1]); }
+            if (num <= n1) { n1 = num; }
+            else if (num <= n2) { n2 = num; }
+            else { return true; }
         }
-        foreach (var v in adj.Values)
-        {
-            v.Sort((a, b) => b.CompareTo(a));
-        }
-        var lookup = adj.GetAlternateLookup<ReadOnlySpan<char>>();
-        List<string> res = [];
-        Dfs("JFK");
-        res.Reverse();
-        return res;
-
-        void Dfs(ReadOnlySpan<char> curr)
-        {
-            while (lookup.TryGetValue(curr, out var tos) && tos.Count > 0)
-            {
-                var next = tos[^1];
-                tos.RemoveAt(tos.Count - 1);
-                Dfs(next);
-            }
-            res.Add(new(curr));
-        }
+        return false;
     }
 }

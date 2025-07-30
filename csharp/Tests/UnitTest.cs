@@ -10,8 +10,11 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow(true, new[] { 1, 2, 3, 4, 5 })]
+    [DataRow(true, new[] { 2, 1, 5, 0, 4, 6 })]
+    public void TestMethod1(bool exp, int[] nums)
     {
+        Assert.AreEqual(exp, sol.IncreasingTriplet(nums));
     }
 
     [TestMethod]
