@@ -7,56 +7,66 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximize_xor_and_xor(nums: &[i32]) -> i64 {
-    let n = nums.len();
-    let total_xor = nums.iter().fold(0, |acc, v| acc ^ v);
-    let mut res = 0;
-    for mask in 0..1 << n {
-        let mut select_and = i32::MAX;
-        let mut select_xor = 0;
-        for (i, &num) in nums.iter().enumerate() {
-            if (mask >> i) & 1 == 1 {
-                select_and &= num;
-                select_xor ^= num;
-            }
-        }
-        if select_and == i32::MAX {
-            select_and = 0;
-        }
-        // With fixed select_and, we want max of
-        // x + unselect_xor ^ x == unselect_xor + 2*(x & inverted)
-        let unselect_xor = total_xor ^ select_xor;
-        // bit_not, i.e 0=>1 1=>0
-        // These are the bits that could be used
-        let inverted = !unselect_xor;
-        // Linear independence
-        // i.e for any a, b, c in basis, a^b != c
-        // Here it records all bit patterns of (x&inverted)
-        let mut basis = vec![];
-        for (i, &num) in nums.iter().enumerate() {
-            // For each number not in select_and group
-            if (mask >> i) & 1 == 0 {
-                // Simplify its bit form
-                let mut reduced = num & inverted;
-                // And further reduce any bit already recorded in basis
-                for b in &basis {
-                    reduced = reduced.min(reduced ^ b);
-                }
-                if reduced > 0 {
-                    basis.push(reduced);
-                }
-            }
-        }
-        // To find max(x&inverted)
-        // Greedily pick the max xor combination of bit patterns
-        let mut max_xor = 0;
-        for b in &basis {
-            max_xor = max_xor.max(max_xor ^ b);
-        }
-        let curr = i64::from(select_and) + i64::from(unselect_xor) + 2 * i64::from(max_xor);
-        res = res.max(curr);
+pub fn palindrome_pairs(words: &[&str]) -> Vec<Vec<i32>> {
+    let mut trie = Trie::default();
+    for (i, s) in words.iter().enumerate() {
+        trie.insert(s.as_bytes(), i);
+    }
+    let mut res = vec![];
+    for (i, s) in words.iter().enumerate() {
+        trie.search(s.as_bytes(), i, &mut res);
     }
     res
+}
+
+#[derive(Default)]
+struct Trie {
+    nodes: [Option<Box<Trie>>; 26],
+    idx: Option<usize>,
+    indices: Vec<usize>,
+}
+
+impl Trie {
+    fn insert(&mut self, s: &[u8], idx: usize) {
+        let mut curr = self;
+        for (right, &b) in s.iter().enumerate().rev() {
+            let node = curr.nodes[usize::from(b - b'a')].get_or_insert_default();
+            if is_palindrome(&s[..=right]) {
+                curr.indices.push(idx); // From this point to the start, it is palin
+            }
+            curr = node;
+        }
+        // records this node is a word's start(since loop backwards)
+        curr.idx = Some(idx);
+    }
+
+    fn search(&self, s: &[u8], idx: usize, res: &mut Vec<Vec<i32>>) {
+        let mut curr = self;
+        for (si, &b) in s.iter().enumerate() {
+            if let Some(curr_idx) = curr.idx
+                && curr_idx != idx
+                && is_palindrome(&s[si..])
+            {
+                // Found a word (curr.idx is Some) and the rest of queried s is palindrome
+                res.push(vec![idx as i32, curr_idx as _]);
+            }
+            let Some(v) = curr.nodes[usize::from(b - b'a')].as_ref() else {
+                return;
+            };
+            curr = v;
+        }
+        if let Some(curr_idx) = curr.idx
+            && curr_idx != idx
+        {
+            // Check this node
+            res.push(vec![idx as i32, curr_idx as _]);
+        }
+        for &i in &curr.indices {
+            if i != idx {
+                res.push(vec![idx as i32, i as i32]);
+            }
+        }
+    }
 }
 
 #[cfg(test)]
@@ -90,11 +100,19 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(maximize_xor_and_xor(&[2, 3]), 5);
-        assert_eq!(maximize_xor_and_xor(&[1, 3, 2]), 6);
-        assert_eq!(maximize_xor_and_xor(&[2, 3, 6, 7]), 15);
+        sort_eq!(
+            palindrome_pairs(&["abcd", "dcba", "lls", "s", "sssll"]),
+            [[0, 1], [1, 0], [3, 2], [2, 4]]
+        );
+        sort_eq!(palindrome_pairs(&["bat", "tab", "cat"]), [[0, 1], [1, 0]]);
+        sort_eq!(palindrome_pairs(&["a", ""]), [[0, 1], [1, 0]]);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        sort_eq!(
+            palindrome_pairs(&["a", "abc", "aba", ""]),
+            [[0, 3], [3, 0], [2, 3], [3, 2]]
+        );
+    }
 }
