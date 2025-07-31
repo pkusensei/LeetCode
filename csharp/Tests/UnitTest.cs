@@ -10,21 +10,24 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(3, new[] { 1, 1, 2 })]
-    [DataRow(6, new[] { 1, 2, 4 })]
-    public void TestMethod1(int exp, int[] arr)
+    public void TestMethod1()
     {
-        Assert.AreEqual(exp, sol.SubarrayBitwiseORs(arr));
+        var root = TreeNode.Make([3, 2, 3, null, 3, null, 1]);
+        Assert.AreEqual(7, sol.Rob(root));
     }
 
     [TestMethod]
     public void TestMethod2()
     {
+        var root = TreeNode.Make([3, 4, 5, 1, 3, null, 1]);
+        Assert.AreEqual(9, sol.Rob(root));
     }
 
     [TestMethod]
     public void TestMethod3()
     {
+        var root = TreeNode.Make([4, 1, null, 2, null, 3]);
+        Assert.AreEqual(7, sol.Rob(root));
     }
 
     [TestMethod]

@@ -7,20 +7,19 @@ namespace Solution;
 
 public class Solution
 {
-    public int SubarrayBitwiseORs(int[] arr)
+    public int Rob(TreeNode root)
     {
-        HashSet<int> res = [];
-        HashSet<int> dp = [];
-        foreach (var num in arr)
+        (int inc, int exc) = Dfs(root);
+        return int.Max(inc, exc);
+
+        static (int inc, int exc) Dfs(TreeNode node)
         {
-            HashSet<int> curr = [num]; // start new subarr
-            foreach (var item in dp)
-            {
-                curr.Add(item | num); // or num onto previous subarrs
-            }
-            dp = curr;
-            res.UnionWith(dp); // ends subarrs here
+            if (node is null) { return (0, 0); }
+            var left = Dfs(node.left);
+            var right = Dfs(node.right);
+            int inc = node.val + left.exc + right.exc;
+            int exc = int.Max(left.inc, left.exc) + int.Max(right.inc, right.exc);
+            return (inc, exc);
         }
-        return res.Count;
     }
 }
