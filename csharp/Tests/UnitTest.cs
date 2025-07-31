@@ -10,11 +10,11 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(true, new[] { 1, 2, 3, 4, 5 })]
-    [DataRow(true, new[] { 2, 1, 5, 0, 4, 6 })]
-    public void TestMethod1(bool exp, int[] nums)
+    [DataRow(3, new[] { 1, 1, 2 })]
+    [DataRow(6, new[] { 1, 2, 4 })]
+    public void TestMethod1(int exp, int[] arr)
     {
-        Assert.AreEqual(exp, sol.IncreasingTriplet(nums));
+        Assert.AreEqual(exp, sol.SubarrayBitwiseORs(arr));
     }
 
     [TestMethod]

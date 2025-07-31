@@ -7,17 +7,20 @@ namespace Solution;
 
 public class Solution
 {
-    public bool IncreasingTriplet(int[] nums)
+    public int SubarrayBitwiseORs(int[] arr)
     {
-        if (nums.Length < 3) { return false; }
-        int n1 = int.MaxValue;
-        int n2 = int.MaxValue;
-        foreach (var num in nums)
+        HashSet<int> res = [];
+        HashSet<int> dp = [];
+        foreach (var num in arr)
         {
-            if (num <= n1) { n1 = num; }
-            else if (num <= n2) { n2 = num; }
-            else { return true; }
+            HashSet<int> curr = [num]; // start new subarr
+            foreach (var item in dp)
+            {
+                curr.Add(item | num); // or num onto previous subarrs
+            }
+            dp = curr;
+            res.UnionWith(dp); // ends subarrs here
         }
-        return false;
+        return res.Count;
     }
 }
