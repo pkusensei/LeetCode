@@ -5,49 +5,18 @@ using static Solution.Utils;
 
 namespace Solution;
 
-public class Twitter
+public class Solution
 {
-    public Twitter()
+    public int CountNumbersWithUniqueDigits(int n)
     {
-        Tweets = [];
-        Follows = [];
-    }
-
-    List<Tweet> Tweets { get; }
-    Dictionary<int, HashSet<int>> Follows { get; }
-
-    public void PostTweet(int userId, int tweetId)
-    {
-        Tweets.Add(new(userId, tweetId));
-        Follows.TryAdd(userId, [userId]);
-    }
-
-    public IList<int> GetNewsFeed(int userId)
-    {
-        if (Follows.TryGetValue(userId, out var fols))
+        if (n < 1) { return 1; }
+        int res = 9;
+        int v = 9;
+        for (int _ = 1; _ < n; _++)
         {
-            return [.. Tweets.AsEnumerable().Reverse()
-                             .Where(t => fols.Contains(t.User))
-                             .Select(t => t.Id).Take(10)];
+            res *= v;
+            v -= 1;
         }
-        else
-        {
-            Follows.Add(userId, [userId]);
-            return [];
-        }
-    }
-
-    public void Follow(int followerId, int followeeId)
-    {
-        Follows.TryAdd(followerId, [followerId]);
-        Follows[followerId].Add(followeeId);
-    }
-
-    public void Unfollow(int followerId, int followeeId)
-    {
-        Follows.TryAdd(followerId, [followerId]);
-        Follows[followerId].Remove(followeeId);
+        return res + CountNumbersWithUniqueDigits(n - 1);
     }
 }
-
-internal record struct Tweet(int User, int Id);
