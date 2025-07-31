@@ -7,37 +7,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-use std::collections::BTreeMap;
-struct SummaryRanges {
-    map: BTreeMap<i32, i32>,
-}
-
-impl SummaryRanges {
-    fn new() -> Self {
-        Self {
-            map: BTreeMap::new(),
-        }
-    }
-
-    fn add_num(&mut self, value: i32) {
-        if let Some((&left_start, &left_end)) = self.map.range(..=value).next_back()
-            && left_end + 1 >= value
-        {
-            if let Some(end) = self.map.remove(&(1 + value)) {
-                self.map.insert(left_start, end);
-            } else {
-                self.map.insert(left_start, left_end.max(value));
-            }
-        } else if let Some(end) = self.map.remove(&(1 + value)) {
-            self.map.insert(value, end);
+pub fn max_envelopes(mut envelopes: Vec<[i32; 2]>) -> i32 {
+    envelopes.sort_unstable_by(|a, b| a[0].cmp(&b[0]).then(b[1].cmp(&a[1])));
+    let mut lis = vec![envelopes[0][1]];
+    for e in &envelopes {
+        let i = lis.partition_point(|&v| v < e[1]);
+        if i >= lis.len() {
+            lis.push(e[1]);
         } else {
-            self.map.insert(value, value);
+            lis[i] = e[1];
         }
     }
-
-    fn get_intervals(&self) -> Vec<Vec<i32>> {
-        self.map.iter().map(|(k, v)| vec![*k, *v]).collect()
-    }
+    lis.len() as i32
 }
 
 #[cfg(test)]
@@ -71,14 +52,7 @@ mod tests {
 
     #[test]
     fn basics() {
-        let mut sr = SummaryRanges::new();
-        sr.add_num(6);
-        sr.add_num(8);
-        assert_eq!(sr.get_intervals(), [[6, 6], [8, 8]]);
-        sr.add_num(7);
-        assert_eq!(sr.get_intervals(), [[6, 8]]);
-        sr.add_num(6);
-        assert_eq!(sr.get_intervals(), [[6, 8]]);
+        assert_eq!(max_envelopes(vec![[5, 4], [6, 4], [6, 7], [2, 3]]), 3);
     }
 
     #[test]
