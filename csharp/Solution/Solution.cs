@@ -7,13 +7,15 @@ namespace Solution;
 
 public class Solution
 {
-    public int[] CountBits(int n)
+    public int IntegerBreak(int n)
     {
-        int[] res = new int[1 + n];
-        for (int i = 1; i <= n; i++)
+        if (n <= 3) { return n - 1; }
+        int prod = 1;
+        while (n > 4)
         {
-            res[i] = (i & 1) + res[i >> 1];
+            prod *= 3;
+            n -= 3;
         }
-        return res;
+        return n * prod;
     }
 }

@@ -10,10 +10,8 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(new[] { 0, 1, 1, 2, 1, 2 }, 5)]
-    public void TestMethod1(int[] exp, int n)
+    public void TestMethod1()
     {
-        Assert.IsTrue(exp.SequenceEqual(sol.CountBits(n)));
     }
 
     [TestMethod]
