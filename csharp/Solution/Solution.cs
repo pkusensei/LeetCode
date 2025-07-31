@@ -7,19 +7,13 @@ namespace Solution;
 
 public class Solution
 {
-    public int Rob(TreeNode root)
+    public int[] CountBits(int n)
     {
-        (int inc, int exc) = Dfs(root);
-        return int.Max(inc, exc);
-
-        static (int inc, int exc) Dfs(TreeNode node)
+        int[] res = new int[1 + n];
+        for (int i = 1; i <= n; i++)
         {
-            if (node is null) { return (0, 0); }
-            var left = Dfs(node.left);
-            var right = Dfs(node.right);
-            int inc = node.val + left.exc + right.exc;
-            int exc = int.Max(left.inc, left.exc) + int.Max(right.inc, right.exc);
-            return (inc, exc);
+            res[i] = (i & 1) + res[i >> 1];
         }
+        return res;
     }
 }
