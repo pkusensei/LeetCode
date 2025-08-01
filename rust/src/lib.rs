@@ -7,18 +7,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_envelopes(mut envelopes: Vec<[i32; 2]>) -> i32 {
-    envelopes.sort_unstable_by(|a, b| a[0].cmp(&b[0]).then(b[1].cmp(&a[1])));
-    let mut lis = vec![envelopes[0][1]];
-    for e in &envelopes {
-        let i = lis.partition_point(|&v| v < e[1]);
-        if i >= lis.len() {
-            lis.push(e[1]);
-        } else {
-            lis[i] = e[1];
+pub fn generate(num_rows: i32) -> Vec<Vec<i32>> {
+    let n = num_rows as usize;
+    let mut res = Vec::with_capacity(n);
+    res.push(vec![1]);
+    for row in 1..n {
+        let mut curr = vec![1];
+        for i in 0..row {
+            let val = res[row - 1][i] + res[row - 1].get(1 + i).unwrap_or(&0);
+            curr.push(val);
         }
+        res.push(curr);
     }
-    lis.len() as i32
+    res
 }
 
 #[cfg(test)]
@@ -52,7 +53,16 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_envelopes(vec![[5, 4], [6, 4], [6, 7], [2, 3]]), 3);
+        assert_eq!(
+            generate(5),
+            vec![
+                vec![1],
+                vec![1, 1],
+                vec![1, 2, 1],
+                vec![1, 3, 3, 1],
+                vec![1, 4, 6, 4, 1]
+            ]
+        );
     }
 
     #[test]
