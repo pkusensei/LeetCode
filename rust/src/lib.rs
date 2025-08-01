@@ -7,38 +7,33 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn largest_divisible_subset(mut nums: Vec<i32>) -> Vec<i32> {
-    let n = nums.len();
-    if n < 2 {
-        return vec![*nums.first().unwrap_or(&0)];
+pub fn super_pow(a: i32, b: &[i32]) -> i32 {
+    const M: i32 = 1337;
+    // Effectively insert 0 in front of b
+    let mut res = 1;
+    for &d in b.iter() {
+        // Suppose b=[d1, d2, ..]
+        // res = pow(a, b) = pow(a, 10*d1 + d2)
+        // pow(a, 10*d1) * pow(a, d2)
+        // pow(pow(a, d1), 10) * pow(a, d2)
+        // res *= pow(a, d1), then res = pow(res, 10);
+        // res *= pow(a, d2)
+        res = mod_pow(res, 10, M);
+        res = res * mod_pow(a % M, d, M);
+        res %= M;
     }
-    nums.sort_unstable();
-    // (length, prev)
-    let mut dp = vec![(1, None::<usize>); n];
-    let mut max_len = 1;
-    let mut max_idx = 0;
-    for right in 1..n {
-        for left in 0..right {
-            if nums[right] % nums[left] == 0 && nums[right] > nums[left] {
-                let len = 1 + dp[left].0;
-                if len > dp[right].0 {
-                    dp[right].0 = len;
-                    dp[right].1 = Some(left);
-                }
-            }
-        }
-        if dp[right].0 > max_len {
-            max_len = dp[right].0;
-            max_idx = right;
-        }
-    }
-    let mut res = vec![nums[max_idx]];
-    while let Some(prev) = dp[max_idx].1 {
-        res.push(nums[prev]);
-        max_idx = prev;
-    }
-    res.reverse();
     res
+}
+
+const fn mod_pow(b: i32, exp: i32, m: i32) -> i32 {
+    if exp == 0 {
+        return 1;
+    }
+    if exp & 1 == 0 {
+        mod_pow(b * b % m, exp >> 1, m)
+    } else {
+        mod_pow(b * b % m, exp >> 1, m) * b % m
+    }
 }
 
 #[cfg(test)]
@@ -74,5 +69,7 @@ mod tests {
     fn basics() {}
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(super_pow(2147483647, &[2, 0, 0]), 1198);
+    }
 }
