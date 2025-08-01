@@ -7,27 +7,31 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<IList<int>> KSmallestPairs(int[] nums1, int[] nums2, int k)
+    public int GetMoneyAmount(int n)
     {
-        int n1 = nums1.Length;
-        int n2 = nums2.Length;
-        List<IList<int>> res = new(k);
-        PriorityQueue<(int, int), int> pq = new();
-        pq.Enqueue((0, 0), nums1[0] + nums2[0]);
-        HashSet<(int, int)> seen = [(0, 0)];
-        while (res.Count < k && pq.TryDequeue(out var item, out _))
+        int[,] memo = new int[1 + n, 1 + n];
+        for (int i = 0; i <= n; i++)
         {
-            (int i1, int i2) = item;
-            res.Add([nums1[i1], nums2[i2]]);
-            if (i1 + 1 < n1 && seen.Add((1 + i1, i2)))
+            for (int j = 0; j <= n; j++)
             {
-                pq.Enqueue((1 + i1, i2), nums1[1 + i1] + nums2[i2]);
-            }
-            if (1 + i2 < n2 && seen.Add((i1, 1 + i2)))
-            {
-                pq.Enqueue((i1, 1 + i2), nums1[i1] + nums2[1 + i2]);
+                memo[i, j] = -1;
             }
         }
-        return res;
+        return Dfs(1, n);
+
+        int Dfs(int left, int right)
+        {
+            if (left >= right) { return 0; } // Found!
+            if (memo[left, right] > -1) { return memo[left, right]; }
+            int res = int.MaxValue;
+            for (int i = left; i <= right; i++)
+            {
+                // Goes on either branch, pick the big one
+                int curr = i + int.Max(Dfs(left, i - 1), Dfs(1 + i, right));
+                res = int.Min(res, curr);
+            }
+            memo[left, right] = res;
+            return res;
+        }
     }
 }
