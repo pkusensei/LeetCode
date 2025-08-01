@@ -10,19 +10,16 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow(3, 1, 2)]
+    [DataRow(7, 3, 4)]
+    public void TestMethod1(int exp, int a, int b)
     {
-        int[][] m = [[1, 0, 1], [0, -2, 3]];
-        Assert.AreEqual(2, sol.MaxSumSubmatrix(m, 2));
-        Assert.AreEqual(2, sol.WithKadanes(m, 2));
+        Assert.AreEqual(exp, sol.GetSum(a, b));
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        int[][] m = [[2, 2, -1]];
-        Assert.AreEqual(3, sol.MaxSumSubmatrix(m, 3));
-        Assert.AreEqual(3, sol.WithKadanes(m, 3));
     }
 
     [TestMethod]
