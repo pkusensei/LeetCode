@@ -7,18 +7,37 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn generate(num_rows: i32) -> Vec<Vec<i32>> {
-    let n = num_rows as usize;
-    let mut res = Vec::with_capacity(n);
-    res.push(vec![1]);
-    for row in 1..n {
-        let mut curr = vec![1];
-        for i in 0..row {
-            let val = res[row - 1][i] + res[row - 1].get(1 + i).unwrap_or(&0);
-            curr.push(val);
-        }
-        res.push(curr);
+pub fn largest_divisible_subset(mut nums: Vec<i32>) -> Vec<i32> {
+    let n = nums.len();
+    if n < 2 {
+        return vec![*nums.first().unwrap_or(&0)];
     }
+    nums.sort_unstable();
+    // (length, prev)
+    let mut dp = vec![(1, None::<usize>); n];
+    let mut max_len = 1;
+    let mut max_idx = 0;
+    for right in 1..n {
+        for left in 0..right {
+            if nums[right] % nums[left] == 0 && nums[right] > nums[left] {
+                let len = 1 + dp[left].0;
+                if len > dp[right].0 {
+                    dp[right].0 = len;
+                    dp[right].1 = Some(left);
+                }
+            }
+        }
+        if dp[right].0 > max_len {
+            max_len = dp[right].0;
+            max_idx = right;
+        }
+    }
+    let mut res = vec![nums[max_idx]];
+    while let Some(prev) = dp[max_idx].1 {
+        res.push(nums[prev]);
+        max_idx = prev;
+    }
+    res.reverse();
     res
 }
 
@@ -52,18 +71,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(
-            generate(5),
-            vec![
-                vec![1],
-                vec![1, 1],
-                vec![1, 2, 1],
-                vec![1, 3, 3, 1],
-                vec![1, 4, 6, 4, 1]
-            ]
-        );
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
