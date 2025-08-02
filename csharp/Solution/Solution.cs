@@ -7,15 +7,18 @@ namespace Solution;
 
 public class Solution
 {
-    public int WiggleMaxLength(int[] nums)
+    public int CombinationSum4(int[] nums, int target)
     {
-        int dec = 0;
-        int inc = 0;
-        for (int i = 0; i < nums.Length - 1; i++)
+        int[] dp = new int[1 + target];
+        dp[0] = 1;
+        for (int right = 1; right <= target; right++)
         {
-            if (nums[i] < nums[1 + i]) { inc = 1 + dec; }
-            if (nums[i] > nums[1 + i]) { dec = 1 + inc; }
+            foreach (var num in nums)
+            {
+                int left = right - num;
+                if (left >= 0) { dp[right] += dp[left]; }
+            }
         }
-        return 1 + int.Max(inc, dec);
+        return dp[target];
     }
 }
