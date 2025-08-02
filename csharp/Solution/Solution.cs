@@ -7,32 +7,15 @@ namespace Solution;
 
 public class Solution
 {
-    public long MinCost(int[] basket1, int[] basket2)
+    public int WiggleMaxLength(int[] nums)
     {
-        Dictionary<int, int> freq = [];
-        int min_num = int.MaxValue;
-        foreach (var num in basket1)
+        int dec = 0;
+        int inc = 0;
+        for (int i = 0; i < nums.Length - 1; i++)
         {
-            if (!freq.TryAdd(num, 1)) { freq[num] += 1; }
-            min_num = int.Min(min_num, num);
+            if (nums[i] < nums[1 + i]) { inc = 1 + dec; }
+            if (nums[i] > nums[1 + i]) { dec = 1 + inc; }
         }
-        foreach (var num in basket2)
-        {
-            if (!freq.TryAdd(num, -1)) { freq[num] -= 1; }
-            min_num = int.Min(min_num, num);
-        }
-        List<int> diff = [];
-        foreach (var (num, f) in freq)
-        {
-            if ((f & 1) == 1) { return -1; }
-            if (f != 0) { diff.AddRange(Enumerable.Repeat(num, int.Abs(f) / 2)); }
-        }
-        diff.Sort();
-        long res = 0;
-        foreach (var num in diff[..(diff.Count / 2)])
-        {
-            res += long.Min(num, 2 * min_num);
-        }
-        return res;
+        return 1 + int.Max(inc, dec);
     }
 }
