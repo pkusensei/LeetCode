@@ -7,18 +7,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_removal(mut nums: Vec<i32>, k: i32) -> i32 {
-    let n = nums.len();
-    nums.sort_unstable();
-    let mut res = 0;
-    for (left, &num) in nums.iter().enumerate() {
-        let right = nums.partition_point(|&v| i64::from(v) <= i64::from(num) * i64::from(k));
-        res = res.max(right - left);
-        if right >= n {
-            break;
-        }
-    }
-    (n - res) as i32
+pub fn is_trionic(nums: Vec<i32>) -> bool {
+    use itertools::Itertools;
+    let v = nums
+        .windows(2)
+        .map(|w| (w[1] - w[0]).signum())
+        .collect_vec()
+        .chunk_by(|a, b| a == b)
+        .map(|ch| ch[0])
+        .collect_vec();
+    matches!(v.as_slice(), &[1, -1, 1])
 }
 
 #[cfg(test)]
