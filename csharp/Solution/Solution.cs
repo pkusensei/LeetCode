@@ -5,58 +5,43 @@ using static Solution.Utils;
 
 namespace Solution;
 
-public class Solution
+public class RandomizedSet
 {
-    public int KthSmallest(int[][] matrix, int k)
+    public RandomizedSet()
     {
-        int n = matrix.Length;
-        PriorityQueue<(int, int), int> pq = new();
-        for (int i = 0; i < n; i++)
-        {
-            pq.Enqueue((0, i), matrix[0][i]);
-        }
-        while (k > 0 && pq.TryDequeue(out var item, out _))
-        {
-            (int r, int c) = item;
-            k -= 1;
-            if (k == 0) { return matrix[r][c]; }
-            if (1 + r < n) { pq.Enqueue((1 + r, c), matrix[1 + r][c]); }
-        }
-        return -1;
+        Rng = new();
+        ValPos = [];
+        Vals = [];
     }
 
-    public int WithBinarySearch(int[][] mat, int k)
-    {
-        int left = mat[0][0];
-        int right = mat[^1][^1];
-        while (left < right)
-        {
-            int mid = left + (right - left) / 2;
-            if (Count(mid) < k) { left = 1 + mid; }
-            else { right = mid; }
-        }
-        return left;
+    Random Rng { get; }
+    Dictionary<int, int> ValPos { get; }
+    List<int> Vals { get; }
+    int Count { get; set; }
 
-        int Count(int mid)
-        {
-            int n = mat.Length;
-            int r = n - 1;
-            int c = 0;
-            int count = 0;
-            while (r >= 0 && c < n)
-            {
-                int curr = mat[r][c];
-                if (curr <= mid)
-                {
-                    count += 1 + r;
-                    c += 1;
-                }
-                else
-                {
-                    r -= 1;
-                }
-            }
-            return count;
-        }
+    public bool Insert(int val)
+    {
+        if (ValPos.ContainsKey(val)) { return false; }
+        if (Count < Vals.Count) { Vals[Count] = val; }
+        else { Vals.Add(val); }
+        ValPos.Add(val, Count);
+        Count += 1;
+        return true;
+    }
+
+    public bool Remove(int val)
+    {
+        if (!ValPos.TryGetValue(val, out int idx)) { return false; }
+        ValPos.Remove(val);
+        (Vals[idx], Vals[Count - 1]) = (Vals[Count - 1], Vals[idx]); // swap remove
+        Count -= 1;
+        if (idx < Count) { ValPos[Vals[idx]] = idx; }
+        return true;
+    }
+
+    public int GetRandom()
+    {
+        int idx = Rng.Next(Count);
+        return Vals[idx];
     }
 }
