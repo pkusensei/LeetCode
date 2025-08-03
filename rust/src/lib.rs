@@ -7,39 +7,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn earliest_finish_time(
-    land_start_time: Vec<i32>,
-    land_duration: Vec<i32>,
-    water_start_time: Vec<i32>,
-    water_duration: Vec<i32>,
-) -> i32 {
-    f(
-        &land_start_time,
-        &land_duration,
-        &water_start_time,
-        &water_duration,
-    )
-    .min(f(
-        &water_start_time,
-        &water_duration,
-        &land_start_time,
-        &land_duration,
-    ))
-}
-
-fn f(start1: &[i32], dur1: &[i32], start2: &[i32], dur2: &[i32]) -> i32 {
-    let earliest = start1
-        .iter()
-        .zip(dur1)
-        .map(|(s, d)| s + d)
-        .min()
-        .unwrap_or(0);
-    let mut res = i32::MAX;
-    for (&s, &d) in start2.iter().zip(dur2) {
-        let curr = s.max(earliest) + d;
-        res = res.min(curr);
+pub fn min_removal(mut nums: Vec<i32>, k: i32) -> i32 {
+    let n = nums.len();
+    nums.sort_unstable();
+    let mut res = 0;
+    for (left, &num) in nums.iter().enumerate() {
+        let right = nums.partition_point(|&v| i64::from(v) <= i64::from(num) * i64::from(k));
+        res = res.max(right - left);
+        if right >= n {
+            break;
+        }
     }
-    res
+    (n - res) as i32
 }
 
 #[cfg(test)]
