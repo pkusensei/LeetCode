@@ -7,16 +7,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_trionic(nums: Vec<i32>) -> bool {
-    use itertools::Itertools;
-    let v = nums
-        .windows(2)
-        .map(|w| (w[1] - w[0]).signum())
-        .collect_vec()
-        .chunk_by(|a, b| a == b)
-        .map(|ch| ch[0])
-        .collect_vec();
-    matches!(v.as_slice(), &[1, -1, 1])
+pub fn max_balanced_shipments(weight: Vec<i32>) -> i32 {
+    let mut prev = i32::MIN;
+    let mut res = 0;
+    for &num in weight.iter() {
+        if prev > num {
+            res += 1;
+            prev = i32::MIN;
+        } else {
+            prev = num
+        }
+    }
+    res
 }
 
 #[cfg(test)]
