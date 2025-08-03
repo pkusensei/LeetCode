@@ -5,9 +5,9 @@ using static Solution.Utils;
 
 namespace Solution;
 
-public class RandomizedSet
+public class RandomizedCollection
 {
-    public RandomizedSet()
+    public RandomizedCollection()
     {
         Rng = new();
         ValPos = [];
@@ -15,27 +15,34 @@ public class RandomizedSet
     }
 
     Random Rng { get; }
-    Dictionary<int, int> ValPos { get; }
+    Dictionary<int, HashSet<int>> ValPos { get; }
     List<int> Vals { get; }
     int Count { get; set; }
 
     public bool Insert(int val)
     {
-        if (ValPos.ContainsKey(val)) { return false; }
+        bool res = ValPos.TryAdd(val, []) || ValPos[val].Count == 0;
+        ValPos[val].Add(Count);
         if (Count < Vals.Count) { Vals[Count] = val; }
         else { Vals.Add(val); }
-        ValPos.Add(val, Count);
         Count += 1;
-        return true;
+        return res;
     }
 
     public bool Remove(int val)
     {
-        if (!ValPos.TryGetValue(val, out int idx)) { return false; }
-        ValPos.Remove(val);
-        (Vals[idx], Vals[Count - 1]) = (Vals[Count - 1], Vals[idx]); // swap remove
+        bool res = ValPos.TryGetValue(val, out var set) && set.Count > 0;
+        if (!res) { return res; }
+        int idx = set.First();
+        set.Remove(idx);
+        int swap = Vals[Count - 1];
+        (Vals[idx], Vals[Count - 1]) = (swap, Vals[idx]); // swap remove
         Count -= 1;
-        if (idx < Count) { ValPos[Vals[idx]] = idx; }
+        if (idx < Count)
+        {
+            ValPos[swap].Remove(Count);
+            ValPos[swap].Add(idx);
+        }
         return true;
     }
 
