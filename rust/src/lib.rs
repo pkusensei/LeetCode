@@ -7,16 +7,37 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_balanced_shipments(weight: Vec<i32>) -> i32 {
-    let mut prev = i32::MIN;
-    let mut res = 0;
-    for &num in weight.iter() {
-        if prev > num {
-            res += 1;
-            prev = i32::MIN;
+pub fn min_time(s: String, order: Vec<i32>, k: i32) -> i32 {
+    let n = s.len();
+    let mut s = s.into_bytes();
+    let mut left = 0;
+    let mut right = n;
+    while left < right {
+        let mid = left + (right - left) / 2;
+        if count(&mut s, &order, mid) >= k as usize {
+            right = mid;
         } else {
-            prev = num
+            left = 1 + mid;
         }
+    }
+    if left < n { left as i32 } else { -1 }
+}
+
+fn count(s: &mut [u8], order: &[i32], mid: usize) -> usize {
+    let n = s.len();
+    for &i in &order[..=mid] {
+        s[i as usize] = b'*';
+    }
+    let v = s
+        .split(|&b| b == b'*')
+        .map(|w| {
+            let v = w.len();
+            v * (1 + v) / 2
+        })
+        .sum::<usize>();
+    let res = n * (1 + n) / 2 - v;
+    for &i in &order[..=mid] {
+        s[i as usize] = b'#';
     }
     res
 }
