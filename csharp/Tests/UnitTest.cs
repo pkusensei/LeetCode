@@ -10,10 +10,11 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(7, new[] { 1, 2, 3 }, 4)]
-    public void TestMethod1(int exp, int[] nums, int t)
+    public void TestMethod1()
     {
-        Assert.AreEqual(exp, sol.CombinationSum4(nums, t));
+        int[][] m = [[1, 5, 9], [10, 11, 13], [12, 13, 15]];
+        Assert.AreEqual(13, sol.KthSmallest(m, 8));
+        Assert.AreEqual(13, sol.WithBinarySearch(m, 8));
     }
 
     [TestMethod]
