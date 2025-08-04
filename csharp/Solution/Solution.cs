@@ -5,50 +5,24 @@ using static Solution.Utils;
 
 namespace Solution;
 
-public class RandomizedCollection
+public class Solution
 {
-    public RandomizedCollection()
+    public int TotalFruit(int[] fruits)
     {
-        Rng = new();
-        ValPos = [];
-        Vals = [];
-    }
-
-    Random Rng { get; }
-    Dictionary<int, HashSet<int>> ValPos { get; }
-    List<int> Vals { get; }
-    int Count { get; set; }
-
-    public bool Insert(int val)
-    {
-        bool res = ValPos.TryAdd(val, []) || ValPos[val].Count == 0;
-        ValPos[val].Add(Count);
-        if (Count < Vals.Count) { Vals[Count] = val; }
-        else { Vals.Add(val); }
-        Count += 1;
-        return res;
-    }
-
-    public bool Remove(int val)
-    {
-        bool res = ValPos.TryGetValue(val, out var set) && set.Count > 0;
-        if (!res) { return res; }
-        int idx = set.First();
-        set.Remove(idx);
-        int swap = Vals[Count - 1];
-        (Vals[idx], Vals[Count - 1]) = (swap, Vals[idx]); // swap remove
-        Count -= 1;
-        if (idx < Count)
+        Dictionary<int, int> freq = [];
+        int res = 0;
+        int left = 0;
+        for (int right = 0; right < fruits.Length; right++)
         {
-            ValPos[swap].Remove(Count);
-            ValPos[swap].Add(idx);
+            if (!freq.TryAdd(fruits[right], 1)) { freq[fruits[right]] += 1; }
+            while (freq.Count > 2)
+            {
+                freq[fruits[left]] -= 1;
+                if (freq[fruits[left]] == 0) { freq.Remove(fruits[left]); }
+                left += 1;
+            }
+            res = int.Max(res, right - left + 1);
         }
-        return true;
-    }
-
-    public int GetRandom()
-    {
-        int idx = Rng.Next(Count);
-        return Vals[idx];
+        return res;
     }
 }
