@@ -7,26 +7,21 @@ namespace Solution;
 
 public class Solution
 {
-    public Solution(ListNode head)
+    public Solution(int[] nums)
     {
         Rng = new();
-        Head = head;
+        Nums = nums;
     }
 
     Random Rng { get; }
-    ListNode Head { get; }
+    int[] Nums { get; }
 
-    public int GetRandom()
+    public int[] Reset() => Nums;
+
+    public int[] Shuffle()
     {
-        int res = 0;
-        int i = 1;
-        var curr = Head;
-        while (curr is not null)
-        {
-            if (Rng.Next() % i == 0) { res = curr.val; }
-            curr = curr.next;
-            i += 1;
-        }
+        int[] res = [.. Nums];
+        Rng.Shuffle(res);
         return res;
     }
 }
