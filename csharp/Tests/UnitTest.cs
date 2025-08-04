@@ -10,8 +10,10 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow(6, 9)]
+    public void TestMethod1(int exp, int n)
     {
+        Assert.AreEqual(exp, sol.LastRemaining(n));
     }
 
     [TestMethod]

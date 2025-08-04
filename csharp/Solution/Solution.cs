@@ -7,24 +7,23 @@ namespace Solution;
 
 public class Solution
 {
-    public int LengthLongestPath(string input)
+    public int LastRemaining(int n)
     {
-        Stack<(int tabs, int len)> st = [];
-        int res = 0;
-        foreach (var s in input.Split('\n'))
+        return Dfs(n, true);
+
+        static int Dfs(int n, bool forward)
         {
-            int tabs = s.TakeWhile(c => c == '\t').Count();
-            while (st.TryPeek(out var top) && top.tabs >= tabs)
+            if (n == 1) { return 1; }
+            // Remove elements on odd indices
+            if (forward) { return 2 * Dfs(n / 2, !forward); }
+            else
             {
-                st.Pop();
-            }
-            st.Push((tabs, s.Length - tabs));
-            if (s.Contains('.'))
-            {
-                int curr = st.Sum(v => v.len) + st.Count - 1;
-                res = int.Max(res, curr);
+                // Remove elements on odd indices
+                if ((n & 1) == 1) { return 2 * Dfs(n / 2, !forward); }
+                // [1,2,3,4,5,6] remove even indices to get [1,3,5]
+                // [1,3,5] == [2*1-1, 2*2-1, 2*3-1]
+                else { return 2 * Dfs(n / 2, !forward) - 1; }
             }
         }
-        return res;
     }
 }
