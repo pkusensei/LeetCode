@@ -7,21 +7,23 @@ namespace Solution;
 
 public class Solution
 {
-    public Solution(int[] nums)
+    public IList<int> LexicalOrder(int n)
     {
-        Rng = new();
-        Nums = nums;
-    }
-
-    Random Rng { get; }
-    int[] Nums { get; }
-
-    public int[] Reset() => Nums;
-
-    public int[] Shuffle()
-    {
-        int[] res = [.. Nums];
-        Rng.Shuffle(res);
+        List<int> res = [];
+        for (int i = 1; i < 10; i++)
+        {
+            Dfs(i);
+        }
         return res;
+
+        void Dfs(int curr)
+        {
+            if (curr > n) { return; }
+            res.Add(curr);
+            for (int i = 0; i < 10; i++)
+            {
+                Dfs(10 * curr + i);
+            }
+        }
     }
 }
