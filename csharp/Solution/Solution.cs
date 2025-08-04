@@ -7,21 +7,25 @@ namespace Solution;
 
 public class Solution
 {
-    public int TotalFruit(int[] fruits)
+    public Solution(ListNode head)
     {
-        Dictionary<int, int> freq = [];
+        Rng = new();
+        Head = head;
+    }
+
+    Random Rng { get; }
+    ListNode Head { get; }
+
+    public int GetRandom()
+    {
         int res = 0;
-        int left = 0;
-        for (int right = 0; right < fruits.Length; right++)
+        int i = 1;
+        var curr = Head;
+        while (curr is not null)
         {
-            if (!freq.TryAdd(fruits[right], 1)) { freq[fruits[right]] += 1; }
-            while (freq.Count > 2)
-            {
-                freq[fruits[left]] -= 1;
-                if (freq[fruits[left]] == 0) { freq.Remove(fruits[left]); }
-                left += 1;
-            }
-            res = int.Max(res, right - left + 1);
+            if (Rng.Next() % i == 0) { res = curr.val; }
+            curr = curr.next;
+            i += 1;
         }
         return res;
     }
