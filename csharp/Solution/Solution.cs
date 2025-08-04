@@ -7,23 +7,24 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<int> LexicalOrder(int n)
+    public int LengthLongestPath(string input)
     {
-        List<int> res = [];
-        for (int i = 1; i < 10; i++)
+        Stack<(int tabs, int len)> st = [];
+        int res = 0;
+        foreach (var s in input.Split('\n'))
         {
-            Dfs(i);
-        }
-        return res;
-
-        void Dfs(int curr)
-        {
-            if (curr > n) { return; }
-            res.Add(curr);
-            for (int i = 0; i < 10; i++)
+            int tabs = s.TakeWhile(c => c == '\t').Count();
+            while (st.TryPeek(out var top) && top.tabs >= tabs)
             {
-                Dfs(10 * curr + i);
+                st.Pop();
+            }
+            st.Push((tabs, s.Length - tabs));
+            if (s.Contains('.'))
+            {
+                int curr = st.Sum(v => v.len) + st.Count - 1;
+                res = int.Max(res, curr);
             }
         }
+        return res;
     }
 }
