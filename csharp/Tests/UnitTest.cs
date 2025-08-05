@@ -10,10 +10,8 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(1, new[] { 4, 2, 5 }, new[] { 3, 5, 4 })]
-    public void TestMethod1(int exp, int[] f, int[] b)
+    public void TestMethod1()
     {
-        Assert.AreEqual(exp, sol.NumOfUnplacedFruits(f, b));
     }
 
     [TestMethod]

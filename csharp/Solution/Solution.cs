@@ -7,75 +7,41 @@ namespace Solution;
 
 public class Solution
 {
-    public int NumOfUnplacedFruits(int[] fruits, int[] baskets)
+    public bool IsRectangleCover(int[][] rectangles)
     {
-        SegTree tree = new(baskets);
-        int res = 0;
-        foreach (var f in fruits)
+        long total = 0;
+        int xmin = int.MaxValue;
+        int ymin = int.MaxValue;
+        int xmax = int.MinValue;
+        int ymax = int.MinValue;
+        Dictionary<(int x, int y), int> freq = [];
+        foreach (var rec in rectangles)
         {
-            res += tree.Query(f) ? 0 : 1;
-        }
-        return res;
-    }
-}
-
-internal class SegTree
-{
-    public SegTree(ReadOnlySpan<int> nums)
-    {
-        N = nums.Length;
-        Tree = new int[4 * N];
-        Build(1, 0, N - 1, nums);
-    }
-
-    int N { get; }
-    int[] Tree { get; }
-
-    private void Build(int node, int left, int right, ReadOnlySpan<int> nums)
-    {
-        if (left == right)
-        {
-            Tree[node] = nums[left];
-            return;
-        }
-        int mid = left + (right - left) / 2;
-        Build(2 * node, left, mid, nums);
-        Build(2 * node + 1, 1 + mid, right, nums);
-        Tree[node] = int.Max(Tree[2 * node], Tree[2 * node + 1]);
-    }
-
-    public void Update(int idx, int val) => Update(1, 0, N - 1, idx, val);
-
-    private void Update(int node, int left, int right, int idx, int val)
-    {
-        if (left == right)
-        {
-            Tree[node] = val;
-            return;
-        }
-        int mid = left + (right - left) / 2;
-        if (idx <= mid) { Update(2 * node, left, mid, idx, val); }
-        else { Update(2 * node + 1, 1 + mid, right, idx, val); }
-        Tree[node] = int.Max(Tree[2 * node], Tree[2 * node + 1]);
-    }
-
-    public bool Query(int val) => Query(1, 0, N - 1, val);
-
-    private bool Query(int node, int left, int right, int val)
-    {
-        if (Tree[node] < val) { return false; }
-        if (left == right)
-        {
-            if (Tree[node] >= val)
+            int x1 = rec[0];
+            int y1 = rec[1];
+            int x2 = rec[2];
+            int y2 = rec[3];
+            xmin = int.Min(xmin, x1);
+            ymin = int.Min(ymin, y1);
+            xmax = int.Max(xmax, x2);
+            ymax = int.Max(ymax, y2);
+            total += (x2 - x1) * (long)(y2 - y1);
+            foreach (var item in new[] { (x1, y1), (x2, y2), (x1, y2), (x2, y1) })
             {
-                Tree[node] = 0;
-                return true;
+                if (!freq.TryAdd(item, 1)) { freq[item] += 1; }
             }
+        }
+        if ((long)(xmax - xmin) * (ymax - ymin) != total) { return false; }
+        Span<(int, int)> corners = [(xmin, ymin), (xmax, ymax), (xmin, ymax), (xmax, ymin)];
+        foreach (var (k, v) in freq)
+        {
+            if (corners.Contains(k))
+            {
+                if (v == 1) { continue; }
+            }
+            else if ((v & 1) == 0) { continue; }
             return false;
         }
-        int mid = left + (right - left) / 2;
-        bool res = Query(2 * node, left, mid, val) || Query(2 * node + 1, 1 + mid, right, val);
-        Tree[node] = int.Max(Tree[2 * node], Tree[2 * node + 1]);
-        return res;
+        return true;
     }
 }
