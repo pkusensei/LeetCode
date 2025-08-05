@@ -10,10 +10,10 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow("zzzyypqjkjkefjkjkefjkjkefjkjkefyypqjkjkefjkjkefjkjkefjkjkefef", "3[z]2[2[y]pq4[2[jk]e1[f]]]ef")]
-    public void TestMethod1(string exp, string s)
+    [DataRow(3, "aaabb", 3)]
+    public void TestMethod1(int exp, string s, int k)
     {
-        Assert.AreEqual(exp, sol.DecodeString(s));
+        Assert.AreEqual(exp, sol.LongestSubstring(s, k));
     }
 
     [TestMethod]

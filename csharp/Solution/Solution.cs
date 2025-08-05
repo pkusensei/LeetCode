@@ -7,38 +7,42 @@ namespace Solution;
 
 public class Solution
 {
-    public string DecodeString(string s)
+    public int LongestSubstring(string s, int k)
     {
-        return Dfs(s);
+        return Dfs(s, k);
 
-        static string Dfs(ReadOnlySpan<char> s)
+        static int Dfs(ReadOnlySpan<char> s, int k)
         {
-            StringBuilder sb = new();
-            int open = 0;
-            int num = 0;
-            for (int i = 0; i < s.Length; i++)
+            if (s.Length < k) { return 0; }
+            if (k == 1) { return s.Length; }
+            Span<int> freq = stackalloc int[26];
+            foreach (var c in s)
             {
-                if (char.IsAsciiLetter(s[i])) { sb.Append(s[i]); }
-                else if (char.IsAsciiDigit(s[i])) { num = 10 * num + s[i] - '0'; }
-                else if (s[i] == '[')
+                freq[c - 'a'] += 1;
+            }
+            bool fit = true;
+            for (int i = 0; i < 26; i++)
+            {
+                if (0 < freq[i] && freq[i] < k)
                 {
-                    int left = 1 + i;
-                    open += 1;
-                    for (i = left; i < s.Length && open > 0; i += 1)
-                    {
-                        if (s[i] == '[') { open += 1; }
-                        if (s[i] == ']') { open -= 1; }
-                    }
-                    i -= 1;
-                    var inner = Dfs(s[left..i]);
-                    for (int _ = 0; _ < num; _++)
-                    {
-                        sb.Append(inner);
-                    }
-                    num = 0;
+                    fit = false;
+                    break;
                 }
             }
-            return sb.ToString();
+            if (fit) { return s.Length; }
+            int res = 0;
+            int left = 0;
+            for (int right = 0; right < s.Length; right++)
+            {
+                int c = s[right] - 'a';
+                if (0 < freq[c] && freq[c] < k)
+                {
+                    res = int.Max(res, Dfs(s[left..right], k));
+                    left = 1 + right;
+                }
+            }
+            res = int.Max(res, Dfs(s[left..], k));
+            return res;
         }
     }
 }
