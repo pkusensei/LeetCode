@@ -7,40 +7,21 @@ namespace Solution;
 
 public class Solution
 {
-    public bool IsRectangleCover(int[][] rectangles)
+    public bool ValidUtf8(int[] data)
     {
-        long total = 0;
-        int xmin = int.MaxValue;
-        int ymin = int.MaxValue;
-        int xmax = int.MinValue;
-        int ymax = int.MinValue;
-        Dictionary<(int x, int y), int> freq = [];
-        foreach (var rec in rectangles)
+        for (int i = 0; i < data.Length;)
         {
-            int x1 = rec[0];
-            int y1 = rec[1];
-            int x2 = rec[2];
-            int y2 = rec[3];
-            xmin = int.Min(xmin, x1);
-            ymin = int.Min(ymin, y1);
-            xmax = int.Max(xmax, x2);
-            ymax = int.Max(ymax, y2);
-            total += (x2 - x1) * (long)(y2 - y1);
-            foreach (var item in new[] { (x1, y1), (x2, y2), (x1, y2), (x2, y1) })
+            int d;
+            if (data[i] <= 0b01_111_111) { d = 1; }
+            else if ((data[i] >> 5) == 0b110) { d = 2; }
+            else if ((data[i] >> 4) == 0b1_110) { d = 3; }
+            else if ((data[i] >> 3) == 0b111_10) { d = 4; }
+            else { return false; }
+            if (i + d > data.Length || data[(i + 1)..(i + d)].Any(v => (v >> 6) != 0b10))
             {
-                if (!freq.TryAdd(item, 1)) { freq[item] += 1; }
+                return false;
             }
-        }
-        if ((long)(xmax - xmin) * (ymax - ymin) != total) { return false; }
-        Span<(int, int)> corners = [(xmin, ymin), (xmax, ymax), (xmin, ymax), (xmax, ymin)];
-        foreach (var (k, v) in freq)
-        {
-            if (corners.Contains(k))
-            {
-                if (v == 1) { continue; }
-            }
-            else if ((v & 1) == 0) { continue; }
-            return false;
+            i += d;
         }
         return true;
     }

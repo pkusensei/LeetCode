@@ -10,8 +10,10 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow(true, new[] { 197, 130, 1 })]
+    public void TestMethod1(bool exp, int[] d)
     {
+        Assert.AreEqual(exp, sol.ValidUtf8(d));
     }
 
     [TestMethod]
