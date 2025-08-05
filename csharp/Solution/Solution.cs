@@ -7,42 +7,23 @@ namespace Solution;
 
 public class Solution
 {
-    public int LongestSubstring(string s, int k)
+    public int MaxRotateFunction(int[] nums)
     {
-        return Dfs(s, k);
-
-        static int Dfs(ReadOnlySpan<char> s, int k)
+        int n = nums.Length;
+        int sum = 0;
+        int curr = 0;
+        for (int i = 0; i < n; i++)
         {
-            if (s.Length < k) { return 0; }
-            if (k == 1) { return s.Length; }
-            Span<int> freq = stackalloc int[26];
-            foreach (var c in s)
-            {
-                freq[c - 'a'] += 1;
-            }
-            bool fit = true;
-            for (int i = 0; i < 26; i++)
-            {
-                if (0 < freq[i] && freq[i] < k)
-                {
-                    fit = false;
-                    break;
-                }
-            }
-            if (fit) { return s.Length; }
-            int res = 0;
-            int left = 0;
-            for (int right = 0; right < s.Length; right++)
-            {
-                int c = s[right] - 'a';
-                if (0 < freq[c] && freq[c] < k)
-                {
-                    res = int.Max(res, Dfs(s[left..right], k));
-                    left = 1 + right;
-                }
-            }
-            res = int.Max(res, Dfs(s[left..], k));
-            return res;
+            sum += nums[i];
+            curr += i * nums[i];
         }
+        int res = curr;
+        for (int i = 1; i < n; i++)
+        {
+            curr -= nums[^i] * n;
+            curr += sum;
+            res = int.Max(res, curr);
+        }
+        return res;
     }
 }

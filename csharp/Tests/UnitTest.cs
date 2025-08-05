@@ -10,10 +10,10 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(3, "aaabb", 3)]
-    public void TestMethod1(int exp, string s, int k)
+    [DataRow(26, new[] { 4, 3, 2, 6 })]
+    public void TestMethod1(int exp, int[] n)
     {
-        Assert.AreEqual(exp, sol.LongestSubstring(s, k));
+        Assert.AreEqual(exp, sol.MaxRotateFunction(n));
     }
 
     [TestMethod]
