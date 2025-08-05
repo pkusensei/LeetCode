@@ -10,10 +10,8 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(26, new[] { 4, 3, 2, 6 })]
-    public void TestMethod1(int exp, int[] n)
+    public void TestMethod1()
     {
-        Assert.AreEqual(exp, sol.MaxRotateFunction(n));
     }
 
     [TestMethod]

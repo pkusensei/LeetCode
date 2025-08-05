@@ -7,22 +7,16 @@ namespace Solution;
 
 public class Solution
 {
-    public int MaxRotateFunction(int[] nums)
+    public int IntegerReplacement(int n)
     {
-        int n = nums.Length;
-        int sum = 0;
-        int curr = 0;
-        for (int i = 0; i < n; i++)
+        int res = 0;
+        long val = n;
+        while (val != 1)
         {
-            sum += nums[i];
-            curr += i * nums[i];
-        }
-        int res = curr;
-        for (int i = 1; i < n; i++)
-        {
-            curr -= nums[^i] * n;
-            curr += sum;
-            res = int.Max(res, curr);
+            if ((val & 1) == 0) { val /= 2; }
+            else if (val == 3 || (val - 1) % 4 == 0) { val -= 1; }
+            else { val += 1; }
+            res += 1;
         }
         return res;
     }
