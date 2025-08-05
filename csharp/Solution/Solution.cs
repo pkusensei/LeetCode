@@ -7,22 +7,38 @@ namespace Solution;
 
 public class Solution
 {
-    public bool ValidUtf8(int[] data)
+    public string DecodeString(string s)
     {
-        for (int i = 0; i < data.Length;)
+        return Dfs(s);
+
+        static string Dfs(ReadOnlySpan<char> s)
         {
-            int d;
-            if (data[i] <= 0b01_111_111) { d = 1; }
-            else if ((data[i] >> 5) == 0b110) { d = 2; }
-            else if ((data[i] >> 4) == 0b1_110) { d = 3; }
-            else if ((data[i] >> 3) == 0b111_10) { d = 4; }
-            else { return false; }
-            if (i + d > data.Length || data[(i + 1)..(i + d)].Any(v => (v >> 6) != 0b10))
+            StringBuilder sb = new();
+            int open = 0;
+            int num = 0;
+            for (int i = 0; i < s.Length; i++)
             {
-                return false;
+                if (char.IsAsciiLetter(s[i])) { sb.Append(s[i]); }
+                else if (char.IsAsciiDigit(s[i])) { num = 10 * num + s[i] - '0'; }
+                else if (s[i] == '[')
+                {
+                    int left = 1 + i;
+                    open += 1;
+                    for (i = left; i < s.Length && open > 0; i += 1)
+                    {
+                        if (s[i] == '[') { open += 1; }
+                        if (s[i] == ']') { open -= 1; }
+                    }
+                    i -= 1;
+                    var inner = Dfs(s[left..i]);
+                    for (int _ = 0; _ < num; _++)
+                    {
+                        sb.Append(inner);
+                    }
+                    num = 0;
+                }
             }
-            i += d;
+            return sb.ToString();
         }
-        return true;
     }
 }

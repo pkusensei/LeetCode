@@ -10,10 +10,10 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(true, new[] { 197, 130, 1 })]
-    public void TestMethod1(bool exp, int[] d)
+    [DataRow("zzzyypqjkjkefjkjkefjkjkefjkjkefyypqjkjkefjkjkefjkjkefjkjkefef", "3[z]2[2[y]pq4[2[jk]e1[f]]]ef")]
+    public void TestMethod1(string exp, string s)
     {
-        Assert.AreEqual(exp, sol.ValidUtf8(d));
+        Assert.AreEqual(exp, sol.DecodeString(s));
     }
 
     [TestMethod]
