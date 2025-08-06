@@ -7,31 +7,20 @@ namespace Solution;
 
 public class Solution
 {
-    public string RemoveKdigits(string num, int k)
+    public bool CanCross(int[] stones)
     {
-        Stack<char> st = [];
-        foreach (var c in num)
+        int n = stones.Length;
+        List<HashSet<int>> dp = [[1]];
+        for (int right = 1; right < n; right++)
         {
-            while (k > 0 && st.TryPeek(out var top) && top > c)
+            HashSet<int> curr = [];
+            for (int left = 0; left < right; left++)
             {
-                k -= 1;
-                st.Pop();
+                int diff = stones[right] - stones[left];
+                if (dp[left].Contains(diff)) { curr.UnionWith([diff - 1, diff, diff + 1]); }
             }
-            st.Push(c);
+            dp.Add(curr);
         }
-        for (int _ = 0; _ < k; _++)
-        {
-            st.Pop();
-        }
-        Queue<char> res = [];
-        foreach (var c in st.Reverse())
-        {
-            res.Enqueue(c);
-        }
-        while (res.TryPeek(out var c) && c == '0')
-        {
-            res.Dequeue();
-        }
-        return res.Count == 0 ? "0" : new([.. res]);
+        return dp.Count >= n && dp[n - 1].Count > 0;
     }
 }
