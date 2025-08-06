@@ -7,20 +7,20 @@ namespace Solution;
 
 public class Solution
 {
-    public bool CanCross(int[] stones)
+    public int[][] ReconstructQueue(int[][] people)
     {
-        int n = stones.Length;
-        List<HashSet<int>> dp = [[1]];
-        for (int right = 1; right < n; right++)
+        int n = people.Length;
+        Array.Sort(people, (a, b) =>
         {
-            HashSet<int> curr = [];
-            for (int left = 0; left < right; left++)
-            {
-                int diff = stones[right] - stones[left];
-                if (dp[left].Contains(diff)) { curr.UnionWith([diff - 1, diff, diff + 1]); }
-            }
-            dp.Add(curr);
+            if (a[0] == b[0]) { return a[1].CompareTo(b[1]); }
+            return b[0].CompareTo(a[0]);
+        });
+        List<int[]> res = new(n);
+        foreach (var p in people)
+        {
+            if (p[1] >= res.Count) { res.Add(p); }
+            else { res.Insert(p[1], p); }
         }
-        return dp.Count >= n && dp[n - 1].Count > 0;
+        return [.. res];
     }
 }
