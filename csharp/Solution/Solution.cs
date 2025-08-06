@@ -7,20 +7,31 @@ namespace Solution;
 
 public class Solution
 {
-    public int FindNthDigit(int n)
+    public string RemoveKdigits(string num, int k)
     {
-        long n_ = n;
-        long step = 1;
-        long count = 9;
-        long start = 1;
-        while (n_ > step * count)
+        Stack<char> st = [];
+        foreach (var c in num)
         {
-            n_ -= step * count;
-            step += 1;
-            count *= 10;
-            start *= 10;
+            while (k > 0 && st.TryPeek(out var top) && top > c)
+            {
+                k -= 1;
+                st.Pop();
+            }
+            st.Push(c);
         }
-        string num = (start + (n_ - 1) / step).ToString();
-        return num[(int)((n_ - 1) % step)] - '0';
+        for (int _ = 0; _ < k; _++)
+        {
+            st.Pop();
+        }
+        Queue<char> res = [];
+        foreach (var c in st.Reverse())
+        {
+            res.Enqueue(c);
+        }
+        while (res.TryPeek(out var c) && c == '0')
+        {
+            res.Dequeue();
+        }
+        return res.Count == 0 ? "0" : new([.. res]);
     }
 }
