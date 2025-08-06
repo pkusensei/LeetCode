@@ -7,20 +7,20 @@ namespace Solution;
 
 public class Solution
 {
-    public int[][] ReconstructQueue(int[][] people)
+    public int NumberOfArithmeticSlices(int[] nums)
     {
-        int n = people.Length;
-        Array.Sort(people, (a, b) =>
+        int n = nums.Length;
+        int res = 0;
+        for (int left = 0; left < n; left++)
         {
-            if (a[0] == b[0]) { return a[1].CompareTo(b[1]); }
-            return b[0].CompareTo(a[0]);
-        });
-        List<int[]> res = new(n);
-        foreach (var p in people)
-        {
-            if (p[1] >= res.Count) { res.Add(p); }
-            else { res.Insert(p[1], p); }
+            int right = 1 + left;
+            if (right >= n) { break; }
+            int d = nums[right] - nums[left];
+            for (; 1 + right < n && nums[1 + right] - nums[right] == d; right++) { }
+            int len = right - left;
+            res += len * (len - 1) / 2;
+            left = right - 1;
         }
-        return [.. res];
+        return res;
     }
 }
