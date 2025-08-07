@@ -7,56 +7,23 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<IList<int>> PacificAtlantic(int[][] heights)
+    public int CountBattleships(char[][] board)
     {
-        int rows = heights.Length;
-        int cols = heights[0].Length;
-        HashSet<(int, int)> a = [];
-        Queue<(int, int)> queue = [];
-        for (int i = 0; i < cols; i++)
+        int rows = board.Length;
+        int cols = board[0].Length;
+        int res = 0;
+        for (int r = 0; r < rows; r++)
         {
-            a.Add((0, i));
-            queue.Enqueue((0, i));
-        }
-        for (int i = 1; i < rows; i++)
-        {
-            a.Add((i, 0));
-            queue.Enqueue((i, 0));
-        }
-        a = Bfs(queue, a);
-        queue.Clear();
-        HashSet<(int, int)> b = [];
-        for (int i = 0; i < cols; i++)
-        {
-            b.Add((rows - 1, i));
-            queue.Enqueue((rows - 1, i));
-        }
-        for (int i = 0; i < rows - 1; i++)
-        {
-            b.Add((i, cols - 1));
-            queue.Enqueue((i, cols - 1));
-        }
-        b = Bfs(queue, b);
-        return [.. a.Intersect(b).Select(v => new[] { v.Item1, v.Item2 })];
-
-        HashSet<(int, int)> Bfs(Queue<(int, int)> queue, HashSet<(int, int)> set)
-        {
-            Span<(int, int)> deltas = [(-1, 0), (1, 0), (0, -1), (0, 1)];
-            while (queue.TryDequeue(out var item))
+            for (int c = 0; c < cols; c++)
             {
-                (int r, int c) = item;
-                foreach (var (dr, dc) in deltas)
+                if (board[r][c] == 'X')
                 {
-                    int nr = r + dr;
-                    int nc = c + dc;
-                    if (0 <= nr && nr < rows && 0 <= nc && nc < cols
-                    && heights[nr][nc] >= heights[r][c] && set.Add((nr, nc)))
-                    {
-                        queue.Enqueue((nr, nc));
-                    }
+                    if (r == 0 && c == 0) { res += 1; }
+                    else if (r == 0 && board[r][c - 1] == '.' || c == 0 && board[r - 1][c] == '.') { res += 1; }
+                    else if (r > 0 && board[r - 1][c] == '.' && c > 0 && board[r][c - 1] == '.') { res += 1; }
                 }
             }
-            return set;
         }
+        return res;
     }
 }
