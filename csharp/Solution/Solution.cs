@@ -7,20 +7,51 @@ namespace Solution;
 
 public class Solution
 {
-    public int NumberOfArithmeticSlices(int[] nums)
+    public int MaxCollectedFruits(int[][] fruits)
     {
-        int n = nums.Length;
+        int n = fruits.Length;
+        int[,] memo = new int[n, n];
         int res = 0;
-        for (int left = 0; left < n; left++)
+        for (int i = 0; i < n; i++)
         {
-            int right = 1 + left;
-            if (right >= n) { break; }
-            int d = nums[right] - nums[left];
-            for (; 1 + right < n && nums[1 + right] - nums[right] == d; right++) { }
-            int len = right - left;
-            res += len * (len - 1) / 2;
-            left = right - 1;
+            res += fruits[i][i];
+            for (int j = 0; j < n; j++)
+            {
+                memo[i, j] = -1;
+            }
         }
-        return res;
+        return res + TopRight(0, n - 1) + BottomLeft(n - 1, 0);
+
+        int TopRight(int row, int col)
+        {
+            if (row < 0 || n <= row || col < 0 || n <= col) { return 0; }
+            if (row == n - 1 && col == n - 1) { return 0; }
+            if (row >= col) { return 0; }
+            if (memo[row, col] > -1) { return memo[row, col]; }
+            int curr = 0;
+            foreach (var nc in new[] { col - 1, col, 1 + col })
+            {
+                curr = int.Max(curr, TopRight(1 + row, nc));
+            }
+            curr += fruits[row][col];
+            memo[row, col] = curr;
+            return curr;
+        }
+
+        int BottomLeft(int row, int col)
+        {
+            if (row < 0 || n <= row || col < 0 || n <= col) { return 0; }
+            if (row == n - 1 && col == n - 1) { return 0; }
+            if (col >= row) { return 0; }
+            if (memo[row, col] > -1) { return memo[row, col]; }
+            int curr = 0;
+            foreach (var nr in new[] { row - 1, row, 1 + row })
+            {
+                curr = int.Max(curr, BottomLeft(nr, 1 + col));
+            }
+            curr += fruits[row][col];
+            memo[row, col] = curr;
+            return curr;
+        }
     }
 }
