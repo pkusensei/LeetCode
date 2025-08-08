@@ -7,44 +7,26 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_maximum_xor(nums: Vec<i32>) -> i32 {
-    let mut trie = Trie::default();
-    for &num in &nums {
-        trie.insert(num);
-    }
-    nums.into_iter().map(|v| trie.find(v)).max().unwrap_or(0)
+pub fn character_replacement(s: &str, k: i32) -> i32 {
+    (b'A'..=b'Z')
+        .map(|t| find(s.as_bytes(), k, t))
+        .max()
+        .unwrap_or(0)
 }
 
-#[derive(Default)]
-struct Trie {
-    nodes: [Option<Box<Trie>>; 2],
-}
-
-impl Trie {
-    fn insert(&mut self, num: i32) {
-        let mut curr = self;
-        for bit in (0..32).rev() {
-            let i = (num >> bit) & 1;
-            curr = curr.nodes[i as usize].get_or_insert_default();
+fn find(s: &[u8], k: i32, target: u8) -> i32 {
+    let mut res = 0;
+    let mut count = k;
+    let mut left = 0;
+    for (right, &b) in s.iter().enumerate() {
+        count -= i32::from(b != target);
+        while left <= right && count < 0 {
+            count += i32::from(s[left] != target);
+            left += 1;
         }
+        res = res.max(right + 1 - left);
     }
-
-    fn find(&self, num: i32) -> i32 {
-        let mut curr = self;
-        let mut res = 0;
-        for bit in (0..32).rev() {
-            let target = 1 - ((num >> bit) & 1);
-            if let Some(v) = curr.nodes[target as usize].as_ref() {
-                curr = v;
-                res |= 1 << bit;
-            } else if let Some(v) = curr.nodes[1 - target as usize].as_ref() {
-                curr = v;
-            } else {
-                break;
-            }
-        }
-        res
-    }
+    res as i32
 }
 
 #[cfg(test)]
@@ -77,7 +59,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(character_replacement("ABAB", 2), 4);
+        assert_eq!(character_replacement("AABABBA", 1), 4);
+    }
 
     #[test]
     fn test() {}
