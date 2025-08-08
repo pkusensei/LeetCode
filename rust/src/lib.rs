@@ -7,34 +7,44 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_sum_trionic(nums: &[i32]) -> i64 {
-    const MIN: i64 = i64::MIN / 2;
-    let n = nums.len();
-    // start, inc, dec, inc
-    let [mut dp0, mut dp1, mut dp2, mut dp3] = [0; 4].map(|_| vec![MIN; n]);
-    dp0[0] = i64::from(nums[0]);
-    for i in 1..n {
-        let val = i64::from(nums[i]);
-        match nums[i - 1].cmp(&nums[i]) {
-            std::cmp::Ordering::Less => {
-                // start from [i-1] or [i]
-                dp0[i] = val.max(dp0[i - 1] + val);
-                // continue inc or initiate anew
-                dp1[i] = val + dp1[i - 1].max(dp0[i - 1]);
-                // Similarly, continue inc or initiate anew from dec
-                dp3[i] = val + dp3[i - 1].max(dp2[i - 1]);
-            }
-            std::cmp::Ordering::Equal => {
-                dp0[i] = val; // Have to start anew
-            }
-            std::cmp::Ordering::Greater => {
-                // Start anew since subarr always begins with inc order
-                dp0[i] = val;
-                dp2[i] = val + dp1[i - 1].max(dp2[i - 1]);
-            }
+pub fn find_maximum_xor(nums: Vec<i32>) -> i32 {
+    let mut trie = Trie::default();
+    for &num in &nums {
+        trie.insert(num);
+    }
+    nums.into_iter().map(|v| trie.find(v)).max().unwrap_or(0)
+}
+
+#[derive(Default)]
+struct Trie {
+    nodes: [Option<Box<Trie>>; 2],
+}
+
+impl Trie {
+    fn insert(&mut self, num: i32) {
+        let mut curr = self;
+        for bit in (0..32).rev() {
+            let i = (num >> bit) & 1;
+            curr = curr.nodes[i as usize].get_or_insert_default();
         }
     }
-    *dp3[3..].iter().max().unwrap()
+
+    fn find(&self, num: i32) -> i32 {
+        let mut curr = self;
+        let mut res = 0;
+        for bit in (0..32).rev() {
+            let target = 1 - ((num >> bit) & 1);
+            if let Some(v) = curr.nodes[target as usize].as_ref() {
+                curr = v;
+                res |= 1 << bit;
+            } else if let Some(v) = curr.nodes[1 - target as usize].as_ref() {
+                curr = v;
+            } else {
+                break;
+            }
+        }
+        res
+    }
 }
 
 #[cfg(test)]
@@ -67,17 +77,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(max_sum_trionic(&[0, -2, -1, -3, 0, 2, -1]), -4);
-        assert_eq!(max_sum_trionic(&[1, 4, 2, 7]), 14);
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(max_sum_trionic(&[35, 941, 281, 713, -160, 996]), 1970);
-        assert_eq!(
-            max_sum_trionic(&[-754, 167, -172, 202, 735, -941, 992]),
-            988
-        );
-    }
+    fn test() {}
 }
