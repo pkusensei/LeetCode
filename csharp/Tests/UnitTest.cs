@@ -10,10 +10,11 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow(0.625, 5)]
+    public void TestMethod1(double exp, int n)
     {
-        char[][] b = [['X', '.', '.', 'X'], ['.', '.', '.', 'X'], ['.', '.', '.', 'X']];
-        Assert.AreEqual(2, sol.CountBattleships(b));
+        Assert.AreEqual(exp, sol.SoupServings(n));
+        Assert.AreEqual(exp, sol.BottomUp(n));
     }
 
     [TestMethod]
