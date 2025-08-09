@@ -7,46 +7,20 @@ namespace Solution;
 
 public class Solution
 {
-    public Node Flatten(Node head)
+    public int EraseOverlapIntervals(int[][] intervals)
     {
-        if (head is null) { return null; }
-        return Dfs(head).n1;
-
-        static (Node n1, Node n2) Dfs(Node head)
+        Array.Sort(intervals, (a, b) =>
         {
-            var curr = head;
-            while (curr.next is not null)
-            {
-                if (curr.child is not null)
-                {
-                    var temp = curr.child;
-                    curr.child = null;
-                    var next = curr.next;
-                    (var n1, var n2) = Dfs(temp);
-                    curr.next = n1;
-                    n1.prev = curr;
-                    n2.next = next;
-                    next.prev = n2;
-                }
-                curr = curr.next;
-            }
-            if (curr.child is not null)
-            {
-                (var n1, var n2) = Dfs(curr.child);
-                curr.child = null;
-                curr.next = n1;
-                n1.prev = curr;
-                curr = n2;
-            }
-            return (head, curr);
+            if (a[1] == b[1]) { return a[0].CompareTo(b[0]); }
+            return a[1].CompareTo(b[1]);
+        });
+        int prev = int.MinValue;
+        int res = 0;
+        foreach (var item in intervals)
+        {
+            if (prev > item[0]) { res += 1; }
+            else { prev = int.Max(prev, item[1]); }
         }
+        return res;
     }
-}
-
-public class Node
-{
-    public int val;
-    public Node prev;
-    public Node next;
-    public Node child;
 }

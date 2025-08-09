@@ -10,11 +10,8 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(0.625, 5)]
-    public void TestMethod1(double exp, int n)
+    public void TestMethod1()
     {
-        Assert.AreEqual(exp, sol.SoupServings(n));
-        Assert.AreEqual(exp, sol.BottomUp(n));
     }
 
     [TestMethod]
