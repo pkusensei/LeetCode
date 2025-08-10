@@ -4,70 +4,74 @@ mod fenwick_tree;
 mod helper;
 mod trie;
 
-use std::{
-    cmp::Reverse,
-    collections::{BinaryHeap, VecDeque},
-};
-
 #[allow(unused_imports)]
 use helper::*;
-use itertools::{Itertools, izip};
 
-pub fn max_total(value: &[i32], limit: &[i32]) -> i64 {
-    let n = value.len();
-    // (value, limit)
-    let vals = izip!(value.iter(), limit.iter())
-        .map(|(&v, &lim)| (v, lim))
-        .sorted_unstable_by_key(|&(v, lim)| (lim, Reverse(v)))
-        .collect_vec();
-    let mut res = 0;
-    let mut active = 0;
-    let mut heap = BinaryHeap::new();
-    let mut idx = 0;
-    while idx < n {
-        let (val, lim) = vals[idx];
-        if active < lim {
-            res += i64::from(val);
-            active += 1;
-            heap.push(Reverse(lim));
-            let i = vals.partition_point(|&(_, _lim)| _lim <= active);
-            let temp = active;
-            while heap.peek().is_some_and(|&Reverse(v)| v <= temp) {
-                heap.pop();
-                active -= 1;
-            }
-            idx = (idx + 1).max(i);
-        }
+use itertools::Itertools;
+use std::{collections::HashSet, iter, sync::LazyLock};
+
+pub fn special_palindrome(n: i64) -> i64 {
+    let i = NUMS.partition_point(|&v| v <= n);
+    NUMS[i]
+}
+
+static NUMS: LazyLock<Vec<i64>> = LazyLock::new(preprocess);
+
+fn preprocess() -> Vec<i64> {
+    let mut res = vec![];
+    for len in 1..=16 {
+        let ds = find_digits(len, 0, 1);
+        let curr = ds.into_iter().flat_map(build).sorted_unstable();
+        res.extend(curr);
     }
     res
 }
 
-pub fn with_deque(value: &[i32], limit: &[i32]) -> i64 {
-    // (value, limit)
-    let vals = izip!(value.iter(), limit.iter())
-        .map(|(&v, &lim)| (v, lim))
-        .sorted_unstable_by_key(|&(v, lim)| (lim, Reverse(v)))
-        .collect_vec();
-    let mut active = VecDeque::new();
-    let mut inactive = 0;
-    let mut res = 0;
-    for (val, lim) in vals {
-        let lim = lim as usize;
-        if active.len() >= lim || inactive >= lim {
+fn find_digits(len: i32, mask: i32, lower: i32) -> Vec<Vec<i32>> {
+    if len == 0 {
+        return vec![vec![]];
+    }
+    let mut res = vec![];
+    for d in lower..=9.min(len) {
+        if (mask >> d) & 1 == 1 || (len & 1 == 0 && d & 1 == 1) {
             continue;
         }
-        res += i64::from(val);
-        active.push_back(lim);
-        if active.len() > inactive {
-            inactive = active.len();
-            while let Some(&f) = active.front()
-                && f <= inactive
-            {
-                active.pop_front();
-            }
-        }
+        let tail = find_digits(len - d, mask | (1 << d), d);
+        res.extend(tail.into_iter().map(|mut v| {
+            v.push(d);
+            v
+        }));
     }
     res
+}
+
+fn build(ds: Vec<i32>) -> Vec<i64> {
+    let mut perm = vec![];
+    let mut single = None::<u8>;
+    for d in ds {
+        if d & 1 == 1 {
+            single = Some(d as u8 + b'0');
+        }
+        perm.extend(iter::repeat_n(d as u8 + b'0', d as usize / 2));
+    }
+    let len = perm.len();
+    let mut res = HashSet::<i64>::new();
+    for mut p in perm.into_iter().permutations(len) {
+        let mut mid = len;
+        if let Some(v) = single {
+            p.push(v);
+            mid += 1;
+        }
+        p.extend_from_within(..len);
+        p[mid..].reverse();
+        res.insert(
+            String::from_utf8(p)
+                .ok()
+                .and_then(|s| s.parse().ok())
+                .unwrap(),
+        );
+    }
+    res.into_iter().collect()
 }
 
 #[cfg(test)]
@@ -101,15 +105,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_total(&[3, 5, 8], &[2, 1, 3]), 16);
-        assert_eq!(max_total(&[4, 2, 6], &[1, 1, 1]), 6);
-        assert_eq!(max_total(&[4, 1, 5, 2], &[3, 3, 2, 3]), 12);
-
-        assert_eq!(with_deque(&[3, 5, 8], &[2, 1, 3]), 16);
-        assert_eq!(with_deque(&[4, 2, 6], &[1, 1, 1]), 6);
-        assert_eq!(with_deque(&[4, 1, 5, 2], &[3, 3, 2, 3]), 12);
+        assert_eq!(special_palindrome(2), 22);
+        assert_eq!(special_palindrome(33), 212);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(special_palindrome(4774), 23332);
+    }
 }
