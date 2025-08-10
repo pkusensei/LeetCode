@@ -7,18 +7,13 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn reverse_submatrix(mut grid: Vec<Vec<i32>>, x: i32, y: i32, k: i32) -> Vec<Vec<i32>> {
-    let [x, y, k] = [x, y, k].map(|v| v as usize);
-    for c in y..y + k {
-        let mut up = x;
-        let mut down = x + k - 1;
-        while up < down {
-            (grid[up][c], grid[down][c]) = (grid[down][c], grid[up][c]);
-            up += 1;
-            down -= 1;
-        }
-    }
-    grid
+pub fn sort_permutation(nums: Vec<i32>) -> i32 {
+    let res = nums
+        .iter()
+        .enumerate()
+        .filter_map(|(i, &v)| if i as i32 != v { Some(v) } else { None })
+        .fold(i32::MAX, |acc, v| acc & v);
+    if res == i32::MAX { 0 } else { res }
 }
 
 #[cfg(test)]
@@ -51,31 +46,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(
-            reverse_submatrix(
-                vec![
-                    vec![1, 2, 3, 4],
-                    vec![5, 6, 7, 8],
-                    vec![9, 10, 11, 12],
-                    vec![13, 14, 15, 16]
-                ],
-                1,
-                0,
-                3
-            ),
-            [
-                [1, 2, 3, 4],
-                [13, 14, 15, 8],
-                [9, 10, 11, 12],
-                [5, 6, 7, 16]
-            ]
-        );
-        assert_eq!(
-            reverse_submatrix(vec![vec![3, 4, 2, 3], vec![2, 3, 4, 2]], 0, 2, 2),
-            [[3, 4, 4, 2], [2, 3, 2, 3]]
-        );
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
