@@ -7,26 +7,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn character_replacement(s: &str, k: i32) -> i32 {
-    (b'A'..=b'Z')
-        .map(|t| find(s.as_bytes(), k, t))
-        .max()
-        .unwrap_or(0)
-}
-
-fn find(s: &[u8], k: i32, target: u8) -> i32 {
-    let mut res = 0;
-    let mut count = k;
-    let mut left = 0;
-    for (right, &b) in s.iter().enumerate() {
-        count -= i32::from(b != target);
-        while left <= right && count < 0 {
-            count += i32::from(s[left] != target);
-            left += 1;
+pub fn reverse_submatrix(mut grid: Vec<Vec<i32>>, x: i32, y: i32, k: i32) -> Vec<Vec<i32>> {
+    let [x, y, k] = [x, y, k].map(|v| v as usize);
+    for c in y..y + k {
+        let mut up = x;
+        let mut down = x + k - 1;
+        while up < down {
+            (grid[up][c], grid[down][c]) = (grid[down][c], grid[up][c]);
+            up += 1;
+            down -= 1;
         }
-        res = res.max(right + 1 - left);
     }
-    res as i32
+    grid
 }
 
 #[cfg(test)]
@@ -60,8 +52,29 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(character_replacement("ABAB", 2), 4);
-        assert_eq!(character_replacement("AABABBA", 1), 4);
+        assert_eq!(
+            reverse_submatrix(
+                vec![
+                    vec![1, 2, 3, 4],
+                    vec![5, 6, 7, 8],
+                    vec![9, 10, 11, 12],
+                    vec![13, 14, 15, 16]
+                ],
+                1,
+                0,
+                3
+            ),
+            [
+                [1, 2, 3, 4],
+                [13, 14, 15, 8],
+                [9, 10, 11, 12],
+                [5, 6, 7, 16]
+            ]
+        );
+        assert_eq!(
+            reverse_submatrix(vec![vec![3, 4, 2, 3], vec![2, 3, 4, 2]], 0, 2, 2),
+            [[3, 4, 4, 2], [2, 3, 2, 3]]
+        );
     }
 
     #[test]
