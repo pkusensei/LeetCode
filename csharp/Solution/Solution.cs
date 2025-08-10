@@ -7,41 +7,31 @@ namespace Solution;
 
 public class Solution
 {
-    public int PathSum(TreeNode root, int targetSum)
+    public Solution()
     {
-        if (root is null) { return 0; }
-        return Dfs(root, targetSum) + PathSum(root.left, targetSum) + PathSum(root.right, targetSum);
-
-        static int Dfs(TreeNode node, long target)
+        Valid = new int[32][];
+        for (int p = 0; p < 32; p++)
         {
-            if (node is null) { return 0; }
-            target -= node.val;
-            int res = target == 0 ? 1 : 0;
-            return res + Dfs(node.left, target) + Dfs(node.right, target);
+            Valid[p] = Count((int)Math.Pow(2, p));
         }
     }
 
-    public int WithPrefixSum(TreeNode root, int targetSum)
+    public bool ReorderedPowerOf2(int n)
     {
-        Dictionary<int, int> prefix = new() { [0] = 1 };
-        return Backtrack(root, 0, targetSum);
+        var curr = Count(n);
+        return Valid.Any(v => v.SequenceEqual(curr));
+    }
 
-        int Backtrack(TreeNode node, int lastSum, int targetSum)
+    int[][] Valid { get; }
+
+    private static int[] Count(int num)
+    {
+        string s = num.ToString();
+        int[] curr = new int[10];
+        foreach (var c in s)
         {
-            if (node is null) { return 0; }
-            int curr = lastSum + node.val;
-            if ((lastSum ^ curr) < 0 && (node.val ^ curr) < 0)
-            {
-                return 0; // checks overflow
-            }
-            int pathCount = prefix.GetValueOrDefault(curr - targetSum, 0);
-            prefix[curr] = prefix.GetValueOrDefault(curr, 0) + 1;
-
-            int leftPaths = Backtrack(node.left, curr, targetSum);
-            int rightPaths = Backtrack(node.right, curr, targetSum);
-
-            prefix[curr] -= 1;
-            return pathCount + leftPaths + rightPaths;
+            curr[c - '0'] += 1;
         }
+        return curr;
     }
 }
