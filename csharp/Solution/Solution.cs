@@ -7,21 +7,21 @@ namespace Solution;
 
 public class Solution
 {
-    public int[] ProductQueries(int n, int[][] queries)
+    public int NumberOfWays(int n, int x)
     {
-        List<int> ps = [];
-        for (int p = 0; p < 32; p++)
+        int[] dp = new int[1 + n];
+        dp[0] = 1;
+        for (int root = 1; root <= n; root++)
         {
-            if (((n >> p) & 1) == 1) { ps.Add((int)Math.Pow(2, p)); }
-        }
-        return queries.Select(q =>
-        {
-            long res = 1;
-            for (int i = q[0]; i <= q[1]; i++)
+            int diff = (int)Math.Pow(root, x);
+            // Backwards to exusre each root is used exactly once
+            // i.e only counts already reached states
+            for (int right = n; right >= diff; right -= 1)
             {
-                res = res * ps[i] % 1_000_000_007;
+                dp[right] += dp[right - diff];
+                dp[right] %= 1_000_000_007;
             }
-            return (int)res;
-        }).ToArray();
+        }
+        return dp[n];
     }
 }
