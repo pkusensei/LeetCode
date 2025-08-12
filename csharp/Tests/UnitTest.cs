@@ -10,11 +10,11 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(10, 13, 2)]
-    [DataRow(1, 1, 1)]
-    public void TestMethod1(int exp, int n, int k)
+    [DataRow(2, 5)]
+    [DataRow(3, 8)]
+    public void TestMethod1(int exp, int n)
     {
-        Assert.AreEqual(exp, sol.FindKthNumber(n, k));
+        Assert.AreEqual(exp, sol.ArrangeCoins(n));
     }
 
     [TestMethod]

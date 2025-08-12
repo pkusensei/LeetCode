@@ -7,38 +7,16 @@ namespace Solution;
 
 public class Solution
 {
-    public int FindKthNumber(int n, int k)
+    public int ArrangeCoins(int n)
     {
-        int res = 1;
-        k -= 1;
-        while (k > 0)
+        long left = 1;
+        long right = int.MaxValue;
+        while (left < right)
         {
-            int steps = Step(res);
-            if (steps <= k)
-            {
-                res += 1;
-                k -= steps;
-            }
-            else
-            {
-                k -= 1;
-                res *= 10;
-            }
+            long mid = left + (right - left + 1) / 2;
+            if (mid * (1 + mid) / 2 > n) { right = mid - 1; }
+            else { left = mid; }
         }
-        return res;
-
-        int Step(int curr)
-        {
-            long n1 = curr;
-            long n2 = 1 + curr;
-            long steps = 0;
-            while (n1 <= n)
-            {
-                steps += long.Min(1 + n, n2) - n1;
-                n1 *= 10;
-                n2 *= 10;
-            }
-            return (int)steps;
-        }
+        return (int)left;
     }
 }
