@@ -10,11 +10,11 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(1, 10, 2)]
-    [DataRow(2, 4, 1)]
-    public void TestMethod1(int exp, int n, int x)
+    [DataRow(10, 13, 2)]
+    [DataRow(1, 1, 1)]
+    public void TestMethod1(int exp, int n, int k)
     {
-        Assert.AreEqual(exp, sol.NumberOfWays(n, x));
+        Assert.AreEqual(exp, sol.FindKthNumber(n, k));
     }
 
     [TestMethod]

@@ -7,21 +7,38 @@ namespace Solution;
 
 public class Solution
 {
-    public int NumberOfWays(int n, int x)
+    public int FindKthNumber(int n, int k)
     {
-        int[] dp = new int[1 + n];
-        dp[0] = 1;
-        for (int root = 1; root <= n; root++)
+        int res = 1;
+        k -= 1;
+        while (k > 0)
         {
-            int diff = (int)Math.Pow(root, x);
-            // Backwards to exusre each root is used exactly once
-            // i.e only counts already reached states
-            for (int right = n; right >= diff; right -= 1)
+            int steps = Step(res);
+            if (steps <= k)
             {
-                dp[right] += dp[right - diff];
-                dp[right] %= 1_000_000_007;
+                res += 1;
+                k -= steps;
+            }
+            else
+            {
+                k -= 1;
+                res *= 10;
             }
         }
-        return dp[n];
+        return res;
+
+        int Step(int curr)
+        {
+            long n1 = curr;
+            long n2 = 1 + curr;
+            long steps = 0;
+            while (n1 <= n)
+            {
+                steps += long.Min(1 + n, n2) - n1;
+                n1 *= 10;
+                n2 *= 10;
+            }
+            return (int)steps;
+        }
     }
 }
