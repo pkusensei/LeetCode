@@ -7,16 +7,16 @@ namespace Solution;
 
 public class Solution
 {
-    public int ArrangeCoins(int n)
+    public IList<int> FindDuplicates(int[] nums)
     {
-        long left = 1;
-        long right = int.MaxValue;
-        while (left < right)
+        List<int> res = [];
+        for (int i = 0; i < nums.Length; i++)
         {
-            long mid = left + (right - left + 1) / 2;
-            if (mid * (1 + mid) / 2 > n) { right = mid - 1; }
-            else { left = mid; }
+            int val = int.Abs(nums[i]);
+            int target = nums[val - 1];
+            if (target < 0) { res.Add(val); }
+            nums[val - 1] = -int.Abs(nums[val - 1]);
         }
-        return (int)left;
+        return res;
     }
 }
