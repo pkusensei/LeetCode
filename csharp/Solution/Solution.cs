@@ -7,16 +7,17 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<int> FindDuplicates(int[] nums)
+    public string LargestGoodInteger(string num)
     {
-        List<int> res = [];
-        for (int i = 0; i < nums.Length; i++)
+        ReadOnlySpan<char> res = [];
+        for (int i = 0; i < num.Length - 2; i++)
         {
-            int val = int.Abs(nums[i]);
-            int target = nums[val - 1];
-            if (target < 0) { res.Add(val); }
-            nums[val - 1] = -int.Abs(nums[val - 1]);
+            if (num[i] == num[1 + i] && num[1 + i] == num[2 + i])
+            {
+                if (res.IsEmpty || res[0] < num[i]) { res = num.AsSpan()[i..(i + 3)]; }
+                i += 2;
+            }
         }
-        return res;
+        return new(res);
     }
 }
