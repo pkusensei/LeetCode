@@ -7,20 +7,18 @@ namespace Solution;
 
 public class Solution
 {
-    public int NumberOfArithmeticSlices(int[] nums)
+    public IList<int> FindDisappearedNumbers(int[] nums)
     {
         int n = nums.Length;
-        int res = 0;
-        Dictionary<long, int>[] dp = [.. Enumerable.Range(0, n).Select(_ => new Dictionary<long, int>())];
-        for (int right = 1; right < n; right++)
-        {
-            for (int left = 0; left < right; left++)
-            {
-                long diff = nums[right] - (long)nums[left];
-                int count = dp[left].GetValueOrDefault(diff, 0);
-                if (!dp[right].TryAdd(diff, 1 + count)) { dp[right][diff] += 1 + count; }
-                res += count;
-            }
+        for (int i = 0; i < n; i++)
+        { // mark all seen as negative
+            int val = int.Abs(nums[i]);
+            nums[val - 1] = -int.Abs(nums[val - 1]);
+        }
+        List<int> res = [];
+        for (int i = 0; i < n; i++)
+        { // positive ones left are missing numbers
+            if (nums[i] > 0) { res.Add(1 + i); }
         }
         return res;
     }
