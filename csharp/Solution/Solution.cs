@@ -5,21 +5,42 @@ using static Solution.Utils;
 
 namespace Solution;
 
-public class Solution
+public class Codec
 {
-    public IList<int> FindDisappearedNumbers(int[] nums)
+    // Encodes a tree to a single string.
+    public string serialize(TreeNode root)
     {
-        int n = nums.Length;
-        for (int i = 0; i < n; i++)
-        { // mark all seen as negative
-            int val = int.Abs(nums[i]);
-            nums[val - 1] = -int.Abs(nums[val - 1]);
+        StringBuilder sb = new();
+        Preorder(root);
+        if (sb.Length > 0) { sb.Remove(sb.Length - 1, 1); }
+        return sb.ToString();
+
+        void Preorder(TreeNode node)
+        {
+            if (node is null) { return; }
+            sb.Append(node.val);
+            sb.Append(',');
+            Preorder(node.left);
+            Preorder(node.right);
         }
-        List<int> res = [];
-        for (int i = 0; i < n; i++)
-        { // positive ones left are missing numbers
-            if (nums[i] > 0) { res.Add(1 + i); }
+    }
+
+    // Decodes your encoded data to tree.
+    public TreeNode deserialize(string data)
+    {
+        if (string.IsNullOrEmpty(data)) { return null; }
+        int[] nums = [.. data.Split(',').Select(int.Parse)];
+        return Dfs(nums);
+
+        static TreeNode Dfs(ReadOnlySpan<int> nums)
+        {
+            if (nums.IsEmpty) { return null; }
+            int val = nums[0];
+            int i = 1;
+            for (; i < nums.Length && nums[i] < val; i++) { }
+            var left = Dfs(nums[1..i]);
+            var right = Dfs(nums[i..]);
+            return new(val, left, right);
         }
-        return res;
     }
 }
