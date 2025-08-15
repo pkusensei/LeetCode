@@ -7,15 +7,34 @@ namespace Solution;
 
 public class Solution
 {
-    public bool IsPowerOfFour(int n)
+    public TreeNode DeleteNode(TreeNode root, int key)
     {
-        int p2 = 0;
-        int val = 2;
-        for (int _ = 0; _ < 16; _++)
+        if (root is null) { return null; }
+        if (key < root.val) { root.left = DeleteNode(root.left, key); }
+        else if (key > root.val) { root.right = DeleteNode(root.right, key); }
+        else
         {
-            p2 |= val;
-            val <<= 2;
+            switch ((root.left is null, root.right is null))
+            {
+                case (true, true): return null;
+                case (true, false): return root.right;
+                case (false, true): return root.left;
+                default:
+                    int val = InorderSuccessor(root.right);
+                    root.val = val;
+                    root.right = DeleteNode(root.right, val);
+                    break;
+            }
         }
-        return n > 0 && (n & (n - 1)) == 0 && (n & p2) == 0;
+        return root;
+
+        static int InorderSuccessor(TreeNode node)
+        {
+            while (node.left is not null)
+            {
+                node = node.left;
+            }
+            return node.val;
+        }
     }
 }
