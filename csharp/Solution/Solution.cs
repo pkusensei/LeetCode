@@ -5,42 +5,17 @@ using static Solution.Utils;
 
 namespace Solution;
 
-public class Codec
+public class Solution
 {
-    // Encodes a tree to a single string.
-    public string serialize(TreeNode root)
+    public bool IsPowerOfFour(int n)
     {
-        StringBuilder sb = new();
-        Preorder(root);
-        if (sb.Length > 0) { sb.Remove(sb.Length - 1, 1); }
-        return sb.ToString();
-
-        void Preorder(TreeNode node)
+        int p2 = 0;
+        int val = 2;
+        for (int _ = 0; _ < 16; _++)
         {
-            if (node is null) { return; }
-            sb.Append(node.val);
-            sb.Append(',');
-            Preorder(node.left);
-            Preorder(node.right);
+            p2 |= val;
+            val <<= 2;
         }
-    }
-
-    // Decodes your encoded data to tree.
-    public TreeNode deserialize(string data)
-    {
-        if (string.IsNullOrEmpty(data)) { return null; }
-        int[] nums = [.. data.Split(',').Select(int.Parse)];
-        return Dfs(nums);
-
-        static TreeNode Dfs(ReadOnlySpan<int> nums)
-        {
-            if (nums.IsEmpty) { return null; }
-            int val = nums[0];
-            int i = 1;
-            for (; i < nums.Length && nums[i] < val; i++) { }
-            var left = Dfs(nums[1..i]);
-            var right = Dfs(nums[i..]);
-            return new(val, left, right);
-        }
+        return n > 0 && (n & (n - 1)) == 0 && (n & p2) == 0;
     }
 }
