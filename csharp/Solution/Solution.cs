@@ -7,25 +7,26 @@ namespace Solution;
 
 public class Solution
 {
-    public int FourSumCount(int[] nums1, int[] nums2, int[] nums3, int[] nums4)
+    public bool Find132pattern(int[] nums)
     {
-        Dictionary<int, int> freq = [];
-        foreach (var v1 in nums1)
+        int n = nums.Length;
+        if (n < 3) { return false; }
+        Stack<int> st = []; // mono decreasing stack
+        int curr_max = int.MinValue;
+        foreach (int num in nums.Reverse())
         {
-            foreach (var v2 in nums2)
+            // `curr_max` is always a value popped from stack
+            // By the reverse nature of loop, 
+            // `curr_max` is smaller than top of stack
+            // which means [k] < [j] when j<k
+            if (curr_max > num) { return true; } // found [i] < [k]
+            while (st.TryPeek(out int top) && top < num)
             {
-                int key = -(v1 + v2);
-                if (!freq.TryAdd(key, 1)) { freq[key] += 1; }
+                st.Pop();
+                curr_max = top;
             }
+            st.Push(num);
         }
-        int res = 0;
-        foreach (var v1 in nums3)
-        {
-            foreach (var v2 in nums4)
-            {
-                res += freq.GetValueOrDefault(v1 + v2, 0);
-            }
-        }
-        return res;
+        return false;
     }
 }
