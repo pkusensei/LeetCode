@@ -7,34 +7,18 @@ namespace Solution;
 
 public class Solution
 {
-    public TreeNode DeleteNode(TreeNode root, int key)
+    public int Maximum69Number(int num)
     {
-        if (root is null) { return null; }
-        if (key < root.val) { root.left = DeleteNode(root.left, key); }
-        else if (key > root.val) { root.right = DeleteNode(root.right, key); }
-        else
+        var s = num.ToString().ToCharArray();
+        for (int i = 0; i < s.Length; i++)
         {
-            switch ((root.left is null, root.right is null))
+            if (s[i] == '6')
             {
-                case (true, true): return null;
-                case (true, false): return root.right;
-                case (false, true): return root.left;
-                default:
-                    int val = InorderSuccessor(root.right);
-                    root.val = val;
-                    root.right = DeleteNode(root.right, val);
-                    break;
+                s[i] = '9';
+                break;
             }
         }
-        return root;
-
-        static int InorderSuccessor(TreeNode node)
-        {
-            while (node.left is not null)
-            {
-                node = node.left;
-            }
-            return node.val;
-        }
+        string s_ = new(s);
+        return int.Parse(s_);
     }
 }
