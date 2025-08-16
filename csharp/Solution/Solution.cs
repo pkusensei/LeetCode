@@ -7,18 +7,14 @@ namespace Solution;
 
 public class Solution
 {
-    public int Maximum69Number(int num)
+    public int MinMoves(int[] nums)
     {
-        var s = num.ToString().ToCharArray();
-        for (int i = 0; i < s.Length; i++)
+        int min = nums.Min();
+        int res = 0;
+        foreach (var num in nums)
         {
-            if (s[i] == '6')
-            {
-                s[i] = '9';
-                break;
-            }
+            res += num - min;
         }
-        string s_ = new(s);
-        return int.Parse(s_);
+        return res;
     }
 }
