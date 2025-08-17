@@ -10,10 +10,12 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(true, new[] { 3, 5, 0, 3, 4 })]
-    public void TestMethod1(bool exp, int[] nums)
+    [DataRow(1.0, 10, 1, 10)]
+    [DataRow(0.6, 6, 1, 10)]
+    [DataRow(0.73278, 21, 17, 10)]
+    public void TestMethod1(double exp, int n, int k, int mp)
     {
-        Assert.AreEqual(exp, sol.Find132pattern(nums));
+        Assert.IsTrue(double.Abs(exp - sol.New21Game(n, k, mp)) <= double.Pow(10, -5));
     }
 
     [TestMethod]

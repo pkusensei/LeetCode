@@ -7,26 +7,16 @@ namespace Solution;
 
 public class Solution
 {
-    public bool Find132pattern(int[] nums)
+    public double New21Game(int n, int k, int maxPts)
     {
-        int n = nums.Length;
-        if (n < 3) { return false; }
-        Stack<int> st = []; // mono decreasing stack
-        int curr_max = int.MinValue;
-        foreach (int num in nums.Reverse())
+        List<double> dp = new(1 + n) { 1.0 };
+        double curr = k > 0 ? 1.0 : 0.0;
+        for (int score = 1; score <= n; score++)
         {
-            // `curr_max` is always a value popped from stack
-            // By the reverse nature of loop, 
-            // `curr_max` is smaller than top of stack
-            // which means [k] < [j] when j<k
-            if (curr_max > num) { return true; } // found [i] < [k]
-            while (st.TryPeek(out int top) && top < num)
-            {
-                st.Pop();
-                curr_max = top;
-            }
-            st.Push(num);
+            dp.Add(curr / maxPts);
+            if (score < k) { curr += dp[score]; }
+            if (score >= maxPts && score - maxPts < k) { curr -= dp[score - maxPts]; }
         }
-        return false;
+        return dp[k..].Sum();
     }
 }
