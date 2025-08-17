@@ -7,9 +7,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_sensors(n: i32, m: i32, k: i32) -> i32 {
-    let s = 2 * k + 1;
-    ((n + s - 1) / s) * ((m + s - 1) / s)
+pub fn perfect_pairs(mut nums: Vec<i32>) -> i64 {
+    nums.sort_unstable_by_key(|v| v.abs());
+    let mut res = 0;
+    let mut right = 0;
+    for (left, num) in nums.iter().enumerate() {
+        while nums.get(right).is_some_and(|v| v.abs() <= 2 * num.abs()) {
+            right += 1;
+        }
+        res += (right - left - 1) as i64;
+    }
+    res
 }
 
 #[cfg(test)]
@@ -45,7 +53,5 @@ mod tests {
     fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(min_sensors(54, 19, 9), 3);
-    }
+    fn test() {}
 }
