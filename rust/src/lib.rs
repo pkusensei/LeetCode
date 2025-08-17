@@ -7,33 +7,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_profit(prices: &[i32], strategy: &[i32], k: i32) -> i64 {
-    use itertools::izip;
-    let k = k as usize;
-    let sum: i64 = izip!(prices.iter(), strategy.iter())
-        .map(|(p, s)| i64::from(p * s))
-        .sum();
-    let mut res = sum;
-    let mut curr = 0;
-    // The first window of k
-    for i in 0..k / 2 {
-        // "lose" these k/2 values
-        curr += i64::from(prices[i] * (0 - strategy[i]));
+pub fn xor_after_queries(mut nums: Vec<i32>, queries: Vec<Vec<i32>>) -> i32 {
+    for q in queries {
+        let [mut idx, right, k] = [0, 1, 2].map(|i| q[i] as usize);
+        while idx <= right {
+            let val = i64::from(nums[idx]) * i64::from(q[3]) % 1_000_000_007;
+            nums[idx] = val as i32;
+            idx += k;
+        }
     }
-    for i in k / 2..k {
-        // "gain" k/2 values
-        curr += i64::from(prices[i] * (1 - strategy[i]));
-    }
-    res = res.max(curr + sum);
-    // For each window
-    for (idx, (&pr, &st)) in izip!(prices.iter(), strategy.iter()).enumerate().skip(k) {
-        curr += i64::from(pr * (1 - st)); // "gain" this value
-        curr -= i64::from(prices[idx - k / 2]); // "Neutralize" mid value
-        let prev = idx - k;
-        curr += i64::from(prices[prev] * strategy[prev]); // "Restore" dropped value
-        res = res.max(sum + curr);
-    }
-    res
+    nums.iter().fold(0, |acc, v| acc ^ v)
 }
 
 #[cfg(test)]
@@ -66,10 +49,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(max_profit(&[4, 2, 8], &[-1, 0, 1], 2), 10);
-        assert_eq!(max_profit(&[5, 4, 3], &[1, 1, 0], 2), 9);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
