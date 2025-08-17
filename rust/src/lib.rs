@@ -7,64 +7,33 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_cost(grid: Vec<Vec<i32>>, k: i32) -> i32 {
-    use itertools::Itertools;
-    use std::collections::HashMap;
-    let [rows, cols] = get_dimensions(&grid);
-    let vals = grid
-        .iter()
-        .flatten()
-        .copied()
-        .sorted_unstable()
-        .dedup()
-        .collect_vec();
-    // coordinate compression
-    let val_id: HashMap<i32, usize> = vals.iter().enumerate().map(|(i, &v)| (v, i)).collect();
-    let mut prev = vec![vec![i32::MAX / 2; cols]; rows];
-    solve(&grid, &mut prev);
-    let mut res = prev[rows - 1][cols - 1];
-    for _ in 0..k {
-        let vn = vals.len();
-        let mut curr = vec![vec![i32::MAX / 2; cols]; rows];
-        let mut best = vec![i32::MAX / 2; vn];
-        for (r, row) in grid.iter().enumerate() {
-            for (c, v) in row.iter().enumerate() {
-                let i = val_id[v];
-                // Min cost to reach each distinct value
-                best[i] = best[i].min(prev[r][c]);
-            }
-        }
-        // `vals` is sorted, vals[i]<=vals[1+i]
-        // i.e the cost to reach [1+i] is good for all [..=i]
-        // `best` is the suffix min cost to reach all vals
-        for i in (0..vn - 1).rev() {
-            best[i] = best[i].min(best[1 + i]);
-        }
-        for r in 0..rows {
-            for c in 0..cols {
-                // Propagate potential teleport steps
-                curr[r][c] = prev[r][c].min(best[val_id[&grid[r][c]]]);
-            }
-        }
-        solve(&grid, &mut curr);
-        prev = curr;
-        res = res.min(prev[rows - 1][cols - 1]);
+pub fn max_profit(prices: &[i32], strategy: &[i32], k: i32) -> i64 {
+    use itertools::izip;
+    let k = k as usize;
+    let sum: i64 = izip!(prices.iter(), strategy.iter())
+        .map(|(p, s)| i64::from(p * s))
+        .sum();
+    let mut res = sum;
+    let mut curr = 0;
+    // The first window of k
+    for i in 0..k / 2 {
+        // "lose" these k/2 values
+        curr += i64::from(prices[i] * (0 - strategy[i]));
+    }
+    for i in k / 2..k {
+        // "gain" k/2 values
+        curr += i64::from(prices[i] * (1 - strategy[i]));
+    }
+    res = res.max(curr + sum);
+    // For each window
+    for (idx, (&pr, &st)) in izip!(prices.iter(), strategy.iter()).enumerate().skip(k) {
+        curr += i64::from(pr * (1 - st)); // "gain" this value
+        curr -= i64::from(prices[idx - k / 2]); // "Neutralize" mid value
+        let prev = idx - k;
+        curr += i64::from(prices[prev] * strategy[prev]); // "Restore" dropped value
+        res = res.max(sum + curr);
     }
     res
-}
-
-fn solve(grid: &[Vec<i32>], dp: &mut [Vec<i32>]) {
-    dp[0][0] = 0;
-    for (r, row) in grid.iter().enumerate() {
-        for (c, &v) in row.iter().enumerate() {
-            if r > 0 {
-                dp[r][c] = dp[r][c].min(v + dp[r - 1][c]);
-            }
-            if c > 0 {
-                dp[r][c] = dp[r][c].min(v + dp[r][c - 1]);
-            }
-        }
-    }
 }
 
 #[cfg(test)]
@@ -98,11 +67,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            min_cost(vec![vec![1, 3, 3], vec![2, 5, 4], vec![4, 3, 5]], 2),
-            7
-        );
-        assert_eq!(min_cost(vec![vec![1, 2], vec![2, 3], vec![3, 4]], 1), 9);
+        assert_eq!(max_profit(&[4, 2, 8], &[-1, 0, 1], 2), 10);
+        assert_eq!(max_profit(&[5, 4, 3], &[1, 1, 0], 2), 9);
     }
 
     #[test]
