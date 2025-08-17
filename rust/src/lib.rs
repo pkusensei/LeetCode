@@ -7,34 +7,64 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_cost(n: i32, edges: Vec<Vec<i32>>) -> i32 {
-    use std::{cmp::Reverse, collections::BinaryHeap};
-    let n = n as usize;
-    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
-        let [a, b] = [0, 1].map(|i| e[i] as usize);
-        acc[a].push((b, e[2]));
-        acc[b].push((a, 2 * e[2]));
-        acc
-    });
-    let mut dists = vec![i32::MAX; n];
-    dists[0] = 0;
-    let mut heap = BinaryHeap::from([(Reverse(0), 0)]);
-    while let Some((Reverse(dist), node)) = heap.pop() {
-        if node == n - 1 {
-            return dist;
+pub fn min_cost(grid: Vec<Vec<i32>>, k: i32) -> i32 {
+    use itertools::Itertools;
+    use std::collections::HashMap;
+    let [rows, cols] = get_dimensions(&grid);
+    let vals = grid
+        .iter()
+        .flatten()
+        .copied()
+        .sorted_unstable()
+        .dedup()
+        .collect_vec();
+    // coordinate compression
+    let val_id: HashMap<i32, usize> = vals.iter().enumerate().map(|(i, &v)| (v, i)).collect();
+    let mut prev = vec![vec![i32::MAX / 2; cols]; rows];
+    solve(&grid, &mut prev);
+    let mut res = prev[rows - 1][cols - 1];
+    for _ in 0..k {
+        let vn = vals.len();
+        let mut curr = vec![vec![i32::MAX / 2; cols]; rows];
+        let mut best = vec![i32::MAX / 2; vn];
+        for (r, row) in grid.iter().enumerate() {
+            for (c, v) in row.iter().enumerate() {
+                let i = val_id[v];
+                // Min cost to reach each distinct value
+                best[i] = best[i].min(prev[r][c]);
+            }
         }
-        if dist > dists[node] {
-            continue;
+        // `vals` is sorted, vals[i]<=vals[1+i]
+        // i.e the cost to reach [1+i] is good for all [..=i]
+        // `best` is the suffix min cost to reach all vals
+        for i in (0..vn - 1).rev() {
+            best[i] = best[i].min(best[1 + i]);
         }
-        for &(next, w) in &adj[node] {
-            let nc = dist + w;
-            if nc < dists[next] {
-                dists[next] = nc;
-                heap.push((Reverse(nc), next));
+        for r in 0..rows {
+            for c in 0..cols {
+                // Propagate potential teleport steps
+                curr[r][c] = prev[r][c].min(best[val_id[&grid[r][c]]]);
+            }
+        }
+        solve(&grid, &mut curr);
+        prev = curr;
+        res = res.min(prev[rows - 1][cols - 1]);
+    }
+    res
+}
+
+fn solve(grid: &[Vec<i32>], dp: &mut [Vec<i32>]) {
+    dp[0][0] = 0;
+    for (r, row) in grid.iter().enumerate() {
+        for (c, &v) in row.iter().enumerate() {
+            if r > 0 {
+                dp[r][c] = dp[r][c].min(v + dp[r - 1][c]);
+            }
+            if c > 0 {
+                dp[r][c] = dp[r][c].min(v + dp[r][c - 1]);
             }
         }
     }
-    -1
 }
 
 #[cfg(test)]
@@ -67,7 +97,13 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(
+            min_cost(vec![vec![1, 3, 3], vec![2, 5, 4], vec![4, 3, 5]], 2),
+            7
+        );
+        assert_eq!(min_cost(vec![vec![1, 2], vec![2, 3], vec![3, 4]], 1), 9);
+    }
 
     #[test]
     fn test() {}
