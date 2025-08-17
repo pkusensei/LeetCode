@@ -7,16 +7,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn xor_after_queries(mut nums: Vec<i32>, queries: Vec<Vec<i32>>) -> i32 {
-    for q in queries {
-        let [mut idx, right, k] = [0, 1, 2].map(|i| q[i] as usize);
-        while idx <= right {
-            let val = i64::from(nums[idx]) * i64::from(q[3]) % 1_000_000_007;
-            nums[idx] = val as i32;
-            idx += k;
-        }
+pub fn min_array_sum(nums: &[i32], k: i32) -> i64 {
+    let mut dp = vec![i64::MAX; 1 + k as usize];
+    dp[0] = 0;
+    let mut prefix = 0;
+    for &num in nums.iter() {
+        prefix += i64::from(num);
+        let rem = (prefix % i64::from(k)) as usize;
+        dp[rem] = dp[rem].min(prefix);
+        prefix = dp[rem];
     }
-    nums.iter().fold(0, |acc, v| acc ^ v)
+    prefix
 }
 
 #[cfg(test)]
@@ -49,7 +50,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(min_array_sum(&[1, 1, 1], 2), 1);
+        assert_eq!(min_array_sum(&[3, 1, 4, 1, 5], 3), 5);
+    }
 
     #[test]
     fn test() {}
