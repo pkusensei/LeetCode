@@ -7,60 +7,38 @@ namespace Solution;
 
 public class Solution
 {
-    public int CountSquares(int[][] matrix)
+    public bool CircularArrayLoop(int[] nums)
     {
-        int rows = matrix.Length;
-        int cols = matrix[0].Length;
-        int[,] dp = new int[rows, cols];
-        int res = 0;
-        for (int i = 0; i < cols; i++)
+        int n = nums.Length;
+        if (n < 2) { return false; }
+        for (int i = 0; i < n; i++)
         {
-            dp[0, i] = matrix[0][i];
-            res += dp[0, i];
-        }
-        for (int i = 1; i < rows; i++)
-        {
-            dp[i, 0] = matrix[i][0];
-            res += dp[i, 0];
-        }
-        for (int r = 1; r < rows; r++)
-        {
-            for (int c = 1; c < cols; c++)
+            if (nums[i] == 0) { continue; }
+            int slow = i;
+            int fast = Step(i);
+            // To ensure forward or backward direction, never both
+            while (nums[i] * nums[fast] > 0 && nums[i] * nums[Step(fast)] > 0)
             {
-                if (matrix[r][c] == 1)
+                if (slow == fast)
                 {
-                    dp[r, c] = 1 + int.Min(dp[r - 1, c - 1], int.Min(dp[r - 1, c], dp[r, c - 1]));
-                    res += dp[r, c];
+                    if (slow == Step(slow)) { break; } // single element loop
+                    return true;
                 }
+                slow = Step(slow);
+                fast = Step(Step(fast));
+            }
+            // This path is not a loop
+            // Clear everything
+            int curr = i;
+            while (nums[curr] * nums[i] > 0)
+            {
+                int next = Step(curr);
+                nums[curr] = 0;
+                curr = next;
             }
         }
-        return res;
-    }
+        return false;
 
-    public int WithBetterSpace(int[][] mat)
-    {
-        int rows = mat.Length;
-        int cols = mat[0].Length;
-        int prev = 0;
-        int res = 0;
-        int[] dp = new int[1 + cols];
-        for (int r = 1; r <= rows; r++)
-        {
-            for (int c = 1; c <= cols; c++)
-            {
-                if (mat[r - 1][c - 1] == 1)
-                {
-                    int temp = dp[c];
-                    dp[c] = 1 + int.Min(prev, int.Min(dp[c - 1], dp[c]));
-                    prev = temp;
-                    res += dp[c];
-                }
-                else
-                {
-                    dp[c] = 0;
-                }
-            }
-        }
-        return res;
+        int Step(int curr) => ((curr + nums[curr]) % n + n) % n;
     }
 }

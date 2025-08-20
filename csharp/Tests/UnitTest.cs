@@ -10,19 +10,17 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow(true, new[] { 2, -1, 1, 2, 2 })]
+    [DataRow(false, new[] { -1, -2, -3, -4, -5, 6 })]
+    [DataRow(true, new[] { 1, -1, 5, 1, 4 })]
+    public void TestMethod1(bool exp, int[] nums)
     {
-        int[][] m = [[0, 1, 1, 1], [1, 1, 1, 1], [0, 1, 1, 1]];
-        Assert.AreEqual(15, sol.CountSquares(m));
-        Assert.AreEqual(15, sol.WithBetterSpace(m));
+        Assert.AreEqual(exp, sol.CircularArrayLoop(nums));
     }
 
     [TestMethod]
     public void TestMethod2()
     {
-        int[][] m = [[1, 0, 1], [1, 1, 0], [1, 1, 0]];
-        Assert.AreEqual(7, sol.CountSquares(m));
-        Assert.AreEqual(7, sol.WithBetterSpace(m));
     }
 
     [TestMethod]
