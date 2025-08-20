@@ -10,17 +10,19 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(true, new[] { 5, 5, 5, 1 })]
-    [DataRow(true, new[] { 4, 1, 8, 7 })]
-    [DataRow(false, new[] { 1, 2, 1, 2 })]
-    public void TestMethod1(bool exp, int[] nums)
+    public void TestMethod1()
     {
-        Assert.AreEqual(exp, sol.JudgePoint24(nums));
+        int[][] m = [[0, 1, 1, 1], [1, 1, 1, 1], [0, 1, 1, 1]];
+        Assert.AreEqual(15, sol.CountSquares(m));
+        Assert.AreEqual(15, sol.WithBetterSpace(m));
     }
 
     [TestMethod]
     public void TestMethod2()
     {
+        int[][] m = [[1, 0, 1], [1, 1, 0], [1, 1, 0]];
+        Assert.AreEqual(7, sol.CountSquares(m));
+        Assert.AreEqual(7, sol.WithBetterSpace(m));
     }
 
     [TestMethod]
