@@ -10,17 +10,19 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(true, new[] { 2, -1, 1, 2, 2 })]
-    [DataRow(false, new[] { -1, -2, -3, -4, -5, 6 })]
-    [DataRow(true, new[] { 1, -1, 5, 1, 4 })]
-    public void TestMethod1(bool exp, int[] nums)
+    public void TestMethod1()
     {
-        Assert.AreEqual(exp, sol.CircularArrayLoop(nums));
+        int[][] m = [[1, 0, 1], [1, 1, 0], [1, 1, 0]];
+        Assert.AreEqual(13, sol.NumSubmat(m));
+        Assert.AreEqual(13, sol.WithMonoStack(m));
     }
 
     [TestMethod]
     public void TestMethod2()
     {
+        int[][] m = [[0, 1, 1, 0], [0, 1, 1, 1], [1, 1, 1, 0]];
+        Assert.AreEqual(24, sol.NumSubmat(m));
+        Assert.AreEqual(24, sol.WithMonoStack(m));
     }
 
     [TestMethod]
