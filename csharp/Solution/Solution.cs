@@ -7,25 +7,16 @@ namespace Solution;
 
 public class Solution
 {
-    public int MinimumArea(int[][] grid)
+    public int PoorPigs(int buckets, int minutesToDie, int minutesToTest)
     {
-        int rmin = int.MaxValue;
-        int cmin = int.MaxValue;
-        int rmax = 0;
-        int cmax = 0;
-        for (int r = 0; r < grid.Length; r++)
-        {
-            for (int c = 0; c < grid[0].Length; c++)
-            {
-                if (grid[r][c] == 1)
-                {
-                    rmin = int.Min(rmin, r);
-                    cmin = int.Min(cmin, c);
-                    rmax = int.Max(rmax, r);
-                    cmax = int.Max(cmax, c);
-                }
-            }
-        }
-        return (rmax - rmin + 1) * (cmax - cmin + 1);
+        // Each pig can try this many buckets
+        int attempt = minutesToTest / minutesToDie;
+        // Plus one that's left out if they are still alive
+        // This is the number each pig can select
+        // Or pieces of information each can gather
+        int choices = 1 + attempt;
+        int res = 0;
+        for (; Math.Pow(choices, res) < buckets; res += 1) { }
+        return res;
     }
 }
