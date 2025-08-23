@@ -7,59 +7,21 @@ namespace Solution;
 
 public class Solution
 {
-    public int MinimumSum(int[][] grid)
+    public bool RepeatedSubstringPattern(string s)
     {
-        const int M = 1_000;
-        int rows = grid.Length;
-        int cols = grid[0].Length;
-        return Dfs(0, 0, rows, cols, 2);
-
-        int Dfs(int minr, int minc, int maxr, int maxc, int cuts)
+        int n = s.Length;
+        int[] lps = new int[n];
+        int len = 0;
+        for (int i = 1; i < n; i++)
         {
-            if (cuts == 0) { return MinArea(minr, minc, maxr, maxc); }
-            int res = M;
-            for (int r = 1 + minr; r < maxr; r++)
+            while (len > 0 && s[len] != s[i])
             {
-                var v1 = Dfs(minr, minc, r, maxc, cuts - 1);
-                var v2 = MinArea(r, minc, maxr, maxc);
-                res = int.Min(res, v1 + v2);
-                v1 = MinArea(minr, minc, r, maxc);
-                v2 = Dfs(r, minc, maxr, maxc, cuts - 1);
-                res = int.Min(res, v1 + v2);
+                len = lps[len - 1];
             }
-            for (int c = 1 + minc; c < maxc; c++)
-            {
-                var v1 = Dfs(minr, minc, maxr, c, cuts - 1);
-                var v2 = MinArea(minr, c, maxr, maxc);
-                res = int.Min(res, v1 + v2);
-                v1 = MinArea(minr, minc, maxr, c);
-                v2 = Dfs(minr, c, maxr, maxc, cuts - 1);
-                res = int.Min(res, v1 + v2);
-            }
-            return res;
+            if (s[i] == s[len]) { len += 1; }
+            lps[i] = len;
         }
-
-        int MinArea(int minr, int minc, int maxr, int maxc)
-        {
-            int res_minr = M;
-            int res_minc = M;
-            int res_maxr = 0;
-            int res_maxc = 0;
-            for (int r = minr; r < maxr; r++)
-            {
-                for (int c = minc; c < maxc; c++)
-                {
-                    if (grid[r][c] == 1)
-                    {
-                        res_minr = int.Min(res_minr, r);
-                        res_minc = int.Min(res_minc, c);
-                        res_maxr = int.Max(res_maxr, r);
-                        res_maxc = int.Max(res_maxc, c);
-                    }
-                }
-            }
-            int res = (res_maxr - res_minr + 1) * (res_maxc - res_minc + 1);
-            return res;
-        }
+        int val = lps[n - 1];
+        return val > 0 && n % (n - val) == 0;
     }
 }
