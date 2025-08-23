@@ -5,23 +5,57 @@ using static Solution.Utils;
 
 namespace Solution;
 
-public class Solution
+public class LFUCache
 {
-    public bool RepeatedSubstringPattern(string s)
+    public LFUCache(int capacity)
     {
-        int n = s.Length;
-        int[] lps = new int[n];
-        int len = 0;
-        for (int i = 1; i < n; i++)
+        MinF = 0;
+        Cap = capacity;
+        KVF = [];
+        FK = [];
+    }
+
+    int MinF { get; set; }
+    int Cap { get; }
+    // key - (val, freq)
+    Dictionary<int, (int val, int freq)> KVF { get; }
+    // freq - [keys..]
+    Dictionary<int, List<int>> FK { get; }
+
+    public int Get(int key)
+    {
+        if (!KVF.TryGetValue(key, out var item)) { return -1; }
+        FK[item.freq].Remove(key);
+        if (FK[item.freq].Count == 0 && item.freq == MinF) { MinF += 1; }
+        Insert(key, item.val, 1 + item.freq);
+        return item.val;
+    }
+
+    public void Put(int key, int value)
+    {
+        if (Cap <= 0) { return; }
+        if (KVF.TryGetValue(key, out var item))
         {
-            while (len > 0 && s[len] != s[i])
-            {
-                len = lps[len - 1];
-            }
-            if (s[i] == s[len]) { len += 1; }
-            lps[i] = len;
+            KVF[key] = (value, item.freq);
+            Get(key);
         }
-        int val = lps[n - 1];
-        return val > 0 && n % (n - val) == 0;
+        else
+        {
+            if (KVF.Count == Cap)
+            {
+                int del = FK[MinF][0];
+                FK[MinF].RemoveAt(0);
+                KVF.Remove(del);
+            }
+            MinF = 1;
+            Insert(key, value, 1);
+        }
+    }
+
+    void Insert(int key, int val, int freq)
+    {
+        KVF[key] = (val, freq);
+        FK.TryAdd(freq, []);
+        FK[freq].Add(key);
     }
 }
