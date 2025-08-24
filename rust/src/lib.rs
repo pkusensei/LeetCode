@@ -7,17 +7,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn gcd_of_odd_even_sums(n: i32) -> i32 {
-    let [mut odd, mut even] = [0, 0];
-    for i in 0..n {
-        odd += 2 * i + 1;
-        even += 2 * i + 2;
+pub fn partition_array(nums: Vec<i32>, k: i32) -> bool {
+    use std::collections::HashMap;
+    let n = nums.len();
+    let k = k as usize;
+    if n % k > 0 {
+        return false;
     }
-    gcd(odd, even)
-}
-
-const fn gcd(a: i32, b: i32) -> i32 {
-    if a == 0 { b } else { gcd(b % a, a) }
+    let f = n / k;
+    let freq = nums.iter().fold(HashMap::new(), |mut acc, &num| {
+        *acc.entry(num).or_insert(0) += 1;
+        acc
+    });
+    freq.into_values().all(|v| v <= f)
 }
 
 #[cfg(test)]
@@ -50,9 +52,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(gcd_of_odd_even_sums(4), 4);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
