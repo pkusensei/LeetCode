@@ -7,62 +7,46 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_value(nums: Vec<i32>) -> Vec<i32> {
-    let n = nums.len();
-    let mut pref_max = vec![nums[0]; n];
-    for i in 1..n {
-        pref_max[i] = nums[i].max(pref_max[i - 1]);
-    }
-    let mut suf_min = vec![nums[n - 1]; n];
-    for i in (0..n - 1).rev() {
-        suf_min[i] = nums[i].min(suf_min[1 + i]);
-    }
-    let mut dsu = DSU::new(&nums);
-    for i in 0..n - 1 {
-        if pref_max[i] > suf_min[1 + i] {
-            dsu.union(i, 1 + i);
-        }
-    }
-    (0..n)
-        .map(|i| {
-            let root = dsu.find(i);
-            nums[dsu.find(root)]
-        })
-        .collect()
+use itertools::{Itertools, izip};
+use std::collections::HashMap;
+
+pub fn max_walls(robots: &[i32], distance: &[i32], mut walls: Vec<i32>) -> i32 {
+    walls.sort_unstable();
+    // [rob, dist]
+    let robs = izip!(robots.iter(), distance.iter())
+        .map(|(&r, &d)| [r, d])
+        .sorted_unstable()
+        .collect_vec();
+    dfs(&robs, &walls, 0, 0, &mut HashMap::new())
 }
 
-struct DSU {
-    parent: Vec<usize>,
-    rank: Vec<i32>,
-}
-
-impl DSU {
-    fn new(nums: &[i32]) -> Self {
-        let n = nums.len();
-        Self {
-            parent: (0..n).collect(),
-            rank: nums.to_vec(),
-        }
+fn dfs(
+    robs: &[[i32; 2]],
+    walls: &[i32],
+    idx: usize,
+    prev: i32,
+    memo: &mut HashMap<(usize, i32), i32>,
+) -> i32 {
+    let Some(&[pos, dist]) = robs.get(idx) else {
+        return 0;
+    };
+    if let Some(&v) = memo.get(&(idx, prev)) {
+        return v;
     }
-
-    fn find(&mut self, v: usize) -> usize {
-        if self.parent[v] != v {
-            self.parent[v] = self.find(self.parent[v])
-        }
-        self.parent[v]
-    }
-
-    fn union(&mut self, x: usize, y: usize) {
-        let [rx, ry] = [x, y].map(|v| self.find(v));
-        if rx == ry {
-            return;
-        }
-        if self.rank[rx] >= self.rank[ry] {
-            self.parent[ry] = rx;
-        } else {
-            self.parent[rx] = ry;
-        }
-    }
+    let left = (1 + prev).max(pos - dist);
+    let i1 = walls.partition_point(|&v| v < left);
+    let i2 = walls.partition_point(|&v| v <= pos);
+    let v1 = (i2 - i1) as i32 + dfs(robs, walls, 1 + idx, pos, memo);
+    let right = robs
+        .get(1 + idx)
+        .map(|&v| (v[0] - 1).min(pos + dist))
+        .unwrap_or(pos + dist);
+    let i3 = walls.partition_point(|&v| v < pos);
+    let i4 = walls.partition_point(|&v| v <= right);
+    let v2 = (i4 - i3) as i32 + dfs(robs, walls, 1 + idx, right, memo);
+    let res = v1.max(v2);
+    memo.insert((idx, prev), res);
+    res
 }
 
 #[cfg(test)]
@@ -96,14 +80,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_value(vec![2, 1, 3]), [2, 2, 3]);
-        assert_eq!(max_value(vec![2, 3, 1]), [3, 3, 3]);
+        assert_eq!(max_walls(&[4], &[3], vec![1, 10]), 1);
+        assert_eq!(max_walls(&[10, 2], &[5, 1], vec![5, 2, 7]), 3);
+        assert_eq!(max_walls(&[1, 2], &[100, 1], vec![10]), 0);
     }
 
     #[test]
-    fn test() {
-        assert_eq!(max_value(vec![11, 18, 11]), [11, 18, 18]);
-        assert_eq!(max_value(vec![30, 21, 5, 35, 24]), [35; 5]);
-        assert_eq!(max_value(vec![13, 4, 11]), [13, 13, 13]);
-    }
+    fn test() {}
 }
