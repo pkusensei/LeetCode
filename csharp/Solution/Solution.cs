@@ -5,57 +5,23 @@ using static Solution.Utils;
 
 namespace Solution;
 
-public class LFUCache
+public class Solution
 {
-    public LFUCache(int capacity)
+    public int LongestSubarray(int[] nums)
     {
-        MinF = 0;
-        Cap = capacity;
-        KVF = [];
-        FK = [];
-    }
-
-    int MinF { get; set; }
-    int Cap { get; }
-    // key - (val, freq)
-    Dictionary<int, (int val, int freq)> KVF { get; }
-    // freq - [keys..]
-    Dictionary<int, List<int>> FK { get; }
-
-    public int Get(int key)
-    {
-        if (!KVF.TryGetValue(key, out var item)) { return -1; }
-        FK[item.freq].Remove(key);
-        if (FK[item.freq].Count == 0 && item.freq == MinF) { MinF += 1; }
-        Insert(key, item.val, 1 + item.freq);
-        return item.val;
-    }
-
-    public void Put(int key, int value)
-    {
-        if (Cap <= 0) { return; }
-        if (KVF.TryGetValue(key, out var item))
+        int res = 0;
+        int left = 0;
+        int zeros = 0;
+        for (int right = 0; right < nums.Length; right++)
         {
-            KVF[key] = (value, item.freq);
-            Get(key);
-        }
-        else
-        {
-            if (KVF.Count == Cap)
+            if (nums[right] == 0) { zeros += 1; }
+            while (zeros > 1)
             {
-                int del = FK[MinF][0];
-                FK[MinF].RemoveAt(0);
-                KVF.Remove(del);
+                zeros -= nums[left] == 0 ? 1 : 0;
+                left += 1;
             }
-            MinF = 1;
-            Insert(key, value, 1);
+            res = int.Max(res, right + 1 - left);
         }
-    }
-
-    void Insert(int key, int val, int freq)
-    {
-        KVF[key] = (val, freq);
-        FK.TryAdd(freq, []);
-        FK[freq].Add(key);
+        return res - 1;
     }
 }
