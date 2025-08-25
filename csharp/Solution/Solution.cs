@@ -7,21 +7,24 @@ namespace Solution;
 
 public class Solution
 {
-    public int LongestSubarray(int[] nums)
+    public int[] FindDiagonalOrder(int[][] mat)
     {
-        int res = 0;
-        int left = 0;
-        int zeros = 0;
-        for (int right = 0; right < nums.Length; right++)
+        int rows = mat.Length;
+        int cols = mat[0].Length;
+        Dictionary<int, List<int>> dict = [];
+        for (int r = 0; r < rows; r++)
         {
-            if (nums[right] == 0) { zeros += 1; }
-            while (zeros > 1)
+            for (int c = 0; c < cols; c++)
             {
-                zeros -= nums[left] == 0 ? 1 : 0;
-                left += 1;
+                if (!dict.TryAdd(r + c, [mat[r][c]])) { dict[r + c].Add(mat[r][c]); }
             }
-            res = int.Max(res, right + 1 - left);
         }
-        return res - 1;
+        List<int> res = new(rows * cols);
+        foreach (var (k, v) in dict)
+        {
+            if ((k & 1) == 0) { v.Reverse(); }
+            res.AddRange(v);
+        }
+        return [.. res];
     }
 }
