@@ -7,33 +7,34 @@ namespace Solution;
 
 public class Solution
 {
-    public bool CanIWin(int maxChoosableInteger, int desiredTotal)
+    public int GetMaxRepetitions(string s1, int n1, string s2, int n2)
     {
-        if (desiredTotal <= 0) { return true; }
-        if ((1 + maxChoosableInteger) * maxChoosableInteger / 2 < desiredTotal) { return false; }
-        Dictionary<int, bool> memo = [];
-        return Dfs(0, desiredTotal);
-
-        bool Dfs(int mask, int total)
+        int len1 = s1.Length;
+        int len2 = s2.Length;
+        int i1 = 0;
+        int i2 = 0;
+        Dictionary<(int, int), (int, int)> seen = [];
+        while (i1 < len1 * n1)
         {
-            if (total <= 0) { return false; }
-            if (memo.TryGetValue(mask, out bool v)) { return v; }
-            for (int bit = 0; bit < maxChoosableInteger; bit++)
+            if (s1[i1 % len1] == s2[i2 % len2])
             {
-                if (((mask >> bit) & 1) == 0)
+                if (seen.TryGetValue((i1 % len1, i2 % len2), out var prev))
                 {
-                    int nmask = mask | (1 << bit);
-                    int ntotal = total - 1 - bit;
-                    bool res = ntotal <= 0 || !Dfs(nmask, ntotal);
-                    if (res)
-                    {
-                        memo.Add(mask, res);
-                        return true;
-                    }
+                    (int prev1, int prev2) = prev;
+                    int p1 = i1 - prev1;
+                    int count = (len1 * n1 - i1) / p1;
+                    i1 += count * p1;
+                    i2 += count * (i2 - prev2);
+                    if (i1 >= len1 * n1) { break; }
                 }
+                else
+                {
+                    seen.Add((i1 % len1, i2 % len2), (i1, i2));
+                }
+                i2 += 1;
             }
-            memo[mask] = false;
-            return false;
+            i1 += 1;
         }
+        return i2 / len2 / n2;
     }
 }

@@ -10,13 +10,10 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(false, 10, 11)]
-    [DataRow(true, 10, 0)]
-    [DataRow(true, 10, 1)]
-    [DataRow(false, 10, 40)]
-    public void TestMethod1(bool exp, int max, int total)
+    [DataRow(2, "acb", 4, "ab", 2)]
+    public void TestMethod1(int exp, string s1, int n1, string s2, int n2)
     {
-        Assert.AreEqual(exp, sol.CanIWin(max, total));
+        Assert.AreEqual(exp, sol.GetMaxRepetitions(s1, n1, s2, n2));
     }
 
     [TestMethod]
