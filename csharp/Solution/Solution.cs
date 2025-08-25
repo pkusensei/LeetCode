@@ -7,34 +7,41 @@ namespace Solution;
 
 public class Solution
 {
-    public int GetMaxRepetitions(string s1, int n1, string s2, int n2)
+    public int FindSubstringInWraproundString(string s)
     {
-        int len1 = s1.Length;
-        int len2 = s2.Length;
-        int i1 = 0;
-        int i2 = 0;
-        Dictionary<(int, int), (int, int)> seen = [];
-        while (i1 < len1 * n1)
+        if (s.Length < 2) { return s.Length; }
+        Span<int> lens = stackalloc int[26];
+        int left = 0;
+        for (int right = 1; right < s.Length; right++)
         {
-            if (s1[i1 % len1] == s2[i2 % len2])
+            int curr_start = s[left] - 'a';
+            int a = s[right - 1] - 'a';
+            int b = s[right] - 'a';
+            if ((1 + a) % 26 == b)
             {
-                if (seen.TryGetValue((i1 % len1, i2 % len2), out var prev))
-                {
-                    (int prev1, int prev2) = prev;
-                    int p1 = i1 - prev1;
-                    int count = (len1 * n1 - i1) / p1;
-                    i1 += count * p1;
-                    i2 += count * (i2 - prev2);
-                    if (i1 >= len1 * n1) { break; }
-                }
-                else
-                {
-                    seen.Add((i1 % len1, i2 % len2), (i1, i2));
-                }
-                i2 += 1;
+                lens[curr_start] = int.Max(lens[curr_start], right - left + 1);
             }
-            i1 += 1;
+            else
+            {
+                while (left < right)
+                {
+                    lens[curr_start] = int.Max(lens[curr_start], right - left);
+                    left += 1;
+                    curr_start = s[left] - 'a';
+                }
+                left = right;
+            }
         }
-        return i2 / len2 / n2;
+        while (left < s.Length)
+        {
+            lens[s[left] - 'a'] = int.Max(lens[s[left] - 'a'], s.Length - left);
+            left += 1;
+        }
+        int res = 0;
+        foreach (var v in lens)
+        {
+            res += v;
+        }
+        return res;
     }
 }
