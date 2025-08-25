@@ -7,24 +7,33 @@ namespace Solution;
 
 public class Solution
 {
-    public int[] FindDiagonalOrder(int[][] mat)
+    public bool CanIWin(int maxChoosableInteger, int desiredTotal)
     {
-        int rows = mat.Length;
-        int cols = mat[0].Length;
-        Dictionary<int, List<int>> dict = [];
-        for (int r = 0; r < rows; r++)
+        if (desiredTotal <= 0) { return true; }
+        if ((1 + maxChoosableInteger) * maxChoosableInteger / 2 < desiredTotal) { return false; }
+        Dictionary<int, bool> memo = [];
+        return Dfs(0, desiredTotal);
+
+        bool Dfs(int mask, int total)
         {
-            for (int c = 0; c < cols; c++)
+            if (total <= 0) { return false; }
+            if (memo.TryGetValue(mask, out bool v)) { return v; }
+            for (int bit = 0; bit < maxChoosableInteger; bit++)
             {
-                if (!dict.TryAdd(r + c, [mat[r][c]])) { dict[r + c].Add(mat[r][c]); }
+                if (((mask >> bit) & 1) == 0)
+                {
+                    int nmask = mask | (1 << bit);
+                    int ntotal = total - 1 - bit;
+                    bool res = ntotal <= 0 || !Dfs(nmask, ntotal);
+                    if (res)
+                    {
+                        memo.Add(mask, res);
+                        return true;
+                    }
+                }
             }
+            memo[mask] = false;
+            return false;
         }
-        List<int> res = new(rows * cols);
-        foreach (var (k, v) in dict)
-        {
-            if ((k & 1) == 0) { v.Reverse(); }
-            res.AddRange(v);
-        }
-        return [.. res];
     }
 }
