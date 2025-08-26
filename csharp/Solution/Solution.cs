@@ -7,23 +7,19 @@ namespace Solution;
 
 public class Solution
 {
-    public int AreaOfMaxDiagonal(int[][] dimensions)
+    public int Rand10()
     {
-        int max_d = 0;
-        int res = 0;
-        foreach (var dim in dimensions)
+        while (true)
         {
-            int d = dim[0] * dim[0] + dim[1] * dim[1];
-            if (max_d < d)
-            {
-                max_d = d;
-                res = dim[0] * dim[1];
-            }
-            else if (max_d == d)
-            {
-                res = int.Max(res, dim[0] * dim[1]);
-            }
+            int a = Rand7();
+            int b = Rand7();
+            int c = (a - 1) * 7 + (b - 1);
+            if (c < 40) { return c % 10 + 1; }
         }
-        return res;
+    }
+
+    int Rand7()
+    {
+        return 0;
     }
 }
