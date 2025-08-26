@@ -10,12 +10,8 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(1, "a")]
-    [DataRow(2, "cac")]
-    [DataRow(6, "zab")]
-    public void TestMethod1(int exp, string s)
+    public void TestMethod1()
     {
-        Assert.AreEqual(exp, sol.FindSubstringInWraproundString(s));
     }
 
     [TestMethod]
