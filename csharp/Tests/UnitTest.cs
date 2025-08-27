@@ -10,12 +10,10 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(new[] { "catsdogcats", "dogcatsdog", "ratcatdogcat" },
-    new[] { "cat", "cats", "catsdogcats", "dog", "dogcatsdog", "hippopotamuses", "rat", "ratcatdogcat" })]
-    [DataRow(new[] { "catdog" }, new[] { "cat", "dog", "catdog" })]
-    public void TestMethod1(string[] exp, string[] w)
+    public void TestMethod1()
     {
-        Assert.IsTrue(exp.Order().SequenceEqual(sol.FindAllConcatenatedWordsInADict(w).Order()));
+        int[][] m = [[2, 2, 1, 2, 2], [2, 0, 2, 2, 0], [2, 0, 1, 1, 0], [1, 0, 2, 2, 2], [2, 0, 0, 2, 2]];
+        Assert.AreEqual(5, sol.LenOfVDiagonal(m));
     }
 
     [TestMethod]

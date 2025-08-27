@@ -7,55 +7,46 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<string> FindAllConcatenatedWordsInADict(string[] words)
+    public int LenOfVDiagonal(int[][] grid)
     {
-        Array.Sort(words, (a, b) => a.Length.CompareTo(b.Length));
-        List<string> res = [];
-        Trie tr = new();
-        foreach (var s in words)
+        int rows = grid.Length;
+        int cols = grid[0].Length;
+        var memo = new int[rows, cols, 4, 2];
+        (int dr, int dc)[] dirs = [(1, 1), (1, -1), (-1, -1), (-1, 1)];
+        int res = 0;
+        for (int r = 0; r < rows; r++)
         {
-            if (tr.Find(s)) { res.Add(s); }
-            else { tr.Insert(s); }
-        }
-        return res;
-    }
-}
-
-class Trie
-{
-    public Trie()
-    {
-        Nodes = new Trie[26];
-        IsEnd = false;
-    }
-
-    Trie[] Nodes { get; }
-    bool IsEnd { get; set; }
-
-    public void Insert(ReadOnlySpan<char> s)
-    {
-        var curr = this;
-        foreach (var c in s)
-        {
-            int idx = c - 'a';
-            curr = curr.Nodes[idx] ??= new();
-        }
-        curr.IsEnd = true;
-    }
-
-    public bool Find(ReadOnlySpan<char> s)
-    {
-        var curr = this;
-        for (int i = 0; i < s.Length; i++)
-        {
-            if (curr is null) { return false; }
-            if (curr.IsEnd)
+            for (int c = 0; c < cols; c++)
             {
-                if (this.Find(s[i..])) { return true; }
+                for (int d = 0; d < 4 && grid[r][c] == 1; d++)
+                {
+                    res = int.Max(res, Dfs(r, c, d, 0, 1));
+                }
             }
-            curr = curr.Nodes[s[i] - 'a'];
         }
-        bool res = curr is not null && curr.IsEnd;
         return res;
+
+        int Dfs(int row, int col, int dir, int turn, int val)
+        {
+            if (row < 0 || rows <= row || col < 0 || cols <= col || grid[row][col] != val)
+            {
+                return 0;
+            }
+            if (memo[row, col, dir, turn] > 0) { return memo[row, col, dir, turn]; }
+            int next_val = val < 2 ? 2 : 0;
+            int nr = row + dirs[dir].dr;
+            int nc = col + dirs[dir].dc;
+            int res = Dfs(nr, nc, dir, turn, next_val);
+            if (turn == 0)
+            {
+                int nd = (1 + dir) % 4;
+                nr = row + dirs[nd].dr;
+                nc = col + dirs[nd].dc;
+                res = int.Max(res, Dfs(nr, nc, nd, 1, next_val));
+            }
+            res += 1;
+            memo[row, col, dir, turn] = res;
+            return res;
+        }
     }
 }
