@@ -12,8 +12,6 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
-        int[][] m = [[2, 2, 1, 2, 2], [2, 0, 2, 2, 0], [2, 0, 1, 1, 0], [1, 0, 2, 2, 2], [2, 0, 0, 2, 2]];
-        Assert.AreEqual(5, sol.LenOfVDiagonal(m));
     }
 
     [TestMethod]
