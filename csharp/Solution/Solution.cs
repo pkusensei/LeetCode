@@ -7,23 +7,36 @@ namespace Solution;
 
 public class Solution
 {
-    public Solution(double radius, double x_center, double y_center)
+    public int[][] SortMatrix(int[][] grid)
     {
-        Radius = radius;
-        X = x_center;
-        Y = y_center;
-        Rng = new Random();
-    }
-
-    public double Radius { get; }
-    public double X { get; }
-    public double Y { get; }
-    public Random Rng { get; }
-
-    public double[] RandPoint()
-    {
-        double angle = Rng.NextDouble() * double.Pi * 2;
-        double r = Radius * double.Sqrt(Rng.NextDouble());
-        return [X + r * double.Cos(angle), Y + r * double.Sin(angle)];
+        int n = grid.Length;
+        List<int> curr;
+        for (int col = 1; col < n; col++)
+        {
+            curr = [];
+            for (int r = 0; r < n - col; r++)
+            {
+                curr.Add(grid[r][col + r]);
+            }
+            curr.Sort();
+            for (int r = 0; r < n - col; r++)
+            {
+                grid[r][r + col] = curr[r];
+            }
+        }
+        for (int row = 0; row < n; row++)
+        {
+            curr = [];
+            for (int c = 0; c < n - row; c++)
+            {
+                curr.Add(grid[row + c][c]);
+            }
+            curr.Sort((a, b) => b.CompareTo(a));
+            for (int c = 0; c < n - row; c++)
+            {
+                grid[row + c][c] = curr[c];
+            }
+        }
+        return grid;
     }
 }
