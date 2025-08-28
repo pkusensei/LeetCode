@@ -7,36 +7,34 @@ namespace Solution;
 
 public class Solution
 {
-    public int[][] SortMatrix(int[][] grid)
+    public int LargestPalindrome(int n)
     {
-        int n = grid.Length;
-        List<int> curr;
-        for (int col = 1; col < n; col++)
+        long up = (long)Math.Pow(10, n) - 1;
+        long down = (long)Math.Pow(10, n - 1);
+        for (long i = up; i >= down; i -= 1)
         {
-            curr = [];
-            for (int r = 0; r < n - col; r++)
+            string s = i.ToString();
+            StringBuilder sb = new(s);
+            sb.Append([.. s.Reverse()]);
+            if (long.TryParse(sb.ToString(), out var v) && Check(v))
             {
-                curr.Add(grid[r][col + r]);
-            }
-            curr.Sort();
-            for (int r = 0; r < n - col; r++)
-            {
-                grid[r][r + col] = curr[r];
+                return (int)(v % 1337);
             }
         }
-        for (int row = 0; row < n; row++)
+        return 9;
+
+        bool Check(long num)
         {
-            curr = [];
-            for (int c = 0; c < n - row; c++)
+            for (long i = up; i >= down; i -= 1)
             {
-                curr.Add(grid[row + c][c]);
+                if (i * i < num) { break; }
+                if (num % i == 0)
+                {
+                    long val = num / i;
+                    if (down <= val && val <= up) { return true; }
+                }
             }
-            curr.Sort((a, b) => b.CompareTo(a));
-            for (int c = 0; c < n - row; c++)
-            {
-                grid[row + c][c] = curr[c];
-            }
+            return false;
         }
-        return grid;
     }
 }
