@@ -7,32 +7,30 @@ namespace Solution;
 
 public class Solution
 {
-    public string SmallestGoodBase(string n)
+    public bool PredictTheWinner(int[] nums)
     {
-        // n  = k^0 + k^1 + .. + k^(p-1)
-        // n > k^(p-1) ==> k<n^(1/(p-1))
-        // kn =       k^1 + .. + k^(p-1) + k^p
-        // (k-1)n = k^p - 1
-        // n = (k^p - 1)/(k-1) ==> n <= k^p - 1 ==> (n+1)^(1/p)<=k
-        if (!long.TryParse(n, out var num)) { return n; }
-        int max_p = (int)Math.Log2(1 + num);
-        for (int p = max_p; p > 2; p -= 1)
+        return Dfs(nums, 0, 0, false);
+
+        static bool Dfs(ReadOnlySpan<int> nums, int p1, int p2, bool turn)
         {
-            long left = (long)Math.Pow(1 + num, 1.0 / p);
-            long right = (long)Math.Pow(num, 1.0 / (p - 1));
-            while (left <= right)
+            if (nums is []) { return p1 >= p2; }
+            if (nums is [int v])
             {
-                long mid = left + (right - left) / 2;
-                long acc = 0;
-                for (int i = 0; i < p; i++)
-                {
-                    acc = acc * mid + 1;
-                }
-                if (num == acc) { return mid.ToString(); }
-                else if (acc < num) { left = 1 + mid; }
-                else { right = mid - 1; }
+                if (!turn) { return Dfs([], p1 + v, p2, !turn); }
+                else { return Dfs([], p1, p2 + v, !turn); }
+            }
+            if (!turn)
+            {
+                bool a = Dfs(nums[1..], p1 + nums[0], p2, !turn);
+                bool b = Dfs(nums[..^1], p1 + nums[^1], p2, !turn);
+                return a || b;
+            }
+            else
+            {
+                bool a = Dfs(nums[1..], p1, p2 + nums[0], !turn);
+                bool b = Dfs(nums[..^1], p1, p2 + nums[^1], !turn);
+                return a && b;
             }
         }
-        return (num - 1).ToString();
     }
 }

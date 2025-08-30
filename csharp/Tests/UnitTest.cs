@@ -10,13 +10,8 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow("3", "13")]
-    [DataRow("8", "4681")]
-    [DataRow("999999999999999999", "1000000000000000000")]
-    [DataRow("686286299", "470988884881403701")]
-    public void TestMethod1(string exp, string n)
+    public void TestMethod1()
     {
-        Assert.AreEqual(exp, sol.SmallestGoodBase(n));
     }
 
     [TestMethod]
