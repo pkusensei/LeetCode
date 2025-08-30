@@ -7,70 +7,59 @@ namespace Solution;
 
 public class Solution
 {
-    public double[] MedianSlidingWindow(int[] nums, int k)
+    public bool IsValidSudoku(char[][] board)
     {
-        // upper half
-        PriorityQueue<int, int> min_heap = new();
-        // lower half
-        PriorityQueue<int, int> max_heap = new(Comparer<int>.Create((a, b) => b.CompareTo(a)));
-        Dictionary<int, int> freq = [];
-        int n = nums.Length;
-        List<double> res = new(n - k);
-        foreach (var num in nums[..k])
+        const int N = 9;
+        int mask = 0;
+        foreach (var row in board)
         {
-            max_heap.Enqueue(num, num);
-            min_heap.Enqueue(max_heap.Peek(), max_heap.Dequeue()); // Params eval-ed in order
-            if (min_heap.Count > max_heap.Count)
+            mask = 0;
+            foreach (var num in row)
             {
-                max_heap.Enqueue(min_heap.Peek(), min_heap.Dequeue());
+                if (!Check(ref mask, num)) { return false; }
             }
         }
-        double med = GetMedian();
-        res.Add(med);
-        for (int i = k; i < n; i++)
+        for (int c = 0; c < N; c++)
         {
-            int prev = nums[i - k];
-            // Lazy deletion
-            if (!freq.TryAdd(prev, 1)) { freq[prev] += 1; }
-            // Remove from lower half vs from upper half
-            int balance = prev <= med ? -1 : 1;
-            if (nums[i] <= med)
+            mask = 0;
+            for (int r = 0; r < N; r++)
             {
-                balance += 1; // add to lower half
-                max_heap.Enqueue(nums[i], nums[i]);
+                char num = board[r][c];
+                if (!Check(ref mask, num)) { return false; }
             }
-            else
-            {
-                balance -= 1;
-                min_heap.Enqueue(nums[i], nums[i]);
-            }
-            if (balance < 0) // balance==-2 <== upper half has too many numbers
-            {
-                max_heap.Enqueue(min_heap.Peek(), min_heap.Dequeue());
-            }
-            else if (balance > 0) // balance==2
-            {
-                min_heap.Enqueue(max_heap.Peek(), max_heap.Dequeue());
-            }
-            while (max_heap.TryPeek(out int top, out _) && freq.TryGetValue(top, out var f) && f > 0)
-            {
-                freq[top] -= 1;
-                max_heap.Dequeue();
-            }
-            while (min_heap.TryPeek(out int top, out _) && freq.TryGetValue(top, out var f) && f > 0)
-            {
-                freq[top] -= 1;
-                min_heap.Dequeue();
-            }
-            med = GetMedian();
-            res.Add(med);
         }
-        return [.. res];
+        for (int r = 0; r < N; r += 3)
+        {
+            for (int c = 0; c < N; c += 3)
+            {
+                if (!CheckBox(r, c)) { return false; }
+            }
+        }
+        return true;
 
-        double GetMedian()
+        bool CheckBox(int row, int col)
         {
-            if ((k & 1) == 1) { return max_heap.Peek(); }
-            else { return ((double)max_heap.Peek() + min_heap.Peek()) / 2; }
+            int mask = 0; ;
+            for (int r = row; r < row + 3; r++)
+            {
+                for (int c = col; c < col + 3; c++)
+                {
+                    char num = board[r][c];
+                    if (!Check(ref mask, num)) { return false; }
+                }
+            }
+            return true;
+        }
+
+        static bool Check(ref int mask, char num)
+        {
+            if (num is >= '1' and <= '9')
+            {
+                int bit = num - '1';
+                if (((mask >> bit) & 1) == 1) { return false; }
+                mask |= 1 << bit;
+            }
+            return true;
         }
     }
 }
