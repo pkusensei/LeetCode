@@ -7,59 +7,16 @@ namespace Solution;
 
 public class Solution
 {
-    public bool IsValidSudoku(char[][] board)
+    public int MagicalString(int n)
     {
-        const int N = 9;
-        int mask = 0;
-        foreach (var row in board)
+        List<int> s = new(1 + n) { 1, 2, 2 };
+        int i = 2;
+        while (s.Count < n)
         {
-            mask = 0;
-            foreach (var num in row)
-            {
-                if (!Check(ref mask, num)) { return false; }
-            }
+            int item = 3 - s.Last();
+            s.AddRange(Enumerable.Range(0, s[i]).Select(_ => item));
+            i += 1;
         }
-        for (int c = 0; c < N; c++)
-        {
-            mask = 0;
-            for (int r = 0; r < N; r++)
-            {
-                char num = board[r][c];
-                if (!Check(ref mask, num)) { return false; }
-            }
-        }
-        for (int r = 0; r < N; r += 3)
-        {
-            for (int c = 0; c < N; c += 3)
-            {
-                if (!CheckBox(r, c)) { return false; }
-            }
-        }
-        return true;
-
-        bool CheckBox(int row, int col)
-        {
-            int mask = 0; ;
-            for (int r = row; r < row + 3; r++)
-            {
-                for (int c = col; c < col + 3; c++)
-                {
-                    char num = board[r][c];
-                    if (!Check(ref mask, num)) { return false; }
-                }
-            }
-            return true;
-        }
-
-        static bool Check(ref int mask, char num)
-        {
-            if (num is >= '1' and <= '9')
-            {
-                int bit = num - '1';
-                if (((mask >> bit) & 1) == 1) { return false; }
-                mask |= 1 << bit;
-            }
-            return true;
-        }
+        return s.Take(n).Count(v => v == 1);
     }
 }

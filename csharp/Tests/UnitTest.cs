@@ -10,8 +10,11 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow(3, 6)]
+    [DataRow(1, 1)]
+    public void TestMethod1(int exp, int n)
     {
+        Assert.AreEqual(exp, sol.MagicalString(n));
     }
 
     [TestMethod]
