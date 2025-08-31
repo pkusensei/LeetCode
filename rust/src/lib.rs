@@ -7,20 +7,32 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn get_least_frequent_digit(mut n: i32) -> i32 {
-    let mut freq = [0; 10];
-    while n > 0 {
-        freq[(n % 10) as usize] += 1;
-        n /= 10;
+pub fn unique_paths(grid: Vec<Vec<i32>>) -> i32 {
+    let [rows, cols] = get_dimensions(&grid);
+    let mut memo = vec![vec![[-1; 2]; cols]; rows];
+    dfs(&grid, 0, 0, 0, &mut memo)
+}
+
+fn dfs(grid: &[Vec<i32>], r: usize, c: usize, dir: usize, memo: &mut [Vec<[i32; 2]>]) -> i32 {
+    let [rows, cols] = get_dimensions(grid);
+    if r == rows - 1 && c == cols - 1 {
+        return 1;
     }
-    let mut f = i32::MAX;
-    let mut res = 9;
-    for (i, v) in freq.into_iter().enumerate() {
-        if v > 0 && v < f {
-            f = v;
-            res = i as i32
-        }
+    if r >= rows || c >= cols {
+        return 0;
     }
+    if memo[r][c][dir] > -1 {
+        return memo[r][c][dir];
+    }
+    let mut res = if grid[r][c] == 0 {
+        dfs(grid, 1 + r, c, 1, memo) + dfs(grid, r, 1 + c, 0, memo)
+    } else if dir == 0 {
+        dfs(grid, 1 + r, c, 1 - dir, memo)
+    } else {
+        dfs(grid, r, 1 + c, 1 - dir, memo)
+    };
+    res %= 1_000_000_007;
+    memo[r][c][dir] = res;
     res
 }
 
@@ -55,8 +67,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(get_least_frequent_digit(1553322), 1);
-        assert_eq!(get_least_frequent_digit(723344511), 2);
+        assert_eq!(
+            unique_paths(vec![vec![0, 1, 0], vec![0, 0, 1], vec![1, 0, 0]]),
+            5
+        );
+        assert_eq!(unique_paths(vec![vec![0, 0], vec![0, 0]]), 2);
+        assert_eq!(unique_paths(vec![vec![0, 1, 1], vec![1, 1, 0]]), 1);
     }
 
     #[test]
