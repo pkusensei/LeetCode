@@ -7,33 +7,40 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn unique_paths(grid: Vec<Vec<i32>>) -> i32 {
-    let [rows, cols] = get_dimensions(&grid);
-    let mut memo = vec![vec![[-1; 2]; cols]; rows];
-    dfs(&grid, 0, 0, 0, &mut memo)
+pub fn score(cards: &[&str], x: char) -> i32 {
+    let x = x as u8;
+    let mut both = 0;
+    let mut x_left = [0; 26];
+    let mut x_right = [0; 26];
+    for s in cards.iter().map(|s| s.as_bytes()) {
+        if s == [x, x] {
+            both += 1;
+        } else if s[0] == x {
+            x_left[usize::from(s[1] - b'a')] += 1;
+        } else if s[1] == x {
+            x_right[usize::from(s[0] - b'a')] += 1;
+        }
+    }
+    let [p1, singles1] = solve(&x_left);
+    let [p2, singles2] = solve(&x_right);
+    let pairs = p1 + p2;
+    let free = singles1 + singles2;
+    let used = free.min(both);
+    both -= used;
+    let extra = pairs.min(both / 2);
+    pairs + used + extra
 }
 
-fn dfs(grid: &[Vec<i32>], r: usize, c: usize, dir: usize, memo: &mut [Vec<[i32; 2]>]) -> i32 {
-    let [rows, cols] = get_dimensions(grid);
-    if r == rows - 1 && c == cols - 1 {
-        return 1;
+fn solve(freq: &[i32]) -> [i32; 2] {
+    let mut sum = 0;
+    let mut max = 0;
+    for &f in freq {
+        sum += f;
+        max = max.max(f);
     }
-    if r >= rows || c >= cols {
-        return 0;
-    }
-    if memo[r][c][dir] > -1 {
-        return memo[r][c][dir];
-    }
-    let mut res = if grid[r][c] == 0 {
-        dfs(grid, 1 + r, c, 1, memo) + dfs(grid, r, 1 + c, 0, memo)
-    } else if dir == 0 {
-        dfs(grid, 1 + r, c, 1 - dir, memo)
-    } else {
-        dfs(grid, r, 1 + c, 1 - dir, memo)
-    };
-    res %= 1_000_000_007;
-    memo[r][c][dir] = res;
-    res
+    let pairs = (sum - max).min(sum / 2); // if max is dorminant
+    let singles = sum - 2 * pairs;
+    [pairs, singles]
 }
 
 #[cfg(test)]
@@ -67,14 +74,25 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            unique_paths(vec![vec![0, 1, 0], vec![0, 0, 1], vec![1, 0, 0]]),
-            5
-        );
-        assert_eq!(unique_paths(vec![vec![0, 0], vec![0, 0]]), 2);
-        assert_eq!(unique_paths(vec![vec![0, 1, 1], vec![1, 1, 0]]), 1);
+        assert_eq!(score(&["aa", "ab", "ba", "ac"], 'a'), 2);
+        assert_eq!(score(&["aa", "ab", "ba"], 'a'), 1);
+        assert_eq!(score(&["aa", "ab", "ba", "ac"], 'b'), 0);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(
+            score(
+                &[
+                    "ab", "aa", "ab", "bc", "cc", "bc", "bb", "ac", "bc", "bc", "aa", "aa", "ba",
+                    "bc", "cb", "ba", "ac", "bb", "cb", "ac", "cb", "cb", "ba", "bc", "ca", "ba",
+                    "bb", "cc", "cc", "ca", "ab", "bb", "bc", "ba", "ac", "bc", "ac", "ac", "bc",
+                    "bb", "bc", "ac", "bc", "aa", "ba", "cc", "ac", "bb", "ba", "bb"
+                ],
+                'b'
+            ),
+            16
+        );
+        assert_eq!(score(&["ba", "aa", "ba", "ca"], 'a'), 2);
+    }
 }
