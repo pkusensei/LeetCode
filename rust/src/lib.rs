@@ -7,40 +7,36 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn score(cards: &[&str], x: char) -> i32 {
-    let x = x as u8;
-    let mut both = 0;
-    let mut x_left = [0; 26];
-    let mut x_right = [0; 26];
-    for s in cards.iter().map(|s| s.as_bytes()) {
-        if s == [x, x] {
-            both += 1;
-        } else if s[0] == x {
-            x_left[usize::from(s[1] - b'a')] += 1;
-        } else if s[1] == x {
-            x_right[usize::from(s[0] - b'a')] += 1;
+pub fn min_operations(s: &str, k: i32) -> i32 {
+    use std::collections::{BTreeSet, VecDeque};
+    let n = s.len() as i32;
+    let zeros = s.bytes().filter(|&v| v == b'0').count() as i32;
+    let mut queue = VecDeque::from([(zeros, 0)]);
+    let mut odd_set: BTreeSet<_> = (0..=n).filter(|&v| v != zeros && v & 1 == 1).collect();
+    let mut even_set: BTreeSet<_> = (0..=n).filter(|&v| v != zeros && v & 1 == 0).collect();
+    while let Some((zeros, step)) = queue.pop_front() {
+        if zeros == 0 {
+            return step;
+        }
+        let min_ones = (k - zeros).max(0);
+        let max_ones = k.min(n - zeros);
+        let lower = zeros + 2 * min_ones - k;
+        let upper = zeros + 2 * max_ones - k;
+        let set = if lower & 1 == 1 {
+            &mut odd_set
+        } else {
+            &mut even_set
+        };
+        let mut del = vec![];
+        for &v in set.range(lower..=upper) {
+            queue.push_back((v, 1 + step));
+            del.push(v);
+        }
+        for v in del {
+            set.remove(&v);
         }
     }
-    let [p1, singles1] = solve(&x_left);
-    let [p2, singles2] = solve(&x_right);
-    let pairs = p1 + p2;
-    let free = singles1 + singles2;
-    let used = free.min(both);
-    both -= used;
-    let extra = pairs.min(both / 2);
-    pairs + used + extra
-}
-
-fn solve(freq: &[i32]) -> [i32; 2] {
-    let mut sum = 0;
-    let mut max = 0;
-    for &f in freq {
-        sum += f;
-        max = max.max(f);
-    }
-    let pairs = (sum - max).min(sum / 2); // if max is dorminant
-    let singles = sum - 2 * pairs;
-    [pairs, singles]
+    -1
 }
 
 #[cfg(test)]
@@ -74,25 +70,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(score(&["aa", "ab", "ba", "ac"], 'a'), 2);
-        assert_eq!(score(&["aa", "ab", "ba"], 'a'), 1);
-        assert_eq!(score(&["aa", "ab", "ba", "ac"], 'b'), 0);
+        assert_eq!(min_operations("110", 1), 1);
+        assert_eq!(min_operations("0101", 3), 2);
+        assert_eq!(min_operations("101", 2), -1);
     }
 
     #[test]
-    fn test() {
-        assert_eq!(
-            score(
-                &[
-                    "ab", "aa", "ab", "bc", "cc", "bc", "bb", "ac", "bc", "bc", "aa", "aa", "ba",
-                    "bc", "cb", "ba", "ac", "bb", "cb", "ac", "cb", "cb", "ba", "bc", "ca", "ba",
-                    "bb", "cc", "cc", "ca", "ab", "bb", "bc", "ba", "ac", "bc", "ac", "ac", "bc",
-                    "bb", "bc", "ac", "bc", "aa", "ba", "cc", "ac", "bb", "ba", "bb"
-                ],
-                'b'
-            ),
-            16
-        );
-        assert_eq!(score(&["ba", "aa", "ba", "ca"], 'a'), 2);
-    }
+    fn test() {}
 }
