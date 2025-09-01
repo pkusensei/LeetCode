@@ -7,30 +7,32 @@ namespace Solution;
 
 public class Solution
 {
-    public bool PredictTheWinner(int[] nums)
+    public double MaxAverageRatio(int[][] classes, int extraStudents)
     {
-        return Dfs(nums, 0, 0, false);
-
-        static bool Dfs(ReadOnlySpan<int> nums, int p1, int p2, bool turn)
+        PriorityQueue<Bunch, double> pq = new(Comparer<double>.Create((a, b) => b.CompareTo(a)));
+        foreach (var item in classes)
         {
-            if (nums is []) { return p1 >= p2; }
-            if (nums is [int v])
-            {
-                if (!turn) { return Dfs([], p1 + v, p2, !turn); }
-                else { return Dfs([], p1, p2 + v, !turn); }
-            }
-            if (!turn)
-            {
-                bool a = Dfs(nums[1..], p1 + nums[0], p2, !turn);
-                bool b = Dfs(nums[..^1], p1 + nums[^1], p2, !turn);
-                return a || b;
-            }
-            else
-            {
-                bool a = Dfs(nums[1..], p1, p2 + nums[0], !turn);
-                bool b = Dfs(nums[..^1], p1, p2 + nums[^1], !turn);
-                return a && b;
-            }
+            Bunch b = new(item[0], item[1]);
+            pq.Enqueue(b, b.Increment);
         }
+        for (int _ = 0; _ < extraStudents; _++)
+        {
+            var b = pq.Dequeue();
+            b.Pass += 1;
+            b.Total += 1;
+            pq.Enqueue(b, b.Increment);
+        }
+        double sum = 0.0;
+        while (pq.TryDequeue(out var b, out _))
+        {
+            sum += b.Ratio;
+        }
+        return sum / classes.Length;
     }
+}
+
+record struct Bunch(int Pass, int Total)
+{
+    public readonly double Increment => (1.0 + Pass) / (1.0 + Total) - Ratio;
+    public readonly double Ratio => (double)Pass / Total;
 }
