@@ -17,8 +17,22 @@ impl<T> FenwickTree<T> {
         }
     }
 
+    pub fn update<U>(&mut self, idx: usize, val: U)
+    where
+        T: From<U> + AddAssign,
+        U: Clone,
+    {
+        assert!(
+            idx < self.n,
+            "Index {} out of bounds (size: {})",
+            idx,
+            self.n
+        );
+        self._update(1 + idx, val);
+    }
+
     // !! 1-based index !!
-    pub fn update<U>(&mut self, mut idx: usize, val: U)
+    fn _update<U>(&mut self, mut idx: usize, val: U)
     where
         T: From<U> + AddAssign,
         U: Clone,
@@ -29,7 +43,21 @@ impl<T> FenwickTree<T> {
         }
     }
 
-    pub fn query(&self, mut idx: usize) -> T
+    // prefix sum
+    pub fn query(&self, idx: usize) -> T
+    where
+        T: Default + Clone + AddAssign,
+    {
+        assert!(
+            idx < self.n,
+            "Index {} out of bounds (size: {})",
+            idx,
+            self.n
+        );
+        self._query(1 + idx)
+    }
+
+    fn _query(&self, mut idx: usize) -> T
     where
         T: Default + Clone + AddAssign,
     {
@@ -41,11 +69,28 @@ impl<T> FenwickTree<T> {
         res
     }
 
+    // range sum [left..=right]
     pub fn range_query(&self, left: usize, right: usize) -> T
     where
         T: Default + Clone + AddAssign + Sub<Output = T>,
     {
-        self.query(right) - self.query(left - 1)
+        assert!(
+            left <= right,
+            "Invalid range: left ({}) > right ({})",
+            left,
+            right
+        );
+        assert!(
+            right < self.n,
+            "Index {} out of bounds (size: {})",
+            right,
+            self.n
+        );
+        if let Some(left) = left.checked_sub(1) {
+            self.query(right) - self.query(left)
+        } else {
+            self.query(right)
+        }
     }
 }
 
@@ -59,16 +104,16 @@ mod tests {
 
         // Test initial state - all queries should return 0
         for i in 1..=5 {
-            assert_eq!(ft.query(i), 0);
+            assert_eq!(ft._query(i), 0);
         }
 
         // Single update and query
-        ft.update(3, 10i32);
-        assert_eq!(ft.query(1), 0);
-        assert_eq!(ft.query(2), 0);
-        assert_eq!(ft.query(3), 10);
-        assert_eq!(ft.query(4), 10);
-        assert_eq!(ft.query(5), 10);
+        ft._update(3, 10i32);
+        assert_eq!(ft._query(1), 0);
+        assert_eq!(ft._query(2), 0);
+        assert_eq!(ft._query(3), 10);
+        assert_eq!(ft._query(4), 10);
+        assert_eq!(ft._query(5), 10);
     }
 
     #[test]
@@ -76,15 +121,15 @@ mod tests {
         let mut ft = FenwickTree::<i64>::new(5);
 
         // Multiple updates
-        ft.update(1, 5i32);
-        ft.update(3, 10i32);
-        ft.update(5, 15i32);
+        ft._update(1, 5i32);
+        ft._update(3, 10i32);
+        ft._update(5, 15i32);
 
-        assert_eq!(ft.query(1), 5); // [5]
-        assert_eq!(ft.query(2), 5); // [5, 0]
-        assert_eq!(ft.query(3), 15); // [5, 0, 10]
-        assert_eq!(ft.query(4), 15); // [5, 0, 10, 0]
-        assert_eq!(ft.query(5), 30); // [5, 0, 10, 0, 15]
+        assert_eq!(ft._query(1), 5); // [5]
+        assert_eq!(ft._query(2), 5); // [5, 0]
+        assert_eq!(ft._query(3), 15); // [5, 0, 10]
+        assert_eq!(ft._query(4), 15); // [5, 0, 10, 0]
+        assert_eq!(ft._query(5), 30); // [5, 0, 10, 0, 15]
     }
 
     #[test]
@@ -93,35 +138,35 @@ mod tests {
 
         // Build array: [1, 2, 3, 4, 5, 6]
         for i in 1..=6 {
-            ft.update(i, i as i32);
+            ft._update(i, i as i32);
         }
 
         // Test prefix sums
-        assert_eq!(ft.query(1), 1); // sum of [1]
-        assert_eq!(ft.query(2), 3); // sum of [1, 2]
-        assert_eq!(ft.query(3), 6); // sum of [1, 2, 3]
-        assert_eq!(ft.query(4), 10); // sum of [1, 2, 3, 4]
-        assert_eq!(ft.query(5), 15); // sum of [1, 2, 3, 4, 5]
-        assert_eq!(ft.query(6), 21); // sum of [1, 2, 3, 4, 5, 6]
+        assert_eq!(ft._query(1), 1); // sum of [1]
+        assert_eq!(ft._query(2), 3); // sum of [1, 2]
+        assert_eq!(ft._query(3), 6); // sum of [1, 2, 3]
+        assert_eq!(ft._query(4), 10); // sum of [1, 2, 3, 4]
+        assert_eq!(ft._query(5), 15); // sum of [1, 2, 3, 4, 5]
+        assert_eq!(ft._query(6), 21); // sum of [1, 2, 3, 4, 5, 6]
 
         // Test range sum: sum from index i to j = query(j) - query(i-1)
-        assert_eq!(ft.query(5) - ft.query(2), 12); // sum of [3, 4, 5] = 12
-        assert_eq!(ft.query(4) - ft.query(1), 9); // sum of [2, 3, 4] = 9
+        assert_eq!(ft._query(5) - ft._query(2), 12); // sum of [3, 4, 5] = 12
+        assert_eq!(ft._query(4) - ft._query(1), 9); // sum of [2, 3, 4] = 9
     }
 
     #[test]
     fn test_negative_values() {
         let mut ft = FenwickTree::<i64>::new(4);
 
-        ft.update(1, -5i32);
-        ft.update(2, 10i32);
-        ft.update(3, -3i32);
-        ft.update(4, 8i32);
+        ft._update(1, -5i32);
+        ft._update(2, 10i32);
+        ft._update(3, -3i32);
+        ft._update(4, 8i32);
 
-        assert_eq!(ft.query(1), -5); // [-5]
-        assert_eq!(ft.query(2), 5); // [-5, 10]
-        assert_eq!(ft.query(3), 2); // [-5, 10, -3]
-        assert_eq!(ft.query(4), 10); // [-5, 10, -3, 8]
+        assert_eq!(ft._query(1), -5); // [-5]
+        assert_eq!(ft._query(2), 5); // [-5, 10]
+        assert_eq!(ft._query(3), 2); // [-5, 10, -3]
+        assert_eq!(ft._query(4), 10); // [-5, 10, -3, 8]
     }
 
     #[test]
@@ -129,13 +174,13 @@ mod tests {
         let mut ft = FenwickTree::<i64>::new(3);
 
         // Multiple updates to same position
-        ft.update(2, 5i32);
-        ft.update(2, 3i32);
-        ft.update(2, -2i32);
+        ft._update(2, 5i32);
+        ft._update(2, 3i32);
+        ft._update(2, -2i32);
 
-        assert_eq!(ft.query(1), 0); // [0]
-        assert_eq!(ft.query(2), 6); // [0, 6] (5 + 3 - 2)
-        assert_eq!(ft.query(3), 6); // [0, 6, 0]
+        assert_eq!(ft._query(1), 0); // [0]
+        assert_eq!(ft._query(2), 6); // [0, 6] (5 + 3 - 2)
+        assert_eq!(ft._query(3), 6); // [0, 6, 0]
     }
 
     #[test]
@@ -143,19 +188,19 @@ mod tests {
         let mut ft = FenwickTree::<i64>::new(3);
 
         let large_val = i32::MAX;
-        ft.update(1, large_val);
-        ft.update(2, large_val);
+        ft._update(1, large_val);
+        ft._update(2, large_val);
 
-        assert_eq!(ft.query(1), large_val as i64);
-        assert_eq!(ft.query(2), (large_val as i64) * 2);
+        assert_eq!(ft._query(1), large_val as i64);
+        assert_eq!(ft._query(2), (large_val as i64) * 2);
     }
 
     #[test]
     fn test_single_element() {
         let mut ft = FenwickTree::<i64>::new(1);
 
-        ft.update(1, 42i32);
-        assert_eq!(ft.query(1), 42);
+        ft._update(1, 42i32);
+        assert_eq!(ft._query(1), 42);
     }
 
     #[test]
@@ -164,7 +209,7 @@ mod tests {
 
         // All queries should return 0 for empty tree
         for i in 1..=10 {
-            assert_eq!(ft.query(i), 0);
+            assert_eq!(ft._query(i), 0);
         }
     }
 
@@ -191,7 +236,7 @@ mod tests {
         ];
 
         for (idx, val) in operations {
-            ft.update(idx, val);
+            ft._update(idx, val);
             *reference.entry(idx).or_insert(0) += val;
         }
 
@@ -204,7 +249,7 @@ mod tests {
                 .sum();
 
             assert_eq!(
-                ft.query(test_idx),
+                ft._query(test_idx),
                 expected,
                 "Mismatch at index {}",
                 test_idx
@@ -217,26 +262,43 @@ mod tests {
         let mut ft = FenwickTree::<i64>::new(5);
 
         // Test that i32 values are properly converted to i64
-        ft.update(1, i32::MIN);
-        ft.update(2, i32::MAX);
+        ft._update(1, i32::MIN);
+        ft._update(2, i32::MAX);
 
-        assert_eq!(ft.query(1), i32::MIN.into());
-        assert_eq!(ft.query(2), i64::from(i32::MIN) + i64::from(i32::MAX));
+        assert_eq!(ft._query(1), i32::MIN.into());
+        assert_eq!(ft._query(2), i64::from(i32::MIN) + i64::from(i32::MAX));
     }
 
     #[test]
-    fn test_range_sum() {
+    fn test_zero_based_indexing() {
+        let mut ft = FenwickTree::<i64>::new(5);
+
+        // Update using 0-based indices
+        ft.update(0, 10i32); // Update first element
+        ft.update(2, 20i32); // Update third element
+        ft.update(4, 30i32); // Update last element
+
+        // Query using 0-based indices
+        assert_eq!(ft.query(0), 10); // [10]
+        assert_eq!(ft.query(1), 10); // [10, 0]
+        assert_eq!(ft.query(2), 30); // [10, 0, 20]
+        assert_eq!(ft.query(3), 30); // [10, 0, 20, 0]
+        assert_eq!(ft.query(4), 60); // [10, 0, 20, 0, 30]
+    }
+
+    #[test]
+    fn test_range_query() {
         let mut ft = FenwickTree::<i64>::new(10);
 
         // Build array [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
         for i in 1..=10 {
-            ft.update(i, i as i32);
+            ft._update(i, i as i32);
         }
 
         // Test various ranges
-        assert_eq!(ft.range_query(1, 5), 15); // 1+2+3+4+5
-        assert_eq!(ft.range_query(3, 7), 25); // 3+4+5+6+7
-        assert_eq!(ft.range_query(6, 6), 6); // single element
-        assert_eq!(ft.range_query(1, 10), 55); // entire array
+        assert_eq!(ft.range_query(0, 4), 15); // 1+2+3+4+5
+        assert_eq!(ft.range_query(2, 6), 25); // 3+4+5+6+7
+        assert_eq!(ft.range_query(5, 5), 6); // single element
+        assert_eq!(ft.range_query(0, 9), 55); // entire array
     }
 }
