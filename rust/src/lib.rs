@@ -7,79 +7,90 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_product(nums: &[i32]) -> i64 {
-    let mut res = 0;
-    let mut t = Trie::default();
-    for &num in nums.iter() {
-        if let Some(v) = t.find(num, 20) {
-            res = res.max(i64::from(v) * i64::from(num));
-        }
-        t.insert(num);
-    }
-    res
-}
-
-#[derive(Default)]
-struct Trie {
-    nodes: [Option<Box<Trie>>; 2],
-    num: Option<i32>,
-}
-
-impl Trie {
-    fn insert(&mut self, num: i32) {
-        let mut curr = self;
-        // rev works!
-        for bit in (0..=20).rev() {
-            let idx = ((num >> bit) & 1) as usize;
-            curr = curr.nodes[idx].get_or_insert_default();
-        }
-        curr.num = Some(num);
-    }
-
-    fn find(&self, num: i32, bit: i32) -> Option<i32> {
-        if bit < 0 {
-            return self.num;
-        }
-        let idx = (num >> bit) & 1;
-        if idx == 0 {
-            let a = self.nodes[0].as_ref().and_then(|v| v.find(num, bit - 1));
-            let b = self.nodes[1].as_ref().and_then(|v| v.find(num, bit - 1));
-            match [a, b] {
-                [Some(x), Some(y)] => Some(x.max(y)),
-                _ => a.or(b),
-            }
-        } else {
-            self.nodes[1 - idx as usize].as_ref()?.find(num, bit - 1)
-        }
-    }
-}
-
-pub fn with_dp(nums: &[i32]) -> i64 {
+pub fn total_beauty(nums: &[i32]) -> i32 {
+    use std::collections::HashMap;
     let Some(&max) = nums.iter().max() else {
         return 0;
     };
-    let width = 1 + max.ilog2();
-    let mask = 1 << width;
-    let mut dp = vec![0; mask];
-    for &num in nums.iter() {
-        dp[num as usize] = num;
-    }
-    for bit in 0..width {
-        for m in 0..mask {
-            // if `m` is set on `bit`, flip off a single bit to find
-            // all max candidates with "stricter" bit patterns
-            if (m & (1 << bit)) > 0 {
-                dp[m] = dp[m].max(dp[m ^ (1 << bit)])
+    let map = nums
+        .iter()
+        .enumerate()
+        .fold(HashMap::<_, Vec<_>>::new(), |mut acc, (i, &num)| {
+            acc.entry(num).or_default().push(i);
+            acc
+        });
+    let mut count = vec![0; 1 + max as usize];
+    for div in 1..=max {
+        let mut indices = vec![];
+        for d in (div..=max).step_by(div as usize) {
+            if let Some(v) = map.get(&d) {
+                indices.extend_from_slice(v);
+            }
+        }
+        if indices.len() <= 1 {
+            count[div as usize] = indices.len() as i32;
+            continue;
+        }
+        indices.sort_unstable();
+        let rank: HashMap<_, _> = indices
+            .iter()
+            .enumerate()
+            .map(|(i, &val)| (val, 1 + i))
+            .collect();
+        let mut ft = FenwickTree::new(indices.len());
+        for d in (div..=max).step_by(div as usize) {
+            let Some(inds) = map.get(&d) else {
+                continue;
+            };
+            for &i in inds.iter().rev() {
+                let r = rank[&i];
+                let add = (1 + ft.query(r - 1)) % M;
+                count[div as usize] = (count[div as usize] + add) % M;
+                ft.update(r, add);
             }
         }
     }
-    nums.iter()
-        .map(|&num| {
-            let complement = (mask - 1) as i32 ^ num;
-            i64::from(num) * i64::from(dp[complement as usize])
-        })
-        .max()
-        .unwrap_or(0)
+    for div in (1..=max).rev() {
+        for e in (2 * div..=max).step_by(div as usize) {
+            count[div as usize] = (count[div as usize] - count[e as usize]).rem_euclid(M);
+        }
+    }
+    count
+        .into_iter()
+        .enumerate()
+        .map(|(i, v)| i as i64 * i64::from(v) % i64::from(M))
+        .fold(0, |acc, v| (acc + v) % i64::from(M)) as i32
+}
+
+const M: i32 = 1_000_000_007;
+
+struct FenwickTree {
+    tree: Vec<i32>,
+}
+
+impl FenwickTree {
+    fn new(n: usize) -> Self {
+        Self {
+            tree: vec![0; 1 + n],
+        }
+    }
+
+    fn update(&mut self, mut idx: usize, val: i32) {
+        let sz = self.tree.len();
+        while idx < sz {
+            self.tree[idx] = (self.tree[idx] + val) % M;
+            idx += idx & idx.wrapping_neg();
+        }
+    }
+
+    fn query(&self, mut idx: usize) -> i32 {
+        let mut res = 0;
+        while idx > 0 {
+            res = (res + self.tree[idx]) % M;
+            idx -= idx & idx.wrapping_neg();
+        }
+        res
+    }
 }
 
 #[cfg(test)]
@@ -113,13 +124,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_product(&[1, 2, 3, 4, 5, 6, 7]), 12);
-        assert_eq!(max_product(&[5, 6, 4]), 0);
-        assert_eq!(max_product(&[64, 8, 32]), 2048);
-
-        assert_eq!(with_dp(&[5, 6, 4]), 0);
-        assert_eq!(with_dp(&[1, 2, 3, 4, 5, 6, 7]), 12);
-        assert_eq!(with_dp(&[64, 8, 32]), 2048);
+        assert_eq!(total_beauty(&[1, 2, 3]), 10);
+        assert_eq!(total_beauty(&[4, 6]), 12);
     }
 
     #[test]
