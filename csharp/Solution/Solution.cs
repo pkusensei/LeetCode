@@ -7,29 +7,65 @@ namespace Solution;
 
 public class Solution
 {
-    public int NumberOfPairs(int[][] points)
+    public int FindMinStep(string board, string hand)
     {
-        Array.Sort(points,
-            (a, b) => a[0] == b[0] ? b[1].CompareTo(a[1]) : a[0].CompareTo(b[0]));
-        int res = 0;
-        for (int i1 = 0; i1 < points.Length; i1++)
+        List<byte> board_ = Compress(board);
+        List<byte> hand_ = Compress(hand);
+        hand_.Sort();
+        Queue<(List<byte> board, List<byte> hand, int step)> queue = [];
+        queue.Enqueue((board_, hand_, 0));
+        HashSet<(List<byte>, List<byte>)> seen = [(board_, hand_)];
+        while (queue.TryDequeue(out var item))
         {
-            int y1 = points[i1][1];
-            int max_y = int.MinValue;
-            for (int i2 = 1 + i1; i2 < points.Length; i2++)
+            if (item.board.Count == 0) { return item.step; }
+            for (int bi = 0; bi < item.board.Count; bi++)
             {
-                int y2 = points[i2][1];
-                // x2>=x1 => p2 is to the right
-                // y1>=y2 => p2 is to the bottom
-                // y2>max_y => nothing between [y1, y2]
-                // Valid!
-                if (y1 >= y2 && y2 > max_y)
+                for (int hi = 0; hi < item.hand.Count; hi++)
                 {
-                    res += 1;
-                    max_y = y2;
+                    if (bi > 0 && item.board[bi - 1] == item.hand[hi]) { continue; }
+                    if (hi > 0 && item.hand[hi - 1] == item.hand[hi]) { continue; }
+                    if (item.board[bi] == item.hand[hi]
+                        || (bi > 0 && item.board[bi - 1] == item.board[bi]))
+                    {
+                        List<byte> nboard = [.. item.board];
+                        List<byte> nhand = [.. item.hand];
+                        nboard.Insert(bi, item.hand[hi]);
+                        nhand.RemoveAt(hi);
+                        nboard = Process(nboard, bi);
+                        if (seen.Add((nboard, nhand)))
+                        {
+                            queue.Enqueue((nboard, nhand, 1 + item.step));
+                        }
+                    }
                 }
             }
         }
-        return res;
+        return -1;
+
+        static List<byte> Process(List<byte> s, int i)
+        {
+            if (i >= s.Count) { return s; }
+            int left = i;
+            for (; left > 0 && s[left - 1] == s[i]; left -= 1) { }
+            int right = i;
+            for (; 1 + right < s.Count && s[1 + right] == s[i]; right += 1) { }
+            int count = right - left + 1;
+            if (count >= 3)
+            {
+                s.RemoveRange(left, count);
+                return Process(s, left);
+            }
+            return s;
+        }
+
+        static List<byte> Compress(ReadOnlySpan<char> s)
+        {
+            List<byte> res = new(s.Length);
+            foreach (var c in s)
+            {
+                res.Add((byte)(c - 'A'));
+            }
+            return res;
+        }
     }
 }
