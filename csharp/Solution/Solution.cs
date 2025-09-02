@@ -7,32 +7,24 @@ namespace Solution;
 
 public class Solution
 {
-    public int[] FindMode(TreeNode root)
+    public int FindMaximizedCapital(int k, int w, int[] profits, int[] capital)
     {
-        List<int> res = [];
-        int curr_num = 100_000;
-        int curr_streak = 0;
-        int max_streak = 0;
-        Dfs(root);
-        return [.. res];
-
-        void Dfs(TreeNode node)
+        int n = profits.Length;
+        (int pro, int cap)[] vals = [.. profits.Zip(capital)];
+        Array.Sort(vals, (a, b) => a.cap.CompareTo(b.cap));
+        PriorityQueue<int, int> pq = new();
+        int idx = 0;
+        for (int _ = 0; _ < k; _++)
         {
-            if (node is null) { return; }
-            Dfs(node.left);
-            if (curr_num == node.val) { curr_streak += 1; }
-            else
+            for (; idx < n && vals[idx].cap <= w; idx += 1)
             {
-                curr_streak = 1;
-                curr_num = node.val;
+                pq.Enqueue(vals[idx].pro, -vals[idx].pro);
             }
-            if (curr_streak > max_streak)
+            if (pq.TryDequeue(out var p, out var _p))
             {
-                res.Clear();
-                max_streak = curr_streak;
+                w += p;
             }
-            if (curr_streak == max_streak) { res.Add(node.val); }
-            Dfs(node.right);
         }
+        return w;
     }
 }
