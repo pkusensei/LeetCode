@@ -7,37 +7,32 @@ namespace Solution;
 
 public class Solution
 {
-    public Solution(int[][] rects)
+    public int[] FindMode(TreeNode root)
     {
-        N = rects.Length;
-        Rects = new(N);
-        Prefix = new(N);
-        Rng = new();
-        foreach (var r in rects)
+        List<int> res = [];
+        int curr_num = 100_000;
+        int curr_streak = 0;
+        int max_streak = 0;
+        Dfs(root);
+        return [.. res];
+
+        void Dfs(TreeNode node)
         {
-            Rect curr = new(r[0], r[1], r[2], r[3]);
-            Rects.Add(curr);
-            Prefix.Add(curr.Dots + Prefix.LastOrDefault());
+            if (node is null) { return; }
+            Dfs(node.left);
+            if (curr_num == node.val) { curr_streak += 1; }
+            else
+            {
+                curr_streak = 1;
+                curr_num = node.val;
+            }
+            if (curr_streak > max_streak)
+            {
+                res.Clear();
+                max_streak = curr_streak;
+            }
+            if (curr_streak == max_streak) { res.Add(node.val); }
+            Dfs(node.right);
         }
     }
-
-    int N { get; }
-    List<Rect> Rects { get; }
-    List<long> Prefix { get; }
-    Random Rng { get; }
-
-    public int[] Pick()
-    {
-        long all_dots = Prefix[^1];
-        long count = Rng.NextInt64(1, 1 + all_dots);
-        int i = Prefix.BinarySearch(count);
-        if (i < 0) { i = ~i; }
-        return Rects[i].Point(Rng);
-    }
-}
-
-readonly record struct Rect(int X1, int Y1, int X2, int Y2)
-{
-    public readonly long Dots => (X2 - X1 + 1L) * (Y2 - Y1 + 1L);
-    public readonly int[] Point(Random rng) => [rng.Next(X1, 1 + X2), rng.Next(Y1, 1 + Y2)];
 }
