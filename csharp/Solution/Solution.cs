@@ -7,35 +7,45 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<IList<int>> FindSubsequences(int[] nums)
+    public int ReversePairs(int[] nums)
     {
-        List<IList<int>> res = [];
-        Backtrack(0, 0, 0);
-        return res;
+        return MergeSort(nums);
 
-        void Backtrack(int idx, int prev, int mask)
+        static int MergeSort(Span<int> nums)
         {
-            if (idx >= nums.Length)
+            if (nums.Length < 2) { return 0; }
+            int mid = nums.Length / 2;
+            int res = MergeSort(nums[..mid]) + MergeSort(nums[mid..]);
+            int left = 0;
+            int right = mid;
+            for (; left < mid; left++)
             {
-                if (int.PopCount(mask) >= 2)
+                for (; right < nums.Length && nums[left] > 2L * nums[right]; right++) { }
+                res += right - mid;
+            }
+            left = 0;
+            right = mid;
+            List<int> vals = new(nums.Length);
+            while (left < mid && right < nums.Length)
+            {
+                if (nums[left] <= nums[right])
                 {
-                    List<int> curr = new(int.PopCount(mask));
-                    for (int bit = 0; bit < nums.Length; bit++)
-                    {
-                        if (((mask >> bit) & 1) == 1) { curr.Add(nums[bit]); }
-                    }
-                    res.Add(curr);
+                    vals.Add(nums[left]);
+                    left += 1;
                 }
-                return;
+                else
+                {
+                    vals.Add(nums[right]);
+                    right += 1;
+                }
             }
-            if (mask == 0 || prev <= nums[idx])
+            vals.AddRange(nums[left..mid]);
+            vals.AddRange(nums[right..]);
+            for (int i = 0; i < nums.Length; i++)
             {
-                Backtrack(1 + idx, nums[idx], mask | (1 << idx));
+                nums[i] = vals[i];
             }
-            if (mask == 0 || prev != nums[idx])
-            {
-                Backtrack(1 + idx, prev, mask);
-            }
+            return res;
         }
     }
 }
