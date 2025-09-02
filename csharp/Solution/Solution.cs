@@ -7,24 +7,22 @@ namespace Solution;
 
 public class Solution
 {
-    public int FindMaximizedCapital(int k, int w, int[] profits, int[] capital)
+    public int[] NextGreaterElements(int[] nums)
     {
-        int n = profits.Length;
-        (int pro, int cap)[] vals = [.. profits.Zip(capital)];
-        Array.Sort(vals, (a, b) => a.cap.CompareTo(b.cap));
-        PriorityQueue<int, int> pq = new();
-        int idx = 0;
-        for (int _ = 0; _ < k; _++)
+        int n = nums.Length;
+        int[] vals = [.. nums, .. nums];
+        int[] res = new int[n];
+        Array.Fill(res, -1);
+        Stack<int> st = [];
+        for (int i = 0; i < vals.Length; i++)
         {
-            for (; idx < n && vals[idx].cap <= w; idx += 1)
+            while (st.TryPeek(out var top) && vals[top] < vals[i])
             {
-                pq.Enqueue(vals[idx].pro, -vals[idx].pro);
+                st.Pop();
+                if (top < n) { res[top] = vals[i]; }
             }
-            if (pq.TryDequeue(out var p, out var _p))
-            {
-                w += p;
-            }
+            st.Push(i);
         }
-        return w;
+        return res;
     }
 }
