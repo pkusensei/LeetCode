@@ -7,22 +7,28 @@ namespace Solution;
 
 public class Solution
 {
-    public int[] NextGreaterElements(int[] nums)
+    public int[] FindFrequentTreeSum(TreeNode root)
     {
-        int n = nums.Length;
-        int[] vals = [.. nums, .. nums];
-        int[] res = new int[n];
-        Array.Fill(res, -1);
-        Stack<int> st = [];
-        for (int i = 0; i < vals.Length; i++)
+        Dictionary<int, int> freq = [];
+        int f = 0;
+        List<int> res = [];
+        Dfs(root);
+        return [.. res];
+
+        int Dfs(TreeNode node)
         {
-            while (st.TryPeek(out var top) && vals[top] < vals[i])
+            if (node is null) { return 0; }
+            int left = Dfs(node.left);
+            int right = Dfs(node.right);
+            int val = node.val + left + right;
+            if (!freq.TryAdd(val, 1)) { freq[val] += 1; }
+            if (freq[val] > f)
             {
-                st.Pop();
-                if (top < n) { res[top] = vals[i]; }
+                f = freq[val];
+                res.Clear();
             }
-            st.Push(i);
+            if (f == freq[val]) { res.Add(val); }
+            return val;
         }
-        return res;
     }
 }
