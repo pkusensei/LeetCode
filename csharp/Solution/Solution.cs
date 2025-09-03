@@ -7,25 +7,23 @@ namespace Solution;
 
 public class Solution
 {
-    public int NumberOfPairs(int[][] points)
+    public int FindBottomLeftValue(TreeNode root)
     {
-        Array.Sort(points,
-            (a, b) => a[0] == b[0] ? b[1].CompareTo(a[1]) : a[0].CompareTo(b[0]));
+        int max_depth = -1;
         int res = 0;
-        for (int i1 = 0; i1 < points.Length; i1++)
-        {
-            int y1 = points[i1][1];
-            int ymax = int.MinValue;
-            for (int i2 = 1 + i1; i2 < points.Length; i2++)
-            {
-                int y2 = points[i2][1];
-                if (y1 >= y2 && y2 > ymax)
-                {
-                    res += 1;
-                    ymax = y2;
-                }
-            }
-        }
+        Dfs(root, 0);
         return res;
+
+        void Dfs(TreeNode node, int depth)
+        {
+            if (node is null) { return; }
+            if (depth > max_depth)
+            {
+                max_depth = depth;
+                res = node.val;
+            }
+            Dfs(node.left, 1 + depth);
+            Dfs(node.right, 1 + depth);
+        }
     }
 }
