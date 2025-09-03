@@ -7,28 +7,25 @@ namespace Solution;
 
 public class Solution
 {
-    public int[] FindFrequentTreeSum(TreeNode root)
+    public int NumberOfPairs(int[][] points)
     {
-        Dictionary<int, int> freq = [];
-        int f = 0;
-        List<int> res = [];
-        Dfs(root);
-        return [.. res];
-
-        int Dfs(TreeNode node)
+        Array.Sort(points,
+            (a, b) => a[0] == b[0] ? b[1].CompareTo(a[1]) : a[0].CompareTo(b[0]));
+        int res = 0;
+        for (int i1 = 0; i1 < points.Length; i1++)
         {
-            if (node is null) { return 0; }
-            int left = Dfs(node.left);
-            int right = Dfs(node.right);
-            int val = node.val + left + right;
-            if (!freq.TryAdd(val, 1)) { freq[val] += 1; }
-            if (freq[val] > f)
+            int y1 = points[i1][1];
+            int ymax = int.MinValue;
+            for (int i2 = 1 + i1; i2 < points.Length; i2++)
             {
-                f = freq[val];
-                res.Clear();
+                int y2 = points[i2][1];
+                if (y1 >= y2 && y2 > ymax)
+                {
+                    res += 1;
+                    ymax = y2;
+                }
             }
-            if (f == freq[val]) { res.Add(val); }
-            return val;
         }
+        return res;
     }
 }
