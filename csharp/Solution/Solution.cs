@@ -7,27 +7,19 @@ namespace Solution;
 
 public class Solution
 {
-    public Solution(int m, int n)
+    public bool CheckSubarraySum(int[] nums, int k)
     {
-        M = m;
-        N = n;
-        Rng = new();
-        Seen = [];
+        Dictionary<int, int> seen = new() { [0] = -1 };
+        int prefix = 0;
+        for (int i = 0; i < nums.Length; i++)
+        {
+            prefix = (prefix + nums[i]) % k;
+            if (seen.TryGetValue(prefix, out var prev) && i - prev >= 2)
+            {
+                return true;
+            }
+            seen.TryAdd(prefix, i);
+        }
+        return false;
     }
-
-    public int M { get; }
-    public int N { get; }
-    Random Rng { get; }
-    HashSet<int> Seen { get; }
-
-    public int[] Flip()
-    {
-        int val = Rng.Next(M * N - Seen.Count);
-        for (; !Seen.Add(val); val += 1) { }
-        int y = val / M;
-        int x = val % M;
-        return [x, y];
-    }
-
-    public void Reset() => Seen.Clear();
 }
