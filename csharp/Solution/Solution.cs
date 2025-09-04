@@ -7,17 +7,38 @@ namespace Solution;
 
 public class Solution
 {
-    public int FindMaxLength(int[] nums)
+    public int CountArrangement(int n)
     {
-        int prefix = 0;
-        int res = 0;
-        Dictionary<int, int> seen = new() { [0] = -1 };
-        for (int i = 0; i < nums.Length; i++)
+        int sz = 1 << n;
+        int[] dp = new int[sz];
+        dp[0] = 1;
+        for (int mask = 1; mask < sz; mask++)
         {
-            prefix += nums[i] > 0 ? 1 : -1;
-            if (seen.TryGetValue(prefix, out var prev)) { res = int.Max(res, i - prev); }
-            seen.TryAdd(prefix, i);
+            int pos = int.PopCount(mask);
+            for (int bit = 0; bit < n; bit++)
+            {
+                if (((mask >> bit) & 1) == 1 && (pos % (1 + bit) == 0 || (1 + bit) % pos == 0))
+                {
+                    dp[mask] += dp[mask ^ (1 << bit)];
+                }
+            }
         }
-        return res;
+        return dp[^1];
+        return Dfs(n, 0, 1);
+
+        static int Dfs(int n, int mask, int depth)
+        {
+            if (int.PopCount(mask) == n) { return 1; }
+            int res = 0;
+            for (int bit = 0; bit < n; bit++)
+            {
+                if (((mask >> bit) & 1) == 0
+                    && ((1 + bit) % depth == 0 || depth % (1 + bit) == 0))
+                {
+                    res += Dfs(n, mask | (1 << bit), 1 + depth);
+                }
+            }
+            return res;
+        }
     }
 }
