@@ -7,44 +7,51 @@ namespace Solution;
 
 public class Solution
 {
-    public int FindRotateSteps(string ring, string key)
+    public int LongestPalindromeSubseq(string s)
     {
-        int rn = ring.Length;
-        int kn = key.Length;
-        int[,] memo = new int[rn, kn];
-        for (int i1 = 0; i1 < rn; i1++)
+        int n = s.Length;
+        int[,] dp = new int[n, n];
+        for (int left = n - 1; left >= 0; left -= 1)
         {
-            for (int i2 = 0; i2 < kn; i2++)
+            dp[left, left] = 1;
+            for (int right = 1 + left; right < n; right++)
+            {
+                if (s[left] == s[right])
+                {
+                    dp[left, right] = 2 + dp[1 + left, right - 1];
+                }
+                else
+                {
+                    dp[left, right] = int.Max(dp[1 + left, right], dp[left, right - 1]);
+                }
+            }
+        }
+        return dp[0, n - 1];
+        int[,] memo = new int[n, n];
+        for (int i1 = 0; i1 < n; i1++)
+        {
+            for (int i2 = 0; i2 < n; i2++)
             {
                 memo[i1, i2] = -1;
             }
         }
-        return Dfs(0, 0);
+        // return Dfs(0, n - 1);
 
-        int Dfs(int ri, int ki)
+        int Dfs(int left, int right)
         {
-            if (ki >= key.Length) { return 0; }
-            if (memo[ri, ki] > -1) { return memo[ri, ki]; }
+            if (left > right) { return 0; }
+            if (left == right) { return 1; }
+            if (memo[left, right] > -1) { return memo[left, right]; }
             int res;
-            if (ring[ri] == key[ki]) { res = 1 + Dfs(ri, 1 + ki); }
+            if (s[left] == s[right])
+            {
+                res = 2 + Dfs(1 + left, right - 1);
+            }
             else
             {
-                int step = 0;
-                int curr = ri;
-                for (; ring[curr] != key[ki]; curr = (1 + curr) % rn)
-                {
-                    step += 1;
-                }
-                res = 1 + step + Dfs(curr, 1 + ki);
-                step = 0;
-                curr = ri;
-                for (; ring[curr] != key[ki]; curr = (curr + rn - 1) % rn)
-                {
-                    step += 1;
-                }
-                res = int.Min(res, 1 + step + Dfs(curr, 1 + ki));
+                res = int.Max(Dfs(left + 1, right), Dfs(left, right - 1));
             }
-            memo[ri, ki] = res;
+            memo[left, right] = res;
             return res;
         }
     }
