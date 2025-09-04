@@ -7,20 +7,27 @@ namespace Solution;
 
 public class Solution
 {
-    public int Change(int amount, int[] coins)
+    public Solution(int m, int n)
     {
-        long[] dp = new long[1 + amount];
-        dp[0] = 1;
-        foreach (var c in coins)
-        {
-            for (int i = 0; i <= amount; i++)
-            {
-                if (c + i <= amount)
-                {
-                    dp[c + i] += dp[i];
-                }
-            }
-        }
-        return (int)dp[^1];
+        M = m;
+        N = n;
+        Rng = new();
+        Seen = [];
     }
+
+    public int M { get; }
+    public int N { get; }
+    Random Rng { get; }
+    HashSet<int> Seen { get; }
+
+    public int[] Flip()
+    {
+        int val = Rng.Next(M * N - Seen.Count);
+        for (; !Seen.Add(val); val += 1) { }
+        int y = val / M;
+        int x = val % M;
+        return [x, y];
+    }
+
+    public void Reset() => Seen.Clear();
 }
