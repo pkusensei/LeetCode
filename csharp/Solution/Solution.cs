@@ -7,17 +7,22 @@ namespace Solution;
 
 public class Solution
 {
-    public TreeNode ConvertBST(TreeNode root)
+    public int SingleNonDuplicate(int[] nums)
     {
-        Dfs(root, 0);
-        return root;
-
-        static int Dfs(TreeNode node, int suffix)
+        int n = nums.Length;
+        int left = 0;
+        int right = n - 1;
+        while (left < right)
         {
-            if (node is null) { return suffix; }
-            suffix = Dfs(node.right, suffix);
-            node.val += suffix;
-            return Dfs(node.left, node.val);
+            int mid = left + (right - left) / 2;
+            if ((mid & 1) == 1)
+            {
+                if (nums[mid] == nums[mid - 1]) { left = 1 + mid; }
+                else { right = mid - 1; }
+            }
+            else if (nums[mid] == nums[1 + mid]) { left = mid; }
+            else { right = mid; }
         }
+        return nums[left];
     }
 }
