@@ -7,17 +7,26 @@ namespace Solution;
 
 public class Solution
 {
-    public int FindPairs(int[] nums, int k)
+    public string ComplexNumberMultiply(string num1, string num2)
     {
-        Dictionary<int, int> freq = nums.GroupBy(x => x).ToDictionary(g => g.Key, g => g.Count());
-        int res = 0;
-        foreach (var key in freq.Keys)
+        (int a1, int b1) = Parse(num1);
+        (int a2, int b2) = Parse(num2);
+        int a = a1 * a2 - b1 * b2;
+        int b = a1 * b2 + a2 * b1;
+        return $"{a}+{b}i";
+
+        // a + bi
+        static (int a, int b) Parse(string s)
         {
-            if (freq.TryGetValue(key + k, out var f) && (k > 0 || f > 1))
-            { // Special case k==0&&f>1
-                res += 1;
+            Span<int> vals = stackalloc int[2];
+            int i = 0;
+            foreach (var item in s.Split('+'))
+            {
+                if (i == 1) { vals[i] = int.Parse(item.AsSpan()[..(item.Length - 1)]); }
+                else { vals[i] = int.Parse(item); }
+                i += 1;
             }
+            return (vals[0], vals[1]);
         }
-        return res;
     }
 }
