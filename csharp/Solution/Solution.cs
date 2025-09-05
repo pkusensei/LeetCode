@@ -7,13 +7,36 @@ namespace Solution;
 
 public class Solution
 {
-    public int MakeTheIntegerZero(int num1, int num2)
+    public int GetMinimumDifference(TreeNode root)
     {
-        for (int i = 0; i <= 60; i++)
+        int res = 100_001;
+        Dfs(root, -100_001, 200_001);
+        return res;
+
+        void Dfs(TreeNode node, int min, int max)
         {
-            long val = (long)num1 - (long)i * num2;
-            if (i <= val && long.PopCount(val) <= i) { return i; }
+            if (node is null) { return; }
+            int val = node.val;
+            res = int.Min(res, int.Min(val - min, max - val));
+            Dfs(node.left, min, val);
+            Dfs(node.right, val, max);
         }
-        return -1;
+    }
+
+    public int Inorder(TreeNode root)
+    {
+        int res = 100_001;
+        int prev = -100_001;
+        Dfs(root);
+        return res;
+
+        void Dfs(TreeNode node)
+        {
+            if (node is null) { return; }
+            Dfs(node.left);
+            res = int.Min(res, node.val - prev);
+            prev = node.val;
+            Dfs(node.right);
+        }
     }
 }
