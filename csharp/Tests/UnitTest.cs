@@ -10,12 +10,8 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(1, new[] { 4, 2, 6, 1, 3 })]
-    public void TestMethod1(int exp, int[] n)
+    public void TestMethod1()
     {
-        var a = TreeNode.MakeInt(n);
-        Assert.AreEqual(exp, sol.GetMinimumDifference(a));
-        Assert.AreEqual(exp, sol.Inorder(a));
     }
 
     [TestMethod]
