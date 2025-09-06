@@ -10,8 +10,10 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow(23, new[] { 1, 3, 2, 2, 2, 3, 4, 3, 1 })]
+    public void TestMethod1(int exp, int[] b)
     {
+        Assert.AreEqual(exp, sol.RemoveBoxes(b));
     }
 
     [TestMethod]
