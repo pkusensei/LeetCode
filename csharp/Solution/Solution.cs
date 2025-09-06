@@ -7,22 +7,26 @@ namespace Solution;
 
 public class Solution
 {
-    public int SingleNonDuplicate(int[] nums)
+    public long MinOperations(int[][] queries)
     {
-        int n = nums.Length;
-        int left = 0;
-        int right = n - 1;
-        while (left < right)
+        long res = 0;
+        foreach (var q in queries)
         {
-            int mid = left + (right - left) / 2;
-            if ((mid & 1) == 1)
-            {
-                if (nums[mid] == nums[mid - 1]) { left = 1 + mid; }
-                else { right = mid - 1; }
-            }
-            else if (nums[mid] == nums[1 + mid]) { left = mid; }
-            else { right = mid; }
+            res += (1 + Count(q[1]) - Count(q[0] - 1)) / 2;
         }
-        return nums[left];
+        return res;
+
+        static long Count(int num)
+        {
+            long res = 0;
+            long p = 1;
+            long val = 1;
+            for (; 4 * val <= num; val *= 4)
+            {
+                res += (4 * val - val) * p; // [val, 4val) needs p operations
+                p += 1;
+            }
+            return res + (num - val + 1) * p;
+        }
     }
 }
