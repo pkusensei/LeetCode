@@ -7,11 +7,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_operations(s: &str) -> i32 {
-    s.bytes()
-        .map(|b| if b == b'a' { 0 } else { 26 - (b - b'a') as i32 })
-        .max()
-        .unwrap_or(0)
+pub fn bowl_subarrays(nums: &[i32]) -> i64 {
+    let mut stack = vec![]; // mono dec stack
+    let mut res = 0;
+    for (right, &num) in nums.iter().enumerate() {
+        // [left_end] <= [right_end]
+        while let Some(&top) = stack.last()
+            && nums[top] <= num
+        {
+            stack.pop();
+            res += i64::from(right + 1 - top >= 3);
+        }
+        // [left_end] > [right_end]
+        if stack.last().is_some_and(|&left| right + 1 - left >= 3) {
+            res += 1;
+        }
+        stack.push(right);
+    }
+    res
 }
 
 #[cfg(test)]
@@ -45,7 +58,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_operations("yz"), 2);
+        assert_eq!(bowl_subarrays(&[2, 5, 3, 1, 4]), 2);
+        assert_eq!(bowl_subarrays(&[5, 1, 2, 3, 4]), 3);
     }
 
     #[test]
