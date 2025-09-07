@@ -7,12 +7,11 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_operations(nums: Vec<i32>) -> i32 {
-    if nums.iter().all(|&v| v == nums[0]) {
-        0
-    } else {
-        1
-    }
+pub fn min_operations(s: &str) -> i32 {
+    s.bytes()
+        .map(|b| if b == b'a' { 0 } else { 26 - (b - b'a') as i32 })
+        .max()
+        .unwrap_or(0)
 }
 
 #[cfg(test)]
@@ -45,7 +44,9 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(min_operations("yz"), 2);
+    }
 
     #[test]
     fn test() {}
