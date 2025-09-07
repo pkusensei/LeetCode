@@ -7,21 +7,13 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn fib(n: i32) -> i32 {
-    FIB[n as usize]
-}
-
-const N: usize = 31;
-const FIB: [i32; N] = {
-    let mut f = [0; N];
-    f[1] = 1;
-    let mut i = 2;
-    while i < N {
-        f[i] = f[i - 1] + f[i - 2];
-        i += 1;
+pub fn min_operations(nums: Vec<i32>) -> i32 {
+    if nums.iter().all(|&v| v == nums[0]) {
+        0
+    } else {
+        1
     }
-    f
-};
+}
 
 #[cfg(test)]
 mod tests {
