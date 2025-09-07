@@ -76,9 +76,7 @@ impl<T> FenwickTree<T> {
     {
         assert!(
             left <= right,
-            "Invalid range: left ({}) > right ({})",
-            left,
-            right
+            "Invalid range: left ({left}) > right ({right})",
         );
         assert!(
             right < self.n,
