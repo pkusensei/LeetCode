@@ -7,21 +7,31 @@ namespace Solution;
 
 public class Solution
 {
-    public int LeastBricks(IList<IList<int>> wall)
+    public int NextGreaterElement(int n)
     {
-        Dictionary<int, int> freq = [];
-        int curr = 0;
-        foreach (var row in wall)
+        var s = n.ToString().ToCharArray();
+        if (NextPerm(s) && int.TryParse(s, out var v)) { return v; }
+        return -1;
+
+        static bool NextPerm(Span<char> s)
         {
-            curr = 0;
-            foreach (var width in row)
+            int n = s.Length;
+            int left = n - 2;
+            bool found = false;
+            for (; left >= 0; left -= 1)
             {
-                curr += width;
-                if (!freq.TryAdd(curr, 1)) { freq[curr] += 1; }
+                if (s[left] < s[1 + left])
+                {
+                    found = true;
+                    break;
+                }
             }
+            if (!found) { return false; }
+            int right = n - 1;
+            for (; left < right && s[left] >= s[right]; right -= 1) { }
+            (s[left], s[right]) = (s[right], s[left]);
+            s[(1 + left)..].Reverse();
+            return true;
         }
-        freq.Remove(curr);
-        if (freq.Count == 0) { return wall.Count; }
-        return wall.Count - freq.Values.Max();
     }
 }
