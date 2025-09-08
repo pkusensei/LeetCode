@@ -7,33 +7,49 @@ namespace Solution;
 
 public class Solution
 {
-    public string NearestPalindromic(string n)
+    public int ArrayNesting(int[] nums)
     {
-        int len = n.Length;
-        long num = long.Parse(n);
-        if (len == 1) { return (num - 1).ToString(); }
-        long half = long.Parse(n.AsSpan()[..((1 + len) / 2)]);
-        bool odd = (len & 1) == 1;
-        List<long> candids = [Build(half, odd), Build(half - 1, odd), Build(1 + half, odd),
-            (long)Math.Pow(10, len)+1, (long)Math.Pow(10, len-1)-1];
-        long res = long.MaxValue;
-        foreach (var item in candids.Where(v => v != num))
+        DSU dsu = new(nums.Length);
+        for (int i = 0; i < nums.Length; i++)
         {
-            if (long.Abs(item - num) < long.Abs(res - num)) { res = item; }
-            if (long.Abs(item - num) == long.Abs(res - num)) { res = long.Min(res, item); }
+            dsu.Union(i, nums[i]);
         }
-        return res.ToString();
+        return dsu.Size.Max();
+    }
+}
 
-        static long Build(long half, bool odd)
+class DSU
+{
+    public DSU(int n)
+    {
+        Parent = [.. Enumerable.Range(0, n)];
+        Size = new int[n];
+        Array.Fill(Size, 1);
+    }
+
+    public int[] Parent { get; }
+    public int[] Size { get; }
+
+    public int Find(int v)
+    {
+        if (Parent[v] != v) { Parent[v] = Find(Parent[v]); }
+        return Parent[v];
+    }
+
+    public void Union(int x, int y)
+    {
+        int rx = Find(x);
+        int ry = Find(y);
+        if (rx == ry) { return; }
+        if (Size[rx] >= Size[ry])
         {
-            long res = half;
-            if (odd) { half /= 10; }
-            while (half > 0)
-            {
-                res = 10 * res + half % 10;
-                half /= 10;
-            }
-            return res;
+            Parent[ry] = rx;
+            Size[rx] += Size[ry];
+        }
+        else
+        {
+            Parent[rx] = ry;
+            Size[ry] += Size[rx];
         }
     }
 }
