@@ -10,8 +10,11 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow("121", "123")]
+    [DataRow("9", "10")]
+    public void TestMethod1(string exp, string n)
     {
+        Assert.AreEqual(exp, sol.NearestPalindromic(n));
     }
 
     [TestMethod]
