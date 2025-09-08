@@ -7,22 +7,21 @@ namespace Solution;
 
 public class Solution
 {
-    public int[] GetNoZeroIntegers(int n)
+    public int LeastBricks(IList<IList<int>> wall)
     {
-        for (int i = 1; i <= n / 2; i++)
+        Dictionary<int, int> freq = [];
+        int curr = 0;
+        foreach (var row in wall)
         {
-            if (Check(i) && Check(n - i)) { return [i, n - i]; }
-        }
-        return [];
-
-        static bool Check(int num)
-        {
-            while (num > 0)
+            curr = 0;
+            foreach (var width in row)
             {
-                if (num % 10 == 0) { return false; }
-                num /= 10;
+                curr += width;
+                if (!freq.TryAdd(curr, 1)) { freq[curr] += 1; }
             }
-            return true;
         }
+        freq.Remove(curr);
+        if (freq.Count == 0) { return wall.Count; }
+        return wall.Count - freq.Values.Max();
     }
 }
