@@ -7,14 +7,22 @@ namespace Solution;
 
 public class Solution
 {
-    public int[] SumZero(int n)
+    public int[] GetNoZeroIntegers(int n)
     {
-        List<int> res = new(n);
-        if ((n & 1) == 1) { res.Add(0); }
-        for (int i = 0; i < n / 2; i++)
+        for (int i = 1; i <= n / 2; i++)
         {
-            res.AddRange([-(1 + i), 1 + i]);
+            if (Check(i) && Check(n - i)) { return [i, n - i]; }
         }
-        return [.. res];
+        return [];
+
+        static bool Check(int num)
+        {
+            while (num > 0)
+            {
+                if (num % 10 == 0) { return false; }
+                num /= 10;
+            }
+            return true;
+        }
     }
 }
