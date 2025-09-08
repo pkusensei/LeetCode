@@ -7,17 +7,19 @@ namespace Solution;
 
 public class Solution
 {
-    public int SubarraySum(int[] nums, int k)
+    public int FindTilt(TreeNode root)
     {
-        Dictionary<long, int> freq = new() { [0] = 1 };
-        long prefix = 0;
         int res = 0;
-        foreach (var num in nums)
-        {
-            prefix += num;
-            res += freq.GetValueOrDefault(prefix - k, 0);
-            if (!freq.TryAdd(prefix, 1)) { freq[prefix] += 1; }
-        }
+        PostOrder(root);
         return res;
+
+        int PostOrder(TreeNode node)
+        {
+            if (node is null) { return 0; }
+            int left = PostOrder(node.left);
+            int right = PostOrder(node.right);
+            res += int.Abs(left - right);
+            return node.val + left + right;
+        }
     }
 }
