@@ -7,35 +7,18 @@ namespace Solution;
 
 public class Solution
 {
-    public bool CheckInclusion(string s1, string s2)
+    public bool IsSubtree(TreeNode root, TreeNode subRoot)
     {
-        if (s1.Length > s2.Length) { return false; }
-        Span<int> freq = stackalloc int[26];
-        foreach (var c in s1)
+        if (root is null) { return subRoot is null; }
+        return Dfs(root, subRoot)
+            || IsSubtree(root.left, subRoot) || IsSubtree(root.right, subRoot);
+
+        static bool Dfs(TreeNode node1, TreeNode node2)
         {
-            freq[c - 'a'] += 1;
+            if (node2 is null) { return node1 is null; }
+            if (node1 is null) { return false; }
+            return node1.val == node2.val
+                && Dfs(node1.left, node2.left) && Dfs(node1.right, node2.right);
         }
-        for (int i = 0; i < s2.Length; i++)
-        {
-            freq[s2[i] - 'a'] -= 1;
-            if (i >= s1.Length)
-            {
-                freq[s2[i - s1.Length] - 'a'] += 1;
-            }
-            if (i >= s1.Length - 1)
-            {
-                bool flag = true;
-                for (int fi = 0; fi < 26; fi++)
-                {
-                    if (freq[fi] > 0)
-                    {
-                        flag = false;
-                        break;
-                    }
-                }
-                if (flag) { return true; }
-            }
-        }
-        return false;
     }
 }
