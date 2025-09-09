@@ -7,49 +7,34 @@ namespace Solution;
 
 public class Solution
 {
-    public int ArrayNesting(int[] nums)
+    public int PeopleAwareOfSecret(int n, int delay, int forget)
     {
-        DSU dsu = new(nums.Length);
-        for (int i = 0; i < nums.Length; i++)
+        const int M = 1_000_000_007;
+        Queue<(int day, int count)> knowq = [];
+        Queue<(int day, int count)> shareq = [];
+        knowq.Enqueue((1, 1));
+        int knows = 1;
+        int shares = 0;
+        for (int i = 1; i <= n; i++)
         {
-            dsu.Union(i, nums[i]);
+            while (knowq.TryPeek(out var item) && i - item.day >= delay)
+            {
+                (int day, int count) = knowq.Dequeue();
+                shareq.Enqueue((day, count));
+                knows = (knows - count + M) % M;
+                shares = (shares + count) % M;
+            }
+            while (shareq.TryPeek(out var item) && i - item.day >= forget)
+            {
+                (int _day, int count) = shareq.Dequeue();
+                shares = (shares - count + M) % M;
+            }
+            if (shares > 0)
+            {
+                knows = (knows + shares) % M;
+                knowq.Enqueue((i, shares));
+            }
         }
-        return dsu.Size.Max();
-    }
-}
-
-class DSU
-{
-    public DSU(int n)
-    {
-        Parent = [.. Enumerable.Range(0, n)];
-        Size = new int[n];
-        Array.Fill(Size, 1);
-    }
-
-    public int[] Parent { get; }
-    public int[] Size { get; }
-
-    public int Find(int v)
-    {
-        if (Parent[v] != v) { Parent[v] = Find(Parent[v]); }
-        return Parent[v];
-    }
-
-    public void Union(int x, int y)
-    {
-        int rx = Find(x);
-        int ry = Find(y);
-        if (rx == ry) { return; }
-        if (Size[rx] >= Size[ry])
-        {
-            Parent[ry] = rx;
-            Size[rx] += Size[ry];
-        }
-        else
-        {
-            Parent[rx] = ry;
-            Size[ry] += Size[rx];
-        }
+        return (knows + shares) % M;
     }
 }
