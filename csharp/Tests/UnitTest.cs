@@ -10,11 +10,8 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(5, 6, 2, 4)]
-    [DataRow(6, 4, 1, 3)]
-    public void TestMethod1(int exp, int n, int d, int f)
+    public void TestMethod1()
     {
-        Assert.AreEqual(exp, sol.PeopleAwareOfSecret(n, d, f));
     }
 
     [TestMethod]

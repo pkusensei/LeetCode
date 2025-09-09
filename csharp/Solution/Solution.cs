@@ -7,34 +7,35 @@ namespace Solution;
 
 public class Solution
 {
-    public int PeopleAwareOfSecret(int n, int delay, int forget)
+    public bool CheckInclusion(string s1, string s2)
     {
-        const int M = 1_000_000_007;
-        Queue<(int day, int count)> knowq = [];
-        Queue<(int day, int count)> shareq = [];
-        knowq.Enqueue((1, 1));
-        int knows = 1;
-        int shares = 0;
-        for (int i = 1; i <= n; i++)
+        if (s1.Length > s2.Length) { return false; }
+        Span<int> freq = stackalloc int[26];
+        foreach (var c in s1)
         {
-            while (knowq.TryPeek(out var item) && i - item.day >= delay)
+            freq[c - 'a'] += 1;
+        }
+        for (int i = 0; i < s2.Length; i++)
+        {
+            freq[s2[i] - 'a'] -= 1;
+            if (i >= s1.Length)
             {
-                (int day, int count) = knowq.Dequeue();
-                shareq.Enqueue((day, count));
-                knows = (knows - count + M) % M;
-                shares = (shares + count) % M;
+                freq[s2[i - s1.Length] - 'a'] += 1;
             }
-            while (shareq.TryPeek(out var item) && i - item.day >= forget)
+            if (i >= s1.Length - 1)
             {
-                (int _day, int count) = shareq.Dequeue();
-                shares = (shares - count + M) % M;
-            }
-            if (shares > 0)
-            {
-                knows = (knows + shares) % M;
-                knowq.Enqueue((i, shares));
+                bool flag = true;
+                for (int fi = 0; fi < 26; fi++)
+                {
+                    if (freq[fi] > 0)
+                    {
+                        flag = false;
+                        break;
+                    }
+                }
+                if (flag) { return true; }
             }
         }
-        return (knows + shares) % M;
+        return false;
     }
 }
