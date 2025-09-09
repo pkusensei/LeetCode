@@ -7,24 +7,27 @@ namespace Solution;
 
 public class Solution
 {
-    public int FindUnsortedSubarray(int[] nums)
+    public int MinDistance(string word1, string word2)
     {
-        int min = 100_001;
-        int max = -100_001;
-        int start = 0;
-        int end = -1;
-        int left = 0;
-        int right = nums.Length - 1;
-        // Finds leftmost and rightmost positions where elements are "out of place"
-        while (right >= 0)
+        int n1 = word1.Length;
+        int n2 = word2.Length;
+        int[,] dp = new int[1 + n1, 1 + n2];
+        int lcs = 0;
+        for (int i1 = 0; i1 < n1; i1++)
         {
-            if (nums[right] <= min) { min = nums[right]; }
-            else { start = right; }
-            if (nums[left] >= max) { max = nums[left]; }
-            else { end = left; }
-            left += 1;
-            right -= 1;
+            for (int i2 = 0; i2 < n2; i2++)
+            {
+                if (word1[i1] == word2[i2])
+                {
+                    dp[1 + i1, 1 + i2] = int.Max(dp[1 + i1, 1 + i2], 1 + dp[i1, i2]);
+                }
+                else
+                {
+                    dp[1 + i1, 1 + i2] = int.Max(dp[1 + i1, i2], dp[i1, 1 + i2]);
+                }
+                lcs = int.Max(lcs, dp[1 + i1, 1 + i2]);
+            }
         }
-        return end + 1 - start;
+        return n1 + n2 - 2 * lcs;
     }
 }
