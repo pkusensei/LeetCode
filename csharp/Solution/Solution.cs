@@ -7,26 +7,73 @@ namespace Solution;
 
 public class Solution
 {
-    public int MinimumTeachings(int n, int[][] languages, int[][] friendships)
+    public int[][] OuterTrees(int[][] points)
     {
-        HashSet<int> needs = [];
-        foreach (var f in friendships)
+        int n = points.Length;
+        if (n <= 1) { return points; }
+        Point[] arr = [.. points.Select(v => new Point(v[0], v[1]))];
+        Array.Sort(arr, (a, b) => a.X == b.X ? a.Y.CompareTo(b.Y) : a.X.CompareTo(b.X));
+        List<Point> lower = [];
+        foreach (var p in arr)
         {
-            if (!languages[f[0] - 1].Intersect(languages[f[1] - 1]).Any())
+            while (lower.Count >= 2 && Point.Cross(lower[^2], lower[^1], p) < 0)
             {
-                needs.UnionWith([f[0] - 1, f[1] - 1]); // Both needs a language
+                lower.RemoveAt(lower.Count - 1);
             }
+            lower.Add(p);
         }
-        int[] freq = new int[1 + n];
-        int max = 0;
-        foreach (var f in needs)
+        List<Point> upper = [];
+        foreach (var p in arr.Reverse())
         {
-            foreach (var item in languages[f])
+            while (upper.Count >= 2 && Point.Cross(upper[^2], upper[^1], p) < 0)
             {
-                freq[item] += 1;
-                max = int.Max(max, freq[item]);
+                upper.RemoveAt(upper.Count - 1);
             }
+            upper.Add(p);
         }
-        return needs.Count - max;
+        return [.. lower.SkipLast(1).Union(upper.SkipLast(1))
+                    .Select(p => new[] { p.X, p.Y })];
     }
+}
+
+readonly record struct Point(int X, int Y) : IComparable<Point>
+{
+    // Find the orientation of two vectors, i.e rotate OA to OB.
+    // >0 counter-clockwise,
+    // <0 clockwise,
+    // =0  collinear
+    public static int Cross(Point ori, Point a, Point b)
+        => (a.X - ori.X) * (b.Y - ori.Y) - (a.Y - ori.Y) * (b.X - ori.X);
+
+    public static Point[] ConvexHull(Point[] points)
+    {
+        int n = points.Length;
+        if (n <= 1) { return points; }
+        Array.Sort(points);
+        List<Point> lower = [];
+        foreach (var p in points)
+        {
+            // We want counter-clockwise turns.
+            // If the last three points make a clockwise turn (cross product < 0),
+            // remove the middle point.
+            while (lower.Count >= 2 && Cross(lower[^2], lower[^1], p) < 0)
+            {
+                lower.RemoveAt(lower.Count - 1);
+            }
+            lower.Add(p);
+        }
+        List<Point> upper = [];
+        foreach (var p in points.Reverse())
+        {
+            while (upper.Count >= 2 && Cross(upper[^2], upper[^1], p) < 0)
+            {
+                upper.RemoveAt(upper.Count - 1);
+            }
+            upper.Add(p);
+        }
+        return [.. lower.SkipLast(1).Union(upper.SkipLast(1))];
+    }
+
+    public int CompareTo(Point other)
+        => X == other.X ? Y.CompareTo(other.Y) : X.CompareTo(other.X);
 }
