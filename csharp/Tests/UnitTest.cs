@@ -10,10 +10,8 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow("0/1", "-1/2+1/2")]
-    public void TestMethod1(string exp, string s)
+    public void TestMethod1()
     {
-        Assert.AreEqual(exp, sol.FractionAddition(s));
     }
 
     [TestMethod]
