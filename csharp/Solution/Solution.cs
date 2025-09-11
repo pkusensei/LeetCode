@@ -7,21 +7,52 @@ namespace Solution;
 
 public class Solution
 {
-    public string SortVowels(string s)
+    public string FractionAddition(string expression)
     {
-        char[] V = ['a', 'e', 'i', 'o', 'u', 'A', 'E', 'I', 'O', 'U'];
-        char[] vows = [.. s.Where(c => V.Contains(c)).Order()];
-        int i = 0;
-        StringBuilder sb = new();
-        foreach (var c in s)
+        long nom = 0;
+        long den = 1;
+        long sign = 1;
+        long curr_nom = 0;
+        long curr_den = 0;
+        bool is_nom = true;
+        foreach (var ch in expression)
         {
-            if (V.Contains(c))
+            switch (ch)
             {
-                sb.Append(vows[i]);
-                i += 1;
+                case '+':
+                case '-':
+                    curr_nom *= sign;
+                    nom = nom * curr_den + curr_nom * den;
+                    den *= curr_den;
+                    if (den == 0) { den = 1; }
+                    long gcd = GCD(long.Abs(nom), den);
+                    nom /= gcd;
+                    den /= gcd;
+                    sign = ch == '-' ? -1 : 1;
+                    curr_nom = 0;
+                    curr_den = 0;
+                    is_nom = true;
+                    break;
+                case '/':
+                    is_nom = false;
+                    break;
+                case char c when char.IsAsciiDigit(ch):
+                    if (is_nom) { curr_nom = 10 * curr_nom + ch - '0'; }
+                    else { curr_den = 10 * curr_den + ch - '0'; }
+                    break;
+                default:
+                    break;
             }
-            else { sb.Append(c); }
         }
-        return sb.ToString();
+        curr_nom *= sign;
+        nom = nom * curr_den + curr_nom * den;
+        den *= curr_den;
+        if (den == 0) { den = 1; }
+        long gcd_ = GCD(long.Abs(nom), den);
+        nom /= gcd_;
+        den /= gcd_;
+        return $"{nom}/{den}";
+
+        static long GCD(long a, long b) => a == 0 ? b : GCD(b % a, a);
     }
 }
