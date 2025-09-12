@@ -10,8 +10,10 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow(8, new[] { 'a', 'a', 'a', 'b', 'b', 'b' }, 2)]
+    public void TestMethod1(int exp, char[] t, int n)
     {
+        Assert.AreEqual(exp, sol.LeastInterval(t, n));
     }
 
     [TestMethod]

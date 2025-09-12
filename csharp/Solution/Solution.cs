@@ -7,21 +7,29 @@ namespace Solution;
 
 public class Solution
 {
-    public TreeNode MergeTrees(TreeNode root1, TreeNode root2)
+    public int LeastInterval(char[] tasks, int n)
     {
-        return Dfs(root1, root2);
-
-        static TreeNode Dfs(TreeNode node1, TreeNode node2)
+        // max heap, task - count
+        PriorityQueue<char, int> ready = new(Comparer<int>.Create((a, b) => b.CompareTo(a)));
+        foreach (var g in tasks.GroupBy(c => c))
         {
-            switch (node1 is null, node2 is null)
+            ready.Enqueue(g.Key, g.Count());
+        }
+        // min heap, (task, count) - day
+        PriorityQueue<(char ch, int count), int> wait = new();
+        int res = 0;
+        for (; ready.Count > 0 || wait.Count > 0; res++)
+        {
+            while (wait.TryPeek(out var item, out var prio) && prio + n < res)
             {
-                case (true, true): return null;
-                case (true, false): return node2;
-                case (false, true): return node1;
-                default:
-                    int val = node1.val + node2.val;
-                    return new(val, Dfs(node1.left, node2.left), Dfs(node1.right, node2.right));
+                wait.Dequeue();
+                ready.Enqueue(item.ch, item.count);
+            }
+            if (ready.TryDequeue(out var ch, out var count))
+            {
+                if (count > 1) { wait.Enqueue((ch, count - 1), res); }
             }
         }
+        return res;
     }
 }
