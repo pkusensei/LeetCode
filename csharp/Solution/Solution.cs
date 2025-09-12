@@ -7,28 +7,21 @@ namespace Solution;
 
 public class Solution
 {
-    public int TriangleNumber(int[] nums)
+    public TreeNode MergeTrees(TreeNode root1, TreeNode root2)
     {
-        int n = nums.Length;
-        Array.Sort(nums);
-        int res = 0;
-        for (int i = n - 1; i >= 2; i -= 1)
+        return Dfs(root1, root2);
+
+        static TreeNode Dfs(TreeNode node1, TreeNode node2)
         {
-            int left = 0;
-            int right = i - 1;
-            while (left < right)
+            switch (node1 is null, node2 is null)
             {
-                if (nums[left] + nums[right] > nums[i])
-                {
-                    res += right - left;
-                    right -= 1;
-                }
-                else
-                {
-                    left += 1;
-                }
+                case (true, true): return null;
+                case (true, false): return node2;
+                case (false, true): return node1;
+                default:
+                    int val = node1.val + node2.val;
+                    return new(val, Dfs(node1.left, node2.left), Dfs(node1.right, node2.right));
             }
         }
-        return res;
     }
 }
