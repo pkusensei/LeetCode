@@ -7,25 +7,19 @@ namespace Solution;
 
 public class Solution
 {
-    public TreeNode AddOneRow(TreeNode root, int val, int depth)
+    public int MaxDistance(IList<IList<int>> arrays)
     {
-        TreeNode dummy = new(val, root);
-        Dfs(dummy, val, depth);
-        return dummy.left;
-
-        static void Dfs(TreeNode node, int val, int depth)
+        int min = arrays[0][0];
+        int max = arrays[0].Last();
+        int res = 0;
+        foreach (var row in arrays.Skip(1))
         {
-            if (node is null) { return; }
-            if (depth == 1)
-            {
-                node.left = new(val, node.left);
-                node.right = new(val, null, node.right);
-            }
-            else
-            {
-                Dfs(node.left, val, depth - 1);
-                Dfs(node.right, val, depth - 1);
-            }
+            int curr_min = row[0];
+            int curr_max = row.Last();
+            res = int.Max(res, int.Max(int.Abs(curr_max - min), int.Abs(max - curr_min)));
+            min = int.Min(min, curr_min);
+            max = int.Max(max, curr_max);
         }
+        return res;
     }
 }
