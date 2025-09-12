@@ -7,19 +7,9 @@ namespace Solution;
 
 public class Solution
 {
-    public int MaxDistance(IList<IList<int>> arrays)
+    public int MaximumProduct(int[] nums)
     {
-        int min = arrays[0][0];
-        int max = arrays[0].Last();
-        int res = 0;
-        foreach (var row in arrays.Skip(1))
-        {
-            int curr_min = row[0];
-            int curr_max = row.Last();
-            res = int.Max(res, int.Max(int.Abs(curr_max - min), int.Abs(max - curr_min)));
-            min = int.Min(min, curr_min);
-            max = int.Max(max, curr_max);
-        }
-        return res;
+        Array.Sort(nums);
+        return int.Max(nums[^3] * nums[^2] * nums[^1], nums[0] * nums[1] * nums[^1]);
     }
 }
