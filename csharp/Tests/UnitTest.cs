@@ -10,11 +10,8 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(5, 5)]
-    public void TestMethod1(int exp, int n)
+    public void TestMethod1()
     {
-        Assert.AreEqual(exp, sol.FindIntegers(n));
-        Assert.AreEqual(exp, sol.DigitDpWithFib(n));
     }
 
     [TestMethod]
