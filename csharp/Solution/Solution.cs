@@ -7,29 +7,25 @@ namespace Solution;
 
 public class Solution
 {
-    public int LeastInterval(char[] tasks, int n)
+    public TreeNode AddOneRow(TreeNode root, int val, int depth)
     {
-        // max heap, task - count
-        PriorityQueue<char, int> ready = new(Comparer<int>.Create((a, b) => b.CompareTo(a)));
-        foreach (var g in tasks.GroupBy(c => c))
+        TreeNode dummy = new(val, root);
+        Dfs(dummy, val, depth);
+        return dummy.left;
+
+        static void Dfs(TreeNode node, int val, int depth)
         {
-            ready.Enqueue(g.Key, g.Count());
-        }
-        // min heap, (task, count) - day
-        PriorityQueue<(char ch, int count), int> wait = new();
-        int res = 0;
-        for (; ready.Count > 0 || wait.Count > 0; res++)
-        {
-            while (wait.TryPeek(out var item, out var prio) && prio + n < res)
+            if (node is null) { return; }
+            if (depth == 1)
             {
-                wait.Dequeue();
-                ready.Enqueue(item.ch, item.count);
+                node.left = new(val, node.left);
+                node.right = new(val, null, node.right);
             }
-            if (ready.TryDequeue(out var ch, out var count))
+            else
             {
-                if (count > 1) { wait.Enqueue((ch, count - 1), res); }
+                Dfs(node.left, val, depth - 1);
+                Dfs(node.right, val, depth - 1);
             }
         }
-        return res;
     }
 }
