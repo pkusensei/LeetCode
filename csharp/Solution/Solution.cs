@@ -7,21 +7,37 @@ namespace Solution;
 
 public class Solution
 {
-    public int MaxFreqSum(string s)
+    public string[] Spellchecker(string[] wordlist, string[] queries)
     {
-        Span<int> freq = stackalloc int[26];
-        foreach (var ch in s)
+        HashSet<string> exact = [];
+        Dictionary<string, string> capital = [];
+        Dictionary<string, string> vowel = [];
+        foreach (var item in wordlist)
         {
-            freq[ch - 'a'] += 1;
+            exact.Add(item);
+            capital.TryAdd(item.ToLower(), item);
+            vowel.TryAdd(Process(item), item);
         }
-        int v = 0;
-        int c = 0;
-        for (int i = 0; i < 26; i += 1)
+        List<string> res = [];
+        foreach (var q in queries)
         {
-            int curr = freq[i];
-            if ("aeiou".Contains((char)(i + 'a'))) { v = int.Max(v, curr); }
-            else { c = int.Max(c, curr); }
+            if (exact.Contains(q)) { res.Add(q); }
+            else if (capital.TryGetValue(q.ToLower(), out var v)) { res.Add(v); }
+            else if (vowel.TryGetValue(Process(q), out v)) { res.Add(v); }
+            else { res.Add(""); }
         }
-        return v + c;
+        return [.. res];
+
+        static string Process(ReadOnlySpan<char> s)
+        {
+            StringBuilder sb = new();
+            foreach (var item in s)
+            {
+                char ch = char.ToLower(item);
+                if ("aeiou".Contains(ch)) { sb.Append('_'); }
+                else { sb.Append(ch); }
+            }
+            return sb.ToString();
+        }
     }
 }
