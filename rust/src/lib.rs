@@ -7,36 +7,8 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_xor_subsequences(nums: &[i32]) -> i32 {
-    const WIDTH: usize = 32;
-    if nums.is_empty() {
-        return 0;
-    }
-    // `basis` marks the highest bit reachable thru xor-ing `nums`.
-    // `basis[bit]` records unique representative for this `bit`,
-    // along with lesser bits, the complete "recipe" to reach `bit`.
-    let mut basis = [0; WIDTH];
-    for &(mut num) in nums.iter() {
-        for bit in (0..WIDTH).rev() {
-            if (num >> bit) & 1 == 1 {
-                if basis[bit] == 0 {
-                    basis[bit] = num;
-                    break;
-                }
-                // Unset this `bit` so that from now on
-                // `num` only represents lesser bits
-                num ^= basis[bit];
-            }
-        }
-    }
-    let mut res = 0;
-    // Once a high bit is set, it's never unset
-    for &b in basis.iter().rev() {
-        if b > 0 {
-            res = res.max(res ^ b)
-        }
-    }
-    res
+pub fn earliest_time(tasks: Vec<Vec<i32>>) -> i32 {
+    tasks.iter().map(|t| t[0] + t[1]).min().unwrap_or(0)
 }
 
 #[cfg(test)]
@@ -69,10 +41,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(max_xor_subsequences(&[1, 2, 3]), 3);
-        assert_eq!(max_xor_subsequences(&[5, 2]), 7);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
