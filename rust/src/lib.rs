@@ -7,46 +7,33 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn generate_schedule(n: i32) -> Vec<Vec<i32>> {
-    let mut res = vec![];
-    if n <= 4 {
-        return res;
+pub fn max_xor_subsequences(nums: &[i32]) -> i32 {
+    const WIDTH: usize = 32;
+    if nums.is_empty() {
+        return 0;
     }
-    if n & 1 == 1 {
-        for i in 0..n {
-            res.push(vec![(2 * i) % n, (2 * i + 1) % n]);
-        }
-        for i in 0..n {
-            res.push(vec![(2 * i + 1) % n, (2 * i) % n]);
-        }
-    } else {
-        for i in (0..n).step_by(2) {
-            res.push(vec![i, 1 + i]);
-        }
-        for i in (0..n).step_by(2) {
-            res.push(vec![1 + i, i]);
-        }
-        for i in (1..n).step_by(2) {
-            res.push(vec![i, (1 + i) % n]);
-        }
-        for i in (1..n).step_by(2) {
-            res.push(vec![(1 + i) % n, i]);
+    // `basis` marks the highest bit reachable thru xor-ing `nums`.
+    // `basis[bit]` records unique representative for this `bit`,
+    // along with lesser bits, the complete "recipe" to reach `bit`.
+    let mut basis = [0; WIDTH];
+    for &(mut num) in nums.iter() {
+        for bit in (0..WIDTH).rev() {
+            if (num >> bit) & 1 == 1 {
+                if basis[bit] == 0 {
+                    basis[bit] = num;
+                    break;
+                }
+                // Unset this `bit` so that from now on
+                // `num` only represents lesser bits
+                num ^= basis[bit];
+            }
         }
     }
-    for d in 2..(1 + n) / 2 {
-        let start = res.last().unwrap()[0] + 1;
-        for i in start..start + n {
-            res.push(vec![i % n, (i + d) % n]);
-        }
-        let start = (res.last().unwrap()[1] - 1 + n) % n;
-        for i in start..start + n {
-            res.push(vec![(i + d) % n, i % n]);
-        }
-    }
-    if n & 1 == 0 {
-        let start = (res.last().unwrap()[0] - 1 + n) % n;
-        for i in start..start + n {
-            res.push(vec![i % n, (i + n / 2) % n]);
+    let mut res = 0;
+    // Once a high bit is set, it's never unset
+    for &b in basis.iter().rev() {
+        if b > 0 {
+            res = res.max(res ^ b)
         }
     }
     res
@@ -83,7 +70,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(generate_schedule(5), Vec::<Vec<i32>>::new());
+        assert_eq!(max_xor_subsequences(&[1, 2, 3]), 3);
+        assert_eq!(max_xor_subsequences(&[5, 2]), 7);
     }
 
     #[test]
