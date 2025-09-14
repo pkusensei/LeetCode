@@ -7,37 +7,27 @@ namespace Solution;
 
 public class Solution
 {
-    public string[] Spellchecker(string[] wordlist, string[] queries)
+    public int KInversePairs(int n, int k)
     {
-        HashSet<string> exact = [];
-        Dictionary<string, string> capital = [];
-        Dictionary<string, string> vowel = [];
-        foreach (var item in wordlist)
+        const int M = 1_000_000_007;
+        if (k == 0) { return 1; }
+        int[] dp = new int[1 + k];
+        dp[0] = 1;
+        for (int ni = 1; ni <= n; ni++)
         {
-            exact.Add(item);
-            capital.TryAdd(item.ToLower(), item);
-            vowel.TryAdd(Process(item), item);
-        }
-        List<string> res = [];
-        foreach (var q in queries)
-        {
-            if (exact.Contains(q)) { res.Add(q); }
-            else if (capital.TryGetValue(q.ToLower(), out var v)) { res.Add(v); }
-            else if (vowel.TryGetValue(Process(q), out v)) { res.Add(v); }
-            else { res.Add(""); }
-        }
-        return [.. res];
-
-        static string Process(ReadOnlySpan<char> s)
-        {
-            StringBuilder sb = new();
-            foreach (var item in s)
+            int[] curr = new int[1 + k];
+            // sum of sliding window of size `ni`
+            int sum = 0;
+            for (int ki = 0; ki <= k; ki++)
             {
-                char ch = char.ToLower(item);
-                if ("aeiou".Contains(ch)) { sb.Append('_'); }
-                else { sb.Append(ch); }
+                sum += dp[ki];
+                if (ki >= ni) { sum -= dp[ki - ni]; }
+                if (sum < 0) { sum += M; }
+                sum %= M;
+                curr[ki] = sum;
             }
-            return sb.ToString();
+            dp = curr;
         }
+        return dp[k];
     }
 }
