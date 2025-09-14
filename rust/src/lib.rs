@@ -7,25 +7,49 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_arrivals_to_discard(arrivals: &[i32], w: i32, m: i32) -> i32 {
-    use std::collections::{HashMap, HashSet};
-    let mut left = 0;
-    let mut freq = HashMap::new();
-    let mut discard = HashSet::new();
-    for (right, &num) in arrivals.iter().enumerate() {
-        *freq.entry(num).or_insert(0) += 1;
-        if right + 1 - left > w as usize {
-            if !discard.contains(&left) {
-                *freq.entry(arrivals[left]).or_insert(0) -= 1;
-            }
-            left += 1;
+pub fn generate_schedule(n: i32) -> Vec<Vec<i32>> {
+    let mut res = vec![];
+    if n <= 4 {
+        return res;
+    }
+    if n & 1 == 1 {
+        for i in 0..n {
+            res.push(vec![(2 * i) % n, (2 * i + 1) % n]);
         }
-        if freq[&num] > m {
-            discard.insert(right);
-            *freq.entry(num).or_insert(0) -= 1;
+        for i in 0..n {
+            res.push(vec![(2 * i + 1) % n, (2 * i) % n]);
+        }
+    } else {
+        for i in (0..n).step_by(2) {
+            res.push(vec![i, 1 + i]);
+        }
+        for i in (0..n).step_by(2) {
+            res.push(vec![1 + i, i]);
+        }
+        for i in (1..n).step_by(2) {
+            res.push(vec![i, (1 + i) % n]);
+        }
+        for i in (1..n).step_by(2) {
+            res.push(vec![(1 + i) % n, i]);
         }
     }
-    discard.len() as i32
+    for d in 2..(1 + n) / 2 {
+        let start = res.last().unwrap()[0] + 1;
+        for i in start..start + n {
+            res.push(vec![i % n, (i + d) % n]);
+        }
+        let start = (res.last().unwrap()[1] - 1 + n) % n;
+        for i in start..start + n {
+            res.push(vec![(i + d) % n, i % n]);
+        }
+    }
+    if n & 1 == 0 {
+        let start = (res.last().unwrap()[0] - 1 + n) % n;
+        for i in start..start + n {
+            res.push(vec![i % n, (i + n / 2) % n]);
+        }
+    }
+    res
 }
 
 #[cfg(test)]
@@ -59,8 +83,7 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_arrivals_to_discard(&[1, 2, 1, 3, 1], 4, 2), 0);
-        assert_eq!(min_arrivals_to_discard(&[1, 2, 3, 3, 3, 4], 3, 2), 1);
+        assert_eq!(generate_schedule(5), Vec::<Vec<i32>>::new());
     }
 
     #[test]
