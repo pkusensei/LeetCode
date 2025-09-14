@@ -7,32 +7,37 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_stable_subsequences(nums: &[i32]) -> i32 {
-    let n = nums.len();
-    dfs(nums, 0, 2, 2, &mut vec![[[-1; 3]; 3]; n]) - 1
-}
-
-const M: i32 = 1_000_000_007;
-
-fn dfs(nums: &[i32], idx: usize, prev1: usize, prev2: usize, memo: &mut [[[i32; 3]; 3]]) -> i32 {
-    if idx >= nums.len() {
-        return 1;
-    }
-    if memo[idx][prev1][prev2] > -1 {
-        return memo[idx][prev1][prev2];
-    }
-    // skip
-    let mut res = dfs(nums, 1 + idx, prev1, prev2, memo);
-    let parity = (nums[idx] & 1) as usize;
-    if prev1 == prev2 {
-        if prev1 == 2 || prev2 != parity {
-            res += dfs(nums, 1 + idx, prev2, parity, memo);
+pub fn subsequence_sum_after_capping(mut nums: Vec<i32>, k: i32) -> Vec<bool> {
+    let (n, k) = (nums.len(), k as usize);
+    nums.sort_unstable();
+    // true if sum `i` is reachable
+    let mut sums = vec![false; 1 + k];
+    sums[0] = true;
+    let mut res = Vec::with_capacity(n);
+    let mut idx = 0;
+    'outer: for cap in 1..=n {
+        // `val` is "uncapped". It can be used to build to `k`
+        while let Some(&val) = nums.get(idx)
+            && (val as usize) < cap
+        {
+            // Standard subset sum DP update (knapsack)
+            // Go backwards to avoid using same element multiple times
+            for i in (val as usize..=k).rev() {
+                if sums[i - val as usize] {
+                    sums[i as usize] = true;
+                }
+            }
+            idx += 1;
         }
-    } else {
-        res += dfs(nums, 1 + idx, prev2, parity, memo);
+        let bigger = n - idx; // These are seen as `cap`
+        for i in (0..=bigger).take_while(|i| i * cap <= k as usize) {
+            if sums[k as usize - i * cap] {
+                res.push(true);
+                continue 'outer;
+            }
+        }
+        res.push(false);
     }
-    res %= M;
-    memo[idx][prev1][prev2] = res;
     res
 }
 
@@ -66,7 +71,16 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(
+            subsequence_sum_after_capping(vec![4, 3, 2, 4], 5),
+            [false, false, true, true]
+        );
+        assert_eq!(
+            subsequence_sum_after_capping(vec![1, 2, 3, 4, 5], 3),
+            [true; 5]
+        );
+    }
 
     #[test]
     fn test() {}
