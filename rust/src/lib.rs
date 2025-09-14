@@ -7,15 +7,25 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn smallest_absent(nums: &[i32]) -> i32 {
-    let n = nums.len() as i32;
-    let sum = nums.iter().sum::<i32>();
-    let set: std::collections::HashSet<i32> = nums.iter().copied().collect();
-    let mut res = ((sum + n) / n).max(1);
-    while set.contains(&res) {
-        res += 1;
+pub fn min_arrivals_to_discard(arrivals: &[i32], w: i32, m: i32) -> i32 {
+    use std::collections::{HashMap, HashSet};
+    let mut left = 0;
+    let mut freq = HashMap::new();
+    let mut discard = HashSet::new();
+    for (right, &num) in arrivals.iter().enumerate() {
+        *freq.entry(num).or_insert(0) += 1;
+        if right + 1 - left > w as usize {
+            if !discard.contains(&left) {
+                *freq.entry(arrivals[left]).or_insert(0) -= 1;
+            }
+            left += 1;
+        }
+        if freq[&num] > m {
+            discard.insert(right);
+            *freq.entry(num).or_insert(0) -= 1;
+        }
     }
-    return res;
+    discard.len() as i32
 }
 
 #[cfg(test)]
@@ -49,9 +59,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(smallest_absent(&[3, 5]), 6);
-        assert_eq!(smallest_absent(&[-1, 1, 2]), 3);
-        assert_eq!(smallest_absent(&[-1, 4]), 2);
+        assert_eq!(min_arrivals_to_discard(&[1, 2, 1, 3, 1], 4, 2), 0);
+        assert_eq!(min_arrivals_to_discard(&[1, 2, 3, 3, 3, 4], 3, 2), 1);
     }
 
     #[test]
