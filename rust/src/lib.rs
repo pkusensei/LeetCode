@@ -7,54 +7,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_binary_palindromes(n: i64) -> i32 {
-    if n < 1 {
-        return 1;
+pub fn smallest_absent(nums: &[i32]) -> i32 {
+    let n = nums.len() as i32;
+    let sum = nums.iter().sum::<i32>();
+    let set: std::collections::HashSet<i32> = nums.iter().copied().collect();
+    let mut res = ((sum + n) / n).max(1);
+    while set.contains(&res) {
+        res += 1;
     }
-    let bits = {
-        let mut bits = vec![];
-        let mut temp = n;
-        while temp > 0 {
-            bits.push((temp & 1) as i8);
-            temp >>= 1;
-        }
-        bits.reverse();
-        bits
-    };
-    let len = bits.len();
-    let mut res = 1 + P[len - 1];
-    let half = len.div_ceil(2);
-    for (i, &bit) in bits[..half].iter().enumerate().skip(1) {
-        // ..,1,...
-        //    i     half
-        //     <---> this length is half-i-1, count all combinations here
-        // 2^(half-i-1)
-        if bit == 1 {
-            res += 1 << (half - i - 1);
-        }
-    }
-    let rev: Vec<_> = bits[..half].iter().rev().copied().collect();
-    res += i32::from(rev.as_slice() <= &bits[len - half..]);
-    res
+    return res;
 }
-
-const N: usize = 52;
-// For "shorter" numbers, let k = half width
-// All together there are 2^(k-1) choices, -1 to exclude leading zero
-const P: [i32; N] = {
-    let mut p = [0; 52];
-    let mut i = 1;
-    while i < N {
-        p[i] = 1 << (i.div_ceil(2) - 1);
-        i += 1;
-    }
-    i = 1;
-    while i < N {
-        p[i] += p[i - 1];
-        i += 1;
-    }
-    p
-};
 
 #[cfg(test)]
 mod tests {
@@ -87,8 +49,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(count_binary_palindromes(4), 3);
-        assert_eq!(count_binary_palindromes(9), 6);
+        assert_eq!(smallest_absent(&[3, 5]), 6);
+        assert_eq!(smallest_absent(&[-1, 1, 2]), 3);
+        assert_eq!(smallest_absent(&[-1, 4]), 2);
     }
 
     #[test]
