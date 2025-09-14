@@ -7,8 +7,15 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn earliest_time(tasks: Vec<Vec<i32>>) -> i32 {
-    tasks.iter().map(|t| t[0] + t[1]).min().unwrap_or(0)
+pub fn max_k_distinct(nums: Vec<i32>, k: i32) -> Vec<i32> {
+    use std::collections::BTreeSet;
+    nums.iter()
+        .copied()
+        .collect::<BTreeSet<_>>()
+        .into_iter()
+        .rev()
+        .take(k as usize)
+        .collect()
 }
 
 #[cfg(test)]
