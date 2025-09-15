@@ -24,14 +24,14 @@ pub fn subsequence_sum_after_capping(mut nums: Vec<i32>, k: i32) -> Vec<bool> {
             // Go backwards to avoid using same element multiple times
             for i in (val as usize..=k).rev() {
                 if sums[i - val as usize] {
-                    sums[i as usize] = true;
+                    sums[i] = true;
                 }
             }
             idx += 1;
         }
         let bigger = n - idx; // These are seen as `cap`
-        for i in (0..=bigger).take_while(|i| i * cap <= k as usize) {
-            if sums[k as usize - i * cap] {
+        for i in (0..=bigger).take_while(|i| i * cap <= k) {
+            if sums[k - i * cap] {
                 res.push(true);
                 continue 'outer;
             }
