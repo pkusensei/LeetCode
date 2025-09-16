@@ -7,28 +7,22 @@ namespace Solution;
 
 public class Solution
 {
-    public int ScheduleCourse(int[][] courses)
+    public IList<int> ReplaceNonCoprimes(int[] nums)
     {
-        Array.Sort(courses, (a, b) => a[1].CompareTo(b[1]));
-        int end = 0;
-        PriorityQueue<int, int> pq = new();
-        foreach (var c in courses)
+        Stack<int> st = [];
+        foreach (var num in nums)
         {
-            if (end + c[0] <= c[1])
+            int curr = num;
+            while (st.TryPeek(out var top) && GCD(top, curr) > 1)
             {
-                // this duration is applicable
-                end += c[0];
-                pq.Enqueue(c[0], -c[0]);
+                st.Pop();
+                curr = LCM(top, curr);
             }
-            else if (pq.TryPeek(out int dur, out _) && dur > c[0])
-            {
-                // or is shorter ==> swap to get earlier end time
-                pq.Dequeue();
-                end -= dur;
-                end += c[0];
-                pq.Enqueue(c[0], -c[0]);
-            }
+            st.Push(curr);
         }
-        return pq.Count;
+        return [.. st.Reverse()];
+
+        static int GCD(int a, int b) => a == 0 ? b : GCD(b % a, a);
+        static int LCM(int a, int b) => a / GCD(a, b) * b;
     }
 }

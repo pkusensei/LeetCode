@@ -10,10 +10,8 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(2, 3, 1)]
-    public void TestMethod1(int exp, int n, int k)
+    public void TestMethod1()
     {
-        Assert.AreEqual(exp, sol.KInversePairs(n, k));
     }
 
     [TestMethod]
