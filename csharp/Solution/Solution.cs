@@ -7,17 +7,34 @@ namespace Solution;
 
 public class Solution
 {
-    public bool JudgeSquareSum(int c)
+    public int[] ExclusiveTime(int n, IList<string> logs)
     {
-        long a = 0;
-        long b = (long)Math.Sqrt(c);
-        while (a <= b)
+        int[] res = new int[n];
+        Stack<(int id, int time)> st = [];
+        foreach (var log in logs)
         {
-            long sum = a * a + b * b;
-            if (sum > c) { b -= 1; }
-            else if (sum < c) { a += 1; }
-            else { return true; }
+            var s = log.Split(':');
+            int id = int.Parse(s[0]);
+            int time = int.Parse(s[2]);
+            if (s[1] == "start")
+            {
+                if (st.TryPeek(out var top))
+                {
+                    res[top.id] += time - top.time;
+                }
+                st.Push((id, time));
+            }
+            else
+            {
+                var top = st.Pop();
+                res[top.id] += 1 + time - top.time;
+                if (st.TryPop(out var item))
+                {
+                    item.time = 1 + time;
+                    st.Push(item);
+                }
+            }
         }
-        return false;
+        return res;
     }
 }
