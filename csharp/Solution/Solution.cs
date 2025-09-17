@@ -5,32 +5,41 @@ using static Solution.Utils;
 
 namespace Solution;
 
-public class FoodRatings
+public class Solution
 {
-    public FoodRatings(string[] foods, string[] cuisines, int[] ratings)
+    public int ShoppingOffers(IList<int> price, IList<IList<int>> special, IList<int> needs)
     {
-        F_CR = [];
-        C_RF = [];
-        foreach (var (food, (cui, rat)) in foods.Zip(cuisines.Zip(ratings)))
+        int n = needs.Count;
+        Dictionary<int, int> memo = [];
+        special = [.. special.OrderDescending(Comparer<IList<int>>.Create((a, b) => a[n].CompareTo(b[n])))];
+        return Dfs(0);
+
+        int Dfs(int idx)
         {
-            F_CR.Add(food, (cui, rat));
-            C_RF.TryAdd(cui,
-                new(Comparer<(int rat, string food)>.Create(
-                    (a, b) => a.rat == b.rat ? b.food.CompareTo(a.food) : a.rat.CompareTo(b.rat))));
-            C_RF[cui].Add((rat, food));
+            int bits = 0;
+            foreach (var v in needs)
+            {
+                if (v < 0) { return int.MaxValue / 2; }
+                bits = (bits << 4) | v;
+            }
+            if (memo.TryGetValue(bits, out var seen)) { return seen; }
+            if (idx >= special.Count)
+            {
+                return price.Zip(needs).Sum(p => p.First * p.Second);
+            }
+            int skip = Dfs(1 + idx); // skip
+            for (int i = 0; i < needs.Count; i++)
+            {
+                needs[i] -= special[idx][i];
+            }
+            int take = special[idx][^1] + int.Min(Dfs(idx), Dfs(1 + idx));
+            for (int i = 0; i < needs.Count; i++)
+            {
+                needs[i] += special[idx][i]; // backtrack
+            }
+            int res = int.Min(skip, take);
+            memo[bits] = res;
+            return res;
         }
     }
-
-    Dictionary<string, (string cui, int rat)> F_CR { get; }
-    Dictionary<string, SortedSet<(int rat, string food)>> C_RF { get; }
-
-    public void ChangeRating(string food, int newRating)
-    {
-        (var cui, var curr_rat) = F_CR[food];
-        F_CR[food] = (cui, newRating);
-        C_RF[cui].Remove((curr_rat, food));
-        C_RF[cui].Add((newRating, food));
-    }
-
-    public string HighestRated(string cuisine) => C_RF[cuisine].Max.food;
 }
