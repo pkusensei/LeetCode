@@ -5,36 +5,32 @@ using static Solution.Utils;
 
 namespace Solution;
 
-public class Solution
+public class FoodRatings
 {
-    public int[] ExclusiveTime(int n, IList<string> logs)
+    public FoodRatings(string[] foods, string[] cuisines, int[] ratings)
     {
-        int[] res = new int[n];
-        Stack<(int id, int time)> st = [];
-        foreach (var log in logs)
+        F_CR = [];
+        C_RF = [];
+        foreach (var (food, (cui, rat)) in foods.Zip(cuisines.Zip(ratings)))
         {
-            var s = log.Split(':');
-            int id = int.Parse(s[0]);
-            int time = int.Parse(s[2]);
-            if (s[1] == "start")
-            {
-                if (st.TryPeek(out var top))
-                {
-                    res[top.id] += time - top.time;
-                }
-                st.Push((id, time));
-            }
-            else
-            {
-                var top = st.Pop();
-                res[top.id] += 1 + time - top.time;
-                if (st.TryPop(out var item))
-                {
-                    item.time = 1 + time;
-                    st.Push(item);
-                }
-            }
+            F_CR.Add(food, (cui, rat));
+            C_RF.TryAdd(cui,
+                new(Comparer<(int rat, string food)>.Create(
+                    (a, b) => a.rat == b.rat ? b.food.CompareTo(a.food) : a.rat.CompareTo(b.rat))));
+            C_RF[cui].Add((rat, food));
         }
-        return res;
     }
+
+    Dictionary<string, (string cui, int rat)> F_CR { get; }
+    Dictionary<string, SortedSet<(int rat, string food)>> C_RF { get; }
+
+    public void ChangeRating(string food, int newRating)
+    {
+        (var cui, var curr_rat) = F_CR[food];
+        F_CR[food] = (cui, newRating);
+        C_RF[cui].Remove((curr_rat, food));
+        C_RF[cui].Add((newRating, food));
+    }
+
+    public string HighestRated(string cuisine) => C_RF[cuisine].Max.food;
 }
