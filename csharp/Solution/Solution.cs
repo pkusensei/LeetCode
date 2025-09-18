@@ -5,41 +5,48 @@ using static Solution.Utils;
 
 namespace Solution;
 
-public class Solution
+public class TaskManager
 {
-    public int ShoppingOffers(IList<int> price, IList<IList<int>> special, IList<int> needs)
+    public TaskManager(IList<IList<int>> tasks)
     {
-        int n = needs.Count;
-        Dictionary<int, int> memo = [];
-        special = [.. special.OrderDescending(Comparer<IList<int>>.Create((a, b) => a[n].CompareTo(b[n])))];
-        return Dfs(0);
-
-        int Dfs(int idx)
+        TaskUP = [];
+        MaxHeap = new(Comparer<(int prio, int task)>.Create(
+            (a, b) => a.prio == b.prio ? b.task.CompareTo(a.task) : b.prio.CompareTo(a.prio)));
+        foreach (var row in tasks)
         {
-            int bits = 0;
-            foreach (var v in needs)
-            {
-                if (v < 0) { return int.MaxValue / 2; }
-                bits = (bits << 4) | v;
-            }
-            if (memo.TryGetValue(bits, out var seen)) { return seen; }
-            if (idx >= special.Count)
-            {
-                return price.Zip(needs).Sum(p => p.First * p.Second);
-            }
-            int skip = Dfs(1 + idx); // skip
-            for (int i = 0; i < needs.Count; i++)
-            {
-                needs[i] -= special[idx][i];
-            }
-            int take = special[idx][^1] + int.Min(Dfs(idx), Dfs(1 + idx));
-            for (int i = 0; i < needs.Count; i++)
-            {
-                needs[i] += special[idx][i]; // backtrack
-            }
-            int res = int.Min(skip, take);
-            memo[bits] = res;
-            return res;
+            Add(row[0], row[1], row[2]);
         }
+    }
+
+    Dictionary<int, (int user, int prio)> TaskUP { get; }
+    PriorityQueue<(int prio, int task), (int prio, int task)> MaxHeap { get; }
+
+    public void Add(int userId, int taskId, int priority)
+    {
+        TaskUP[taskId] = (userId, priority);
+        MaxHeap.Enqueue((priority, taskId), (priority, taskId));
+    }
+
+    public void Edit(int taskId, int newPriority)
+    {
+        int user = TaskUP[taskId].user;
+        TaskUP[taskId] = (user, newPriority);
+        MaxHeap.Enqueue((newPriority, taskId), (newPriority, taskId));
+    }
+
+    public void Rmv(int taskId) => TaskUP.Remove(taskId);
+
+    public int ExecTop()
+    {
+        while (MaxHeap.TryDequeue(out var top, out _))
+        {
+            (int prio, int task) = top;
+            if (TaskUP.TryGetValue(task, out var v) && v.prio == prio)
+            {
+                TaskUP.Remove(task);
+                return v.user;
+            }
+        }
+        return -1;
     }
 }
