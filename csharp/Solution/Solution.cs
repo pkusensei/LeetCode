@@ -5,48 +5,37 @@ using static Solution.Utils;
 
 namespace Solution;
 
-public class TaskManager
+public class Spreadsheet
 {
-    public TaskManager(IList<IList<int>> tasks)
+    public Spreadsheet(int rows)
     {
-        TaskUP = [];
-        MaxHeap = new(Comparer<(int prio, int task)>.Create(
-            (a, b) => a.prio == b.prio ? b.task.CompareTo(a.task) : b.prio.CompareTo(a.prio)));
-        foreach (var row in tasks)
+        Table = new int[rows, 26];
+    }
+
+    int[,] Table { get; }
+
+    public void SetCell(string cell, int value)
+    {
+        int col = cell[0] - 'A';
+        int row = int.Parse(cell[1..]) - 1;
+        Table[row, col] = value;
+    }
+
+    public void ResetCell(string cell) => SetCell(cell, 0);
+
+    public int GetValue(string formula)
+    {
+        int res = 0;
+        foreach (var item in formula[1..].Split('+'))
         {
-            Add(row[0], row[1], row[2]);
-        }
-    }
-
-    Dictionary<int, (int user, int prio)> TaskUP { get; }
-    PriorityQueue<(int prio, int task), (int prio, int task)> MaxHeap { get; }
-
-    public void Add(int userId, int taskId, int priority)
-    {
-        TaskUP[taskId] = (userId, priority);
-        MaxHeap.Enqueue((priority, taskId), (priority, taskId));
-    }
-
-    public void Edit(int taskId, int newPriority)
-    {
-        int user = TaskUP[taskId].user;
-        TaskUP[taskId] = (user, newPriority);
-        MaxHeap.Enqueue((newPriority, taskId), (newPriority, taskId));
-    }
-
-    public void Rmv(int taskId) => TaskUP.Remove(taskId);
-
-    public int ExecTop()
-    {
-        while (MaxHeap.TryDequeue(out var top, out _))
-        {
-            (int prio, int task) = top;
-            if (TaskUP.TryGetValue(task, out var v) && v.prio == prio)
+            if (int.TryParse(item, out var v)) { res += v; }
+            else
             {
-                TaskUP.Remove(task);
-                return v.user;
+                int col = item[0] - 'A';
+                int row = int.Parse(item[1..]) - 1;
+                res += Table[row, col];
             }
         }
-        return -1;
+        return res;
     }
 }
