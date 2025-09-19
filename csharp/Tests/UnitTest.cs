@@ -10,12 +10,15 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(18, "1*")]
-    [DataRow(15, "2*")]
-    [DataRow(96, "**")]
-    public void TestMethod1(int exp, string s)
+    [DataRow("x=2", "x+5-3+x=6+x-2")]
+    [DataRow("Infinite solutions", "x=x")]
+    [DataRow("x=0", "2x=x")]
+    [DataRow("x=1", "-x=-1")]
+    [DataRow("x=-2", "2=-x")]
+    [DataRow("Infinite solutions", "0x=0")]
+    public void TestMethod1(string exp, string s)
     {
-        Assert.AreEqual(exp, sol.NumDecodings(s));
+        Assert.AreEqual(exp, sol.SolveEquation(s));
     }
 
     [TestMethod]

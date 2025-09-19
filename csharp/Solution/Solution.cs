@@ -7,60 +7,57 @@ namespace Solution;
 
 public class Solution
 {
-    public int NumDecodings(string s)
+    public string SolveEquation(string equation)
     {
-        const long M = 1_000_000_007;
-        long prev = 1;
-        long curr = s[0] switch
+        int xfactor = 0;
+        int num = 0;
+        int sign = 1;
+        int is_left = 1;
+        int curr_num = 0;
+        for (int i = 0; i < equation.Length; i++)
         {
-            '0' => 0,
-            '*' => 9,
-            _ => 1,
-        };
-        for (int i = 0; i < s.Length - 1; i++)
-        {
-            long temp = curr;
-            if (s[1 + i] == '*')
+            switch (equation[i])
             {
-                curr = curr * 9 % M;
-                switch (s[i])
-                {
-                    case '1':
-                        curr = (curr + 9 * prev) % M;
-                        break;
-                    case '2':
-                        curr = (curr + 6 * prev) % M;
-                        break;
-                    case '*':
-                        curr = (curr + 15 * prev) % M;
-                        break;
-                    default:
-                        break;
-                }
+                case 'x':
+                    if (i > 0 && equation[i - 1] == '0') { break; }
+                    if (curr_num == 0)
+                    {
+                        xfactor += sign;
+                    }
+                    else
+                    {
+                        xfactor += sign * curr_num;
+                        curr_num = 0;
+                        sign = is_left;
+                    }
+                    break;
+                case '+':
+                    num += sign * curr_num;
+                    sign = is_left;
+                    curr_num = 0;
+                    break;
+                case '-':
+                    num += sign * curr_num;
+                    sign = -1 * is_left;
+                    curr_num = 0;
+                    break;
+                case '=':
+                    num += sign * curr_num;
+                    is_left = -1;
+                    sign = is_left;
+                    curr_num = 0;
+                    break;
+                default:
+                    curr_num = 10 * curr_num + equation[i] - '0';
+                    break;
             }
-            else
-            {
-                if (s[1 + i] == '0') { curr = 0; }
-                switch (s[i])
-                {
-                    case '1':
-                        curr = (curr + prev) % M;
-                        break;
-                    case '2' when s[1 + i] is <= '6':
-                        curr = (curr + prev) % M;
-                        break;
-                    case '*' when s[1 + i] is <= '6':
-                        curr = (curr + 2 * prev) % M;
-                        break;
-                    case '*':
-                        curr = (curr + prev) % M;
-                        break;
-                    default:
-                        break;
-                }
-            }
-            prev = temp;
         }
-        return (int)curr;
+        num += sign * curr_num;
+        return (xfactor == 0, num == 0) switch
+        {
+            (true, true) => "Infinite solutions",
+            (true, false) => "No solution",
+            _ => $"x={-num / xfactor}"
+        };
     }
 }
