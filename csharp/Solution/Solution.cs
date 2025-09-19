@@ -5,37 +5,62 @@ using static Solution.Utils;
 
 namespace Solution;
 
-public class Spreadsheet
+public class Solution
 {
-    public Spreadsheet(int rows)
+    public int NumDecodings(string s)
     {
-        Table = new int[rows, 26];
-    }
-
-    int[,] Table { get; }
-
-    public void SetCell(string cell, int value)
-    {
-        int col = cell[0] - 'A';
-        int row = int.Parse(cell[1..]) - 1;
-        Table[row, col] = value;
-    }
-
-    public void ResetCell(string cell) => SetCell(cell, 0);
-
-    public int GetValue(string formula)
-    {
-        int res = 0;
-        foreach (var item in formula[1..].Split('+'))
+        const long M = 1_000_000_007;
+        long prev = 1;
+        long curr = s[0] switch
         {
-            if (int.TryParse(item, out var v)) { res += v; }
+            '0' => 0,
+            '*' => 9,
+            _ => 1,
+        };
+        for (int i = 0; i < s.Length - 1; i++)
+        {
+            long temp = curr;
+            if (s[1 + i] == '*')
+            {
+                curr = curr * 9 % M;
+                switch (s[i])
+                {
+                    case '1':
+                        curr = (curr + 9 * prev) % M;
+                        break;
+                    case '2':
+                        curr = (curr + 6 * prev) % M;
+                        break;
+                    case '*':
+                        curr = (curr + 15 * prev) % M;
+                        break;
+                    default:
+                        break;
+                }
+            }
             else
             {
-                int col = item[0] - 'A';
-                int row = int.Parse(item[1..]) - 1;
-                res += Table[row, col];
+                if (s[1 + i] == '0') { curr = 0; }
+                switch (s[i])
+                {
+                    case '1':
+                        curr = (curr + prev) % M;
+                        break;
+                    case '2' when s[1 + i] is <= '6':
+                        curr = (curr + prev) % M;
+                        break;
+                    case '*' when s[1 + i] is <= '6':
+                        curr = (curr + 2 * prev) % M;
+                        break;
+                    case '*':
+                        curr = (curr + prev) % M;
+                        break;
+                    default:
+                        break;
+                }
             }
+            prev = temp;
         }
-        return res;
+        return (int)curr;
     }
 }
