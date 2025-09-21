@@ -4,72 +4,82 @@ mod fenwick_tree;
 mod helper;
 mod trie;
 
-use std::collections::{HashMap, HashSet, VecDeque};
-
 #[allow(unused_imports)]
 use helper::*;
-use itertools::Itertools;
 
-pub fn min_split_merge(nums1: &[i32], nums2: &[i32]) -> i32 {
-    let map = nums1.iter().fold(HashMap::new(), |mut acc, &v| {
-        let n = acc.len() as i32;
-        acc.entry(v).or_insert(n);
-        acc
-    });
-    let start = to_bits(&map, nums1);
-    let target = to_bits(&map, nums2);
-    let mut queue = VecDeque::from([(start, 0)]);
-    let mut seen = HashSet::from([start]);
-    while let Some((curr, step)) = queue.pop_front() {
-        if curr == target {
-            return step;
-        }
-        for next in generate(nums1.len(), curr, &mut seen) {
-            queue.push_back((next, 1 + step));
-        }
-    }
-    -1
-}
-
-const WIDTH: i32 = 3; // 0b111
-
-fn generate(n: usize, mut bits: i32, seen: &mut HashSet<i32>) -> Vec<i32> {
-    let mut nums = Vec::with_capacity(n);
-    while nums.len() < n {
-        nums.push(bits & 0b111);
-        bits >>= WIDTH;
-    }
-    nums.reverse();
-    let mut res = vec![];
+pub fn max_total_value(nums: &[i32], k: i32) -> i64 {
+    use std::collections::BinaryHeap;
+    let n = nums.len();
+    let mintree = SegTree::new(nums, std::cmp::min, i32::MAX);
+    let maxtree = SegTree::new(nums, std::cmp::max, i32::MIN);
+    // (diff, left, right)
+    let mut heap = BinaryHeap::with_capacity(n);
     for left in 0..n {
-        for right in left..n {
-            let mut curr = nums[..left]
-                .iter()
-                .chain(&nums[1 + right..])
-                .copied()
-                .collect_vec();
-            let sub = &nums[left..=right];
-            for i in 0..curr.len() {
-                let mut temp = curr.clone();
-                temp.splice(i..i, sub.iter().copied());
-                let mask = temp.iter().fold(0, |acc, v| (acc << WIDTH) | v);
-                if seen.insert(mask) {
-                    res.push(mask);
-                }
-            }
-            curr.extend_from_slice(sub);
-            let mask = curr.iter().fold(0, |acc, v| (acc << WIDTH) | v);
-            if seen.insert(mask) {
-                res.push(mask);
-            }
+        let diff = maxtree.query(left, n - 1) - mintree.query(left, n - 1);
+        heap.push((diff, left, n - 1));
+    }
+    let mut res = 0;
+    for _ in 0..k {
+        let Some((diff, left, right)) = heap.pop() else {
+            break;
+        };
+        res += i64::from(diff);
+        if left < right {
+            let diff = maxtree.query(left, right - 1) - mintree.query(left, right - 1);
+            heap.push((diff, left, right - 1));
         }
     }
     res
 }
 
-// len(nums)<=6
-fn to_bits(map: &HashMap<i32, i32>, nums: &[i32]) -> i32 {
-    nums.iter().fold(0, |acc, v| (acc << WIDTH) | map[v])
+struct SegTree {
+    tree: Vec<i32>,
+    n: usize,
+    f: fn(i32, i32) -> i32,
+    discard: i32,
+}
+
+impl SegTree {
+    fn new(nums: &[i32], f: fn(i32, i32) -> i32, discard: i32) -> Self {
+        let n = nums.len();
+        let mut s = Self {
+            tree: vec![0; 4 * n],
+            n,
+            f,
+            discard,
+        };
+        s.build(1, 0, n - 1, nums);
+        s
+    }
+
+    fn build(&mut self, node: usize, left: usize, right: usize, nums: &[i32]) {
+        if left == right {
+            self.tree[node] = nums[left];
+            return;
+        }
+        let mid = left.midpoint(right);
+        self.build(2 * node, left, mid, nums);
+        self.build(2 * node + 1, 1 + mid, right, nums);
+        self.tree[node] = (self.f)(self.tree[2 * node], self.tree[2 * node + 1]);
+    }
+
+    fn query(&self, ql: usize, qr: usize) -> i32 {
+        self._query(1, 0, self.n - 1, ql, qr)
+    }
+
+    fn _query(&self, node: usize, left: usize, right: usize, ql: usize, qr: usize) -> i32 {
+        if qr < left || right < ql {
+            return self.discard;
+        }
+        if ql <= left && right <= qr {
+            return self.tree[node];
+        }
+        let mid = left.midpoint(right);
+        (self.f)(
+            self._query(2 * node, left, mid, ql, qr),
+            self._query(2 * node + 1, 1 + mid, right, ql, qr),
+        )
+    }
 }
 
 #[cfg(test)]
@@ -103,12 +113,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_split_merge(&[3, 1, 2], &[1, 2, 3]), 1);
-        assert_eq!(min_split_merge(&[1, 1, 2, 3, 4, 5], &[5, 4, 3, 2, 1, 1]), 3)
+        assert_eq!(max_total_value(&[1, 3, 2], 2), 4);
+        assert_eq!(max_total_value(&[4, 2, 5, 1], 3), 12);
     }
 
     #[test]
     fn test() {
-        assert_eq!(min_split_merge(&[-17, -31], &[-31, -17]), 1);
+        assert_eq!(max_total_value(&[11, 8], 2), 3);
     }
 }
