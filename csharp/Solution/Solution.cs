@@ -1,76 +1,70 @@
-﻿using System.Text;
+﻿using System.Collections.Frozen;
+using System.Text;
 using Solution.LList;
 using Solution.Tree;
 using static Solution.Utils;
 
 namespace Solution;
 
-public class Router
+public class MovieRentingSystem
 {
-    public Router(int memoryLimit)
+    public MovieRentingSystem(int n, int[][] entries)
     {
-        Cap = memoryLimit;
-        Set = [];
-        Fifo = [];
-        DstTimes = [];
+        InStore = [];
+        Rented = [];
+        Dictionary<(int, int), int> lookup = [];
+        foreach (var item in entries)
+        {
+            int shop = item[0];
+            int movie = item[1];
+            int price = item[2];
+            InStore.TryAdd(movie, []);
+            InStore[movie].Add((price, shop));
+            lookup.Add((shop, movie), price);
+        }
+        Lookup = lookup.ToFrozenDictionary();
     }
 
-    int Cap { get; }
-    HashSet<Packet> Set { get; }
-    Queue<Packet> Fifo { get; }
-    Dictionary<int, List<int>> DstTimes { get; }
+    // movie_id - (price, shop)
+    Dictionary<int, SortedSet<(int price, int shop)>> InStore = [];
+    SortedSet<Movie> Rented { get; }
+    FrozenDictionary<(int shop, int movie), int> Lookup { get; }
 
-    public bool AddPacket(int source, int destination, int timestamp)
+    public IList<int> Search(int movie)
     {
-        Packet p = new(source, destination, timestamp);
-        if (!Set.Add(p)) { return false; }
-        if (Fifo.Count == Cap) { ForwardPacket(); }
-        Fifo.Enqueue(p);
-        if (!DstTimes.TryAdd(destination, [timestamp])) { DstTimes[destination].Add(timestamp); }
-        return true;
+        List<int> res = [];
+        if (!InStore.TryGetValue(movie, out var set)) { return res; }
+        foreach (var (_, shop) in set)
+        {
+            res.Add(shop);
+            if (res.Count == 5) { break; }
+        }
+        return res;
     }
 
-    public int[] ForwardPacket()
+    public void Rent(int shop, int movie)
     {
-        if (!Fifo.TryDequeue(out var pac)) { return []; }
-        Set.Remove(pac);
-        DstTimes[pac.Dst].RemoveAt(0);
-        return [pac.Src, pac.Dst, pac.Time];
+        int price = Lookup[(shop, movie)];
+        InStore[movie].Remove((price, shop));
+        Rented.Add(new(shop, movie, price));
     }
 
-    public int GetCount(int destination, int startTime, int endTime)
+    public void Drop(int shop, int movie)
     {
-        if (!DstTimes.TryGetValue(destination, out var list) || list.Count == 0)
+        int price = Lookup[(shop, movie)];
+        InStore[movie].Add((price, shop));
+        Rented.Remove(new(shop, movie, price));
+    }
+
+    public IList<IList<int>> Report() => [.. Rented.Take(5).Select(m => (IList<int>)[m.Shop, m.Id])];
+
+    readonly record struct Movie(int Shop, int Id, int Price) : IComparable<Movie>
+    {
+        public int CompareTo(Movie other)
         {
-            return 0;
+            if (Price != other.Price) { return Price.CompareTo(other.Price); }
+            else if (Shop != other.Shop) { return Shop.CompareTo(other.Shop); }
+            else { return Id.CompareTo(other.Id); }
         }
-        int start = list.BinarySearch(startTime);
-        if (start >= 0)
-        {
-            while (start >= 0 && list[start] == startTime)
-            {
-                start -= 1;
-            }
-            start += 1;
-        }
-        else
-        {
-            start = ~start;
-        }
-        int end = list.BinarySearch(endTime);
-        if (end >= 0)
-        {
-            while (end < list.Count && list[end] == endTime)
-            {
-                end += 1;
-            }
-        }
-        else
-        {
-            end = ~end;
-        }
-        return end - start;
     }
 }
-
-readonly record struct Packet(int Src, int Dst, int Time);
