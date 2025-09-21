@@ -7,10 +7,13 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn even_number_bitwise_o_rs(nums: Vec<i32>) -> i32 {
-    nums.into_iter()
-        .filter(|v| v & 1 == 0)
-        .fold(0, |acc, v| acc | v)
+pub fn max_total_value(nums: Vec<i32>, k: i32) -> i64 {
+    let [mut min, mut max] = [i32::MAX, i32::MIN];
+    for num in nums {
+        min = min.min(num);
+        max = max.max(num);
+    }
+    i64::from(k) * i64::from(max - min)
 }
 
 #[cfg(test)]
