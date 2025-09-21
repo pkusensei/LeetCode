@@ -7,38 +7,10 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn subsequence_sum_after_capping(mut nums: Vec<i32>, k: i32) -> Vec<bool> {
-    let (n, k) = (nums.len(), k as usize);
-    nums.sort_unstable();
-    // true if sum `i` is reachable
-    let mut sums = vec![false; 1 + k];
-    sums[0] = true;
-    let mut res = Vec::with_capacity(n);
-    let mut idx = 0;
-    'outer: for cap in 1..=n {
-        // `val` is "uncapped". It can be used to build to `k`
-        while let Some(&val) = nums.get(idx)
-            && (val as usize) < cap
-        {
-            // Standard subset sum DP update (knapsack)
-            // Go backwards to avoid using same element multiple times
-            for i in (val as usize..=k).rev() {
-                if sums[i - val as usize] {
-                    sums[i] = true;
-                }
-            }
-            idx += 1;
-        }
-        let bigger = n - idx; // These are seen as `cap`
-        for i in (0..=bigger).take_while(|i| i * cap <= k) {
-            if sums[k - i * cap] {
-                res.push(true);
-                continue 'outer;
-            }
-        }
-        res.push(false);
-    }
-    res
+pub fn even_number_bitwise_o_rs(nums: Vec<i32>) -> i32 {
+    nums.into_iter()
+        .filter(|v| v & 1 == 0)
+        .fold(0, |acc, v| acc | v)
 }
 
 #[cfg(test)]
@@ -71,16 +43,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(
-            subsequence_sum_after_capping(vec![4, 3, 2, 4], 5),
-            [false, false, true, true]
-        );
-        assert_eq!(
-            subsequence_sum_after_capping(vec![1, 2, 3, 4, 5], 3),
-            [true; 5]
-        );
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
