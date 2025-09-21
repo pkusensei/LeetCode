@@ -2,12 +2,14 @@ mod binary_lifting;
 mod dsu;
 mod fenwick_tree;
 mod helper;
+mod seg_tree;
 mod trie;
 
 #[allow(unused_imports)]
 use helper::*;
 
 pub fn max_total_value(nums: &[i32], k: i32) -> i64 {
+    use seg_tree::SegTree;
     use std::collections::BinaryHeap;
     let n = nums.len();
     let mintree = SegTree::new(nums, std::cmp::min, i32::MAX);
@@ -30,56 +32,6 @@ pub fn max_total_value(nums: &[i32], k: i32) -> i64 {
         }
     }
     res
-}
-
-struct SegTree {
-    tree: Vec<i32>,
-    n: usize,
-    f: fn(i32, i32) -> i32,
-    discard: i32,
-}
-
-impl SegTree {
-    fn new(nums: &[i32], f: fn(i32, i32) -> i32, discard: i32) -> Self {
-        let n = nums.len();
-        let mut s = Self {
-            tree: vec![0; 4 * n],
-            n,
-            f,
-            discard,
-        };
-        s.build(1, 0, n - 1, nums);
-        s
-    }
-
-    fn build(&mut self, node: usize, left: usize, right: usize, nums: &[i32]) {
-        if left == right {
-            self.tree[node] = nums[left];
-            return;
-        }
-        let mid = left.midpoint(right);
-        self.build(2 * node, left, mid, nums);
-        self.build(2 * node + 1, 1 + mid, right, nums);
-        self.tree[node] = (self.f)(self.tree[2 * node], self.tree[2 * node + 1]);
-    }
-
-    fn query(&self, ql: usize, qr: usize) -> i32 {
-        self._query(1, 0, self.n - 1, ql, qr)
-    }
-
-    fn _query(&self, node: usize, left: usize, right: usize, ql: usize, qr: usize) -> i32 {
-        if qr < left || right < ql {
-            return self.discard;
-        }
-        if ql <= left && right <= qr {
-            return self.tree[node];
-        }
-        let mid = left.midpoint(right);
-        (self.f)(
-            self._query(2 * node, left, mid, ql, qr),
-            self._query(2 * node + 1, 1 + mid, right, ql, qr),
-        )
-    }
 }
 
 #[cfg(test)]
