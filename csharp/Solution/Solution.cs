@@ -8,22 +8,19 @@ namespace Solution;
 
 public class Solution
 {
-    public int CompareVersion(string version1, string version2)
+    public int FindLongestChain(int[][] pairs)
     {
-        int[] s1 = [.. version1.Split('.').Select(int.Parse)];
-        int[] s2 = [.. version2.Split('.').Select(int.Parse)];
-        int i1 = 0;
-        int i2 = 0;
-        for (; i1 < s1.Length || i2 < s2.Length; i1 += 1, i2 += 1)
+        Array.Sort(pairs, (a, b) => a[1].CompareTo(b[1]));
+        int end = -1001;
+        int res = 0;
+        foreach (var item in pairs)
         {
-            if (i1 < s1.Length && i2 < s2.Length)
+            if (end < item[0])
             {
-                if (s1[i1] == s2[i2]) { continue; }
-                return s1[i1] < s2[i2] ? -1 : 1;
+                res += 1;
+                end = item[1];
             }
-            if (i1 >= s1.Length && s2[i2] > 0) { return -1; }
-            if (i2 >= s2.Length && s1[i1] > 0) { return 1; }
         }
-        return 0;
+        return res;
     }
 }
