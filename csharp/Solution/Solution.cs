@@ -8,18 +8,22 @@ namespace Solution;
 
 public class Solution
 {
-    public int[] FindErrorNums(int[] nums)
+    public int CompareVersion(string version1, string version2)
     {
-        int n = nums.Length;
-        int dup = 0;
-        int sum = 0;
-        for (int i = 0; i < n; i++)
+        int[] s1 = [.. version1.Split('.').Select(int.Parse)];
+        int[] s2 = [.. version2.Split('.').Select(int.Parse)];
+        int i1 = 0;
+        int i2 = 0;
+        for (; i1 < s1.Length || i2 < s2.Length; i1 += 1, i2 += 1)
         {
-            sum += int.Abs(nums[i]);
-            int idx = int.Abs(nums[i]) - 1;
-            if (nums[idx] < 0) { dup = int.Abs(nums[i]); }
-            nums[idx] *= -1;
+            if (i1 < s1.Length && i2 < s2.Length)
+            {
+                if (s1[i1] == s2[i2]) { continue; }
+                return s1[i1] < s2[i2] ? -1 : 1;
+            }
+            if (i1 >= s1.Length && s2[i2] > 0) { return -1; }
+            if (i2 >= s2.Length && s1[i1] > 0) { return 1; }
         }
-        return [dup, n * (1 + n) / 2 - sum + dup];
+        return 0;
     }
 }
