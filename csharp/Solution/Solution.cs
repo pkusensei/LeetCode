@@ -8,24 +8,21 @@ namespace Solution;
 
 public class Solution
 {
-    public string PredictPartyVictory(string senate)
+    public int MinSteps(int n)
     {
-        int n = senate.Length;
-        Queue<int> rs = [];
-        Queue<int> ds = [];
-        for (int i = 0; i < n; i++)
+        if (n == 1) { return 0; }
+        int[,] memo = new int[1 + n, 1 + n / 2];
+        return 1 + Dfs(1, 1);
+
+        int Dfs(int curr, int clipboard)
         {
-            if (senate[i] == 'R') { rs.Enqueue(i); }
-            else { ds.Enqueue(i); }
+            if (curr == n) { return 0; }
+            if (curr > n) { return int.MaxValue / 2; }
+            if (memo[curr, clipboard] > 0) { return memo[curr, clipboard]; }
+            int paste = 1 + Dfs(curr + clipboard, clipboard);
+            int copy_paste = 2 + Dfs(2 * curr, curr);
+            memo[curr, clipboard] = int.Min(paste, copy_paste);
+            return memo[curr, clipboard];
         }
-        while (ds.Count > 0 && rs.Count > 0)
-        {
-            int r = rs.Dequeue();
-            int d = ds.Dequeue();
-            if (r < d) { rs.Enqueue(r + n); }
-            else { ds.Enqueue(d + n); }
-        }
-        if (rs.Count > 0) { return "Radiant"; }
-        return "Dire";
     }
 }
