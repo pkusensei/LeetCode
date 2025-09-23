@@ -8,47 +8,24 @@ namespace Solution;
 
 public class Solution
 {
-    public string ReplaceWords(IList<string> dictionary, string sentence)
+    public string PredictPartyVictory(string senate)
     {
-        Trie tr = new();
-        foreach (var w in dictionary)
+        int n = senate.Length;
+        Queue<int> rs = [];
+        Queue<int> ds = [];
+        for (int i = 0; i < n; i++)
         {
-            tr.Insert(w);
+            if (senate[i] == 'R') { rs.Enqueue(i); }
+            else { ds.Enqueue(i); }
         }
-        return string.Join(' ', sentence.Split(' ').Select(s => tr.Find(s)));
-    }
-
-    class Trie
-    {
-        public Trie()
+        while (ds.Count > 0 && rs.Count > 0)
         {
-            Nodes = new Trie[26];
-            IsEnd = false;
+            int r = rs.Dequeue();
+            int d = ds.Dequeue();
+            if (r < d) { rs.Enqueue(r + n); }
+            else { ds.Enqueue(d + n); }
         }
-
-        Trie[] Nodes { get; }
-        bool IsEnd { get; set; }
-
-        public void Insert(ReadOnlySpan<char> s)
-        {
-            var curr = this;
-            foreach (var ch in s)
-            {
-                curr = curr.Nodes[ch - 'a'] ??= new();
-            }
-            curr.IsEnd = true;
-        }
-
-        public string Find(ReadOnlySpan<char> s)
-        {
-            var curr = this;
-            for (int i = 0; i < s.Length; i++)
-            {
-                if (curr is null) { break; }
-                if (curr.IsEnd) { return new(s[..i]); }
-                curr = curr.Nodes[s[i] - 'a'];
-            }
-            return new(s);
-        }
+        if (rs.Count > 0) { return "Radiant"; }
+        return "Dire";
     }
 }
