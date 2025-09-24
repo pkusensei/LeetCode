@@ -8,21 +8,34 @@ namespace Solution;
 
 public class Solution
 {
-    public int MinSteps(int n)
+    public IList<TreeNode> FindDuplicateSubtrees(TreeNode root)
     {
-        if (n == 1) { return 0; }
-        int[,] memo = new int[1 + n, 1 + n / 2];
-        return 1 + Dfs(1, 1);
+        Dictionary<string, TreeNode> seen = [];
+        Dfs(root);
+        return [.. seen.Values.Where(s => s is not null)];
 
-        int Dfs(int curr, int clipboard)
+        string Dfs(TreeNode node)
         {
-            if (curr == n) { return 0; }
-            if (curr > n) { return int.MaxValue / 2; }
-            if (memo[curr, clipboard] > 0) { return memo[curr, clipboard]; }
-            int paste = 1 + Dfs(curr + clipboard, clipboard);
-            int copy_paste = 2 + Dfs(2 * curr, curr);
-            memo[curr, clipboard] = int.Min(paste, copy_paste);
-            return memo[curr, clipboard];
+            if (node is null) { return "#"; }
+            StringBuilder sb = new();
+            sb.Append(node.val);
+            sb.Append(',');
+            string left = Dfs(node.left);
+            string right = Dfs(node.right);
+            sb.Append(left);
+            sb.Append(right);
+            string s = sb.ToString();
+            if (seen.TryGetValue(s, out var v))
+            {
+                // second time, record this node
+                if (v is null) { seen[s] = node; }
+            }
+            else
+            {
+                // first time, mark this string
+                seen.Add(s, null);
+            }
+            return s;
         }
     }
 }
