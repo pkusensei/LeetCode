@@ -8,15 +8,53 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<int> FindClosestElements(int[] arr, int k, int x)
+    public bool IsPossible(int[] nums)
     {
-        int left = 0;
-        int right = arr.Length - 1;
-        while (right - left + 1 > k)
+        PriorityQueue<Seq, Seq> pq = new();
+        foreach (var num in nums)
         {
-            if (int.Abs(arr[right] - x) >= int.Abs(arr[left] - x)) { right -= 1; }
-            else { left += 1; }
+            while (true)
+            {
+                if (pq.TryPeek(out Seq seq, out _))
+                {
+                    if (seq.Num + 1 == num)
+                    {
+                        pq.Dequeue(); // Continue on this seq
+                        seq = new(num, 1 + seq.Len);
+                        pq.Enqueue(seq, seq);
+                        break;
+                    }
+                    else if (seq.Num == num)
+                    {
+                        seq = new(num, 1); // start a new one
+                        pq.Enqueue(seq, seq);
+                        break;
+                    }
+                    else
+                    {
+                        // Found gap; clear pq
+                        if (seq.Len < 3) { return false; }
+                        else { pq.Dequeue(); }
+                    }
+                }
+                else
+                {
+                    seq = new(num, 1);
+                    pq.Enqueue(seq, seq);
+                    break;
+                }
+            }
         }
-        return arr[left..(1 + right)];
+        while (pq.TryDequeue(out var seq, out _))
+        {
+            if (seq.Len < 3) { return false; }
+        }
+        return true;
+    }
+
+    readonly record struct Seq(int Num, int Len) : IComparable<Seq>
+    {
+        public int CompareTo(Seq other)
+        => Num == other.Num ? Len.CompareTo(other.Len) : Num.CompareTo(other.Num);
     }
 }
