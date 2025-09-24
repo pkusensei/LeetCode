@@ -8,34 +8,23 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<TreeNode> FindDuplicateSubtrees(TreeNode root)
+    public bool FindTarget(TreeNode root, int k)
     {
-        Dictionary<string, TreeNode> seen = [];
-        Dfs(root);
-        return [.. seen.Values.Where(s => s is not null)];
+        return Dfs(root, root, k);
 
-        string Dfs(TreeNode node)
+        static bool Dfs(TreeNode node, TreeNode root, int k)
         {
-            if (node is null) { return "#"; }
-            StringBuilder sb = new();
-            sb.Append(node.val);
-            sb.Append(',');
-            string left = Dfs(node.left);
-            string right = Dfs(node.right);
-            sb.Append(left);
-            sb.Append(right);
-            string s = sb.ToString();
-            if (seen.TryGetValue(s, out var v))
-            {
-                // second time, record this node
-                if (v is null) { seen[s] = node; }
-            }
-            else
-            {
-                // first time, mark this string
-                seen.Add(s, null);
-            }
-            return s;
+            if (node is null) { return false; }
+            return Find(root, node, k - node.val)
+                || Dfs(node.left, root, k) || Dfs(node.right, root, k);
+        }
+
+        static bool Find(TreeNode node, TreeNode used, int val)
+        {
+            if (node is null) { return false; }
+            if (val == node.val && node != used) { return true; }
+            if (val < node.val) { return Find(node.left, used, val); }
+            return Find(node.right, used, val);
         }
     }
 }

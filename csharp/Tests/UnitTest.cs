@@ -12,7 +12,6 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
-        Assert.AreEqual("[]", sol.FindDuplicateSubtrees(TreeNode.Make([2, 1, 11, 11, null, 1])).Print());
     }
 
     [TestMethod]
