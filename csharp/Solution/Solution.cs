@@ -8,23 +8,15 @@ namespace Solution;
 
 public class Solution
 {
-    public bool FindTarget(TreeNode root, int k)
+    public IList<int> FindClosestElements(int[] arr, int k, int x)
     {
-        return Dfs(root, root, k);
-
-        static bool Dfs(TreeNode node, TreeNode root, int k)
+        int left = 0;
+        int right = arr.Length - 1;
+        while (right - left + 1 > k)
         {
-            if (node is null) { return false; }
-            return Find(root, node, k - node.val)
-                || Dfs(node.left, root, k) || Dfs(node.right, root, k);
+            if (int.Abs(arr[right] - x) >= int.Abs(arr[left] - x)) { right -= 1; }
+            else { left += 1; }
         }
-
-        static bool Find(TreeNode node, TreeNode used, int val)
-        {
-            if (node is null) { return false; }
-            if (val == node.val && node != used) { return true; }
-            if (val < node.val) { return Find(node.left, used, val); }
-            return Find(node.right, used, val);
-        }
+        return arr[left..(1 + right)];
     }
 }
