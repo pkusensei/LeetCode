@@ -8,28 +8,33 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_total_value(nums: &[i32], k: i32) -> i64 {
-    use seg_tree::SegTree;
-    use std::collections::BinaryHeap;
-    let n = nums.len();
-    let mintree = SegTree::new(nums, std::cmp::min, i32::MAX);
-    let maxtree = SegTree::new(nums, std::cmp::max, i32::MIN);
-    // (diff, left, right)
-    let mut heap = BinaryHeap::with_capacity(n);
-    for left in 0..n {
-        let diff = maxtree.query(left, n - 1) - mintree.query(left, n - 1);
-        heap.push((diff, left, n - 1));
+pub fn fraction_to_decimal(numerator: i32, denominator: i32) -> String {
+    use std::collections::HashMap;
+    if numerator == 0 {
+        return "0".into();
     }
-    let mut res = 0;
-    for _ in 0..k {
-        let Some((diff, left, right)) = heap.pop() else {
-            break;
-        };
-        res += i64::from(diff);
-        if left < right {
-            let diff = maxtree.query(left, right - 1) - mintree.query(left, right - 1);
-            heap.push((diff, left, right - 1));
+    let [mut num, den] = [numerator, denominator].map(|v| i64::from(v).abs());
+    let mut res = String::new();
+    if (numerator < 0) ^ (denominator < 0) {
+        res.push('-');
+    }
+    res.push_str(&format!("{}", num / den));
+    num %= den;
+    if num == 0 {
+        return res;
+    }
+    res.push('.');
+    let mut seen = HashMap::new();
+    while num > 0 {
+        if let Some(&prev) = seen.get(&num) {
+            res.insert(prev, '(');
+            res.push(')');
+            return res;
         }
+        seen.insert(num, res.len());
+        num *= 10;
+        res.push_str(&format!("{}", num / den));
+        num %= den;
     }
     res
 }
@@ -65,12 +70,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_total_value(&[1, 3, 2], 2), 4);
-        assert_eq!(max_total_value(&[4, 2, 5, 1], 3), 12);
+        assert_eq!(fraction_to_decimal(1, 2), "0.5");
     }
 
     #[test]
-    fn test() {
-        assert_eq!(max_total_value(&[11, 8], 2), 3);
-    }
+    fn test() {}
 }
