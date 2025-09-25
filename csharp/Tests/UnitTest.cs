@@ -10,10 +10,11 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(true, new[] { 1, 2, 3, 3, 4, 5 })]
-    public void TestMethod1(bool exp, int[] nums)
+    [DataRow(2, "aaabbb")]
+    [DataRow(2, "aba")]
+    public void TestMethod1(int exp, string s)
     {
-        Assert.AreEqual(exp, sol.IsPossible(nums));
+        Assert.AreEqual(exp, sol.StrangePrinter(s));
     }
 
     [TestMethod]

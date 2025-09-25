@@ -8,53 +8,36 @@ namespace Solution;
 
 public class Solution
 {
-    public bool IsPossible(int[] nums)
+    public int StrangePrinter(string s)
     {
-        PriorityQueue<Seq, Seq> pq = new();
-        foreach (var num in nums)
+        List<int> nums = [];
+        int left = 0;
+        for (int right = left; right < s.Length; right += 1)
         {
-            while (true)
+            if (s[right] == s[left]) { continue; }
+            nums.Add(s[left] - 'a');
+            left = right;
+        }
+        nums.Add(s[left] - 'a');
+        int n = nums.Count;
+        int[,] memo = new int[n, n];
+        return Dfs(0, n - 1);
+
+        int Dfs(int left, int right)
+        {
+            if (left > right) { return 0; }
+            if (memo[left, right] > 0) { return memo[left, right]; }
+            int res = 1 + Dfs(1 + left, right);
+            for (int i = 1 + left; i <= right; i++)
             {
-                if (pq.TryPeek(out Seq seq, out _))
+                if (nums[i] == nums[left])
                 {
-                    if (seq.Num + 1 == num)
-                    {
-                        pq.Dequeue(); // Continue on this seq
-                        seq = new(num, 1 + seq.Len);
-                        pq.Enqueue(seq, seq);
-                        break;
-                    }
-                    else if (seq.Num == num)
-                    {
-                        seq = new(num, 1); // start a new one
-                        pq.Enqueue(seq, seq);
-                        break;
-                    }
-                    else
-                    {
-                        // Found gap; clear pq
-                        if (seq.Len < 3) { return false; }
-                        else { pq.Dequeue(); }
-                    }
-                }
-                else
-                {
-                    seq = new(num, 1);
-                    pq.Enqueue(seq, seq);
-                    break;
+                    // abac => ab + c
+                    res = int.Min(res, Dfs(left, i - 1) + Dfs(1 + i, right));
                 }
             }
+            memo[left, right] = res;
+            return res;
         }
-        while (pq.TryDequeue(out var seq, out _))
-        {
-            if (seq.Len < 3) { return false; }
-        }
-        return true;
-    }
-
-    readonly record struct Seq(int Num, int Len) : IComparable<Seq>
-    {
-        public int CompareTo(Seq other)
-        => Num == other.Num ? Len.CompareTo(other.Len) : Num.CompareTo(other.Num);
     }
 }
