@@ -8,35 +8,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn fraction_to_decimal(numerator: i32, denominator: i32) -> String {
-    use std::collections::HashMap;
-    if numerator == 0 {
-        return "0".into();
-    }
-    let [mut num, den] = [numerator, denominator].map(|v| i64::from(v).abs());
-    let mut res = String::new();
-    if (numerator < 0) ^ (denominator < 0) {
-        res.push('-');
-    }
-    res.push_str(&format!("{}", num / den));
-    num %= den;
-    if num == 0 {
-        return res;
-    }
-    res.push('.');
-    let mut seen = HashMap::new();
-    while num > 0 {
-        if let Some(&prev) = seen.get(&num) {
-            res.insert(prev, '(');
-            res.push(')');
-            return res;
+pub fn minimum_total(triangle: Vec<Vec<i32>>) -> i32 {
+    let mut dp = vec![0];
+    for row in triangle {
+        let mut curr = vec![i32::MAX; row.len()];
+        for (i, num) in row.iter().enumerate() {
+            if let Some(prev) = dp.get(i) {
+                curr[i] = curr[i].min(prev + num);
+            }
+            if let Some(prev) = i.checked_sub(1).and_then(|i| dp.get(i)) {
+                curr[i] = curr[i].min(prev + num);
+            }
         }
-        seen.insert(num, res.len());
-        num *= 10;
-        res.push_str(&format!("{}", num / den));
-        num %= den;
+        dp = curr;
     }
-    res
+    dp.into_iter().min().unwrap()
 }
 
 #[cfg(test)]
@@ -69,9 +55,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(fraction_to_decimal(1, 2), "0.5");
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
