@@ -8,35 +8,28 @@ namespace Solution;
 
 public class Solution
 {
-    public int[] ConstructArray(int n, int k)
+    public int FindKthNumber(int m, int n, int k)
     {
-        int[] res = [.. Enumerable.Range(1, n)];
-        for (int i = 1; i <= k; i++)
-        {
-            Array.Reverse(res, i, n - i);
-        }
-        return res;
-    }
-
-    public int[] WithTwoPtrs(int n, int k)
-    {
-        List<int> res = new(n);
         int left = 1;
-        int right = n;
-        while (left <= right)
+        int right = m * n;
+        while (left < right)
         {
-            if ((k & 1) == 1)
-            {
-                res.Add(left);
-                left += 1;
-            }
-            else
-            {
-                res.Add(right);
-                right -= 1;
-            }
-            if (k > 1) { k -= 1; }
+            int mid = left + (right - left) / 2;
+            if (Count(mid) >= k) { right = mid; }
+            else { left = 1 + mid; }
         }
-        return [.. res];
+        return left;
+
+        int Count(int mid)
+        {
+            int acc = 0;
+            for (int row = 1; row <= m; row++)
+            {
+                // mid/row is
+                // on this `row`, how many numbers are <= mid
+                acc += int.Min(mid / row, n);
+            }
+            return acc;
+        }
     }
 }
