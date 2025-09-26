@@ -8,28 +8,13 @@ namespace Solution;
 
 public class Solution
 {
-    public int FindKthNumber(int m, int n, int k)
+    public TreeNode TrimBST(TreeNode root, int low, int high)
     {
-        int left = 1;
-        int right = m * n;
-        while (left < right)
-        {
-            int mid = left + (right - left) / 2;
-            if (Count(mid) >= k) { right = mid; }
-            else { left = 1 + mid; }
-        }
-        return left;
-
-        int Count(int mid)
-        {
-            int acc = 0;
-            for (int row = 1; row <= m; row++)
-            {
-                // mid/row is
-                // on this `row`, how many numbers are <= mid
-                acc += int.Min(mid / row, n);
-            }
-            return acc;
-        }
+        if (root is null) { return null; }
+        if (root.val < low) { return TrimBST(root.right, low, high); }
+        if (root.val > high) { return TrimBST(root.left, low, high); }
+        root.left = TrimBST(root.left, low, high);
+        root.right = TrimBST(root.right, low, high);
+        return root;
     }
 }
