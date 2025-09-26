@@ -8,21 +8,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_total(triangle: Vec<Vec<i32>>) -> i32 {
-    let mut dp = vec![0];
-    for row in triangle {
-        let mut curr = vec![i32::MAX; row.len()];
-        for (i, num) in row.iter().enumerate() {
-            if let Some(prev) = dp.get(i) {
-                curr[i] = curr[i].min(prev + num);
-            }
-            if let Some(prev) = i.checked_sub(1).and_then(|i| dp.get(i)) {
-                curr[i] = curr[i].min(prev + num);
+pub fn triangle_number(mut nums: Vec<i32>) -> i32 {
+    nums.sort_unstable();
+    let n = nums.len();
+    let mut res = 0;
+    for big in (2..n).rev() {
+        let mut left = 0;
+        let mut right = big - 1;
+        while left < right {
+            if nums[left] + nums[right] > nums[big] {
+                res += (right - left) as i32;
+                right -= 1;
+            } else {
+                left += 1;
             }
         }
-        dp = curr;
     }
-    dp.into_iter().min().unwrap()
+    res
 }
 
 #[cfg(test)]
