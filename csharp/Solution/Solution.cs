@@ -8,28 +8,27 @@ namespace Solution;
 
 public class Solution
 {
-    public int MaximumSwap(int num)
+    public int FindSecondMinimumValue(TreeNode root)
     {
-        char[] chs = num.ToString().ToCharArray();
-        Span<int> last = stackalloc int[10];
-        int n = chs.Length;
-        for (int i = 0; i < n; i++)
+        long min1 = long.MaxValue;
+        long min2 = long.MaxValue;
+        Dfs(root);
+        return min2 > int.MaxValue ? -1 : (int)min2;
+
+        void Dfs(TreeNode node)
         {
-            last[chs[i] - '0'] = i;
-        }
-        for (int left = 0; left < n; left++)
-        {
-            int left_d = chs[left] - '0';
-            for (int right_d = 9; right_d > left_d; right_d -= 1)
+            if (node is null || node.val >= min2) { return; }
+            if (node.val < min1)
             {
-                if (left < last[right_d])
-                {
-                    int right = last[right_d];
-                    (chs[left], chs[right]) = (chs[right], chs[left]);
-                    return int.Parse(chs);
-                }
+                min2 = min1;
+                min1 = node.val;
             }
+            else if (min1 < node.val)
+            {
+                min2 = node.val;
+            }
+            Dfs(node.left);
+            Dfs(node.right);
         }
-        return num;
     }
 }
