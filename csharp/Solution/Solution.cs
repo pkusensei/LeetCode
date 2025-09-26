@@ -8,36 +8,35 @@ namespace Solution;
 
 public class Solution
 {
-    public int StrangePrinter(string s)
+    public int[] ConstructArray(int n, int k)
     {
-        List<int> nums = [];
-        int left = 0;
-        for (int right = left; right < s.Length; right += 1)
+        int[] res = [.. Enumerable.Range(1, n)];
+        for (int i = 1; i <= k; i++)
         {
-            if (s[right] == s[left]) { continue; }
-            nums.Add(s[left] - 'a');
-            left = right;
+            Array.Reverse(res, i, n - i);
         }
-        nums.Add(s[left] - 'a');
-        int n = nums.Count;
-        int[,] memo = new int[n, n];
-        return Dfs(0, n - 1);
+        return res;
+    }
 
-        int Dfs(int left, int right)
+    public int[] WithTwoPtrs(int n, int k)
+    {
+        List<int> res = new(n);
+        int left = 1;
+        int right = n;
+        while (left <= right)
         {
-            if (left > right) { return 0; }
-            if (memo[left, right] > 0) { return memo[left, right]; }
-            int res = 1 + Dfs(1 + left, right);
-            for (int i = 1 + left; i <= right; i++)
+            if ((k & 1) == 1)
             {
-                if (nums[i] == nums[left])
-                {
-                    // abac => ab + c
-                    res = int.Min(res, Dfs(left, i - 1) + Dfs(1 + i, right));
-                }
+                res.Add(left);
+                left += 1;
             }
-            memo[left, right] = res;
-            return res;
+            else
+            {
+                res.Add(right);
+                right -= 1;
+            }
+            if (k > 1) { k -= 1; }
         }
+        return [.. res];
     }
 }
