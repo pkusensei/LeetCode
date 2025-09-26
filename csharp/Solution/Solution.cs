@@ -8,13 +8,28 @@ namespace Solution;
 
 public class Solution
 {
-    public TreeNode TrimBST(TreeNode root, int low, int high)
+    public int MaximumSwap(int num)
     {
-        if (root is null) { return null; }
-        if (root.val < low) { return TrimBST(root.right, low, high); }
-        if (root.val > high) { return TrimBST(root.left, low, high); }
-        root.left = TrimBST(root.left, low, high);
-        root.right = TrimBST(root.right, low, high);
-        return root;
+        char[] chs = num.ToString().ToCharArray();
+        Span<int> last = stackalloc int[10];
+        int n = chs.Length;
+        for (int i = 0; i < n; i++)
+        {
+            last[chs[i] - '0'] = i;
+        }
+        for (int left = 0; left < n; left++)
+        {
+            int left_d = chs[left] - '0';
+            for (int right_d = 9; right_d > left_d; right_d -= 1)
+            {
+                if (left < last[right_d])
+                {
+                    int right = last[right_d];
+                    (chs[left], chs[right]) = (chs[right], chs[left]);
+                    return int.Parse(chs);
+                }
+            }
+        }
+        return num;
     }
 }

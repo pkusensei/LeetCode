@@ -10,11 +10,8 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(2, "aaabbb")]
-    [DataRow(2, "aba")]
-    public void TestMethod1(int exp, string s)
+    public void TestMethod1()
     {
-        Assert.AreEqual(exp, sol.StrangePrinter(s));
     }
 
     [TestMethod]
