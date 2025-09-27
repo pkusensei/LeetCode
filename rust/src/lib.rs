@@ -8,27 +8,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn majority_frequency_group(s: &str) -> String {
-    use itertools::Itertools;
-    let freq = s.bytes().fold([0; 26], |mut acc, b| {
-        acc[usize::from(b - b'a')] += 1;
-        acc
-    });
-    let map = freq.into_iter().filter(|&v| v > 0).counts();
-    let max = *map.values().max().unwrap_or(&0);
-    let mut f = 0;
-    for (k, v) in map {
-        if v == max {
-            f = f.max(k);
+pub fn climb_stairs(n: i32, costs: &[i32]) -> i32 {
+    let n = n as usize;
+    let mut dp = vec![i32::MAX; 1 + n];
+    dp[0] = 0;
+    for left in 0..n {
+        for step in 1..=3 {
+            let right = left + step;
+            if right > n {
+                break;
+            }
+            dp[right] = dp[right].min(dp[left] + costs[right - 1] + step.pow(2) as i32);
         }
     }
-    let mut res = vec![];
-    for (i, &v) in freq.iter().enumerate() {
-        if v == f {
-            res.push(i as u8 + b'a');
-        }
-    }
-    String::from_utf8(res).unwrap()
+    dp[n]
 }
 
 #[cfg(test)]
@@ -62,9 +55,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(majority_frequency_group("aaabbbccdddde"), "ab");
-        assert_eq!(majority_frequency_group("abcd"), "abcd");
-        assert_eq!(majority_frequency_group("pfpfgi"), "fp");
+        assert_eq!(climb_stairs(4, &[1, 2, 3, 4]), 13);
+        assert_eq!(climb_stairs(4, &[5, 1, 6, 2]), 11);
     }
 
     #[test]
