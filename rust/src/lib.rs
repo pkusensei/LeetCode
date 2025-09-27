@@ -8,51 +8,69 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn distinct_points(s: &str, k: i32) -> i32 {
-    use std::collections::HashSet;
-    let (s, n) = (s.as_bytes(), s.len());
-    let k = k as usize;
-    if n == k {
-        return 1;
+pub fn max_alternating_sum(nums: &[i32], swaps: &[[i32; 2]]) -> i64 {
+    use std::collections::HashMap;
+    let n = nums.len();
+    let mut dsu = DSU::new(n);
+    for s in swaps {
+        dsu.union(s[0] as usize, s[1] as usize);
     }
-    let mut end = [0, 0];
-    for &b in s {
-        match b {
-            b'U' => end[1] += 1,
-            b'D' => end[1] -= 1,
-            b'L' => end[0] -= 1,
-            b'R' => end[0] += 1,
-            _ => (),
+    let mut groups = HashMap::<_, Pack>::new();
+    for (idx, &num) in nums.iter().enumerate() {
+        let root = dsu.find(idx);
+        let pack = groups.entry(root).or_default();
+        pack.odd += idx & 1;
+        pack.nums.push(num.into());
+    }
+    let mut res = 0;
+    for mut pack in groups.into_values() {
+        pack.nums.sort_unstable();
+        res +=
+            pack.nums[pack.odd..].iter().sum::<i64>() - pack.nums[..pack.odd].iter().sum::<i64>();
+    }
+    res
+}
+
+#[derive(Default)]
+struct Pack {
+    nums: Vec<i64>,
+    odd: usize,
+}
+
+struct DSU {
+    parent: Vec<usize>,
+    rank: Vec<i32>,
+}
+
+impl DSU {
+    fn new(n: usize) -> Self {
+        Self {
+            parent: (0..n).collect(),
+            rank: vec![0; n],
         }
     }
-    let mut seen = HashSet::new();
-    let mut acc_x = 0;
-    let mut acc_y = 0;
-    for (right, &b) in s.iter().enumerate() {
-        match b {
-            b'U' => acc_y += 1,
-            b'D' => acc_y -= 1,
-            b'L' => acc_x -= 1,
-            b'R' => acc_x += 1,
-            _ => (),
+
+    fn find(&mut self, v: usize) -> usize {
+        if self.parent[v] != v {
+            self.parent[v] = self.find(self.parent[v]);
         }
-        if right >= k {
-            match s[right - k] {
-                b'U' => acc_y -= 1,
-                b'D' => acc_y += 1,
-                b'L' => acc_x += 1,
-                b'R' => acc_x -= 1,
-                _ => (),
+        self.parent[v]
+    }
+
+    fn union(&mut self, x: usize, y: usize) {
+        let [rx, ry] = [x, y].map(|v| self.find(v));
+        if rx == ry {
+            return;
+        }
+        match self.rank[rx].cmp(&self.rank[ry]) {
+            std::cmp::Ordering::Less => self.parent[rx] = ry,
+            std::cmp::Ordering::Equal => {
+                self.rank[rx] += 1;
+                self.parent[ry] = rx;
             }
-        }
-        if right >= k - 1 {
-            let mut curr = end;
-            curr[0] -= acc_x;
-            curr[1] -= acc_y;
-            seen.insert(curr);
+            std::cmp::Ordering::Greater => self.parent[ry] = rx,
         }
     }
-    seen.len() as i32
 }
 
 #[cfg(test)]
@@ -86,9 +104,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(distinct_points("LUL", 1), 2);
-        assert_eq!(distinct_points("UDLR", 4), 1);
-        assert_eq!(distinct_points("UU", 1), 1);
+        assert_eq!(max_alternating_sum(&[1, 2, 3], &[[0, 2], [1, 2]]), 4);
+        assert_eq!(max_alternating_sum(&[1, 2, 3], &[[1, 2]]), 2);
+        assert_eq!(
+            max_alternating_sum(&[1, 1000000000, 1, 1000000000, 1, 1000000000], &[]),
+            -2999999997
+        );
     }
 
     #[test]
