@@ -8,20 +8,51 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn climb_stairs(n: i32, costs: &[i32]) -> i32 {
-    let n = n as usize;
-    let mut dp = vec![i32::MAX; 1 + n];
-    dp[0] = 0;
-    for left in 0..n {
-        for step in 1..=3 {
-            let right = left + step;
-            if right > n {
-                break;
-            }
-            dp[right] = dp[right].min(dp[left] + costs[right - 1] + step.pow(2) as i32);
+pub fn distinct_points(s: &str, k: i32) -> i32 {
+    use std::collections::HashSet;
+    let (s, n) = (s.as_bytes(), s.len());
+    let k = k as usize;
+    if n == k {
+        return 1;
+    }
+    let mut end = [0, 0];
+    for &b in s {
+        match b {
+            b'U' => end[1] += 1,
+            b'D' => end[1] -= 1,
+            b'L' => end[0] -= 1,
+            b'R' => end[0] += 1,
+            _ => (),
         }
     }
-    dp[n]
+    let mut seen = HashSet::new();
+    let mut acc_x = 0;
+    let mut acc_y = 0;
+    for (right, &b) in s.iter().enumerate() {
+        match b {
+            b'U' => acc_y += 1,
+            b'D' => acc_y -= 1,
+            b'L' => acc_x -= 1,
+            b'R' => acc_x += 1,
+            _ => (),
+        }
+        if right >= k {
+            match s[right - k] {
+                b'U' => acc_y -= 1,
+                b'D' => acc_y += 1,
+                b'L' => acc_x += 1,
+                b'R' => acc_x -= 1,
+                _ => (),
+            }
+        }
+        if right >= k - 1 {
+            let mut curr = end;
+            curr[0] -= acc_x;
+            curr[1] -= acc_y;
+            seen.insert(curr);
+        }
+    }
+    seen.len() as i32
 }
 
 #[cfg(test)]
@@ -55,8 +86,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(climb_stairs(4, &[1, 2, 3, 4]), 13);
-        assert_eq!(climb_stairs(4, &[5, 1, 6, 2]), 11);
+        assert_eq!(distinct_points("LUL", 1), 2);
+        assert_eq!(distinct_points("UDLR", 4), 1);
+        assert_eq!(distinct_points("UU", 1), 1);
     }
 
     #[test]
