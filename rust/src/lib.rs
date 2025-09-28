@@ -8,33 +8,64 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn split_array(nums: &[i32]) -> i64 {
-    let n = nums.len();
-    let [mut pref, mut suf] = [vec![false; n], vec![false; n]];
-    pref[0] = true;
-    for (i, w) in nums.windows(2).enumerate() {
-        pref[1 + i] = pref[i] && (w[0] < w[1]);
-        if !pref[1 + i] {
-            break;
+pub fn zig_zag_arrays(n: i32, l: i32, r: i32) -> i32 {
+    let [n, low, high] = [n, l - l, r - l].map(|v| v as usize);
+    let width = high + 1 - low;
+    let mut dp_inc = vec![1; width];
+    let mut dp_dec = vec![1; width];
+    for _ in 1..n {
+        let mut curr_inc = vec![0; width];
+        let mut curr_dec = vec![0; width];
+        for i in 1 + low..=high {
+            curr_inc[i] = (dp_dec[i - 1] + curr_inc[i - 1]) % M;
         }
-    }
-    suf[n - 1] = true;
-    for (i, w) in nums.windows(2).enumerate().rev() {
-        suf[i] = suf[1 + i] && (w[0] > w[1]);
-        if !suf[i] {
-            break;
+        for i in (low..high).rev() {
+            curr_dec[i] = (dp_inc[1 + i] + curr_dec[1 + i]) % M;
         }
+        dp_inc = curr_inc;
+        dp_dec = curr_dec;
     }
-    let sum = nums.iter().map(|&v| i64::from(v)).sum::<i64>();
-    let mut left = 0;
-    let mut res = i64::MAX;
-    for (i, &num) in nums[..n - 1].iter().enumerate() {
-        left += i64::from(num);
-        if pref[i] && suf[1 + i] {
-            res = res.min((sum - 2 * left).abs());
-        }
+    dp_inc
+        .into_iter()
+        .chain(dp_dec)
+        .fold(0, |acc, v| (acc + v) % M)
+    // let [n, left, right] = [n, l, r].map(|v| v as usize);
+    // let width = right - left + 1;
+    // let mut memo = vec![vec![vec![-1; width]; 2]; n];
+    // (left..=right)
+    //     .map(|curr| {
+    //         (dfs(n, left, right, 0, curr, &mut memo) + dfs(n, left, right, 1, curr, &mut memo)) % M
+    //     })
+    //     .fold(0, |acc, v| (acc + v) % M)
+}
+
+const M: i32 = 1_000_000_007;
+
+// tle's
+fn dfs(
+    n: usize,
+    left: usize,
+    right: usize,
+    dir: usize,
+    curr: usize,
+    memo: &mut [Vec<Vec<i32>>],
+) -> i32 {
+    if n == 1 {
+        return 1;
     }
-    if res == i64::MAX { -1 } else { res }
+    if memo[n - 1][dir][curr - left] > -1 {
+        return memo[n - 1][dir][curr - left];
+    }
+    let range = if dir == 1 {
+        left..curr
+    } else {
+        1 + curr..1 + right
+    };
+    let res = range
+        .map(|val| dfs(n - 1, left, right, 1 ^ dir, val, memo))
+        .fold(0, |acc, v| (acc + v) % M);
+    memo[n - 1][dir][curr - left] = res;
+    res
 }
 
 #[cfg(test)]
@@ -68,9 +99,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(split_array(&[1, 3, 2]), 2);
-        assert_eq!(split_array(&[1, 2, 4, 3]), 4);
-        assert_eq!(split_array(&[3, 1, 2]), -1);
+        assert_eq!(zig_zag_arrays(3, 1, 3), 10);
+        assert_eq!(zig_zag_arrays(3, 4, 5), 2);
     }
 
     #[test]
