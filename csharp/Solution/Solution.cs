@@ -8,16 +8,24 @@ namespace Solution;
 
 public class Solution
 {
-    public int LargestPerimeter(int[] nums)
+    public int MinScoreTriangulation(int[] values)
     {
-        Array.Sort(nums, (a, b) => b.CompareTo(a));
-        for (int i = 0; i < nums.Length - 3; i++)
+        int n = values.Length;
+        int[,] memo = new int[n, n];
+        return Dfs(0, n - 1);
+
+        int Dfs(int left, int right)
         {
-            if (nums[i] < nums[1 + i] + nums[2 + i])
+            if (right - left + 1 < 3) { return 0; }
+            if (memo[left, right] > 0) { return memo[left, right]; }
+            int res = int.MaxValue;
+            for (int mid = 1 + left; mid < right; mid++)
             {
-                return nums[i..(3 + i)].Sum();
+                int curr = values[left] * values[right] * values[mid];
+                res = int.Min(res, curr + Dfs(left, mid) + Dfs(mid, right));
             }
+            memo[left, right] = res;
+            return res;
         }
-        return 0;
     }
 }
