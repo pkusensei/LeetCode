@@ -8,17 +8,39 @@ namespace Solution;
 
 public class Solution
 {
-    public int TriangularSum(int[] nums)
+    public int FindNumberOfLIS(int[] nums)
     {
-        List<int> vals = [.. nums];
-        while (vals.Count > 1)
+        int n = nums.Length;
+        int[] dp = new int[n];
+        int[] count = new int[n];
+        Array.Fill(dp, 1);
+        Array.Fill(count, 1);
+        int len = 1;
+        for (int right = 0; right < n; right++)
         {
-            for (int i = 0; i < vals.Count - 1; i++)
+            for (int left = 0; left < right; left++)
             {
-                vals[i] = (vals[i] + vals[1 + i]) % 10;
+                if (nums[right] > nums[left])
+                {
+                    int curr = 1 + dp[left];
+                    len = int.Max(len, curr);
+                    if (curr > dp[right])
+                    {
+                        dp[right] = curr;
+                        count[right] = count[left]; // continue this streak
+                    }
+                    else if (curr == dp[right])
+                    {
+                        count[right] += count[left]; // find another route
+                    }
+                }
             }
-            vals.RemoveAt(vals.Count - 1);
         }
-        return vals[0];
+        int res = 0;
+        for (int i = 0; i < n; i++)
+        {
+            if (dp[i] == len) { res += count[i]; }
+        }
+        return res;
     }
 }
