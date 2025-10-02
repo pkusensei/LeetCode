@@ -8,7 +8,7 @@ namespace Solution;
 
 public class Solution
 {
-    public int NumWaterBottles(int numBottles, int numExchange)
+    public int MaxBottlesDrunk(int numBottles, int numExchange)
     {
         int res = 0;
         int empty = 0;
@@ -16,8 +16,13 @@ public class Solution
         {
             res += numBottles;
             empty += numBottles;
-            numBottles = empty / numExchange;
-            empty %= numExchange;
+            numBottles = 0;
+            while (empty >= numExchange)
+            {
+                empty -= numExchange;
+                numExchange += 1;
+                numBottles += 1;
+            }
         }
         return res;
     }
