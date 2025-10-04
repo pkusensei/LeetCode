@@ -9,30 +9,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn trap_rain_water(height_map: Vec<Vec<i32>>) -> i32 {
-    use std::{cmp::Reverse, collections::BinaryHeap};
-    let [rows, cols] = get_dimensions(&height_map);
-    let mut seen = vec![vec![false; cols]; rows];
-    let mut heap = BinaryHeap::new();
-    for (r, row) in height_map.iter().enumerate() {
-        for (c, &v) in row.iter().enumerate() {
-            if r == 0 || c == 0 || r == rows - 1 || c == cols - 1 {
-                seen[r][c] = true;
-                heap.push((Reverse(v), r, c));
-            }
-        }
-    }
+pub fn max_area(height: Vec<i32>) -> i32 {
+    let n = height.len();
+    let mut left = 0;
+    let mut right = n - 1;
     let mut res = 0;
-    let mut max_h = 0;
-    while let Some((Reverse(curr), r, c)) = heap.pop() {
-        max_h = max_h.max(curr);
-        for [nr, nc] in neighbors([r, c]).filter(|&[nr, nc]| nr < rows && nc < cols) {
-            if !seen[nr][nc] {
-                seen[nr][nc] = true;
-                let h = height_map[nr][nc];
-                heap.push((Reverse(h), nr, nc));
-                res += (max_h - h).max(0);
-            }
+    while left < right {
+        let h = height[left].min(height[right]);
+        res = res.max(h * (right - left) as i32);
+        if height[left] <= height[right] {
+            left += 1;
+        } else {
+            right -= 1;
         }
     }
     res
