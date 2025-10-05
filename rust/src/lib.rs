@@ -9,12 +9,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn alternating_sum(nums: Vec<i32>) -> i32 {
-    let mut res = 0;
-    for (i, &v) in nums.iter().enumerate() {
-        if i & 1 == 0 { res += v } else { res -= v }
+pub fn longest_subsequence(nums: Vec<i32>) -> i32 {
+    let n = nums.len();
+    let xor = nums.iter().fold(0, |acc, v| acc ^ v);
+    if xor > 0 {
+        n as i32
+    } else if nums.iter().all(|&v| v == 0) {
+        0
+    } else {
+        n as i32 - 1
     }
-    res
 }
 
 #[cfg(test)]
