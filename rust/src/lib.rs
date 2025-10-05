@@ -9,15 +9,49 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn longest_subsequence(nums: Vec<i32>) -> i32 {
-    let n = nums.len();
-    let xor = nums.iter().fold(0, |acc, v| acc ^ v);
-    if xor > 0 {
-        n as i32
-    } else if nums.iter().all(|&v| v == 0) {
-        0
-    } else {
-        n as i32 - 1
+pub fn remove_substring(s: &str, k: i32) -> String {
+    use std::iter;
+    let k = k as usize;
+    let mut st: Vec<(u8, usize)> = vec![];
+    for ch in s.as_bytes().chunk_by(|a, b| a == b) {
+        if let Some(top) = st.last_mut()
+            && top.0 == ch[0]
+        {
+            top.1 += ch.len();
+            f(&mut st, k);
+        } else {
+            st.push((ch[0], ch.len()));
+            if ch[0] == b')' {
+                f(&mut st, k);
+            }
+        }
+    }
+    st.into_iter()
+        .flat_map(|v| iter::repeat_n(char::from(v.0), v.1))
+        .collect()
+}
+
+fn f(st: &mut Vec<(u8, usize)>, k: usize) {
+    if st.len() < 2 || st.last().is_none_or(|v| v.0 == b'(') {
+        return;
+    }
+    let mut close = st.pop().unwrap();
+    let mut open = st.pop().unwrap();
+    let x = close.1.min(open.1) / k;
+    close.1 -= x * k;
+    open.1 -= x * k;
+    if open.1 > 0 {
+        st.push(open);
+    }
+    if close.1 > 0 {
+        if let Some(top) = st.last_mut()
+            && top.0 == close.0
+        {
+            top.1 += close.1;
+            f(st, k);
+        } else {
+            st.push(close);
+        }
     }
 }
 
@@ -51,8 +85,15 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(remove_substring("(()(", 1), "((");
+        assert_eq!(remove_substring("(())", 1), "");
+        assert_eq!(remove_substring("((()))()()()", 3), "()()()");
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(remove_substring("(()(()(()))((()", 2), "(()((()");
+        assert_eq!(remove_substring(")))(()()", 1), ")))(");
+    }
 }
