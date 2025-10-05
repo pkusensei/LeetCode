@@ -6,53 +6,52 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn remove_substring(s: &str, k: i32) -> String {
-    use std::iter;
-    let k = k as usize;
-    let mut st: Vec<(u8, usize)> = vec![];
-    for ch in s.as_bytes().chunk_by(|a, b| a == b) {
-        if let Some(top) = st.last_mut()
-            && top.0 == ch[0]
-        {
-            top.1 += ch.len();
-            f(&mut st, k);
-        } else {
-            st.push((ch[0], ch.len()));
-            if ch[0] == b')' {
-                f(&mut st, k);
+pub fn count_no_zero_pairs(n: i64) -> i64 {
+    let s: Vec<u8> = n.to_string().bytes().map(|b| b - b'0').rev().collect();
+    let len = s.len();
+    let mut res = 0;
+    for len_a in 1..=len {
+        for len_b in 1..=len {
+            res += dfs(&s, 0, 0, len_a, len_b, &mut HashMap::new());
+        }
+    }
+    res
+}
+
+fn dfs(
+    s: &[u8],
+    idx: usize,
+    carry: u8,
+    len_a: usize,
+    len_b: usize,
+    memo: &mut HashMap<(usize, u8, usize, usize), i64>,
+) -> i64 {
+    if s.len() <= idx {
+        return (carry == 0).into();
+    }
+    let k = (idx, carry, len_a, len_b);
+    if let Some(&v) = memo.get(&k) {
+        return v;
+    }
+    // While building actual numbers, i.e idx<len, consider only 1..=9
+    // 0's could be used only as leading zeros
+    let [range_a, range_b] = [len_a, len_b].map(|x| if idx < x { 1..=9 } else { 0..=0 });
+    let mut res = 0;
+    for da in range_a {
+        for db in range_b.clone() {
+            let sum = da + db + carry;
+            if sum % 10 == s[idx] {
+                res += dfs(s, 1 + idx, sum / 10, len_a, len_b, memo)
             }
         }
     }
-    st.into_iter()
-        .flat_map(|v| iter::repeat_n(char::from(v.0), v.1))
-        .collect()
-}
-
-fn f(st: &mut Vec<(u8, usize)>, k: usize) {
-    if st.len() < 2 || st.last().is_none_or(|v| v.0 == b'(') {
-        return;
-    }
-    let mut close = st.pop().unwrap();
-    let mut open = st.pop().unwrap();
-    let x = close.1.min(open.1) / k;
-    close.1 -= x * k;
-    open.1 -= x * k;
-    if open.1 > 0 {
-        st.push(open);
-    }
-    if close.1 > 0 {
-        if let Some(top) = st.last_mut()
-            && top.0 == close.0
-        {
-            top.1 += close.1;
-            f(st, k);
-        } else {
-            st.push(close);
-        }
-    }
+    memo.insert(k, res);
+    res
 }
 
 #[cfg(test)]
@@ -86,14 +85,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(remove_substring("(()(", 1), "((");
-        assert_eq!(remove_substring("(())", 1), "");
-        assert_eq!(remove_substring("((()))()()()", 3), "()()()");
+        assert_eq!(count_no_zero_pairs(11), 8);
     }
 
     #[test]
-    fn test() {
-        assert_eq!(remove_substring("(()(()(()))((()", 2), "(()((()");
-        assert_eq!(remove_substring(")))(()()", 1), ")))(");
-    }
+    fn test() {}
 }
