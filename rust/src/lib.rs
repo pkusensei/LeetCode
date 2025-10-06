@@ -6,52 +6,93 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_no_zero_pairs(n: i64) -> i64 {
-    let s: Vec<u8> = n.to_string().bytes().map(|b| b - b'0').rev().collect();
-    let len = s.len();
-    let mut res = 0;
-    for len_a in 1..=len {
-        for len_b in 1..=len {
-            res += dfs(&s, 0, 0, len_a, len_b, &mut HashMap::new());
+pub fn swim_in_water(grid: &[&[i32]]) -> i32 {
+    use std::{cmp::Reverse, collections::BinaryHeap};
+    let n = grid.len();
+    let mut heap = BinaryHeap::from([(Reverse(grid[0][0]), 0, 0)]);
+    let mut seen = vec![vec![1 + n.pow(2) as i32; n]; n];
+    while let Some((Reverse(step), r, c)) = heap.pop() {
+        if r == n - 1 && c == n - 1 {
+            return step;
         }
-    }
-    res
-}
-
-fn dfs(
-    s: &[u8],
-    idx: usize,
-    carry: u8,
-    len_a: usize,
-    len_b: usize,
-    memo: &mut HashMap<(usize, u8, usize, usize), i64>,
-) -> i64 {
-    if s.len() <= idx {
-        return (carry == 0).into();
-    }
-    let k = (idx, carry, len_a, len_b);
-    if let Some(&v) = memo.get(&k) {
-        return v;
-    }
-    // While building actual numbers, i.e idx<len, consider only 1..=9
-    // 0's could be used only as leading zeros
-    let [range_a, range_b] = [len_a, len_b].map(|x| if idx < x { 1..=9 } else { 0..=0 });
-    let mut res = 0;
-    for da in range_a {
-        for db in range_b.clone() {
-            let sum = da + db + carry;
-            if sum % 10 == s[idx] {
-                res += dfs(s, 1 + idx, sum / 10, len_a, len_b, memo)
+        if step > seen[r][c] {
+            continue;
+        }
+        for [nr, nc] in neighbors([r, c]) {
+            if let Some(&v) = grid.get(nr).and_then(|row| row.get(nc)) {
+                let next = v.max(step);
+                if next < seen[nr][nc] {
+                    seen[nr][nc] = next;
+                    heap.push((Reverse(next), nr, nc));
+                }
             }
         }
     }
-    memo.insert(k, res);
-    res
+    -1
+}
+
+pub fn with_dsu(grid: &[&[i32]]) -> i32 {
+    let n = grid.len();
+    let mut vals = Vec::with_capacity(n * n);
+    for (r, row) in grid.iter().enumerate() {
+        for (c, &v) in row.iter().enumerate() {
+            vals.push((v, r, c));
+        }
+    }
+    vals.sort_unstable_by_key(|v| v.0);
+    let mut pass = vec![false; n * n];
+    let mut dsu = DSU::new(n * n);
+    for (step, r, c) in vals {
+        pass[r * n + c] = true;
+        for [nr, nc] in neighbors([r, c]) {
+            if nr < n && nc < n && pass[nr * n + nc] {
+                dsu.union(r * n + c, nr * n + nc);
+            }
+        }
+        if dsu.find(0) == dsu.find(n * n - 1) {
+            return step;
+        }
+    }
+    -1
+}
+
+struct DSU {
+    parent: Vec<usize>,
+    rank: Vec<i32>,
+}
+
+impl DSU {
+    fn new(n: usize) -> Self {
+        Self {
+            parent: (0..n).collect(),
+            rank: vec![0; n],
+        }
+    }
+
+    fn find(&mut self, v: usize) -> usize {
+        if self.parent[v] != v {
+            self.parent[v] = self.find(self.parent[v]);
+        }
+        self.parent[v]
+    }
+
+    fn union(&mut self, x: usize, y: usize) {
+        let [rx, ry] = [x, y].map(|v| self.find(v));
+        if rx == ry {
+            return;
+        }
+        match self.rank[rx].cmp(&self.rank[ry]) {
+            std::cmp::Ordering::Less => self.parent[rx] = ry,
+            std::cmp::Ordering::Equal => {
+                self.parent[ry] = rx;
+                self.rank[rx] += 1;
+            }
+            std::cmp::Ordering::Greater => self.parent[ry] = rx,
+        }
+    }
 }
 
 #[cfg(test)]
@@ -85,7 +126,26 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(count_no_zero_pairs(11), 8);
+        assert_eq!(
+            swim_in_water(&[
+                &[0, 1, 2, 3, 4],
+                &[24, 23, 22, 21, 5],
+                &[12, 13, 14, 15, 16],
+                &[11, 17, 18, 19, 20],
+                &[10, 9, 8, 7, 6]
+            ]),
+            16
+        );
+        assert_eq!(
+            with_dsu(&[
+                &[0, 1, 2, 3, 4],
+                &[24, 23, 22, 21, 5],
+                &[12, 13, 14, 15, 16],
+                &[11, 17, 18, 19, 20],
+                &[10, 9, 8, 7, 6]
+            ]),
+            16
+        );
     }
 
     #[test]
