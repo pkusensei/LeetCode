@@ -9,26 +9,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn avoid_flood(rains: &[i32]) -> Vec<i32> {
-    use std::collections::{BTreeSet, HashMap};
-    let n = rains.len();
-    let mut res = vec![-1; n];
-    let mut seen = HashMap::new();
-    let mut dry = BTreeSet::new();
-    for (i, &lake) in rains.iter().enumerate() {
-        if lake == 0 {
-            dry.insert(i);
-            res[i] = 1;
-        } else {
-            if let Some(&prev) = seen.get(&lake) {
-                let Some(&d) = dry.range(1 + prev..).next() else {
-                    return vec![];
-                };
-                dry.remove(&d);
-                res[d] = lake;
-            }
-            seen.insert(lake, i);
+pub fn successful_pairs(spells: Vec<i32>, mut potions: Vec<i32>, success: i64) -> Vec<i32> {
+    use itertools::Itertools;
+    potions.sort_unstable_by(|a, b| b.cmp(a));
+    let mut res = vec![0; spells.len()];
+    let mut pi = 0;
+    for (idx, &sp) in spells
+        .iter()
+        .enumerate()
+        .sorted_unstable_by_key(|&(_, &v)| v)
+    {
+        while potions
+            .get(pi)
+            .is_some_and(|&p| i64::from(p) * i64::from(sp) >= success)
+        {
+            pi += 1;
         }
+        res[idx] = pi as i32;
     }
     res
 }
@@ -63,14 +60,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(avoid_flood(&[1, 2, 3, 4]), [-1; 4]);
-        assert_eq!(avoid_flood(&[1, 2, 0, 0, 2, 1]), [-1, -1, 2, 1, -1, -1]);
-        assert_eq!(avoid_flood(&[1, 2, 0, 1, 2]), []);
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(avoid_flood(&[0, 1, 1]), []);
-    }
+    fn test() {}
 }
