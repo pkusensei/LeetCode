@@ -6,58 +6,59 @@ using static Solution.Utils;
 
 namespace Solution;
 
-public class Solution
+public class MagicDictionary
 {
-    public int CutOffTree(IList<IList<int>> forest)
-    {
-        int rows = forest.Count;
-        int cols = forest[0].Count;
-        PriorityQueue<Coord, int> trees = new(rows * cols);
-        for (int r = 0; r < rows; r++)
-        {
-            for (int c = 0; c < cols; c++)
-            {
-                if (forest[r][c] > 1)
-                {
-                    trees.Enqueue(new(r, c), forest[r][c]);
-                }
-            }
-        }
-        Coord spot = new(0, 0);
-        int res = 0;
-        while (trees.TryDequeue(out var dest, out _))
-        {
-            int v = Bfs(spot, dest);
-            if (v < 0) { return -1; }
-            res += v;
-            spot = dest;
-        }
-        return res;
+    public MagicDictionary() => Root = new();
 
-        int Bfs(Coord start, Coord dest)
+    Trie Root { get; }
+
+    public void BuildDict(string[] dictionary)
+    {
+        foreach (var s in dictionary)
         {
-            Queue<(Coord, int num)> queue = [];
-            bool[,] seen = new bool[rows, cols];
-            queue.Enqueue((start, 0));
-            seen[start.Row, start.Col] = true;
-            while (queue.TryDequeue(out var item))
-            {
-                (Coord curr, int step) = item;
-                if (curr == dest) { return step; }
-                foreach (var (dr, dc) in new[] { (-1, 0), (1, 0), (0, -1), (0, 1) })
-                {
-                    Coord next = new(curr.Row + dr, curr.Col + dc);
-                    if (0 <= next.Row && next.Row < rows && 0 <= next.Col && next.Col < cols
-                    && forest[next.Row][next.Col] > 0 && !seen[next.Row, next.Col])
-                    {
-                        seen[next.Row, next.Col] = true;
-                        queue.Enqueue((next, 1 + step));
-                    }
-                }
-            }
-            return -1;
+            Root.Insert(s);
         }
     }
 
-    readonly record struct Coord(int Row, int Col);
+    public bool Search(string searchWord) => Root.Find(searchWord, false);
+}
+
+internal sealed class Trie
+{
+    public Trie()
+    {
+        Nodes = new Trie[26];
+        IsEnd = false;
+    }
+
+    Trie[] Nodes { get; }
+    bool IsEnd { get; set; }
+
+    public void Insert(ReadOnlySpan<char> s)
+    {
+        var curr = this;
+        foreach (var ch in s)
+        {
+            int idx = ch - 'a';
+            curr = curr.Nodes[idx] ??= new();
+        }
+        curr.IsEnd = true;
+    }
+
+    public bool Find(ReadOnlySpan<char> s, bool alter)
+    {
+        if (s.IsEmpty) { return IsEnd && alter; }
+        int idx = s[0] - 'a';
+        bool res = false;
+        for (int i = 0; i < 26; i++)
+        {
+            if (Nodes[i] is Trie node)
+            {
+                if (idx == i) { res |= node.Find(s[1..], alter); }
+                else if (!alter) { res |= node.Find(s[1..], true); }
+                if (res) { break; }
+            }
+        }
+        return res;
+    }
 }
