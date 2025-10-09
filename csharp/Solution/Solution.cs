@@ -8,22 +8,23 @@ namespace Solution;
 
 public class Solution
 {
-    public int MaxBottlesDrunk(int numBottles, int numExchange)
+    public long MinTime(int[] skill, int[] mana)
     {
-        int res = 0;
-        int empty = 0;
-        while (numBottles > 0)
+        int n = skill.Length;
+        long[] finish = new long[1 + n];
+        foreach (var m in mana)
         {
-            res += numBottles;
-            empty += numBottles;
-            numBottles = 0;
-            while (empty >= numExchange)
+            for (int i = 0; i < n; i++)
             {
-                empty -= numExchange;
-                numExchange += 1;
-                numBottles += 1;
+                // Max of [1+i] on previous potion
+                //     vs [i] on current potion
+                finish[1 + i] = long.Max(finish[1 + i], finish[i]) + m * skill[i];
+            }
+            for (int i = n - 1; i >= 0; i -= 1)
+            {
+                finish[i] = finish[1 + i] - m * skill[i];
             }
         }
-        return res;
+        return finish[^1];
     }
 }
