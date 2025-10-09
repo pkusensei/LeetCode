@@ -6,21 +6,18 @@ using static Solution.Utils;
 
 namespace Solution;
 
-public class MagicDictionary
+public class MapSum
 {
-    public MagicDictionary() => Root = new();
+    public MapSum()
+    {
+        Root = new();
+    }
 
     Trie Root { get; }
 
-    public void BuildDict(string[] dictionary)
-    {
-        foreach (var s in dictionary)
-        {
-            Root.Insert(s);
-        }
-    }
+    public void Insert(string key, int val) => Root.Insert(key, val);
 
-    public bool Search(string searchWord) => Root.Find(searchWord, false);
+    public int Sum(string prefix) => Root.Sum(prefix);
 }
 
 internal sealed class Trie
@@ -28,13 +25,13 @@ internal sealed class Trie
     public Trie()
     {
         Nodes = new Trie[26];
-        IsEnd = false;
+        Val = 0;
     }
 
     Trie[] Nodes { get; }
-    bool IsEnd { get; set; }
+    int Val { get; set; }
 
-    public void Insert(ReadOnlySpan<char> s)
+    public void Insert(ReadOnlySpan<char> s, int val)
     {
         var curr = this;
         foreach (var ch in s)
@@ -42,23 +39,24 @@ internal sealed class Trie
             int idx = ch - 'a';
             curr = curr.Nodes[idx] ??= new();
         }
-        curr.IsEnd = true;
+        curr.Val = val;
     }
 
-    public bool Find(ReadOnlySpan<char> s, bool alter)
+    public int Sum(ReadOnlySpan<char> s)
     {
-        if (s.IsEmpty) { return IsEnd && alter; }
-        int idx = s[0] - 'a';
-        bool res = false;
-        for (int i = 0; i < 26; i++)
+        if (s.IsEmpty)
         {
-            if (Nodes[i] is Trie node)
+            int res = Val;
+            foreach (var node in Nodes)
             {
-                if (idx == i) { res |= node.Find(s[1..], alter); }
-                else if (!alter) { res |= node.Find(s[1..], true); }
-                if (res) { break; }
+                if (node is not null) { res += node.Sum([]); }
             }
+            return res;
         }
-        return res;
+        else
+        {
+            int idx = s[0] - 'a';
+            return Nodes[idx] is Trie node ? node.Sum(s[1..]) : 0;
+        }
     }
 }
