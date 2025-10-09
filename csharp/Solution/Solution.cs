@@ -8,34 +8,46 @@ namespace Solution;
 
 public class Solution
 {
-    public bool ValidPalindrome(string s)
+    public int[] FindRedundantConnection(int[][] edges)
     {
-        int left = 0;
-        int right = s.Length - 1;
-        while (left < right)
+        DSU dsu = new(edges.Length);
+        foreach (var e in edges)
         {
-            if (s[left] == s[right])
-            {
-                left += 1;
-                right -= 1;
-            }
-            else
-            {
-                return Check(s.AsSpan()[left..right])
-                    || Check(s.AsSpan()[(1 + left)..(1 + right)]);
-            }
+            if (!dsu.Union(e[0] - 1, e[1] - 1)) { return e; }
+        }
+        return null;
+    }
+}
+
+readonly struct DSU
+{
+    public DSU(int n)
+    {
+        Parent = [.. Enumerable.Range(0, n)];
+        Rank = new int[n];
+    }
+
+    int[] Parent { get; }
+    int[] Rank { get; }
+
+    public int Find(int v)
+    {
+        if (Parent[v] != v) { Parent[v] = Find(Parent[v]); }
+        return Parent[v];
+    }
+
+    public bool Union(int x, int y)
+    {
+        int rx = Find(x);
+        int ry = Find(y);
+        if (rx == ry) { return false; }
+        if (Rank[rx] < Rank[ry]) { Parent[rx] = ry; }
+        else if (Rank[rx] > Rank[ry]) { Parent[ry] = rx; }
+        else
+        {
+            Parent[ry] = rx;
+            Rank[rx] += 1;
         }
         return true;
-
-        static bool Check(ReadOnlySpan<char> s)
-        {
-            int n = s.Length;
-            if (n <= 1) { return true; }
-            for (int i = 0; i < n / 2; i++)
-            {
-                if (s[i] != s[n - i - 1]) { return false; }
-            }
-            return true;
-        }
     }
 }
