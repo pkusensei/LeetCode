@@ -7,11 +7,13 @@ namespace Tests;
 [TestClass]
 public class UnitTest
 {
-    // readonly Solution.Solution sol = new();
+    readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow(false, "(((((()*)(*)*))())())(()())())))((**)))))(()())()")]
+    public void TestMethod1(bool exp, string s)
     {
+        Assert.AreEqual(exp, sol.CheckValidString(s));
     }
 
     [TestMethod]

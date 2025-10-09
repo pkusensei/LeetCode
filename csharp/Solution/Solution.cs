@@ -6,57 +6,34 @@ using static Solution.Utils;
 
 namespace Solution;
 
-public class MapSum
+public class Solution
 {
-    public MapSum()
+    public bool CheckValidString(string s)
     {
-        Root = new();
-    }
-
-    Trie Root { get; }
-
-    public void Insert(string key, int val) => Root.Insert(key, val);
-
-    public int Sum(string prefix) => Root.Sum(prefix);
-}
-
-internal sealed class Trie
-{
-    public Trie()
-    {
-        Nodes = new Trie[26];
-        Val = 0;
-    }
-
-    Trie[] Nodes { get; }
-    int Val { get; set; }
-
-    public void Insert(ReadOnlySpan<char> s, int val)
-    {
-        var curr = this;
-        foreach (var ch in s)
+        Stack<int> opens = [];
+        Stack<int> stars = [];
+        for (int i = 0; i < s.Length; i++)
         {
-            int idx = ch - 'a';
-            curr = curr.Nodes[idx] ??= new();
-        }
-        curr.Val = val;
-    }
-
-    public int Sum(ReadOnlySpan<char> s)
-    {
-        if (s.IsEmpty)
-        {
-            int res = Val;
-            foreach (var node in Nodes)
+            switch (s[i])
             {
-                if (node is not null) { res += node.Sum([]); }
+                case '(':
+                    opens.Push(i);
+                    break;
+                case '*':
+                    stars.Push(i);
+                    break;
+                default:
+                    if (!opens.TryPop(out _) && !stars.TryPop(out _))
+                    {
+                        return false;
+                    }
+                    break;
             }
-            return res;
         }
-        else
+        while (opens.TryPop(out var open))
         {
-            int idx = s[0] - 'a';
-            return Nodes[idx] is Trie node ? node.Sum(s[1..]) : 0;
+            if (!stars.TryPop(out var close) || close < open) { return false; }
         }
+        return opens.Count == 0;
     }
 }
