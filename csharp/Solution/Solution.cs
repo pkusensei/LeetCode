@@ -8,32 +8,34 @@ namespace Solution;
 
 public class Solution
 {
-    public bool CheckValidString(string s)
+    public bool ValidPalindrome(string s)
     {
-        Stack<int> opens = [];
-        Stack<int> stars = [];
-        for (int i = 0; i < s.Length; i++)
+        int left = 0;
+        int right = s.Length - 1;
+        while (left < right)
         {
-            switch (s[i])
+            if (s[left] == s[right])
             {
-                case '(':
-                    opens.Push(i);
-                    break;
-                case '*':
-                    stars.Push(i);
-                    break;
-                default:
-                    if (!opens.TryPop(out _) && !stars.TryPop(out _))
-                    {
-                        return false;
-                    }
-                    break;
+                left += 1;
+                right -= 1;
+            }
+            else
+            {
+                return Check(s.AsSpan()[left..right])
+                    || Check(s.AsSpan()[(1 + left)..(1 + right)]);
             }
         }
-        while (opens.TryPop(out var open))
+        return true;
+
+        static bool Check(ReadOnlySpan<char> s)
         {
-            if (!stars.TryPop(out var close) || close < open) { return false; }
+            int n = s.Length;
+            if (n <= 1) { return true; }
+            for (int i = 0; i < n / 2; i++)
+            {
+                if (s[i] != s[n - i - 1]) { return false; }
+            }
+            return true;
         }
-        return opens.Count == 0;
     }
 }

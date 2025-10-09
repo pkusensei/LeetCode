@@ -10,10 +10,10 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(false, "(((((()*)(*)*))())())(()())())))((**)))))(()())()")]
+    [DataRow(false, "abc")]
     public void TestMethod1(bool exp, string s)
     {
-        Assert.AreEqual(exp, sol.CheckValidString(s));
+        Assert.AreEqual(exp, sol.ValidPalindrome(s));
     }
 
     [TestMethod]
