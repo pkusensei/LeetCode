@@ -9,23 +9,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn successful_pairs(spells: Vec<i32>, mut potions: Vec<i32>, success: i64) -> Vec<i32> {
-    use itertools::Itertools;
-    potions.sort_unstable_by(|a, b| b.cmp(a));
-    let mut res = vec![0; spells.len()];
-    let mut pi = 0;
-    for (idx, &sp) in spells
-        .iter()
-        .enumerate()
-        .sorted_unstable_by_key(|&(_, &v)| v)
-    {
-        while potions
-            .get(pi)
-            .is_some_and(|&p| i64::from(p) * i64::from(sp) >= success)
-        {
-            pi += 1;
+pub fn maximum_energy(energy: Vec<i32>, k: i32) -> i32 {
+    let n = energy.len();
+    let k = k as usize;
+    let mut dp = vec![0; n];
+    let mut res = i32::MIN;
+    for i in 0..n {
+        if i + k < n {
+            dp[i + k] = dp[i + k].max(dp[i] + energy[i]);
+        } else {
+            res = res.max(dp[i] + energy[i]);
         }
-        res[idx] = pi as i32;
     }
     res
 }
