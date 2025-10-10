@@ -8,14 +8,36 @@ namespace Solution;
 
 public class Solution
 {
-    public int[] FindRedundantConnection(int[][] edges)
+    public int[] FindRedundantDirectedConnection(int[][] edges)
     {
-        DSU dsu = new(edges.Length);
-        foreach (var e in edges)
+        int n = edges.Length;
+        int[] inedge = [.. Enumerable.Repeat(-1, 1 + n)];
+        int cand1 = -1;
+        int cand2 = -1;
+        for (int i = 0; i < n; i += 1)
         {
-            if (!dsu.Union(e[0] - 1, e[1] - 1)) { return e; }
+            if (inedge[edges[i][1]] != -1) // in-degree >= 2
+            {
+                cand1 = inedge[edges[i][1]];
+                cand2 = i;
+            }
+            inedge[edges[i][1]] = i;
         }
-        return null;
+        DSU dsu = new(1 + n);
+        for (int i = 0; i < n; i++)
+        {
+            // ignore second in-edge; no union
+            if (i == cand2) { continue; }
+            if (!dsu.Union(edges[i][0], edges[i][1]))
+            {
+                // in-degree >= 2; first edge causes cycle
+                if (cand2 >= 0) { return edges[cand1]; }
+                // All in-degrees are 1; no parent conflict
+                // this edge causing cycle
+                else { return edges[i]; }
+            }
+        }
+        return edges[cand2]; // in-degree >= 2; second edge is redundant
     }
 }
 
@@ -27,8 +49,8 @@ readonly struct DSU
         Rank = new int[n];
     }
 
-    int[] Parent { get; }
-    int[] Rank { get; }
+    public int[] Parent { get; }
+    public int[] Rank { get; }
 
     public int Find(int v)
     {
