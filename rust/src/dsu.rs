@@ -3,8 +3,8 @@
 pub struct DSU {
     parent: Vec<usize>,
     rank: Vec<i32>,
-    size: Vec<i32>,
-    count: usize,
+    size: Vec<i32>, // size of component at this root
+    count: usize,   // number of component
 }
 
 #[allow(dead_code)]

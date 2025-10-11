@@ -9,19 +9,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_energy(energy: Vec<i32>, k: i32) -> i32 {
-    let n = energy.len();
-    let k = k as usize;
-    let mut dp = vec![0; n];
-    let mut res = i32::MIN;
-    for i in 0..n {
-        if i + k < n {
-            dp[i + k] = dp[i + k].max(dp[i] + energy[i]);
-        } else {
-            res = res.max(dp[i] + energy[i]);
+pub fn score_balance(s: String) -> bool {
+    let total: i32 = s.bytes().map(|b| 1 + i32::from(b - b'a')).sum();
+    if total & 1 == 1 {
+        return false;
+    }
+    let mut curr = 0;
+    for b in s.bytes() {
+        curr += 1 + i32::from(b - b'a');
+        if curr * 2 == total {
+            return true;
         }
     }
-    res
+    false
 }
 
 #[cfg(test)]
