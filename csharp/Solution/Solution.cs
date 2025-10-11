@@ -8,68 +8,23 @@ namespace Solution;
 
 public class Solution
 {
-    public int[] FindRedundantDirectedConnection(int[][] edges)
+    public long MaximumTotalDamage(int[] power)
     {
-        int n = edges.Length;
-        int[] inedge = [.. Enumerable.Repeat(-1, 1 + n)];
-        int cand1 = -1;
-        int cand2 = -1;
-        for (int i = 0; i < n; i += 1)
+        (long num, int c)[] nums = [.. power.CountBy(x => x).OrderBy(x => x.Key).Select(x => ((long)x.Key, x.Value))];
+        int n = nums.Length;
+        long[] dp = [.. nums.Select(x => x.num * x.c)];
+        for (int left = 0; left < n; left++)
         {
-            if (inedge[edges[i][1]] != -1) // in-degree >= 2
+            int right = 1 + left;
+            while (right < n && nums[right].num <= nums[left].num + 2)
             {
-                cand1 = inedge[edges[i][1]];
-                cand2 = i;
+                right += 1;
             }
-            inedge[edges[i][1]] = i;
-        }
-        DSU dsu = new(1 + n);
-        for (int i = 0; i < n; i++)
-        {
-            // ignore second in-edge; no union
-            if (i == cand2) { continue; }
-            if (!dsu.Union(edges[i][0], edges[i][1]))
+            for (int i = 0; i < 3 && right < n; i += 1, right += 1)
             {
-                // in-degree >= 2; first edge causes cycle
-                if (cand2 >= 0) { return edges[cand1]; }
-                // All in-degrees are 1; no parent conflict
-                // this edge causing cycle
-                else { return edges[i]; }
+                dp[right] = long.Max(dp[right], dp[left] + nums[right].num * nums[right].c);
             }
         }
-        return edges[cand2]; // in-degree >= 2; second edge is redundant
-    }
-}
-
-readonly struct DSU
-{
-    public DSU(int n)
-    {
-        Parent = [.. Enumerable.Range(0, n)];
-        Rank = new int[n];
-    }
-
-    public int[] Parent { get; }
-    public int[] Rank { get; }
-
-    public int Find(int v)
-    {
-        if (Parent[v] != v) { Parent[v] = Find(Parent[v]); }
-        return Parent[v];
-    }
-
-    public bool Union(int x, int y)
-    {
-        int rx = Find(x);
-        int ry = Find(y);
-        if (rx == ry) { return false; }
-        if (Rank[rx] < Rank[ry]) { Parent[rx] = ry; }
-        else if (Rank[rx] > Rank[ry]) { Parent[ry] = rx; }
-        else
-        {
-            Parent[ry] = rx;
-            Rank[rx] += 1;
-        }
-        return true;
+        return dp.Max();
     }
 }

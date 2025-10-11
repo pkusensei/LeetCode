@@ -10,8 +10,10 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow(10, new[] { 7, 1, 6, 3 })]
+    public void TestMethod1(long exp, int[] p)
     {
+        Assert.AreEqual(exp, sol.MaximumTotalDamage(p));
     }
 
     [TestMethod]
