@@ -9,23 +9,78 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-struct ExamTracker {
-    data: Vec<(i32, i64)>,
+pub fn max_partition_factor(points: &[[i32; 2]]) -> i32 {
+    let n = points.len();
+        if n <= 2 {
+            return 0;
+        }
+    let mut dists = vec![];
+    for (i1, p1) in points.iter().enumerate() {
+        for (i2, p2) in points.iter().enumerate().skip(1 + i1) {
+            let d = (p1[0] - p2[0]).abs() + (p1[1] - p2[1]).abs();
+            dists.push((d, i1, i2));
+        }
+    }
+    dists.sort_unstable_by_key(|v| v.0);
+    let mut left = 0;
+    let mut right = dists.last().unwrap().0;
+    while left < right {
+        let mid = left + (right - left + 1) / 2;
+        if check_split(n, &dists, mid) {
+            left = mid;
+        } else {
+            right = mid - 1;
+        }
+    }
+    left
 }
 
-impl ExamTracker {
-    fn new() -> Self {
-        Self { data: Vec::new() }
+fn check_split(n: usize, dists: &[(i32, usize, usize)], mid: i32) -> bool {
+    let mut dsu = DSU::new(2 * n);
+    for &(_, i1, i2) in dists.iter().take_while(|v| v.0 < mid) {
+        if dsu.find(i1) == dsu.find(i2) {
+            return false;
+        }
+        dsu.union(i1, i2 + n);
+        dsu.union(i1 + n, i2);
+    }
+    true
+}
+
+struct DSU {
+    parent: Vec<usize>,
+    rank: Vec<i32>,
+}
+
+impl DSU {
+    fn new(n: usize) -> Self {
+        Self {
+            parent: (0..n).collect(),
+            rank: vec![0; n],
+        }
     }
 
-    fn record(&mut self, time: i32, score: i32) {
-        self.data.push((time, i64::from(score)));
+    fn find(&mut self, v: usize) -> usize {
+        if self.parent[v] != v {
+            self.parent[v] = self.find(self.parent[v]);
+        }
+        self.parent[v]
     }
 
-    fn total_score(&self, start_time: i32, end_time: i32) -> i64 {
-        let a = self.data.partition_point(|v| v.0 < start_time);
-        let b = self.data.partition_point(|v| v.0 <= end_time);
-        self.data[a..b].iter().map(|v| v.1).sum()
+    fn union(&mut self, x: usize, y: usize) -> bool {
+        let [rx, ry] = [x, y].map(|v| self.find(v));
+        if rx == ry {
+            return false;
+        }
+        match self.rank[rx].cmp(&self.rank[ry]) {
+            std::cmp::Ordering::Less => self.parent[rx] = ry,
+            std::cmp::Ordering::Equal => {
+                self.parent[ry] = rx;
+                self.rank[rx] += 1;
+            }
+            std::cmp::Ordering::Greater => self.parent[ry] = rx,
+        }
+        true
     }
 }
 
@@ -60,16 +115,29 @@ mod tests {
 
     #[test]
     fn basics() {
-        let mut examTracker = ExamTracker::new();
-        examTracker.record(1, 98); // Alice takes a new exam at time 1, scoring 98.
-        assert_eq!(examTracker.total_score(1, 1), 98); // Between time 1 and time 1, Alice took 1 exam at time 1, scoring 98. The total score is 98.
-        examTracker.record(5, 99); // Alice takes a new exam at time 5, scoring 99.
-        assert_eq!(examTracker.total_score(1, 3), 98); // Between time 1 and time 3, Alice took 1 exam at time 1, scoring 98. The total score is 98.
-        assert_eq!(examTracker.total_score(1, 5), 197); // Between time 1 and time 5, Alice took 2 exams at time 1 and 5, scoring 98 and 99. The total score is 98 + 99 = 197.
-        assert_eq!(examTracker.total_score(3, 4), 0); // Alice did not take any exam between time 3 and time 4. Therefore, the answer is 0.
-        assert_eq!(examTracker.total_score(2, 5), 99);
+        assert_eq!(max_partition_factor(&[[0, 0], [0, 2], [2, 0], [2, 2]]), 4);
+        assert_eq!(max_partition_factor(&[[0, 0], [0, 1], [10, 0]]), 11);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(
+            max_partition_factor(&[
+                [-66397, -34995],
+                [-2453, -42401],
+                [20537, -8704],
+                [22668, -62907]
+            ]),
+            56687
+        );
+        assert_eq!(
+            max_partition_factor(&[
+                [7232, 86484],
+                [-30449, 30516],
+                [85154, 76686],
+                [-41851, -41661]
+            ]),
+            161773
+        );
+    }
 }
