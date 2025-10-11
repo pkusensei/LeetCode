@@ -9,19 +9,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn score_balance(s: String) -> bool {
-    let total: i32 = s.bytes().map(|b| 1 + i32::from(b - b'a')).sum();
-    if total & 1 == 1 {
-        return false;
-    }
-    let mut curr = 0;
-    for b in s.bytes() {
-        curr += 1 + i32::from(b - b'a');
-        if curr * 2 == total {
-            return true;
+pub fn longest_subarray(nums: &[i32]) -> i32 {
+    let mut res = 2;
+    let n = nums.len();
+    let mut left = 0;
+    let mut right = 1;
+    while 1 + right < n {
+        while 1 + right < n
+            && i64::from(nums[right - 1]) + i64::from(nums[right]) == i64::from(nums[1 + right])
+        {
+            right += 1;
         }
+        right += 1;
+        res = res.max(right - left);
+        left = right - 1;
     }
-    false
+    res as i32
 }
 
 #[cfg(test)]
@@ -54,7 +57,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(longest_subarray(&[1, 1, 1, 1, 2, 3, 5, 1]), 5);
+        assert_eq!(longest_subarray(&[5, 2, 7, 9, 16]), 5);
+        assert_eq!(longest_subarray(&[1000000000, 1000000000, 1000000000]), 2);
+    }
 
     #[test]
     fn test() {}
