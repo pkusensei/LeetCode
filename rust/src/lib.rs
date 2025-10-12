@@ -6,70 +6,64 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::collections::HashMap;
+use std::sync::LazyLock;
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn longest_balanced(s: &str) -> i32 {
-    let s = s.as_bytes();
-    let uniform = s
-        .chunk_by(|a, b| a == b)
-        .map(|ch| ch.len())
-        .max()
-        .unwrap_or(1);
-    // a - freq[0]
-    // b - freq[1]
-    // c - freq[2]
-    let mut curr = [0; 3];
-    let mut freq = Vec::from([curr]);
-    let mut seen = HashMap::from([((0, 0), 0)]);
-    let mut res = 1;
-    for (idx, &b) in s.iter().enumerate() {
-        curr[usize::from(b - b'a')] += 1;
-        freq.push(curr);
-        // (freq_b - freq_a, freq_c - freq_a)
-        if let Some(&prev) = seen.get(&(curr[1] - curr[0], curr[2] - curr[0])) {
-            res = res.max(idx + 1 - prev);
-        } else {
-            seen.insert((curr[1] - curr[0], curr[2] - curr[0]), 1 + idx);
-        }
-    }
-    res.max(uniform)
-        .max(count2(&freq, 0, 1))
-        .max(count2(&freq, 1, 2))
-        .max(count2(&freq, 0, 2)) as i32
+pub fn sum_of_ancestors(n: i32, edges: Vec<Vec<i32>>, nums: Vec<i32>) -> i64 {
+    let n = n as usize;
+    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
+        let [a, b] = [0, 1].map(|i| e[i] as usize);
+        acc[a].push(b);
+        acc[b].push(a);
+        acc
+    });
+    let facts: Vec<i32> = nums.iter().map(|&v| factors(v)).collect();
+    let max = *facts.iter().max().unwrap_or(&1);
+    dfs(&adj, &facts, 0, n, &mut vec![0; 1 + max as usize])
 }
 
-fn count2(freq: &[[i32; 3]], i1: usize, i2: usize) -> usize {
-    let n = freq.len();
-    let i3 = 3 - i1 - i2;
-    let mut discard = 0;
-    let mut left = 1;
-    let mut res = 1;
-    while left < n {
-        while left < n && freq[left][i3] - discard > 0 {
-            discard = freq[left][i3];
-            left += 1;
+fn dfs(adj: &[Vec<usize>], facts: &[i32], node: usize, prev: usize, freq: &mut [i64]) -> i64 {
+    let f = facts[node];
+    let mut res = freq[f as usize];
+    freq[f as usize] += 1;
+    for &next in &adj[node] {
+        if next != prev {
+            res += dfs(adj, facts, next, node, freq);
         }
-        if left >= n {
-            break;
-        }
-        let mut right = left;
-        let mut seen = HashMap::from([(0, left - 1)]);
-        while right < n && freq[right][i3] == discard {
-            let delta =
-                (freq[right][i2] - freq[right][i1]) - (freq[left - 1][i2] - freq[left - 1][i1]);
-            if let Some(&prev) = seen.get(&delta) {
-                res = res.max(right - prev);
-            } else {
-                seen.insert(delta, right);
-            }
-            right += 1;
-        }
-        left = right; // fast forward
     }
+    freq[f as usize] -= 1;
     res
+}
+
+fn factors(mut num: i32) -> i32 {
+    for &p in S.iter() {
+        while num >= p.pow(2) && num % p.pow(2) == 0 {
+            num /= p.pow(2);
+        }
+    }
+    num
+}
+
+static S: LazyLock<Vec<i32>> = LazyLock::new(sieve);
+
+fn sieve() -> Vec<i32> {
+    const MAX: usize = 100_000_usize.isqrt();
+    let mut res = vec![true; 1 + MAX];
+    res[..2].fill(false);
+    res[2] = true;
+    for p in 2..=MAX.isqrt() {
+        if res[p] {
+            for val in (p * p..=MAX).step_by(p) {
+                res[val] = false;
+            }
+        }
+    }
+    res.into_iter()
+        .enumerate()
+        .filter_map(|(p, v)| if v { Some(p as i32) } else { None })
+        .collect()
 }
 
 #[cfg(test)]
@@ -102,16 +96,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(longest_balanced("aabcc"), 3);
-        assert_eq!(longest_balanced("abbac"), 4);
-        assert_eq!(longest_balanced("aba"), 2);
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(longest_balanced("cbbbc"), 3);
-        assert_eq!(longest_balanced("abcbc"), 4);
-        assert_eq!(longest_balanced("bac"), 3);
-    }
+    fn test() {}
 }
