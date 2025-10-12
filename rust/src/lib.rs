@@ -9,16 +9,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn sum_divisible_by_k(nums: Vec<i32>, k: i32) -> i32 {
+pub fn longest_balanced(s: String) -> i32 {
     use itertools::Itertools;
-    nums.iter()
-        .counts()
-        .into_iter()
-        .filter_map(|(num, f)| {
-            let f = f as i32;
-            if f % k == 0 { Some(f * num) } else { None }
-        })
-        .sum()
+    let (s, n) = (s.as_bytes(), s.len());
+    let mut res = 1;
+    for left in 0..n {
+        let mut f = [0; 26];
+        for right in left..n {
+            f[usize::from(s[right] - b'a')] += 1;
+            if f.into_iter().filter(|&v| v > 0).all_equal() {
+                res = res.max(right + 1 - left);
+            }
+        }
+    }
+    res as i32
 }
 
 #[cfg(test)]
