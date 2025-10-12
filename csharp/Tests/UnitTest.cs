@@ -10,10 +10,10 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(10, new[] { 7, 1, 6, 3 })]
-    public void TestMethod1(long exp, int[] p)
+    [DataRow(991600007, 5, 5, new[] { 1, 10, 100, 10000, 1000000 })]
+    public void TestMethod1(int exp, int m, int k, int[] p)
     {
-        Assert.AreEqual(exp, sol.MaximumTotalDamage(p));
+        Assert.AreEqual(exp, sol.MagicalSum(m, k, p));
     }
 
     [TestMethod]

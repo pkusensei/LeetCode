@@ -11,9 +11,9 @@ use helper::*;
 
 pub fn max_partition_factor(points: &[[i32; 2]]) -> i32 {
     let n = points.len();
-        if n <= 2 {
-            return 0;
-        }
+    if n <= 2 {
+        return 0;
+    }
     let mut dists = vec![];
     for (i1, p1) in points.iter().enumerate() {
         for (i2, p2) in points.iter().enumerate().skip(1 + i1) {
