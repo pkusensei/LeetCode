@@ -8,30 +8,16 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<string> RemoveAnagrams(string[] words)
+    public int LongestUnivaluePath(TreeNode root)
     {
-        List<string> res = [];
-        for (int left = 0; left < words.Length;)
-        {
-            res.Add(words[left]);
-            int[] f1 = Count(words[left]);
-            int right = left;
-            while (right < words.Length && f1.SequenceEqual(Count(words[right])))
-            {
-                right += 1;
-            }
-            left = right;
-        }
-        return res;
+        if (root is null) { return 0; }
+        return int.Max(Dfs(root.left, root.val) + Dfs(root.right, root.val),
+                    int.Max(LongestUnivaluePath(root.left), LongestUnivaluePath(root.right)));
 
-        static int[] Count(ReadOnlySpan<char> s)
+        static int Dfs(TreeNode node, int val)
         {
-            int[] f = new int[26];
-            foreach (var c in s)
-            {
-                f[c - 'a'] += 1;
-            }
-            return f;
+            if (node is null || node.val != val) { return 0; }
+            return 1 + int.Max(Dfs(node.left, val), Dfs(node.right, val));
         }
     }
 }
