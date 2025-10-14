@@ -8,35 +8,36 @@ namespace Solution;
 
 public class Solution
 {
-    public double KnightProbability(int n, int k, int row, int column)
+    public int MinStickers(string[] stickers, string target)
     {
-        double[,,] memo = new double[1 + k, n, n];
-        for (int i1 = 0; i1 <= k; i1++)
+        int n = target.Length;
+        int[] dp = new int[1 << n];
+        Array.Fill(dp, -1);
+        dp[0] = 0;
+        for (int mask = 0; mask < (1 << n); mask++)
         {
-            for (int r = 0; r < n; r++)
+            if (dp[mask] < 0) { continue; } // unreachable
+            foreach (var s in stickers)
             {
-                for (int c = 0; c < n; c++)
+                int curr = mask;
+                foreach (var ch in s)
                 {
-                    memo[i1, r, c] = -1.0;
+                    for (int i = 0; i < n; i++)
+                    {
+                        if (((curr >> i) & 1) == 1) { continue; }
+                        if (ch == target[i])
+                        {
+                            curr |= 1 << i;
+                            break;
+                        }
+                    }
+                }
+                if (dp[curr] == -1 || dp[curr] > 1 + dp[mask])
+                {
+                    dp[curr] = 1 + dp[mask];
                 }
             }
         }
-        return Dfs(k, row, column, 1.0);
-
-        double Dfs(int k, int row, int col, double f)
-        {
-            if (row < 0 || n <= row || col < 0 || n <= col) { return 0.0; }
-            if (k == 0) { return f; }
-            if (memo[k, row, col] > -1.0) { return memo[k, row, col]; }
-            Span<(int, int)> deltas = [(-2, -1), (-1, -2), (2, 1), (1, 2),
-                                        (2, -1), (-1,2), (-2, 1), (1, -2)];
-            double res = 0.0;
-            foreach (var (dr, dc) in deltas)
-            {
-                res += Dfs(k - 1, row + dr, col + dc, f / 8.0);
-            }
-            memo[k, row, col] = res;
-            return res;
-        }
+        return dp[^1];
     }
 }
