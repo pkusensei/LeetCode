@@ -8,21 +8,29 @@ namespace Solution;
 
 public class Solution
 {
-    public int CountBinarySubstrings(string s)
+    public int FindShortestSubArray(int[] nums)
     {
-        int n = s.Length;
-        List<int> arr = [];
-        for (int left = 0; left < n;)
+        Dictionary<int, int> freq = [];
+        Dictionary<int, int> left = [];
+        Dictionary<int, int> right = [];
+        int max_f = 1;
+        for (int i = 0; i < nums.Length; i++)
         {
-            int right = left;
-            for (; right < n && s[right] == s[left]; right += 1) { }
-            arr.Add(right - left);
-            left = right;
+            if (!freq.TryAdd(nums[i], 1))
+            {
+                freq[nums[i]] += 1;
+                max_f = int.Max(max_f, freq[nums[i]]);
+            }
+            left.TryAdd(nums[i], i);
+            right[nums[i]] = i;
         }
-        int res = 0;
-        for (int i = 0; i < arr.Count - 1; i++)
+        int res = nums.Length;
+        foreach (var (num, f) in freq)
         {
-            res += int.Min(arr[i], arr[1 + i]);
+            if (f == max_f)
+            {
+                res = int.Min(res, right[num] + 1 - left[num]);
+            }
         }
         return res;
     }
