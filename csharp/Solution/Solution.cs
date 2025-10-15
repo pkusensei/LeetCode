@@ -8,30 +8,59 @@ namespace Solution;
 
 public class Solution
 {
-    public bool CanPartitionKSubsets(int[] nums, int k)
+    public IList<int> FallingSquares(int[][] positions)
     {
-        int n = nums.Length;
-        int sum = nums.Sum();
-        if (sum % k > 0) { return false; }
-        int target = sum / k;
-        int[] dp = new int[1 << n];
-        Array.Fill(dp, -1);
-        dp[0] = 0;
-        for (int mask = 0; mask < (1 << n); mask++)
+        var compression = positions.SelectMany(p => new[] { p[0], p[0] + p[1] - 1 }).Distinct().Order().Select((num, i) => (num, i)).ToDictionary();
+        int n = compression.Count;
+        SegTree tree = new(n);
+        List<int> res = new(n);
+        foreach (var p in positions)
         {
-            if (dp[mask] < 0) { continue; }
-            for (int i = 0; i < n; i++)
-            {
-                if (((mask >> i) & 1) == 1) { continue; }
-                int curr = mask | (1 << i);
-                if (dp[mask] + nums[i] <= target && dp[curr] == -1)
-                {
-                    // Implicity switch buckets
-                    // i.e when this one is full, start a new one
-                    dp[curr] = (dp[mask] + nums[i]) % target;
-                }
-            }
+            int left = compression[p[0]];
+            int right = compression[p[0] + p[1] - 1];
+            int prev = tree.Query(left, right);
+            tree.Update(left, right, prev + p[1]);
+            res.Add(tree.Query(0, n - 1));
         }
-        return dp[^1] == 0;
+        return res;
+    }
+}
+
+readonly struct SegTree
+{
+    public SegTree(int n)
+    {
+        Tree = new int[4 * n];
+        N = n;
+    }
+
+    public int[] Tree { get; }
+    public int N { get; }
+
+    public int Query(int left, int right) => Query(1, 0, N - 1, left, right);
+
+    private int Query(int node, int left, int right, int ql, int qr)
+    {
+        if (right < ql || qr < left) { return 0; }
+        if (ql <= left && right <= qr) { return Tree[node]; }
+        int mid = left + (right - left) / 2;
+        return int.Max(Query(2 * node, left, mid, ql, qr),
+                       Query(2 * node + 1, 1 + mid, right, ql, qr));
+    }
+
+    public void Update(int left, int right, int val) => Update(1, 0, N - 1, left, right, val);
+
+    private void Update(int node, int left, int right, int ql, int qr, int val)
+    {
+        if (right < ql || qr < left) { return; }
+        if (left == right)
+        {
+            Tree[node] = val;
+            return;
+        }
+        int mid = left + (right - left) / 2;
+        Update(2 * node, left, mid, ql, qr, val);
+        Update(2 * node + 1, 1 + mid, right, ql, qr, val);
+        Tree[node] = int.Max(Tree[2 * node], Tree[2 * node + 1]);
     }
 }

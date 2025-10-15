@@ -46,7 +46,7 @@ impl<T: Copy> SegTree<T> {
         if ql <= left && right <= qr {
             return self.tree[node];
         }
-        let mid = (left + right) / 2;
+        let mid = left.midpoint(right);
         (self.f)(
             self._query(2 * node, left, mid, ql, qr),
             self._query(2 * node + 1, mid + 1, right, ql, qr),
@@ -65,12 +65,38 @@ impl<T: Copy> SegTree<T> {
             self.tree[node] = val;
             return;
         }
-        let mid = (left + right) / 2;
+        let mid = left.midpoint(right);
         if idx <= mid {
             self._update(2 * node, left, mid, idx, val);
         } else {
             self._update(2 * node + 1, mid + 1, right, idx, val);
         }
+        self.tree[node] = (self.f)(self.tree[2 * node], self.tree[2 * node + 1]);
+    }
+
+    pub fn range_update(&mut self, ql: usize, qr: usize, val: T) {
+        self._range_update(1, 0, self.n - 1, ql, qr, val);
+    }
+
+    fn _range_update(
+        &mut self,
+        node: usize,
+        left: usize,
+        right: usize,
+        ql: usize,
+        qr: usize,
+        val: T,
+    ) {
+        if qr < left || right < ql {
+            return;
+        }
+        if ql <= left && right <= qr {
+            self.tree[node] = val;
+            return;
+        }
+        let mid = left.midpoint(right);
+        self._range_update(2 * node, left, mid, ql, qr, val);
+        self._range_update(2 * node + 1, 1 + mid, right, ql, qr, val);
         self.tree[node] = (self.f)(self.tree[2 * node], self.tree[2 * node + 1]);
     }
 }
