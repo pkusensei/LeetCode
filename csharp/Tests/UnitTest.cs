@@ -10,8 +10,10 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow(true, new[] { 1, 1, 1, 1, 2, 2, 2, 2 }, 2)]
+    public void TestMethod1(bool exp, int[] nums, int k)
     {
+        Assert.AreEqual(exp, sol.CanPartitionKSubsets(nums, k));
     }
 
     [TestMethod]

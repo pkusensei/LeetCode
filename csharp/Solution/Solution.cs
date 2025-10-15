@@ -8,30 +8,30 @@ namespace Solution;
 
 public class Solution
 {
-    public int FindShortestSubArray(int[] nums)
+    public bool CanPartitionKSubsets(int[] nums, int k)
     {
-        Dictionary<int, int> freq = [];
-        Dictionary<int, int> left = [];
-        Dictionary<int, int> right = [];
-        int max_f = 1;
-        for (int i = 0; i < nums.Length; i++)
+        int n = nums.Length;
+        int sum = nums.Sum();
+        if (sum % k > 0) { return false; }
+        int target = sum / k;
+        int[] dp = new int[1 << n];
+        Array.Fill(dp, -1);
+        dp[0] = 0;
+        for (int mask = 0; mask < (1 << n); mask++)
         {
-            if (!freq.TryAdd(nums[i], 1))
+            if (dp[mask] < 0) { continue; }
+            for (int i = 0; i < n; i++)
             {
-                freq[nums[i]] += 1;
-                max_f = int.Max(max_f, freq[nums[i]]);
-            }
-            left.TryAdd(nums[i], i);
-            right[nums[i]] = i;
-        }
-        int res = nums.Length;
-        foreach (var (num, f) in freq)
-        {
-            if (f == max_f)
-            {
-                res = int.Min(res, right[num] + 1 - left[num]);
+                if (((mask >> i) & 1) == 1) { continue; }
+                int curr = mask | (1 << i);
+                if (dp[mask] + nums[i] <= target && dp[curr] == -1)
+                {
+                    // Implicity switch buckets
+                    // i.e when this one is full, start a new one
+                    dp[curr] = (dp[mask] + nums[i]) % target;
+                }
             }
         }
-        return res;
+        return dp[^1] == 0;
     }
 }
