@@ -8,36 +8,24 @@ namespace Solution;
 
 public class Solution
 {
-    public int MinStickers(string[] stickers, string target)
+    public int MaxIncreasingSubarrays(IList<int> nums)
     {
-        int n = target.Length;
-        int[] dp = new int[1 << n];
-        Array.Fill(dp, -1);
-        dp[0] = 0;
-        for (int mask = 0; mask < (1 << n); mask++)
+        int n = nums.Count;
+        int res = 0;
+        int left = 0;
+        int prev = 0;
+        for (int right = 1; right < n; right++)
         {
-            if (dp[mask] < 0) { continue; } // unreachable
-            foreach (var s in stickers)
-            {
-                int curr = mask;
-                foreach (var ch in s)
-                {
-                    for (int i = 0; i < n; i++)
-                    {
-                        if (((curr >> i) & 1) == 1) { continue; }
-                        if (ch == target[i])
-                        {
-                            curr |= 1 << i;
-                            break;
-                        }
-                    }
-                }
-                if (dp[curr] == -1 || dp[curr] > 1 + dp[mask])
-                {
-                    dp[curr] = 1 + dp[mask];
-                }
-            }
+            if (nums[right - 1] < nums[right]) { continue; }
+            int a = (right - left) / 2;
+            int b = int.Min(prev, right - left);
+            res = int.Max(res, int.Max(a, b));
+            prev = right - left;
+            left = right;
         }
-        return dp[^1];
+        int aa = (n - left) / 2;
+        int bb = int.Min(prev, n - left);
+        res = int.Max(res, int.Max(aa, bb));
+        return res;
     }
 }
