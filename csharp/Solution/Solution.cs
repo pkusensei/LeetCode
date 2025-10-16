@@ -8,24 +8,17 @@ namespace Solution;
 
 public class KthLargest
 {
-    public KthLargest(int k, int[] nums)
+    public int Search(int[] nums, int target)
     {
-        PQ = new();
-        K = k;
-        foreach (var num in nums)
+        int left = 0;
+        int right = nums.Length - 1;
+        while (left <= right)
         {
-            PQ.Enqueue(num, num);
-            if (PQ.Count > K) { PQ.Dequeue(); }
+            int mid = left + (right - left) / 2;
+            if (target == nums[mid]) { return mid; }
+            else if (target < nums[mid]) { right = mid - 1; }
+            else { left = 1 + mid; }
         }
-    }
-
-    PriorityQueue<int, int> PQ { get; }
-    int K { get; }
-
-    public int Add(int val)
-    {
-        PQ.Enqueue(val, val);
-        if (PQ.Count > K) { PQ.Dequeue(); }
-        return PQ.Peek();
+        return -1;
     }
 }
