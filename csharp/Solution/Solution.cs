@@ -6,13 +6,26 @@ using static Solution.Utils;
 
 namespace Solution;
 
-public class Solution
+public class KthLargest
 {
-    public TreeNode InsertIntoBST(TreeNode root, int val)
+    public KthLargest(int k, int[] nums)
     {
-        if (root is null) { return new(val); }
-        if (root.val < val) { root.right = InsertIntoBST(root.right, val); }
-        else { root.left = InsertIntoBST(root.left, val); }
-        return root;
+        PQ = new();
+        K = k;
+        foreach (var num in nums)
+        {
+            PQ.Enqueue(num, num);
+            if (PQ.Count > K) { PQ.Dequeue(); }
+        }
+    }
+
+    PriorityQueue<int, int> PQ { get; }
+    int K { get; }
+
+    public int Add(int val)
+    {
+        PQ.Enqueue(val, val);
+        if (PQ.Count > K) { PQ.Dequeue(); }
+        return PQ.Peek();
     }
 }
