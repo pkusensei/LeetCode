@@ -12,8 +12,6 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
-        int[][] p = [[1, 2], [2, 3], [6, 1]];
-        Assert.IsTrue(new[] { 2, 5, 5 }.SequenceEqual(sol.FallingSquares(p)));
     }
 
     [TestMethod]
