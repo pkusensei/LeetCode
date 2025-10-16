@@ -8,15 +8,11 @@ namespace Solution;
 
 public class Solution
 {
-    public int FindSmallestInteger(int[] nums, int value)
+    public TreeNode InsertIntoBST(TreeNode root, int val)
     {
-        Dictionary<int, int> dict = Enumerable.Range(0, value).ToDictionary(v => v, v => v);
-        foreach (var num in nums)
-        {
-            int v = num % value;
-            if (v < 0) { v += value; }
-            dict[v] += value;
-        }
-        return dict.Values.Min();
+        if (root is null) { return new(val); }
+        if (root.val < val) { root.right = InsertIntoBST(root.right, val); }
+        else { root.left = InsertIntoBST(root.left, val); }
+        return root;
     }
 }
