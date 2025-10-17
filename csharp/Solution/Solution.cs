@@ -8,34 +8,30 @@ namespace Solution;
 
 public class Solution
 {
-    public int MaxPartitionsAfterOperations(string s, int k)
+    public Solution(int n, int[] blacklist)
     {
-        Dictionary<(int, int, bool), int> memo = [];
-        return Dfs(0, 0, false);
-
-        int Dfs(int idx, int mask, bool change)
+        Rng = new();
+        N = n - blacklist.Length;
+        Banned = [];
+        HashSet<int> set = [.. blacklist];
+        int val = N;
+        foreach (var banned in blacklist.Order())
         {
-            if (idx >= s.Length) { return 1; }
-            var key = (idx, mask, change);
-            int res;
-            if (memo.TryGetValue(key, out res)) { return res; }
-            int bit = 1 << (s[idx] - 'a');
-            if (int.PopCount(mask | bit) <= k) { res = Dfs(1 + idx, mask | bit, change); }
-            else { res = 1 + Dfs(1 + idx, bit, change); }
-            if (!change)
-            {
-                for (int i = 0; i < 26; i++)
-                {
-                    bit = 1 << i;
-                    int val;
-                    if (int.PopCount(mask | bit) <= k) { val = Dfs(1 + idx, mask | bit, true); }
-                    else { val = 1 + Dfs(1 + idx, bit, true); }
-                    res = int.Max(res, val);
-                }
-            }
-            memo.Add(key, res);
-            return res;
+            if (banned >= N) { break; }
+            while (set.Contains(val)) { val += 1; }
+            Banned.Add(banned, val);
+            val += 1;
         }
+    }
+
+    Random Rng { get; }
+    int N { get; }
+    Dictionary<int, int> Banned { get; }
+
+    public int Pick()
+    {
+        int v = Rng.Next(N);
+        return Banned.GetValueOrDefault(v, v);
     }
 }
 
