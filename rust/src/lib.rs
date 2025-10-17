@@ -9,83 +9,59 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_sum_of_three_subarrays(nums: &[i32], k: i32) -> [usize; 3] {
-    let k = k as usize;
-    let mut sums = vec![];
-    let mut window = 0;
-    for (i, &num) in nums.iter().enumerate() {
-        window += num;
-        if i >= k {
-            window -= nums[i - k];
+pub fn max_partitions_after_operations(s: &str, k: i32) -> i32 {
+    let n = s.len();
+    let mut left = Vec::with_capacity(n);
+    let [mut partitions, mut mask, mut pop_count] = [0; 3];
+    left.push([partitions, mask, pop_count]);
+    for b in s.bytes().take(n - 1) {
+        let bit = 1 << (b - b'a');
+        if mask & bit == 0 {
+            pop_count += 1;
+            if pop_count <= k {
+                mask |= bit;
+            } else {
+                partitions += 1;
+                mask = bit;
+                pop_count = 1;
+            }
         }
-        if i >= k - 1 {
-            sums.push(window);
-        }
+        left.push([partitions, mask, pop_count]);
     }
-    let mut max_i = 0;
-    let mut left = vec![];
-    for (i, &v) in sums.iter().enumerate() {
-        if v > sums[max_i] {
-            max_i = i;
+    let mut right = Vec::with_capacity(n);
+    [partitions, mask, pop_count] = [0; 3];
+    right.push([partitions, mask, pop_count]);
+    for b in s.bytes().rev().take(n - 1) {
+        let bit = 1 << (b - b'a');
+        if mask & bit == 0 {
+            pop_count += 1;
+            if pop_count <= k {
+                mask |= bit;
+            } else {
+                partitions += 1;
+                mask = bit;
+                pop_count = 1;
+            }
         }
-        left.push(max_i);
-    }
-    let mut right = vec![];
-    max_i = sums.len() - 1;
-    for (i, &v) in sums.iter().enumerate().rev() {
-        // smallest idx
-        if v >= sums[max_i] {
-            max_i = i;
-        }
-        right.push(max_i);
+        right.push([partitions, mask, pop_count]);
     }
     right.reverse();
-    let mut max_sum = 0;
-    let mut res = [0, 0, 0];
-    for mid in k..sums.len() - k {
-        let curr = sums[mid] + sums[left[mid - k]] + sums[right[mid + k]];
-        if curr > max_sum {
-            max_sum = curr;
-            res = [left[mid - k], mid, right[mid + k]];
+    let mut res = 0;
+    for (left, right) in left.into_iter().zip(right) {
+        // baseline 2 + left_acc [..i] + right_acc [1+i..]
+        // one partial forward segment and one partial backward segment
+        let mut seg = 2 + left[0] + right[0];
+        let mask = left[1] | right[1];
+        if left[2] == k && right[2] == k && mask.count_ones() < 26 {
+            // left and right side of this segment is already k distinct
+            // change current [i] to force partition
+            seg += 1;
+        } else if (1 + mask.count_ones()).min(26) as i32 <= k {
+            seg -= 1; // continue/stretch left segment onto right
         }
+        res = res.max(seg);
     }
     res
-}
-
-pub fn with_three_windows(nums: &[i32], k: i32) -> [usize; 3] {
-    let n = nums.len();
-    let k = k as usize;
-    let mut best_seq1 = [0];
-    let mut best_seq2 = [0, k];
-    let mut best_seq3 = [0, k, 2 * k];
-    let mut sum1: i32 = nums[..k].iter().sum();
-    let mut sum2: i32 = nums[k..2 * k].iter().sum();
-    let mut sum3: i32 = nums[2 * k..3 * k].iter().sum();
-    let mut max_sum1 = sum1;
-    let mut max_sum2 = sum1 + sum2;
-    let mut max_sum3 = sum1 + sum2 + sum3;
-    let mut i1 = 1;
-    let mut i2 = 1 + k;
-    for i3 in 1 + 2 * k..=n - k {
-        sum1 += nums[i1 + k - 1] - nums[i1 - 1];
-        sum2 += nums[i2 + k - 1] - nums[i2 - 1];
-        sum3 += nums[i3 + k - 1] - nums[i3 - 1];
-        if sum1 > max_sum1 {
-            max_sum1 = sum1;
-            best_seq1 = [i1];
-        }
-        if sum2 + max_sum1 > max_sum2 {
-            max_sum2 = sum2 + max_sum1;
-            best_seq2 = [best_seq1[0], i2];
-        }
-        if sum3 + max_sum2 > max_sum3 {
-            max_sum3 = sum3 + max_sum2;
-            best_seq3 = [best_seq2[0], best_seq2[1], i3];
-        }
-        i1 += 1;
-        i2 += 1;
-    }
-    best_seq3
 }
 
 #[cfg(test)]
@@ -119,20 +95,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            max_sum_of_three_subarrays(&[1, 2, 1, 2, 6, 7, 5, 1], 2),
-            [0, 3, 5]
-        );
-        assert_eq!(
-            max_sum_of_three_subarrays(&[1, 2, 1, 2, 1, 2, 1, 2, 1], 2),
-            [0, 2, 4]
-        );
-
-        assert_eq!(with_three_windows(&[1, 2, 1, 2, 6, 7, 5, 1], 2), [0, 3, 5]);
-        assert_eq!(
-            with_three_windows(&[1, 2, 1, 2, 1, 2, 1, 2, 1], 2),
-            [0, 2, 4]
-        );
+        assert_eq!(max_partitions_after_operations("accca", 2), 3);
+        assert_eq!(max_partitions_after_operations("aabaab", 3), 1);
+        assert_eq!(max_partitions_after_operations("xxyz", 1), 4);
     }
 
     #[test]
