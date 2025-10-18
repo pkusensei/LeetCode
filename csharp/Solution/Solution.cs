@@ -8,30 +8,19 @@ namespace Solution;
 
 public class Solution
 {
-    public Solution(int n, int[] blacklist)
+    public int MaxDistinctElements(int[] nums, int k)
     {
-        Rng = new();
-        N = n - blacklist.Length;
-        Banned = [];
-        HashSet<int> set = [.. blacklist];
-        int val = N;
-        foreach (var banned in blacklist.Order())
+        int n = nums.Length;
+        Array.Sort(nums);
+        int curr = nums[0] - k;
+        int res = 1;
+        for (int i = 0; i < n; i++)
         {
-            if (banned >= N) { break; }
-            while (set.Contains(val)) { val += 1; }
-            Banned.Add(banned, val);
-            val += 1;
+            if (curr > nums[i] + k) { continue; }
+            nums[i] = int.Max(curr, nums[i] - k);
+            curr = 1 + nums[i];
+            if (i > 0 && nums[i] > nums[i - 1]) { res += 1; }
         }
-    }
-
-    Random Rng { get; }
-    int N { get; }
-    Dictionary<int, int> Banned { get; }
-
-    public int Pick()
-    {
-        int v = Rng.Next(N);
-        return Banned.GetValueOrDefault(v, v);
+        return res;
     }
 }
-
