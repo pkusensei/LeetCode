@@ -9,25 +9,46 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn longest_balanced(nums: Vec<i32>) -> i32 {
-    use std::collections::HashSet;
-    let n = nums.len();
-    let mut res = 0;
-    for left in 0..n {
-        let mut odds = HashSet::new();
-        let mut evens = HashSet::new();
-        for right in left..n {
-            if nums[right] & 1 == 1 {
-                odds.insert(nums[right]);
-            } else {
-                evens.insert(nums[right]);
-            }
-            if odds.len() == evens.len() {
-                res = res.max(right + 1 - left);
+pub fn lex_greater_permutation(s: &str, target: &str) -> String {
+    let mut freq = s.bytes().fold([0; 26], |mut acc, b| {
+        acc[usize::from(b - b'a')] += 1;
+        acc
+    });
+    backtrack(&mut freq, target.as_bytes(), &mut vec![], false)
+        .and_then(|v| String::from_utf8(v).ok())
+        .unwrap_or_default()
+}
+
+fn backtrack(
+    freq: &mut [i16; 26],
+    target: &[u8],
+    curr: &mut Vec<u8>,
+    inc: bool,
+) -> Option<Vec<u8>> {
+    if inc {
+        for (i, &v) in freq.iter().enumerate() {
+            if v > 0 {
+                curr.extend(std::iter::repeat_n(i as u8 + b'a', v as usize));
             }
         }
+        return Some(curr.clone());
     }
-    res as i32
+    if target.is_empty() {
+        return None;
+    }
+    let idx = usize::from(target[0] - b'a');
+    for i in idx..26 {
+        if freq[i] > 0 {
+            freq[i] -= 1;
+            curr.push(i as u8 + b'a');
+            if let Some(v) = backtrack(freq, &target[1..], curr, i > idx) {
+                return Some(v);
+            }
+            freq[i] += 1;
+            curr.pop();
+        }
+    }
+    return None;
 }
 
 #[cfg(test)]
@@ -60,7 +81,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(lex_greater_permutation("leet", "code"), "eelt");
+        assert_eq!(lex_greater_permutation("baba", "bbaa"), "");
+    }
 
     #[test]
     fn test() {}
