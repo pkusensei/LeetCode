@@ -9,15 +9,25 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn missing_multiple(nums: Vec<i32>, k: i32) -> i32 {
+pub fn longest_balanced(nums: Vec<i32>) -> i32 {
     use std::collections::HashSet;
-    let set: HashSet<_> = nums.into_iter().collect();
-    for v in (k..205).step_by(k as usize) {
-        if !set.contains(&v) {
-            return v;
+    let n = nums.len();
+    let mut res = 0;
+    for left in 0..n {
+        let mut odds = HashSet::new();
+        let mut evens = HashSet::new();
+        for right in left..n {
+            if nums[right] & 1 == 1 {
+                odds.insert(nums[right]);
+            } else {
+                evens.insert(nums[right]);
+            }
+            if odds.len() == evens.len() {
+                res = res.max(right + 1 - left);
+            }
         }
     }
-    -1
+    res as i32
 }
 
 #[cfg(test)]
