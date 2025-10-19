@@ -7,11 +7,13 @@ namespace Tests;
 [TestClass]
 public class UnitTest
 {
-    // readonly Solution.Solution sol = new();
+    readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow("24", "74", 5, 1)]
+    public void TestMethod1(string exp, string s, int a, int b)
     {
+        Assert.AreEqual(exp, sol.FindLexSmallestString(s, a, b));
     }
 
     [TestMethod]
