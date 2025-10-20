@@ -9,19 +9,15 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_subarray_product_less_than_k(nums: Vec<i32>, k: i32) -> i32 {
-    let mut left = 0;
-    let mut prod = 1;
-    let mut res = 0;
-    for (right, num) in nums.iter().enumerate() {
-        prod *= num;
-        while prod >= k && left <= right {
-            prod /= nums[left];
-            left += 1;
-        }
-        res += right + 1 - left;
+pub fn max_profit(prices: Vec<i32>, fee: i32) -> i32 {
+    let mut buy = -prices[0];
+    let mut sell = 0;
+    for price in &prices[1..] {
+        let temp = buy;
+        buy = buy.max(sell - price);
+        sell = sell.max(temp + price - fee)
     }
-    res as i32
+    buy.max(sell)
 }
 
 #[cfg(test)]
