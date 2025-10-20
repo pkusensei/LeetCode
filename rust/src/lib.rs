@@ -9,20 +9,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_delete_sum(s1: String, s2: String) -> i32 {
-    let n1 = s1.len();
-    let n2 = s2.len();
-    let mut dp = vec![vec![0; 1 + n2]; 1 + n1];
-    for (i1, b1) in s1.bytes().enumerate() {
-        for (i2, b2) in s2.bytes().enumerate() {
-            dp[1 + i1][1 + i2] = if b1 == b2 {
-                b1 as i32 + dp[i1][i2]
-            } else {
-                dp[1 + i1][i2].max(dp[i1][1 + i2])
-            };
+pub fn num_subarray_product_less_than_k(nums: Vec<i32>, k: i32) -> i32 {
+    let mut left = 0;
+    let mut prod = 1;
+    let mut res = 0;
+    for (right, num) in nums.iter().enumerate() {
+        prod *= num;
+        while prod >= k && left <= right {
+            prod /= nums[left];
+            left += 1;
         }
+        res += right + 1 - left;
     }
-    s1.bytes().chain(s2.bytes()).map(|b| b as i32).sum::<i32>() - 2 * dp[n1][n2]
+    res as i32
 }
 
 #[cfg(test)]
