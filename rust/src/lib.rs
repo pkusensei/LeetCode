@@ -9,61 +9,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-use std::collections::BTreeMap;
-struct RangeModule {
-    data: BTreeMap<i32, i32>,
-}
-
-impl RangeModule {
-    fn new() -> Self {
-        Self {
-            data: BTreeMap::new(),
+pub fn find_length(nums1: Vec<i32>, nums2: Vec<i32>) -> i32 {
+    let n1 = nums1.len();
+    let n2 = nums2.len();
+    let mut dp = vec![vec![0; 1 + n2]; 1 + n1];
+    let mut res = 0;
+    for (i1, &v1) in nums1.iter().enumerate() {
+        for (i2, &v2) in nums2.iter().enumerate() {
+            if v1 == v2 {
+                dp[1 + i1][1 + i2] = 1 + dp[i1][i2];
+                res = res.max(dp[1 + i1][1 + i2]);
+            }
         }
     }
-
-    fn add_range(&mut self, mut left: i32, mut right: i32) {
-        if let Some(p) = self.data.range(..=left).next_back()
-            && left <= *p.1
-        {
-            left = *p.0;
-        }
-        if let Some(p) = self.data.range(..=right).next_back()
-            && right < *p.1
-        {
-            right = *p.1;
-        }
-        let del: Vec<_> = self.data.range(left..right).map(|p| *p.0).collect();
-        for k in del {
-            self.data.remove(&k);
-        }
-        self.data.insert(left, right);
-    }
-
-    fn query_range(&self, left: i32, right: i32) -> bool {
-        self.data
-            .range(..=left)
-            .next_back()
-            .is_some_and(|p| right <= *p.1)
-    }
-
-    fn remove_range(&mut self, left: i32, right: i32) {
-        if let Some(p) = self.data.range(..=right).next_back()
-            && right < *p.1
-        {
-            let val = *p.1;
-            self.data.insert(right, val);
-        }
-        if let Some(p) = self.data.range(..=left).next_back()
-            && left < *p.1
-        {
-            let key = *p.0;
-            self.data.insert(key, left);
-        }
-        let del: Vec<_> = self.data.range(left..right).map(|p| *p.0).collect();
-        for k in del {
-            self.data.remove(&k);
-        }
-    }
+    res
 }
 
 #[cfg(test)]
@@ -96,14 +55,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        let mut rm = RangeModule::new();
-        rm.add_range(10, 20);
-        rm.remove_range(14, 16);
-        assert!(rm.query_range(10, 14)); // return True,(Every number in [10, 14) is being tracked)
-        assert!(!rm.query_range(13, 15)); // return False,(Numbers like 14, 14.03, 14.17 in [13, 15) are not being tracked)
-        assert!(rm.query_range(16, 17));
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
