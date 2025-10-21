@@ -8,26 +8,32 @@ namespace Solution;
 
 public class Solution
 {
-    public string FindLexSmallestString(string s, int a, int b)
+    public int MaxFrequency(int[] nums, int k, int numOperations)
     {
-        int n = s.Length;
-        Queue<char[]> queue = [];
-        queue.Enqueue(s.ToCharArray());
-        HashSet<string> seen = [s];
-        while (queue.TryDequeue(out var curr))
+        int max = nums.Max();
+        int n = max + k + 2;
+        int[] freq = new int[n];
+        foreach (var item in nums)
         {
-            char[] temp1 = [.. curr];
-            for (int i = 1; i < n; i += 2)
-            {
-                temp1[i] = (char)(temp1[i] + a);
-                if (temp1[i] > '9') { temp1[i] = (char)(temp1[i] - 10); }
-            }
-            if (seen.Add(new(temp1))) { queue.Enqueue(temp1); }
-            char[] temp2 = new char[n];
-            Array.Copy(curr, b, temp2, 0, n - b);
-            Array.Copy(curr, 0, temp2, n - b, b);
-            if (seen.Add(new(temp2))) { queue.Enqueue(temp2); }
+            freq[item] += 1;
         }
-        return seen.Min();
+        int[] prefix = new int[n];
+        prefix[0] = freq[0];
+        for (int i = 1; i < n; i++)
+        {
+            prefix[i] = prefix[i - 1] + freq[i];
+        }
+        int res = 0;
+        for (int num = 0; num < n; num++)
+        {
+            if (freq[num] == 0 && numOperations == 0) { continue; }
+            int left = int.Max(0, num - k);
+            int right = int.Min(n - 1, num + k);
+            int f = prefix[right] - (left > 0 ? prefix[left - 1] : 0);
+            int change = f - freq[num];
+            int curr = freq[num] + int.Min(change, numOperations);
+            res = int.Max(res, curr);
+        }
+        return res;
     }
 }
