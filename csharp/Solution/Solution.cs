@@ -36,4 +36,55 @@ public class Solution
         }
         return res;
     }
+
+    public int MaxFrequency2(int[] nums, int k, int numOperations)
+    {
+        Array.Sort(nums);
+        List<int> vals = [];
+        List<int> freq = [];
+        foreach (var num in nums)
+        {
+            if (vals.Count == 0 || vals[^1] < num)
+            {
+                vals.Add(num);
+                freq.Add(0);
+            }
+            freq[^1] += 1;
+        }
+        int left = 0;
+        int right = 0;
+        int sum_f = 0;
+        int res = 0;
+        for (int i = 0; i < vals.Count; i++)
+        {
+            int num = vals[i];
+            int f = freq[i];
+            while (vals[left] < num - k)
+            {
+                sum_f -= freq[left];
+                left += 1;
+            }
+            while (right < vals.Count && vals[right] <= num + k)
+            {
+                sum_f += freq[right];
+                right += 1;
+            }
+            int curr = f + int.Min(sum_f - f, numOperations);
+            res = int.Max(res, curr);
+        }
+        left = 0;
+        sum_f = 0;
+        for (int i = 0; i < vals.Count; i++)
+        {
+            sum_f += freq[i];
+            while (vals[left] < vals[i] - 2 * k)
+            {
+                sum_f -= freq[left];
+                left += 1;
+            }
+            int curr = int.Min(sum_f, numOperations);
+            res = int.Max(res, curr);
+        }
+        return res;
+    }
 }

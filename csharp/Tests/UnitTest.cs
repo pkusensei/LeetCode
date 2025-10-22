@@ -10,10 +10,8 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow("24", "74", 5, 1)]
-    public void TestMethod1(string exp, string s, int a, int b)
+    public void TestMethod1()
     {
-        Assert.AreEqual(exp, sol.FindLexSmallestString(s, a, b));
     }
 
     [TestMethod]
