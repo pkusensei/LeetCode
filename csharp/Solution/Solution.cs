@@ -8,32 +8,42 @@ namespace Solution;
 
 public class Solution
 {
-    public int SmallestDistancePair(int[] nums, int k)
+    public string LongestWord(string[] words)
     {
-        Array.Sort(nums);
-        int left = 0;
-        int right = nums[^1] - nums[0];
-        while (left < right)
+        Array.Sort(words, (a, b) =>
         {
-            int mid = left + (right - left) / 2;
-            if (Count(mid) >= k) { right = mid; }
-            else { left = 1 + mid; }
+            if (a.Length == b.Length) { return a.CompareTo(b); }
+            return a.Length.CompareTo(b.Length);
+        });
+        string res = "";
+        Trie trie = new();
+        foreach (var s in words)
+        {
+            if (trie.Insert(s) && s.Length > res.Length) { res = s; }
         }
-        return left;
+        return res;
+    }
+}
 
-        int Count(int mid)
+internal sealed class Trie
+{
+    public Trie()
+    {
+        Nodes = new Trie[26];
+    }
+
+    Trie[] Nodes { get; }
+
+    public bool Insert(ReadOnlySpan<char> s)
+    {
+        var curr = this;
+        for (int i = 0; i < s.Length; i++)
         {
-            int left = 0;
-            int count = 0;
-            for (int right = 0; right < nums.Length; right += 1)
-            {
-                while (nums[right] - nums[left] > mid)
-                {
-                    left += 1;
-                }
-                count += right - left;
-            }
-            return count;
+            int idx = s[i] - 'a';
+            if (curr.Nodes[idx] is not null) { curr = curr.Nodes[idx]; }
+            else if (i == s.Length - 1) { curr = curr.Nodes[idx] = new(); }
+            else { return false; }
         }
+        return true;
     }
 }
