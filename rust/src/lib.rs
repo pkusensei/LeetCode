@@ -9,18 +9,48 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_length(nums1: Vec<i32>, nums2: Vec<i32>) -> i32 {
-    let n1 = nums1.len();
-    let n2 = nums2.len();
-    let mut dp = vec![vec![0; 1 + n2]; 1 + n1];
-    let mut res = 0;
-    for (i1, &v1) in nums1.iter().enumerate() {
-        for (i2, &v2) in nums2.iter().enumerate() {
-            if v1 == v2 {
-                dp[1 + i1][1 + i2] = 1 + dp[i1][i2];
-                res = res.max(dp[1 + i1][1 + i2]);
-            }
+pub fn next_beautiful_number(n: i32) -> i32 {
+    let s = {
+        let mut s = vec![];
+        let mut n = n;
+        while n > 0 {
+            s.push(n % 10);
+            n /= 10;
         }
+        s.push(0); // leading zero
+        s.reverse();
+        s
+    };
+    let mut freq = [0; 8];
+    dfs(&s, 0, true, 0, true, &mut freq)
+}
+
+fn dfs(s: &[i32], idx: usize, tight: bool, num: i32, leading_zero: bool, freq: &mut [i32]) -> i32 {
+    const M: i32 = 10_000_000;
+    if idx >= s.len() {
+        if !tight
+            && !leading_zero
+            && freq
+                .iter()
+                .enumerate()
+                .skip(1)
+                .all(|(i, &v)| v == 0 || v == i as i32)
+        {
+            return num;
+        }
+        return M;
+    }
+    let lower = if tight { s[idx] } else { 1 };
+    let mut res = M;
+    for d in lower..=7 {
+        if !leading_zero && d == 0 {
+            continue;
+        }
+        let ntight = tight && d == lower;
+        let nleading = leading_zero && d == 0;
+        freq[d as usize] += 1;
+        res = res.min(dfs(s, 1 + idx, ntight, num * 10 + d, nleading, freq));
+        freq[d as usize] -= 1;
     }
     res
 }
@@ -55,7 +85,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(next_beautiful_number(1000), 1333);
+        assert_eq!(next_beautiful_number(3000), 3133)
+    }
 
     #[test]
     fn test() {}
