@@ -9,10 +9,26 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub const fn total_money(n: i32) -> i32 {
-    const UNIT: i32 = (1 + 7) * 7 / 2;
-    let div = n / 7;
-    div * UNIT + (div - 1) * div / 2 * 7 + (1..=n % 7).map(|v| v + div).sum::<i32>()
+pub fn lex_smallest(s: &str) -> String {
+    let n = s.len();
+    let mut res = s.to_string();
+    for k in 1..=n {
+        let mut curr = Vec::with_capacity(n);
+        curr.extend(s.bytes().take(k).rev());
+        curr.extend(s.bytes().skip(k));
+        let v = String::from_utf8(curr.clone()).unwrap();
+        if v < res {
+            res = v;
+        }
+        curr.clear();
+        curr.extend(s.bytes().take(n - k));
+        curr.extend(s.bytes().skip(n - k).rev());
+        let v = String::from_utf8(curr).unwrap();
+        if v < res {
+            res = v;
+        }
+    }
+    res
 }
 
 #[cfg(test)]
@@ -45,7 +61,9 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(lex_smallest("abba"), "aabb");
+    }
 
     #[test]
     fn test() {}
