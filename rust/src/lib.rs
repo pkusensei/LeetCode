@@ -9,21 +9,41 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_operations(nums1: &[i32], nums2: &[i32]) -> i64 {
-    let append = *nums2.last().unwrap();
-    let mut res = 1;
-    let mut ops = u32::MAX;
-    for (&v1, &v2) in nums1.iter().zip(nums2.iter()) {
-        res += i64::from(v1.abs_diff(v2));
-        let min = v1.min(v2);
-        let max = v1.max(v2);
-        if (min..=max).contains(&append) {
-            ops = 0;
-        } else if ops > 0 {
-            ops = ops.min(v1.abs_diff(append).min(v2.abs_diff(append)));
-        }
+pub fn count_coprime(mat: Vec<Vec<i32>>) -> i32 {
+    let rows = mat.len();
+    let mut dp = vec![[None; 151]; rows];
+    let mut res = 0;
+    for &v in mat[0].iter() {
+        res = (res + dfs(&mat, 0, v, &mut dp)) % M;
     }
-    res + i64::from(ops)
+    res as i32
+}
+
+fn dfs(mat: &[Vec<i32>], row: usize, val: i32, dp: &mut [[Option<usize>; 151]]) -> usize {
+    let [rows, cols] = get_dimensions(mat);
+    if row == rows - 1 {
+        return (val == 1).into();
+    }
+    if let Some(v) = dp[row][val as usize] {
+        return v;
+    }
+    let res = if val == 1 {
+        (0..rows - row - 1).fold(1, |acc, _| acc * cols % M)
+    } else {
+        let mut res = 0;
+        for &v in mat[1 + row].iter() {
+            res = (res + dfs(mat, 1 + row, gcd(val, v), dp)) % M;
+        }
+        res
+    };
+    dp[row][val as usize] = Some(res);
+    res
+}
+
+const M: usize = 1_000_000_007;
+
+const fn gcd(a: i32, b: i32) -> i32 {
+    if a == 0 { b } else { gcd(b % a, a) }
 }
 
 #[cfg(test)]
@@ -57,10 +77,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_operations(&[2, 8], &[1, 7, 3]), 4);
-        assert_eq!(min_operations(&[1, 3, 6], &[2, 4, 5, 3]), 4);
+        assert_eq!(count_coprime(vec![vec![1, 2], vec![3, 4]]), 3);
+        assert_eq!(count_coprime(vec![vec![2, 2], vec![2, 2]]), 0);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(count_coprime(vec![vec![1]]), 1);
+    }
 }
