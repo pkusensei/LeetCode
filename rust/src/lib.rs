@@ -9,21 +9,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_sum_of_squares(num: i32, sum: i32) -> String {
-    use std::iter;
-    if num * 9 < sum {
-        return "".into();
-    }
-    let mut res = Vec::with_capacity(num as usize);
-    let count = (sum / 9) as usize;
-    res.extend(iter::repeat_n(b'9', count as usize));
-    if sum % 9 > 0 {
-        res.push(b'0' + (sum % 9) as u8);
-        while res.len() < num as usize {
-            res.push(b'0');
+pub fn min_operations(nums1: &[i32], nums2: &[i32]) -> i64 {
+    let append = *nums2.last().unwrap();
+    let mut res = 1;
+    let mut ops = u32::MAX;
+    for (&v1, &v2) in nums1.iter().zip(nums2.iter()) {
+        res += i64::from(v1.abs_diff(v2));
+        let min = v1.min(v2);
+        let max = v1.max(v2);
+        if (min..=max).contains(&append) {
+            ops = 0;
+        } else if ops > 0 {
+            ops = ops.min(v1.abs_diff(append).min(v2.abs_diff(append)));
         }
     }
-    String::from_utf8(res).unwrap()
+    res + i64::from(ops)
 }
 
 #[cfg(test)]
@@ -57,13 +57,10 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_sum_of_squares(2, 3), "30");
-        assert_eq!(max_sum_of_squares(2, 17), "98");
-        assert_eq!(max_sum_of_squares(1, 10), "");
+        assert_eq!(min_operations(&[2, 8], &[1, 7, 3]), 4);
+        assert_eq!(min_operations(&[1, 3, 6], &[2, 4, 5, 3]), 4);
     }
 
     #[test]
-    fn test() {
-        assert_eq!(max_sum_of_squares(1, 9), "9");
-    }
+    fn test() {}
 }
