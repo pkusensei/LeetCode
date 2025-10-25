@@ -9,26 +9,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn lex_smallest(s: &str) -> String {
-    let n = s.len();
-    let mut res = s.to_string();
-    for k in 1..=n {
-        let mut curr = Vec::with_capacity(n);
-        curr.extend(s.bytes().take(k).rev());
-        curr.extend(s.bytes().skip(k));
-        let v = String::from_utf8(curr.clone()).unwrap();
-        if v < res {
-            res = v;
-        }
-        curr.clear();
-        curr.extend(s.bytes().take(n - k));
-        curr.extend(s.bytes().skip(n - k).rev());
-        let v = String::from_utf8(curr).unwrap();
-        if v < res {
-            res = v;
+pub fn max_sum_of_squares(num: i32, sum: i32) -> String {
+    use std::iter;
+    if num * 9 < sum {
+        return "".into();
+    }
+    let mut res = Vec::with_capacity(num as usize);
+    let count = (sum / 9) as usize;
+    res.extend(iter::repeat_n(b'9', count as usize));
+    if sum % 9 > 0 {
+        res.push(b'0' + (sum % 9) as u8);
+        while res.len() < num as usize {
+            res.push(b'0');
         }
     }
-    res
+    String::from_utf8(res).unwrap()
 }
 
 #[cfg(test)]
@@ -62,9 +57,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(lex_smallest("abba"), "aabb");
+        assert_eq!(max_sum_of_squares(2, 3), "30");
+        assert_eq!(max_sum_of_squares(2, 17), "98");
+        assert_eq!(max_sum_of_squares(1, 10), "");
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(max_sum_of_squares(1, 9), "9");
+    }
 }
