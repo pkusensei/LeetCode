@@ -9,50 +9,10 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn next_beautiful_number(n: i32) -> i32 {
-    let s = {
-        let mut s = vec![];
-        let mut n = n;
-        while n > 0 {
-            s.push(n % 10);
-            n /= 10;
-        }
-        s.push(0); // leading zero
-        s.reverse();
-        s
-    };
-    let mut freq = [0; 8];
-    dfs(&s, 0, true, 0, true, &mut freq)
-}
-
-fn dfs(s: &[i32], idx: usize, tight: bool, num: i32, leading_zero: bool, freq: &mut [i32]) -> i32 {
-    const M: i32 = 10_000_000;
-    if idx >= s.len() {
-        if !tight
-            && !leading_zero
-            && freq
-                .iter()
-                .enumerate()
-                .skip(1)
-                .all(|(i, &v)| v == 0 || v == i as i32)
-        {
-            return num;
-        }
-        return M;
-    }
-    let lower = if tight { s[idx] } else { 1 };
-    let mut res = M;
-    for d in lower..=7 {
-        if !leading_zero && d == 0 {
-            continue;
-        }
-        let ntight = tight && d == lower;
-        let nleading = leading_zero && d == 0;
-        freq[d as usize] += 1;
-        res = res.min(dfs(s, 1 + idx, ntight, num * 10 + d, nleading, freq));
-        freq[d as usize] -= 1;
-    }
-    res
+pub const fn total_money(n: i32) -> i32 {
+    const UNIT: i32 = (1 + 7) * 7 / 2;
+    let div = n / 7;
+    div * UNIT + (div - 1) * div / 2 * 7 + (1..=n % 7).map(|v| v + div).sum::<i32>()
 }
 
 #[cfg(test)]
@@ -85,10 +45,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(next_beautiful_number(1000), 1333);
-        assert_eq!(next_beautiful_number(3000), 3133)
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
