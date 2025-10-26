@@ -9,26 +9,28 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_stable_subarrays(capacity: &[i32]) -> i64 {
+pub fn num_good_subarrays(nums: &[i32], k: i32) -> i64 {
     use std::collections::HashMap;
-    let n = capacity.len();
-    let mut num_ids = HashMap::<_, Vec<_>>::new();
-    let mut prefix = Vec::with_capacity(n);
-    for (i, &v) in capacity.iter().enumerate() {
-        num_ids.entry(i64::from(v)).or_default().push(i);
-        prefix.push(i64::from(v) + prefix.last().unwrap_or(&0));
-    }
+    // start from empty subarr (sum % k == 0)
+    let mut freq = HashMap::from([(0, 1)]);
+    let mut prefix = 0;
     let mut res = 0;
-    for (num, ids) in num_ids {
-        let mut map = HashMap::<_, Vec<_>>::new();
-        for i in ids {
-            if let Some(v) = map.get(&(prefix[i] - 2 * num)) {
-                res += v.len() as i64;
-                if v.last().is_some_and(|&prev| prev + 1 == i) {
-                    res -= 1;
-                }
+    for &num in nums.iter() {
+        prefix = (prefix + num) % k;
+        let f = freq.entry(prefix).or_insert(0);
+        res += *f;
+        *f += 1;
+    }
+    let k = i64::from(k);
+    for ch in nums.chunk_by(|a, b| a == b) {
+        let num = i64::from(ch[0]);
+        for len in 1..ch.len() {
+            if len as i64 * num % k == 0 {
+                // This uniform subarr is over-counted
+                // Its total in `res` is (n-len+1)
+                // Hence remove that (n-len)
+                res -= (ch.len() - len) as i64;
             }
-            map.entry(prefix[i]).or_default().push(i);
         }
     }
     res
@@ -65,11 +67,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(count_stable_subarrays(&[9, 3, 3, 3, 9]), 2);
-        assert_eq!(count_stable_subarrays(&[1, 2, 3, 4, 5]), 0);
-        assert_eq!(count_stable_subarrays(&[-4, 4, 0, 0, -8, -4]), 1);
+        assert_eq!(num_good_subarrays(&[1, 2, 3], 3), 3);
+        assert_eq!(num_good_subarrays(&[2, 2, 2, 2, 2, 2], 6), 2);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(num_good_subarrays(&[1, 1, 1, 1, 1, 3, 4, 4, 6, 8], 6), 7);
+    }
 }
