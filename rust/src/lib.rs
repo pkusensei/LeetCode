@@ -9,41 +9,49 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_coprime(mat: Vec<Vec<i32>>) -> i32 {
-    let rows = mat.len();
-    let mut dp = vec![[None; 151]; rows];
-    let mut res = 0;
-    for &v in mat[0].iter() {
-        res = (res + dfs(&mat, 0, v, &mut dp)) % M;
-    }
-    res as i32
+struct Bank {
+    data: Vec<i64>,
 }
 
-fn dfs(mat: &[Vec<i32>], row: usize, val: i32, dp: &mut [[Option<usize>; 151]]) -> usize {
-    let [rows, cols] = get_dimensions(mat);
-    if row == rows - 1 {
-        return (val == 1).into();
+impl Bank {
+    fn new(data: Vec<i64>) -> Self {
+        Self { data }
     }
-    if let Some(v) = dp[row][val as usize] {
-        return v;
-    }
-    let res = if val == 1 {
-        (0..rows - row - 1).fold(1, |acc, _| acc * cols % M)
-    } else {
-        let mut res = 0;
-        for &v in mat[1 + row].iter() {
-            res = (res + dfs(mat, 1 + row, gcd(val, v), dp)) % M;
+
+    fn transfer(&mut self, account1: i32, account2: i32, money: i64) -> bool {
+        let n = self.data.len();
+        let a = account1 as usize;
+        let b = account2 as usize;
+        if (1..=n).contains(&a) && (1..=n).contains(&b) && self.data[a - 1] >= money {
+            self.data[a - 1] -= money;
+            self.data[b - 1] += money;
+            true
+        } else {
+            false
         }
-        res
-    };
-    dp[row][val as usize] = Some(res);
-    res
-}
+    }
 
-const M: usize = 1_000_000_007;
+    fn deposit(&mut self, account: i32, money: i64) -> bool {
+        let n = self.data.len();
+        let a = account as usize;
+        if (1..=n).contains(&a) {
+            self.data[a - 1] += money;
+            true
+        } else {
+            false
+        }
+    }
 
-const fn gcd(a: i32, b: i32) -> i32 {
-    if a == 0 { b } else { gcd(b % a, a) }
+    fn withdraw(&mut self, account: i32, money: i64) -> bool {
+        let n = self.data.len();
+        let a = account as usize;
+        if (1..=n).contains(&a) && self.data[a - 1] >= money {
+            self.data[a - 1] -= money;
+            true
+        } else {
+            false
+        }
+    }
 }
 
 #[cfg(test)]
@@ -76,13 +84,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(count_coprime(vec![vec![1, 2], vec![3, 4]]), 3);
-        assert_eq!(count_coprime(vec![vec![2, 2], vec![2, 2]]), 0);
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(count_coprime(vec![vec![1]]), 1);
-    }
+    fn test() {}
 }
