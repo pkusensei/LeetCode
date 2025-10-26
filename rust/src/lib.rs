@@ -9,49 +9,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-struct Bank {
-    data: Vec<i64>,
-}
-
-impl Bank {
-    fn new(data: Vec<i64>) -> Self {
-        Self { data }
-    }
-
-    fn transfer(&mut self, account1: i32, account2: i32, money: i64) -> bool {
-        let n = self.data.len();
-        let a = account1 as usize;
-        let b = account2 as usize;
-        if (1..=n).contains(&a) && (1..=n).contains(&b) && self.data[a - 1] >= money {
-            self.data[a - 1] -= money;
-            self.data[b - 1] += money;
-            true
-        } else {
-            false
+pub fn remove_zeros(mut n: i64) -> i64 {
+    let mut res = vec![];
+    while n > 0 {
+        let d = n % 10;
+        if d > 0 {
+            res.push(d);
         }
+        n /= 10;
     }
-
-    fn deposit(&mut self, account: i32, money: i64) -> bool {
-        let n = self.data.len();
-        let a = account as usize;
-        if (1..=n).contains(&a) {
-            self.data[a - 1] += money;
-            true
-        } else {
-            false
-        }
-    }
-
-    fn withdraw(&mut self, account: i32, money: i64) -> bool {
-        let n = self.data.len();
-        let a = account as usize;
-        if (1..=n).contains(&a) && self.data[a - 1] >= money {
-            self.data[a - 1] -= money;
-            true
-        } else {
-            false
-        }
-    }
+    res.into_iter().rev().fold(0, |acc, v| acc * 10 + v)
 }
 
 #[cfg(test)]
