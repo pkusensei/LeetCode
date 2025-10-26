@@ -9,15 +9,29 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_alternating_sum(mut nums: Vec<i32>) -> i64 {
-    let n = nums.len();
-    nums.sort_unstable_by_key(|v| v.abs());
-    nums[..n / 2]
-        .iter()
-        .fold(0, |acc, v| acc - i64::from(v.pow(2)))
-        + nums[n / 2..]
-            .iter()
-            .fold(0, |acc, v| acc + i64::from(v.pow(2)))
+pub fn count_stable_subarrays(capacity: &[i32]) -> i64 {
+    use std::collections::HashMap;
+    let n = capacity.len();
+    let mut num_ids = HashMap::<_, Vec<_>>::new();
+    let mut prefix = Vec::with_capacity(n);
+    for (i, &v) in capacity.iter().enumerate() {
+        num_ids.entry(i64::from(v)).or_default().push(i);
+        prefix.push(i64::from(v) + prefix.last().unwrap_or(&0));
+    }
+    let mut res = 0;
+    for (num, ids) in num_ids {
+        let mut map = HashMap::<_, Vec<_>>::new();
+        for i in ids {
+            if let Some(v) = map.get(&(prefix[i] - 2 * num)) {
+                res += v.len() as i64;
+                if v.last().is_some_and(|&prev| prev + 1 == i) {
+                    res -= 1;
+                }
+            }
+            map.entry(prefix[i]).or_default().push(i);
+        }
+    }
+    res
 }
 
 #[cfg(test)]
@@ -50,7 +64,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(count_stable_subarrays(&[9, 3, 3, 3, 9]), 2);
+        assert_eq!(count_stable_subarrays(&[1, 2, 3, 4, 5]), 0);
+        assert_eq!(count_stable_subarrays(&[-4, 4, 0, 0, -8, -4]), 1);
+    }
 
     #[test]
     fn test() {}
