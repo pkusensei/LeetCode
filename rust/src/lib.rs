@@ -9,16 +9,15 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn remove_zeros(mut n: i64) -> i64 {
-    let mut res = vec![];
-    while n > 0 {
-        let d = n % 10;
-        if d > 0 {
-            res.push(d);
-        }
-        n /= 10;
-    }
-    res.into_iter().rev().fold(0, |acc, v| acc * 10 + v)
+pub fn max_alternating_sum(mut nums: Vec<i32>) -> i64 {
+    let n = nums.len();
+    nums.sort_unstable_by_key(|v| v.abs());
+    nums[..n / 2]
+        .iter()
+        .fold(0, |acc, v| acc - i64::from(v.pow(2)))
+        + nums[n / 2..]
+            .iter()
+            .fold(0, |acc, v| acc + i64::from(v.pow(2)))
 }
 
 #[cfg(test)]
