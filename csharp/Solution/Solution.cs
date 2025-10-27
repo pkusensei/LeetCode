@@ -8,18 +8,35 @@ namespace Solution;
 
 public class Solution
 {
-    public bool HasSameDigits(string s)
+    public ListNode[] SplitListToParts(ListNode head, int k)
     {
-        List<int> nums = [.. s.Select(c => c - 'a')];
-        while (nums.Count > 2)
+        ListNode[] res = new ListNode[k];
+        if (head is null) { return res; }
+        int len = 0;
+        var curr = head;
+        while (curr is not null)
         {
-            List<int> curr = new(nums.Count - 1);
-            for (int i = 0; i < nums.Count - 1; i++)
-            {
-                curr.Add((nums[i] + nums[1 + i]) % 10);
-            }
-            nums = curr;
+            len += 1;
+            curr = curr.next;
         }
-        return nums[0] == nums[1];
+        int ave = len / k;
+        int rem = len % k;
+        curr = head;
+        for (int i = 0; i < k; i++)
+        {
+            int count = ave + (rem > 0 ? 1 : 0);
+            rem -= 1;
+            if (count == 0) { break; }
+            while (count > 1)
+            {
+                curr = curr.next;
+                count -= 1;
+            }
+            res[i] = head;
+            head = curr.next;
+            curr.next = null;
+            curr = head;
+        }
+        return res;
     }
 }
