@@ -8,35 +8,69 @@ namespace Solution;
 
 public class Solution
 {
-    public ListNode[] SplitListToParts(ListNode head, int k)
+    public string CountOfAtoms(string formula)
     {
-        ListNode[] res = new ListNode[k];
-        if (head is null) { return res; }
-        int len = 0;
-        var curr = head;
-        while (curr is not null)
+        var res = Parse(formula, 0).dict;
+        StringBuilder sb = new();
+        foreach (var kv in res.OrderBy(kv => kv.Key))
         {
-            len += 1;
-            curr = curr.next;
+            sb.Append(kv.Key);
+            if (kv.Value > 1) { sb.Append(kv.Value); }
         }
-        int ave = len / k;
-        int rem = len % k;
-        curr = head;
-        for (int i = 0; i < k; i++)
+        return sb.ToString();
+
+        static (int end, Dictionary<string, int> dict) Parse(ReadOnlySpan<char> s, int idx)
         {
-            int count = ave + (rem > 0 ? 1 : 0);
-            rem -= 1;
-            if (count == 0) { break; }
-            while (count > 1)
+            Dictionary<string, int> res = [];
+            var lookup = res.GetAlternateLookup<ReadOnlySpan<char>>();
+            int prev = idx;
+            bool done = false;
+            while (!done && idx < s.Length)
             {
-                curr = curr.next;
-                count -= 1;
+                switch (s[idx])
+                {
+                    case char ch when char.IsAsciiLetterUpper(ch):
+                        idx += 1;
+                        while (idx < s.Length && char.IsAsciiLetterLower(s[idx]))
+                        {
+                            idx += 1;
+                        }
+                        var name = s[prev..idx];
+                        var temp = Count(s, idx);
+                        idx = temp.i;
+                        if (!lookup.TryAdd(name, temp.c)) { lookup[name] += temp.c; }
+                        prev = idx;
+                        break;
+                    case '(':
+                        var (end, dict) = Parse(s, 1 + idx);
+                        idx = end;
+                        temp = Count(s, idx);
+                        idx = temp.i;
+                        prev = idx;
+                        foreach (var (k, v) in dict)
+                        {
+                            if (!lookup.TryAdd(k, temp.c * v)) { lookup[k] += temp.c * v; }
+                        }
+                        break;
+                    default:
+                        done = true;
+                        idx += 1; // skip ')'
+                        break; // do not break while loop
+                }
             }
-            res[i] = head;
-            head = curr.next;
-            curr.next = null;
-            curr = head;
+            return (idx, res);
         }
-        return res;
+
+        static (int c, int i) Count(ReadOnlySpan<char> s, int idx)
+        {
+            int count = 0;
+            while (idx < s.Length && char.IsAsciiDigit(s[idx]))
+            {
+                count = 10 * count + s[idx] - '0';
+                idx += 1;
+            }
+            if (count == 0) { count = 1; }
+            return (count, idx);
+        }
     }
 }
