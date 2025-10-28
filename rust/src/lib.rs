@@ -9,23 +9,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_valid_selections(nums: Vec<i32>) -> i32 {
-    let sum: i32 = nums.iter().sum();
-    let mut prefix = 0;
-    let mut res = 0;
-    for &num in nums.iter() {
-        prefix += num;
-        if num == 0 {
-            res += if (2 * prefix).abs_diff(sum) == 1 {
-                1
-            } else if 2 * prefix == sum {
-                2
-            } else {
-                0
-            }
+use std::collections::BTreeMap;
+
+struct MyCalendar {
+    data: BTreeMap<i32, i32>,
+}
+
+impl MyCalendar {
+    fn new() -> Self {
+        Self {
+            data: BTreeMap::new(),
         }
     }
-    res
+
+    fn book(&mut self, start_time: i32, end_time: i32) -> bool {
+        if let Some(kv) = self.data.range(..end_time).next_back()
+            && *kv.1 > start_time
+        {
+            return false;
+        }
+        self.data.insert(start_time, end_time).is_none()
+    }
 }
 
 #[cfg(test)]
