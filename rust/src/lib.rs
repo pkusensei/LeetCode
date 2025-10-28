@@ -9,27 +9,49 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-use std::collections::BTreeMap;
-
-struct MyCalendar {
-    data: BTreeMap<i32, i32>,
+pub fn count_palindromic_subsequences(s: &str) -> i32 {
+    let (s, n) = (s.as_bytes(), s.len());
+    let mut memo = vec![vec![-1_i32; n]; n];
+    dfs(s, 0, n - 1, &mut memo)
 }
 
-impl MyCalendar {
-    fn new() -> Self {
-        Self {
-            data: BTreeMap::new(),
-        }
-    }
+const M: i32 = 1_000_000_007;
 
-    fn book(&mut self, start_time: i32, end_time: i32) -> bool {
-        if let Some(kv) = self.data.range(..end_time).next_back()
-            && *kv.1 > start_time
-        {
-            return false;
-        }
-        self.data.insert(start_time, end_time).is_none()
+fn dfs(s: &[u8], left: usize, right: usize, memo: &mut [Vec<i32>]) -> i32 {
+    if left > right {
+        return 0;
     }
+    if left == right {
+        return 1;
+    }
+    if memo[left][right] > -1 {
+        return memo[left][right];
+    }
+    let res = if s[left] == s[right] {
+        let mut res = 2 * dfs(s, 1 + left, right - 1, memo) % M;
+        let mut inner_left = 1 + left;
+        let mut inner_right = right - 1;
+        while inner_left <= inner_right && s[inner_left] != s[left] {
+            inner_left += 1;
+        }
+        while inner_left <= inner_right && s[inner_right] != s[left] {
+            inner_right -= 1;
+        }
+        if inner_left < inner_right {
+            res -= dfs(s, 1 + inner_left, inner_right - 1, memo)
+        } else if inner_left == inner_right {
+            res += 1;
+        } else {
+            res += 2;
+        }
+        res.rem_euclid(M)
+    } else {
+        (dfs(s, 1 + left, right, memo) + dfs(s, left, right - 1, memo)
+            - dfs(s, 1 + left, right - 1, memo))
+        .rem_euclid(M)
+    };
+    memo[left][right] = res;
+    res
 }
 
 #[cfg(test)]
