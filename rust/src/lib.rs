@@ -9,16 +9,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn number_of_beams(bank: Vec<String>) -> i32 {
-    bank.into_iter()
-        .filter_map(|s| {
-            let c = s.bytes().filter(|&b| b == b'1').count();
-            if c > 0 { Some(c as i32) } else { None }
-        })
-        .collect::<Vec<_>>()
-        .windows(2)
-        .map(|w| w[0] * w[1])
-        .sum()
+pub fn count_valid_selections(nums: Vec<i32>) -> i32 {
+    let sum: i32 = nums.iter().sum();
+    let mut prefix = 0;
+    let mut res = 0;
+    for &num in nums.iter() {
+        prefix += num;
+        if num == 0 {
+            res += if (2 * prefix).abs_diff(sum) == 1 {
+                1
+            } else if 2 * prefix == sum {
+                2
+            } else {
+                0
+            }
+        }
+    }
+    res
 }
 
 #[cfg(test)]
