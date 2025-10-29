@@ -6,27 +6,58 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn asteroid_collision(asteroids: Vec<i32>) -> Vec<i32> {
-    use std::cmp::Ordering;
-    let mut res: Vec<i32> = vec![];
-    for mut num in asteroids {
-        while let Some(&v) = res.last()
-            && v > 0
-            && num < 0
-        {
-            res.pop();
-            match v.abs().cmp(&num.abs()) {
-                Ordering::Equal => num = 0,
-                Ordering::Greater => num = v,
-                Ordering::Less => (),
+pub fn evaluate(expression: String) -> i32 {
+    dfs(&expression, &HashMap::new())
+}
+
+fn dfs(s: &str, env: &HashMap<&str, i32>) -> i32 {
+    if let Ok(v) = s.parse() {
+        return v;
+    }
+    if s.as_bytes()[0].is_ascii_alphabetic() {
+        return *env.get(s).unwrap_or(&0);
+    }
+    let mut curr = env.clone();
+    let Some((left, right)) = s.split_once(' ') else {
+        return 0;
+    };
+    let toks = split(&right[..right.len() - 1]);
+    match left {
+        "(add" => dfs(toks[0], &curr) + dfs(toks[1], &curr),
+        "(mult" => dfs(toks[0], &curr) * dfs(toks[1], &curr),
+        "(let" => {
+            for ch in toks.chunks_exact(2) {
+                let v = dfs(ch[1], &curr);
+                curr.insert(ch[0], v);
             }
+            dfs(toks.last().unwrap_or(&""), &curr)
         }
-        if num != 0 {
-            res.push(num);
+        _ => unreachable!(),
+    }
+}
+
+fn split(s: &str) -> Vec<&str> {
+    let mut res = vec![];
+    let mut left = 0;
+    let mut open = 0;
+    for (right, b) in s.bytes().enumerate() {
+        match b {
+            b'(' => open += 1,
+            b')' => open -= 1,
+            _ => (),
         }
+        if open == 0 && b.is_ascii_whitespace() {
+            res.push(&s[left..right]);
+            left = 1 + right;
+        }
+    }
+    if !s[left..].is_empty() {
+        res.push(&s[left..]);
     }
     res
 }
