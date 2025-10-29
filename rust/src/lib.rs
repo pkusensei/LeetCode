@@ -9,9 +9,33 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn smallest_number(n: i32) -> i32 {
-    let p = n.ilog2();
-    2_i32.pow(1 + p) - 1
+use std::collections::BTreeMap;
+
+struct MyCalendarTwo {
+    data: BTreeMap<i32, i32>,
+}
+
+impl MyCalendarTwo {
+    fn new() -> Self {
+        Self {
+            data: BTreeMap::new(),
+        }
+    }
+
+    fn book(&mut self, start_time: i32, end_time: i32) -> bool {
+        *self.data.entry(start_time).or_insert(0) += 1;
+        *self.data.entry(end_time).or_insert(0) -= 1;
+        let mut total = 0;
+        for v in self.data.values() {
+            total += v;
+            if total > 2 {
+                *self.data.entry(start_time).or_insert(0) -= 1;
+                *self.data.entry(end_time).or_insert(0) += 1;
+                return false;
+            }
+        }
+        true
+    }
 }
 
 #[cfg(test)]
