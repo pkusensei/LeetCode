@@ -9,33 +9,26 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-use std::collections::BTreeMap;
-
-struct MyCalendarTwo {
-    data: BTreeMap<i32, i32>,
-}
-
-impl MyCalendarTwo {
-    fn new() -> Self {
-        Self {
-            data: BTreeMap::new(),
-        }
-    }
-
-    fn book(&mut self, start_time: i32, end_time: i32) -> bool {
-        *self.data.entry(start_time).or_insert(0) += 1;
-        *self.data.entry(end_time).or_insert(0) -= 1;
-        let mut total = 0;
-        for v in self.data.values() {
-            total += v;
-            if total > 2 {
-                *self.data.entry(start_time).or_insert(0) -= 1;
-                *self.data.entry(end_time).or_insert(0) += 1;
-                return false;
+pub fn asteroid_collision(asteroids: Vec<i32>) -> Vec<i32> {
+    use std::cmp::Ordering;
+    let mut res: Vec<i32> = vec![];
+    for mut num in asteroids {
+        while let Some(&v) = res.last()
+            && v > 0
+            && num < 0
+        {
+            res.pop();
+            match v.abs().cmp(&num.abs()) {
+                Ordering::Equal => num = 0,
+                Ordering::Greater => num = v,
+                Ordering::Less => (),
             }
         }
-        true
+        if num != 0 {
+            res.push(num);
+        }
     }
+    res
 }
 
 #[cfg(test)]
