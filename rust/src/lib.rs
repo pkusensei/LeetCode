@@ -9,18 +9,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn daily_temperatures(temperatures: Vec<i32>) -> Vec<i32> {
-    let n = temperatures.len();
-    let mut res = vec![0; n];
-    let mut st = vec![];
-    for (i, &num) in temperatures.iter().enumerate() {
-        while let Some(&top) = st.last()
-            && temperatures[top] < num
-        {
-            st.pop();
-            res[top] = i.abs_diff(top) as i32;
+pub fn delete_and_earn(mut nums: Vec<i32>) -> i32 {
+    nums.sort_unstable();
+    let mut res = 0;
+    let mut skip = 0;
+    let mut prev = 0;
+    for ch in nums.chunk_by(|a, b| a == b) {
+        let val = ch[0] * ch.len() as i32;
+        let temp = res;
+        if 1 + prev < ch[0] {
+            res += val;
+        } else {
+            res = res.max(skip + val);
         }
-        st.push(i);
+        skip = temp;
+        prev = ch[0];
     }
     res
 }
@@ -55,8 +58,12 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(delete_and_earn(vec![2, 2, 3, 3, 3, 4]), 9);
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(delete_and_earn(vec![1, 6, 3, 3, 8, 4, 8, 10, 1, 3]), 43);
+    }
 }
