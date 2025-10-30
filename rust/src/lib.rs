@@ -9,14 +9,31 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_number_operations(target: Vec<i32>) -> i32 {
+pub fn monotone_increasing_digits(n: i32) -> i32 {
+    let s = n.to_string();
+    let len = s.len();
+    let mut res = vec![];
     let mut prev = 0;
-    let mut res = 0;
-    for num in target {
-        res += (num - prev).max(0);
-        prev = num;
+    for (idx, d) in s.bytes().map(|b| i32::from(b - b'0')).enumerate() {
+        if prev <= d {
+            res.push(d);
+            prev = d;
+        } else {
+            let mut last = prev - 1;
+            let mut count = len - idx;
+            while let Some(&top) = res.last()
+                && top > last
+            {
+                res.pop();
+                last = top - 1;
+                count += 1;
+            }
+            res.push(last);
+            res.extend(std::iter::repeat_n(9, count - 1));
+            break;
+        }
     }
-    res
+    res.into_iter().fold(0, |acc, d| acc * 10 + d)
 }
 
 #[cfg(test)]
@@ -49,7 +66,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(monotone_increasing_digits(10), 9);
+        assert_eq!(monotone_increasing_digits(1234), 1234);
+        assert_eq!(monotone_increasing_digits(332), 299);
+    }
 
     #[test]
     fn test() {}
