@@ -9,23 +9,28 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn delete_and_earn(mut nums: Vec<i32>) -> i32 {
-    nums.sort_unstable();
-    let mut res = 0;
-    let mut skip = 0;
-    let mut prev = 0;
-    for ch in nums.chunk_by(|a, b| a == b) {
-        let val = ch[0] * ch.len() as i32;
-        let temp = res;
-        if 1 + prev < ch[0] {
-            res += val;
-        } else {
-            res = res.max(skip + val);
-        }
-        skip = temp;
-        prev = ch[0];
+pub fn get_sneaky_numbers(nums: Vec<i32>) -> Vec<i32> {
+    let n = nums.len() as i32 - 2;
+    let mut xor = 0;
+    for &num in &nums {
+        xor ^= num;
     }
-    res
+    for i in 0..n {
+        xor ^= i;
+    }
+    let low_bit = xor & (-xor);
+    let [mut a, mut b] = [0, 0];
+    for num in nums {
+        if num & low_bit == 0 {
+            a ^= num
+        } else {
+            b ^= num
+        }
+    }
+    for i in 0..n {
+        if i & low_bit == 0 { a ^= i } else { b ^= i }
+    }
+    [a, b].into()
 }
 
 #[cfg(test)]
