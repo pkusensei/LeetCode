@@ -9,41 +9,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn cherry_pickup(grid: Vec<Vec<i32>>) -> i32 {
-    let n = grid.len();
-    let mut memo = vec![vec![vec![M; n]; n]; n];
-    dfs(&grid, [0; 4], &mut memo).max(0)
-}
-
-const M: i32 = -2501;
-
-fn dfs(grid: &[Vec<i32>], pos: [usize; 4], memo: &mut [Vec<Vec<i32>>]) -> i32 {
-    let n = grid.len();
-    let [r1, c1, r2, c2] = pos;
-    if !pos.iter().all(|c| (0..n).contains(c)) || grid[r1][c1] == -1 || grid[r2][c2] == -1 {
-        return M;
+pub fn next_greatest_letter(letters: Vec<char>, target: char) -> char {
+    let mut left = 0;
+    let mut right = letters.len();
+    while left < right {
+        let mid = left.midpoint(right);
+        if letters[mid] <= target {
+            left = 1 + mid;
+        } else {
+            right = mid;
+        }
     }
-    if r1 == n - 1 && c1 == n - 1 {
-        return grid[c1][c1];
-    }
-    if memo[r1][c1][r2] > M {
-        return memo[r1][c1][r2];
-    }
-    let mut res = grid[r1][c1];
-    if r1 != r2 && c1 != c2 {
-        res += grid[r2][c2];
-    }
-    res += [
-        dfs(grid, [1 + r1, c1, 1 + r2, c2], memo),
-        dfs(grid, [r1, 1 + c1, r2, 1 + c2], memo),
-        dfs(grid, [1 + r1, c1, r2, 1 + c2], memo),
-        dfs(grid, [r1, 1 + c1, 1 + r2, c2], memo),
-    ]
-    .into_iter()
-    .max()
-    .unwrap_or(0);
-    memo[r1][c1][r2] = res;
-    res
+    letters.get(left).copied().unwrap_or(letters[0])
 }
 
 #[cfg(test)]
