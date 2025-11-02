@@ -9,19 +9,13 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_missing_elements(mut nums: Vec<i32>) -> Vec<i32> {
+pub fn max_product(mut nums: Vec<i32>) -> i64 {
+    let n = nums.len();
     nums.sort_unstable();
-    let min = nums[0];
-    let mut res = vec![];
-    let mut curr = min;
-    for num in nums {
-        while curr < num {
-            res.push(curr);
-            curr += 1;
-        }
-        curr += 1;
-    }
-    res
+    let a = i64::from(nums[0]) * i64::from(nums[1]);
+    let b = i64::from(nums[n - 1]) * i64::from(nums[n - 2]);
+    let c = i64::from(nums[0]) * i64::from(nums[n - 1]);
+    a.abs().max(b.abs().max(c.abs())) * 100_000
 }
 
 #[cfg(test)]
