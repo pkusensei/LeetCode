@@ -9,35 +9,75 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_time(d: Vec<i32>, r: Vec<i32>) -> i64 {
-    let lcm_ = lcm(r[0].into(), r[1].into());
-    let mut left = 1;
-    let mut right = i64::MAX >> 1;
-    while left < right {
-        let mid = left + (right - left) / 2;
-        if check(&d, &r, mid, lcm_) {
-            right = mid;
-        } else {
-            left = 1 + mid;
+pub fn lex_palindromic_permutation(s: &str, target: &str) -> String {
+    let freq = s.bytes().fold([0; 26], |mut acc, b| {
+        acc[usize::from(b - b'a')] += 1;
+        acc
+    });
+    let mut single = None;
+    for (idx, f) in freq.iter().enumerate() {
+        if f & 1 == 1 {
+            if single.is_none() {
+                single = Some(idx as u8 + b'a');
+            } else {
+                return "".to_string();
+            }
         }
     }
-    left
+    let n = s.len();
+    let mut candids = freq.map(|v| v / 2);
+    let res = build(
+        target.as_bytes(),
+        single,
+        &mut candids,
+        &target.as_bytes()[..n / 2],
+        true,
+        &mut vec![],
+    )
+    .unwrap_or_default();
+    String::from_utf8(res).unwrap_or_default()
 }
 
-fn check(d: &[i32], r: &[i32], mid: i64, lcm_: i64) -> bool {
-    let [rest1, rest2] = [0, 1].map(|i| mid / i64::from(r[i]));
-    let common = mid - rest1 - rest2 + mid / lcm_;
-    let [h1, h2] = [rest1, rest2].map(|v| mid - v - common);
-    let d1 = i64::from(d[0]) - h1;
-    let d2 = i64::from(d[1]) - h2;
-    d1.max(0) + d2.max(0) <= common
-}
-
-const fn gcd(a: i64, b: i64) -> i64 {
-    if a == 0 { b } else { gcd(b % a, a) }
-}
-const fn lcm(a: i64, b: i64) -> i64 {
-    a / gcd(a, b) * b
+fn build(
+    target: &[u8],
+    single: Option<u8>,
+    candids: &mut [i32; 26],
+    half: &[u8],
+    tight: bool,
+    curr: &mut Vec<u8>,
+) -> Option<Vec<u8>> {
+    if half.is_empty() {
+        let mut temp = curr.clone();
+        if let Some(v) = single {
+            temp.push(v);
+        }
+        temp.extend(curr.iter().rev());
+        if temp.as_slice() > target {
+            return Some(temp);
+        }
+        return None;
+    }
+    let lower = if tight { half[0] } else { b'a' };
+    for b in lower..=b'z' {
+        let bi = usize::from(b - b'a');
+        if candids[bi] > 0 {
+            candids[bi] -= 1;
+            curr.push(b);
+            if let Some(v) = build(
+                target,
+                single,
+                candids,
+                &half[1..],
+                tight && b == lower,
+                curr,
+            ) {
+                return Some(v);
+            }
+            curr.pop();
+            candids[bi] += 1;
+        }
+    }
+    None
 }
 
 #[cfg(test)]
@@ -70,8 +110,15 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(lex_palindromic_permutation("baba", "abba"), "baab");
+        assert_eq!(lex_palindromic_permutation("baba", "bbaa"), "");
+        assert_eq!(lex_palindromic_permutation("abc", "abb"), "");
+        assert_eq!(lex_palindromic_permutation("aac", "abb"), "aca");
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(lex_palindromic_permutation("aabb", "aaaa"), "abba");
+    }
 }
