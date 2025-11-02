@@ -9,13 +9,35 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_product(mut nums: Vec<i32>) -> i64 {
-    let n = nums.len();
-    nums.sort_unstable();
-    let a = i64::from(nums[0]) * i64::from(nums[1]);
-    let b = i64::from(nums[n - 1]) * i64::from(nums[n - 2]);
-    let c = i64::from(nums[0]) * i64::from(nums[n - 1]);
-    a.abs().max(b.abs().max(c.abs())) * 100_000
+pub fn minimum_time(d: Vec<i32>, r: Vec<i32>) -> i64 {
+    let lcm_ = lcm(r[0].into(), r[1].into());
+    let mut left = 1;
+    let mut right = i64::MAX >> 1;
+    while left < right {
+        let mid = left + (right - left) / 2;
+        if check(&d, &r, mid, lcm_) {
+            right = mid;
+        } else {
+            left = 1 + mid;
+        }
+    }
+    left
+}
+
+fn check(d: &[i32], r: &[i32], mid: i64, lcm_: i64) -> bool {
+    let [rest1, rest2] = [0, 1].map(|i| mid / i64::from(r[i]));
+    let common = mid - rest1 - rest2 + mid / lcm_;
+    let [h1, h2] = [rest1, rest2].map(|v| mid - v - common);
+    let d1 = i64::from(d[0]) - h1;
+    let d2 = i64::from(d[1]) - h2;
+    d1.max(0) + d2.max(0) <= common
+}
+
+const fn gcd(a: i64, b: i64) -> i64 {
+    if a == 0 { b } else { gcd(b % a, a) }
+}
+const fn lcm(a: i64, b: i64) -> i64 {
+    a / gcd(a, b) * b
 }
 
 #[cfg(test)]
