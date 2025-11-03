@@ -9,75 +9,25 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn lex_palindromic_permutation(s: &str, target: &str) -> String {
-    let freq = s.bytes().fold([0; 26], |mut acc, b| {
-        acc[usize::from(b - b'a')] += 1;
-        acc
-    });
-    let mut single = None;
-    for (idx, f) in freq.iter().enumerate() {
-        if f & 1 == 1 {
-            if single.is_none() {
-                single = Some(idx as u8 + b'a');
-            } else {
-                return "".to_string();
+pub fn min_cost(colors: String, needed_time: Vec<i32>) -> i32 {
+    let mut left = 0;
+    let mut res = 0;
+    for ch in colors.as_bytes().chunk_by(|a, b| a == b) {
+        if ch.len() == 1 {
+            left += 1;
+        } else {
+            let mut sum = 0;
+            let mut max = 0;
+            let right = left + ch.len();
+            for c in needed_time[left..right].iter() {
+                sum += c;
+                max = max.max(*c);
             }
+            res += sum - max;
+            left = right;
         }
     }
-    let n = s.len();
-    let mut candids = freq.map(|v| v / 2);
-    let res = build(
-        target.as_bytes(),
-        single,
-        &mut candids,
-        &target.as_bytes()[..n / 2],
-        true,
-        &mut vec![],
-    )
-    .unwrap_or_default();
-    String::from_utf8(res).unwrap_or_default()
-}
-
-fn build(
-    target: &[u8],
-    single: Option<u8>,
-    candids: &mut [i32; 26],
-    half: &[u8],
-    tight: bool,
-    curr: &mut Vec<u8>,
-) -> Option<Vec<u8>> {
-    if half.is_empty() {
-        let mut temp = curr.clone();
-        if let Some(v) = single {
-            temp.push(v);
-        }
-        temp.extend(curr.iter().rev());
-        if temp.as_slice() > target {
-            return Some(temp);
-        }
-        return None;
-    }
-    let lower = if tight { half[0] } else { b'a' };
-    for b in lower..=b'z' {
-        let bi = usize::from(b - b'a');
-        if candids[bi] > 0 {
-            candids[bi] -= 1;
-            curr.push(b);
-            if let Some(v) = build(
-                target,
-                single,
-                candids,
-                &half[1..],
-                tight && b == lower,
-                curr,
-            ) {
-                return Some(v);
-            }
-            curr.pop();
-            candids[bi] += 1;
-        }
-    }
-    None
+    res
 }
 
 #[cfg(test)]
@@ -110,15 +60,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(lex_palindromic_permutation("baba", "abba"), "baab");
-        assert_eq!(lex_palindromic_permutation("baba", "bbaa"), "");
-        assert_eq!(lex_palindromic_permutation("abc", "abb"), "");
-        assert_eq!(lex_palindromic_permutation("aac", "abb"), "aca");
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(lex_palindromic_permutation("aabb", "aaaa"), "abba");
-    }
+    fn test() {}
 }
