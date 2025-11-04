@@ -6,47 +6,32 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
+use std::collections::HashSet;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn open_lock(deadends: &[&str], target: &str) -> i32 {
-    use std::collections::{HashSet, VecDeque};
-    let s = target.as_bytes();
-    let tmask = to_bit_u8(s);
-    let mut seen: HashSet<_> = deadends.iter().map(|s| to_bit_u8(s.as_bytes())).collect();
-    if !seen.insert(to_bit_u8(&[b'0'; 4])) {
-        return -1;
+pub fn crack_safe(n: i32, k: i32) -> String {
+    if n == 1 && k == 1 {
+        return "0".into();
     }
-    let mut queue = VecDeque::from([([0_i8; 4], 0)]);
-    while let Some((curr, step)) = queue.pop_front() {
-        let cmask = to_bit_i8(&curr);
-        if cmask == tmask {
-            return step;
-        }
-        for i in 0..4 {
-            let mut next = curr;
-            next[i] = (next[i] - 1).rem_euclid(10);
-            let mut mask = to_bit_i8(&next);
-            if seen.insert(mask) {
-                queue.push_back((next, 1 + step));
-            }
-            next[i] = (next[i] + 2).rem_euclid(10);
-            mask = to_bit_i8(&next);
-            if seen.insert(mask) {
-                queue.push_back((next, 1 + step));
-            }
-        }
-    }
-    -1
+    let n = n as usize;
+    let start = vec![b'0'; n - 1];
+    let mut res = vec![];
+    dfs(&start, k, &mut HashSet::new(), &mut res);
+    res.extend(start);
+    String::from_utf8(res).unwrap()
 }
 
-fn to_bit_u8(s: &[u8]) -> i64 {
-    s.iter().fold(0, |acc, b| (acc << 10) | (1 << (b - b'0')))
-}
-
-fn to_bit_i8(s: &[i8]) -> i64 {
-    s.iter()
-        .fold(0, |acc, b| (acc << 10) | (1 << b.rem_euclid(10)))
+fn dfs(node: &[u8], k: i32, seen: &mut HashSet<Vec<u8>>, res: &mut Vec<u8>) {
+    for i in 0..k {
+        let mut next = node.to_vec();
+        next.push(i as u8 + b'0');
+        if seen.insert(next.clone()) {
+            dfs(&next[1..], k, seen, res);
+            res.push(i as u8 + b'0');
+        }
+    }
 }
 
 #[cfg(test)]
@@ -82,7 +67,5 @@ mod tests {
     fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(open_lock(&["0000"], "8888"), -1);
-    }
+    fn test() {}
 }
