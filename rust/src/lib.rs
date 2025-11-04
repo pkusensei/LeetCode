@@ -6,32 +6,47 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::{
-    cmp::Reverse,
-    collections::{BinaryHeap, HashMap},
-};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_x_sum(nums: Vec<i32>, k: i32, x: i32) -> Vec<i32> {
-    let [k, x] = [k, x].map(|v| v as usize);
-    let mut freq = HashMap::new();
-    let mut res = vec![];
-    for (i, &num) in nums.iter().enumerate() {
-        *freq.entry(num).or_insert(0) += 1;
-        if i >= k {
-            *freq.entry(nums[i - k]).or_insert(0) -= 1;
+pub fn open_lock(deadends: &[&str], target: &str) -> i32 {
+    use std::collections::{HashSet, VecDeque};
+    let s = target.as_bytes();
+    let tmask = to_bit_u8(s);
+    let mut seen: HashSet<_> = deadends.iter().map(|s| to_bit_u8(s.as_bytes())).collect();
+    if !seen.insert(to_bit_u8(&[b'0'; 4])) {
+        return -1;
+    }
+    let mut queue = VecDeque::from([([0_i8; 4], 0)]);
+    while let Some((curr, step)) = queue.pop_front() {
+        let cmask = to_bit_i8(&curr);
+        if cmask == tmask {
+            return step;
         }
-        if i >= k - 1 {
-            let mut heap: BinaryHeap<_> = freq.iter().map(|(&num, &f)| Reverse((f, num))).collect();
-            while heap.len() > x {
-                heap.pop();
+        for i in 0..4 {
+            let mut next = curr;
+            next[i] = (next[i] - 1).rem_euclid(10);
+            let mut mask = to_bit_i8(&next);
+            if seen.insert(mask) {
+                queue.push_back((next, 1 + step));
             }
-            res.push(heap.into_iter().map(|Reverse((v, f))| v * f).sum());
+            next[i] = (next[i] + 2).rem_euclid(10);
+            mask = to_bit_i8(&next);
+            if seen.insert(mask) {
+                queue.push_back((next, 1 + step));
+            }
         }
     }
-    res
+    -1
+}
+
+fn to_bit_u8(s: &[u8]) -> i64 {
+    s.iter().fold(0, |acc, b| (acc << 10) | (1 << (b - b'0')))
+}
+
+fn to_bit_i8(s: &[i8]) -> i64 {
+    s.iter()
+        .fold(0, |acc, b| (acc << 10) | (1 << b.rem_euclid(10)))
 }
 
 #[cfg(test)]
@@ -67,5 +82,7 @@ mod tests {
     fn basics() {}
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(open_lock(&["0000"], "8888"), -1);
+    }
 }
