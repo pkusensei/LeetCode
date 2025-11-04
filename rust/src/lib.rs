@@ -6,25 +6,29 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
+use std::{
+    cmp::Reverse,
+    collections::{BinaryHeap, HashMap},
+};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_cost(colors: String, needed_time: Vec<i32>) -> i32 {
-    let mut left = 0;
-    let mut res = 0;
-    for ch in colors.as_bytes().chunk_by(|a, b| a == b) {
-        if ch.len() == 1 {
-            left += 1;
-        } else {
-            let mut sum = 0;
-            let mut max = 0;
-            let right = left + ch.len();
-            for c in needed_time[left..right].iter() {
-                sum += c;
-                max = max.max(*c);
+pub fn find_x_sum(nums: Vec<i32>, k: i32, x: i32) -> Vec<i32> {
+    let [k, x] = [k, x].map(|v| v as usize);
+    let mut freq = HashMap::new();
+    let mut res = vec![];
+    for (i, &num) in nums.iter().enumerate() {
+        *freq.entry(num).or_insert(0) += 1;
+        if i >= k {
+            *freq.entry(nums[i - k]).or_insert(0) -= 1;
+        }
+        if i >= k - 1 {
+            let mut heap: BinaryHeap<_> = freq.iter().map(|(&num, &f)| Reverse((f, num))).collect();
+            while heap.len() > x {
+                heap.pop();
             }
-            res += sum - max;
-            left = right;
+            res.push(heap.into_iter().map(|Reverse((v, f))| v * f).sum());
         }
     }
     res
