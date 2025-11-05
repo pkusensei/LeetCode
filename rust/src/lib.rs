@@ -6,64 +6,28 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::collections::{HashMap, HashSet, VecDeque};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn pyramid_transition(bottom: String, allowed: Vec<String>) -> bool {
-    let map = allowed
-        .iter()
-        .map(|s| {
-            let s = s.as_bytes();
-            let bot = i32::from((s[0] - b'A' + 1) << 4) | i32::from(s[1] - b'A' + 1);
-            (bot, i32::from(s[2] - b'A' + 1))
-        })
-        .fold(HashMap::<i32, Vec<_>>::new(), |mut acc, (k, v)| {
-            acc.entry(k).or_default().push(v);
-            acc
-        });
-    let bot: Vec<_> = bottom.bytes().map(|b| i32::from(b - b'A' + 1)).collect();
-    let mut seen = HashSet::from([to_bit(&bot)]);
-    let mut queue = VecDeque::from([bot]);
-    while let Some(curr) = queue.pop_front() {
-        if curr.len() == 1 {
-            return true;
-        }
-        let mut acc = vec![];
-        backtrack(&curr, &map, &mut vec![], &mut acc);
-        for v in acc {
-            let mask = to_bit(&v);
-            if seen.insert(mask) {
-                queue.push_back(v);
-            }
+pub fn intersection_size_two(mut intervals: Vec<[i32; 2]>) -> i32 {
+    intervals.sort_unstable_by(|a, b| a[1].cmp(&b[1]).then(b[0].cmp(&a[0])));
+    let mut res = 2;
+    let mut right = intervals[0][1];
+    let mut left = right - 1;
+    for int in &intervals[1..] {
+        let [a, b] = int[..] else { unreachable!() };
+        if a <= left {
+        } else if a <= right {
+            left = right;
+            right = b;
+            res += 1;
+        } else {
+            right = b;
+            left = right - 1;
+            res += 2;
         }
     }
-    false
-}
-
-fn backtrack(
-    s: &[i32],
-    map: &HashMap<i32, Vec<i32>>,
-    curr: &mut Vec<i32>,
-    acc: &mut Vec<Vec<i32>>,
-) {
-    if s.len() <= 1 {
-        acc.push(curr.clone());
-        return;
-    }
-    let k = to_bit(&s[..2]);
-    if let Some(v) = map.get(&k) {
-        for &b in v {
-            curr.push(b);
-            backtrack(&s[1..], map, curr, acc);
-            curr.pop();
-        }
-    }
-}
-
-fn to_bit(v: &[i32]) -> i32 {
-    v.iter().fold(0, |acc, x| (acc << 4) | x)
+    res
 }
 
 #[cfg(test)]
@@ -99,5 +63,10 @@ mod tests {
     fn basics() {}
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(
+            intersection_size_two(vec![[1, 3], [3, 7], [5, 7], [7, 8]]),
+            5
+        );
+    }
 }
