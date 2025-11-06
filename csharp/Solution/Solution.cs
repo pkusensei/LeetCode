@@ -8,33 +8,26 @@ namespace Solution;
 
 public class Solution
 {
-    public string MakeLargestSpecial(string s)
+    public IList<int> PartitionLabels(string s)
     {
-        return Dfs(s);
-
-        static string Dfs(ReadOnlySpan<char> s)
+        Span<int> last = stackalloc int[26];
+        for (int i = 0; i < s.Length; i++)
         {
-            if (s.Length <= 2) { return new(s); }
-            int open = 0;
-            int left = 0;
-            List<string> res = [];
-            StringBuilder sb = new();
-            for (int right = 0; right < s.Length; right++)
-            {
-                if (s[right] == '1') { open += 1; }
-                else { open -= 1; }
-                if (open == 0)
-                {
-                    sb.Clear();
-                    sb.Append('1');
-                    sb.Append(Dfs(s[(1 + left)..right]));
-                    sb.Append('0');
-                    res.Add(sb.ToString());
-                    left = 1 + right;
-                }
-            }
-            res.Sort((a, b) => b.CompareTo(a));
-            return string.Join("", res);
+            last[s[i] - 'a'] = i;
         }
+        List<int> res = [];
+        int left = 0;
+        int end = 0;
+        for (int right = 0; right < s.Length; right++)
+        {
+            int curr = s[right] - 'a';
+            end = int.Max(end, last[curr]);
+            if (end == right)
+            {
+                res.Add(right - left + 1);
+                left = 1 + right;
+            }
+        }
+        return res;
     }
 }
