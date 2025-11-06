@@ -10,8 +10,10 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow("11100100", "11011000")]
+    public void TestMethod1(string exp, string s)
     {
+        Assert.AreEqual(exp, sol.MakeLargestSpecial(s));
     }
 
     [TestMethod]
