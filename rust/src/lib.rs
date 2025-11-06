@@ -9,25 +9,75 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn intersection_size_two(mut intervals: Vec<[i32; 2]>) -> i32 {
-    intervals.sort_unstable_by(|a, b| a[1].cmp(&b[1]).then(b[0].cmp(&a[0])));
-    let mut res = 2;
-    let mut right = intervals[0][1];
-    let mut left = right - 1;
-    for int in &intervals[1..] {
-        let [a, b] = int[..] else { unreachable!() };
-        if a <= left {
-        } else if a <= right {
-            left = right;
-            right = b;
-            res += 1;
+pub fn process_queries(c: i32, connections: Vec<Vec<i32>>, queries: Vec<Vec<i32>>) -> Vec<i32> {
+    use std::collections::{BTreeSet, HashMap};
+    let n = 1 + c as usize;
+    let mut dsu = DSU::new(n);
+    for con in connections {
+        let [x, y] = con[..] else { unreachable!() };
+        dsu.union(x as usize, y as usize);
+    }
+    let mut map = HashMap::<_, BTreeSet<_>>::new();
+    for i in 1..n {
+        let root = dsu.find(i);
+        map.entry(root).or_default().insert(i as i32);
+    }
+    let mut res = vec![];
+    for q in queries {
+        let root = dsu.find(q[1] as usize);
+        if q[0] == 1 {
+            let Some(v) = map.get(&root) else {
+                continue;
+            };
+            if v.contains(&q[1]) {
+                res.push(q[1]);
+            } else {
+                res.push(*v.first().unwrap_or(&-1));
+            }
         } else {
-            right = b;
-            left = right - 1;
-            res += 2;
+            let Some(v) = map.get_mut(&root) else {
+                continue;
+            };
+            v.remove(&q[1]);
         }
     }
     res
+}
+
+struct DSU {
+    parent: Vec<usize>,
+    rank: Vec<i32>,
+}
+
+impl DSU {
+    fn new(n: usize) -> Self {
+        Self {
+            parent: (0..n).collect(),
+            rank: vec![0; n],
+        }
+    }
+
+    fn find(&mut self, v: usize) -> usize {
+        if self.parent[v] != v {
+            self.parent[v] = self.find(self.parent[v])
+        }
+        self.parent[v]
+    }
+
+    fn union(&mut self, x: usize, y: usize) {
+        let [rx, ry] = [x, y].map(|v| self.find(v));
+        if rx == ry {
+            return;
+        }
+        match self.rank[rx].cmp(&self.rank[ry]) {
+            std::cmp::Ordering::Less => self.parent[rx] = ry,
+            std::cmp::Ordering::Equal => {
+                self.rank[rx] += 1;
+                self.parent[ry] = rx;
+            }
+            std::cmp::Ordering::Greater => self.parent[ry] = rx,
+        }
+    }
 }
 
 #[cfg(test)]
@@ -63,10 +113,5 @@ mod tests {
     fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(
-            intersection_size_two(vec![[1, 3], [3, 7], [5, 7], [7, 8]]),
-            5
-        );
-    }
+    fn test() {}
 }
