@@ -8,26 +8,62 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<int> PartitionLabels(string s)
+    public int MinSwapsCouples(int[] row)
     {
-        Span<int> last = stackalloc int[26];
-        for (int i = 0; i < s.Length; i++)
+        int n = row.Length / 2;
+        DSU dsu = new(n);
+        int[] seats = [.. Enumerable.Repeat(-1, n)];
+        for (int i = 0; i < row.Length; i++)
         {
-            last[s[i] - 'a'] = i;
+            int group = row[i] / 2;
+            if (seats[group] < 0) { seats[group] = i / 2; }
+            else { dsu.Union(seats[group], i / 2); }
         }
-        List<int> res = [];
-        int left = 0;
-        int end = 0;
-        for (int right = 0; right < s.Length; right++)
+        int res = 0;
+        for (int i = 0; i < n; i++)
         {
-            int curr = s[right] - 'a';
-            end = int.Max(end, last[curr]);
-            if (end == right)
+            int root = dsu.Find(i);
+            if (seats[root] >= 0)
             {
-                res.Add(right - left + 1);
-                left = 1 + right;
+                res += dsu.Size[root] - 1;
+                seats[root] = -1;
             }
         }
         return res;
+    }
+}
+
+readonly struct DSU
+{
+    public DSU(int n)
+    {
+        Parent = [.. Enumerable.Range(0, n)];
+        Size = [.. Enumerable.Repeat(1, n)];
+    }
+
+    public int[] Parent { get; }
+    public int[] Size { get; }
+
+    public int Find(int v)
+    {
+        if (Parent[v] != v) { Parent[v] = Find(Parent[v]); }
+        return Parent[v];
+    }
+
+    public void Union(int x, int y)
+    {
+        int rx = Find(x);
+        int ry = Find(y);
+        if (rx == ry) { return; }
+        if (Size[rx] < Size[ry])
+        {
+            Parent[rx] = ry;
+            Size[ry] += Size[rx];
+        }
+        else
+        {
+            Parent[ry] = rx;
+            Size[rx] += Size[ry];
+        }
     }
 }
