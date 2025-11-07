@@ -9,60 +9,42 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_power(stations: &[i32], r: i32, k: i32) -> i64 {
-    let n = stations.len();
-    let mut line = vec![0; 1 + n];
-    let r = r as usize;
-    let mut sum = 0;
-    for (i, &v) in stations.iter().enumerate() {
-        let v = i64::from(v);
-        sum += v;
-        let left = i.saturating_sub(r);
-        line[left] += v;
-        let right = (i + r + 1).min(n);
-        line[right] -= v;
-    }
+pub fn max_chunks_to_sorted(arr: &[i32]) -> i32 {
+    let n = arr.len();
+    let mut left_max = Vec::with_capacity(n);
     let mut curr = 0;
-    let mut left = i64::MAX;
-    for v in line.iter_mut() {
-        curr += *v;
-        *v = curr;
-        left = left.min(curr);
+    for &num in arr.iter() {
+        curr = curr.max(num);
+        left_max.push(curr);
     }
-    let k = i64::from(k);
-    let mut right = sum + k;
-    line.pop();
-    while left < right {
-        let mid = left + (right - left + 1) / 2;
-        if check(&line, r, k, mid) {
-            left = mid;
-        } else {
-            right = mid - 1;
-        }
+    curr = i32::MAX;
+    let mut right_min = Vec::with_capacity(n);
+    for &num in arr.iter().rev() {
+        curr = curr.min(num);
+        right_min.push(curr);
     }
-    left
+    right_min.reverse();
+    1 + left_max
+        .iter()
+        .zip(right_min.iter().skip(1))
+        .filter(|(a, b)| a <= b)
+        .count() as i32
 }
 
-fn check(nums: &[i64], r: usize, mut k: i64, mid: i64) -> bool {
-    let n = nums.len();
-    let mut prefix = vec![0; 1 + n];
-    for (left, &num) in nums.iter().enumerate() {
-        if left > 0 {
-            prefix[left] += prefix[left - 1];
-        }
-        let curr = num + prefix[left];
-        if curr < mid {
-            let delta = mid - curr;
-            k -= delta;
-            if k < 0 {
-                return false;
+pub fn with_stack(arr: &[i32]) -> i32 {
+    let mut st = vec![];
+    for &num in arr {
+        if st.last().is_none_or(|&top| top <= num) {
+            st.push(num);
+        } else {
+            let ele = *st.last().unwrap();
+            while st.last().is_some_and(|&top| top > num) {
+                st.pop();
             }
-            prefix[left] += delta;
-            let right = (left + 2 * r + 1).min(n);
-            prefix[right] -= delta;
+            st.push(ele);
         }
     }
-    true
+    st.len() as i32
 }
 
 #[cfg(test)]
@@ -96,7 +78,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_power(&[1, 2, 4, 5, 0], 1, 2), 5);
+        assert_eq!(max_chunks_to_sorted(&[2, 1, 3, 4, 4]), 4);
+        assert_eq!(with_stack(&[2, 1, 3, 4, 4]), 4);
     }
 
     #[test]
