@@ -9,75 +9,60 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn process_queries(c: i32, connections: Vec<Vec<i32>>, queries: Vec<Vec<i32>>) -> Vec<i32> {
-    use std::collections::{BTreeSet, HashMap};
-    let n = 1 + c as usize;
-    let mut dsu = DSU::new(n);
-    for con in connections {
-        let [x, y] = con[..] else { unreachable!() };
-        dsu.union(x as usize, y as usize);
+pub fn max_power(stations: &[i32], r: i32, k: i32) -> i64 {
+    let n = stations.len();
+    let mut line = vec![0; 1 + n];
+    let r = r as usize;
+    let mut sum = 0;
+    for (i, &v) in stations.iter().enumerate() {
+        let v = i64::from(v);
+        sum += v;
+        let left = i.saturating_sub(r);
+        line[left] += v;
+        let right = (i + r + 1).min(n);
+        line[right] -= v;
     }
-    let mut map = HashMap::<_, BTreeSet<_>>::new();
-    for i in 1..n {
-        let root = dsu.find(i);
-        map.entry(root).or_default().insert(i as i32);
+    let mut curr = 0;
+    let mut left = i64::MAX;
+    for v in line.iter_mut() {
+        curr += *v;
+        *v = curr;
+        left = left.min(curr);
     }
-    let mut res = vec![];
-    for q in queries {
-        let root = dsu.find(q[1] as usize);
-        if q[0] == 1 {
-            let Some(v) = map.get(&root) else {
-                continue;
-            };
-            if v.contains(&q[1]) {
-                res.push(q[1]);
-            } else {
-                res.push(*v.first().unwrap_or(&-1));
-            }
+    let k = i64::from(k);
+    let mut right = sum + k;
+    line.pop();
+    while left < right {
+        let mid = left + (right - left + 1) / 2;
+        if check(&line, r, k, mid) {
+            left = mid;
         } else {
-            let Some(v) = map.get_mut(&root) else {
-                continue;
-            };
-            v.remove(&q[1]);
+            right = mid - 1;
         }
     }
-    res
+    left
 }
 
-struct DSU {
-    parent: Vec<usize>,
-    rank: Vec<i32>,
-}
-
-impl DSU {
-    fn new(n: usize) -> Self {
-        Self {
-            parent: (0..n).collect(),
-            rank: vec![0; n],
+fn check(nums: &[i64], r: usize, mut k: i64, mid: i64) -> bool {
+    let n = nums.len();
+    let mut prefix = vec![0; 1 + n];
+    for (left, &num) in nums.iter().enumerate() {
+        if left > 0 {
+            prefix[left] += prefix[left - 1];
         }
-    }
-
-    fn find(&mut self, v: usize) -> usize {
-        if self.parent[v] != v {
-            self.parent[v] = self.find(self.parent[v])
-        }
-        self.parent[v]
-    }
-
-    fn union(&mut self, x: usize, y: usize) {
-        let [rx, ry] = [x, y].map(|v| self.find(v));
-        if rx == ry {
-            return;
-        }
-        match self.rank[rx].cmp(&self.rank[ry]) {
-            std::cmp::Ordering::Less => self.parent[rx] = ry,
-            std::cmp::Ordering::Equal => {
-                self.rank[rx] += 1;
-                self.parent[ry] = rx;
+        let curr = num + prefix[left];
+        if curr < mid {
+            let delta = mid - curr;
+            k -= delta;
+            if k < 0 {
+                return false;
             }
-            std::cmp::Ordering::Greater => self.parent[ry] = rx,
+            prefix[left] += delta;
+            let right = (left + 2 * r + 1).min(n);
+            prefix[right] -= delta;
         }
     }
+    true
 }
 
 #[cfg(test)]
@@ -110,7 +95,9 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(max_power(&[1, 2, 4, 5, 0], 1, 2), 5);
+    }
 
     #[test]
     fn test() {}
