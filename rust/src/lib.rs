@@ -9,57 +9,52 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_path_score(grid: Vec<Vec<i32>>, k: i32) -> i32 {
-    let [rows, cols] = get_dimensions(&grid);
+pub fn maximum_score(nums: &[i32], k: i32) -> i64 {
+    use itertools::{Itertools, chain};
     let k = k as usize;
-    dfs(
-        &grid,
-        k,
-        0,
-        0,
-        0,
-        &mut vec![vec![vec![None; 1 + k]; cols]; rows],
-    )
-    .unwrap_or(-1)
+    let min_idx = nums
+        .iter()
+        .enumerate()
+        .min_by_key(|(_i, v)| **v)
+        .map(|(i, _)| i)
+        .unwrap_or(0);
+    // min at start
+    let a = chain!(&nums[min_idx..], &nums[..min_idx])
+        .copied()
+        .collect_vec();
+    // min at end
+    let b = chain!(&nums[1 + min_idx..], &nums[..=min_idx])
+        .copied()
+        .collect_vec();
+    rolling_dp(&a, k).max(rolling_dp(&b, k))
 }
 
-fn dfs(
-    grid: &[Vec<i32>],
-    k: usize,
-    row: usize,
-    col: usize,
-    cost: usize,
-    memo: &mut [Vec<Vec<Option<i32>>>],
-) -> Option<i32> {
-    let [rows, cols] = get_dimensions(grid);
-    if row >= rows || col >= cols {
-        return None;
+// 3573
+fn rolling_dp(nums: &[i32], k: usize) -> i64 {
+    let n = nums.len();
+    if n < 2 {
+        return 0;
     }
-    if let Some(v) = memo[row][col][cost] {
-        return if v < 0 { None } else { Some(v) };
+    let mut cash = vec![0; 1 + k];
+    let mut normal = vec![i64::MIN >> 1; 1 + k];
+    let mut short = vec![i64::MIN >> 1; 1 + k];
+    for i in 1..=k {
+        normal[i] = -i64::from(nums[0]);
+        short[i] = i64::from(nums[0]);
     }
-    let ncost = cost + usize::from(grid[row][col] > 0);
-    if ncost > k {
-        return None;
+    for &num in nums {
+        let num = i64::from(num);
+        let mut ncash = cash.clone();
+        let mut nnormal = normal.clone();
+        let mut nshort = short.clone();
+        for i in 1..=k {
+            ncash[i] = cash[i].max(normal[i] + num).max(short[i] - num);
+            nnormal[i] = normal[i].max(cash[i - 1] - num);
+            nshort[i] = short[i].max(cash[i - 1] + num);
+        }
+        [cash, normal, short] = [ncash, nnormal, nshort];
     }
-    let curr = grid[row][col];
-    if row == rows - 1 && col == cols - 1 {
-        return Some(curr);
-    }
-    if let Some(res) = match (
-        dfs(grid, k, 1 + row, col, ncost, memo),
-        dfs(grid, k, row, 1 + col, ncost, memo),
-    ) {
-        (None, None) => None,
-        (None, Some(v)) | (Some(v), None) => Some(curr + v),
-        (Some(a), Some(b)) => Some(curr + a.max(b)),
-    } {
-        memo[row][col][cost] = Some(res);
-        Some(res)
-    } else {
-        memo[row][col][cost] = Some(-1);
-        None
-    }
+    cash[k]
 }
 
 #[cfg(test)]
@@ -93,10 +88,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_path_score(vec![vec![0, 1], vec![2, 0]], 1), 2);
-        assert_eq!(max_path_score(vec![vec![0, 1], vec![1, 2]], 1), -1);
+        assert_eq!(maximum_score(&[1, 2, 3, 3], 2), 3);
+        assert_eq!(maximum_score(&[1, 2, 3, 3], 1), 2);
+        assert_eq!(maximum_score(&[1, 2, 3, 3], 4), 3);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(maximum_score(&[1, 1, 2, 2, 2, 1], 3), 2);
+    }
 }
