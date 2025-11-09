@@ -20,17 +20,14 @@ pub fn minimum_distance(nums: Vec<i32>) -> i32 {
         });
     let mut res = None;
     for v in map.values() {
-        if v.len() < 3 {
-            continue;
-        }
-        for (i1, a) in v.iter().enumerate() {
-            for (i2, b) in v.iter().enumerate().skip(1 + i1) {
-                for c in v.iter().skip(1 + i2) {
-                    let curr = a.abs_diff(*b) + b.abs_diff(*c) + a.abs_diff(*c);
-                    let r = res.get_or_insert(curr as i32);
-                    *r = (*r).min(curr as i32);
-                }
-            }
+        if let Some(curr) = v
+            .windows(3)
+            .map(|w| w[0].abs_diff(w[1]) + w[1].abs_diff(w[2]) + w[2].abs_diff(w[0]))
+            .min()
+            .map(|x| x as i32)
+        {
+            let r = res.get_or_insert(curr);
+            *r = (*r).min(curr)
         }
     }
     res.unwrap_or(-1)
