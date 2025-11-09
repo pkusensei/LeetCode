@@ -9,66 +9,31 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_majority_subarrays(nums: &[i32], target: i32) -> i64 {
-    use itertools::Itertools;
+pub fn minimum_distance(nums: Vec<i32>) -> i32 {
     use std::collections::HashMap;
-    let prefix = nums.iter().fold(vec![0], |mut acc, &v| {
-        acc.push(if v == target { 1_i32 } else { -1 } + acc.last().unwrap_or(&0));
-        acc
-    });
-    if prefix
-        .last()
-        .is_some_and(|&v| v < 0 && v.abs() == nums.len() as i32)
-    {
-        return 0;
-    }
-    let map: HashMap<_, _> = prefix
+    let map = nums
         .iter()
-        .copied()
-        .sorted_unstable()
-        .dedup()
         .enumerate()
-        .map(|(i, v)| (v, i))
-        .collect();
-    let n = map.len();
-    let mut ft = FenwickTree::new(n);
-    let mut res = 0;
-    for p in &prefix {
-        let i = map[p];
-        ft.update(1 + i, 1);
-        res += ft.query(i); // find all freq<current
-    }
-    res
-}
-
-struct FenwickTree {
-    tree: Vec<i64>,
-    n: usize,
-}
-
-impl FenwickTree {
-    fn new(n: usize) -> Self {
-        Self {
-            tree: vec![0; 1 + n],
-            n,
+        .fold(HashMap::<_, Vec<_>>::new(), |mut acc, (i, &v)| {
+            acc.entry(v).or_default().push(i);
+            acc
+        });
+    let mut res = None;
+    for v in map.values() {
+        if v.len() < 3 {
+            continue;
+        }
+        for (i1, a) in v.iter().enumerate() {
+            for (i2, b) in v.iter().enumerate().skip(1 + i1) {
+                for c in v.iter().skip(1 + i2) {
+                    let curr = a.abs_diff(*b) + b.abs_diff(*c) + a.abs_diff(*c);
+                    let r = res.get_or_insert(curr as i32);
+                    *r = (*r).min(curr as i32);
+                }
+            }
         }
     }
-
-    fn update(&mut self, mut idx: usize, val: i64) {
-        while idx <= self.n {
-            self.tree[idx] += val;
-            idx += idx & idx.wrapping_neg();
-        }
-    }
-
-    fn query(&self, mut idx: usize) -> i64 {
-        let mut res = 0;
-        while idx > 0 {
-            res += self.tree[idx];
-            idx -= idx & idx.wrapping_neg();
-        }
-        res
-    }
+    res.unwrap_or(-1)
 }
 
 #[cfg(test)]
@@ -101,13 +66,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(count_majority_subarrays(&[1, 2, 2, 3], 2), 5);
-        assert_eq!(count_majority_subarrays(&[1, 1, 1, 1], 1), 10);
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(count_majority_subarrays(&[7, 1], 7), 1);
-    }
+    fn test() {}
 }
