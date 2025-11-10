@@ -8,24 +8,26 @@ namespace Solution;
 
 public class Solution
 {
-    public int MinimumOneBitOperations(int n)
+    public int MinOperations(int[] nums)
     {
-        // 100 101 111 110 010 011 001 000
-        // 4               2       1
-        Dictionary<int, int> memo = Enumerable.Range(0, 30)
-            .Select(p => ((int)Math.Pow(2, p), (int)Math.Pow(2, 1 + p) - 1))
-            .ToDictionary(kv => kv.Item1, kv => kv.Item2);
-        return Dfs(n);
-
-        int Dfs(int x)
+        int res = 0;
+        Stack<int> st = [];
+        foreach (var num in nums)
         {
-            if (x <= 1) { return x; }
-            if (memo.TryGetValue(x, out var v)) { return v; }
-            int p = int.Log2(x);
-            int res = Dfs((int)Math.Pow(2, p)) - Dfs(x - (int)Math.Pow(2, p));
-            memo.TryAdd(x, res);
-            return res;
+            if (num == 0)
+            {
+                st.Clear();
+                continue;
+            }
+            while (st.TryPeek(out int top) && top > num)
+            {
+                st.Pop();
+            }
+            if (st.TryPeek(out int top_) && top_ == num) { continue; }
+            st.Push(num);
+            res += 1;
         }
+        return res;
     }
 }
 
