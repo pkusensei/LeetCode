@@ -9,25 +9,38 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_ideal_permutation(nums: &[i32]) -> bool {
-    let n = nums.len();
-    if n <= 2 {
-        return true;
+pub fn can_transform(start: String, result: String) -> bool {
+    let s1 = start.as_bytes();
+    let s2 = result.as_bytes();
+    let n = s1.len();
+    if n != s2.len() {
+        return false;
     }
-    let mut max = 0;
-    for i in 0..n - 2 {
-        max = max.max(nums[i]);
-        if max > nums[2 + i] {
-            return false; // All global inversions must be local
+    let mut i1 = 0;
+    let mut i2 = 0;
+    while i1 < n && i2 < n {
+        while s1.get(i1).is_some_and(|&v| v == b'X') {
+            i1 += 1;
         }
+        while s2.get(i2).is_some_and(|&v| v == b'X') {
+            i2 += 1;
+        }
+        if i1 >= n || i2 >= n {
+            break;
+        }
+        if s1[i1] != s2[i2] {
+            return false;
+        }
+        if s1[i1] == b'L' && i1 < i2 {
+            return false;
+        }
+        if s1[i1] == b'R' && i1 > i2 {
+            return false;
+        }
+        i1 += 1;
+        i2 += 1;
     }
-    true
-}
-
-pub fn constrain_dislocation(nums: &[i32]) -> bool {
-    nums.iter()
-        .enumerate()
-        .all(|(i, &v)| i.abs_diff(v as usize) <= 1)
+    s1[i1..].iter().chain(&s2[i2..]).all(|&v| v == b'X')
 }
 
 #[cfg(test)]
@@ -60,13 +73,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert!(is_ideal_permutation(&[1, 0, 2]));
-        assert!(!is_ideal_permutation(&[1, 2, 0]));
-
-        assert!(constrain_dislocation(&[1, 0, 2]));
-        assert!(!constrain_dislocation(&[1, 2, 0]));
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
