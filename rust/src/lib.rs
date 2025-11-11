@@ -9,19 +9,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_max_form(strs: Vec<String>, m: i32, n: i32) -> i32 {
-    let [m, n] = [m, n].map(|v| v as usize);
-    let mut dp = vec![vec![0; 1 + n]; 1 + m];
-    for s in strs.iter() {
-        let zeros = s.bytes().filter(|&b| b == b'0').count();
-        let ones = s.len() - zeros;
-        for i0 in (zeros..=m).rev() {
-            for i1 in (ones..=n).rev() {
-                dp[i0][i1] = dp[i0][i1].max(1 + dp[i0 - zeros][i1 - ones]);
-            }
-        }
+pub const fn kth_grammar(n: i32, k: i32) -> i32 {
+    if k == 1 {
+        return 0;
     }
-    dp[m][n]
+    // 0
+    // 01
+    // 0110
+    // 01101001
+    let len = 2_i32.pow(n.unsigned_abs() - 1);
+    if k > len / 2 {
+        1 - kth_grammar(n - 1, k - len / 2)
+    } else {
+        kth_grammar(n - 1, k)
+    }
 }
 
 #[cfg(test)]
