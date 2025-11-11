@@ -9,20 +9,26 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub const fn kth_grammar(n: i32, k: i32) -> i32 {
-    if k == 1 {
-        return 0;
+pub const fn reaching_points(sx: i32, sy: i32, mut tx: i32, mut ty: i32) -> bool {
+    if tx < sx || ty < sy {
+        return false;
     }
-    // 0
-    // 01
-    // 0110
-    // 01101001
-    let len = 2_i32.pow(n.unsigned_abs() - 1);
-    if k > len / 2 {
-        1 - kth_grammar(n - 1, k - len / 2)
-    } else {
-        kth_grammar(n - 1, k)
+    while tx > sx && ty > sy {
+        if tx > ty {
+            tx %= ty;
+        } else if tx < ty {
+            ty %= tx;
+        } else {
+            break;
+        }
     }
+    if sx == tx {
+        return (ty - sy) % sx == 0;
+    }
+    if sy == ty {
+        return (tx - sx) % sy == 0;
+    }
+    tx == sx && ty == sy
 }
 
 #[cfg(test)]
@@ -55,7 +61,9 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert!(reaching_points(1, 1, 3, 5));
+    }
 
     #[test]
     fn test() {}
