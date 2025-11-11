@@ -9,38 +9,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn can_transform(start: String, result: String) -> bool {
-    let s1 = start.as_bytes();
-    let s2 = result.as_bytes();
-    let n = s1.len();
-    if n != s2.len() {
-        return false;
+pub fn find_max_form(strs: Vec<String>, m: i32, n: i32) -> i32 {
+    let [m, n] = [m, n].map(|v| v as usize);
+    let mut dp = vec![vec![0; 1 + n]; 1 + m];
+    for s in strs.iter() {
+        let zeros = s.bytes().filter(|&b| b == b'0').count();
+        let ones = s.len() - zeros;
+        for i0 in (zeros..=m).rev() {
+            for i1 in (ones..=n).rev() {
+                dp[i0][i1] = dp[i0][i1].max(1 + dp[i0 - zeros][i1 - ones]);
+            }
+        }
     }
-    let mut i1 = 0;
-    let mut i2 = 0;
-    while i1 < n && i2 < n {
-        while s1.get(i1).is_some_and(|&v| v == b'X') {
-            i1 += 1;
-        }
-        while s2.get(i2).is_some_and(|&v| v == b'X') {
-            i2 += 1;
-        }
-        if i1 >= n || i2 >= n {
-            break;
-        }
-        if s1[i1] != s2[i2] {
-            return false;
-        }
-        if s1[i1] == b'L' && i1 < i2 {
-            return false;
-        }
-        if s1[i1] == b'R' && i1 > i2 {
-            return false;
-        }
-        i1 += 1;
-        i2 += 1;
-    }
-    s1[i1..].iter().chain(&s2[i2..]).all(|&v| v == b'X')
+    dp[m][n]
 }
 
 #[cfg(test)]
