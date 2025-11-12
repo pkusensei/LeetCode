@@ -9,26 +9,28 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub const fn reaching_points(sx: i32, sy: i32, mut tx: i32, mut ty: i32) -> bool {
-    if tx < sx || ty < sy {
-        return false;
+pub fn min_operations(nums: Vec<i32>) -> i32 {
+    const fn gcd(a: i32, b: i32) -> i32 {
+        if a == 0 { b } else { gcd(b % a, a) }
     }
-    while tx > sx && ty > sy {
-        if tx > ty {
-            tx %= ty;
-        } else if tx < ty {
-            ty %= tx;
-        } else {
-            break;
+
+    let n = nums.len();
+    let one = nums.iter().filter(|&&v| v == 1).count();
+    if one > 0 {
+        return (n - one) as i32;
+    }
+    let mut min = None;
+    for (left, &a) in nums.iter().enumerate() {
+        let mut gcd_ = a;
+        for (right, &b) in nums.iter().enumerate().skip(1 + left) {
+            gcd_ = gcd(gcd_, b);
+            if gcd_ == 1 {
+                let v = min.get_or_insert(right - left);
+                *v = (*v).min(right - left)
+            }
         }
     }
-    if sx == tx {
-        return (ty - sy) % sx == 0;
-    }
-    if sy == ty {
-        return (tx - sx) % sy == 0;
-    }
-    tx == sx && ty == sy
+    min.map(|v| (n + v - 1) as i32).unwrap_or(-1)
 }
 
 #[cfg(test)]
@@ -61,9 +63,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert!(reaching_points(1, 1, 3, 5));
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
