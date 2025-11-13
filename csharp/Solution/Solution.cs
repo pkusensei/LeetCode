@@ -8,24 +8,13 @@ namespace Solution;
 
 public class Solution
 {
-    public int MinOperations(int[] nums)
+    public int NumRabbits(int[] answers)
     {
         int res = 0;
-        Stack<int> st = [];
-        foreach (var num in nums)
+        foreach (var (key, val) in answers.CountBy(x => x))
         {
-            if (num == 0)
-            {
-                st.Clear();
-                continue;
-            }
-            while (st.TryPeek(out int top) && top > num)
-            {
-                st.Pop();
-            }
-            if (st.TryPeek(out int top_) && top_ == num) { continue; }
-            st.Push(num);
-            res += 1;
+            int pack = 1 + key;
+            res += (int)Math.Ceiling((double)val / pack) * pack;
         }
         return res;
     }
