@@ -9,28 +9,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_operations(nums: Vec<i32>) -> i32 {
-    const fn gcd(a: i32, b: i32) -> i32 {
-        if a == 0 { b } else { gcd(b % a, a) }
-    }
-
-    let n = nums.len();
-    let one = nums.iter().filter(|&&v| v == 1).count();
-    if one > 0 {
-        return (n - one) as i32;
-    }
-    let mut min = None;
-    for (left, &a) in nums.iter().enumerate() {
-        let mut gcd_ = a;
-        for (right, &b) in nums.iter().enumerate().skip(1 + left) {
-            gcd_ = gcd(gcd_, b);
-            if gcd_ == 1 {
-                let v = min.get_or_insert(right - left);
-                *v = (*v).min(right - left)
-            }
+pub fn max_operations(s: String) -> i32 {
+    let mut res = 0;
+    let mut count = 0;
+    for ch in s.as_bytes().chunk_by(|a, b| a == b).rev() {
+        if ch[0] == b'0' {
+            count += 1;
+        } else {
+            res += count * ch.len() as i32
         }
     }
-    min.map(|v| (n + v - 1) as i32).unwrap_or(-1)
+    res
 }
 
 #[cfg(test)]
