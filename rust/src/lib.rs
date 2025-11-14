@@ -9,14 +9,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_operations(s: String) -> i32 {
-    let mut res = 0;
-    let mut count = 0;
-    for ch in s.as_bytes().chunk_by(|a, b| a == b).rev() {
-        if ch[0] == b'0' {
-            count += 1;
-        } else {
-            res += count * ch.len() as i32
+pub fn range_add_queries(n: i32, queries: &[[i32; 4]]) -> Vec<Vec<i32>> {
+    let n = n as usize;
+    let mut res = vec![vec![0; n]; n];
+    for q in queries {
+        let [row1, col1, row2, col2] = [0, 1, 2, 3].map(|i| q[i] as usize);
+        for r in row1..=row2 {
+            res[r][col1] += 1;
+            if 1 + col2 < n {
+                res[r][1 + col2] -= 1;
+            }
+        }
+    }
+    for r in res.iter_mut() {
+        for c in 1..n {
+            r[c] += r[c - 1];
         }
     }
     res
@@ -52,7 +59,12 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(
+            range_add_queries(3, &[[1, 1, 2, 2], [0, 0, 1, 1]]),
+            [[1, 1, 0], [1, 2, 1], [0, 1, 1]]
+        );
+    }
 
     #[test]
     fn test() {}
