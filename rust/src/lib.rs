@@ -9,24 +9,31 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn range_add_queries(n: i32, queries: &[[i32; 4]]) -> Vec<Vec<i32>> {
-    let n = n as usize;
-    let mut res = vec![vec![0; n]; n];
-    for q in queries {
-        let [row1, col1, row2, col2] = [0, 1, 2, 3].map(|i| q[i] as usize);
-        for r in row1..=row2 {
-            res[r][col1] += 1;
-            if 1 + col2 < n {
-                res[r][1 + col2] -= 1;
+pub fn number_of_substrings(s: &str) -> i32 {
+    let s = s.as_bytes();
+    let n = s.len();
+    let mut left_zero = vec![-1; 1 + n];
+    for i in 0..n {
+        left_zero[1 + i] = if i == 0 || s[i - 1] == b'0' {
+            i as i32
+        } else {
+            left_zero[i]
+        };
+    }
+    let mut res = 0;
+    for (right, &b) in s.iter().enumerate() {
+        let mut f0 = if b == b'0' { 1 } else { 0 };
+        let mut end = 1 + right as i32;
+        while end > 0 && f0 * f0 <= n {
+            let f1 = (1 + right) as i32 - left_zero[end as usize] - f0 as i32;
+            if (f0 * f0) as i32 <= f1 {
+                res += (end as i32 - left_zero[end as usize]).min(1 + f1 - (f0 * f0) as i32);
             }
+            end = left_zero[end as usize];
+            f0 += 1;
         }
     }
-    for r in res.iter_mut() {
-        for c in 1..n {
-            r[c] += r[c - 1];
-        }
-    }
-    res
+    res as i32
 }
 
 #[cfg(test)]
@@ -60,10 +67,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            range_add_queries(3, &[[1, 1, 2, 2], [0, 0, 1, 1]]),
-            [[1, 1, 0], [1, 2, 1], [0, 1, 1]]
-        );
+        assert_eq!(number_of_substrings("00011"), 5);
+        assert_eq!(number_of_substrings("101101"), 16);
     }
 
     #[test]
