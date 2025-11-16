@@ -9,30 +9,76 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_distinct(n: i64) -> i64 {
-    let s = n.to_string().into_bytes();
-    let n = s.len();
-    let mut memo = vec![[[-1; 2]; 2]; 1 + n];
-    dfs(&s, 1, 1, &mut memo)
+pub fn count_stable_subarrays(nums: &[i32], queries: &[[i32; 2]]) -> Vec<i64> {
+    let n = nums.len();
+    let mut streak = 0_i64;
+    let mut prev = i32::MIN;
+    let mut prefix = Vec::with_capacity(n);
+    let mut dsu = DSU::new(n);
+    for (i, &num) in nums.iter().enumerate() {
+        if prev > num {
+            streak = 0;
+        } else if i > 0 {
+            dsu.union(i - 1, i);
+        }
+        prev = num;
+        streak += 1;
+        prefix.push(streak + prefix.last().unwrap_or(&0));
+    }
+    let mut res = Vec::with_capacity(queries.len());
+    for q in queries {
+        let [a, b] = [0, 1].map(|i| q[i] as usize);
+        let left_root = dsu.find(a);
+        let curr = if left_root == dsu.find(b) {
+            let v = (b - a + 1) as i64;
+            v * (1 + v) / 2
+        } else if left_root < a {
+            let mut curr = prefix[b];
+            let max = *dsu.packs[left_root].last().unwrap();
+            curr -= prefix[max];
+            let i = dsu.packs[left_root].binary_search(&a).unwrap();
+            let len = dsu.packs[left_root].len();
+            curr += ((len - i) * (len - i + 1) / 2) as i64;
+            curr
+        } else {
+            prefix[b] - if a > 0 { prefix[a - 1] } else { 0 } // len(pack)==1
+        };
+        res.push(curr);
+    }
+    res
 }
 
-fn dfs(s: &[u8], tight: usize, leading_zero: usize, memo: &mut [[[i64; 2]; 2]]) -> i64 {
-    if s.is_empty() {
-        return i64::from(leading_zero == 0); // not zero
+struct DSU {
+    parent: Vec<usize>,
+    packs: Vec<Vec<usize>>,
+}
+
+impl DSU {
+    fn new(n: usize) -> Self {
+        Self {
+            parent: (0..n).collect(),
+            packs: (0..n).map(|v| vec![v]).collect(),
+        }
     }
-    if memo[s.len()][tight][leading_zero] > -1 {
-        return memo[s.len()][tight][leading_zero];
+
+    fn find(&mut self, v: usize) -> usize {
+        if self.parent[v] != v {
+            self.parent[v] = self.find(self.parent[v])
+        }
+        self.parent[v]
     }
-    let upper = if tight == 1 { s[0] } else { b'9' };
-    let lower = if leading_zero == 1 { b'0' } else { b'1' };
-    let mut res = 0;
-    for b in lower..=upper {
-        let ntight = tight & usize::from(b == upper);
-        let nleading = leading_zero & usize::from(b == b'0');
-        res += dfs(&s[1..], ntight, nleading, memo);
+
+    fn union(&mut self, x: usize, y: usize) {
+        let [rx, ry] = [x, y].map(|v| self.find(v));
+        if rx == ry {
+            return;
+        }
+        self.parent[ry] = rx;
+        let Ok([px, py]) = self.packs.get_disjoint_mut([rx, ry]) else {
+            return;
+        };
+        px.append(py);
     }
-    memo[s.len()][tight][leading_zero] = res;
-    res
 }
 
 #[cfg(test)]
@@ -66,10 +112,16 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(count_distinct(10), 9);
-        assert_eq!(count_distinct(3), 3);
+        assert_eq!(
+            count_stable_subarrays(&[3, 1, 2], &[[0, 1], [1, 2], [0, 2]]),
+            [2, 3, 4]
+        );
+        assert_eq!(count_stable_subarrays(&[2, 2], &[[0, 1], [0, 0]]), [3, 1]);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(count_stable_subarrays(&[1, 2, 3], &[[1, 2]]), [3]);
+        assert_eq!(count_stable_subarrays(&[8, 12], &[[1, 1]]), [1]);
+    }
 }
