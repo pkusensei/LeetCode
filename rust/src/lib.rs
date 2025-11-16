@@ -9,10 +9,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximize_expression_of_three(mut nums: Vec<i32>) -> i32 {
-    let n = nums.len();
-    nums.sort_unstable();
-    nums[n - 1] + nums[n - 2] - nums[0]
+pub fn min_length_after_removals(s: &str) -> i32 {
+    let mut st = vec![];
+    for b in s.bytes() {
+        if st.last().is_some_and(|&top| top != b) {
+            st.pop();
+        } else {
+            st.push(b);
+        }
+    }
+    st.len() as i32
 }
 
 #[cfg(test)]
@@ -45,8 +51,14 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(min_length_after_removals("aabbab"), 0);
+        assert_eq!(min_length_after_removals("aaaa"), 4);
+        assert_eq!(min_length_after_removals("aaabb"), 1);
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(min_length_after_removals("baaab"), 1);
+    }
 }
