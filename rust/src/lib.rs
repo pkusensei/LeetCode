@@ -9,16 +9,30 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_length_after_removals(s: &str) -> i32 {
-    let mut st = vec![];
-    for b in s.bytes() {
-        if st.last().is_some_and(|&top| top != b) {
-            st.pop();
-        } else {
-            st.push(b);
-        }
+pub fn count_distinct(n: i64) -> i64 {
+    let s = n.to_string().into_bytes();
+    let n = s.len();
+    let mut memo = vec![[[-1; 2]; 2]; 1 + n];
+    dfs(&s, 1, 1, &mut memo)
+}
+
+fn dfs(s: &[u8], tight: usize, leading_zero: usize, memo: &mut [[[i64; 2]; 2]]) -> i64 {
+    if s.is_empty() {
+        return i64::from(leading_zero == 0); // not zero
     }
-    st.len() as i32
+    if memo[s.len()][tight][leading_zero] > -1 {
+        return memo[s.len()][tight][leading_zero];
+    }
+    let upper = if tight == 1 { s[0] } else { b'9' };
+    let lower = if leading_zero == 1 { b'0' } else { b'1' };
+    let mut res = 0;
+    for b in lower..=upper {
+        let ntight = tight & usize::from(b == upper);
+        let nleading = leading_zero & usize::from(b == b'0');
+        res += dfs(&s[1..], ntight, nleading, memo);
+    }
+    memo[s.len()][tight][leading_zero] = res;
+    res
 }
 
 #[cfg(test)]
@@ -52,13 +66,10 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_length_after_removals("aabbab"), 0);
-        assert_eq!(min_length_after_removals("aaaa"), 4);
-        assert_eq!(min_length_after_removals("aaabb"), 1);
+        assert_eq!(count_distinct(10), 9);
+        assert_eq!(count_distinct(3), 3);
     }
 
     #[test]
-    fn test() {
-        assert_eq!(min_length_after_removals("baaab"), 1);
-    }
+    fn test() {}
 }
