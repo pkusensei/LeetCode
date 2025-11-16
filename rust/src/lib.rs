@@ -9,19 +9,10 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_sub(s: String) -> i32 {
-    const M: i32 = 1_000_000_007;
-    let mut res = 0;
-    let mut curr = 0;
-    for b in s.bytes() {
-        if b == b'1' {
-            curr = (1 + curr) % M;
-        } else {
-            curr = 0;
-        }
-        res = (res + curr) % M;
-    }
-    res
+pub fn maximize_expression_of_three(mut nums: Vec<i32>) -> i32 {
+    let n = nums.len();
+    nums.sort_unstable();
+    nums[n - 1] + nums[n - 2] - nums[0]
 }
 
 #[cfg(test)]
