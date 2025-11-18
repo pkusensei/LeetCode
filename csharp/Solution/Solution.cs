@@ -8,24 +8,22 @@ namespace Solution;
 
 public class Solution
 {
-    public int MinDiffInBST(TreeNode root)
+    public bool IsOneBitCharacter(int[] bits)
     {
-        int res = int.MaxValue;
-        int? prev = null;
-        Dfs(root);
-        return res;
-
-        void Dfs(TreeNode node)
+        bool prev_zero = false;
+        for (int i = 0; i < bits.Length; i++)
         {
-            if (node is null) { return; }
-            Dfs(node.left);
-            if (prev is not null)
+            if (bits[i] == 0)
             {
-                res = int.Min(res, node.val - prev.Value);
+                prev_zero = true;
             }
-            prev = node.val;
-            Dfs(node.right);
+            else
+            {
+                prev_zero = false;
+                i += 1;
+            }
         }
+        return prev_zero;
     }
 }
 
