@@ -9,19 +9,14 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn k_length_apart(nums: Vec<i32>, k: i32) -> bool {
-    let mut prev = None;
-    for (i, &num) in nums.iter().enumerate() {
-        if num == 1 {
-            if let Some(p) = prev
-                && i - p <= k as usize
-            {
-                return false;
-            }
-            prev = Some(i)
-        }
+pub fn find_final_value(nums: Vec<i32>, original: i32) -> i32 {
+    use std::collections::HashSet;
+    let set: HashSet<_> = nums.into_iter().collect();
+    let mut x = original;
+    while set.contains(&x) {
+        x *= 2;
     }
-    true
+    x
 }
 
 #[cfg(test)]
