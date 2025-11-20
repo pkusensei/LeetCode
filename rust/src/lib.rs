@@ -9,46 +9,34 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn kth_smallest_prime_fraction(arr: Vec<i32>, k: i32) -> Vec<i32> {
-    use std::{cmp::Reverse, collections::BinaryHeap};
-    let mut heap: BinaryHeap<_> = arr[1..]
-        .iter()
-        .map(|&den| (Reverse(Frac { nom: 1, den }), 0))
-        .collect();
-    let mut nom = 0;
-    let mut den = 0;
-    for _ in 0..k {
-        let Some((Reverse(curr), idx)) = heap.pop() else {
-            break;
-        };
-        nom = curr.nom;
-        den = curr.den;
-        if let Some(v) = arr.get(1 + idx)
-            && *v < den
-        {
-            heap.push((Reverse(Frac { nom: *v, ..curr }), 1 + idx));
+pub fn find_cheapest_price(n: i32, flights: Vec<Vec<i32>>, src: i32, dst: i32, k: i32) -> i32 {
+    use std::collections::VecDeque;
+    let [n, src, dst, k] = [n, src, dst, k].map(|v| v as usize);
+    let adj = flights.iter().fold(vec![vec![]; n], |mut acc, f| {
+        acc[f[0] as usize].push((f[1] as usize, f[2]));
+        acc
+    });
+    let mut queue = VecDeque::from([(src, 0, 0)]);
+    let mut seen = vec![vec![i32::MAX; 2 + k]; n];
+    seen[src].fill(0);
+    while let Some((node, cost, step)) = queue.pop_front() {
+        if cost > seen[node][step] || step > 1 + k {
+            continue;
+        }
+        seen[node][step] = cost;
+        for &(next, c) in &adj[node] {
+            if 1 + step > 1 + k || seen[node][step] + c >= seen[next][1 + step] {
+                continue;
+            }
+            seen[next][1 + step] = c + seen[node][step];
+            queue.push_back((next, c + seen[node][step], 1 + step));
         }
     }
-    vec![nom, den]
-}
-
-#[derive(Clone, Copy, PartialEq, Eq)]
-struct Frac {
-    nom: i32,
-    den: i32,
-}
-
-impl PartialOrd for Frac {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl Ord for Frac {
-    // a/b - c/d = (ad-bc)/bd
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        (self.nom * other.den).cmp(&(self.den * other.nom))
-    }
+    seen[dst]
+        .iter()
+        .min()
+        .map(|&v| if v < i32::MAX { v } else { -1 })
+        .unwrap_or(-1)
 }
 
 #[cfg(test)]
