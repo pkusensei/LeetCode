@@ -9,47 +9,45 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_bipartite(graph: Vec<Vec<i32>>) -> bool {
-    let n = graph.len();
-    let mut dsu = DSU::new(2 * n);
-    for (a, pack) in graph.iter().enumerate() {
-        for b in pack.iter().map(|&v| v as usize) {
-            dsu.union(a, b + n);
-            dsu.union(b, a + n);
-            if dsu.find(a) == dsu.find(b) {
-                return false;
-            }
+pub fn kth_smallest_prime_fraction(arr: Vec<i32>, k: i32) -> Vec<i32> {
+    use std::{cmp::Reverse, collections::BinaryHeap};
+    let mut heap: BinaryHeap<_> = arr[1..]
+        .iter()
+        .map(|&den| (Reverse(Frac { nom: 1, den }), 0))
+        .collect();
+    let mut nom = 0;
+    let mut den = 0;
+    for _ in 0..k {
+        let Some((Reverse(curr), idx)) = heap.pop() else {
+            break;
+        };
+        nom = curr.nom;
+        den = curr.den;
+        if let Some(v) = arr.get(1 + idx)
+            && *v < den
+        {
+            heap.push((Reverse(Frac { nom: *v, ..curr }), 1 + idx));
         }
     }
-    true
+    vec![nom, den]
 }
 
-struct DSU {
-    parent: Vec<usize>,
+#[derive(Clone, Copy, PartialEq, Eq)]
+struct Frac {
+    nom: i32,
+    den: i32,
 }
 
-impl DSU {
-    fn new(n: usize) -> Self {
-        Self {
-            parent: (0..n).collect(),
-        }
+impl PartialOrd for Frac {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
     }
+}
 
-    fn find(&mut self, v: usize) -> usize {
-        if self.parent[v] != v {
-            self.parent[v] = self.find(self.parent[v]);
-        }
-        self.parent[v]
-    }
-
-    fn union(&mut self, x: usize, y: usize) -> bool {
-        let [rx, ry] = [x, y].map(|v| self.find(v));
-        if rx == ry {
-            return false;
-        }
-        let [rx, ry] = [rx.min(ry), rx.max(ry)];
-        self.parent[ry] = rx;
-        true
+impl Ord for Frac {
+    // a/b - c/d = (ad-bc)/bd
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        (self.nom * other.den).cmp(&(self.den * other.nom))
     }
 }
 
