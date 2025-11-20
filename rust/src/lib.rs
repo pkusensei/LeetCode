@@ -9,14 +9,48 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_final_value(nums: Vec<i32>, original: i32) -> i32 {
-    use std::collections::HashSet;
-    let set: HashSet<_> = nums.into_iter().collect();
-    let mut x = original;
-    while set.contains(&x) {
-        x *= 2;
+pub fn is_bipartite(graph: Vec<Vec<i32>>) -> bool {
+    let n = graph.len();
+    let mut dsu = DSU::new(2 * n);
+    for (a, pack) in graph.iter().enumerate() {
+        for b in pack.iter().map(|&v| v as usize) {
+            dsu.union(a, b + n);
+            dsu.union(b, a + n);
+            if dsu.find(a) == dsu.find(b) {
+                return false;
+            }
+        }
     }
-    x
+    true
+}
+
+struct DSU {
+    parent: Vec<usize>,
+}
+
+impl DSU {
+    fn new(n: usize) -> Self {
+        Self {
+            parent: (0..n).collect(),
+        }
+    }
+
+    fn find(&mut self, v: usize) -> usize {
+        if self.parent[v] != v {
+            self.parent[v] = self.find(self.parent[v]);
+        }
+        self.parent[v]
+    }
+
+    fn union(&mut self, x: usize, y: usize) -> bool {
+        let [rx, ry] = [x, y].map(|v| self.find(v));
+        if rx == ry {
+            return false;
+        }
+        let [rx, ry] = [rx.min(ry), rx.max(ry)];
+        self.parent[ry] = rx;
+        true
+    }
 }
 
 #[cfg(test)]
