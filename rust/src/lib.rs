@@ -6,27 +6,42 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_palindromic_subsequence(s: &str) -> i32 {
-    let n = s.len();
-    let mut pre_masks = Vec::with_capacity(n);
-    for b in s.bytes() {
-        let pos = usize::from(b - b'a');
-        pre_masks.push((1_i32 << pos) | pre_masks.last().unwrap_or(&0));
+pub fn rotated_digits(n: i32) -> i32 {
+    let s = n.to_string().into_bytes();
+    dfs(&s, true, false, false, &mut HashMap::new())
+}
+
+fn dfs(
+    s: &[u8],
+    tight: bool,
+    rotated: bool,
+    stay: bool,
+    memo: &mut HashMap<(usize, bool, bool, bool), i32>,
+) -> i32 {
+    if s.is_empty() {
+        return i32::from(rotated);
     }
-    let mut suf_masks = Vec::with_capacity(n);
-    for b in s.bytes().rev() {
-        suf_masks.push((1 << (b - b'a')) | suf_masks.last().unwrap_or(&0));
+    let k = (s.len(), tight, rotated, stay);
+    if let Some(&v) = memo.get(&k) {
+        return v;
     }
-    suf_masks.reverse();
-    let mut res = [0; 26];
-    for i in 1..n - 1 {
-        let b = s.as_bytes()[i];
-        res[usize::from(b - b'a')] |= pre_masks[i - 1] & suf_masks[1 + i];
+    let upper = if tight { s[0] } else { b'9' };
+    let mut res = 0;
+    for b in b'0'..=upper {
+        let ntight = tight && b == upper;
+        if b"018".contains(&b) {
+            res += dfs(&s[1..], ntight, rotated, true, memo)
+        } else if b"2569".contains(&b) {
+            res += dfs(&s[1..], ntight, true, stay, memo)
+        }
     }
-    res.iter().map(|v| v.count_ones() as i32).sum()
+    memo.insert(k, res);
+    res
 }
 
 #[cfg(test)]
@@ -60,7 +75,7 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(count_palindromic_subsequence("bbcbaba"), 4);
+        assert_eq!(rotated_digits(10), 4);
     }
 
     #[test]
