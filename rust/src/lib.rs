@@ -9,34 +9,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_cheapest_price(n: i32, flights: Vec<Vec<i32>>, src: i32, dst: i32, k: i32) -> i32 {
-    use std::collections::VecDeque;
-    let [n, src, dst, k] = [n, src, dst, k].map(|v| v as usize);
-    let adj = flights.iter().fold(vec![vec![]; n], |mut acc, f| {
-        acc[f[0] as usize].push((f[1] as usize, f[2]));
-        acc
-    });
-    let mut queue = VecDeque::from([(src, 0, 0)]);
-    let mut seen = vec![vec![i32::MAX; 2 + k]; n];
-    seen[src].fill(0);
-    while let Some((node, cost, step)) = queue.pop_front() {
-        if cost > seen[node][step] || step > 1 + k {
-            continue;
-        }
-        seen[node][step] = cost;
-        for &(next, c) in &adj[node] {
-            if 1 + step > 1 + k || seen[node][step] + c >= seen[next][1 + step] {
-                continue;
-            }
-            seen[next][1 + step] = c + seen[node][step];
-            queue.push_back((next, c + seen[node][step], 1 + step));
-        }
+pub fn count_palindromic_subsequence(s: &str) -> i32 {
+    let n = s.len();
+    let mut pre_masks = Vec::with_capacity(n);
+    for b in s.bytes() {
+        let pos = usize::from(b - b'a');
+        pre_masks.push((1_i32 << pos) | pre_masks.last().unwrap_or(&0));
     }
-    seen[dst]
-        .iter()
-        .min()
-        .map(|&v| if v < i32::MAX { v } else { -1 })
-        .unwrap_or(-1)
+    let mut suf_masks = Vec::with_capacity(n);
+    for b in s.bytes().rev() {
+        suf_masks.push((1 << (b - b'a')) | suf_masks.last().unwrap_or(&0));
+    }
+    suf_masks.reverse();
+    let mut res = [0; 26];
+    for i in 1..n - 1 {
+        let b = s.as_bytes()[i];
+        res[usize::from(b - b'a')] |= pre_masks[i - 1] & suf_masks[1 + i];
+    }
+    res.iter().map(|v| v.count_ones() as i32).sum()
 }
 
 #[cfg(test)]
@@ -69,7 +59,9 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(count_palindromic_subsequence("bbcbaba"), 4);
+    }
 
     #[test]
     fn test() {}
