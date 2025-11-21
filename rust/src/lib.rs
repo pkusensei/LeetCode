@@ -6,42 +6,20 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn rotated_digits(n: i32) -> i32 {
-    let s = n.to_string().into_bytes();
-    dfs(&s, true, false, false, &mut HashMap::new())
-}
-
-fn dfs(
-    s: &[u8],
-    tight: bool,
-    rotated: bool,
-    stay: bool,
-    memo: &mut HashMap<(usize, bool, bool, bool), i32>,
-) -> i32 {
-    if s.is_empty() {
-        return i32::from(rotated);
+pub fn num_tilings(n: i32) -> i32 {
+    const M: i32 = 1_000_000_007;
+    let n = n as usize;
+    let mut dp = [0; 1001];
+    dp[1] = 1;
+    dp[2] = 2;
+    dp[3] = 5;
+    for i in 4..=n {
+        dp[i] = (2 * dp[i - 1] % M + dp[i - 3]) % M
     }
-    let k = (s.len(), tight, rotated, stay);
-    if let Some(&v) = memo.get(&k) {
-        return v;
-    }
-    let upper = if tight { s[0] } else { b'9' };
-    let mut res = 0;
-    for b in b'0'..=upper {
-        let ntight = tight && b == upper;
-        if b"018".contains(&b) {
-            res += dfs(&s[1..], ntight, rotated, true, memo)
-        } else if b"2569".contains(&b) {
-            res += dfs(&s[1..], ntight, true, stay, memo)
-        }
-    }
-    memo.insert(k, res);
-    res
+    dp[n]
 }
 
 #[cfg(test)]
