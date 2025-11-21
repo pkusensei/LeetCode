@@ -9,17 +9,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_tilings(n: i32) -> i32 {
-    const M: i32 = 1_000_000_007;
-    let n = n as usize;
-    let mut dp = [0; 1001];
-    dp[1] = 1;
-    dp[2] = 2;
-    dp[3] = 5;
-    for i in 4..=n {
-        dp[i] = (2 * dp[i - 1] % M + dp[i - 3]) % M
+pub fn custom_sort_string(order: String, s: String) -> String {
+    let mut freq = s.bytes().fold([0; 26], |mut acc, b| {
+        acc[usize::from(b - b'a')] += 1;
+        acc
+    });
+    let mut res = Vec::with_capacity(s.len());
+    for b in order.bytes() {
+        res.extend(std::iter::repeat_n(b, freq[usize::from(b - b'a')]));
+        freq[usize::from(b - b'a')] = 0;
     }
-    dp[n]
+    for (i, &f) in freq.iter().enumerate() {
+        if f > 0 {
+            res.extend(std::iter::repeat_n(i as u8 + b'a', f));
+        }
+    }
+    String::from_utf8(res).unwrap()
 }
 
 #[cfg(test)]
@@ -52,9 +57,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(rotated_digits(10), 4);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
