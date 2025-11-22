@@ -9,19 +9,26 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn total_waviness(num1: i32, num2: i32) -> i32 {
-    (num1..=num2).map(report).sum()
-}
-
-fn report(x: i32) -> i32 {
-    if x < 100 {
-        return 0;
+pub fn lex_smallest_negated_perm(n: i32, target: i64) -> Vec<i32> {
+    let n = i64::from(n);
+    let sum = (1 + n) * n / 2;
+    let t_abs = target.abs();
+    let delta = sum - t_abs;
+    if delta < 0 || delta & 1 == 1 {
+        return vec![];
     }
-    x.to_string()
-        .into_bytes()
-        .windows(3)
-        .filter(|w| (w[0] > w[1] && w[2] > w[1]) || (w[0] < w[1] && w[2] < w[1]))
-        .count() as i32
+    let mut res = Vec::with_capacity(n as usize);
+    let mut delta = sum - target;
+    for num in (1..=n).rev() {
+        if delta > 0 && 2 * num <= delta {
+            res.push(-num);
+            delta -= 2 * num;
+        } else {
+            res.push(num);
+        }
+    }
+    res.sort_unstable();
+    res.into_iter().map(|v| v as i32).collect()
 }
 
 #[cfg(test)]
@@ -54,8 +61,13 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(lex_smallest_negated_perm(3, 0), [-3, 1, 2]);
+        assert_eq!(lex_smallest_negated_perm(3, -2), [-3, -1, 2])
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(lex_smallest_negated_perm(4, -4), [-4, -3, 1, 2]);
+    }
 }
