@@ -9,22 +9,14 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn custom_sort_string(order: String, s: String) -> String {
-    let mut freq = s.bytes().fold([0; 26], |mut acc, b| {
-        acc[usize::from(b - b'a')] += 1;
-        acc
-    });
-    let mut res = Vec::with_capacity(s.len());
-    for b in order.bytes() {
-        res.extend(std::iter::repeat_n(b, freq[usize::from(b - b'a')]));
-        freq[usize::from(b - b'a')] = 0;
+pub const fn minimum_flips(n: i32) -> i32 {
+    let mut temp = n;
+    let mut rev = 0;
+    while temp > 0 {
+        rev = (rev << 1) | (temp & 1);
+        temp >>= 1;
     }
-    for (i, &f) in freq.iter().enumerate() {
-        if f > 0 {
-            res.extend(std::iter::repeat_n(i as u8 + b'a', f));
-        }
-    }
-    String::from_utf8(res).unwrap()
+    (n ^ rev).count_ones() as i32
 }
 
 #[cfg(test)]
