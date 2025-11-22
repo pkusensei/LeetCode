@@ -9,14 +9,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub const fn minimum_flips(n: i32) -> i32 {
-    let mut temp = n;
-    let mut rev = 0;
-    while temp > 0 {
-        rev = (rev << 1) | (temp & 1);
-        temp >>= 1;
+pub fn total_waviness(num1: i32, num2: i32) -> i32 {
+    (num1..=num2).map(report).sum()
+}
+
+fn report(x: i32) -> i32 {
+    if x < 100 {
+        return 0;
     }
-    (n ^ rev).count_ones() as i32
+    x.to_string()
+        .into_bytes()
+        .windows(3)
+        .filter(|w| (w[0] > w[1] && w[2] > w[1]) || (w[0] < w[1] && w[2] < w[1]))
+        .count() as i32
 }
 
 #[cfg(test)]
