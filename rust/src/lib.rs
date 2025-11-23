@@ -9,18 +9,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn sum_and_multiply(mut n: i32) -> i64 {
-    let mut sum = 0;
-    let mut ds = vec![];
-    while n > 0 {
-        let d = i64::from(n % 10);
-        n /= 10;
-        if d > 0 {
-            ds.push(d);
-            sum += d;
+pub fn max_balanced_subarray(nums: Vec<i32>) -> i32 {
+    use std::collections::HashMap;
+    // (xor, even_odd) - idx
+    let mut prefix = HashMap::from([((0, 0), -1)]);
+    let mut curr_xor = 0;
+    let mut curr_even_odd = 0;
+    let mut res = 0;
+    for (idx, &num) in nums.iter().enumerate() {
+        curr_xor ^= num;
+        if num & 1 == 1 {
+            curr_even_odd -= 1
+        } else {
+            curr_even_odd += 1
+        }
+        if let Some(prev) = prefix.get(&(curr_xor, curr_even_odd)) {
+            res = res.max(idx as i32 - prev)
+        } else {
+            prefix.insert((curr_xor, curr_even_odd), idx as i32);
         }
     }
-    ds.iter().rev().fold(0, |acc, d| acc * 10 + d) * sum
+    res
 }
 
 #[cfg(test)]
