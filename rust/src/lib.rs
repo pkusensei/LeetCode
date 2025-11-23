@@ -9,52 +9,55 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn sum_and_multiply(s: &str, queries: &[[i32; 2]]) -> Vec<i32> {
-    let n = s.len();
-    let mut pref_sum = Vec::with_capacity(n);
-    let mut pref_x = Vec::with_capacity(n);
-    let mut pref_pow = Vec::with_capacity(n);
-    let mut curr_val = 0;
-    for b in s.bytes() {
-        let d = i64::from(b - b'0');
-        pref_sum.push(d + pref_sum.last().unwrap_or(&0));
-        pref_pow.push(i64::from(d > 0) + pref_pow.last().unwrap_or(&0));
-        curr_val *= if d == 0 { 1 } else { 10 };
-        curr_val %= M;
-        curr_val += d;
-        curr_val %= M;
-        pref_x.push(curr_val);
+pub fn count_effective(nums: &[i32]) -> i32 {
+    const M: i32 = 1_000_000_007;
+    let n = nums.len();
+    let [mut max, mut total_or] = [0, 0];
+    for &num in nums.iter() {
+        max = max.max(num);
+        total_or |= num;
     }
-    let mut res = vec![];
-    for q in queries {
-        let [left, right] = [0, 1].map(|i| q[i] as usize);
-        let dsum = pref_sum[right] - if left > 0 { pref_sum[left - 1] } else { 0 };
-        if dsum == 0 {
-            res.push(0);
-            continue;
+    if total_or == 0 {
+        return 0;
+    }
+    let width = 1 + max.ilog2();
+    let full_mask = 1 << width;
+    let mut dp = vec![0; full_mask];
+    for &num in nums.iter() {
+        dp[num as usize] += 1;
+    }
+    for bit in 0..width {
+        for mask in 0..full_mask {
+            if mask & (1 << bit) > 0 {
+                let subset = mask ^ (1 << bit);
+                // count of numbers in that tick all bits in mask
+                // but they may also tick bits not in mask
+                dp[mask] += dp[subset];
+            }
         }
-        let x = pref_x[right]
-            - if left > 0 {
-                pref_x[left - 1] * mod_pow(10, pref_pow[right] - pref_pow[left - 1], M) % M
-            } else {
-                0
-            };
-        res.push((x.rem_euclid(M) * dsum % M) as i32);
     }
-    res
-}
-
-const M: i64 = 1_000_000_007;
-
-const fn mod_pow(b: i64, exp: i64, m: i64) -> i64 {
-    if exp == 0 {
-        return 1;
+    let mut pow2 = Vec::with_capacity(n);
+    pow2.push(1);
+    for _ in 0..n {
+        pow2.push(2 * pow2.last().unwrap_or(&1) % M);
     }
-    if exp & 1 == 1 {
-        mod_pow(b * b % m, exp >> 1, m) * b % m
-    } else {
-        mod_pow(b * b % m, exp >> 1, m)
+    // count of subseqs for this mask
+    for v in dp.iter_mut() {
+        *v = (pow2[*v as usize] - 1).rem_euclid(M);
     }
+    for bit in 0..width {
+        for mask in 0..full_mask {
+            if mask & (1 << bit) > 0 {
+                let subset = mask ^ (1 << bit);
+                // By removing dp[subset]
+                // dp[mask] = count of subseqs that tick exactly mask
+                dp[mask] = (dp[mask] - dp[subset]).rem_euclid(M);
+            }
+        }
+    }
+    dp[..total_or as usize]
+        .iter()
+        .fold(1, |acc, v| (acc + v) % M)
 }
 
 #[cfg(test)]
@@ -88,12 +91,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            sum_and_multiply("10203004", &[[0, 7], [1, 3], [4, 6]]),
-            [12340, 4, 9]
-        );
-        assert_eq!(sum_and_multiply("1000", &[[0, 3], [1, 1]]), [1, 0]);
-        assert_eq!(sum_and_multiply("9876543210", &[[0, 9]]), [444444137]);
+        assert_eq!(count_effective(&[1, 2, 3]), 3);
+        assert_eq!(count_effective(&[7, 4, 6]), 4);
     }
 
     #[test]
