@@ -6,54 +6,45 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn total_waviness(num1: i64, num2: i64) -> i64 {
-    let [s1, s2] = [num1 - 1, num2].map(|v| v.to_string().into_bytes());
-    let a = dfs(&s1, true, false, b'0', b'0', &mut HashMap::new())[0];
-    let b = dfs(&s2, true, false, b'0', b'0', &mut HashMap::new())[0];
-    b - a
-}
-
-// [waviness, count of numbers]
-fn dfs(
-    s: &[u8],
-    tight: bool,
-    start: bool,
-    left: u8,
-    mid: u8,
-    memo: &mut HashMap<(usize, bool, bool, u8, u8), [i64; 2]>,
-) -> [i64; 2] {
-    if s.is_empty() {
-        return [0, 1]; // [no more waviness, one number]
-    }
-    let k = (s.len(), tight, start, left, mid);
-    if let Some(&v) = memo.get(&k) {
-        return v;
-    }
-    let upper = if tight { s[0] } else { b'9' };
-    let mut res = [0; 2];
-    for digit in b'0'..=upper {
-        let ntight = tight && digit == upper;
-        let nstart = start || mid > b'0';
-        let [sub_wav, sub_count] = dfs(&s[1..], ntight, nstart, mid, digit, memo);
-        res[0] += sub_wav;
-        res[1] += sub_count;
-        if start && nstart {
-            // This peak/valey propagates to all sub numbers
-            if left > mid && digit > mid {
-                res[0] += sub_count;
-            }
-            if left < mid && digit < mid {
-                res[0] += sub_count;
-            }
+pub fn max_sum_div_three(nums: Vec<i32>) -> i32 {
+    let mut sum = 0;
+    let mut rem1 = vec![];
+    let mut rem2 = vec![];
+    for &num in nums.iter() {
+        sum += num;
+        if num % 3 == 1 {
+            rem1.push(num);
+        } else if num % 3 == 2 {
+            rem2.push(num);
         }
     }
-    memo.insert(k, res);
-    res
+    let mut res = 0;
+    rem1.sort_unstable();
+    rem2.sort_unstable();
+    match sum % 3 {
+        1 => {
+            if rem1.len() > 0 {
+                res = res.max(sum - rem1[0]);
+            }
+            if rem2.len() > 1 {
+                res = res.max(sum - rem2[0] - rem2[1]);
+            }
+            res
+        }
+        2 => {
+            if rem2.len() > 0 {
+                res = res.max(sum - rem2[0]);
+            }
+            if rem1.len() > 1 {
+                res = res.max(sum - rem1[0] - rem1[1]);
+            }
+            res
+        }
+        _ => sum,
+    }
 }
 
 #[cfg(test)]
@@ -86,11 +77,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(total_waviness(4848, 4848), 2);
-        assert_eq!(total_waviness(120, 130), 3);
-        assert_eq!(total_waviness(198, 202), 3);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
