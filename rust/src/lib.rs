@@ -9,42 +9,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_sum_div_three(nums: Vec<i32>) -> i32 {
+pub fn sum_and_multiply(mut n: i32) -> i64 {
     let mut sum = 0;
-    let mut rem1 = vec![];
-    let mut rem2 = vec![];
-    for &num in nums.iter() {
-        sum += num;
-        if num % 3 == 1 {
-            rem1.push(num);
-        } else if num % 3 == 2 {
-            rem2.push(num);
+    let mut ds = vec![];
+    while n > 0 {
+        let d = i64::from(n % 10);
+        n /= 10;
+        if d > 0 {
+            ds.push(d);
+            sum += d;
         }
     }
-    let mut res = 0;
-    rem1.sort_unstable();
-    rem2.sort_unstable();
-    match sum % 3 {
-        1 => {
-            if rem1.len() > 0 {
-                res = res.max(sum - rem1[0]);
-            }
-            if rem2.len() > 1 {
-                res = res.max(sum - rem2[0] - rem2[1]);
-            }
-            res
-        }
-        2 => {
-            if rem2.len() > 0 {
-                res = res.max(sum - rem2[0]);
-            }
-            if rem1.len() > 1 {
-                res = res.max(sum - rem1[0] - rem1[1]);
-            }
-            res
-        }
-        _ => sum,
-    }
+    ds.iter().rev().fold(0, |acc, d| acc * 10 + d) * sum
 }
 
 #[cfg(test)]
