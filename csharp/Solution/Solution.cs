@@ -8,33 +8,15 @@ namespace Solution;
 
 public class Solution
 {
-    public int IntersectionSizeTwo(int[][] intervals)
+    public IList<bool> PrefixesDivBy5(int[] nums)
     {
-        Array.Sort(intervals, (a, b) =>
+        int curr = 0;
+        List<bool> res = new(nums.Length);
+        foreach (var num in nums)
         {
-            if (a[1] == b[1]) { return b[0].CompareTo(a[0]); }
-            return a[1].CompareTo(b[1]);
-        });
-        int res = 2;
-        int right = intervals[0][1];
-        int left = right - 1;
-        foreach (var item in intervals[1..])
-        {
-            int a = item[0];
-            int b = item[1];
-            if (a <= left) { }
-            else if (a <= right)
-            {
-                left = right;
-                right = b;
-                res += 1;
-            }
-            else
-            {
-                right = b;
-                left = right - 1;
-                res += 2;
-            }
+            curr = (curr << 1) | num;
+            curr %= 5;
+            res.Add(curr == 0);
         }
         return res;
     }
