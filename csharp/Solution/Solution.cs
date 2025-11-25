@@ -8,17 +8,19 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<bool> PrefixesDivBy5(int[] nums)
+    public int SmallestRepunitDivByK(int k)
     {
-        int curr = 0;
-        List<bool> res = new(nums.Length);
-        foreach (var num in nums)
+        bool[] seen = new bool[1 + k];
+        int curr = 1;
+        int len = 1;
+        while (true)
         {
-            curr = (curr << 1) | num;
-            curr %= 5;
-            res.Add(curr == 0);
+            if (curr % k == 0) { return len; }
+            if (seen[curr]) { return -1; }
+            seen[curr] = true;
+            curr = (10 * curr + 1) % k;
+            len += 1;
         }
-        return res;
     }
 }
 
