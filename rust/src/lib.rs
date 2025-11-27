@@ -9,27 +9,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn number_of_paths(grid: Vec<Vec<i32>>, k: i32) -> i32 {
-    const M: i32 = 1_000_000_007;
-    let [rows, cols] = get_dimensions(&grid);
+pub fn max_subarray_sum(nums: Vec<i32>, k: i32) -> i64 {
     let k = k as usize;
-    let mut dp = vec![vec![vec![0; k]; cols]; rows];
-    dp[0][0][grid[0][0] as usize % k] = 1;
-    for (r, row) in grid.iter().enumerate() {
-        for (c, &v) in row.iter().enumerate() {
-            for rem in 0..k {
-                if r > 0 {
-                    dp[r][c][(rem + v as usize) % k] =
-                        (dp[r][c][(rem + v as usize) % k] + dp[r - 1][c][rem]) % M;
-                }
-                if c > 0 {
-                    dp[r][c][(rem + v as usize) % k] =
-                        (dp[r][c][(rem + v as usize) % k] + dp[r][c - 1][rem]) % M;
-                }
-            }
+    let mut prefix: Vec<Option<i64>> = vec![None; k as usize];
+    prefix[k - 1] = Some(0);
+    let mut sum = 0;
+    let mut res = i64::MIN;
+    for (i, &num) in nums.iter().enumerate() {
+        sum += i64::from(num);
+        if let Some(prev) = prefix[i % k] {
+            res = res.max(sum - prev);
+            prefix[i % k] = Some(prev.min(sum));
+        } else {
+            prefix[i % k] = Some(sum);
         }
     }
-    dp[rows - 1][cols - 1][0] as i32
+    res
 }
 
 #[cfg(test)]
