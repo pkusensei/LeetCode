@@ -9,22 +9,34 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_subarray_sum(nums: Vec<i32>, k: i32) -> i64 {
-    let k = k as usize;
-    let mut prefix: Vec<Option<i64>> = vec![None; k as usize];
-    prefix[k - 1] = Some(0);
-    let mut sum = 0;
-    let mut res = i64::MIN;
-    for (i, &num) in nums.iter().enumerate() {
-        sum += i64::from(num);
-        if let Some(prev) = prefix[i % k] {
-            res = res.max(sum - prev);
-            prefix[i % k] = Some(prev.min(sum));
-        } else {
-            prefix[i % k] = Some(sum);
+pub fn max_k_divisible_components(n: i32, edges: Vec<Vec<i32>>, values: Vec<i32>, k: i32) -> i32 {
+    let n = n as usize;
+    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
+        let [a, b] = [0, 1].map(|i| e[i] as usize);
+        acc[a].push(b);
+        acc[b].push(a);
+        acc
+    });
+    dfs(&adj, &values, k, 0, n)[0]
+}
+
+// [count of component, sum]
+fn dfs(adj: &[Vec<usize>], values: &[i32], k: i32, node: usize, prev: usize) -> [i32; 2] {
+    let mut count = 0;
+    let mut sum = values[node];
+    for &next in &adj[node] {
+        if next != prev {
+            let [subc, subs] = dfs(adj, values, k, next, node);
+            count += subc;
+            sum += subs;
         }
     }
-    res
+    let rem = sum % k;
+    if rem % k == 0 {
+        [1 + count, 0]
+    } else {
+        [count, rem]
+    }
 }
 
 #[cfg(test)]
