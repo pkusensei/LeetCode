@@ -9,25 +9,9 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_subarray(nums: Vec<i32>, p: i32) -> i32 {
-    use std::collections::HashMap;
-    let sum = nums.iter().fold(0, |acc, v| (acc + v) % p);
-    if sum == 0 {
-        return 0;
-    }
-    let n = nums.len();
-    let mut map = HashMap::from([(0, -1)]);
-    let mut prefix = 0;
-    let mut res = n as i32;
-    for (idx, num) in nums.iter().enumerate() {
-        prefix = (prefix + num) % p;
-        let v = (prefix - sum).rem_euclid(p);
-        if let Some(prev) = map.get(&v) {
-            res = res.min(idx as i32 - prev);
-        }
-        map.insert(prefix, idx as i32);
-    }
-    if res == n as i32 { -1 } else { res }
+pub fn max_distinct(s: String) -> i32 {
+    use itertools::Itertools;
+    s.bytes().unique().count() as i32
 }
 
 #[cfg(test)]
