@@ -9,34 +9,25 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_k_divisible_components(n: i32, edges: Vec<Vec<i32>>, values: Vec<i32>, k: i32) -> i32 {
-    let n = n as usize;
-    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
-        let [a, b] = [0, 1].map(|i| e[i] as usize);
-        acc[a].push(b);
-        acc[b].push(a);
-        acc
-    });
-    dfs(&adj, &values, k, 0, n)[0]
-}
-
-// [count of component, sum]
-fn dfs(adj: &[Vec<usize>], values: &[i32], k: i32, node: usize, prev: usize) -> [i32; 2] {
-    let mut count = 0;
-    let mut sum = values[node];
-    for &next in &adj[node] {
-        if next != prev {
-            let [subc, subs] = dfs(adj, values, k, next, node);
-            count += subc;
-            sum += subs;
+pub fn min_subarray(nums: Vec<i32>, p: i32) -> i32 {
+    use std::collections::HashMap;
+    let sum = nums.iter().fold(0, |acc, v| (acc + v) % p);
+    if sum == 0 {
+        return 0;
+    }
+    let n = nums.len();
+    let mut map = HashMap::from([(0, -1)]);
+    let mut prefix = 0;
+    let mut res = n as i32;
+    for (idx, num) in nums.iter().enumerate() {
+        prefix = (prefix + num) % p;
+        let v = (prefix - sum).rem_euclid(p);
+        if let Some(prev) = map.get(&v) {
+            res = res.min(idx as i32 - prev);
         }
+        map.insert(prefix, idx as i32);
     }
-    let rem = sum % k;
-    if rem % k == 0 {
-        [1 + count, 0]
-    } else {
-        [count, rem]
-    }
+    if res == n as i32 { -1 } else { res }
 }
 
 #[cfg(test)]
