@@ -9,9 +9,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_distinct(s: String) -> i32 {
-    use itertools::Itertools;
-    s.bytes().unique().count() as i32
+pub fn min_mirror_pair_distance(nums: Vec<i32>) -> i32 {
+    use std::collections::HashMap;
+    let n = nums.len();
+    let mut res = n;
+    let mut seen = HashMap::new();
+    for (idx, &num) in nums.iter().enumerate() {
+        if let Some(prev) = seen.get(&num) {
+            res = res.min(idx - prev);
+        }
+        seen.insert(reverse(num), idx);
+    }
+    if res == n { -1 } else { res as i32 }
+}
+
+const fn reverse(mut num: i32) -> i32 {
+    let mut res = 0;
+    while num > 0 {
+        res = res * 10 + num % 10;
+        num /= 10;
+    }
+    res
 }
 
 #[cfg(test)]
