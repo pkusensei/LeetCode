@@ -8,19 +8,33 @@ namespace Solution;
 
 public class Solution
 {
-    public int SmallestRepunitDivByK(int k)
+    public int NumMatchingSubseq(string s, string[] words)
     {
-        bool[] seen = new bool[1 + k];
-        int curr = 1;
-        int len = 1;
-        while (true)
+        Dictionary<char, List<string>> buckets = [];
+        foreach (var w in words)
         {
-            if (curr % k == 0) { return len; }
-            if (seen[curr]) { return -1; }
-            seen[curr] = true;
-            curr = (10 * curr + 1) % k;
-            len += 1;
+            if (!buckets.TryAdd(w[0], [w[1..]]))
+            {
+                buckets[w[0]].Add(w[1..]);
+            }
         }
+        int res = 0;
+        foreach (var ch in s)
+        {
+            if (buckets.Remove(ch, out var lst))
+            {
+                foreach (var item in lst)
+                {
+                    if (string.IsNullOrEmpty(item)) { res += 1; }
+                    else if (!buckets.TryAdd(item[0], [item[1..]]))
+                    {
+                        buckets[item[0]].Add(item[1..]);
+                    }
+
+                }
+            }
+        }
+        return res;
     }
 }
 

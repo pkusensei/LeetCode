@@ -10,8 +10,10 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow(3, "abcde", new[] { "a", "bb", "acd", "ace" })]
+    public void TestMethod1(int exp, string s, string[] w)
     {
+        Assert.AreEqual(exp, sol.NumMatchingSubseq(s, w));
     }
 
     [TestMethod]
