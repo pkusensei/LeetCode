@@ -8,33 +8,23 @@ namespace Solution;
 
 public class Solution
 {
-    public int NumMatchingSubseq(string s, string[] words)
+    public int CountTrapezoids(int[][] points)
     {
-        Dictionary<char, List<string>> buckets = [];
-        foreach (var w in words)
+        const long M = 1_000_000_007;
+        Dictionary<int, long> freq = [];
+        foreach (var p in points)
         {
-            if (!buckets.TryAdd(w[0], [w[1..]]))
-            {
-                buckets[w[0]].Add(w[1..]);
-            }
+            if (!freq.TryAdd(p[1], 1)) { freq[p[1]] += 1; }
         }
-        int res = 0;
-        foreach (var ch in s)
+        long res = 0;
+        long prefix = 0;
+        foreach (var v in freq.Values)
         {
-            if (buckets.Remove(ch, out var lst))
-            {
-                foreach (var item in lst)
-                {
-                    if (string.IsNullOrEmpty(item)) { res += 1; }
-                    else if (!buckets.TryAdd(item[0], [item[1..]]))
-                    {
-                        buckets[item[0]].Add(item[1..]);
-                    }
-
-                }
-            }
+            long curr = v * (v - 1) / 2 % M;
+            res = (res + curr * prefix) % M;
+            prefix = (prefix + curr) % M;
         }
-        return res;
+        return (int)res;
     }
 }
 
