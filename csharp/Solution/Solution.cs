@@ -8,22 +8,37 @@ namespace Solution;
 
 public class Solution
 {
-    public int NumSubarrayBoundedMax(int[] nums, int left, int right)
+    public int BestRotation(int[] nums)
     {
-        int res = 0;
-        int curr = 0;
-        int slow = 0;
-        for (int fast = 0; fast < nums.Length; fast++)
+        int n = nums.Length;
+        int score = 0;
+        int[] diff = new int[1 + n];
+        for (int i = 0; i < n; i++)
         {
-            if (left <= nums[fast] && nums[fast] <= right) { curr = fast - slow + 1; }
-            else if (right < nums[fast])
+            int num = nums[i];
+            if (num <= i)
             {
-                slow = 1 + fast;
-                curr = 0;
+                score += 1;
+                diff[1 + i] += 1;
+                diff[1 + i - num] -= 1;
             }
-            res += curr;
+            else
+            {
+                diff[1 + i] += 1;
+                diff[1 + i + n - num] -= 1;
+            }
+        }
+        int max = 0;
+        int res = 0;
+        for (int rotate = 0; rotate < n; rotate++)
+        {
+            score += diff[rotate];
+            if (max < score)
+            {
+                res = rotate;
+                max = score;
+            }
         }
         return res;
     }
 }
-
