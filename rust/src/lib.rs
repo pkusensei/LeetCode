@@ -9,20 +9,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_run_time(n: i32, batteries: Vec<i32>) -> i64 {
-    let n = i64::from(n);
-    let mut left = 0;
-    let mut right: i64 = batteries.iter().map(|&v| i64::from(v)).sum();
-    while left < right {
-        let mid = left + (right - left + 1) / 2;
-        let sum: i64 = batteries.iter().map(|&v| mid.min(i64::from(v))).sum();
-        if sum >= mid * n {
-            left = mid;
-        } else {
-            right = mid - 1;
+pub fn champagne_tower(poured: i32, query_row: i32, query_glass: i32) -> f64 {
+    let mut prev = vec![f64::from(poured)];
+    for row in 0..query_row as usize {
+        let mut curr = vec![0.0; 2 * (row + 1) + 1];
+        for col in 0..=row {
+            let overflow = (prev[col] - 1.0) / 2.0;
+            if overflow > 0.0 {
+                curr[col] += overflow;
+                curr[1 + col] += overflow;
+            }
         }
+        prev = curr;
     }
-    left
+    prev.get(query_glass as usize)
+        .map(|&v| v.min(1.0))
+        .unwrap_or_default()
 }
 
 #[cfg(test)]
@@ -55,7 +57,9 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(champagne_tower(2, 1, 1), 0.5);
+    }
 
     #[test]
     fn test() {}
