@@ -6,39 +6,29 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::sync::LazyLock;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_operations(nums: Vec<i32>) -> Vec<i32> {
-    nums.iter()
-        .map(|val| {
-            if let Err(i) = P.binary_search(val) {
-                let mut curr = 5000;
-                if let Some(v) = P.get(i) {
-                    curr = curr.min(v - val);
-                }
-                if let Some(v) = i.checked_sub(1).map(|i| P[i]) {
-                    curr = curr.min(val - v);
-                }
-                curr
-            } else {
-                0
-            }
-        })
-        .collect()
-}
-
-static P: LazyLock<Vec<i32>> = LazyLock::new(|| {
-    let mut res = vec![];
-    for num in 1..=10_000 {
-        if is_palindrome(format!("{:b}", num).bytes()) {
-            res.push(num);
+pub fn max_points(technique1: Vec<i32>, technique2: Vec<i32>, k: i32) -> i64 {
+    use itertools::{Itertools, izip};
+    use std::collections::HashSet;
+    let deltas: HashSet<_> = izip!(&technique1, &technique2)
+        .enumerate()
+        .map(|(idx, (a, b))| (a - b, idx))
+        .sorted_unstable_by(|a, b| b.0.cmp(&a.0))
+        .take(k as usize)
+        .map(|(_v, i)| i)
+        .collect();
+    let mut res = 0;
+    for (idx, (&a, &b)) in izip!(&technique1, &technique2).enumerate() {
+        if deltas.contains(&idx) {
+            res += i64::from(a);
+        } else {
+            res += i64::from(a.max(b))
         }
     }
     res
-});
+}
 
 #[cfg(test)]
 mod tests {
