@@ -9,22 +9,33 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn champagne_tower(poured: i32, query_row: i32, query_glass: i32) -> f64 {
-    let mut prev = vec![f64::from(poured)];
-    for row in 0..query_row as usize {
-        let mut curr = vec![0.0; 2 * (row + 1) + 1];
-        for col in 0..=row {
-            let overflow = (prev[col] - 1.0) / 2.0;
-            if overflow > 0.0 {
-                curr[col] += overflow;
-                curr[1 + col] += overflow;
+pub fn count_partitions(nums: Vec<i32>, k: i32) -> i32 {
+    use std::collections::BTreeMap;
+    const M: i32 = 1_000_000_007;
+
+    let n = nums.len();
+    let mut map = BTreeMap::new();
+    let mut left = 0;
+    let mut dp = vec![0; 1 + n];
+    dp[0] = 1;
+    let mut curr = 0;
+    for (right, &num) in nums.iter().enumerate() {
+        *map.entry(num).or_insert(0) += 1;
+        curr = (curr + dp[right]) % M;
+        while let (Some(a), Some(b)) = (map.keys().next(), map.keys().next_back())
+            && b - a > k
+        {
+            let v = map.entry(nums[left]).or_insert(0);
+            *v -= 1;
+            if *v == 0 {
+                map.remove(&nums[left]);
             }
+            curr = (curr - dp[left]).rem_euclid(M);
+            left += 1;
         }
-        prev = curr;
+        dp[1 + right] = curr;
     }
-    prev.get(query_glass as usize)
-        .map(|&v| v.min(1.0))
-        .unwrap_or_default()
+    dp[n]
 }
 
 #[cfg(test)]
@@ -57,9 +68,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(champagne_tower(2, 1, 1), 0.5);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
