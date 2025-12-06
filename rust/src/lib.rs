@@ -11,56 +11,33 @@ use std::sync::LazyLock;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn complete_prime(num: i32) -> bool {
-    let s = num.to_string();
-    let n = s.len();
-    for i in 0..n {
-        if let Ok(pref) = s[..i].parse::<i32>()
-            && !is_prime(pref)
-        {
-            return false;
-        }
-        if let Ok(suf) = s[i..].parse::<i32>()
-            && !is_prime(suf)
-        {
-            return false;
-        }
-    }
-    true
-}
-
-fn is_prime(num: i32) -> bool {
-    if num < 2 {
-        return false;
-    }
-    for &p in S.iter() {
-        if num < p {
-            break;
-        }
-        if num % p == 0 && num > p {
-            return false;
-        }
-    }
-    true
-}
-
-static S: LazyLock<Vec<i32>> = LazyLock::new(|| {
-    const MAX: usize = 31_623; // or some big number
-    let mut res = vec![true; 1 + MAX]; // assume all are prime
-    res[..2].fill(false); // 0 and 1 are not prime
-    res[2] = true;
-    for p in 2..=MAX {
-        if res[p] {
-            // For this prime, all of its multiples are non-prime
-            for val in (p * p..=MAX).step_by(p) {
-                res[val] = false;
+pub fn min_operations(nums: Vec<i32>) -> Vec<i32> {
+    nums.iter()
+        .map(|val| {
+            if let Err(i) = P.binary_search(val) {
+                let mut curr = 5000;
+                if let Some(v) = P.get(i) {
+                    curr = curr.min(v - val);
+                }
+                if let Some(v) = i.checked_sub(1).map(|i| P[i]) {
+                    curr = curr.min(val - v);
+                }
+                curr
+            } else {
+                0
             }
+        })
+        .collect()
+}
+
+static P: LazyLock<Vec<i32>> = LazyLock::new(|| {
+    let mut res = vec![];
+    for num in 1..=10_000 {
+        if is_palindrome(format!("{:b}", num).bytes()) {
+            res.push(num);
         }
     }
-    res.into_iter()
-        .enumerate()
-        .filter_map(|(p, v)| if v { Some(p as i32) } else { None })
-        .collect()
+    res
 });
 
 #[cfg(test)]
@@ -93,9 +70,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert!(!complete_prime(39));
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
