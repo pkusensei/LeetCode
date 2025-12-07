@@ -6,46 +6,49 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
+use std::sync::LazyLock;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_subgraph_score(n: i32, edges: &[[i32; 2]], good: &[i32]) -> Vec<i32> {
-    let n = n as usize;
-    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
-        let [a, b] = [0, 1].map(|i| e[i] as usize);
-        acc[a].push(b);
-        acc[b].push(a);
-        acc
-    });
-    let mut res = vec![0; n];
-    res[0] = dfs(&adj, &good, 0, n, &mut res);
-    reroot(&adj, 0, n, &mut res);
+pub fn largest_prime(n: i32) -> i32 {
+    if n <= 1 {
+        return 0;
+    }
+    let mut prefix = 0;
+    let mut res = 0;
+    for p in S.iter() {
+        prefix += p;
+        if prefix > n {
+            break;
+        }
+        if S.binary_search(&prefix).is_ok() {
+            res = res.max(prefix)
+        }
+    }
     res
 }
 
-fn reroot(adj: &[Vec<usize>], node: usize, prev: usize, res: &mut [i32]) {
-    for &next in &adj[node] {
-        if next != prev {
-            let curr = res[next].max(0);
-            let prev_score = res[node] - curr;
-            res[next] += prev_score.max(0);
-            reroot(adj, next, node, res);
-        }
-    }
-}
+static S: LazyLock<Vec<i32>> = LazyLock::new(precompute);
 
-fn dfs(adj: &[Vec<usize>], good: &[i32], node: usize, prev: usize, res: &mut [i32]) -> i32 {
-    let mut score = if good[node] > 0 { 1 } else { -1 };
-    for &next in &adj[node] {
-        if next != prev {
-            let subtree = dfs(adj, good, next, node, res);
-            if subtree > 0 {
-                score += subtree;
+fn precompute() -> Vec<i32> {
+    const N: usize = 500_000;
+    let mut sieve = vec![true; 1 + N]; // assume all are prime
+    sieve[..2].fill(false); // 0 and 1 are not prime
+    sieve[2] = true;
+    for p in 2..=N {
+        if sieve[p] {
+            // For this prime, all of its multiples are non-prime
+            for val in (p * p..=N).step_by(p) {
+                sieve[val] = false;
             }
         }
     }
-    res[node] = score;
-    score
+    sieve
+        .into_iter()
+        .enumerate()
+        .filter_map(|(i, v)| if v { Some(i as i32) } else { None })
+        .collect()
 }
 
 #[cfg(test)]
@@ -78,17 +81,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(
-            max_subgraph_score(3, &[[0, 1], [1, 2]], &[1, 0, 1]),
-            [1, 1, 1]
-        );
-        assert_eq!(
-            max_subgraph_score(5, &[[1, 0], [1, 2], [1, 3], [3, 4]], &[0, 1, 0, 1, 1]),
-            [2, 3, 2, 3, 3]
-        );
-        assert_eq!(max_subgraph_score(2, &[[0, 1]], &[0, 0]), [-1, -1]);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
