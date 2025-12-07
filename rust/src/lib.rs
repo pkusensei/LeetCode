@@ -9,28 +9,43 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn total_score(hp: i32, damage: &[i32], requirement: &[i32]) -> i64 {
-    use itertools::izip;
-    let n = damage.len();
-    let mut prefix = Vec::with_capacity(1 + n);
-    prefix.push(0);
-    // for d in damage.iter() {
-    //     prefix.push(i64::from(*d) + prefix.last().unwrap_or(&0));
-    // }
-    // hp - sum(damage[left..=right]) >= req
-    // hp - (pref[1+right]-pref[left]) >= req
-    // pref[left] >= req - hp + pref[1+right]
-    let mut res = 0;
-    for (right, (d, req)) in izip!(damage.iter(), requirement.iter()).enumerate() {
-        prefix.push(i64::from(*d) + prefix.last().unwrap_or(&0));
-        let req = i64::from(*req);
-        let need = prefix[1 + right] + req - i64::from(hp);
-        let left = prefix.partition_point(|&v| v < need);
-        if left <= right {
-            res += 1 + right - left;
+pub fn max_subgraph_score(n: i32, edges: &[[i32; 2]], good: &[i32]) -> Vec<i32> {
+    let n = n as usize;
+    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
+        let [a, b] = [0, 1].map(|i| e[i] as usize);
+        acc[a].push(b);
+        acc[b].push(a);
+        acc
+    });
+    let mut res = vec![0; n];
+    res[0] = dfs(&adj, &good, 0, n, &mut res);
+    reroot(&adj, 0, n, &mut res);
+    res
+}
+
+fn reroot(adj: &[Vec<usize>], node: usize, prev: usize, res: &mut [i32]) {
+    for &next in &adj[node] {
+        if next != prev {
+            let curr = res[next].max(0);
+            let prev_score = res[node] - curr;
+            res[next] += prev_score.max(0);
+            reroot(adj, next, node, res);
         }
     }
-    res as i64
+}
+
+fn dfs(adj: &[Vec<usize>], good: &[i32], node: usize, prev: usize, res: &mut [i32]) -> i32 {
+    let mut score = if good[node] > 0 { 1 } else { -1 };
+    for &next in &adj[node] {
+        if next != prev {
+            let subtree = dfs(adj, good, next, node, res);
+            if subtree > 0 {
+                score += subtree;
+            }
+        }
+    }
+    res[node] = score;
+    score
 }
 
 #[cfg(test)]
@@ -64,20 +79,17 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(total_score(11, &[3, 6, 7], &[4, 2, 5]), 3);
-        assert_eq!(total_score(2, &[10000, 1], &[1, 1]), 1);
+        assert_eq!(
+            max_subgraph_score(3, &[[0, 1], [1, 2]], &[1, 0, 1]),
+            [1, 1, 1]
+        );
+        assert_eq!(
+            max_subgraph_score(5, &[[1, 0], [1, 2], [1, 3], [3, 4]], &[0, 1, 0, 1, 1]),
+            [2, 3, 2, 3, 3]
+        );
+        assert_eq!(max_subgraph_score(2, &[[0, 1]], &[0, 0]), [-1, -1]);
     }
 
     #[test]
-    fn test() {
-        assert_eq!(
-            total_score(
-                6,
-                &[1, 10000, 1, 10000, 1, 10000],
-                &[1, 10000, 1, 10000, 1, 10000]
-            ),
-            3
-        );
-        assert_eq!(total_score(1, &[1], &[2]), 0);
-    }
+    fn test() {}
 }
