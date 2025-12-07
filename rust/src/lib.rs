@@ -9,65 +9,13 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_inversion_count(nums: &[i32], k: i32) -> i64 {
-    use itertools::Itertools;
-    use std::collections::HashMap;
-    let num_idx: HashMap<_, _> = nums
-        .iter()
-        .copied()
-        .sorted_unstable()
-        .dedup()
-        .enumerate()
-        .map(|(i, v)| (v, 1 + i))
-        .collect();
-    let mut res = i64::MAX;
-    let n = num_idx.len();
-    let k = k as usize;
-    let mut ft = FenwickTree::new(n);
-    let mut curr = 0;
-    for (right, num) in nums.iter().enumerate() {
-        if right >= k {
-            let left = num_idx[&nums[right - k]];
-            ft.update(left, -1);
-            curr -= ft.query(left - 1);
-        }
-        curr += right.min(k - 1) as i64 - ft.query(num_idx[num]);
-        ft.update(num_idx[num], 1);
-        if right >= k - 1 {
-            res = res.min(curr);
-        }
-    }
-    res
-}
-
-struct FenwickTree {
-    tree: Vec<i64>,
-    n: usize, // Semantic size
-}
-
-impl FenwickTree {
-    fn new(n: usize) -> Self {
-        Self {
-            tree: vec![0; 1 + n],
-            n,
-        }
-    }
-
-    fn update(&mut self, mut idx: usize, val: i64) {
-        while idx <= self.n {
-            self.tree[idx] += val;
-            idx += idx & idx.wrapping_neg();
-        }
-    }
-
-    fn query(&self, mut idx: usize) -> i64 {
-        let mut res = 0;
-        while idx > 0 {
-            res += self.tree[idx];
-            idx -= idx & idx.wrapping_neg();
-        }
-        res
-    }
+pub fn sort_by_reflection(mut nums: Vec<i32>) -> Vec<i32> {
+    nums.sort_unstable_by(|a, b| {
+        let [sa, sb] = [a, b].map(|v| format!("{:b}", v).chars().rev().collect::<String>());
+        let [ra, rb] = [sa, sb].map(|s| u64::from_str_radix(&s, 2).unwrap_or_default());
+        ra.cmp(&rb).then(a.cmp(b))
+    });
+    nums
 }
 
 #[cfg(test)]
@@ -100,10 +48,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(min_inversion_count(&[3, 1, 2, 5, 4], 3), 0);
-        assert_eq!(min_inversion_count(&[5, 3, 2, 1], 4), 6);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
