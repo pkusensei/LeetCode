@@ -12,21 +12,8 @@ use std::sync::LazyLock;
 use helper::*;
 
 pub fn largest_prime(n: i32) -> i32 {
-    if n <= 1 {
-        return 0;
-    }
-    let mut prefix = 0;
-    let mut res = 0;
-    for p in S.iter() {
-        prefix += p;
-        if prefix > n {
-            break;
-        }
-        if S.binary_search(&prefix).is_ok() {
-            res = res.max(prefix)
-        }
-    }
-    res
+    let i = S.partition_point(|&v| v <= n);
+    i.checked_sub(1).map(|i| S[i]).unwrap_or_default()
 }
 
 static S: LazyLock<Vec<i32>> = LazyLock::new(precompute);
@@ -44,11 +31,20 @@ fn precompute() -> Vec<i32> {
             }
         }
     }
-    sieve
-        .into_iter()
-        .enumerate()
-        .filter_map(|(i, v)| if v { Some(i as i32) } else { None })
-        .collect()
+    let mut res = vec![];
+    let mut prefix = 0;
+    for (i, b) in sieve.iter().enumerate() {
+        if *b {
+            prefix += i;
+        }
+        if prefix > N {
+            break;
+        }
+        if sieve[prefix] {
+            res.push(prefix as i32);
+        }
+    }
+    res
 }
 
 #[cfg(test)]
