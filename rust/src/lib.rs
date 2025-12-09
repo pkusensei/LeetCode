@@ -6,45 +6,24 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::sync::LazyLock;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn largest_prime(n: i32) -> i32 {
-    let i = S.partition_point(|&v| v <= n);
-    i.checked_sub(1).map(|i| S[i]).unwrap_or_default()
-}
-
-static S: LazyLock<Vec<i32>> = LazyLock::new(precompute);
-
-fn precompute() -> Vec<i32> {
-    const N: usize = 500_000;
-    let mut sieve = vec![true; 1 + N]; // assume all are prime
-    sieve[..2].fill(false); // 0 and 1 are not prime
-    sieve[2] = true;
-    for p in 2..=N {
-        if sieve[p] {
-            // For this prime, all of its multiples are non-prime
-            for val in (p * p..=N).step_by(p) {
-                sieve[val] = false;
-            }
-        }
+pub fn special_triplets(nums: Vec<i32>) -> i32 {
+    use std::collections::HashMap;
+    let mut left = HashMap::new();
+    let mut right = nums.iter().fold(HashMap::new(), |mut acc, num| {
+        *acc.entry(*num).or_insert(0) += 1;
+        acc
+    });
+    let mut res = 0_i64;
+    for &num in nums.iter() {
+        right.entry(num).and_modify(|v| *v -= 1);
+        let [a, b] = [&left, &right].map(|m| m.get(&(2 * num)).unwrap_or(&0));
+        res = (res + a * b) % 1_000_000_007;
+        *left.entry(num).or_insert(0) += 1;
     }
-    let mut res = vec![];
-    let mut prefix = 0;
-    for (i, b) in sieve.iter().enumerate() {
-        if *b {
-            prefix += i;
-        }
-        if prefix > N {
-            break;
-        }
-        if sieve[prefix] {
-            res.push(prefix as i32);
-        }
-    }
-    res
+    res as i32
 }
 
 #[cfg(test)]
