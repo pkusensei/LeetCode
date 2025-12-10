@@ -8,42 +8,104 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<int> EventualSafeNodes(int[][] graph)
+    public int[] HitBricks(int[][] grid, int[][] hits)
     {
-        int n = graph.Length;
-        int[] outdegs = new int[n];
-        List<int>[] incoming = [.. Enumerable.Range(0, n).Select(_ => new List<int>())];
-        for (int i = 0; i < n; i++)
+        ReadOnlySpan<(int, int)> dirs = [(-1, 0), (1, 0), (0, -1), (0, 1)];
+        int rows = grid.Length;
+        int cols = grid[0].Length;
+        DSU dsu = new(1 + rows * cols);
+        bool[,] dotted = new bool[rows, cols];
+        for (int r = 0; r < rows; r++)
         {
-            outdegs[i] = graph[i].Length;
-            foreach (var node in graph[i])
+            for (int c = 0; c < cols; c++)
             {
-                incoming[node].Add(i);
+                if (grid[r][c] == 1) { dotted[r, c] = true; }
             }
         }
-        Queue<int> queue = [];
-        List<int> res = [];
-        for (int i = 0; i < n; i++)
+        foreach (var h in hits)
         {
-            if (outdegs[i] == 0)
-            {
-                res.Add(i);
-                queue.Enqueue(i);
-            }
+            dotted[h[0], h[1]] = false;
         }
-        while (queue.TryDequeue(out int node))
+        for (int r = 0; r < rows; r++)
         {
-            foreach (var item in incoming[node])
+            for (int c = 0; c < cols; c++)
             {
-                outdegs[item] -= 1;
-                if (outdegs[item] == 0)
+                int i1 = IdOf(r, c);
+                if (dotted[r, c])
                 {
-                    res.Add(item);
-                    queue.Enqueue(item);
+                    if (r == 0) { dsu.Union(0, i1); }
+                    foreach (var (dr, dc) in dirs)
+                    {
+                        (int nr, int nc) = (r + dr, c + dc);
+                        if (0 <= nr && nr < rows && 0 <= nc && nc < cols && dotted[nr, nc])
+                        {
+                            dsu.Union(i1, IdOf(nr, nc));
+                        }
+                    }
                 }
             }
         }
-        res.Sort();
-        return res;
+        List<int> res = new(hits.Length);
+        foreach (var h in hits.Reverse())
+        {
+            (int r, int c) = (h[0], h[1]);
+            if (grid[r][c] == 0)
+            {
+                res.Add(0);
+                continue;
+            }
+            int temp = dsu.Top;
+            int i1 = IdOf(r, c);
+            if (r == 0) { dsu.Union(0, i1); }
+            foreach (var (dr, dc) in dirs)
+            {
+                (int nr, int nc) = (r + dr, c + dc);
+                if (0 <= nr && nr < rows && 0 <= nc && nc < cols && dotted[nr, nc])
+                {
+                    dsu.Union(i1, IdOf(nr, nc));
+                }
+            }
+            dotted[r, c] = true;
+            res.Add(int.Max(0, dsu.Top - temp - 1));
+        }
+        return [.. res.AsEnumerable().Reverse()];
+
+        int IdOf(int row, int col) => 1 + row * cols + col;
+    }
+}
+
+readonly struct DSU
+{
+    public DSU(int n)
+    {
+        Parent = [.. Enumerable.Range(0, n)];
+        Size = [.. Enumerable.Repeat(1, n)];
+        Size[0] = 0;
+    }
+
+    public int[] Parent { get; }
+    public int[] Size { get; }
+    public int Top => Size[Find(0)];
+
+    public int Find(int v)
+    {
+        if (Parent[v] != v) { Parent[v] = Find(Parent[v]); }
+        return Parent[v];
+    }
+
+    public void Union(int x, int y)
+    {
+        (int rx, int ry) = (Find(x), Find(y));
+        if (rx == ry) { return; }
+        if (Size[rx] < Size[ry])
+        {
+            Parent[rx] = ry;
+            Size[ry] += Size[rx];
+        }
+        else
+        {
+            Parent[ry] = rx;
+            Size[rx] += Size[ry];
+        }
     }
 }
