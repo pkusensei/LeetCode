@@ -9,21 +9,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn special_triplets(nums: Vec<i32>) -> i32 {
-    use std::collections::HashMap;
-    let mut left = HashMap::new();
-    let mut right = nums.iter().fold(HashMap::new(), |mut acc, num| {
-        *acc.entry(*num).or_insert(0) += 1;
-        acc
-    });
-    let mut res = 0_i64;
-    for &num in nums.iter() {
-        right.entry(num).and_modify(|v| *v -= 1);
-        let [a, b] = [&left, &right].map(|m| m.get(&(2 * num)).unwrap_or(&0));
-        res = (res + a * b) % 1_000_000_007;
-        *left.entry(num).or_insert(0) += 1;
+pub fn count_permutations(complexity: Vec<i32>) -> i32 {
+    if complexity[1..].iter().any(|&v| v <= complexity[0]) {
+        0
+    } else {
+        fact(complexity.len() as i64 - 1) as i32
     }
-    res as i32
+}
+
+const fn fact(v: i64) -> i64 {
+    if v <= 1 {
+        1
+    } else {
+        v * fact(v - 1) % 1_000_000_007
+    }
 }
 
 #[cfg(test)]
