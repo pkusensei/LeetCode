@@ -9,20 +9,29 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_permutations(complexity: Vec<i32>) -> i32 {
-    if complexity[1..].iter().any(|&v| v <= complexity[0]) {
-        0
-    } else {
-        fact(complexity.len() as i64 - 1) as i32
+pub fn count_covered_buildings(n: i32, buildings: Vec<Vec<i32>>) -> i32 {
+    let n = n as usize;
+    let mut max_row = vec![0; 1 + n];
+    let mut min_row = vec![1 + n; 1 + n];
+    let mut max_col = vec![0; 1 + n];
+    let mut min_col = vec![1 + n; 1 + n];
+    for b in &buildings {
+        let [x, y] = b[..] else { unreachable!() };
+        max_row[y as usize] = max_row[y as usize].max(x as usize);
+        min_row[y as usize] = min_row[y as usize].min(x as usize);
+        max_col[x as usize] = max_col[x as usize].max(y as usize);
+        min_col[x as usize] = min_col[x as usize].min(y as usize);
     }
-}
-
-const fn fact(v: i64) -> i64 {
-    if v <= 1 {
-        1
-    } else {
-        v * fact(v - 1) % 1_000_000_007
+    let mut res = 0;
+    for b in buildings {
+        let [x, y] = b[..] else { unreachable!() };
+        if (1 + min_row[y as usize]..max_row[y as usize]).contains(&(x as usize))
+            && (1 + min_col[x as usize]..max_col[x as usize]).contains(&(y as usize))
+        {
+            res += 1;
+        }
     }
+    res
 }
 
 #[cfg(test)]
