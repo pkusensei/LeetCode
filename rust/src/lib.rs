@@ -9,30 +9,29 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn validate_coupons(
-    code: Vec<String>,
-    business_line: Vec<String>,
-    is_active: Vec<bool>,
-) -> Vec<String> {
-    use itertools::{Itertools, izip};
-    izip!(code, business_line, is_active)
-        .filter_map(|(c, b, a)| {
-            if !c.is_empty()
-                && c.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'_')
-                && matches!(
-                    b.as_str(),
-                    "electronics" | "grocery" | "pharmacy" | "restaurant"
-                )
-                && a
-            {
-                Some((b, c))
+pub fn number_of_ways(corridor: String) -> i32 {
+    const M: i64 = 1_000_000_007;
+
+    if !corridor.contains('S') {
+        return 0;
+    }
+    let mut s_count = 0;
+    let mut p_count = 0;
+    let mut res = 1;
+    for b in corridor.bytes() {
+        if b == b'S' {
+            if s_count == 2 {
+                res = res * (1 + p_count) % M;
+                s_count = 1;
+                p_count = 0
             } else {
-                None
+                s_count += 1;
             }
-        })
-        .sorted_unstable()
-        .map(|(_, c)| c)
-        .collect()
+        } else if s_count == 2 {
+            p_count += 1;
+        }
+    }
+    if s_count & 1 == 1 { 0 } else { res as i32 }
 }
 
 #[cfg(test)]
