@@ -9,10 +9,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn abs_difference(mut nums: Vec<i32>, k: i32) -> i32 {
-    let k = k as usize;
-    nums.sort_unstable();
-    nums.iter().rev().take(k).sum::<i32>() - nums[..k].iter().sum::<i32>()
+pub fn reverse_words(s: String) -> String {
+    let mut it = s.split_ascii_whitespace();
+    let first = it.next().unwrap();
+    let vow = first.bytes().filter(|b| b"aeiou".contains(b)).count();
+    let mut res = first.to_owned();
+    for s in it {
+        res.push(' ');
+        if s.bytes().filter(|b| b"aeiou".contains(b)).count() == vow {
+            res.extend(s.bytes().rev().map(char::from));
+        } else {
+            res.push_str(s);
+        }
+    }
+    res
 }
 
 #[cfg(test)]
