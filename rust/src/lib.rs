@@ -9,18 +9,42 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn reverse_words(s: String) -> String {
-    let mut it = s.split_ascii_whitespace();
-    let first = it.next().unwrap();
-    let vow = first.bytes().filter(|b| b"aeiou".contains(b)).count();
-    let mut res = first.to_owned();
-    for s in it {
-        res.push(' ');
-        if s.bytes().filter(|b| b"aeiou".contains(b)).count() == vow {
-            res.extend(s.bytes().rev().map(char::from));
-        } else {
-            res.push_str(s);
+pub fn min_moves(balance: Vec<i32>) -> i64 {
+    use itertools::Itertools;
+    let n = balance.len();
+    let mut sum = 0;
+    let mut neg = None;
+    for (i, &num) in balance.iter().enumerate() {
+        sum += i64::from(num);
+        if num < 0 {
+            neg = Some(i)
         }
+    }
+    if sum < 0 {
+        return -1;
+    }
+    let Some(neg) = neg else {
+        return 0;
+    };
+    let mut val = balance[neg];
+    let mut res = 0;
+    for (dist, num) in balance
+        .iter()
+        .enumerate()
+        .map(|(i, &num)| {
+            let mut dist = i.abs_diff(neg);
+            dist = dist.min(n - dist);
+            (dist, num)
+        })
+        .sorted_unstable()
+        .skip(1)
+    {
+        if val >= 0 {
+            break;
+        }
+        let diff = val.abs().min(num);
+        res += dist as i64 * i64::from(diff);
+        val += diff;
     }
     res
 }
