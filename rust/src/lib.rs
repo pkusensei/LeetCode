@@ -9,29 +9,10 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn number_of_ways(corridor: String) -> i32 {
-    const M: i64 = 1_000_000_007;
-
-    if !corridor.contains('S') {
-        return 0;
-    }
-    let mut s_count = 0;
-    let mut p_count = 0;
-    let mut res = 1;
-    for b in corridor.bytes() {
-        if b == b'S' {
-            if s_count == 2 {
-                res = res * (1 + p_count) % M;
-                s_count = 1;
-                p_count = 0
-            } else {
-                s_count += 1;
-            }
-        } else if s_count == 2 {
-            p_count += 1;
-        }
-    }
-    if s_count & 1 == 1 { 0 } else { res as i32 }
+pub fn abs_difference(mut nums: Vec<i32>, k: i32) -> i32 {
+    let k = k as usize;
+    nums.sort_unstable();
+    nums.iter().rev().take(k).sum::<i32>() - nums[..k].iter().sum::<i32>()
 }
 
 #[cfg(test)]
