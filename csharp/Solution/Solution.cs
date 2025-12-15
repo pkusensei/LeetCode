@@ -8,104 +8,55 @@ namespace Solution;
 
 public class Solution
 {
-    public int[] HitBricks(int[][] grid, int[][] hits)
+    public bool SplitArraySameAverage(int[] nums)
     {
-        ReadOnlySpan<(int, int)> dirs = [(-1, 0), (1, 0), (0, -1), (0, 1)];
-        int rows = grid.Length;
-        int cols = grid[0].Length;
-        DSU dsu = new(1 + rows * cols);
-        bool[,] dotted = new bool[rows, cols];
-        for (int r = 0; r < rows; r++)
+        int n = nums.Length;
+        if (n == 1) { return false; }
+        int sum = nums.Sum();
+        bool possible = false;
+        for (int k = 1; k <= n / 2; k++)
         {
-            for (int c = 0; c < cols; c++)
+            if (sum * k % n == 0)
             {
-                if (grid[r][c] == 1) { dotted[r, c] = true; }
+                possible = true;
+                break;
             }
         }
-        foreach (var h in hits)
+        if (!possible) { return false; }
+        int[] arr = [.. nums.Select(v => v * n - sum)];
+        int mid = n / 2;
+        ReadOnlySpan<int> left = arr.AsSpan()[..mid];
+        ReadOnlySpan<int> right = arr.AsSpan()[mid..];
+        HashSet<int> left_sums = new(1 << mid) { 0 };
+        foreach (var item in left)
         {
-            dotted[h[0], h[1]] = false;
-        }
-        for (int r = 0; r < rows; r++)
-        {
-            for (int c = 0; c < cols; c++)
+            List<int> next = new(1 << mid);
+            foreach (var num in left_sums)
             {
-                int i1 = IdOf(r, c);
-                if (dotted[r, c])
+                int ns = num + item;
+                if (ns == 0) { return true; }
+                next.Add(ns);
+            }
+            left_sums.UnionWith(next);
+        }
+        left_sums.Remove(0);
+        HashSet<int> right_sums = new(1 << (n - mid)) { 0 };
+        int total_right = arr.Skip(mid).Sum();
+        foreach (var item in right)
+        {
+            List<int> next = [];
+            foreach (var num in right_sums)
+            {
+                int ns = item + num;
+                if (ns == 0) { return true; }
+                if (left_sums.Contains(-ns))
                 {
-                    if (r == 0) { dsu.Union(0, i1); }
-                    foreach (var (dr, dc) in dirs)
-                    {
-                        (int nr, int nc) = (r + dr, c + dc);
-                        if (0 <= nr && nr < rows && 0 <= nc && nc < cols && dotted[nr, nc])
-                        {
-                            dsu.Union(i1, IdOf(nr, nc));
-                        }
-                    }
+                    if (ns != total_right) { return true; }
                 }
+                next.Add(ns);
             }
+            right_sums.UnionWith(next);
         }
-        List<int> res = new(hits.Length);
-        foreach (var h in hits.Reverse())
-        {
-            (int r, int c) = (h[0], h[1]);
-            if (grid[r][c] == 0)
-            {
-                res.Add(0);
-                continue;
-            }
-            int temp = dsu.Top;
-            int i1 = IdOf(r, c);
-            if (r == 0) { dsu.Union(0, i1); }
-            foreach (var (dr, dc) in dirs)
-            {
-                (int nr, int nc) = (r + dr, c + dc);
-                if (0 <= nr && nr < rows && 0 <= nc && nc < cols && dotted[nr, nc])
-                {
-                    dsu.Union(i1, IdOf(nr, nc));
-                }
-            }
-            dotted[r, c] = true;
-            res.Add(int.Max(0, dsu.Top - temp - 1));
-        }
-        return [.. res.AsEnumerable().Reverse()];
-
-        int IdOf(int row, int col) => 1 + row * cols + col;
-    }
-}
-
-readonly struct DSU
-{
-    public DSU(int n)
-    {
-        Parent = [.. Enumerable.Range(0, n)];
-        Size = [.. Enumerable.Repeat(1, n)];
-        Size[0] = 0;
-    }
-
-    public int[] Parent { get; }
-    public int[] Size { get; }
-    public int Top => Size[Find(0)];
-
-    public int Find(int v)
-    {
-        if (Parent[v] != v) { Parent[v] = Find(Parent[v]); }
-        return Parent[v];
-    }
-
-    public void Union(int x, int y)
-    {
-        (int rx, int ry) = (Find(x), Find(y));
-        if (rx == ry) { return; }
-        if (Size[rx] < Size[ry])
-        {
-            Parent[rx] = ry;
-            Size[ry] += Size[rx];
-        }
-        else
-        {
-            Parent[ry] = rx;
-            Size[rx] += Size[ry];
-        }
+        return false;
     }
 }
