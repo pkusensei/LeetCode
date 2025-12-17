@@ -8,55 +8,27 @@ namespace Solution;
 
 public class Solution
 {
-    public bool SplitArraySameAverage(int[] nums)
+    public int MaxIncreaseKeepingSkyline(int[][] grid)
     {
-        int n = nums.Length;
-        if (n == 1) { return false; }
-        int sum = nums.Sum();
-        bool possible = false;
-        for (int k = 1; k <= n / 2; k++)
+        int n = grid.Length;
+        int[] rowmax = new int[n];
+        int[] colmax = new int[n];
+        for (int r = 0; r < n; r++)
         {
-            if (sum * k % n == 0)
+            for (int c = 0; c < n; c++)
             {
-                possible = true;
-                break;
+                rowmax[r] = int.Max(rowmax[r], grid[r][c]);
+                colmax[c] = int.Max(colmax[c], grid[r][c]);
             }
         }
-        if (!possible) { return false; }
-        int[] arr = [.. nums.Select(v => v * n - sum)];
-        int mid = n / 2;
-        ReadOnlySpan<int> left = arr.AsSpan()[..mid];
-        ReadOnlySpan<int> right = arr.AsSpan()[mid..];
-        HashSet<int> left_sums = new(1 << mid) { 0 };
-        foreach (var item in left)
+        int res = 0;
+        for (int r = 0; r < n; r++)
         {
-            List<int> next = new(1 << mid);
-            foreach (var num in left_sums)
+            for (int c = 0; c < n; c++)
             {
-                int ns = num + item;
-                if (ns == 0) { return true; }
-                next.Add(ns);
+                res += int.Min(rowmax[r], colmax[c]) - grid[r][c];
             }
-            left_sums.UnionWith(next);
         }
-        left_sums.Remove(0);
-        HashSet<int> right_sums = new(1 << (n - mid)) { 0 };
-        int total_right = arr.Skip(mid).Sum();
-        foreach (var item in right)
-        {
-            List<int> next = [];
-            foreach (var num in right_sums)
-            {
-                int ns = item + num;
-                if (ns == 0) { return true; }
-                if (left_sums.Contains(-ns))
-                {
-                    if (ns != total_right) { return true; }
-                }
-                next.Add(ns);
-            }
-            right_sums.UnionWith(next);
-        }
-        return false;
+        return res;
     }
 }
