@@ -9,51 +9,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn knapsack(prices: &[i32], k: i32) -> i64 {
-    let k = k as usize;
-    let mut normal = vec![0; 1 + k];
-    let mut buy = vec![i64::MIN >> 2; 1 + k];
-    let mut short = vec![0; 1 + k];
-    for num in prices.iter().map(|&v| i64::from(v)) {
-        for i in (1..=k).rev() {
-            normal[i] = normal[i].max(buy[i] + num).max(short[i] - num);
-            buy[i] = buy[i].max(normal[i - 1] - num);
-            short[i] = short[i].max(normal[i - 1] + num);
-        }
-    }
-    normal[k]
-}
-
-pub fn maximum_profit(prices: &[i32], k: i32) -> i64 {
+pub fn max_profit(prices: &[i32], strategy: &[i32], k: i32) -> i64 {
+    use itertools::izip;
     let n = prices.len();
-    let k = k as usize;
-    let mut memo = vec![vec![[[-1; 2]; 2]; 1 + k]; 1 + n];
-    dfs(&prices, k, 0, 0, &mut memo)
-}
-
-fn dfs(nums: &[i32], k: usize, type_: usize, run: usize, memo: &mut [Vec<[[i64; 2]; 2]>]) -> i64 {
-    if k == 0 || nums.is_empty() {
-        return if run == 0 { 0 } else { i64::MIN >> 4 };
+    let mut pref_p = Vec::with_capacity(n);
+    let mut pref_s = Vec::with_capacity(n);
+    for (p, s) in izip!(prices, strategy) {
+        pref_p.push(i64::from(*p) + pref_p.last().unwrap_or(&0));
+        pref_s.push(i64::from(p * s) + pref_s.last().unwrap_or(&0));
     }
-    let n = nums.len();
-    if memo[n][k][type_][run] > -1 {
-        return memo[n][k][type_][run];
+    let mut res = *pref_s.last().unwrap();
+    let k = k as usize / 2;
+    let mut curr = res - pref_s[2 * k - 1];
+    curr += pref_p[2 * k - 1] - pref_p[k - 1];
+    res = res.max(curr);
+    for idx in 2 * k..n {
+        curr += i64::from(prices[idx - 2 * k] * strategy[idx - 2 * k]);
+        curr += i64::from(prices[idx] * (1 - strategy[idx]));
+        curr -= i64::from(prices[idx - k]);
+        res = res.max(curr);
     }
-    let skip = dfs(&nums[1..], k, type_, run, memo);
-    let num = i64::from(nums[0]);
-    let take = if run == 0 {
-        let buy = -num + dfs(&nums[1..], k, 0, 1 - run, memo);
-        let short = num + dfs(&nums[1..], k, 1, 1 - run, memo);
-        buy.max(short)
-    } else {
-        if type_ == 0 {
-            num + dfs(&nums[1..], k - 1, type_, 1 - run, memo)
-        } else {
-            -num + dfs(&nums[1..], k - 1, type_, 1 - run, memo)
-        }
-    };
-    memo[n][k][type_][run] = skip.max(take);
-    memo[n][k][type_][run]
+    res
 }
 
 #[cfg(test)]
@@ -87,13 +63,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(maximum_profit(&[1, 7, 9, 8, 2], 2), 14);
-        assert_eq!(maximum_profit(&[12, 16, 19, 19, 8, 1, 19, 13, 9], 3), 36);
-
-        assert_eq!(knapsack(&[1, 7, 9, 8, 2], 2), 14);
-        assert_eq!(knapsack(&[12, 16, 19, 19, 8, 1, 19, 13, 9], 3), 36);
+        assert_eq!(max_profit(&[4, 2, 8], &[-1, 0, 1], 2), 10);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(max_profit(&[4, 7, 13], &[-1, -1, 0], 2), 9);
+    }
 }
