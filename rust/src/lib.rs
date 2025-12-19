@@ -9,27 +9,73 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_profit(prices: &[i32], strategy: &[i32], k: i32) -> i64 {
-    use itertools::izip;
-    let n = prices.len();
-    let mut pref_p = Vec::with_capacity(n);
-    let mut pref_s = Vec::with_capacity(n);
-    for (p, s) in izip!(prices, strategy) {
-        pref_p.push(i64::from(*p) + pref_p.last().unwrap_or(&0));
-        pref_s.push(i64::from(p * s) + pref_s.last().unwrap_or(&0));
+pub fn find_all_people(n: i32, mut meetings: Vec<Vec<i32>>, first_person: i32) -> Vec<i32> {
+    let n = n as usize;
+    let mut dsu = DSU::new(n);
+    dsu.union(0, first_person as usize);
+    meetings.sort_unstable_by_key(|m| m[2]);
+    for ch in meetings.chunk_by(|a, b| a[2] == b[2]) {
+        for m in ch {
+            dsu.union(m[0] as usize, m[1] as usize);
+        }
+        for m in ch {
+            if dsu.find(m[0] as usize) != dsu.find(0) {
+                dsu.reset(m[0] as usize);
+                dsu.reset(m[1] as usize);
+            }
+        }
     }
-    let mut res = *pref_s.last().unwrap();
-    let k = k as usize / 2;
-    let mut curr = res - pref_s[2 * k - 1];
-    curr += pref_p[2 * k - 1] - pref_p[k - 1];
-    res = res.max(curr);
-    for idx in 2 * k..n {
-        curr += i64::from(prices[idx - 2 * k] * strategy[idx - 2 * k]);
-        curr += i64::from(prices[idx] * (1 - strategy[idx]));
-        curr -= i64::from(prices[idx - k]);
-        res = res.max(curr);
+    let root = dsu.find(0);
+    (0..n)
+        .filter_map(|v| {
+            if dsu.find(v) == root {
+                Some(v as i32)
+            } else {
+                None
+            }
+        })
+        .collect()
+}
+
+struct DSU {
+    parent: Vec<usize>,
+    rank: Vec<i32>,
+}
+
+impl DSU {
+    fn new(n: usize) -> Self {
+        Self {
+            parent: (0..n).collect(),
+            rank: vec![0; n],
+        }
     }
-    res
+
+    fn find(&mut self, v: usize) -> usize {
+        if self.parent[v] != v {
+            self.parent[v] = self.find(self.parent[v])
+        }
+        self.parent[v]
+    }
+
+    fn union(&mut self, x: usize, y: usize) {
+        let [rx, ry] = [x, y].map(|v| self.find(v));
+        if rx == ry {
+            return;
+        }
+        match self.rank[rx].cmp(&self.rank[ry]) {
+            std::cmp::Ordering::Less => self.parent[rx] = ry,
+            std::cmp::Ordering::Equal => {
+                self.parent[ry] = rx;
+                self.rank[rx] += 1;
+            }
+            std::cmp::Ordering::Greater => self.parent[ry] = rx,
+        }
+    }
+
+    fn reset(&mut self, v: usize) {
+        self.parent[v] = v;
+        self.rank[v] = 0;
+    }
 }
 
 #[cfg(test)]
