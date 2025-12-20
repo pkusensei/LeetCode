@@ -9,17 +9,39 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_operations(nums: &[i32]) -> i32 {
-    use std::collections::HashSet;
-    let mut seen = HashSet::new();
-    let mut dup = None;
-    for (idx, &num) in nums.iter().enumerate().rev() {
-        if !seen.insert(num) {
-            dup = Some(idx);
-            break;
+pub fn maximum_score(nums: Vec<i32>, s: String) -> i64 {
+    use itertools::izip;
+    use std::collections::BinaryHeap;
+    let mut res = 0;
+    let mut heap = BinaryHeap::new();
+    for (&num, b) in izip!(&nums, s.bytes()) {
+        heap.push(num);
+        if b == b'1' {
+            res += i64::from(heap.pop().unwrap_or_default());
         }
     }
-    dup.map(|v| (v as i32 + 3) / 3).unwrap_or(0)
+    res
+}
+
+// q2
+pub fn maximum_sum(mut nums: Vec<i32>) -> i32 {
+    nums.sort_unstable_by(|a, b| b.cmp(a));
+    let mut res = 0;
+    let mut rems = [None::<i32>; 3];
+    for (i, &a) in nums.iter().enumerate() {
+        let rem = (3 - a % 3) % 3;
+        if let Some(v) = rems[rem as usize] {
+            res = res.max(v + a);
+        }
+        if rems.iter().any(|v| v.is_none()) {
+            for b in &nums[..i] {
+                let rem = (a + b) % 3;
+                let v = rems[rem as usize].get_or_insert(a + b);
+                *v = (*v).max(a + b);
+            }
+        }
+    }
+    res
 }
 
 #[cfg(test)]
@@ -52,13 +74,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(maximum_sum(vec![4, 2, 3, 1]), 9);
+        assert_eq!(maximum_sum(vec![2, 1, 5]), 0);
+    }
 
     #[test]
-    fn test() {
-        assert_eq!(
-            min_operations(&[57, 35, 57, 85, 95, 26, 26, 90, 67, 58, 33]),
-            2
-        );
-    }
+    fn test() {}
 }
