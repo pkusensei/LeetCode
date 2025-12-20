@@ -9,18 +9,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_deletion_size(strs: Vec<String>) -> i32 {
-    let n = strs[0].len();
-    let mut res = 0;
-    'out: for c in 0..n {
-        for r in 1..strs.len() {
-            if strs[r - 1].as_bytes()[c] > strs[r].as_bytes()[c] {
-                res += 1;
-                continue 'out;
-            }
+pub fn min_operations(nums: &[i32]) -> i32 {
+    use std::collections::HashSet;
+    let mut seen = HashSet::new();
+    let mut dup = None;
+    for (idx, &num) in nums.iter().enumerate().rev() {
+        if !seen.insert(num) {
+            dup = Some(idx);
+            break;
         }
     }
-    res
+    dup.map(|v| (v as i32 + 3) / 3).unwrap_or(0)
 }
 
 #[cfg(test)]
@@ -56,5 +55,10 @@ mod tests {
     fn basics() {}
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(
+            min_operations(&[57, 35, 57, 85, 95, 26, 26, 90, 67, 58, 33]),
+            2
+        );
+    }
 }
