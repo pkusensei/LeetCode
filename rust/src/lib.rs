@@ -9,73 +9,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_all_people(n: i32, mut meetings: Vec<Vec<i32>>, first_person: i32) -> Vec<i32> {
-    let n = n as usize;
-    let mut dsu = DSU::new(n);
-    dsu.union(0, first_person as usize);
-    meetings.sort_unstable_by_key(|m| m[2]);
-    for ch in meetings.chunk_by(|a, b| a[2] == b[2]) {
-        for m in ch {
-            dsu.union(m[0] as usize, m[1] as usize);
-        }
-        for m in ch {
-            if dsu.find(m[0] as usize) != dsu.find(0) {
-                dsu.reset(m[0] as usize);
-                dsu.reset(m[1] as usize);
+pub fn min_deletion_size(strs: Vec<String>) -> i32 {
+    let n = strs[0].len();
+    let mut res = 0;
+    'out: for c in 0..n {
+        for r in 1..strs.len() {
+            if strs[r - 1].as_bytes()[c] > strs[r].as_bytes()[c] {
+                res += 1;
+                continue 'out;
             }
         }
     }
-    let root = dsu.find(0);
-    (0..n)
-        .filter_map(|v| {
-            if dsu.find(v) == root {
-                Some(v as i32)
-            } else {
-                None
-            }
-        })
-        .collect()
-}
-
-struct DSU {
-    parent: Vec<usize>,
-    rank: Vec<i32>,
-}
-
-impl DSU {
-    fn new(n: usize) -> Self {
-        Self {
-            parent: (0..n).collect(),
-            rank: vec![0; n],
-        }
-    }
-
-    fn find(&mut self, v: usize) -> usize {
-        if self.parent[v] != v {
-            self.parent[v] = self.find(self.parent[v])
-        }
-        self.parent[v]
-    }
-
-    fn union(&mut self, x: usize, y: usize) {
-        let [rx, ry] = [x, y].map(|v| self.find(v));
-        if rx == ry {
-            return;
-        }
-        match self.rank[rx].cmp(&self.rank[ry]) {
-            std::cmp::Ordering::Less => self.parent[rx] = ry,
-            std::cmp::Ordering::Equal => {
-                self.parent[ry] = rx;
-                self.rank[rx] += 1;
-            }
-            std::cmp::Ordering::Greater => self.parent[ry] = rx,
-        }
-    }
-
-    fn reset(&mut self, v: usize) {
-        self.parent[v] = v;
-        self.rank[v] = 0;
-    }
+    res
 }
 
 #[cfg(test)]
@@ -108,12 +53,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(max_profit(&[4, 2, 8], &[-1, 0, 1], 2), 10);
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(max_profit(&[4, 7, 13], &[-1, -1, 0], 2), 9);
-    }
+    fn test() {}
 }
