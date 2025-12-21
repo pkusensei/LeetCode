@@ -9,30 +9,14 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_deletion_size(strs: Vec<String>) -> i32 {
-    let [rows, cols] = get_dimensions(&strs);
-    let mut keep: Vec<usize> = vec![];
-    for c in 0..cols {
-        let mut keep_curr = true;
-        for r in 1..rows {
-            if strs[r - 1].as_bytes()[c] > strs[r].as_bytes()[c] {
-                keep_curr = false;
-                for &left in keep.iter().rev() {
-                    if strs[r - 1].as_bytes()[left] < strs[r].as_bytes()[left] {
-                        keep_curr = true;
-                        break;
-                    }
-                }
-                if !keep_curr {
-                    break;
-                }
-            }
-        }
-        if keep_curr {
-            keep.push(c);
-        }
+pub const fn mirror_distance(n: i32) -> i32 {
+    let mut x = n;
+    let mut rn = 0;
+    while x > 0 {
+        rn = rn * 10 + x % 10;
+        x /= 10;
     }
-    (cols - keep.len()) as i32
+    n.abs_diff(rn) as i32
 }
 
 #[cfg(test)]
