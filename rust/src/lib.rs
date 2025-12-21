@@ -9,23 +9,30 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn last_integer(n: i64) -> i64 {
-    dfs(1, n, n, true, 0)
-}
-
-const fn dfs(start: i64, end: i64, count: i64, dir: bool, pow: u32) -> i64 {
-    if count > 1 {
-        let (a, b) = match (count & 1, dir) {
-            (1, true) => (start, end),
-            (0, true) => (start, end - 2_i64.pow(pow)),
-            (1, false) => (start, end),
-            (0, false) => (start + 2_i64.pow(pow), end),
-            _ => unreachable!(),
-        };
-        dfs(a, b, (1 + count) / 2, !dir, 1 + pow)
-    } else {
-        start
+pub fn min_deletion_size(strs: Vec<String>) -> i32 {
+    let [rows, cols] = get_dimensions(&strs);
+    let mut keep: Vec<usize> = vec![];
+    for c in 0..cols {
+        let mut keep_curr = true;
+        for r in 1..rows {
+            if strs[r - 1].as_bytes()[c] > strs[r].as_bytes()[c] {
+                keep_curr = false;
+                for &left in keep.iter().rev() {
+                    if strs[r - 1].as_bytes()[left] < strs[r].as_bytes()[left] {
+                        keep_curr = true;
+                        break;
+                    }
+                }
+                if !keep_curr {
+                    break;
+                }
+            }
+        }
+        if keep_curr {
+            keep.push(c);
+        }
     }
+    (cols - keep.len()) as i32
 }
 
 #[cfg(test)]
@@ -58,11 +65,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(last_integer(5), 1);
-        assert_eq!(last_integer(8), 3);
-        assert_eq!(last_integer(9), 9);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
