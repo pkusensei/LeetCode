@@ -9,14 +9,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub const fn mirror_distance(n: i32) -> i32 {
-    let mut x = n;
-    let mut rn = 0;
-    while x > 0 {
-        rn = rn * 10 + x % 10;
-        x /= 10;
+pub fn min_cost(s: String, cost: Vec<i32>) -> i64 {
+    use itertools::izip;
+    let mut scores = [0; 26];
+    let mut sum = 0;
+    for (b, &num) in izip!(s.bytes(), cost.iter()) {
+        let i = usize::from(b - b'a');
+        scores[i] += i64::from(num);
+        sum += i64::from(num);
     }
-    n.abs_diff(rn) as i32
+    sum - scores.into_iter().max().unwrap_or_default()
 }
 
 #[cfg(test)]
