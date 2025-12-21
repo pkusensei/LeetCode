@@ -6,29 +6,47 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_swaps(nums: Vec<i32>, forbidden: Vec<i32>) -> i32 {
-    use itertools::izip;
-    use std::collections::HashMap;
+pub fn interaction_costs(n: i32, edges: &[[i32; 2]], group: &[i32]) -> i64 {
+    let n = n as usize;
+    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
+        let [a, b] = [0, 1].map(|i| e[i] as usize);
+        acc[a].push(b);
+        acc[b].push(a);
+        acc
+    });
+    let group_freq = group.iter().fold(HashMap::new(), |mut acc, &g| {
+        *acc.entry(g).or_insert(0) += 1;
+        acc
+    });
+    dfs(&adj, &group, &group_freq, 0, n).0
+}
 
-    let n = nums.len();
-    let mut total_freq = HashMap::new();
-    let mut pairs = HashMap::new();
-    for (&a, &b) in izip!(nums.iter(), forbidden.iter()) {
-        *total_freq.entry(a).or_insert(0) += 1;
-        *total_freq.entry(b).or_insert(0) += 1;
-        if a == b {
-            *pairs.entry(a).or_insert(0) += 1;
+// group-freq
+fn dfs(
+    adj: &[Vec<usize>],
+    group: &[i32],
+    gf: &HashMap<i32, i64>,
+    node: usize,
+    prev: usize,
+) -> (i64, HashMap<i32, i64>) {
+    let mut freq = HashMap::from([(group[node], 1)]);
+    let mut res = 0;
+    for &next in &adj[node] {
+        if next != prev {
+            let subtree = dfs(adj, group, gf, next, node);
+            res += subtree.0;
+            for (k, v) in subtree.1 {
+                res += v * (gf[&k] - v);
+                *freq.entry(k).or_insert(0) += v;
+            }
         }
     }
-    if total_freq.values().any(|&v| v > n) {
-        return -1;
-    }
-    let sum: i32 = pairs.values().sum();
-    let max = *pairs.values().max().unwrap_or(&0);
-    max.max((sum + 1) / 2)
+    (res, freq)
 }
 
 #[cfg(test)]
@@ -61,7 +79,15 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(interaction_costs(3, &[[0, 1], [1, 2]], &[1, 1, 1]), 4);
+        assert_eq!(interaction_costs(3, &[[0, 1], [1, 2]], &[3, 2, 3]), 2);
+        assert_eq!(
+            interaction_costs(4, &[[0, 1], [0, 2], [0, 3]], &[1, 1, 4, 4]),
+            3
+        );
+        assert_eq!(interaction_costs(2, &[[0, 1]], &[9, 8]), 0);
+    }
 
     #[test]
     fn test() {}
