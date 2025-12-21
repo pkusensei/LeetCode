@@ -9,16 +9,26 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_cost(s: String, cost: Vec<i32>) -> i64 {
+pub fn min_swaps(nums: Vec<i32>, forbidden: Vec<i32>) -> i32 {
     use itertools::izip;
-    let mut scores = [0; 26];
-    let mut sum = 0;
-    for (b, &num) in izip!(s.bytes(), cost.iter()) {
-        let i = usize::from(b - b'a');
-        scores[i] += i64::from(num);
-        sum += i64::from(num);
+    use std::collections::HashMap;
+
+    let n = nums.len();
+    let mut total_freq = HashMap::new();
+    let mut pairs = HashMap::new();
+    for (&a, &b) in izip!(nums.iter(), forbidden.iter()) {
+        *total_freq.entry(a).or_insert(0) += 1;
+        *total_freq.entry(b).or_insert(0) += 1;
+        if a == b {
+            *pairs.entry(a).or_insert(0) += 1;
+        }
     }
-    sum - scores.into_iter().max().unwrap_or_default()
+    if total_freq.values().any(|&v| v > n) {
+        return -1;
+    }
+    let sum: i32 = pairs.values().sum();
+    let max = *pairs.values().max().unwrap_or(&0);
+    max.max((sum + 1) / 2)
 }
 
 #[cfg(test)]
