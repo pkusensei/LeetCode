@@ -9,25 +9,13 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_two_events(mut events: Vec<[i32; 3]>) -> i32 {
-    use std::{cmp::Reverse, collections::BinaryHeap};
-
-    events.sort_unstable_by(|a, b| a[0].cmp(&b[0]).then(a[1].cmp(&b[1])));
-    let mut heap: BinaryHeap<(Reverse<i32>, i32)> = BinaryHeap::new();
+pub fn minimum_boxes(apple: Vec<i32>, mut capacity: Vec<i32>) -> i32 {
+    let mut sum: i32 = apple.iter().sum();
+    capacity.sort_unstable();
     let mut res = 0;
-    let mut prev_max = 0;
-    for e in events {
-        let [start, end, val] = e[..] else {
-            unreachable!()
-        };
-        while let Some((Reverse(prev_e), prev_v)) = heap.peek()
-            && *prev_e < start
-        {
-            prev_max = prev_max.max(*prev_v);
-            heap.pop();
-        }
-        res = res.max(prev_max + val);
-        heap.push((Reverse(end), val));
+    while sum > 0 {
+        sum -= capacity.pop().unwrap_or_default();
+        res += 1;
     }
     res
 }
