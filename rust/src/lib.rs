@@ -9,15 +9,13 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_boxes(apple: Vec<i32>, mut capacity: Vec<i32>) -> i32 {
-    let mut sum: i32 = apple.iter().sum();
-    capacity.sort_unstable();
-    let mut res = 0;
-    while sum > 0 {
-        sum -= capacity.pop().unwrap_or_default();
-        res += 1;
-    }
-    res
+pub fn maximum_happiness_sum(mut happiness: Vec<i32>, k: i32) -> i64 {
+    happiness.sort_unstable_by(|a, b| b.cmp(a));
+    happiness
+        .iter()
+        .zip(0..k)
+        .map(|(a, b)| i64::from((a - b).max(0)))
+        .sum()
 }
 
 #[cfg(test)]
@@ -53,33 +51,5 @@ mod tests {
     fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(
-            max_two_events(vec![
-                [28, 81, 48],
-                [27, 90, 94],
-                [97, 99, 79],
-                [5, 35, 81],
-                [65, 94, 84],
-                [65, 83, 58],
-                [94, 94, 31],
-                [39, 52, 73]
-            ]),
-            173
-        );
-        assert_eq!(
-            max_two_events(vec![
-                [22, 44, 9],
-                [93, 96, 48],
-                [56, 90, 3],
-                [80, 92, 45],
-                [63, 73, 69],
-                [73, 96, 33],
-                [11, 23, 84],
-                [59, 72, 29],
-                [89, 100, 46]
-            ]),
-            153
-        );
-    }
+    fn test() {}
 }
