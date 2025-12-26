@@ -9,13 +9,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_happiness_sum(mut happiness: Vec<i32>, k: i32) -> i64 {
-    happiness.sort_unstable_by(|a, b| b.cmp(a));
-    happiness
-        .iter()
-        .zip(0..k)
-        .map(|(a, b)| i64::from((a - b).max(0)))
-        .sum()
+pub fn best_closing_time(customers: String) -> i32 {
+    let mut score = customers.bytes().filter(|&b| b == b'Y').count() as i32;
+    let mut res = 0;
+    let mut curr = score;
+    for (i, b) in customers.bytes().enumerate() {
+        curr += if b == b'N' { 1 } else { -1 };
+        if curr < score {
+            score = curr;
+            res = 1 + i;
+        }
+    }
+    res as i32
 }
 
 #[cfg(test)]
