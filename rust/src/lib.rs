@@ -9,15 +9,35 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn best_closing_time(customers: String) -> i32 {
-    let mut score = customers.bytes().filter(|&b| b == b'Y').count() as i32;
+pub fn most_booked(n: i32, mut meetings: Vec<[i32; 2]>) -> i32 {
+    use std::{cmp::Reverse, collections::BinaryHeap};
+    let n = n as usize;
+    let mut freq = vec![0; n];
+    meetings.sort_unstable();
+    let mut free: BinaryHeap<_> = (0..n).map(Reverse).collect();
+    let mut busy: BinaryHeap<Reverse<(i64, usize)>> = BinaryHeap::new();
+    for m in meetings {
+        let [start, end] = m[..] else { unreachable!() };
+        while let Some(&Reverse((end, i))) = busy.peek()
+            && end <= i64::from(start)
+        {
+            busy.pop();
+            free.push(Reverse(i));
+        }
+        if let Some(Reverse(i)) = free.pop() {
+            freq[i] += 1;
+            busy.push(Reverse((i64::from(end), i)));
+        } else if let Some(Reverse((prev, i))) = busy.pop() {
+            freq[i] += 1;
+            busy.push(Reverse((prev + i64::from(end - start), i)));
+        }
+    }
     let mut res = 0;
-    let mut curr = score;
-    for (i, b) in customers.bytes().enumerate() {
-        curr += if b == b'N' { 1 } else { -1 };
-        if curr < score {
-            score = curr;
-            res = 1 + i;
+    let mut maxf = freq[0];
+    for (i, &f) in freq.iter().enumerate() {
+        if f > maxf {
+            maxf = f;
+            res = i;
         }
     }
     res as i32
@@ -56,5 +76,10 @@ mod tests {
     fn basics() {}
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(
+            most_booked(4, vec![[18, 19], [3, 12], [17, 19], [2, 13], [7, 10]]),
+            0
+        );
+    }
 }
