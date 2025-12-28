@@ -9,13 +9,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_cost(cost1: i32, cost2: i32, cost_both: i32, need1: i32, need2: i32) -> i64 {
-    let min_both = cost_both.min(cost1 + cost2);
-    let need_both = need1.min(need2);
-    let mut res = i64::from(min_both) * i64::from(need_both);
-    res += i64::from(cost1.min(cost_both)) * i64::from(need1 - need_both);
-    res += i64::from(cost2.min(cost_both)) * i64::from(need2 - need_both);
-    res
+pub fn min_all_one_multiple(k: i32) -> i32 {
+    use std::collections::HashSet;
+    if k & 1 == 0 {
+        return -1;
+    }
+    let mut num = 1;
+    let mut res = 1;
+    let mut seen = HashSet::new();
+    while seen.insert(num) {
+        if num % k == 0 {
+            return res;
+        } else {
+            num = num * 10 % k + 1;
+            res += 1;
+        }
+    }
+    -1
 }
 
 #[cfg(test)]
@@ -48,7 +58,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(min_all_one_multiple(3), 3);
+        assert_eq!(min_all_one_multiple(7), 6);
+    }
 
     #[test]
     fn test() {}
