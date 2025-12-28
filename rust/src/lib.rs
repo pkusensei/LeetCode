@@ -9,22 +9,13 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_score(nums: &[i32]) -> i64 {
-    let n = nums.len();
-    let mut suf_min = nums.iter().rev().fold(vec![], |mut acc, &v| {
-        acc.push(v.min(*acc.last().unwrap_or(&i32::MAX)));
-        acc
-    });
-    suf_min.pop();
-    suf_min.reverse();
-    let mut prefix = 0;
-    let mut max = i64::MIN;
-    for (i, &num) in nums[..n - 1].iter().enumerate() {
-        prefix += i64::from(num);
-        let curr = prefix - i64::from(suf_min[i]);
-        max = max.max(curr);
-    }
-    max
+pub fn minimum_cost(cost1: i32, cost2: i32, cost_both: i32, need1: i32, need2: i32) -> i64 {
+    let min_both = cost_both.min(cost1 + cost2);
+    let need_both = need1.min(need2);
+    let mut res = i64::from(min_both) * i64::from(need_both);
+    res += i64::from(cost1.min(cost_both)) * i64::from(need1 - need_both);
+    res += i64::from(cost2.min(cost_both)) * i64::from(need2 - need_both);
+    res
 }
 
 #[cfg(test)]
@@ -57,9 +48,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(maximum_score(&[-7, -5, 3]), -2);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
