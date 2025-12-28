@@ -9,36 +9,15 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn most_booked(n: i32, mut meetings: Vec<[i32; 2]>) -> i32 {
-    use std::{cmp::Reverse, collections::BinaryHeap};
-    let n = n as usize;
-    let mut freq = vec![0; n];
-    meetings.sort_unstable();
-    let mut free: BinaryHeap<_> = (0..n).map(Reverse).collect();
-    let mut busy: BinaryHeap<Reverse<(i64, usize)>> = BinaryHeap::new();
-    for m in meetings {
-        let [start, end] = m[..] else { unreachable!() };
-        while let Some(&Reverse((end, i))) = busy.peek()
-            && end <= i64::from(start)
-        {
-            busy.pop();
-            free.push(Reverse(i));
-        }
-        if let Some(Reverse(i)) = free.pop() {
-            freq[i] += 1;
-            busy.push(Reverse((i64::from(end), i)));
-        } else if let Some(Reverse((prev, i))) = busy.pop() {
-            freq[i] += 1;
-            busy.push(Reverse((prev + i64::from(end - start), i)));
-        }
-    }
+pub fn count_negatives(grid: Vec<Vec<i32>>) -> i32 {
+    let cols = grid[0].len();
+    let mut curr_i = cols;
     let mut res = 0;
-    let mut maxf = freq[0];
-    for (i, &f) in freq.iter().enumerate() {
-        if f > maxf {
-            maxf = f;
-            res = i;
+    for row in &grid {
+        while curr_i > 0 && row[curr_i - 1] < 0 {
+            curr_i -= 1;
         }
+        res += cols - curr_i;
     }
     res as i32
 }
