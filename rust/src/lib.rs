@@ -9,44 +9,35 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_magic_squares_inside(grid: Vec<Vec<i32>>) -> i32 {
-    let [rows, cols] = get_dimensions(&grid);
-    if rows < 3 || cols < 3 {
-        return 0;
-    }
-    let mut res = 0;
-    for r in 0..=rows - 3 {
-        for c in 0..=cols - 3 {
-            if check(&grid, r, c) {
-                res += 1;
-            }
-        }
-    }
-    res
+pub fn largest_sum_of_averages(nums: Vec<i32>, k: i32) -> f64 {
+    let n = nums.len();
+    let k = k as usize;
+    let prefix = nums.iter().fold(vec![0.0], |mut acc, &v| {
+        acc.push(f64::from(v) + acc.last().unwrap_or(&0.0));
+        acc
+    });
+    dfs(&prefix, 0, k, &mut vec![vec![-1.0; 1 + k]; n])
 }
 
-fn check(grid: &[Vec<i32>], row: usize, col: usize) -> bool {
-    let mut freq = [0; 9];
-    for r in &grid[row..row + 3] {
-        for &v in &r[col..col + 3] {
-            if !(1..=9).contains(&v) {
-                return false;
-            }
-            freq[v as usize - 1] += 1;
-        }
+fn dfs(prefix: &[f64], idx: usize, k: usize, memo: &mut [Vec<f64>]) -> f64 {
+    let n = prefix.len() - 1;
+    if idx >= n {
+        return 0.0;
     }
-    if freq.into_iter().any(|n| n != 1) {
-        return false;
+    if k == 0 {
+        return f64::MIN;
     }
-    const SUM: i32 = 15;
-    grid[row][col..col + 3].iter().sum::<i32>() == SUM
-        && grid[row + 1][col..col + 3].iter().sum::<i32>() == SUM
-        && grid[row + 2][col..col + 3].iter().sum::<i32>() == SUM
-        && grid[row][col] + grid[row + 1][col] + grid[row + 2][col] == SUM
-        && grid[row][col + 1] + grid[row + 1][col + 1] + grid[row + 2][col + 1] == SUM
-        && grid[row][col + 2] + grid[row + 1][col + 2] + grid[row + 2][col + 2] == SUM
-        && grid[row][col] + grid[row + 1][col + 1] + grid[row + 2][col + 2] == SUM
-        && grid[row][col + 2] + grid[row + 1][col + 1] + grid[row + 2][col] == SUM
+    if memo[idx][k] > -1.0 {
+        return memo[idx][k];
+    }
+    let mut res = f64::MIN;
+    for i in idx..n {
+        let val =
+            (prefix[1 + i] - prefix[idx]) / (1 + i - idx) as f64 + dfs(prefix, 1 + i, k - 1, memo);
+        res = res.max(val);
+    }
+    memo[idx][k] = res;
+    res
 }
 
 #[cfg(test)]
