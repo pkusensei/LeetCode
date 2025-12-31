@@ -9,42 +9,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_buses_to_destination(routes: Vec<Vec<i32>>, source: i32, target: i32) -> i32 {
-    use std::collections::{HashMap, HashSet, VecDeque};
-    if source == target {
-        return 0;
-    }
-    let stop_buses =
-        routes
-            .iter()
-            .enumerate()
-            .fold(HashMap::<_, Vec<usize>>::new(), |mut acc, (i, r)| {
-                for &stop in r {
-                    acc.entry(stop).or_default().push(i);
-                }
-                acc
-            });
-    let Some(src_buses) = stop_buses.get(&source) else {
-        return -1;
-    };
-    let mut queue = VecDeque::new();
-    let mut seen = HashSet::new();
-    for &b in src_buses {
-        queue.push_back((b, 1));
-        seen.insert(b);
-    }
-    while let Some((bus, num)) = queue.pop_front() {
-        for &stop in &routes[bus] {
-            if stop == target {
-                return num;
-            }
-            if let Some(v) = stop_buses.get(&stop) {
-                for &next in v {
-                    if seen.insert(next) {
-                        queue.push_back((next, 1 + num));
-                    }
-                }
-            }
+pub fn racecar(target: i32) -> i32 {
+    use std::collections::{HashSet, VecDeque};
+    let mut queue = VecDeque::from([[0, 1, 0]]);
+    let mut seen = HashSet::from([[0, 1]]);
+    while let Some([pos, speed, num]) = queue.pop_front() {
+        if pos == target {
+            return num;
+        }
+        if !(0..=2 * target).contains(&pos) {
+            continue;
+        }
+        if seen.insert([pos + speed, 2 * speed]) {
+            queue.push_back([pos + speed, 2 * speed, 1 + num]);
+        }
+        let rev = if speed > 0 { -1 } else { 1 };
+        if seen.insert([pos, rev]) {
+            queue.push_back([pos, rev, 1 + num]);
         }
     }
     -1
