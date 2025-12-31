@@ -9,26 +9,38 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn racecar(target: i32) -> i32 {
-    use std::collections::{HashSet, VecDeque};
-    let mut queue = VecDeque::from([[0, 1, 0]]);
-    let mut seen = HashSet::from([[0, 1]]);
-    while let Some([pos, speed, num]) = queue.pop_front() {
-        if pos == target {
-            return num;
-        }
-        if !(0..=2 * target).contains(&pos) {
-            continue;
-        }
-        if seen.insert([pos + speed, 2 * speed]) {
-            queue.push_back([pos + speed, 2 * speed, 1 + num]);
-        }
-        let rev = if speed > 0 { -1 } else { 1 };
-        if seen.insert([pos, rev]) {
-            queue.push_back([pos, rev, 1 + num]);
-        }
+pub fn minimum_length_encoding(mut words: Vec<String>) -> i32 {
+    words.sort_unstable_by_key(|s| s.len());
+    let mut trie = Trie::default();
+    let mut res = 0;
+    for s in &words {
+        res += trie.insert(s.bytes().rev());
     }
-    -1
+    res
+}
+
+#[derive(Default)]
+struct Trie {
+    nodes: [Option<Box<Trie>>; 26],
+    len: i32,
+}
+
+impl Trie {
+    fn insert(&mut self, it: impl Iterator<Item = u8>) -> i32 {
+        let mut curr = self;
+        let mut res = 0;
+        let mut len = 1;
+        for b in it {
+            len += 1;
+            let i = usize::from(b - b'a');
+            let node = curr.nodes[i].get_or_insert_default();
+            res -= node.len;
+            node.len = 0;
+            curr = node;
+        }
+        curr.len = len;
+        res + len
+    }
 }
 
 #[cfg(test)]
@@ -61,26 +73,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(
-            latest_day_to_cross(
-                3,
-                3,
-                &[
-                    [1, 2],
-                    [2, 1],
-                    [3, 3],
-                    [2, 2],
-                    [1, 1],
-                    [1, 3],
-                    [2, 3],
-                    [3, 2],
-                    [3, 1]
-                ]
-            ),
-            3
-        );
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
