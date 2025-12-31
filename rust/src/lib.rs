@@ -9,35 +9,70 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn largest_sum_of_averages(nums: Vec<i32>, k: i32) -> f64 {
-    let n = nums.len();
-    let k = k as usize;
-    let prefix = nums.iter().fold(vec![0.0], |mut acc, &v| {
-        acc.push(f64::from(v) + acc.last().unwrap_or(&0.0));
-        acc
-    });
-    dfs(&prefix, 0, k, &mut vec![vec![-1.0; 1 + k]; n])
+pub fn latest_day_to_cross(row: i32, col: i32, cells: &[[i32; 2]]) -> i32 {
+    let [row, col] = [row, col].map(|v| v as usize);
+    let n = row * col;
+    let mut dsu = DSU::new(2 + n);
+    let id_of = |r, c| r * col + c;
+    for c in 0..col {
+        dsu.union(n, c); // top tow
+        dsu.union(1 + n, id_of(row - 1, c)); // bottom row
+    }
+    let mut land = vec![false; n];
+    for (idx, cell) in cells.iter().enumerate().rev() {
+        let [r, c] = {
+            let [r, c] = cell[..] else { unreachable!() };
+            [(r - 1) as usize, c as usize - 1]
+        };
+        let id = id_of(r, c);
+        land[id] = true;
+        for [nr, nc] in neighbors([r, c]) {
+            let nid = id_of(nr, nc);
+            if nr < row && nc < col && land[nid] {
+                dsu.union(id, nid);
+            }
+        }
+        if dsu.find(n) == dsu.find(1 + n) {
+            return idx as i32;
+        }
+    }
+    -1
 }
 
-fn dfs(prefix: &[f64], idx: usize, k: usize, memo: &mut [Vec<f64>]) -> f64 {
-    let n = prefix.len() - 1;
-    if idx >= n {
-        return 0.0;
+struct DSU {
+    parent: Vec<usize>,
+    rank: Vec<i32>,
+}
+
+impl DSU {
+    fn new(n: usize) -> Self {
+        Self {
+            parent: (0..n).collect(),
+            rank: vec![0; n],
+        }
     }
-    if k == 0 {
-        return f64::MIN;
+
+    fn find(&mut self, v: usize) -> usize {
+        if self.parent[v] != v {
+            self.parent[v] = self.find(self.parent[v])
+        }
+        self.parent[v]
     }
-    if memo[idx][k] > -1.0 {
-        return memo[idx][k];
+
+    fn union(&mut self, x: usize, y: usize) {
+        let [rx, ry] = [x, y].map(|v| self.find(v));
+        if rx == ry {
+            return;
+        }
+        match self.rank[rx].cmp(&self.rank[ry]) {
+            std::cmp::Ordering::Less => self.parent[rx] = ry,
+            std::cmp::Ordering::Equal => {
+                self.parent[ry] = rx;
+                self.rank[rx] += 1;
+            }
+            std::cmp::Ordering::Greater => self.parent[ry] = rx,
+        }
     }
-    let mut res = f64::MIN;
-    for i in idx..n {
-        let val =
-            (prefix[1 + i] - prefix[idx]) / (1 + i - idx) as f64 + dfs(prefix, 1 + i, k - 1, memo);
-        res = res.max(val);
-    }
-    memo[idx][k] = res;
-    res
 }
 
 #[cfg(test)]
@@ -70,7 +105,26 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(
+            latest_day_to_cross(
+                3,
+                3,
+                &[
+                    [1, 2],
+                    [2, 1],
+                    [3, 3],
+                    [2, 2],
+                    [1, 1],
+                    [1, 3],
+                    [2, 3],
+                    [3, 2],
+                    [3, 1]
+                ]
+            ),
+            3
+        );
+    }
 
     #[test]
     fn test() {}
