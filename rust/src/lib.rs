@@ -9,38 +9,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_length_encoding(mut words: Vec<String>) -> i32 {
-    words.sort_unstable_by_key(|s| s.len());
-    let mut trie = Trie::default();
-    let mut res = 0;
-    for s in &words {
-        res += trie.insert(s.bytes().rev());
+pub fn plus_one(digits: Vec<i32>) -> Vec<i32> {
+    let mut res = vec![];
+    let mut carry = 1;
+    for d in digits.iter().rev() {
+        let curr = (d + carry) % 10;
+        carry = (d + carry) / 10;
+        res.push(curr);
     }
+    if carry > 0 {
+        res.push(carry);
+    }
+    res.reverse();
     res
-}
-
-#[derive(Default)]
-struct Trie {
-    nodes: [Option<Box<Trie>>; 26],
-    len: i32,
-}
-
-impl Trie {
-    fn insert(&mut self, it: impl Iterator<Item = u8>) -> i32 {
-        let mut curr = self;
-        let mut res = 0;
-        let mut len = 1;
-        for b in it {
-            len += 1;
-            let i = usize::from(b - b'a');
-            let node = curr.nodes[i].get_or_insert_default();
-            res -= node.len;
-            node.len = 0;
-            curr = node;
-        }
-        curr.len = len;
-        res + len
-    }
 }
 
 #[cfg(test)]
