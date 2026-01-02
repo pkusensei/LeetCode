@@ -9,19 +9,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn plus_one(digits: Vec<i32>) -> Vec<i32> {
-    let mut res = vec![];
-    let mut carry = 1;
-    for d in digits.iter().rev() {
-        let curr = (d + carry) % 10;
-        carry = (d + carry) / 10;
-        res.push(curr);
+pub fn repeated_n_times(nums: Vec<i32>) -> i32 {
+    for w in nums.windows(3) {
+        // [1, 1, 2, 3]
+        // [1, 2, 1, 3]
+        if w[0] == w[1] || w[0] == w[2] {
+            return w[0];
+        }
     }
-    if carry > 0 {
-        res.push(carry);
-    }
-    res.reverse();
-    res
+    // [1, 2, 3, 1]
+    return *nums.last().unwrap();
 }
 
 #[cfg(test)]
