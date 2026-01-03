@@ -9,10 +9,29 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn reverse_prefix(s: String, k: i32) -> String {
-    let mut s = s.into_bytes();
-    s[..k as usize].reverse();
-    String::from_utf8(s).unwrap()
+pub fn min_length(nums: Vec<i32>, k: i32) -> i32 {
+    use std::collections::HashMap;
+    let mut res = 1 + nums.len();
+    let mut curr = 0;
+    let mut freq = HashMap::new();
+    let mut left = 0;
+    for (right, &num) in nums.iter().enumerate() {
+        let f = freq.entry(num).or_insert(0);
+        if *f == 0 {
+            curr += num;
+        }
+        *f += 1;
+        while curr >= k {
+            res = res.min(right + 1 - left);
+            let prev = freq.entry(nums[left]).or_insert(0);
+            if *prev == 1 {
+                curr -= nums[left];
+            }
+            *prev -= 1;
+            left += 1;
+        }
+    }
+    if res > nums.len() { -1 } else { res as i32 }
 }
 
 #[cfg(test)]
