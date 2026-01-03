@@ -9,16 +9,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn repeated_n_times(nums: Vec<i32>) -> i32 {
-    for w in nums.windows(3) {
-        // [1, 1, 2, 3]
-        // [1, 2, 1, 3]
-        if w[0] == w[1] || w[0] == w[2] {
-            return w[0];
-        }
+pub fn num_of_ways(n: i32) -> i32 {
+    const M: i64 = 1_000_000_007;
+    let mut abc = 6;
+    let mut aba = 6;
+    for _ in 1..n {
+        // abc
+        // bcb bca bab bac
+        let next_abc = (2 * aba + 2 * abc) % M;
+        // aba
+        // bab bac cab cac bcb
+        let next_aba = (3 * aba + 2 * abc) % M;
+        abc = next_abc;
+        aba = next_aba;
     }
-    // [1, 2, 3, 1]
-    return *nums.last().unwrap();
+    ((abc + aba) % M) as i32
 }
 
 #[cfg(test)]
