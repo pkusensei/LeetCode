@@ -9,24 +9,12 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn sum_four_divisors(nums: Vec<i32>) -> i32 {
-    nums.iter()
-        .map(|&num| {
-            let mut count = 0;
-            let mut res = 0;
-            for p in (1..=num.isqrt()).rev() {
-                if num % p == 0 {
-                    if p * p == num {
-                        return 0;
-                    } else {
-                        count += 2;
-                        res += p + num / p;
-                    }
-                }
-            }
-            if count == 4 { res } else { 0 }
-        })
-        .sum()
+pub fn largest_even(s: String) -> String {
+    let mut s = s.into_bytes();
+    while s.last().is_some_and(|&v| (v - b'0') & 1 == 1) {
+        s.pop();
+    }
+    String::from_utf8(s).unwrap_or_default()
 }
 
 #[cfg(test)]
