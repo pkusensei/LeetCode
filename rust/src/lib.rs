@@ -9,42 +9,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn word_squares(words: &[&str]) -> Vec<Vec<String>> {
-    use itertools::Itertools;
-    use std::collections::HashSet;
-    let mut res = HashSet::new();
-    let words = words.iter().map(|s| s.as_bytes()).collect_vec();
-    for (topi, top) in words.iter().enumerate() {
-        let left = find_col(&words, top[0], 1 << topi);
-        for (left_w, left_end, left_mask) in &left {
-            let right = find_col(&words, top[3], *left_mask);
-            for (right_w, right_end, right_mask) in &right {
-                for (boti, botw) in words.iter().enumerate() {
-                    if right_mask & (1 << boti) == 0
-                        && botw.starts_with(&[*left_end])
-                        && botw.ends_with(&[*right_end])
-                    {
-                        res.insert(
-                            [top, left_w, right_w, botw]
-                                .iter()
-                                .map(|v| String::from_utf8(v.to_vec()).unwrap())
-                                .collect(),
-                        );
-                    }
-                }
-            }
+pub fn minimum_cost(s: &str, t: &str, flip_cost: i32, swap_cost: i32, cross_cost: i32) -> i64 {
+    if s == t {
+        return 0;
+    }
+    let [mut one_zero, mut zero_one] = [0, 0];
+    for (b1, b2) in s.bytes().zip(t.bytes()) {
+        match [b1, b2] {
+            [b'1', b'0'] => one_zero += 1,
+            [b'0', b'1'] => zero_one += 1,
+            _ => (),
         }
     }
-    res.into_iter().sorted_unstable().collect()
-}
-
-fn find_col<'a>(words: &[&'a [u8]], start: u8, mask: i32) -> Vec<(&'a [u8], u8, i32)> {
-    let mut res = vec![];
-    for (i, w) in words.iter().enumerate() {
-        if mask & (1 << i) == 0 && w.starts_with(&[start]) {
-            res.push((*w, w[3], mask | (1 << i)));
-        }
-    }
+    let pair = one_zero.min(zero_one);
+    let mut res = pair * i64::from(swap_cost.min(2 * flip_cost));
+    one_zero -= pair;
+    zero_one -= pair;
+    res += (one_zero - zero_one).abs() / 2 * i64::from((swap_cost + cross_cost).min(2 * flip_cost));
+    res += ((one_zero - zero_one).abs() & 1) * i64::from(flip_cost);
     res
 }
 
@@ -79,14 +61,8 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            word_squares(&["able", "area", "echo", "also"]),
-            [
-                ["able", "area", "echo", "also"],
-                ["area", "able", "also", "echo"]
-            ]
-        );
-        assert!(word_squares(&["code", "cafe", "eden", "edge"]).is_empty());
+        assert_eq!(minimum_cost("01000", "10111", 10, 2, 2), 16);
+        assert_eq!(minimum_cost("001", "110", 2, 100, 100), 6);
     }
 
     #[test]
