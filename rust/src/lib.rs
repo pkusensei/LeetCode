@@ -9,25 +9,43 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_cost(s: &str, t: &str, flip_cost: i32, swap_cost: i32, cross_cost: i32) -> i64 {
-    if s == t {
-        return 0;
+pub fn min_merge_cost(lists: &[&[i32]]) -> i64 {
+    use itertools::{Itertools, chain};
+
+    let n = lists.len();
+    let full_mask = 1 << n; // well, 1+full_mask
+    let mut arrs = vec![vec![]; full_mask];
+    let mut meds = vec![0; full_mask];
+    for mask in 1..full_mask {
+        let lsb = mask & mask.wrapping_neg();
+        let mut curr: Vec<i32> =
+            chain!(arrs[mask ^ lsb].iter(), lists[lsb.ilog2() as usize].iter())
+                .copied()
+                .collect_vec();
+        let len = curr.len();
+        let (_, med, _) = curr.select_nth_unstable((len - 1) / 2);
+        meds[mask] = *med;
+        arrs[mask] = curr;
     }
-    let [mut one_zero, mut zero_one] = [0, 0];
-    for (b1, b2) in s.bytes().zip(t.bytes()) {
-        match [b1, b2] {
-            [b'1', b'0'] => one_zero += 1,
-            [b'0', b'1'] => zero_one += 1,
-            _ => (),
+    let mut dp = vec![i64::MAX >> 2; full_mask];
+    dp[0] = 0;
+    for mask in 1..full_mask {
+        if mask.count_ones() == 1 {
+            dp[mask] = 0;
+            continue;
+        }
+        for subset in 1..mask {
+            if mask | subset == mask {
+                let other = mask ^ subset;
+                let cost = (arrs[subset].len() + arrs[other].len()) as i64
+                    + i64::from(meds[subset].abs_diff(meds[other]))
+                    + dp[subset]
+                    + dp[other];
+                dp[mask] = dp[mask].min(cost);
+            }
         }
     }
-    let pair = one_zero.min(zero_one);
-    let mut res = pair * i64::from(swap_cost.min(2 * flip_cost));
-    one_zero -= pair;
-    zero_one -= pair;
-    res += (one_zero - zero_one).abs() / 2 * i64::from((swap_cost + cross_cost).min(2 * flip_cost));
-    res += ((one_zero - zero_one).abs() & 1) * i64::from(flip_cost);
-    res
+    dp[full_mask - 1]
 }
 
 #[cfg(test)]
@@ -61,8 +79,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(minimum_cost("01000", "10111", 10, 2, 2), 16);
-        assert_eq!(minimum_cost("001", "110", 2, 100, 100), 6);
+        assert_eq!(min_merge_cost(&[&[1, 3, 5], &[2, 4], &[6, 7, 8]]), 18);
+        assert_eq!(min_merge_cost(&[&[1, 1, 5], &[1, 4, 7, 8]]), 10);
+        assert_eq!(min_merge_cost(&[&[1], &[3]]), 4);
     }
 
     #[test]
