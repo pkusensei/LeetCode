@@ -8,24 +8,21 @@ namespace Solution;
 
 public class Solution
 {
-    public int NumFriendRequests(int[] ages)
+    public int MaxProfitAssignment(int[] difficulty, int[] profit, int[] worker)
     {
-        int n = ages.Length;
-        Array.Sort(ages);
+        (int d, int p)[] arr = [.. difficulty.Zip(profit).Order().Select(v => (v.First, v.Second))];
+        int max_p = 0;
         int res = 0;
-        int left = 0;
-        int right = 0;
-        foreach (var num in ages)
+        int i = 0;
+        Array.Sort(worker);
+        foreach (var item in worker)
         {
-            while (left < n && ages[left] <= num / 2 + 7)
+            while (i < arr.Length && arr[i].d <= item)
             {
-                left += 1;
+                max_p = int.Max(max_p, arr[i].p);
+                i += 1;
             }
-            while (right < n && ages[right] <= num)
-            {
-                right += 1;
-            }
-            res += int.Max(0, right - left - 1);
+            res += max_p;
         }
         return res;
     }
