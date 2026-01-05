@@ -8,15 +8,24 @@ namespace Solution;
 
 public class Solution
 {
-    public int Flipgame(int[] fronts, int[] backs)
+    public int NumFactoredBinaryTrees(int[] arr)
     {
-        var ban = fronts.Zip(backs).Where(v => v.First == v.Second)
-            .Select(v => v.First).ToFrozenSet();
-        int res = int.MaxValue;
-        foreach (var item in fronts.Concat(backs))
+        const long M = 1_000_000_007;
+        Array.Sort(arr);
+        Dictionary<int, long> prev = [];
+        foreach (var num in arr)
         {
-            if (!ban.Contains(item)) { res = int.Min(res, item); }
+            Dictionary<int, long> curr = new(prev) { [num] = 1 };
+            foreach (var (k, v) in prev)
+            {
+                var x = num / k;
+                if (x * k == num)
+                {
+                    curr[num] = (curr[num] + v * prev.GetValueOrDefault(x)) % M;
+                }
+            }
+            prev = curr;
         }
-        return res == int.MaxValue ? 0 : res;
+        return (int)prev.Values.Aggregate(0L, (a, b) => (a + b) % M);
     }
 }
