@@ -8,24 +8,25 @@ namespace Solution;
 
 public class Solution
 {
-    public int NumFactoredBinaryTrees(int[] arr)
+    public int NumFriendRequests(int[] ages)
     {
-        const long M = 1_000_000_007;
-        Array.Sort(arr);
-        Dictionary<int, long> prev = [];
-        foreach (var num in arr)
+        int n = ages.Length;
+        Array.Sort(ages);
+        int res = 0;
+        int left = 0;
+        int right = 0;
+        foreach (var num in ages)
         {
-            Dictionary<int, long> curr = new(prev) { [num] = 1 };
-            foreach (var (k, v) in prev)
+            while (left < n && ages[left] <= num / 2 + 7)
             {
-                var x = num / k;
-                if (x * k == num)
-                {
-                    curr[num] = (curr[num] + v * prev.GetValueOrDefault(x)) % M;
-                }
+                left += 1;
             }
-            prev = curr;
+            while (right < n && ages[right] <= num)
+            {
+                right += 1;
+            }
+            res += int.Max(0, right - left - 1);
         }
-        return (int)prev.Values.Aggregate(0L, (a, b) => (a + b) % M);
+        return res;
     }
 }
