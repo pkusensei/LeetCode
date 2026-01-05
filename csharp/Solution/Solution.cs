@@ -8,12 +8,15 @@ namespace Solution;
 
 public class Solution
 {
-    public TreeNode PruneTree(TreeNode root)
+    public int Flipgame(int[] fronts, int[] backs)
     {
-        if (root is null) { return null; }
-        root.left = PruneTree(root.left);
-        root.right = PruneTree(root.right);
-        if (root.left is null & root.right is null && root.val == 0) { return null; }
-        return root;
+        var ban = fronts.Zip(backs).Where(v => v.First == v.Second)
+            .Select(v => v.First).ToFrozenSet();
+        int res = int.MaxValue;
+        foreach (var item in fronts.Concat(backs))
+        {
+            if (!ban.Contains(item)) { res = int.Min(res, item); }
+        }
+        return res == int.MaxValue ? 0 : res;
     }
 }
