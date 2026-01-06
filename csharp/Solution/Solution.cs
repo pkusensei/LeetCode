@@ -8,84 +8,31 @@ namespace Solution;
 
 public class Solution
 {
-    public int LargestIsland(int[][] grid)
+    public int MaxLevelSum(TreeNode root)
     {
-        int n = grid.Length;
-        DSU dsu = new(n * n);
-        for (int r = 0; r < n; r++)
+        int res = 1;
+        Queue<TreeNode> queue = new();
+        queue.Enqueue(root);
+        int level = 0;
+        int max = int.MinValue;
+        while (queue.Count > 0)
         {
-            for (int c = 0; c < n; c++)
+            level += 1;
+            int n = queue.Count;
+            int sum = 0;
+            for (int _ = 0; _ < n; _++)
             {
-                if (grid[r][c] == 1)
-                {
-                    if (1 + r < n && grid[1 + r][c] == 1)
-                    {
-                        dsu.Union(r * n + c, (1 + r) * n + c);
-                    }
-                    if (1 + c < n && grid[r][1 + c] == 1)
-                    {
-                        dsu.Union(r * n + c, r * n + 1 + c);
-                    }
-                }
+                var node = queue.Dequeue();
+                sum += node.val;
+                if (node.left is not null) { queue.Enqueue(node.left); }
+                if (node.right is not null) { queue.Enqueue(node.right); }
             }
-        }
-        ReadOnlySpan<(int dr, int dc)> D = [(-1, 0), (1, 0), (0, -1), (0, 1)];
-        int res = dsu.Size.Max();
-        for (int r = 0; r < n; r++)
-        {
-            for (int c = 0; c < n; c++)
+            if (sum > max)
             {
-                if (grid[r][c] == 1) { continue; }
-                HashSet<int> roots = [];
-                foreach (var (dr, dc) in D)
-                {
-                    int nr = r + dr;
-                    int nc = c + dc;
-                    if (0 <= nr && nr < n && 0 <= nc && nc < n && grid[nr][nc] == 1)
-                    {
-                        int root = dsu.Find(nr * n + nc);
-                        roots.Add(root);
-                    }
-                }
-                int curr = 1 + roots.Sum(r => dsu.Size[r]);
-                res = int.Max(res, curr);
+                max = sum;
+                res = level;
             }
         }
         return res;
-    }
-}
-
-struct DSU
-{
-    public DSU(int n)
-    {
-        Parent = [.. Enumerable.Range(0, n)];
-        Size = [.. Enumerable.Repeat(1, n)];
-    }
-
-    public int[] Parent;
-    public int[] Size;
-
-    public int Find(int v)
-    {
-        if (Parent[v] != v) { Parent[v] = Find(Parent[v]); }
-        return Parent[v];
-    }
-
-    public void Union(int x, int y)
-    {
-        int rx = Find(x);
-        int ry = Find(y);
-        if (rx == ry) { return; }
-        if (Size[rx] < Size[ry])
-        {
-            Parent[rx] = ry;
-            Size[ry] += Size[rx];
-        }
-        else
-        {
-            Parent[ry] = rx;
-            Size[rx] += Size[ry];
-        }
     }
 }
