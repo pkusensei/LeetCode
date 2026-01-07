@@ -8,24 +8,25 @@ namespace Solution;
 
 public class Solution
 {
-    public int MaxProduct(TreeNode root)
+    public int UniqueLetterString(string s)
     {
-        long sum = Sum(root);
-        long res = 0;
-        Dfs(root);
-        return (int)(res % 1_000_000_007);
-
-        long Dfs(TreeNode node)
+        Span<(int prev1, int prev2)> inds = stackalloc (int, int)[26];
+        for (int i = 0; i < 26; i++)
         {
-            if (node is null) { return 0; }
-            long left = Dfs(node.left);
-            long right = Dfs(node.right);
-            long curr = sum - node.val - left - right;
-            res = long.Max(res, curr * (sum - curr));
-            return node.val + left + right;
+            inds[i] = (-1, -1);
         }
-
-        static long Sum(TreeNode node)
-           => node is null ? 0 : node.val + Sum(node.left) + Sum(node.right);
+        int n = s.Length;
+        int res = 0;
+        for (int i = 0; i < n; i++)
+        {
+            int c = s[i] - 'A';
+            res += (i - inds[c].prev2) * (inds[c].prev2 - inds[c].prev1);
+            inds[c] = (inds[c].prev2, i);
+        }
+        for (int i = 0; i < 26; i++)
+        {
+            res += (n - inds[i].prev2) * (inds[i].prev2 - inds[i].prev1);
+        }
+        return res;
     }
 }
