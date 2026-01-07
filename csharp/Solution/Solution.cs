@@ -8,24 +8,15 @@ namespace Solution;
 
 public class Solution
 {
-    public int UniqueLetterString(string s)
+    public int ConsecutiveNumbersSum(int n)
     {
-        Span<(int prev1, int prev2)> inds = stackalloc (int, int)[26];
-        for (int i = 0; i < 26; i++)
-        {
-            inds[i] = (-1, -1);
-        }
-        int n = s.Length;
+        // a + a+1 + a+2 + .. + a+i
+        // a*(1+i) + (1+2+..+i)
         int res = 0;
-        for (int i = 0; i < n; i++)
+        for (int i = 0; i * (1 + i) < 2 * n; i++)
         {
-            int c = s[i] - 'A';
-            res += (i - inds[c].prev2) * (inds[c].prev2 - inds[c].prev1);
-            inds[c] = (inds[c].prev2, i);
-        }
-        for (int i = 0; i < 26; i++)
-        {
-            res += (n - inds[i].prev2) * (inds[i].prev2 - inds[i].prev1);
+            int d = n - i * (1 + i) / 2;
+            if (d % (1 + i) == 0) { res += 1; }
         }
         return res;
     }
