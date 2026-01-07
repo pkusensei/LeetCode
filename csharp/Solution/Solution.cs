@@ -8,31 +8,24 @@ namespace Solution;
 
 public class Solution
 {
-    public int MaxLevelSum(TreeNode root)
+    public int MaxProduct(TreeNode root)
     {
-        int res = 1;
-        Queue<TreeNode> queue = new();
-        queue.Enqueue(root);
-        int level = 0;
-        int max = int.MinValue;
-        while (queue.Count > 0)
+        long sum = Sum(root);
+        long res = 0;
+        Dfs(root);
+        return (int)(res % 1_000_000_007);
+
+        long Dfs(TreeNode node)
         {
-            level += 1;
-            int n = queue.Count;
-            int sum = 0;
-            for (int _ = 0; _ < n; _++)
-            {
-                var node = queue.Dequeue();
-                sum += node.val;
-                if (node.left is not null) { queue.Enqueue(node.left); }
-                if (node.right is not null) { queue.Enqueue(node.right); }
-            }
-            if (sum > max)
-            {
-                max = sum;
-                res = level;
-            }
+            if (node is null) { return 0; }
+            long left = Dfs(node.left);
+            long right = Dfs(node.right);
+            long curr = sum - node.val - left - right;
+            res = long.Max(res, curr * (sum - curr));
+            return node.val + left + right;
         }
-        return res;
+
+        static long Sum(TreeNode node)
+           => node is null ? 0 : node.val + Sum(node.left) + Sum(node.right);
     }
 }
