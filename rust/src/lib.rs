@@ -9,47 +9,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn sum_of_distances_in_tree(n: usize, edges: &[[usize; 2]]) -> Vec<i32> {
-    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, &e| {
-        let [a, b] = e;
-        acc[a].push(b);
-        acc[b].push(a);
-        acc
-    });
-    let mut res = vec![0; n];
-    let mut subtree = vec![0; n];
-    res[0] = dfs(&adj, 0, n, &mut subtree)[0];
-    reroot(&adj, &subtree, &mut res, 0, n);
-    res
-}
-
-fn reroot(adj: &[Vec<usize>], subtree: &[i32], res: &mut [i32], node: usize, prev: usize) {
-    let n = adj.len();
-    if prev < n {
-        let other = n as i32 - subtree[node];
-        let curr = res[prev] - subtree[node] + other;
-        res[node] = curr;
-    }
-    for &next in &adj[node] {
-        if next != prev {
-            reroot(adj, subtree, res, next, node);
+pub fn largest_overlap(img1: Vec<Vec<i32>>, img2: Vec<Vec<i32>>) -> i32 {
+    use std::collections::HashMap;
+    let mut freq = HashMap::new();
+    for (r1, row1) in img1.iter().enumerate() {
+        for (c1, &v) in row1.iter().enumerate() {
+            if v == 1 {
+                for (r2, row2) in img2.iter().enumerate() {
+                    for (c2, &v2) in row2.iter().enumerate() {
+                        if v2 == 1 {
+                            let [r1, c1, r2, c2] = [r1, c1, r2, c2].map(|v| v as i32);
+                            *freq.entry([r1 - r2, c1 - c2]).or_insert(0) += 1;
+                        }
+                    }
+                }
+            }
         }
     }
-}
-
-// [sum_dist, subtree_size]
-fn dfs(adj: &[Vec<usize>], node: usize, prev: usize, subtree: &mut [i32]) -> [i32; 2] {
-    let mut dist = 0;
-    let mut sub = 1;
-    for &next in &adj[node] {
-        if next != prev {
-            let v = dfs(adj, next, node, subtree);
-            dist += v[0] + v[1];
-            sub += v[1];
-        }
-    }
-    subtree[node] = sub;
-    [dist, sub]
+    freq.into_values().max().unwrap_or(0)
 }
 
 #[cfg(test)]
@@ -82,13 +59,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(
-            sum_of_distances_in_tree(6, &[[0, 1], [0, 2], [2, 3], [2, 4], [2, 5]]),
-            [8, 12, 6, 10, 10, 10]
-        );
-        assert_eq!(sum_of_distances_in_tree(2, &[[1, 0]]), [1, 1]);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
