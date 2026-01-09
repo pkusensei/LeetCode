@@ -8,16 +8,18 @@ namespace Solution;
 
 public class Solution
 {
-    public int ConsecutiveNumbersSum(int n)
+    public TreeNode SubtreeWithAllDeepest(TreeNode root)
     {
-        // a + a+1 + a+2 + .. + a+i
-        // a*(1+i) + (1+2+..+i)
-        int res = 0;
-        for (int i = 0; i * (1 + i) < 2 * n; i++)
+        return Dfs(root).node;
+
+        static (int depth, TreeNode node) Dfs(TreeNode node)
         {
-            int d = n - i * (1 + i) / 2;
-            if (d % (1 + i) == 0) { res += 1; }
+            if (node is null) { return (0, null); }
+            (int left_depth, TreeNode left) = Dfs(node.left);
+            (int right_depth, TreeNode right) = Dfs(node.right);
+            if (left_depth == right_depth) { return (1 + left_depth, node); }
+            else if (left_depth < right_depth) { return (1 + right_depth, right); }
+            else { return (1 + left_depth, left); }
         }
-        return res;
     }
 }
