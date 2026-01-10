@@ -9,24 +9,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn largest_overlap(img1: Vec<Vec<i32>>, img2: Vec<Vec<i32>>) -> i32 {
-    use std::collections::HashMap;
-    let mut freq = HashMap::new();
-    for (r1, row1) in img1.iter().enumerate() {
-        for (c1, &v) in row1.iter().enumerate() {
-            if v == 1 {
-                for (r2, row2) in img2.iter().enumerate() {
-                    for (c2, &v2) in row2.iter().enumerate() {
-                        if v2 == 1 {
-                            let [r1, c1, r2, c2] = [r1, c1, r2, c2].map(|v| v as i32);
-                            *freq.entry([r1 - r2, c1 - c2]).or_insert(0) += 1;
-                        }
-                    }
-                }
-            }
+pub fn minimum_delete_sum(s1: String, s2: String) -> i32 {
+    let [s1, s2] = [&s1, &s2].map(|s| s.as_bytes());
+    let [n1, n2] = [s1, s2].map(|s| s.len());
+    let mut dp = vec![vec![0; 1 + n2]; 1 + n1];
+    for i1 in 0..n1 {
+        for i2 in 0..n2 {
+            dp[1 + i1][1 + i2] = if s1[i1] == s2[i2] {
+                i32::from(s1[i1]) + dp[i1][i2]
+            } else {
+                dp[1 + i1][i2].max(dp[i1][1 + i2])
+            };
         }
     }
-    freq.into_values().max().unwrap_or(0)
+    s1.iter()
+        .chain(s2.iter())
+        .map(|&b| i32::from(b))
+        .sum::<i32>()
+        - 2 * dp[n1][n2]
 }
 
 #[cfg(test)]
