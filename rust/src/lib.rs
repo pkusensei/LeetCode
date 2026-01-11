@@ -9,24 +9,37 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_delete_sum(s1: String, s2: String) -> i32 {
-    let [s1, s2] = [&s1, &s2].map(|s| s.as_bytes());
-    let [n1, n2] = [s1, s2].map(|s| s.len());
-    let mut dp = vec![vec![0; 1 + n2]; 1 + n1];
-    for i1 in 0..n1 {
-        for i2 in 0..n2 {
-            dp[1 + i1][1 + i2] = if s1[i1] == s2[i2] {
-                i32::from(s1[i1]) + dp[i1][i2]
+pub fn maximal_rectangle(matrix: &[&[i32]]) -> i32 {
+    let cols = matrix[0].len();
+    let mut res = 0;
+    // Added 0 is used to pop all values in mono stack
+    let mut height = vec![0; 1 + cols];
+    for row in matrix {
+        for (i, &c) in row.iter().enumerate() {
+            if c == 1 {
+                height[i] += 1;
             } else {
-                dp[1 + i1][i2].max(dp[i1][1 + i2])
-            };
+                height[i] = 0;
+            }
+        }
+        let mut st = vec![];
+        for (idx, &h) in height.iter().enumerate() {
+            // Small values are the "thresholds" => Keep them in stack
+            while let Some(&top) = st.last()
+                && height[top] > h
+            {
+                // This "big" [top] is being processed
+                st.pop();
+                // `idx` is 1 beyond end [top] streak
+                // `left` is 1 before start of [top] streak
+                // len([top] streak) = idx-left-1
+                let left = st.last().map(|&v| v as i32).unwrap_or(-1);
+                res = res.max((idx as i32 - left - 1) * height[top]);
+            }
+            st.push(idx);
         }
     }
-    s1.iter()
-        .chain(s2.iter())
-        .map(|&b| i32::from(b))
-        .sum::<i32>()
-        - 2 * dp[n1][n2]
+    res
 }
 
 #[cfg(test)]
@@ -59,7 +72,17 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(
+            maximal_rectangle(&[
+                &[1, 0, 1, 0, 0],
+                &[1, 0, 1, 1, 1],
+                &[1, 1, 1, 1, 1],
+                &[1, 0, 0, 1, 0]
+            ]),
+            6
+        );
+    }
 
     #[test]
     fn test() {}
