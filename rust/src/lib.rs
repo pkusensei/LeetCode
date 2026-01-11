@@ -31,20 +31,14 @@ pub fn maximum_and(nums: &[i32], k: i32, m: i32) -> i32 {
 }
 
 fn cost(num: i32, candid: i32) -> i32 {
-    if num & candid == candid {
-        return 0;
-    }
-    let mut curr = num;
+    let [num, candid] = [num, candid].map(i64::from);
     for bit in (0..31).rev() {
-        let candid_bit = candid & (1 << bit);
-        let curr_bit = curr & (1 << bit);
-        if candid_bit > 0 && curr_bit == 0 {
-            let rem = curr % (1 << bit);
-            let add = (1 << bit) - rem;
-            curr += add;
+        if candid & (1 << bit) > 0 && num & (1 << bit) == 0 {
+            let full = (1 << (bit + 1)) - 1;
+            return ((full & candid) - (full & num)) as i32;
         }
     }
-    curr - num
+    0
 }
 
 #[cfg(test)]
