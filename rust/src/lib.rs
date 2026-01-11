@@ -9,18 +9,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn residue_prefixes(s: String) -> i32 {
-    let mut seen = [false; 26];
-    let mut distinct = 0;
+pub fn centered_subarrays(nums: Vec<i32>) -> i32 {
+    use std::collections::HashSet;
     let mut res = 0;
-    for (i, b) in s.bytes().enumerate() {
-        let bi = usize::from(b - b'a');
-        if !seen[bi] {
-            distinct += 1;
-        }
-        seen[bi] = true;
-        if distinct == (1 + i) % 3 {
-            res += 1;
+    for (a, &_v1) in nums.iter().enumerate() {
+        let mut sum = 0;
+        let mut seen = HashSet::new();
+        for &v2 in nums.iter().skip(a) {
+            sum += v2;
+            seen.insert(v2);
+            res += i32::from(seen.contains(&sum));
         }
     }
     res
