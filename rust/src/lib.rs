@@ -9,19 +9,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn centered_subarrays(nums: Vec<i32>) -> i32 {
-    use std::collections::HashSet;
-    let mut res = 0;
-    for (a, &_v1) in nums.iter().enumerate() {
-        let mut sum = 0;
-        let mut seen = HashSet::new();
-        for &v2 in nums.iter().skip(a) {
-            sum += v2;
-            seen.insert(v2);
-            res += i32::from(seen.contains(&sum));
-        }
+pub fn count_pairs(words: &[&str]) -> i64 {
+    use itertools::Itertools;
+    use std::collections::HashMap;
+    let mut freq = HashMap::new();
+    for s in words {
+        let s = s.as_bytes();
+        let diff = s
+            .iter()
+            .map(|&b| (i32::from(b) - i32::from(s[0])).rem_euclid(26))
+            .collect_vec();
+        *freq.entry(diff).or_insert(0) += 1;
     }
-    res
+    freq.into_values().map(|v| v * (v - 1) / 2).sum()
 }
 
 #[cfg(test)]
@@ -54,7 +54,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(count_pairs(&["fusion", "layout"]), 1);
+        assert_eq!(count_pairs(&["ab", "aa", "za", "aa"]), 2);
+    }
 
     #[test]
     fn test() {}
