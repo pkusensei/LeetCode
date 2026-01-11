@@ -9,34 +9,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximal_rectangle(matrix: &[&[i32]]) -> i32 {
-    let cols = matrix[0].len();
+pub fn residue_prefixes(s: String) -> i32 {
+    let mut seen = [false; 26];
+    let mut distinct = 0;
     let mut res = 0;
-    // Added 0 is used to pop all values in mono stack
-    let mut height = vec![0; 1 + cols];
-    for row in matrix {
-        for (i, &c) in row.iter().enumerate() {
-            if c == 1 {
-                height[i] += 1;
-            } else {
-                height[i] = 0;
-            }
+    for (i, b) in s.bytes().enumerate() {
+        let bi = usize::from(b - b'a');
+        if !seen[bi] {
+            distinct += 1;
         }
-        let mut st = vec![];
-        for (idx, &h) in height.iter().enumerate() {
-            // Small values are the "thresholds" => Keep them in stack
-            while let Some(&top) = st.last()
-                && height[top] > h
-            {
-                // This "big" [top] is being processed
-                st.pop();
-                // `idx` is 1 beyond end [top] streak
-                // `left` is 1 before start of [top] streak
-                // len([top] streak) = idx-left-1
-                let left = st.last().map(|&v| v as i32).unwrap_or(-1);
-                res = res.max((idx as i32 - left - 1) * height[top]);
-            }
-            st.push(idx);
+        seen[bi] = true;
+        if distinct == (1 + i) % 3 {
+            res += 1;
         }
     }
     res
@@ -72,17 +56,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(
-            maximal_rectangle(&[
-                &[1, 0, 1, 0, 0],
-                &[1, 0, 1, 1, 1],
-                &[1, 1, 1, 1, 1],
-                &[1, 0, 0, 1, 0]
-            ]),
-            6
-        );
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
