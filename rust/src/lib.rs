@@ -9,19 +9,42 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_pairs(words: &[&str]) -> i64 {
+pub fn maximum_and(nums: &[i32], k: i32, m: i32) -> i32 {
     use itertools::Itertools;
-    use std::collections::HashMap;
-    let mut freq = HashMap::new();
-    for s in words {
-        let s = s.as_bytes();
-        let diff = s
+    let mut res = 0;
+    'out: for bit in (0..31).rev() {
+        let candid = res | (1 << bit);
+        let diff = nums
             .iter()
-            .map(|&b| (i32::from(b) - i32::from(s[0])).rem_euclid(26))
-            .collect_vec();
-        *freq.entry(diff).or_insert(0) += 1;
+            .map(|&num| cost(num, candid))
+            .k_smallest_relaxed(m as usize);
+        let mut sum = 0;
+        for d in diff {
+            sum += d;
+            if sum > k {
+                continue 'out;
+            }
+        }
+        res = candid;
     }
-    freq.into_values().map(|v| v * (v - 1) / 2).sum()
+    res
+}
+
+fn cost(num: i32, candid: i32) -> i32 {
+    if num & candid == candid {
+        return 0;
+    }
+    let mut curr = num;
+    for bit in (0..31).rev() {
+        let candid_bit = candid & (1 << bit);
+        let curr_bit = curr & (1 << bit);
+        if candid_bit > 0 && curr_bit == 0 {
+            let rem = curr % (1 << bit);
+            let add = (1 << bit) - rem;
+            curr += add;
+        }
+    }
+    curr - num
 }
 
 #[cfg(test)]
@@ -55,10 +78,14 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(count_pairs(&["fusion", "layout"]), 1);
-        assert_eq!(count_pairs(&["ab", "aa", "za", "aa"]), 2);
+        assert_eq!(maximum_and(&[3, 1, 2], 8, 2), 6);
+        assert_eq!(maximum_and(&[1, 2, 8, 4], 7, 3), 4);
+        assert_eq!(maximum_and(&[1, 1], 3, 2), 2);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(maximum_and(&[8], 10, 1), 18);
+        assert_eq!(maximum_and(&[5, 19], 1, 2), 4);
+    }
 }
