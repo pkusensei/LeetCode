@@ -8,18 +8,12 @@ namespace Solution;
 
 public class Solution
 {
-    public TreeNode SubtreeWithAllDeepest(TreeNode root)
+    public bool IsRectangleOverlap(int[] rec1, int[] rec2)
     {
-        return Dfs(root).node;
-
-        static (int depth, TreeNode node) Dfs(TreeNode node)
-        {
-            if (node is null) { return (0, null); }
-            (int left_depth, TreeNode left) = Dfs(node.left);
-            (int right_depth, TreeNode right) = Dfs(node.right);
-            if (left_depth == right_depth) { return (1 + left_depth, node); }
-            else if (left_depth < right_depth) { return (1 + right_depth, right); }
-            else { return (1 + left_depth, left); }
-        }
+        int xmin = int.Max(rec1[0], rec2[0]);
+        int xmax = int.Min(rec1[2], rec2[2]);
+        int ymin = int.Max(rec1[1], rec2[1]);
+        int ymax = int.Min(rec1[3], rec2[3]);
+        return xmin < xmax && ymin < ymax;
     }
 }
