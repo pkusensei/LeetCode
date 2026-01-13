@@ -8,12 +8,35 @@ namespace Solution;
 
 public class Solution
 {
-    public bool IsRectangleOverlap(int[] rec1, int[] rec2)
+    public double SeparateSquares(int[][] squares)
     {
-        int xmin = int.Max(rec1[0], rec2[0]);
-        int xmax = int.Min(rec1[2], rec2[2]);
-        int ymin = int.Max(rec1[1], rec2[1]);
-        int ymax = int.Min(rec1[3], rec2[3]);
-        return xmin < xmax && ymin < ymax;
+        const double E = 1e-5;
+        double left = double.MaxValue;
+        double right = double.MinValue;
+        double area = 0.0;
+        foreach (var sq in squares)
+        {
+            left = double.Min(left, sq[1]);
+            right = double.Max(right, sq[1] + sq[2]);
+            area += double.Pow(sq[2], 2);
+        }
+        while (right - left > E)
+        {
+            double mid = (left + right) / 2;
+            if (Check(mid)) { left = mid; }
+            else { right = mid; }
+        }
+        return left;
+
+        bool Check(double mid)
+        {
+            double bot = 0;
+            foreach (var sq in squares)
+            {
+                if (mid >= sq[1] + sq[2]) { bot += double.Pow(sq[2], 2); }
+                else if (mid >= sq[1]) { bot += (mid - sq[1]) * sq[2]; }
+            }
+            return area > 2 * bot;
+        }
     }
 }
