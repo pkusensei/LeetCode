@@ -9,6 +9,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
+pub fn total_area(squares: &[[i32; 3]]) -> i32 {
+    let (y_items, xs, min_y) = preprocess(squares);
+    let mut st = SegTree::new(&xs);
+    let mut total = 0;
+    let mut prev_y = min_y;
+    for item in &y_items {
+        let &[y, x1, x2, type_] = item;
+        total += (y - prev_y) * (st.query());
+        st.update(x1, x2, type_);
+        prev_y = y;
+    }
+    total
+}
+
 pub fn separate_squares(squares: &[[i32; 3]]) -> f64 {
     let n = squares.len();
     let (y_items, xs, min_y) = preprocess(squares);
@@ -25,19 +39,17 @@ pub fn separate_squares(squares: &[[i32; 3]]) -> f64 {
         prefix.push(total);
         x_lens.push(st.query());
     }
-    split_with_binary_search(y_items, total, prefix, x_lens)
+    split_with_binary_search(&y_items, total, &prefix, &x_lens)
     // mid_split(&y_items, &xs, min_y, total)
 }
 
 fn split_with_binary_search(
-    y_items: Vec<[i32; 4]>,
+    y_items: &[[i32; 4]],
     total: i64,
-    prefix: Vec<i64>,
-    x_lens: Vec<i32>,
+    prefix: &[i64],
+    x_lens: &[i32],
 ) -> f64 {
-    let i = prefix
-        .partition_point(|&v| v < (1 + total) / 2)
-        .saturating_sub(1);
+    let i = prefix.partition_point(|&v| v < (1 + total) / 2) - 1;
     let y = f64::from(y_items[i][0]);
     let x = f64::from(x_lens[i]);
     y + (total as f64 - prefix[i] as f64 * 2.0) / (x * 2.0)
@@ -81,8 +93,8 @@ fn preprocess(squares: &[[i32; 3]]) -> (Vec<[i32; 4]>, Vec<i32>, i32) {
 
 struct SegTree<'a> {
     xs: &'a [i32],
-    count: Vec<i32>,   // accumulated count of line sweep
-    covered: Vec<i32>, // covered length
+    count: Vec<i32>,   // accumulated count from line sweep
+    covered: Vec<i32>, // covered length of x-chunks
     n: usize,
 }
 
@@ -163,8 +175,15 @@ mod tests {
     fn basics() {
         float_eq!(separate_squares(&[[0, 0, 1], [2, 2, 1]]), 1.0);
         float_eq!(separate_squares(&[[0, 0, 2], [1, 1, 1]]), 1.0);
+
+        assert_eq!(total_area(&[[0, 0, 1], [2, 2, 1]]), 2);
+        assert_eq!(total_area(&[[0, 0, 2], [1, 1, 1]]), 4);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        float_eq!(separate_squares(&[[10, 30, 3], [17, 27, 4]]), 30.07143);
+
+        assert_eq!(total_area(&[[10, 30, 3], [17, 27, 4]]), 25);
+    }
 }
