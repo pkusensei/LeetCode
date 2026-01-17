@@ -9,31 +9,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximize_square_area(m: i32, n: i32, mut h_fences: Vec<i32>, mut v_fences: Vec<i32>) -> i32 {
-    use std::collections::HashSet;
-    const M: i64 = 1_000_000_007;
-    h_fences.extend([1, m]);
-    let mut hnums = HashSet::new();
-    for (i, a) in h_fences.iter().enumerate() {
-        for b in h_fences.iter().skip(1 + i) {
-            hnums.insert(b.abs_diff(*a));
-        }
-    }
-    v_fences.extend([1, n]);
+pub fn largest_square_area(bottom_left: Vec<Vec<i32>>, top_right: Vec<Vec<i32>>) -> i64 {
+    use itertools::{Itertools, izip};
     let mut res = 0;
-    for (i, a) in v_fences.iter().enumerate() {
-        for b in v_fences.iter().skip(1 + i) {
-            let v = a.abs_diff(*b);
-            if hnums.contains(&v) {
-                res = res.max(v);
-            }
-        }
+    for [a, b] in izip!(bottom_left.iter(), top_right.iter()).array_combinations::<2>() {
+        let [ax1, ay1] = a.0[..] else { unreachable!() };
+        let [ax2, ay2] = a.1[..] else { unreachable!() };
+        let [bx1, by1] = b.0[..] else { unreachable!() };
+        let [bx2, by2] = b.1[..] else { unreachable!() };
+        let dx = ax2.min(bx2) - ax1.max(bx1);
+        let dy = ay2.min(by2) - ay1.max(by1);
+        res = res.max(dx.min(dy).max(0));
     }
-    if res == 0 {
-        -1
-    } else {
-        (i64::from(res).pow(2) % M) as i32
-    }
+    i64::from(res).pow(2)
 }
 
 #[cfg(test)]
