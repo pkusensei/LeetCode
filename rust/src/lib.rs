@@ -9,20 +9,13 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn best_tower(towers: Vec<Vec<i32>>, center: Vec<i32>, radius: i32) -> Vec<i32> {
-    use itertools::Itertools;
-    use std::cmp::Reverse;
-    towers
-        .iter()
-        .filter(|t| {
-            let [tx, ty] = t[..2] else { unreachable!() };
-            let [cx, cy] = center[..] else { unreachable!() };
-            tx.abs_diff(cx) + ty.abs_diff(cy) <= radius as u32
-        })
-        .sorted_unstable_by_key(|t| (Reverse(t[2]), t[0], t[1]))
-        .next()
-        .map(|t| t[..2].to_vec())
-        .unwrap_or(vec![-1, -1])
+pub fn min_operations(nums: Vec<i32>, target: Vec<i32>) -> i32 {
+    use itertools::{Itertools, izip};
+    izip!(&nums, &target)
+        .filter_map(|(&a, &b)| if a != b { Some(a) } else { None })
+        .sorted_unstable()
+        .dedup()
+        .count() as i32
 }
 
 #[cfg(test)]
