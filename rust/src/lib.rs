@@ -9,16 +9,28 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn vowel_consonant_score(s: String) -> i32 {
-    let [mut v, mut c] = [0, 0];
-    for b in s.bytes() {
-        if b"aeiou".contains(&b) {
-            v += 1
-        } else if b.is_ascii_alphabetic() {
-            c += 1
+pub fn max_capacity(costs: &[i32], capacity: &[i32], budget: i32) -> i32 {
+    use itertools::izip;
+    let mut res = 0;
+    let mut arr = vec![];
+    for (co, ca) in izip!(costs.iter(), capacity.iter())
+        .filter_map(|(&co, &ca)| if co < budget { Some((co, ca)) } else { None })
+    {
+        arr.push((co, ca));
+        res = res.max(ca)
+    }
+    arr.sort_unstable();
+    let pref_max = arr.iter().fold(vec![], |mut acc, &(_, ca)| {
+        acc.push(ca.max(*acc.last().unwrap_or(&0)));
+        acc
+    });
+    for (right, &(cost, cap)) in arr.iter().enumerate().skip(1) {
+        let left = arr[..right].partition_point(|v| v.0 + cost < budget);
+        if left > 0 {
+            res = res.max(cap + pref_max[left - 1]);
         }
     }
-    if c == 0 { 0 } else { v / c }
+    res
 }
 
 #[cfg(test)]
@@ -51,7 +63,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(max_capacity(&[4, 8, 5, 3], &[1, 5, 2, 7], 8), 8);
+        assert_eq!(max_capacity(&[3, 5, 7, 4], &[2, 4, 3, 6], 7), 6);
+        assert_eq!(max_capacity(&[2, 2, 2], &[3, 5, 4], 5), 9);
+    }
 
     #[test]
     fn test() {}
