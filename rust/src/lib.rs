@@ -9,28 +9,71 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_capacity(costs: &[i32], capacity: &[i32], budget: i32) -> i32 {
-    use itertools::izip;
-    let mut res = 0;
-    let mut arr = vec![];
-    for (co, ca) in izip!(costs.iter(), capacity.iter())
-        .filter_map(|(&co, &ca)| if co < budget { Some((co, ca)) } else { None })
-    {
-        arr.push((co, ca));
-        res = res.max(ca)
+use std::collections::{BTreeMap, HashMap, HashSet};
+#[derive(Default)]
+struct AuctionSystem {
+    user_bid: HashMap<[i32; 2], i32>, // [user, item]-amount
+    high: HashMap<i32, BTreeMap<i32, HashSet<i32>>>, // item-amount-user
+}
+
+impl AuctionSystem {
+    fn new() -> Self {
+        Default::default()
     }
-    arr.sort_unstable();
-    let pref_max = arr.iter().fold(vec![], |mut acc, &(_, ca)| {
-        acc.push(ca.max(*acc.last().unwrap_or(&0)));
-        acc
-    });
-    for (right, &(cost, cap)) in arr.iter().enumerate().skip(1) {
-        let left = arr[..right].partition_point(|v| v.0 + cost < budget);
-        if left > 0 {
-            res = res.max(cap + pref_max[left - 1]);
+
+    fn add_bid(&mut self, user_id: i32, item_id: i32, bid_amount: i32) {
+        if self.user_bid.contains_key(&[user_id, item_id]) {
+            self.update_bid(user_id, item_id, bid_amount);
+        } else {
+            self.user_bid.insert([user_id, item_id], bid_amount);
+            self.high
+                .entry(item_id)
+                .or_default()
+                .entry(bid_amount)
+                .or_default()
+                .insert(user_id);
         }
     }
-    res
+
+    fn update_bid(&mut self, user_id: i32, item_id: i32, new_amount: i32) {
+        let Some(old) = self.user_bid.insert([user_id, item_id], new_amount) else {
+            unreachable!()
+        };
+        if let Some(map) = self.high.get_mut(&item_id)
+            && let Some(user_set) = map.get_mut(&old)
+        {
+            user_set.remove(&user_id);
+            if user_set.is_empty() {
+                map.remove(&old);
+            }
+            map.entry(new_amount).or_default().insert(user_id);
+        }
+    }
+
+    fn remove_bid(&mut self, user_id: i32, item_id: i32) {
+        let Some(amount) = self.user_bid.remove(&[user_id, item_id]) else {
+            unreachable!()
+        };
+        if let Some(map) = self.high.get_mut(&item_id)
+            && let Some(user_set) = map.get_mut(&amount)
+        {
+            user_set.remove(&user_id);
+            if user_set.is_empty() {
+                map.remove(&amount);
+            }
+        }
+    }
+
+    fn get_highest_bidder(&self, item_id: i32) -> i32 {
+        self.high
+            .get(&item_id)
+            .map(|map| {
+                map.last_key_value()
+                    .and_then(|set| set.1.iter().max().copied())
+            })
+            .flatten()
+            .unwrap_or(-1)
+    }
 }
 
 #[cfg(test)]
@@ -63,11 +106,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(max_capacity(&[4, 8, 5, 3], &[1, 5, 2, 7], 8), 8);
-        assert_eq!(max_capacity(&[3, 5, 7, 4], &[2, 4, 3, 6], 7), 6);
-        assert_eq!(max_capacity(&[2, 2, 2], &[3, 5, 4], 5), 9);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
