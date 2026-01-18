@@ -9,71 +9,29 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-use std::collections::{BTreeMap, HashMap, HashSet};
-#[derive(Default)]
-struct AuctionSystem {
-    user_bid: HashMap<[i32; 2], i32>, // [user, item]-amount
-    high: HashMap<i32, BTreeMap<i32, HashSet<i32>>>, // item-amount-user
-}
-
-impl AuctionSystem {
-    fn new() -> Self {
-        Default::default()
-    }
-
-    fn add_bid(&mut self, user_id: i32, item_id: i32, bid_amount: i32) {
-        if self.user_bid.contains_key(&[user_id, item_id]) {
-            self.update_bid(user_id, item_id, bid_amount);
-        } else {
-            self.user_bid.insert([user_id, item_id], bid_amount);
-            self.high
-                .entry(item_id)
-                .or_default()
-                .entry(bid_amount)
-                .or_default()
-                .insert(user_id);
-        }
-    }
-
-    fn update_bid(&mut self, user_id: i32, item_id: i32, new_amount: i32) {
-        let Some(old) = self.user_bid.insert([user_id, item_id], new_amount) else {
-            unreachable!()
-        };
-        if let Some(map) = self.high.get_mut(&item_id)
-            && let Some(user_set) = map.get_mut(&old)
+pub fn lex_smallest_after_deletion(s: &str) -> String {
+    let mut freq = s.bytes().fold([0; 26], |mut acc, b| {
+        acc[usize::from(b - b'a')] += 1;
+        acc
+    });
+    let mut st = vec![];
+    for b in s.bytes() {
+        while let Some(&top) = st.last()
+            && top > b
+            && freq[usize::from(top - b'a')] > 1
         {
-            user_set.remove(&user_id);
-            if user_set.is_empty() {
-                map.remove(&old);
-            }
-            map.entry(new_amount).or_default().insert(user_id);
+            st.pop();
+            freq[usize::from(top - b'a')] -= 1;
         }
+        st.push(b);
     }
-
-    fn remove_bid(&mut self, user_id: i32, item_id: i32) {
-        let Some(amount) = self.user_bid.remove(&[user_id, item_id]) else {
-            unreachable!()
-        };
-        if let Some(map) = self.high.get_mut(&item_id)
-            && let Some(user_set) = map.get_mut(&amount)
-        {
-            user_set.remove(&user_id);
-            if user_set.is_empty() {
-                map.remove(&amount);
-            }
-        }
+    while let Some(&b) = st.last()
+        && freq[usize::from(b - b'a')] > 1
+    {
+        freq[usize::from(b - b'a')] -= 1;
+        st.pop();
     }
-
-    fn get_highest_bidder(&self, item_id: i32) -> i32 {
-        self.high
-            .get(&item_id)
-            .map(|map| {
-                map.last_key_value()
-                    .and_then(|set| set.1.iter().max().copied())
-            })
-            .flatten()
-            .unwrap_or(-1)
-    }
+    String::from_utf8(st).unwrap_or_default()
 }
 
 #[cfg(test)]
@@ -106,7 +64,9 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(lex_smallest_after_deletion("aaccb"), "aacb");
+    }
 
     #[test]
     fn test() {}
