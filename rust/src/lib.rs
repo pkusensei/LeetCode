@@ -9,74 +9,52 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-use std::collections::{BinaryHeap, HashMap, hash_map::Entry};
-
-#[derive(Debug, Default)]
-struct AuctionSystem {
-    user_bid: HashMap<[i32; 2], i32>, // [user, item] - amount
-    // high: HashMap<i32, BTreeMap<i32, BTreeSet<i32>>>, // item-amount-user
-    high: HashMap<i32, BinaryHeap<[i32; 2]>>, // item - [amount, user]
+pub fn max_side_length(mat: Vec<Vec<i32>>, threshold: i32) -> i32 {
+    let [rows, cols] = get_dimensions(&mat);
+    let prefix = build(&mat);
+    let mut left = 0;
+    let mut right = rows.min(cols);
+    while left < right {
+        let mid = left + (right - left + 1) / 2;
+        if check(threshold, rows, cols, &prefix, mid) {
+            left = mid;
+        } else {
+            right = mid - 1
+        }
+    }
+    left as i32
 }
 
-impl AuctionSystem {
-    fn new() -> Self {
-        Default::default()
-    }
-
-    fn add_bid(&mut self, user_id: i32, item_id: i32, bid_amount: i32) {
-        if let Entry::Vacant(e) = self.user_bid.entry([user_id, item_id]) {
-            e.insert(bid_amount);
-            self.high
-                .entry(item_id)
-                .or_default()
-                .push([bid_amount, user_id]);
-        } else {
-            self.update_bid(user_id, item_id, bid_amount);
+fn build(grid: &[Vec<i32>]) -> Vec<Vec<i32>> {
+    let cols = grid[0].len();
+    // prefix sum matrix of (1+rows)*(1+cols)
+    let mut prefix = vec![vec![0; 1 + cols]];
+    for (r, row) in grid.iter().enumerate() {
+        let mut curr = row.iter().fold(vec![0], |mut acc, v| {
+            acc.push(v + acc.last().unwrap_or(&0));
+            acc
+        });
+        for (c, v) in curr.iter_mut().enumerate() {
+            *v += prefix[r][c];
         }
+        prefix.push(curr);
     }
+    prefix
+}
 
-    fn update_bid(&mut self, user_id: i32, item_id: i32, new_amount: i32) {
-        let Some(old) = self.user_bid.insert([user_id, item_id], new_amount) else {
-            unreachable!()
-        };
-        if let Some(heap) = self.high.get_mut(&item_id) {
-            if let Some(&top) = heap.peek()
-                && top == [old, user_id]
-            {
-                heap.pop();
-            }
-            heap.push([new_amount, user_id]);
-        }
-    }
-
-    fn remove_bid(&mut self, user_id: i32, item_id: i32) {
-        let Some(amount) = self.user_bid.remove(&[user_id, item_id]) else {
-            unreachable!()
-        };
-        if let Some(heap) = self.high.get_mut(&item_id)
-            && let Some(&top) = heap.peek()
-            && top == [amount, user_id]
-        {
-            heap.pop();
-        }
-    }
-
-    fn get_highest_bidder(&mut self, item_id: i32) -> i32 {
-        if let Some(heap) = self.high.get_mut(&item_id) {
-            while let Some(&[top_amount, user]) = heap.peek()
-                && self
-                    .user_bid
-                    .get(&[user, item_id])
-                    .is_none_or(|&curr| curr != top_amount)
-            {
-                heap.pop();
-            }
-            if let Some(top) = heap.peek() {
-                return top[1];
+fn check(threshold: i32, rows: usize, cols: usize, prefix: &[Vec<i32>], mid: usize) -> bool {
+    for r in 1..=rows - mid + 1 {
+        for c in 1..=cols - mid + 1 {
+            let curr = prefix[r + mid - 1][c + mid - 1]
+                - prefix[r - 1][c + mid - 1]
+                - prefix[r + mid - 1][c - 1]
+                + prefix[r - 1][c - 1];
+            if curr <= threshold {
+                return true;
             }
         }
-        -1
     }
+    false
 }
 
 #[cfg(test)]
@@ -109,17 +87,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        let mut auct = AuctionSystem::new(); // Initialize the Auction system
-        auct.add_bid(1, 7, 5); // User 1 bids 5 on item 7
-        auct.add_bid(2, 7, 6); // User 2 bids 6 on item 7
-        assert_eq!(auct.get_highest_bidder(7), 2); // return 2 as User 2 has the highest bid
-        auct.update_bid(1, 7, 8); // User 1 updates bid to 8 on item 7
-        assert_eq!(auct.get_highest_bidder(7), 1); // return 1 as User 1 now has the highest bid
-        auct.remove_bid(2, 7); // Remove User 2's bid on item 7
-        assert_eq!(auct.get_highest_bidder(7), 1); // return 1 as User 1 is the current highest bidder
-        assert_eq!(auct.get_highest_bidder(3), -1); // return -1 as no bids exist for item 3
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
