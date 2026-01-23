@@ -9,20 +9,112 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_bitwise_array(nums: Vec<i32>) -> Vec<i32> {
-    nums.iter().map(|&num| f(num)).collect()
-}
+pub fn minimum_pair_removal(nums: &[i32]) -> i32 {
+    use std::collections::BinaryHeap;
 
-fn f(num: i32) -> i32 {
-    let mut res = -1;
-    let mut bit = 1;
-    // e.g 23 == 0b10111
-    // find this bit ^
-    while num & bit > 0 {
-        res = num - bit;
-        bit <<= 1;
+    let n = nums.len();
+    let mut nodes = Vec::with_capacity(n);
+    let mut merged = vec![false; n];
+    let mut heap = BinaryHeap::new();
+    let mut bad_count = 0;
+    for (idx, &num) in nums.iter().enumerate() {
+        nodes.push(Node {
+            val: num.into(),
+            prev: idx.checked_sub(1),
+            next: if 1 + idx < n { Some(1 + idx) } else { None },
+        });
+        if idx > 0 {
+            heap.push(Item {
+                fst: idx - 1,
+                snd: idx,
+                cost: i64::from(nums[idx - 1]) + i64::from(num),
+            });
+            bad_count += i32::from(nums[idx - 1] > num);
+        }
+    }
+    let mut res = 0;
+    while let Some(Item { fst, snd, cost }) = heap.pop()
+        && bad_count > 0
+    {
+        if merged[fst] || merged[snd] || nodes[fst].val + nodes[snd].val != cost {
+            continue;
+        }
+        res += 1;
+        if nodes[fst].val > nodes[snd].val {
+            bad_count -= 1; // this is a bad pair
+        }
+        let prev = nodes[fst].prev;
+        let next = nodes[snd].next;
+        nodes[fst].next = next;
+        if let Some(i) = next {
+            nodes[i].prev = Some(fst);
+        }
+        if let Some(prev) = prev {
+            if (1 + nodes[fst].val..=cost).contains(&nodes[prev].val) {
+                bad_count -= 1;
+            } else if (1 + cost..=nodes[fst].val).contains(&nodes[prev].val) {
+                bad_count += 1;
+            }
+            heap.push(Item {
+                fst: prev,
+                snd: fst,
+                cost: nodes[prev].val + cost,
+            });
+        }
+        if let Some(next) = next {
+            if nodes[next].val < nodes[snd].val && cost <= nodes[next].val {
+                bad_count -= 1;
+            } else if nodes[snd].val <= nodes[next].val && nodes[next].val < cost {
+                bad_count += 1;
+            }
+            heap.push(Item {
+                fst: fst,
+                snd: next,
+                cost: nodes[next].val + cost,
+            });
+        }
+        nodes[fst].val = cost;
+        merged[snd] = true;
     }
     res
+}
+
+#[derive(Default, Clone, Copy)]
+struct Node {
+    val: i64,
+    prev: Option<usize>,
+    next: Option<usize>,
+}
+
+#[derive(Debug, Clone, Copy)]
+struct Item {
+    fst: usize,
+    snd: usize,
+    cost: i64,
+}
+
+impl PartialEq for Item {
+    fn eq(&self, other: &Self) -> bool {
+        self.cost == other.cost
+    }
+}
+
+impl Eq for Item {}
+
+impl PartialOrd for Item {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+// To make min heap
+impl Ord for Item {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        other
+            .cost
+            .cmp(&self.cost)
+            .then_with(|| other.fst.cmp(&self.fst))
+    }
 }
 
 #[cfg(test)]
@@ -55,8 +147,16 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(minimum_pair_removal(&[5, 2, 3, 1]), 2);
+        assert_eq!(minimum_pair_removal(&[1, 2, 2]), 0);
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(
+            minimum_pair_removal(&[2, 2, -1, 3, -2, 2, 1, 1, 1, 0, -1]),
+            9
+        );
+    }
 }
