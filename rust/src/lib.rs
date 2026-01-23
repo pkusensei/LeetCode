@@ -9,112 +9,35 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_pair_removal(nums: &[i32]) -> i32 {
-    use std::collections::BinaryHeap;
-
-    let n = nums.len();
-    let mut nodes = Vec::with_capacity(n);
-    let mut merged = vec![false; n];
-    let mut heap = BinaryHeap::new();
-    let mut bad_count = 0;
-    for (idx, &num) in nums.iter().enumerate() {
-        nodes.push(Node {
-            val: num.into(),
-            prev: idx.checked_sub(1),
-            next: if 1 + idx < n { Some(1 + idx) } else { None },
-        });
-        if idx > 0 {
-            heap.push(Item {
-                fst: idx - 1,
-                snd: idx,
-                cost: i64::from(nums[idx - 1]) + i64::from(num),
-            });
-            bad_count += i32::from(nums[idx - 1] > num);
-        }
+pub fn split_into_fibonacci(num: String) -> Vec<i32> {
+    let mut curr = vec![];
+    if backtrack(&num, &mut curr) {
+        curr.into_iter().map(|v| v as i32).collect()
+    } else {
+        vec![]
     }
-    let mut res = 0;
-    while let Some(Item { fst, snd, cost }) = heap.pop()
-        && bad_count > 0
-    {
-        if merged[fst] || merged[snd] || nodes[fst].val + nodes[snd].val != cost {
-            continue;
+}
+
+fn backtrack(s: &str, curr: &mut Vec<i64>) -> bool {
+    if s.is_empty() && curr.len() >= 3 {
+        return true;
+    }
+    for end in 1..=s.len() {
+        if end > 1 && s.starts_with('0') {
+            return false;
         }
-        res += 1;
-        if nodes[fst].val > nodes[snd].val {
-            bad_count -= 1; // this is a bad pair
-        }
-        let prev = nodes[fst].prev;
-        let next = nodes[snd].next;
-        nodes[fst].next = next;
-        if let Some(i) = next {
-            nodes[i].prev = Some(fst);
-        }
-        if let Some(prev) = prev {
-            if (1 + nodes[fst].val..=cost).contains(&nodes[prev].val) {
-                bad_count -= 1;
-            } else if (1 + cost..=nodes[fst].val).contains(&nodes[prev].val) {
-                bad_count += 1;
+        let Ok(num) = s[..end].parse::<i32>() else {
+            return false;
+        };
+        if curr.len() < 2 || curr.iter().rev().take(2).sum::<i64>() == i64::from(num) {
+            curr.push(i64::from(num));
+            if backtrack(&s[end..], curr) {
+                return true;
             }
-            heap.push(Item {
-                fst: prev,
-                snd: fst,
-                cost: nodes[prev].val + cost,
-            });
+            curr.pop();
         }
-        if let Some(next) = next {
-            if nodes[next].val < nodes[snd].val && cost <= nodes[next].val {
-                bad_count -= 1;
-            } else if nodes[snd].val <= nodes[next].val && nodes[next].val < cost {
-                bad_count += 1;
-            }
-            heap.push(Item {
-                fst: fst,
-                snd: next,
-                cost: nodes[next].val + cost,
-            });
-        }
-        nodes[fst].val = cost;
-        merged[snd] = true;
     }
-    res
-}
-
-#[derive(Default, Clone, Copy)]
-struct Node {
-    val: i64,
-    prev: Option<usize>,
-    next: Option<usize>,
-}
-
-#[derive(Debug, Clone, Copy)]
-struct Item {
-    fst: usize,
-    snd: usize,
-    cost: i64,
-}
-
-impl PartialEq for Item {
-    fn eq(&self, other: &Self) -> bool {
-        self.cost == other.cost
-    }
-}
-
-impl Eq for Item {}
-
-impl PartialOrd for Item {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-// To make min heap
-impl Ord for Item {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        other
-            .cost
-            .cmp(&self.cost)
-            .then_with(|| other.fst.cmp(&self.fst))
-    }
+    false
 }
 
 #[cfg(test)]
@@ -147,16 +70,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(minimum_pair_removal(&[5, 2, 3, 1]), 2);
-        assert_eq!(minimum_pair_removal(&[1, 2, 2]), 0);
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(
-            minimum_pair_removal(&[2, 2, -1, 3, -2, 2, 1, 1, 1, 0, -1]),
-            9
-        );
-    }
+    fn test() {}
 }
