@@ -8,86 +8,107 @@ namespace Solution;
 
 public class Solution
 {
-    public int NumSimilarGroups(string[] strs)
+    public int MinimumPairRemoval(int[] nums)
     {
-        int n = strs.Length;
-        FrozenDictionary<string, int> dict
-            = strs.Select((s, i) => (s, i)).ToFrozenDictionary(v => v.s, v => v.i);
-        DSU dsu = new(n);
-        for (int idx = 0; idx < n; idx++)
+        int n = nums.Length;
+        // Removed `nodes` array 
+        // Rely on GC tracing to keep nodes valid
+        bool[] merged = new bool[n]; // functions as set
+        PriorityQueue<Pair, Pair> pq = new();
+        int bad_count = 0;
+        Node prev = null;
+        for (int i = 0; i < n; i++)
         {
-            if (dsu.GetSize(idx) > 1) { continue; }
-            Queue<int> queue = new();
-            queue.Enqueue(idx);
-            bool[] seen = new bool[n];
-            seen[idx] = true;
-            while (queue.TryDequeue(out var si))
+            Node curr = new(i, nums[i]);
+            if (i > 0)
             {
-                foreach (var item in Next(strs[si]))
-                {
-                    if (dict.TryGetValue(item, out var next) && !seen[next])
-                    {
-                        seen[next] = true;
-                        dsu.Union(idx, next);
-                        queue.Enqueue(next);
-                    }
-                }
+                prev.Next = curr;
+                curr.Prev = prev;
+                Pair p = new(prev, curr, nums[i - 1] + (long)nums[i]);
+                pq.Enqueue(p, p);
+                if (nums[i - 1] > nums[i]) { bad_count += 1; }
             }
+            prev = curr;
         }
-        return Enumerable.Range(0, n).Select(i => dsu.Find(i)).Distinct().Count();
-
-        static IEnumerable<string> Next(string s)
+        int res = 0;
+        while (bad_count > 0 && pq.TryDequeue(out var pair, out _))
         {
-            int n = s.Length;
-            for (int i1 = 0; i1 < n; i1++)
+            (Node node1, Node node2, long val) = pair;
+            if (merged[node1.Idx] || merged[node2.Idx]
+                || node1.Val + node2.Val != val)
             {
-                for (int i2 = 0; i2 < n; i2++)
-                {
-                    if (s[i1] != s[i2])
-                    {
-                        char[] arr = s.ToArray();
-                        (arr[i1], arr[i2]) = (arr[i2], arr[i1]);
-                        yield return new(arr);
-                    }
-                }
+                continue;
             }
+            res += 1;
+            if (node1.Val > node2.Val) { bad_count -= 1; }
+            prev = node1.Prev;
+            Node next = node2.Next;
+            node1.Next = next;
+            if (next is not null) { next.Prev = node1; }
+            if (prev is not null)
+            {
+                // Before update: [prev]>[i1]
+                // After update: [prev]<val
+                if (node1.Val < prev.Val && prev.Val <= val)
+                {
+                    bad_count -= 1;
+                }
+                // Before [prev]<=[i1]
+                // After [prev]>val
+                else if (val < prev.Val && prev.Val <= node1.Val)
+                {
+                    bad_count += 1;
+                }
+                Pair p = new(prev, node1, prev.Val + val);
+                pq.Enqueue(p, p);
+            }
+            if (next is not null)
+            {
+                // Before [i2]>[next]
+                // After val<=[next]
+                if (next.Val < node2.Val && val <= next.Val)
+                {
+                    bad_count -= 1;
+                }
+                // Before [i2]<=[next]
+                // After val>[next]
+                else if (node2.Val <= next.Val && next.Val < val)
+                {
+                    bad_count += 1;
+                }
+                Pair p = new(node1, next, next.Val + val);
+                pq.Enqueue(p, p);
+            }
+            node1.Val = val;
+            merged[node2.Idx] = true;
         }
+        return res;
     }
 }
 
-struct DSU
+internal sealed class Node(int i, int val)
 {
-    public DSU(int n)
+    public int Idx { get; } = i;
+    public long Val { get; set; } = val;
+    public Node Prev { get; set; }
+    public Node Next { get; set; }
+}
+
+internal struct Pair(Node n1, Node n2, long val) : IComparable<Pair>
+{
+    public Node Node1 { get; set; } = n1;
+    public Node Node2 { get; set; } = n2;
+    public long Val { get; set; } = val;
+
+    public readonly int CompareTo(Pair other)
+        => Val == other.Val
+           ? Node1.Idx.CompareTo(other.Node1.Idx)
+           : Val.CompareTo(other.Val);
+
+    public readonly void Deconstruct(out Node n1, out Node n2, out long val)
     {
-        Parent = [.. Enumerable.Range(0, n)];
-        Size = [.. Enumerable.Repeat(1, n)];
+        n1 = Node1;
+        n2 = Node2;
+        val = Val;
     }
-
-    public int[] Parent { get; }
-    public int[] Size { get; }
-
-    public int Find(int v)
-    {
-        if (Parent[v] != v) { Parent[v] = Find(Parent[v]); }
-        return Parent[v];
-    }
-
-    public void Union(int x, int y)
-    {
-        int rx = Find(x);
-        int ry = Find(y);
-        if (rx == ry) { return; }
-        if (Size[rx] < Size[ry])
-        {
-            Parent[rx] = ry;
-            Size[ry] += Size[rx];
-        }
-        else
-        {
-            Parent[ry] = rx;
-            Size[rx] += Size[ry];
-        }
-    }
-
-    public int GetSize(int v) => Size[Find(v)];
 }
