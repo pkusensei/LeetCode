@@ -9,35 +9,30 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn split_into_fibonacci(num: String) -> Vec<i32> {
-    let mut curr = vec![];
-    if backtrack(&num, &mut curr) {
-        curr.into_iter().map(|v| v as i32).collect()
-    } else {
-        vec![]
-    }
-}
-
-fn backtrack(s: &str, curr: &mut Vec<i64>) -> bool {
-    if s.is_empty() && curr.len() >= 3 {
-        return true;
-    }
-    for end in 1..=s.len() {
-        if end > 1 && s.starts_with('0') {
-            return false;
+pub fn longest_mountain(arr: Vec<i32>) -> i32 {
+    let n = arr.len();
+    let mut res = 0;
+    let mut idx = 0;
+    while idx < n {
+        let start = idx;
+        while arr.get(1 + idx).is_some_and(|&v| v > arr[idx]) {
+            idx += 1;
         }
-        let Ok(num) = s[..end].parse::<i32>() else {
-            return false;
-        };
-        if curr.len() < 2 || curr.iter().rev().take(2).sum::<i64>() == i64::from(num) {
-            curr.push(i64::from(num));
-            if backtrack(&s[end..], curr) {
-                return true;
-            }
-            curr.pop();
+        if start == idx {
+            idx += 1;
+            continue;
         }
+        let mid = idx;
+        while arr.get(1 + idx).is_some_and(|&v| v < arr[idx]) {
+            idx += 1;
+        }
+        if mid == idx {
+            idx += 1;
+            continue;
+        }
+        res = res.max(idx + 1 - start);
     }
-    false
+    res as i32
 }
 
 #[cfg(test)]
