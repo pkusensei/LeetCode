@@ -9,13 +9,29 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_pair_sum(mut nums: Vec<i32>) -> i32 {
-    let n = nums.len();
-    nums.sort_unstable();
-    (0..n / 2)
-        .map(|i| nums[i] + nums[n - i - 1])
-        .max()
-        .unwrap_or_default()
+pub fn shortest_path_length(graph: Vec<Vec<i32>>) -> i32 {
+    use std::collections::VecDeque;
+    let n = graph.len();
+    let mut seen = vec![vec![false; n]; 1 << n];
+    let mut queue = VecDeque::new();
+    for i in 0..n {
+        let mask = 1 << i;
+        queue.push_back((mask, i, 0));
+        seen[mask][i] = true;
+    }
+    while let Some((mask, node, step)) = queue.pop_front() {
+        if mask == (1 << n) - 1 {
+            return step;
+        }
+        for &next in &graph[node] {
+            let nmask = mask | (1 << next);
+            if !seen[nmask][next as usize] {
+                seen[nmask][next as usize] = true;
+                queue.push_back((nmask, next as usize, 1 + step));
+            }
+        }
+    }
+    -1
 }
 
 #[cfg(test)]
