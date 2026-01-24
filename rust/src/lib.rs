@@ -9,33 +9,13 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_n_straight_hand(mut hand: Vec<i32>, group_size: i32) -> bool {
-    use itertools::Itertools;
-    use std::cmp::Reverse;
-    let n = hand.len();
-    let sz = group_size as usize;
-    if n % sz > 0 {
-        return false;
-    }
-    let mut freq = hand.iter().copied().counts();
-    hand.sort_unstable_by_key(|&v| Reverse(v));
-    while let Some(last) = hand.pop() {
-        match freq.get(&last) {
-            None | Some(&0) => continue,
-            Some(&f) => {
-                for d in 0..group_size {
-                    if let Some(v) = freq.get_mut(&(last + d))
-                        && *v >= f
-                    {
-                        *v -= f;
-                    } else {
-                        return false;
-                    };
-                }
-            }
-        }
-    }
-    true
+pub fn min_pair_sum(mut nums: Vec<i32>) -> i32 {
+    let n = nums.len();
+    nums.sort_unstable();
+    (0..n / 2)
+        .map(|i| nums[i] + nums[n - i - 1])
+        .max()
+        .unwrap_or_default()
 }
 
 #[cfg(test)]
