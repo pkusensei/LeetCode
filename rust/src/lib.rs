@@ -9,14 +9,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn shifting_letters(s: String, shifts: Vec<i32>) -> String {
-    let mut s = s.into_bytes();
-    let mut curr = 0;
-    for (b, sh) in s.iter_mut().zip(shifts).rev() {
-        curr = (curr + sh) % 26;
-        *b = ((*b - b'a') + curr as u8) % 26 + b'a';
-    }
-    String::from_utf8(s).unwrap()
+pub fn max_dist_to_closest(seats: Vec<i32>) -> i32 {
+    let mut res = seats.iter().take_while(|&&v| v == 0).count();
+    res = res.max(seats.iter().rev().take_while(|&&v| v == 0).count());
+    seats
+        .chunk_by(|a, b| a == b)
+        .filter_map(|ch| if ch[0] == 0 { Some(ch.len()) } else { None })
+        .map(|v| (1 + v) / 2)
+        .max()
+        .unwrap_or_default()
+        .max(res) as i32
 }
 
 #[cfg(test)]
