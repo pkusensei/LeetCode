@@ -9,16 +9,10 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_difference(mut nums: Vec<i32>, k: i32) -> i32 {
-    nums.sort_unstable();
-    let mut res = i32::MAX;
-    for (i, left) in nums.iter().enumerate() {
-        let Some(right) = nums.get(i + k as usize - 1) else {
-            break;
-        };
-        res = res.min(right - left);
-    }
-    res
+pub fn minimum_prefix_length(nums: Vec<i32>) -> i32 {
+    let n = nums.len();
+    let v = nums.windows(2).rev().take_while(|w| w[0] < w[1]).count();
+    (n - v - 1) as i32
 }
 
 #[cfg(test)]
