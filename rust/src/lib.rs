@@ -9,40 +9,39 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn special_nodes(n: i32, edges: Vec<Vec<i32>>, x: i32, y: i32, z: i32) -> i32 {
-    use itertools::izip;
-    let n = n as usize;
-    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
-        let [a, b] = [0, 1].map(|i| e[i] as usize);
-        acc[a].push(b);
-        acc[b].push(a);
-        acc
-    });
-    let [dx, dy, dz] = [x, y, z].map(|v| bfs(&adj, v as usize));
+pub fn nth_smallest(mut n: i64, k: i32) -> i64 {
+    let mut k = k as usize;
+    let mut memo = vec![vec![-1; 1 + k]; 1 + N];
     let mut res = 0;
-    for (a, b, c) in izip!(dx, dy, dz) {
-        let mut v = [a, b, c];
-        v.sort_unstable();
-        res += i32::from(v[0].pow(2) + v[1].pow(2) == v[2].pow(2));
-    }
-    res
-}
-
-fn bfs(adj: &[Vec<usize>], start: usize) -> Vec<i64> {
-    use std::collections::VecDeque;
-    let n = adj.len();
-    let mut res = vec![-1; n];
-    let mut queue = VecDeque::from([(start, 0)]);
-    res[start] = 0;
-    while let Some((node, step)) = queue.pop_front() {
-        for &next in &adj[node] {
-            if res[next] == -1 {
-                res[next] = 1 + step;
-                queue.push_back((next, 1 + step));
-            }
+    // 1..=N to make dfs/memo easier
+    for bit in (1..=N).rev() {
+        if k == 0 {
+            break;
+        }
+        let f = dfs(bit - 1, k, &mut memo);
+        if f < n {
+            n -= f;
+            res |= 1 << bit;
+            k -= 1;
         }
     }
-    res
+    res >> 1 // offset 1..=N
+}
+
+const N: usize = 50;
+
+fn dfs(idx: usize, k: usize, memo: &mut [Vec<i64>]) -> i64 {
+    if k == 0 {
+        return 1;
+    }
+    if idx == 0 {
+        return 0;
+    }
+    if memo[idx][k] > -1 {
+        return memo[idx][k];
+    }
+    memo[idx][k] = dfs(idx - 1, k, memo) + dfs(idx - 1, k - 1, memo);
+    memo[idx][k]
 }
 
 #[cfg(test)]
@@ -75,7 +74,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(nth_smallest(4, 2), 9);
+        assert_eq!(nth_smallest(3, 1), 4);
+    }
 
     #[test]
     fn test() {}
