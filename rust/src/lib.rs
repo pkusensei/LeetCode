@@ -9,23 +9,40 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn rotate_elements(mut nums: Vec<i32>, k: i32) -> Vec<i32> {
-    use itertools::Itertools;
-    let mut pos = nums.iter().copied().filter(|&v| v >= 0).collect_vec();
-    if pos.is_empty() {
-        return nums;
+pub fn special_nodes(n: i32, edges: Vec<Vec<i32>>, x: i32, y: i32, z: i32) -> i32 {
+    use itertools::izip;
+    let n = n as usize;
+    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
+        let [a, b] = [0, 1].map(|i| e[i] as usize);
+        acc[a].push(b);
+        acc[b].push(a);
+        acc
+    });
+    let [dx, dy, dz] = [x, y, z].map(|v| bfs(&adj, v as usize));
+    let mut res = 0;
+    for (a, b, c) in izip!(dx, dy, dz) {
+        let mut v = [a, b, c];
+        v.sort_unstable();
+        res += i32::from(v[0].pow(2) + v[1].pow(2) == v[2].pow(2));
     }
-    let n = pos.len();
-    let k = k as usize % n;
-    pos.rotate_left(k);
-    let mut i = 0;
-    for v in nums.iter_mut() {
-        if *v >= 0 {
-            *v = pos[i];
-            i += 1;
+    res
+}
+
+fn bfs(adj: &[Vec<usize>], start: usize) -> Vec<i64> {
+    use std::collections::VecDeque;
+    let n = adj.len();
+    let mut res = vec![-1; n];
+    let mut queue = VecDeque::from([(start, 0)]);
+    res[start] = 0;
+    while let Some((node, step)) = queue.pop_front() {
+        for &next in &adj[node] {
+            if res[next] == -1 {
+                res[next] = 1 + step;
+                queue.push_back((next, 1 + step));
+            }
         }
     }
-    nums
+    res
 }
 
 #[cfg(test)]
