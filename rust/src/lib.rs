@@ -9,10 +9,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_prefix_length(nums: Vec<i32>) -> i32 {
-    let n = nums.len();
-    let v = nums.windows(2).rev().take_while(|w| w[0] < w[1]).count();
-    (n - v - 1) as i32
+pub fn rotate_elements(mut nums: Vec<i32>, k: i32) -> Vec<i32> {
+    use itertools::Itertools;
+    let mut pos = nums.iter().copied().filter(|&v| v >= 0).collect_vec();
+    if pos.is_empty() {
+        return nums;
+    }
+    let n = pos.len();
+    let k = k as usize % n;
+    pos.rotate_left(k);
+    let mut i = 0;
+    for v in nums.iter_mut() {
+        if *v >= 0 {
+            *v = pos[i];
+            i += 1;
+        }
+    }
+    nums
 }
 
 #[cfg(test)]
