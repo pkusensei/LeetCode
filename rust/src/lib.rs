@@ -9,39 +9,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn nth_smallest(mut n: i64, k: i32) -> i64 {
-    let mut k = k as usize;
-    let mut memo = vec![vec![-1; 1 + k]; 1 + N];
-    let mut res = 0;
-    // 1..=N to make dfs/memo easier
-    for bit in (1..=N).rev() {
-        if k == 0 {
-            break;
+pub fn minimum_abs_difference(mut arr: Vec<i32>) -> Vec<Vec<i32>> {
+    arr.sort_unstable();
+    let mut d = i32::MAX >> 2;
+    let mut res = vec![];
+    for w in arr.windows(2) {
+        let curr = w[1] - w[0];
+        if curr < d {
+            res.clear();
+            d = curr;
         }
-        let f = dfs(bit - 1, k, &mut memo);
-        if f < n {
-            n -= f;
-            res |= 1 << bit;
-            k -= 1;
+        if curr == d {
+            res.push(w);
         }
     }
-    res >> 1 // offset 1..=N
-}
-
-const N: usize = 50;
-
-fn dfs(idx: usize, k: usize, memo: &mut [Vec<i64>]) -> i64 {
-    if k == 0 {
-        return 1;
-    }
-    if idx == 0 {
-        return 0;
-    }
-    if memo[idx][k] > -1 {
-        return memo[idx][k];
-    }
-    memo[idx][k] = dfs(idx - 1, k, memo) + dfs(idx - 1, k - 1, memo);
-    memo[idx][k]
+    res.iter().map(|w| w.to_vec()).collect()
 }
 
 #[cfg(test)]
@@ -74,10 +56,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(nth_smallest(4, 2), 9);
-        assert_eq!(nth_smallest(3, 1), 4);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
