@@ -9,34 +9,36 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_cost(n: i32, edges: Vec<Vec<i32>>) -> i32 {
-    use std::{cmp::Reverse, collections::BinaryHeap};
-    let n = n as usize;
-    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
+pub fn loud_and_rich(richer: &[[i32; 2]], quiet: &[i32]) -> Vec<i32> {
+    use std::collections::VecDeque;
+    let n = quiet.len();
+    let mut adj = vec![vec![]; n];
+    let mut indegs = vec![0; n];
+    for e in richer.iter() {
         let [a, b] = [0, 1].map(|i| e[i] as usize);
-        acc[a].push((b, e[2]));
-        acc[b].push((a, 2 * e[2]));
-        acc
-    });
-    let mut dists = vec![i32::MAX; n];
-    dists[0] = 0;
-    let mut heap = BinaryHeap::from([(Reverse(0), 0)]);
-    while let Some((Reverse(dist), node)) = heap.pop() {
-        if dist > dists[node] {
-            continue;
-        }
-        if node == n - 1 {
-            return dist;
-        }
-        for &(next, w) in &adj[node] {
-            let cost = dist + w;
-            if cost < dists[next] {
-                dists[next] = cost;
-                heap.push((Reverse(cost), next));
+        adj[a].push(b);
+        indegs[b] += 1;
+    }
+    // (curr_node, curr_min_quiet)
+    let mut queue: VecDeque<_> = indegs
+        .iter()
+        .enumerate()
+        .filter_map(|(i, &v)| if v == 0 { Some((i, i)) } else { None })
+        .collect();
+    let mut res: Vec<_> = (0..n).collect();
+    while let Some((node, min_node)) = queue.pop_front() {
+        res[node] = min_node;
+        for &next in &adj[node] {
+            indegs[next] -= 1;
+            if quiet[min_node] <= quiet[res[next]] {
+                res[next] = min_node;
+            }
+            if indegs[next] == 0 {
+                queue.push_back((next, res[next]));
             }
         }
     }
-    -1
+    res.iter().map(|&v| v as i32).collect()
 }
 
 #[cfg(test)]
@@ -69,7 +71,15 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(
+            loud_and_rich(
+                &[[1, 0], [2, 1], [3, 1], [3, 7], [4, 3], [5, 3], [6, 3]],
+                &[3, 2, 5, 4, 6, 1, 7, 0]
+            ),
+            [5, 5, 2, 5, 4, 5, 6, 7]
+        );
+    }
 
     #[test]
     fn test() {}
