@@ -9,21 +9,34 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_abs_difference(mut arr: Vec<i32>) -> Vec<Vec<i32>> {
-    arr.sort_unstable();
-    let mut d = i32::MAX >> 2;
-    let mut res = vec![];
-    for w in arr.windows(2) {
-        let curr = w[1] - w[0];
-        if curr < d {
-            res.clear();
-            d = curr;
+pub fn min_cost(n: i32, edges: Vec<Vec<i32>>) -> i32 {
+    use std::{cmp::Reverse, collections::BinaryHeap};
+    let n = n as usize;
+    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
+        let [a, b] = [0, 1].map(|i| e[i] as usize);
+        acc[a].push((b, e[2]));
+        acc[b].push((a, 2 * e[2]));
+        acc
+    });
+    let mut dists = vec![i32::MAX; n];
+    dists[0] = 0;
+    let mut heap = BinaryHeap::from([(Reverse(0), 0)]);
+    while let Some((Reverse(dist), node)) = heap.pop() {
+        if dist > dists[node] {
+            continue;
         }
-        if curr == d {
-            res.push(w);
+        if node == n - 1 {
+            return dist;
+        }
+        for &(next, w) in &adj[node] {
+            let cost = dist + w;
+            if cost < dists[next] {
+                dists[next] = cost;
+                heap.push((Reverse(cost), next));
+            }
         }
     }
-    res.iter().map(|w| w.to_vec()).collect()
+    -1
 }
 
 #[cfg(test)]
