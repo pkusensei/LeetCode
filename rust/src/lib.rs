@@ -9,27 +9,47 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn car_fleet(target: i32, position: &[i32], speed: &[i32]) -> i32 {
-    use itertools::{Itertools, izip};
-    use std::cmp::Reverse;
-    let cars = izip!(position.iter(), speed.iter())
-        .map(|(&p, &s)| (p, s))
-        .sorted_unstable_by_key(|(p, _s)| Reverse(*p))
-        .collect_vec();
-    let mut st = vec![];
-    for (pos, sp) in cars {
-        // This car takes `curr` time to reach `target`
-        let curr = f64::from(target - pos) / f64::from(sp);
-        // But the car before this one takes longer
-        // A crash/catch-up happens
-        // Both cars run at same speed and arrive at same time now
-        // In this case `curr` is irrelevant
-        if st.last().is_some_and(|&top| top >= curr) {
-            continue;
+pub fn k_similarity(s1: &str, s2: &str) -> i32 {
+    use itertools::Itertools;
+    use std::collections::{HashSet, VecDeque};
+    let n = s1.len();
+    let [s1, s2] = [&s1, &s2].map(|s| s.bytes().map(|b| b - b'a').collect_vec());
+    let [mask1, mask2] = [&s1, &s2].map(|v| to_mask(v));
+    let mut seen = HashSet::from([mask1]);
+    let mut queue = VecDeque::from([(s1, mask1, 0)]);
+    'out: while let Some((curr_s, curr_mask, step)) = queue.pop_front() {
+        if curr_mask == mask2 {
+            return step;
         }
-        st.push(curr);
+        for i1 in 0..n {
+            if curr_s[i1] != s2[i1] {
+                for i2 in 1 + i1..n {
+                    if curr_s[i2] != s2[i2] && curr_s[i1] == s2[i2] {
+                        let mut temp = curr_s.clone();
+                        temp.swap(i1, i2);
+                        let tmask = to_mask(&temp);
+                        if seen.insert(tmask) {
+                            queue.push_back((temp, tmask, 1 + step));
+                            if curr_s[i2] == s2[i1] {
+                                // swapped pair, best swap possible
+                                continue 'out;
+                            }
+                        }
+                    }
+                }
+                // swapped one slot, shortcut to next one
+                continue 'out;
+                // Further optimization
+                // Record this idx and start from there in next loop
+            }
+        }
     }
-    st.len() as i32
+    -1
+}
+
+fn to_mask(v: &[u8]) -> i64 {
+    const WIDTH: i64 = 3; // 0b111==7
+    v.iter().fold(0, |acc, b| (acc << WIDTH) | i64::from(*b))
 }
 
 #[cfg(test)]
