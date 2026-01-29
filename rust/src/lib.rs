@@ -9,47 +9,43 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn k_similarity(s1: &str, s2: &str) -> i32 {
-    use itertools::Itertools;
-    use std::collections::{HashSet, VecDeque};
-    let n = s1.len();
-    let [s1, s2] = [&s1, &s2].map(|s| s.bytes().map(|b| b - b'a').collect_vec());
-    let [mask1, mask2] = [&s1, &s2].map(|v| to_mask(v));
-    let mut seen = HashSet::from([mask1]);
-    let mut queue = VecDeque::from([(s1, mask1, 0)]);
-    'out: while let Some((curr_s, curr_mask, step)) = queue.pop_front() {
-        if curr_mask == mask2 {
-            return step;
+pub fn with_stach(s: &str) -> i32 {
+    let mut st = vec![0];
+    for b in s.bytes() {
+        if b == b'(' {
+            st.push(0);
+        } else {
+            let last = st.pop().unwrap();
+            let top = st.last_mut().unwrap();
+            *top += if last == 0 { 1 } else { last * 2 };
         }
-        for i1 in 0..n {
-            if curr_s[i1] != s2[i1] {
-                for i2 in 1 + i1..n {
-                    if curr_s[i2] != s2[i2] && curr_s[i1] == s2[i2] {
-                        let mut temp = curr_s.clone();
-                        temp.swap(i1, i2);
-                        let tmask = to_mask(&temp);
-                        if seen.insert(tmask) {
-                            queue.push_back((temp, tmask, 1 + step));
-                            if curr_s[i2] == s2[i1] {
-                                // swapped pair, best swap possible
-                                continue 'out;
-                            }
-                        }
-                    }
-                }
-                // swapped one slot, shortcut to next one
-                continue 'out;
-                // Further optimization
-                // Record this idx and start from there in next loop
+    }
+    st[0]
+}
+
+pub fn score_of_parentheses(s: String) -> i32 {
+    dfs(s.as_bytes())
+}
+
+fn dfs(s: &[u8]) -> i32 {
+    if s.is_empty() {
+        return 0;
+    }
+    if s == b"()" {
+        return 1;
+    }
+    let mut open = 0;
+    for (idx, &b) in s.iter().enumerate() {
+        open += if b == b'(' { 1 } else { -1 };
+        if open == 0 {
+            if idx == s.len() - 1 {
+                return 2 * dfs(&s[1..idx]);
+            } else {
+                return dfs(&s[..=idx]) + dfs(&s[1 + idx..]);
             }
         }
     }
-    -1
-}
-
-fn to_mask(v: &[u8]) -> i64 {
-    const WIDTH: i64 = 3; // 0b111==7
-    v.iter().fold(0, |acc, b| (acc << WIDTH) | i64::from(*b))
+    unreachable!()
 }
 
 #[cfg(test)]
