@@ -18,33 +18,14 @@ pub fn minimum_cost(
     changed: &[&str],
     cost: &[i32],
 ) -> i64 {
-    let n_seg = original.len() * 2;
-    let mut mat = vec![vec![None; n_seg]; n_seg];
-    for i in 0..n_seg {
-        mat[i][i] = Some(0);
-    }
-    let mut global_id = 0;
-    let mut trie = Trie::default();
-    for (a, b, c) in izip!(original.iter(), changed.iter(), cost.iter()) {
-        let [a, b] = [a, b].map(|s| trie.insert(s.bytes().rev(), &mut global_id));
-        let v = mat[a][b].get_or_insert(i64::from(*c));
-        *v = (*v).min(i64::from(*c));
-    }
-    for mid in 0..n_seg {
-        for a in 0..n_seg {
-            let Some(x) = mat[a][mid] else {
-                continue; // SMH this is key to avoid TLE; WTF
-            };
-            for b in 0..n_seg {
-                if let Some(y) = mat[mid][b] {
-                    let v = mat[a][b].get_or_insert(x + y);
-                    *v = (*v).min(x + y);
-                }
-            }
-        }
-    }
-    let n_src = source.len();
-    let mut dp = vec![i64::MAX >> 2; 1 + n_src];
+    let (mat, trie) = preprocess(original, changed, cost);
+    let mat = fw(mat);
+    solve(source, target, trie, mat)
+}
+
+fn solve(source: &str, target: &str, trie: Trie, mat: Vec<Vec<Option<i64>>>) -> i64 {
+    let n = source.len();
+    let mut dp = vec![i64::MAX >> 2; 1 + n];
     dp[0] = 0;
     for (idx, (src, tgt)) in izip!(source.bytes(), target.bytes()).enumerate() {
         if src == tgt {
@@ -68,11 +49,42 @@ pub fn minimum_cost(
             };
         }
     }
-    if dp[n_src] >= i64::MAX >> 2 {
-        -1
-    } else {
-        dp[n_src]
+    if dp[n] >= i64::MAX >> 2 { -1 } else { dp[n] }
+}
+
+// floyd warshall
+fn fw(mut mat: Vec<Vec<Option<i64>>>) -> Vec<Vec<Option<i64>>> {
+    let n = mat.len();
+    for mid in 0..n {
+        for a in 0..n {
+            let Some(x) = mat[a][mid] else {
+                continue; // SMH this is key to avoid TLE; WTF
+            };
+            for b in 0..n {
+                if let Some(y) = mat[mid][b] {
+                    let v = mat[a][b].get_or_insert(x + y);
+                    *v = (*v).min(x + y);
+                }
+            }
+        }
     }
+    mat
+}
+
+fn preprocess(original: &[&str], changed: &[&str], cost: &[i32]) -> (Vec<Vec<Option<i64>>>, Trie) {
+    let n = original.len() * 2;
+    let mut mat = vec![vec![None; n]; n];
+    for i in 0..n {
+        mat[i][i] = Some(0);
+    }
+    let mut global_id = 0;
+    let mut trie = Trie::default();
+    for (a, b, c) in izip!(original.iter(), changed.iter(), cost.iter()) {
+        let [a, b] = [a, b].map(|s| trie.insert(s.bytes().rev(), &mut global_id));
+        let v = mat[a][b].get_or_insert(i64::from(*c));
+        *v = (*v).min(i64::from(*c));
+    }
+    (mat, trie)
 }
 
 #[derive(Default)]
@@ -88,11 +100,13 @@ impl Trie {
             let node = curr.nodes[usize::from(b - b'a')].get_or_insert_default();
             curr = node;
         }
-        if curr.id.is_none() {
+        if let Some(v) = curr.id {
+            v
+        } else {
             curr.id = Some(*global_id);
-            *global_id = *global_id + 1;
+            *global_id += 1;
+            *global_id - 1
         }
-        curr.id.unwrap()
     }
 
     fn find(&self, b: u8) -> Option<&Trie> {
