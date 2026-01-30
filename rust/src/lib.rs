@@ -9,43 +9,96 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn with_stach(s: &str) -> i32 {
-    let mut st = vec![0];
-    for b in s.bytes() {
-        if b == b'(' {
-            st.push(0);
-        } else {
-            let last = st.pop().unwrap();
-            let top = st.last_mut().unwrap();
-            *top += if last == 0 { 1 } else { last * 2 };
-        }
-    }
-    st[0]
-}
+use itertools::izip;
 
-pub fn score_of_parentheses(s: String) -> i32 {
-    dfs(s.as_bytes())
-}
-
-fn dfs(s: &[u8]) -> i32 {
-    if s.is_empty() {
-        return 0;
+pub fn minimum_cost(
+    source: &str,
+    target: &str,
+    original: &[&str],
+    changed: &[&str],
+    cost: &[i32],
+) -> i64 {
+    let n_seg = original.len() * 2;
+    let mut mat = vec![vec![None; n_seg]; n_seg];
+    for i in 0..n_seg {
+        mat[i][i] = Some(0);
     }
-    if s == b"()" {
-        return 1;
+    let mut global_id = 0;
+    let mut trie = Trie::default();
+    for (a, b, c) in izip!(original.iter(), changed.iter(), cost.iter()) {
+        let [a, b] = [a, b].map(|s| trie.insert(s.bytes().rev(), &mut global_id));
+        let v = mat[a][b].get_or_insert(i64::from(*c));
+        *v = (*v).min(i64::from(*c));
     }
-    let mut open = 0;
-    for (idx, &b) in s.iter().enumerate() {
-        open += if b == b'(' { 1 } else { -1 };
-        if open == 0 {
-            if idx == s.len() - 1 {
-                return 2 * dfs(&s[1..idx]);
-            } else {
-                return dfs(&s[..=idx]) + dfs(&s[1 + idx..]);
+    for mid in 0..n_seg {
+        for a in 0..n_seg {
+            let Some(x) = mat[a][mid] else {
+                continue; // SMH this is key to avoid TLE; WTF
+            };
+            for b in 0..n_seg {
+                if let Some(y) = mat[mid][b] {
+                    let v = mat[a][b].get_or_insert(x + y);
+                    *v = (*v).min(x + y);
+                }
             }
         }
     }
-    unreachable!()
+    let n_src = source.len();
+    let mut dp = vec![i64::MAX >> 2; 1 + n_src];
+    dp[0] = 0;
+    for (idx, (src, tgt)) in izip!(source.bytes(), target.bytes()).enumerate() {
+        if src == tgt {
+            dp[1 + idx] = dp[1 + idx].min(dp[idx]);
+        }
+        let mut src_trie = &trie;
+        let mut tgt_trie = &trie;
+        for left in (0..=idx).rev() {
+            if let Some(strie) = src_trie.find(source.as_bytes()[left])
+                && let Some(ttrie) = tgt_trie.find(target.as_bytes()[left])
+            {
+                src_trie = strie;
+                tgt_trie = ttrie;
+                if let Some((a, b)) = strie.id.zip(ttrie.id)
+                    && let Some(v) = mat[a][b]
+                {
+                    dp[1 + idx] = dp[1 + idx].min(dp[left] + v);
+                }
+            } else {
+                break; // no more branch
+            };
+        }
+    }
+    if dp[n_src] >= i64::MAX >> 2 {
+        -1
+    } else {
+        dp[n_src]
+    }
+}
+
+#[derive(Default)]
+struct Trie {
+    nodes: [Option<Box<Trie>>; 26],
+    id: Option<usize>,
+}
+
+impl Trie {
+    fn insert(&mut self, it: impl Iterator<Item = u8>, global_id: &mut usize) -> usize {
+        let mut curr = self;
+        for b in it {
+            let node = curr.nodes[usize::from(b - b'a')].get_or_insert_default();
+            curr = node;
+        }
+        if curr.id.is_none() {
+            curr.id = Some(*global_id);
+            *global_id = *global_id + 1;
+        }
+        curr.id.unwrap()
+    }
+
+    fn find(&self, b: u8) -> Option<&Trie> {
+        let i = usize::from(b - b'a');
+        self.nodes[i].as_deref()
+    }
 }
 
 #[cfg(test)]
@@ -78,7 +131,18 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(
+            minimum_cost(
+                "abcd",
+                "acbe",
+                &["a", "b", "c", "c", "e", "d"],
+                &["b", "c", "b", "e", "b", "e"],
+                &[2, 5, 5, 1, 2, 20]
+            ),
+            28
+        );
+    }
 
     #[test]
     fn test() {}
