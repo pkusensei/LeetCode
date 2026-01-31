@@ -9,28 +9,9 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn mirror_reflection(x: i32, y: i32) -> i32 {
-    let val = lcm(x, y);
-    let [a, b] = [x, y].map(|v| val / v);
-    match [a & 1, b & 1] {
-        [1, 1] => 1,
-        [0, 1] => 0,
-        _ => 2,
-    }
-}
-
-// `x` is side length.
-// `y` is the height where beams hits right wall for first time.
-// lcm(x, y) is the length beams travels before it hits corner.
-// lcm/y is even => beam hits corner on left wall => #2
-// lcm/x is odd => hits #1
-
-const fn gcd(a: i32, b: i32) -> i32 {
-    if a == 0 { b } else { gcd(b % a, a) }
-}
-
-const fn lcm(a: i32, b: i32) -> i32 {
-    a / gcd(a, b) * b
+pub fn next_greatest_letter(letters: Vec<char>, target: char) -> char {
+    let i = letters.partition_point(|&v| v <= target);
+    letters.get(i).copied().unwrap_or(letters[0])
 }
 
 #[cfg(test)]
