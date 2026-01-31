@@ -9,24 +9,39 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn longest_subsequence(nums: &[i32]) -> i32 {
-    let mut res = 0;
-    for bit in 0..31 {
-        let mut lis = vec![];
-        for num in nums
-            .iter()
-            .filter_map(|v| if v & (1 << bit) > 0 { Some(*v) } else { None })
-        {
-            let i = lis.partition_point(|&v| v < num);
-            if i >= lis.len() {
-                lis.push(num);
-            } else {
-                lis[i] = num;
-            }
-        }
-        res = res.max(lis.len())
+pub fn min_partition_score(nums: &[i32], k: i32) -> i64 {
+    let n = nums.len();
+    let k = k as usize;
+    dfs(&nums, 0, k, &mut vec![vec![-1; 1 + k]; n])
+}
+
+fn dfs(nums: &[i32], idx: usize, k: usize, memo: &mut [Vec<i64>]) -> i64 {
+    let n = nums.len();
+    if k == 0 {
+        return if idx >= n { 0 } else { i64::MAX >> 1 };
     }
-    res as i32
+    if idx >= n {
+        return i64::MAX >> 1;
+    }
+    if memo[idx][k] > -1 {
+        return memo[idx][k];
+    }
+    let mut res = i64::MAX >> 1;
+    let mut sum = 0;
+    for i in idx..n {
+        if n - i < k {
+            // not enough numbers
+            break;
+        }
+        sum += i64::from(nums[i]);
+        let curr = sum * (1 + sum) / 2;
+        if curr >= res {
+            break; // future recursion is useless
+        }
+        res = res.min(curr + dfs(nums, 1 + i, k - 1, memo));
+    }
+    memo[idx][k] = res;
+    res
 }
 
 #[cfg(test)]
@@ -59,10 +74,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(min_partition_score(&[1], 1), 1);
+        assert_eq!(min_partition_score(&[5, 1, 2, 1], 2), 25);
+    }
 
     #[test]
-    fn test() {
-        assert_eq!(longest_subsequence(&[1, 1]), 1);
-    }
+    fn test() {}
 }
