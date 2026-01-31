@@ -9,9 +9,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn next_greatest_letter(letters: Vec<char>, target: char) -> char {
-    let i = letters.partition_point(|&v| v <= target);
-    letters.get(i).copied().unwrap_or(letters[0])
+pub fn reverse_by_type(s: String) -> String {
+    let mut s = s.into_bytes();
+    let [mut v1, mut v2] = [vec![], vec![]];
+    for &b in s.iter() {
+        if b.is_ascii_alphabetic() {
+            v1.push(b);
+        } else {
+            v2.push(b);
+        }
+    }
+    for b in s.iter_mut() {
+        if b.is_ascii_alphabetic() {
+            *b = v1.pop().unwrap()
+        } else {
+            *b = v2.pop().unwrap()
+        }
+    }
+    String::from_utf8(s).unwrap()
 }
 
 #[cfg(test)]
