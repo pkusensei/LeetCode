@@ -9,27 +9,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_k(nums: &[i32]) -> i32 {
-    let mut left = 1;
-    let mut right = i64::from(i32::MAX >> 1);
-    while left < right {
-        let mid = left + (right - left) / 2;
-        if non_positive(&nums, mid) <= mid.pow(2) {
-            right = mid;
-        } else {
-            left = 1 + mid
+pub fn longest_subsequence(nums: &[i32]) -> i32 {
+    let mut res = 0;
+    for bit in 0..31 {
+        let mut lis = vec![];
+        for num in nums
+            .iter()
+            .filter_map(|v| if v & (1 << bit) > 0 { Some(*v) } else { None })
+        {
+            let i = lis.partition_point(|&v| v < num);
+            if i >= lis.len() {
+                lis.push(num);
+            } else {
+                lis[i] = num;
+            }
         }
+        res = res.max(lis.len())
     }
-    left as i32
-}
-
-fn non_positive(nums: &[i32], k: i64) -> i64 {
-    nums.iter()
-        .map(|&num| {
-            let num = i64::from(num);
-            num / k + i64::from(num % k > 0)
-        })
-        .sum()
+    res as i32
 }
 
 #[cfg(test)]
@@ -66,6 +63,6 @@ mod tests {
 
     #[test]
     fn test() {
-        assert_eq!(minimum_k(&[1, 1]), 2);
+        assert_eq!(longest_subsequence(&[1, 1]), 1);
     }
 }
