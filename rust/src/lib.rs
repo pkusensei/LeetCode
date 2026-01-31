@@ -9,24 +9,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn reverse_by_type(s: String) -> String {
-    let mut s = s.into_bytes();
-    let [mut v1, mut v2] = [vec![], vec![]];
-    for &b in s.iter() {
-        if b.is_ascii_alphabetic() {
-            v1.push(b);
+pub fn minimum_k(nums: &[i32]) -> i32 {
+    let mut left = 1;
+    let mut right = i64::from(i32::MAX >> 1);
+    while left < right {
+        let mid = left + (right - left) / 2;
+        if non_positive(&nums, mid) <= mid.pow(2) {
+            right = mid;
         } else {
-            v2.push(b);
+            left = 1 + mid
         }
     }
-    for b in s.iter_mut() {
-        if b.is_ascii_alphabetic() {
-            *b = v1.pop().unwrap()
-        } else {
-            *b = v2.pop().unwrap()
-        }
-    }
-    String::from_utf8(s).unwrap()
+    left as i32
+}
+
+fn non_positive(nums: &[i32], k: i64) -> i64 {
+    nums.iter()
+        .map(|&num| {
+            let num = i64::from(num);
+            num / k + i64::from(num % k > 0)
+        })
+        .sum()
 }
 
 #[cfg(test)]
@@ -62,5 +65,7 @@ mod tests {
     fn basics() {}
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(minimum_k(&[1, 1]), 2);
+    }
 }
