@@ -9,9 +9,44 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn final_element(nums: &[i32]) -> i32 {
+pub fn longest_alternating(nums: &[i32]) -> i32 {
     let n = nums.len();
-    nums[0].max(nums[n - 1])
+    let mut left_len = Vec::with_capacity(n);
+    left_len.push([1, 1]);
+    let mut res = 1;
+    // [0] == <
+    // [1] == >
+    for w in nums.windows(2) {
+        let last = left_len.last().unwrap();
+        let curr = match w[0].cmp(&w[1]) {
+            std::cmp::Ordering::Less => [1 + last[1], 1],
+            std::cmp::Ordering::Equal => [1, 1],
+            std::cmp::Ordering::Greater => [1, 1 + last[0]],
+        };
+        res = res.max(curr[0]).max(curr[1]);
+        left_len.push(curr);
+    }
+    let mut right_len = Vec::with_capacity(n);
+    right_len.push([1, 1]);
+    for w in nums.windows(2).rev() {
+        let last = right_len.last().unwrap();
+        let curr = match w[0].cmp(&w[1]) {
+            std::cmp::Ordering::Less => [1 + last[1], 1],
+            std::cmp::Ordering::Equal => [1, 1],
+            std::cmp::Ordering::Greater => [1, 1 + last[0]],
+        };
+        right_len.push(curr);
+    }
+    right_len.reverse();
+    for del in 1..n - 1 {
+        let curr = match nums[del - 1].cmp(&nums[1 + del]) {
+            std::cmp::Ordering::Less => left_len[del - 1][1] + right_len[1 + del][1],
+            std::cmp::Ordering::Equal => 0,
+            std::cmp::Ordering::Greater => left_len[del - 1][0] + right_len[1 + del][0],
+        };
+        res = res.max(curr);
+    }
+    res
 }
 
 #[cfg(test)]
@@ -45,15 +80,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(final_element(&[4, 16, 3, 9]), 9);
-        assert_eq!(final_element(&[1, 5, 2]), 2);
-        assert_eq!(final_element(&[3, 7]), 7);
-        assert_eq!(final_element(&[1, 17, 12, 9]), 9);
+        assert_eq!(longest_alternating(&[3, 2, 1, 2, 3, 2, 1]), 4);
+        assert_eq!(longest_alternating(&[2, 1, 3, 2]), 4);
+        assert_eq!(longest_alternating(&[100000, 100000]), 1);
     }
 
     #[test]
-    fn test() {
-        assert_eq!(final_element(&[22, 26, 16, 3, 20]), 22);
-        assert_eq!(final_element(&[22, 6, 24, 15, 4]), 22);
-    }
+    fn test() {}
 }
