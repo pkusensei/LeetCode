@@ -9,9 +9,14 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_cost(mut nums: Vec<i32>) -> i32 {
-    nums[1..].select_nth_unstable(1);
-    nums[..3].iter().sum()
+pub const fn count_monobit(n: i32) -> i32 {
+    let mut p = 0;
+    let mut res = 0;
+    while (1 << p) - 1 <= n {
+        res += 1;
+        p += 1;
+    }
+    res
 }
 
 #[cfg(test)]
@@ -44,7 +49,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(count_monobit(0), 1);
+        assert_eq!(count_monobit(4), 3);
+    }
 
     #[test]
     fn test() {}
