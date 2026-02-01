@@ -9,39 +9,9 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_partition_score(nums: &[i32], k: i32) -> i64 {
-    let n = nums.len();
-    let k = k as usize;
-    dfs(&nums, 0, k, &mut vec![vec![-1; 1 + k]; n])
-}
-
-fn dfs(nums: &[i32], idx: usize, k: usize, memo: &mut [Vec<i64>]) -> i64 {
-    let n = nums.len();
-    if k == 0 {
-        return if idx >= n { 0 } else { i64::MAX >> 1 };
-    }
-    if idx >= n {
-        return i64::MAX >> 1;
-    }
-    if memo[idx][k] > -1 {
-        return memo[idx][k];
-    }
-    let mut res = i64::MAX >> 1;
-    let mut sum = 0;
-    for i in idx..n {
-        if n - i < k {
-            // not enough numbers
-            break;
-        }
-        sum += i64::from(nums[i]);
-        let curr = sum * (1 + sum) / 2;
-        if curr >= res {
-            break; // future recursion is useless
-        }
-        res = res.min(curr + dfs(nums, 1 + i, k - 1, memo));
-    }
-    memo[idx][k] = res;
-    res
+pub fn minimum_cost(mut nums: Vec<i32>) -> i32 {
+    nums[1..].select_nth_unstable(1);
+    nums[..3].iter().sum()
 }
 
 #[cfg(test)]
@@ -74,10 +44,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(min_partition_score(&[1], 1), 1);
-        assert_eq!(min_partition_score(&[5, 1, 2, 1], 2), 25);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
