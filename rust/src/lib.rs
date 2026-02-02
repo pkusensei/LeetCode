@@ -9,113 +9,102 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-use std::{
-    cmp::Reverse,
-    collections::{BinaryHeap, HashSet},
-};
-type MinHeap = BinaryHeap<(Reverse<i64>, usize)>;
-type MaxHeap = BinaryHeap<(i64, usize)>;
+use std::collections::BTreeMap;
 
-pub fn slide_with_heap(nums: &[i64], k: usize, size: usize) -> i64 {
-    let mut res = i64::MAX >> 1;
-    // Currently used in computing cost
-    let mut max_heap = MaxHeap::new();
-    // Candidates available
-    let mut min_heap = MinHeap::new();
-    let mut used = HashSet::new();
+pub fn slide_with_multiset(nums: &[i64], k: usize, size: usize) -> i64 {
+    let mut used = MultiSet::default();
+    let mut candids = MultiSet::default();
     let mut curr = 0;
-    for (right, &num) in nums.iter().enumerate() {
-        if let Some(left) = right.checked_sub(size)
-            && used.remove(&left)
-        {
-            // [left] is out of window
-            // but it is used in calculation
-            curr = drop_left(nums, &mut max_heap, &mut min_heap, &mut used, left, curr)
-        }
-        if used.len() < k {
-            // Not enough numbers
-            // Add in right boundary to maintain valid window
-            curr = add_right(&mut max_heap, &mut used, num, right, curr);
+    for &num in &nums[..size] {
+        curr += num;
+        used.insert(num);
+    }
+    curr = balance(&mut used, &mut candids, k, curr);
+    let mut res = curr;
+    for (right, &num) in nums.iter().enumerate().skip(size) {
+        let del = nums[right - size];
+        if used.remove(del) {
+            curr -= del;
         } else {
-            while let Some(top) = max_heap.peek()
-                && !used.contains(&top.1)
-            {
-                max_heap.pop(); // pop unused
-            }
-            if let Some(top) = max_heap.peek()
-                && top.0 > num
-            {
-                // [right]<top
-                curr = balance(&mut max_heap, &mut min_heap, &mut used, num, right, curr)
-            } else {
-                min_heap.push((Reverse(num), right));
-            }
+            candids.remove(del);
         }
-        if right >= size - 1 {
-            res = res.min(curr);
+        if used.back().is_some_and(|&v| v > num) {
+            curr += num;
+            used.insert(num);
+        } else {
+            candids.insert(num);
         }
+        curr = balance(&mut used, &mut candids, k, curr);
+        res = res.min(curr);
     }
     res
 }
 
-fn balance(
-    max_heap: &mut MaxHeap,
-    min_heap: &mut MinHeap,
-    used: &mut HashSet<usize>,
-    num: i64,
-    right: usize,
-    curr: i64,
-) -> i64 {
-    // Move top into candidates
-    // Add in [right]
-    let top = max_heap.pop().unwrap();
-    min_heap.push((Reverse(top.0), top.1));
-    used.remove(&top.1);
-    max_heap.push((num, right));
-    used.insert(right);
-    curr + num - top.0
-}
-
-fn add_right(
-    max_heap: &mut MaxHeap,
-    used: &mut HashSet<usize>,
-    num: i64,
-    right: usize,
-    curr: i64,
-) -> i64 {
-    used.insert(right);
-    max_heap.push((num, right));
-    curr + num
-}
-
-fn drop_left(
-    nums: &[i64],
-    max_heap: &mut MaxHeap,
-    min_heap: &mut MinHeap,
-    used: &mut HashSet<usize>,
-    left: usize,
-    mut curr: i64,
-) -> i64 {
-    curr -= nums[left];
-    // Remove elements outside window from candidates
-    while let Some((_, i)) = min_heap.peek()
-        && *i < left
-    {
-        min_heap.pop();
+fn balance(used: &mut MultiSet, candids: &mut MultiSet, k: usize, mut curr: i64) -> i64 {
+    while used.len < k {
+        let Some(v) = candids.pop_front() else {
+            return curr;
+        };
+        used.insert(v);
+        curr += v;
     }
-    // Can still find a small element
-    if let Some((Reverse(top), i)) = min_heap.pop() {
-        used.insert(i);
-        curr += top;
-        max_heap.push((top, i));
+    while used.len > k {
+        let v = used.pop_back().unwrap();
+        candids.insert(v);
+        curr -= v;
     }
     curr
+}
+
+#[derive(Default)]
+struct MultiSet {
+    map: BTreeMap<i64, i32>,
+    len: usize,
+}
+
+impl MultiSet {
+    fn insert(&mut self, num: i64) {
+        *self.map.entry(num).or_insert(0) += 1;
+        self.len += 1;
+    }
+
+    fn remove(&mut self, num: i64) -> bool {
+        let Some(v) = self.map.get_mut(&num) else {
+            return false;
+        };
+        *v -= 1;
+        if *v == 0 {
+            self.map.remove(&num);
+        }
+        self.len -= 1;
+        true
+    }
+
+    fn front(&self) -> Option<&i64> {
+        self.map.first_key_value().map(|(k, _)| k)
+    }
+
+    fn back(&self) -> Option<&i64> {
+        self.map.last_key_value().map(|(k, _)| k)
+    }
+
+    fn pop_front(&mut self) -> Option<i64> {
+        let Some(&v) = self.front() else { return None };
+        self.remove(v);
+        Some(v)
+    }
+
+    fn pop_back(&mut self) -> Option<i64> {
+        let Some(&v) = self.back() else { return None };
+        self.remove(v);
+        Some(v)
+    }
 }
 
 pub fn minimum_cost(nums: &[i32], k: i32, dist: i32) -> i64 {
     let [k, dist] = [k, dist].map(|v| v as usize);
     let res = i64::from(nums[0]);
-    res + slide_with_heap(
+    res + slide_with_multiset(
         &nums[1..].iter().map(|&v| i64::from(v)).collect::<Vec<_>>(),
         k - 1,
         1 + dist,
@@ -153,9 +142,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(slide_with_heap(&[3, 2, 6, 4, 2], 2, 4), 4);
-        assert_eq!(slide_with_heap(&[1, 2, 2, 2, 1], 3, 4), 5);
-        assert_eq!(slide_with_heap(&[8, 18, 9], 2, 2), 26);
+        assert_eq!(slide_with_multiset(&[3, 2, 6, 4, 2], 2, 4), 4);
+        assert_eq!(slide_with_multiset(&[1, 2, 2, 2, 1], 3, 4), 5);
+        assert_eq!(slide_with_multiset(&[8, 18, 9], 2, 2), 26);
 
         assert_eq!(minimum_cost(&[1, 3, 2, 6, 4, 2], 3, 3), 5);
         assert_eq!(minimum_cost(&[10, 1, 2, 2, 2, 1], 4, 3), 15);
