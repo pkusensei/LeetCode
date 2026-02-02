@@ -9,120 +9,117 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-use std::{cmp::Reverse, collections::BinaryHeap};
+use std::{
+    cmp::Reverse,
+    collections::{BinaryHeap, HashSet},
+};
 type MinHeap = BinaryHeap<(Reverse<i64>, usize)>;
 type MaxHeap = BinaryHeap<(i64, usize)>;
 
-pub fn minimum_cost(nums: &[i32], k: i32, dist: i32) -> i64 {
-    let n = nums.len();
-    let [k, dist] = [k, dist].map(|v| v as usize);
+pub fn slide_with_heap(nums: &[i64], k: usize, size: usize) -> i64 {
     let mut res = i64::MAX >> 1;
+    // Currently used in computing cost
     let mut max_heap = MaxHeap::new();
+    // Candidates available
     let mut min_heap = MinHeap::new();
-    let mut used = vec![false; n];
-    let mut used_count = 0;
-    let mut curr = 0_i64;
-    for (right, &num) in nums.iter().enumerate().skip(1) {
-        let num = i64::from(num);
-        // Fix window size right-(1+left)=dist
-        // left is one prior to window
-        let left = right.checked_sub(1 + dist);
-        if let Some(left) = left
-            && left > 0
-            && used[left]
+    let mut used = HashSet::new();
+    let mut curr = 0;
+    for (right, &num) in nums.iter().enumerate() {
+        if let Some(left) = right.checked_sub(size)
+            && used.remove(&left)
         {
-            curr = drop_left(
-                nums,
-                &mut max_heap,
-                &mut min_heap,
-                &mut used,
-                &mut used_count,
-                curr,
-                left,
-            );
+            // [left] is out of window
+            // but it is used in calculation
+            curr = drop_left(nums, &mut max_heap, &mut min_heap, &mut used, left, curr)
         }
-        if used_count < k - 1 {
-            // Use right boundary
-            curr = add_right(&mut max_heap, &mut used, &mut used_count, curr, right, num);
+        if used.len() < k {
+            // Not enough numbers
+            // Add in right boundary to maintain valid window
+            curr = add_right(&mut max_heap, &mut used, num, right, curr);
         } else {
             while let Some(top) = max_heap.peek()
-                && !used[top.1]
+                && !used.contains(&top.1)
             {
                 max_heap.pop(); // pop unused
             }
-            if let Some(&top) = max_heap.peek()
+            if let Some(top) = max_heap.peek()
                 && top.0 > num
             {
-                // [right]<top(max_heap)
-                curr = balance(&mut max_heap, &mut min_heap, &mut used, curr, right, num);
+                // [right]<top
+                curr = balance(&mut max_heap, &mut min_heap, &mut used, num, right, curr)
             } else {
-                // Add to candidates
                 min_heap.push((Reverse(num), right));
             }
         }
-        if left.is_some() {
+        if right >= size - 1 {
             res = res.min(curr);
         }
     }
-    res + i64::from(nums[0])
+    res
 }
 
 fn balance(
     max_heap: &mut MaxHeap,
     min_heap: &mut MinHeap,
-    used: &mut Vec<bool>,
-    mut curr: i64,
-    right: usize,
+    used: &mut HashSet<usize>,
     num: i64,
+    right: usize,
+    curr: i64,
 ) -> i64 {
+    // Move top into candidates
+    // Add in [right]
     let top = max_heap.pop().unwrap();
     min_heap.push((Reverse(top.0), top.1));
-    used[top.1] = false;
+    used.remove(&top.1);
     max_heap.push((num, right));
-    used[right] = true;
-    curr += num - top.0;
-    curr
+    used.insert(right);
+    curr + num - top.0
 }
 
 fn add_right(
     max_heap: &mut MaxHeap,
-    used: &mut [bool],
-    used_count: &mut usize,
-    curr: i64,
-    right: usize,
+    used: &mut HashSet<usize>,
     num: i64,
+    right: usize,
+    curr: i64,
 ) -> i64 {
-    used[right] = true;
-    *used_count += 1;
+    used.insert(right);
     max_heap.push((num, right));
     curr + num
 }
 
 fn drop_left(
-    nums: &[i32],
+    nums: &[i64],
     max_heap: &mut MaxHeap,
     min_heap: &mut MinHeap,
-    used: &mut [bool],
-    used_count: &mut usize,
-    mut curr: i64,
+    used: &mut HashSet<usize>,
     left: usize,
+    mut curr: i64,
 ) -> i64 {
-    used[left] = false;
-    *used_count -= 1;
-    curr -= i64::from(nums[left]);
+    curr -= nums[left];
+    // Remove elements outside window from candidates
     while let Some((_, i)) = min_heap.peek()
         && *i < left
     {
         min_heap.pop();
     }
-    // Find min unused num in window
+    // Can still find a small element
     if let Some((Reverse(top), i)) = min_heap.pop() {
-        used[i] = true;
-        *used_count += 1;
+        used.insert(i);
         curr += top;
         max_heap.push((top, i));
     }
     curr
+}
+
+pub fn minimum_cost(nums: &[i32], k: i32, dist: i32) -> i64 {
+    let [k, dist] = [k, dist].map(|v| v as usize);
+    let res = i64::from(nums[0]);
+    res + slide_with_heap(
+        &nums[1..].iter().map(|&v| i64::from(v)).collect::<Vec<_>>(),
+        k - 1,
+        1 + dist,
+    )
 }
 
 #[cfg(test)]
@@ -156,6 +153,10 @@ mod tests {
 
     #[test]
     fn basics() {
+        assert_eq!(slide_with_heap(&[3, 2, 6, 4, 2], 2, 4), 4);
+        assert_eq!(slide_with_heap(&[1, 2, 2, 2, 1], 3, 4), 5);
+        assert_eq!(slide_with_heap(&[8, 18, 9], 2, 2), 26);
+
         assert_eq!(minimum_cost(&[1, 3, 2, 6, 4, 2], 3, 3), 5);
         assert_eq!(minimum_cost(&[10, 1, 2, 2, 2, 1], 4, 3), 15);
         assert_eq!(minimum_cost(&[10, 8, 18, 9], 3, 1), 36);
