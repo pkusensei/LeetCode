@@ -8,17 +8,25 @@ namespace Solution;
 
 public class Solution
 {
-    public int PeakIndexInMountainArray(int[] arr)
+    public bool IsTrionic(int[] nums)
     {
-        int left = 0;
-        int right = arr.Length - 1;
-        while (left < right)
+        int prev = -1;
+        int res = 0;
+        foreach (var item in nums.Zip(nums.Skip(1)).Select(v => v.Second - v.First))
         {
-            int mid = left + (right - left) / 2;
-            if (arr[mid - 1] < arr[mid] && arr[mid] < arr[1 + mid]) { left = mid; }
-            else if (arr[mid - 1] > arr[mid] && arr[mid] > arr[1 + mid]) { right = mid; }
-            else { return mid; }
+            int curr = item switch
+            {
+                > 0 => 1,
+                < 0 => -1,
+                0 => 0
+            };
+            if (curr == 0) { return false; }
+            if (prev != curr)
+            {
+                res += 1;
+                prev = curr;
+            }
         }
-        return -1;
+        return res == 3 && nums[0] < nums[1];
     }
 }
