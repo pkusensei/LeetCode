@@ -8,29 +8,29 @@ mod trie;
 
 #[allow(unused_imports)]
 use helper::*;
+use itertools::izip;
 
-pub fn max_sum_trionic(nums: &[i32]) -> i64 {
-    let mut res = i64::MIN;
-    // [start, inc, inc_dec, dec_inc]
-    let mut dp = [i64::MIN >> 1; 4];
-    dp[0] = i64::from(nums[0]);
-    for w in nums.windows(2) {
-        let mut curr = [i64::MIN >> 1; 4];
-        let num = i64::from(w[1]);
-        curr[0] = num; // Attempt to start here
-        match w[0].cmp(&w[1]) {
-            std::cmp::Ordering::Less => {
-                curr[1] = num + dp[1].max(dp[0]);
-                curr[3] = num + dp[3].max(dp[2]);
-                curr[0] = num.max(num + dp[0]); // Sneak in Kadane's algo
-            }
-            std::cmp::Ordering::Equal => (), // reset streak
-            std::cmp::Ordering::Greater => curr[2] = num + dp[2].max(dp[1]),
-        }
-        dp = curr;
-        res = res.max(dp[3]);
+pub fn buddy_strings(s: String, goal: String) -> bool {
+    if s.len() != goal.len() {
+        return false;
     }
-    res
+    if s == goal {
+        let mut seen = 0;
+        for b in s.bytes() {
+            let i = b - b'a';
+            if seen & (1 << i) > 0 {
+                return true;
+            }
+            seen |= 1 << i;
+        }
+        false
+    } else {
+        let mut it = izip!(s.bytes(), goal.bytes()).filter(|(a, b)| a != b);
+        let (Some(a), Some(b)) = (it.next(), it.next()) else {
+            return false;
+        };
+        it.next().is_none() && a.0 == b.1 && a.1 == b.0
+    }
 }
 
 #[cfg(test)]
@@ -66,10 +66,5 @@ mod tests {
     fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(
-            max_sum_trionic(&[-754, 167, -172, 202, 735, -941, 992]),
-            988
-        );
-    }
+    fn test() {}
 }
