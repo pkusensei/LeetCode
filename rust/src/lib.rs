@@ -8,29 +8,34 @@ mod trie;
 
 #[allow(unused_imports)]
 use helper::*;
-use itertools::izip;
 
-pub fn buddy_strings(s: String, goal: String) -> bool {
-    if s.len() != goal.len() {
-        return false;
-    }
-    if s == goal {
-        let mut seen = 0;
-        for b in s.bytes() {
-            let i = b - b'a';
-            if seen & (1 << i) > 0 {
-                return true;
+pub fn lemonade_change(bills: &[i32]) -> bool {
+    let mut freq = [0; 2];
+    for num in bills {
+        match num {
+            5 => freq[0] += 1,
+            10 => {
+                freq[1] += 1;
+                freq[0] -= 1;
+                if freq[0] < 0 {
+                    return false;
+                }
             }
-            seen |= 1 << i;
+            20 => {
+                if freq[1] > 0 {
+                    freq[1] -= 1;
+                    freq[0] -= 1;
+                } else {
+                    freq[0] -= 3
+                }
+                if freq.iter().any(|&v| v < 0) {
+                    return false;
+                }
+            }
+            _ => (),
         }
-        false
-    } else {
-        let mut it = izip!(s.bytes(), goal.bytes()).filter(|(a, b)| a != b);
-        let (Some(a), Some(b)) = (it.next(), it.next()) else {
-            return false;
-        };
-        it.next().is_none() && a.0 == b.1 && a.1 == b.0
     }
+    true
 }
 
 #[cfg(test)]
@@ -66,5 +71,7 @@ mod tests {
     fn basics() {}
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert!(lemonade_change(&[5, 5, 10, 10, 5, 20, 5, 10, 5, 5]))
+    }
 }
