@@ -8,48 +8,31 @@ namespace Solution;
 
 public class Solution
 {
-    public int ShortestSubarray(int[] nums, int k)
+    public IList<int> DistanceK(TreeNode root, TreeNode target, int k)
     {
-        int n = nums.Length;
-        int res = 1 + n;
-        PriorityQueue<(int i, long sum), long> pq = new();
-        long curr = 0;
-        for (int i = 0; i < n; i++)
-        {
-            curr += nums[i];
-            if (curr >= k) { res = int.Min(res, 1 + i); }
-            while (pq.TryPeek(out _, out long prio) && curr - prio >= k)
-            {
-                (int prev, _) = pq.Dequeue();
-                res = int.Min(res, i - prev);
-            }
-            pq.Enqueue((i, curr), curr);
-        }
-        return res > n ? -1 : res;
-    }
+        TreeNode[] parents = new TreeNode[501];
+        FindParent(root, null);
+        List<int> res = [];
+        bool[] seen = new bool[501];
+        Dfs(target, k);
+        return res;
 
-    public int WithDeque(int[] nums, int k)
-    {
-        int n = nums.Length;
-        int res = 1 + n;
-        LinkedList<(int i, long sum)> queue = new();
-        long curr = 0;
-        for (int i = 0; i < n; i++)
+        void Dfs(TreeNode node, int k)
         {
-            curr += nums[i];
-            if (curr >= k) { res = int.Min(res, 1 + i); }
-            while (queue.Last is not null && queue.Last.Value.sum >= curr)
-            {
-                queue.RemoveLast();
-            }
-            while (queue.First is not null && curr - queue.First.Value.sum >= k)
-            {
-                int prev = queue.First.Value.i;
-                res = int.Min(res, i - prev);
-                queue.RemoveFirst();
-            }
-            queue.AddLast((i, curr));
+            if (node is null || seen[node.val]) { return; }
+            seen[node.val] = true;
+            if (k == 0) { res.Add(node.val); }
+            Dfs(node.left, k - 1);
+            Dfs(node.right, k - 1);
+            if (parents[node.val] is TreeNode n) { Dfs(n, k - 1); }
         }
-        return res > n ? -1 : res;
+
+        void FindParent(TreeNode node, TreeNode parent)
+        {
+            if (node is null) { return; }
+            parents[node.val] = parent;
+            FindParent(node.left, node);
+            FindParent(node.right, node);
+        }
     }
 }
