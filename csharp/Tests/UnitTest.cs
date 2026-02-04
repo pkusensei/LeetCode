@@ -10,10 +10,12 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(2, new[] { 5, 2, 3, 1 })]
-    public void TestMethod1(int exp, int[] nums)
+    [DataRow(1, new[] { 1 }, 1)]
+    [DataRow(2, new[] { 17, 85, 93, -45, -21 }, 150)]
+    public void TestMethod1(int exp, int[] nums, int k)
     {
-        Assert.AreEqual(exp, sol.MinimumPairRemoval(nums));
+        Assert.AreEqual(exp, sol.ShortestSubarray(nums, k));
+        Assert.AreEqual(exp, sol.WithDeque(nums, k));
     }
 
     [TestMethod]

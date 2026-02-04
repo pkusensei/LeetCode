@@ -8,25 +8,48 @@ namespace Solution;
 
 public class Solution
 {
-    public bool IsTrionic(int[] nums)
+    public int ShortestSubarray(int[] nums, int k)
     {
-        int prev = -1;
-        int res = 0;
-        foreach (var item in nums.Zip(nums.Skip(1)).Select(v => v.Second - v.First))
+        int n = nums.Length;
+        int res = 1 + n;
+        PriorityQueue<(int i, long sum), long> pq = new();
+        long curr = 0;
+        for (int i = 0; i < n; i++)
         {
-            int curr = item switch
+            curr += nums[i];
+            if (curr >= k) { res = int.Min(res, 1 + i); }
+            while (pq.TryPeek(out _, out long prio) && curr - prio >= k)
             {
-                > 0 => 1,
-                < 0 => -1,
-                0 => 0
-            };
-            if (curr == 0) { return false; }
-            if (prev != curr)
-            {
-                res += 1;
-                prev = curr;
+                (int prev, _) = pq.Dequeue();
+                res = int.Min(res, i - prev);
             }
+            pq.Enqueue((i, curr), curr);
         }
-        return res == 3 && nums[0] < nums[1];
+        return res > n ? -1 : res;
+    }
+
+    public int WithDeque(int[] nums, int k)
+    {
+        int n = nums.Length;
+        int res = 1 + n;
+        LinkedList<(int i, long sum)> queue = new();
+        long curr = 0;
+        for (int i = 0; i < n; i++)
+        {
+            curr += nums[i];
+            if (curr >= k) { res = int.Min(res, 1 + i); }
+            while (queue.Last is not null && queue.Last.Value.sum >= curr)
+            {
+                queue.RemoveLast();
+            }
+            while (queue.First is not null && curr - queue.First.Value.sum >= k)
+            {
+                int prev = queue.First.Value.i;
+                res = int.Min(res, i - prev);
+                queue.RemoveFirst();
+            }
+            queue.AddLast((i, curr));
+        }
+        return res > n ? -1 : res;
     }
 }
