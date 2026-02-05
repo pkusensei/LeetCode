@@ -9,33 +9,14 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn lemonade_change(bills: &[i32]) -> bool {
-    let mut freq = [0; 2];
-    for num in bills {
-        match num {
-            5 => freq[0] += 1,
-            10 => {
-                freq[1] += 1;
-                freq[0] -= 1;
-                if freq[0] < 0 {
-                    return false;
-                }
-            }
-            20 => {
-                if freq[1] > 0 {
-                    freq[1] -= 1;
-                    freq[0] -= 1;
-                } else {
-                    freq[0] -= 3
-                }
-                if freq.iter().any(|&v| v < 0) {
-                    return false;
-                }
-            }
-            _ => (),
-        }
+pub fn construct_transformed_array(nums: Vec<i32>) -> Vec<i32> {
+    let n = nums.len();
+    let mut res = vec![0; n];
+    for i in 0..n {
+        let ti = (i as i32 + nums[i]).rem_euclid(n as i32) as usize;
+        res[i] = nums[ti];
     }
-    true
+    res
 }
 
 #[cfg(test)]
@@ -71,7 +52,5 @@ mod tests {
     fn basics() {}
 
     #[test]
-    fn test() {
-        assert!(lemonade_change(&[5, 5, 10, 10, 5, 20, 5, 10, 5, 5]))
-    }
+    fn test() {}
 }
