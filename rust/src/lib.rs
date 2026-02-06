@@ -9,14 +9,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn construct_transformed_array(nums: Vec<i32>) -> Vec<i32> {
+pub fn min_removal(mut nums: Vec<i32>, k: i32) -> i32 {
     let n = nums.len();
-    let mut res = vec![0; n];
-    for i in 0..n {
-        let ti = (i as i32 + nums[i]).rem_euclid(n as i32) as usize;
-        res[i] = nums[ti];
+    let k = i64::from(k);
+    nums.sort_unstable();
+    let mut res = 0;
+    let mut right = 0;
+    for (left, &num) in nums.iter().enumerate() {
+        while let Some(&v) = nums.get(right)
+            && i64::from(v) <= k * i64::from(num)
+        {
+            right += 1;
+        }
+        res = res.max(right - left);
     }
-    res
+    (n - res) as i32
 }
 
 #[cfg(test)]
