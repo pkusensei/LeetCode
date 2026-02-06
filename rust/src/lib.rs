@@ -9,21 +9,58 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_removal(mut nums: Vec<i32>, k: i32) -> i32 {
-    let n = nums.len();
-    let k = i64::from(k);
-    nums.sort_unstable();
-    let mut res = 0;
-    let mut right = 0;
-    for (left, &num) in nums.iter().enumerate() {
-        while let Some(&v) = nums.get(right)
-            && i64::from(v) <= k * i64::from(num)
-        {
-            right += 1;
+pub fn shortest_path_all_keys(grid: &[&str]) -> i32 {
+    use std::collections::VecDeque;
+    let [rows, cols] = get_dimensions(&grid);
+    let mut keys = 0;
+    let mut start = [0, 0];
+    for (r, row) in grid.iter().enumerate() {
+        for (c, b) in row.bytes().enumerate() {
+            if b.is_ascii_lowercase() {
+                keys += 1;
+            }
+            if b == b'@' {
+                start = [r, c];
+            }
         }
-        res = res.max(right - left);
     }
-    (n - res) as i32
+    let mut seen = vec![vec![vec![false; 1 << keys]; cols]; rows];
+    seen[start[0]][start[1]][0] = true;
+    let mut queue = VecDeque::from([(start[0], start[1], 0, 0)]);
+    while let Some((r, c, mask, step)) = queue.pop_front() {
+        if mask == (1 << keys) - 1 {
+            return step;
+        }
+        for [nr, nc] in neighbors([r, c]) {
+            let Some(b) = grid.get(nr).and_then(|row| row.as_bytes().get(nc)) else {
+                continue;
+            };
+            match b {
+                b'.' | b'@' if !seen[nr][nc][mask] => {
+                    seen[nr][nc][mask] = true;
+                    queue.push_back((nr, nc, mask, 1 + step));
+                }
+                b if b.is_ascii_lowercase() => {
+                    let nmask = mask | (1 << (b - b'a'));
+                    if !seen[nr][nc][nmask] {
+                        seen[nr][nc][nmask] = true;
+                        queue.push_back((nr, nc, nmask, 1 + step));
+                    }
+                }
+                b if b.is_ascii_uppercase() => {
+                    if mask & (1 << (b - b'A')) == 0 {
+                        continue;
+                    }
+                    if !seen[nr][nc][mask] {
+                        seen[nr][nc][mask] = true;
+                        queue.push_back((nr, nc, mask, 1 + step));
+                    }
+                }
+                _ => (),
+            }
+        }
+    }
+    -1
 }
 
 #[cfg(test)]
@@ -59,5 +96,7 @@ mod tests {
     fn basics() {}
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(shortest_path_all_keys(&["@...a", ".###A", "b.BCc"]), 10);
+    }
 }
