@@ -8,31 +8,18 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<int> DistanceK(TreeNode root, TreeNode target, int k)
+    public TreeNode SubtreeWithAllDeepest(TreeNode root)
     {
-        TreeNode[] parents = new TreeNode[501];
-        FindParent(root, null);
-        List<int> res = [];
-        bool[] seen = new bool[501];
-        Dfs(target, k);
-        return res;
+        return Dfs(root, 0).Item1;
 
-        void Dfs(TreeNode node, int k)
+        static (TreeNode, int) Dfs(TreeNode node, int depth)
         {
-            if (node is null || seen[node.val]) { return; }
-            seen[node.val] = true;
-            if (k == 0) { res.Add(node.val); }
-            Dfs(node.left, k - 1);
-            Dfs(node.right, k - 1);
-            if (parents[node.val] is TreeNode n) { Dfs(n, k - 1); }
-        }
-
-        void FindParent(TreeNode node, TreeNode parent)
-        {
-            if (node is null) { return; }
-            parents[node.val] = parent;
-            FindParent(node.left, node);
-            FindParent(node.right, node);
+            if (node is null) { return (null, depth); }
+            var (left, d1) = Dfs(node.left, 1 + depth);
+            var (right, d2) = Dfs(node.right, 1 + depth);
+            if (d1 < d2) { return (right, d2); }
+            else if (d1 > d2) { return (left, d1); }
+            else { return (node, d1); }
         }
     }
 }
