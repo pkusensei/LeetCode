@@ -9,36 +9,78 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn prime_palindrome(n: i32) -> i32 {
-    if (8..=11).contains(&n) {
-        return 11;
-    }
-    for a in 1..=100_000 {
-        let mut s = a.to_string();
-        let rev = s.chars().rev().skip(1).collect::<String>();
-        s.push_str(&rev);
-        if let Ok(num) = s.parse()
-            && num >= n
-            && check(num)
-        {
-            return num;
+pub fn with_stack(s: &str) -> i32 {
+    let mut res = 0;
+    let mut st = vec![];
+    for b in s.bytes() {
+        if b == b'a' && st.last().is_some_and(|v| *v == b'b') {
+            st.pop();
+            res += 1;
+        } else {
+            st.push(b);
         }
     }
-    -1
+    res
 }
 
-const fn check(num: i32) -> bool {
-    if num <= 2 || num & 1 == 0 {
-        return num == 2;
+pub fn with_prefix_suffix(s: &str) -> i32 {
+    let mut count_a = 0;
+    let mut suf_a = vec![];
+    // count of 'a' after this idx
+    for b in s.bytes().rev() {
+        suf_a.push(count_a);
+        count_a += i32::from(b == b'a');
     }
-    let mut p = 3;
-    while p * p <= num {
-        if num % p == 0 {
-            return false;
+    suf_a.reverse();
+    let mut res = s.len() as i32;
+    let mut count_b = 0;
+    for (b, count_a) in s.bytes().zip(suf_a) {
+        res = res.min(count_a + count_b);
+        count_b += i32::from(b == b'b');
+    }
+    res
+}
+
+pub fn with_prefix_suffix_opt(s: &str) -> i32 {
+    let mut count_a = s.bytes().filter(|&b| b == b'a').count() as i32;
+    let mut res = s.len() as i32;
+    let mut count_b = 0;
+    for b in s.bytes() {
+        // 'a' to the right
+        count_a -= i32::from(b == b'a');
+        res = res.min(count_a + count_b);
+        // 'b' to the left
+        count_b += i32::from(b == b'b');
+    }
+    res
+}
+
+pub fn with_dp(s: &str) -> i32 {
+    let n = s.len();
+    let mut dp = vec![0; 1 + n];
+    let mut count_b = 0;
+    for (i, b) in s.bytes().enumerate() {
+        if b == b'b' {
+            dp[1 + i] = dp[i];
+            count_b += 1;
+        } else {
+            dp[1 + i] = (1 + dp[i]).min(count_b);
         }
-        p += 2;
     }
-    true
+    dp[n]
+}
+
+pub fn with_dp_opt(s: &str) -> i32 {
+    let mut res = 0;
+    let mut count_b = 0;
+    for b in s.bytes() {
+        if b == b'b' {
+            count_b += 1;
+        } else {
+            res = (1 + res).min(count_b);
+        }
+    }
+    res
 }
 
 #[cfg(test)]
@@ -71,7 +113,22 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(with_stack("aababbab"), 2);
+        assert_eq!(with_stack("bbaaaaabb"), 2);
+
+        assert_eq!(with_prefix_suffix("aababbab"), 2);
+        assert_eq!(with_prefix_suffix("bbaaaaabb"), 2);
+
+        assert_eq!(with_prefix_suffix_opt("aababbab"), 2);
+        assert_eq!(with_prefix_suffix_opt("bbaaaaabb"), 2);
+
+        assert_eq!(with_dp("aababbab"), 2);
+        assert_eq!(with_dp("bbaaaaabb"), 2);
+
+        assert_eq!(with_dp_opt("aababbab"), 2);
+        assert_eq!(with_dp_opt("bbaaaaabb"), 2);
+    }
 
     #[test]
     fn test() {}
