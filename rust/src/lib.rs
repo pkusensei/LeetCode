@@ -9,16 +9,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn dominant_indices(nums: &[i32]) -> i32 {
-    let mut res = 0;
-    let mut sum = f64::from(*nums.last().unwrap());
-    let mut count = 1.0;
-    for &num in nums.iter().rev().skip(1) {
-        res += i32::from(f64::from(num) > sum / count);
-        sum += f64::from(num);
-        count += 1.0;
+pub fn merge_adjacent(nums: Vec<i32>) -> Vec<i64> {
+    let mut st = vec![];
+    for num in nums.iter() {
+        let mut num = i64::from(*num);
+        while let Some(&top) = st.last()
+            && top == num
+        {
+            num *= 2;
+            st.pop();
+        }
+        st.push(num);
     }
-    res
+    st
 }
 
 #[cfg(test)]
@@ -51,9 +54,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(dominant_indices(&[5, 4, 3]), 2);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
