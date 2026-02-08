@@ -8,18 +8,25 @@ namespace Solution;
 
 public class Solution
 {
-    public TreeNode SubtreeWithAllDeepest(TreeNode root)
+    public bool IsBalanced(TreeNode root)
     {
-        return Dfs(root, 0).Item1;
+        return Dfs(root).Item1;
 
-        static (TreeNode, int) Dfs(TreeNode node, int depth)
+        static (bool, int) Dfs(TreeNode node)
         {
-            if (node is null) { return (null, depth); }
-            var (left, d1) = Dfs(node.left, 1 + depth);
-            var (right, d2) = Dfs(node.right, 1 + depth);
-            if (d1 < d2) { return (right, d2); }
-            else if (d1 > d2) { return (left, d1); }
-            else { return (node, d1); }
+            if (node is null) { return (true, 0); }
+            var left = Dfs(node.left);
+            var right = Dfs(node.right);
+            if (left.Item1 && right.Item1)
+            {
+                int max = int.Max(left.Item2, right.Item2);
+                if (int.Abs(left.Item2 - right.Item2) <= 1) { return (true, 1 + max); }
+                else { return (false, 0); }
+            }
+            else
+            {
+                return (false, 0);
+            }
         }
     }
 }
