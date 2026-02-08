@@ -9,59 +9,54 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-use std::collections::VecDeque;
-
-pub fn count_subarrays(nums: &[i32], k: i64) -> i64 {
-    let mut left = 0;
-    let mut res = 0;
-    let [mut minq, mut maxq] = [const { VecDeque::new() }; 2];
-    for (right, &num) in nums.iter().enumerate() {
-        while let Some((i, _val)) = minq.front()
-            && *i < left
-        {
-            minq.pop_front();
-        }
-        while let Some(&(_, val)) = minq.back()
-            && val > num
-        {
-            minq.pop_back();
-        }
-        minq.push_back((right, num));
-        while let Some((i, _val)) = maxq.front()
-            && *i < left
-        {
-            minq.pop_front();
-        }
-        while let Some(&(_, val)) = maxq.back()
-            && val < num
-        {
-            maxq.pop_back();
-        }
-        maxq.push_back((right, num));
-        while f(&minq, &maxq, right - left + 1) > k {
-            if let Some((i, _)) = minq.front()
-                && *i == left
-            {
-                minq.pop_front();
+pub fn with_dp(nums1: &[i32], nums2: &[i32], k: i32) -> i64 {
+    let [n1, n2] = [&nums1, &nums2].map(|v| v.len());
+    let k = k as usize;
+    let mut dp = vec![vec![vec![i64::MIN >> 2; 1 + k]; 1 + n2]; 1 + n1];
+    for i1 in 0..n1 {
+        for i2 in 0..n2 {
+            dp[i1][i2][0] = 0;
+            for kk in 0..k {
+                dp[1 + i1][1 + i2][1 + kk] = dp[i1][1 + i2][1 + kk]
+                    .max(dp[1 + i1][i2][1 + kk])
+                    .max(i64::from(nums1[i1]) * i64::from(nums2[i2]) + dp[i1][i2][kk]);
             }
-            if let Some((i, _)) = maxq.front()
-                && *i == left
-            {
-                maxq.pop_front();
-            }
-            left += 1;
         }
-        let len = right - left + 1;
-        res += len;
     }
-    res as _
+    dp[n1][n2][k]
 }
 
-fn f(minq: &VecDeque<(usize, i32)>, maxq: &VecDeque<(usize, i32)>, len: usize) -> i64 {
-    let (Some(a), Some(b)) = (minq.front(), maxq.front()) else {
+pub fn max_score(nums1: &[i32], nums2: &[i32], k: i32) -> i64 {
+    let [n1, n2] = [&nums1, &nums2].map(|v| v.len());
+    let k = k as usize;
+    let mut memo = vec![vec![vec![None; 1 + k]; n2]; n1];
+    dfs(&nums1, &nums2, 0, 0, k, &mut memo)
+}
+
+fn dfs(
+    nums1: &[i32],
+    nums2: &[i32],
+    i1: usize,
+    i2: usize,
+    k: usize,
+    memo: &mut [Vec<Vec<Option<i64>>>],
+) -> i64 {
+    if i1 >= nums1.len() || i2 >= nums2.len() {
+        return if k == 0 { return 0 } else { i64::MIN >> 2 };
+    }
+    if k == 0 {
         return 0;
-    };
-    i64::from(b.1 - a.1) * len as i64
+    }
+    if let Some(v) = memo[i1][i2][k] {
+        return v;
+    }
+    let mut res = i64::from(nums1[i1]) * i64::from(nums2[i2])
+        + dfs(nums1, nums2, 1 + i1, 1 + i2, k - 1, memo);
+    res =
+        res.max(dfs(nums1, nums2, 1 + i1, i2, k, memo))
+            .max(dfs(nums1, nums2, i1, 1 + i2, k, memo));
+    memo[i1][i2][k] = Some(res);
+    res
 }
 
 #[cfg(test)]
@@ -95,9 +90,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(count_subarrays(&[1, 3, 2], 4), 5);
-        assert_eq!(count_subarrays(&[5; 4], 0), 10);
-        assert_eq!(count_subarrays(&[1, 2, 3], 0), 3);
+        assert_eq!(max_score(&[1, 3, 2], &[4, 5, 1], 2), 22);
+        assert_eq!(max_score(&[-2, 0, 5], &[-3, 4, -1, 2], 2), 26);
+        assert_eq!(max_score(&[-3, -2], &[1, 2], 2), -7);
+
+        assert_eq!(with_dp(&[1, 3, 2], &[4, 5, 1], 2), 22);
+        assert_eq!(with_dp(&[-2, 0, 5], &[-3, 4, -1, 2], 2), 26);
+        assert_eq!(with_dp(&[-3, -2], &[1, 2], 2), -7);
     }
 
     #[test]
