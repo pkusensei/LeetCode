@@ -8,28 +8,21 @@ namespace Solution;
 
 public class Solution
 {
-    public TreeNode BalanceBST(TreeNode root)
+    public int BinaryGap(int n)
     {
-        List<int> vals = [];
-        Inorder(root);
-        return Build(vals);
-
-        void Inorder(TreeNode node)
+        int prev = -1;
+        int res = 0;
+        int i = 0;
+        while (n > 0)
         {
-            if (node is null) { return; }
-            Inorder(node.left);
-            vals.Add(node.val);
-            Inorder(node.right);
+            if ((n & 1) == 1)
+            {
+                if (prev > -1) { res = int.Max(res, i - prev); }
+                prev = i;
+            }
+            n >>= 1;
+            i += 1;
         }
-
-        static TreeNode Build(List<int> vals)
-        {
-            if (vals.Count == 0) { return null; }
-            int n = vals.Count;
-            TreeNode node = new(vals[n / 2]);
-            node.left = Build(vals[..(n / 2)]);
-            node.right = Build(vals[(1 + n / 2)..]);
-            return node;
-        }
+        return res;
     }
 }
