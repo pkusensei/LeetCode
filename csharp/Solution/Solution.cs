@@ -8,25 +8,28 @@ namespace Solution;
 
 public class Solution
 {
-    public bool IsBalanced(TreeNode root)
+    public TreeNode BalanceBST(TreeNode root)
     {
-        return Dfs(root).Item1;
+        List<int> vals = [];
+        Inorder(root);
+        return Build(vals);
 
-        static (bool, int) Dfs(TreeNode node)
+        void Inorder(TreeNode node)
         {
-            if (node is null) { return (true, 0); }
-            var left = Dfs(node.left);
-            var right = Dfs(node.right);
-            if (left.Item1 && right.Item1)
-            {
-                int max = int.Max(left.Item2, right.Item2);
-                if (int.Abs(left.Item2 - right.Item2) <= 1) { return (true, 1 + max); }
-                else { return (false, 0); }
-            }
-            else
-            {
-                return (false, 0);
-            }
+            if (node is null) { return; }
+            Inorder(node.left);
+            vals.Add(node.val);
+            Inorder(node.right);
+        }
+
+        static TreeNode Build(List<int> vals)
+        {
+            if (vals.Count == 0) { return null; }
+            int n = vals.Count;
+            TreeNode node = new(vals[n / 2]);
+            node.left = Build(vals[..(n / 2)]);
+            node.right = Build(vals[(1 + n / 2)..]);
+            return node;
         }
     }
 }
