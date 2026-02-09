@@ -8,29 +8,26 @@ namespace Solution;
 
 public class Solution
 {
-    public int[] AdvantageCount(int[] nums1, int[] nums2)
+    public int MinRefuelStops(int target, int startFuel, int[][] stations)
     {
-        int n = nums1.Length;
-        Array.Sort(nums1);
-        int[] ids = [.. Enumerable.Range(0, n)];
-        Array.Sort(ids, (a, b) => nums2[a].CompareTo(nums2[b]));
-        int[] res = new int[n];
-        Array.Fill(res, -1);
-        Stack<int> st = [];
-        int i2 = 0;
-        foreach (var num in nums1)
+        int pos = startFuel;
+        // max queue
+        PriorityQueue<int, int> pq = new(Comparer<int>.Create((a, b) => b.CompareTo(a)));
+        int res = 0;
+        foreach (var s in stations)
         {
-            if (num > nums2[ids[i2]])
+            while (pos < s[0] && pq.TryDequeue(out int f, out _))
             {
-                res[ids[i2]] = num;
-                i2 += 1;
+                pos += f;
+                res += 1;
             }
-            else { st.Push(num); }
+            if (pos >= s[0]) { pq.Enqueue(s[1], s[1]); }
         }
-        for (int i = 0; i < n; i++)
+        while (pos < target && pq.TryDequeue(out int f, out _))
         {
-            if (res[i] == -1) { res[i] = st.Pop(); }
+            pos += f;
+            res += 1;
         }
-        return res;
+        return pos < target ? -1 : res;
     }
 }
