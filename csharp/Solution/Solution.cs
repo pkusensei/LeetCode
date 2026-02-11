@@ -8,27 +8,18 @@ namespace Solution;
 
 public class Solution
 {
-    public int LenLongestFibSubseq(int[] arr)
+    public int MinEatingSpeed(int[] piles, int h)
     {
-        int n = arr.Length;
-        Dictionary<(int, int), int> dict = [];
-        HashSet<int> seen = [];
-        int res = 0;
-        for (int right = 0; right < n; right++)
+        int left = 1;
+        int right = piles.Max();
+        while (left < right)
         {
-            seen.Add(arr[right]);
-            for (int left = right - 1; left >= 0; left -= 1)
-            {
-                int diff = arr[right] - arr[left];
-                if (diff >= arr[left]) { break; }
-                if (seen.Contains(diff))
-                {
-                    int curr = 1 + dict.GetValueOrDefault((diff, arr[left]), 2);
-                    dict.Add((arr[left], arr[right]), curr);
-                    res = int.Max(res, curr);
-                }
-            }
+            int mid = left + (right - left) / 2;
+            if (Eat(mid) > h) { left = 1 + mid; }
+            else { right = mid; }
         }
-        return res;
+        return left;
+
+        int Eat(int mid) => piles.Sum(v => (v + mid - 1) / mid);
     }
 }
