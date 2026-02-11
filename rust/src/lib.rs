@@ -6,57 +6,101 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn with_dp(nums1: &[i32], nums2: &[i32], k: i32) -> i64 {
-    let [n1, n2] = [&nums1, &nums2].map(|v| v.len());
-    let k = k as usize;
-    let mut dp = vec![vec![vec![i64::MIN >> 2; 1 + k]; 1 + n2]; 1 + n1];
-    for i1 in 0..n1 {
-        for i2 in 0..n2 {
-            dp[i1][i2][0] = 0;
-            for kk in 0..k {
-                dp[1 + i1][1 + i2][1 + kk] = dp[i1][1 + i2][1 + kk]
-                    .max(dp[1 + i1][i2][1 + kk])
-                    .max(i64::from(nums1[i1]) * i64::from(nums2[i2]) + dp[i1][i2][kk]);
-            }
+pub fn longest_balanced(nums: &[i32]) -> i32 {
+    let n = nums.len();
+    let mut pos = HashMap::new();
+    let mut st = SegTree::new(n);
+    let mut res = 0;
+    for (right, &num) in nums.iter().enumerate() {
+        let val = if num & 1 == 1 { 1 } else { -1 };
+        if let Some(left) = pos.insert(num, right) {
+            st.update(0, left, -val);
+        }
+        st.update(0, right, val);
+        if let Some(left) = st.query()
+            && left < right
+        {
+            res = res.max(right - left + 1);
         }
     }
-    dp[n1][n2][k]
+    res as i32
 }
 
-pub fn max_score(nums1: &[i32], nums2: &[i32], k: i32) -> i64 {
-    let [n1, n2] = [&nums1, &nums2].map(|v| v.len());
-    let k = k as usize;
-    let mut memo = vec![vec![vec![None; 1 + k]; n2]; n1];
-    dfs(&nums1, &nums2, 0, 0, k, &mut memo)
+struct SegTree {
+    mint: Vec<i32>,
+    maxt: Vec<i32>,
+    lazy: Vec<i32>,
+    n: usize,
 }
 
-fn dfs(
-    nums1: &[i32],
-    nums2: &[i32],
-    i1: usize,
-    i2: usize,
-    k: usize,
-    memo: &mut [Vec<Vec<Option<i64>>>],
-) -> i64 {
-    if i1 >= nums1.len() || i2 >= nums2.len() {
-        return if k == 0 { return 0 } else { i64::MIN >> 2 };
+impl SegTree {
+    fn new(n: usize) -> Self {
+        Self {
+            mint: vec![0; 4 * n],
+            maxt: vec![0; 4 * n],
+            lazy: vec![0; 4 * n],
+            n,
+        }
     }
-    if k == 0 {
-        return 0;
+
+    fn update(&mut self, ql: usize, qr: usize, val: i32) {
+        self._update(1, 0, self.n - 1, ql, qr, val);
     }
-    if let Some(v) = memo[i1][i2][k] {
-        return v;
+
+    fn query(&mut self) -> Option<usize> {
+        self._query(1, 0, self.n - 1)
     }
-    let mut res = i64::from(nums1[i1]) * i64::from(nums2[i2])
-        + dfs(nums1, nums2, 1 + i1, 1 + i2, k - 1, memo);
-    res =
-        res.max(dfs(nums1, nums2, 1 + i1, i2, k, memo))
-            .max(dfs(nums1, nums2, i1, 1 + i2, k, memo));
-    memo[i1][i2][k] = Some(res);
-    res
+
+    fn _update(&mut self, node: usize, left: usize, right: usize, ql: usize, qr: usize, val: i32) {
+        self.push(node, left, right);
+        if qr < left || right < ql {
+            return;
+        }
+        if ql <= left && right <= qr {
+            self.lazy[node] += val;
+            self.push(node, left, right);
+            return;
+        }
+        let mid = left.midpoint(right);
+        self._update(2 * node, left, mid, ql, qr, val);
+        self._update(2 * node + 1, 1 + mid, right, ql, qr, val);
+        self.mint[node] = self.mint[2 * node].min(self.mint[2 * node + 1]);
+        self.maxt[node] = self.maxt[2 * node].max(self.maxt[2 * node + 1]);
+    }
+
+    fn _query(&mut self, node: usize, left: usize, right: usize) -> Option<usize> {
+        self.push(node, left, right);
+        if self.mint[node] > 0 || self.maxt[node] < 0 {
+            return None;
+        }
+        if left == right {
+            return if self.mint[node] == 0 {
+                Some(left)
+            } else {
+                None
+            };
+        }
+        let mid = left.midpoint(right);
+        self._query(2 * node, left, mid)
+            .or_else(|| self._query(2 * node + 1, 1 + mid, right))
+    }
+
+    fn push(&mut self, node: usize, left: usize, right: usize) {
+        if self.lazy[node] != 0 {
+            self.mint[node] += self.lazy[node];
+            self.maxt[node] += self.lazy[node];
+            if left < right {
+                self.lazy[2 * node] += self.lazy[node];
+                self.lazy[2 * node + 1] += self.lazy[node];
+            }
+            self.lazy[node] = 0;
+        }
+    }
 }
 
 #[cfg(test)]
@@ -90,13 +134,7 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_score(&[1, 3, 2], &[4, 5, 1], 2), 22);
-        assert_eq!(max_score(&[-2, 0, 5], &[-3, 4, -1, 2], 2), 26);
-        assert_eq!(max_score(&[-3, -2], &[1, 2], 2), -7);
-
-        assert_eq!(with_dp(&[1, 3, 2], &[4, 5, 1], 2), 22);
-        assert_eq!(with_dp(&[-2, 0, 5], &[-3, 4, -1, 2], 2), 26);
-        assert_eq!(with_dp(&[-3, -2], &[1, 2], 2), -7);
+        assert_eq!(longest_balanced(&[1, 2, 3, 2]), 3);
     }
 
     #[test]
