@@ -8,26 +8,27 @@ namespace Solution;
 
 public class Solution
 {
-    public int MinRefuelStops(int target, int startFuel, int[][] stations)
+    public int LenLongestFibSubseq(int[] arr)
     {
-        int pos = startFuel;
-        // max queue
-        PriorityQueue<int, int> pq = new(Comparer<int>.Create((a, b) => b.CompareTo(a)));
+        int n = arr.Length;
+        Dictionary<(int, int), int> dict = [];
+        HashSet<int> seen = [];
         int res = 0;
-        foreach (var s in stations)
+        for (int right = 0; right < n; right++)
         {
-            while (pos < s[0] && pq.TryDequeue(out int f, out _))
+            seen.Add(arr[right]);
+            for (int left = right - 1; left >= 0; left -= 1)
             {
-                pos += f;
-                res += 1;
+                int diff = arr[right] - arr[left];
+                if (diff >= arr[left]) { break; }
+                if (seen.Contains(diff))
+                {
+                    int curr = 1 + dict.GetValueOrDefault((diff, arr[left]), 2);
+                    dict.Add((arr[left], arr[right]), curr);
+                    res = int.Max(res, curr);
+                }
             }
-            if (pos >= s[0]) { pq.Enqueue(s[1], s[1]); }
         }
-        while (pos < target && pq.TryDequeue(out int f, out _))
-        {
-            pos += f;
-            res += 1;
-        }
-        return pos < target ? -1 : res;
+        return res;
     }
 }
