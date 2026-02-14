@@ -9,17 +9,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn map_word_weights(words: Vec<String>, weights: Vec<i32>) -> String {
-    words
-        .iter()
-        .map(|s| {
-            s.bytes()
-                .map(|b| weights[usize::from(b - b'a')])
-                .sum::<i32>()
-                % 26
-        })
-        .map(|v| (b'a' + 25 - v as u8) as char)
-        .collect()
+pub fn prefix_connected(words: Vec<String>, k: i32) -> i32 {
+    use std::collections::HashMap;
+    let k = k as usize;
+    let mut map = HashMap::new();
+    for w in words.iter() {
+        if w.len() < k {
+            continue;
+        }
+        let p = &w[..k];
+        *map.entry(p).or_insert(0) += 1;
+    }
+    map.iter().filter(|(k, v)| **v > 1).count() as i32
 }
 
 #[cfg(test)]
