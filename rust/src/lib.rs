@@ -9,18 +9,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn champagne_tower(poured: i32, query_row: i32, query_glass: i32) -> f64 {
-    let mut prev = vec![f64::from(poured)];
-    for row in 0..query_row as usize {
-        let mut curr = vec![0.0; 1 + 2 * (1 + row)];
-        for col in 0..=row {
-            let val = ((prev[col] - 1.0) / 2.0).max(0.0);
-            curr[col] += val;
-            curr[1 + col] += val;
-        }
-        prev = curr;
-    }
-    (*prev.get(query_glass as usize).unwrap_or(&0.0)).min(1.0)
+pub fn map_word_weights(words: Vec<String>, weights: Vec<i32>) -> String {
+    words
+        .iter()
+        .map(|s| {
+            s.bytes()
+                .map(|b| weights[usize::from(b - b'a')])
+                .sum::<i32>()
+                % 26
+        })
+        .map(|v| (b'a' + 25 - v as u8) as char)
+        .collect()
 }
 
 #[cfg(test)]
