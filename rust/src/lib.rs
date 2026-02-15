@@ -9,56 +9,86 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn almost_palindromic(s: &str) -> i32 {
-    let (s, n) = (s.as_bytes(), s.len());
-    if n < 2 {
-        return n as i32;
-    }
-    let mut memo = vec![vec![[-1; 2]; n]; n];
-    let res = (0..n).map(|i| f(s, i, i, 0, &mut memo)).max().unwrap_or(2);
-    (0..n - 1)
-        .filter_map(|i| {
-            if s[i] == s[1 + i] {
-                Some(f(s, i, 1 + i, 0, &mut memo))
-            } else {
-                None
+pub fn max_xor(nums: &[i32], k: i32) -> i32 {
+    use std::collections::VecDeque;
+    let mut minq = VecDeque::new();
+    let mut maxq = VecDeque::new();
+    let mut pref_xor = vec![0];
+    let mut trie = Trie::default();
+    trie.update(0, 1);
+    let mut res = 0;
+    let mut curr_xor = 0;
+    let mut left = 0;
+    for (right, &num) in nums.iter().enumerate() {
+        curr_xor ^= num;
+        pref_xor.push(curr_xor);
+        trie.update(curr_xor, 1);
+        while let Some((_, v)) = minq.back()
+            && *v > num
+        {
+            minq.pop_back();
+        }
+        minq.push_back((right, num));
+        while let Some((_, v)) = maxq.back()
+            && *v < num
+        {
+            maxq.pop_back();
+        }
+        maxq.push_back((right, num));
+        while let Some(&(left1, minv)) = minq.front()
+            && let Some(&(left2, maxv)) = maxq.front()
+            && maxv - minv > k
+        {
+            while left <= left1.min(left2) {
+                trie.update(pref_xor[left], -1);
+                left += 1;
             }
-        })
-        .max()
-        .unwrap_or(2)
-        .max(res)
+            while minq.front().is_some_and(|&(i, _)| i < left) {
+                minq.pop_front();
+            }
+            while maxq.front().is_some_and(|&(i, _)| i < left) {
+                maxq.pop_front();
+            }
+        }
+        res = res.max(trie.query(curr_xor));
+    }
+    res
 }
 
-fn f(
-    s: &[u8],
-    mut left: usize,
-    mut right: usize,
-    skipped: usize,
-    memo: &mut [Vec<[i32; 2]>],
-) -> i32 {
-    let n = s.len();
-    if memo[left][right][skipped] > -1 {
-        return memo[left][right][skipped];
-    }
-    let mut res = (1 + right - left) as i32;
-    while let Some(ll) = left.checked_sub(1)
-        && 1 + right < n
-        && s[ll] == s[1 + right]
-    {
-        res += 2;
-        left -= 1;
-        right += 1;
-    }
-    if skipped == 0 {
-        if left > 0 {
-            res = res.max(f(s, left - 1, right, 1, memo));
-        }
-        if right < n - 1 {
-            res = res.max(f(s, left, 1 + right, 1, memo));
+#[derive(Default)]
+struct Trie {
+    nodes: [Option<Box<Trie>>; 2],
+    count: i32,
+}
+
+impl Trie {
+    fn update(&mut self, num: i32, val: i32) {
+        let mut curr = self;
+        for bit in (0..16).rev() {
+            let i = ((num >> bit) & 1) as usize;
+            curr = curr.nodes[i].get_or_insert_default();
+            curr.count += val;
         }
     }
-    memo[left][right][skipped] = res;
-    res
+
+    fn query(&self, num: i32) -> i32 {
+        let mut curr = self;
+        let mut res = 0;
+        for bit in (0..16).rev() {
+            let i = ((num >> bit) & 1) as usize;
+            if let Some(node) = curr.nodes[1 - i].as_ref()
+                && node.count > 0
+            {
+                res |= 1 << bit;
+                curr = node;
+            } else if let Some(node) = curr.nodes[i].as_ref() {
+                curr = node;
+            } else {
+                break;
+            }
+        }
+        res
+    }
 }
 
 #[cfg(test)]
@@ -92,13 +122,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(almost_palindromic("abca"), 4);
-        assert_eq!(almost_palindromic("abba"), 4);
-        assert_eq!(almost_palindromic("zzabba"), 5);
+        assert_eq!(max_xor(&[5, 4, 5, 6], 1), 6);
+        assert_eq!(max_xor(&[5, 4, 5, 6], 2), 7);
     }
 
     #[test]
     fn test() {
-        assert_eq!(almost_palindromic("abc"), 2);
+        assert_eq!(max_xor(&[0, 3], 0), 3);
     }
 }
