@@ -9,16 +9,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn toggle_light_bulbs(bulbs: Vec<i32>) -> Vec<i32> {
-    use itertools::Itertools;
-    use std::collections::HashSet;
-    let mut seen = HashSet::new();
-    for b in bulbs {
-        if !seen.insert(b) {
-            seen.remove(&b);
+pub fn first_unique_freq(nums: Vec<i32>) -> i32 {
+    use std::collections::HashMap;
+    let freq = nums.iter().fold(vec![0; 100_001], |mut acc, &num| {
+        acc[num as usize] += 1;
+        acc
+    });
+    let map = freq
+        .iter()
+        .enumerate()
+        .filter_map(|(num, &f)| if f > 0 { Some((num, f)) } else { None })
+        .fold(HashMap::<_, Vec<_>>::new(), |mut acc, (num, f)| {
+            acc.entry(f).or_default().push(num);
+            acc
+        });
+    for num in nums {
+        let f = freq[num as usize];
+        if map[&f].len() == 1 {
+            return num;
         }
     }
-    seen.into_iter().sorted_unstable().collect()
+    -1
 }
 
 #[cfg(test)]
