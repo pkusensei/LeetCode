@@ -9,12 +9,14 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn reverse_bits(mut n: i32) -> i32 {
-    let mut res = 0;
-    for _ in 0..32 {
-        res <<= 1;
-        res |= n & 1;
-        n >>= 1
+pub fn read_binary_watch(turned_on: i32) -> Vec<String> {
+    let mut res = vec![];
+    for a in 0_i32..12 {
+        for b in 0_i32..60 {
+            if a.count_ones() + b.count_ones() == turned_on as u32 {
+                res.push(format!("{}:{:02}", a, b));
+            }
+        }
     }
     res
 }
