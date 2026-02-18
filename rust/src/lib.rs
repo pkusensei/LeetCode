@@ -9,14 +9,25 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub const fn has_alternating_bits(mut n: i32) -> bool {
-    while n > 0 {
-        if (n & 1) ^ ((n >> 1) & 1) != 1 {
-            return false;
-        }
-        n >>= 1
+pub fn nth_magical_number(n: i32, a: i32, b: i32) -> i32 {
+    let [a, b, n] = [a, b, n].map(i64::from);
+    let lcm_ = lcm(a, b);
+    let mut left = 1;
+    let mut right = i64::MAX >> 1;
+    while left < right {
+        let mid = left + (right - left) / 2;
+        let c = mid / a + mid / b - mid / lcm_;
+        if c < n { left = 1 + mid } else { right = mid }
     }
-    true
+    (left % 1_000_000_007) as i32
+}
+
+const fn lcm(a: i64, b: i64) -> i64 {
+    a / gcd(a, b) * b
+}
+
+const fn gcd(a: i64, b: i64) -> i64 {
+    if a == 0 { b } else { gcd(b % a, a) }
 }
 
 #[cfg(test)]
