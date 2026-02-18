@@ -9,72 +9,14 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_lca(adj: &[Vec<usize>], a: usize, b: usize) -> usize {
-    let (euler, first, depth) = euler_tour(adj);
-    let st = build(&euler, &depth);
-    let [a, b] = [a, b].map(|v| first[v]);
-    let idx = rmq(&st, &euler, &depth, a.min(b), a.max(b));
-    euler[idx]
-}
-
-fn rmq(st: &[Vec<usize>], euler: &[usize], depth: &[i32], left: usize, right: usize) -> usize {
-    let len = 1 + right - left;
-    let k = len.ilog2() as usize;
-    let left = st[k][left];
-    let right = st[k][right + 1 - (1 << k)];
-    if depth[euler[left]] < depth[euler[right]] {
-        left
-    } else {
-        right
-    }
-}
-
-fn build(euler: &[usize], depth: &[i32]) -> Vec<Vec<usize>> {
-    let n = euler.len();
-    let log = 1 + n.ilog2() as usize;
-    let mut st = vec![vec![0; n]; log];
-    st[0] = (0..n).collect();
-    for k in 1..log {
-        let len = 1 << k;
-        for i in 0..=n - len {
-            let left = st[k - 1][i];
-            let right = st[k - 1][i + (len >> 1)];
-            st[k][i] = if depth[euler[left]] < depth[euler[right]] {
-                left
-            } else {
-                right
-            }
+pub const fn has_alternating_bits(mut n: i32) -> bool {
+    while n > 0 {
+        if (n & 1) ^ ((n >> 1) & 1) != 1 {
+            return false;
         }
+        n >>= 1
     }
-    st
-}
-
-pub fn euler_tour(adj: &[Vec<usize>]) -> (Vec<usize>, Vec<usize>, Vec<i32>) {
-    let n = adj.len();
-    let mut euler = Vec::with_capacity(2 * n - 1);
-    let mut first = vec![0; n];
-    let mut depth = vec![0; n];
-    dfs(&adj, 0, n, &mut euler, &mut first, &mut depth);
-    (euler, first, depth)
-}
-
-fn dfs(
-    adj: &[Vec<usize>],
-    node: usize,
-    prev: usize,
-    euler: &mut Vec<usize>,
-    first: &mut [usize],
-    depth: &mut Vec<i32>,
-) {
-    first[node] = euler.len();
-    euler.push(node);
-    for &next in &adj[node] {
-        if next != prev {
-            depth[next] = 1 + depth[node];
-            dfs(adj, next, node, euler, first, depth);
-            euler.push(node);
-        }
-    }
+    true
 }
 
 #[cfg(test)]
@@ -107,24 +49,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        let e = [
-            [0, 1],
-            [0, 2],
-            [1, 3],
-            [1, 4],
-            [3, 5],
-            [3, 6],
-            [2, 7],
-            [2, 8],
-        ];
-        let adj = e.iter().fold(vec![vec![]; 9], |mut acc, e| {
-            acc[e[0]].push(e[1]);
-            acc[e[1]].push(e[0]);
-            acc
-        });
-        assert_eq!(find_lca(&adj, 4, 5), 1);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
