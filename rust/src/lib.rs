@@ -9,25 +9,43 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn nth_magical_number(n: i32, a: i32, b: i32) -> i32 {
-    let [a, b, n] = [a, b, n].map(i64::from);
-    let lcm_ = lcm(a, b);
-    let mut left = 1;
-    let mut right = i64::MAX >> 1;
-    while left < right {
-        let mid = left + (right - left) / 2;
-        let c = mid / a + mid / b - mid / lcm_;
-        if c < n { left = 1 + mid } else { right = mid }
+pub fn reachable_nodes(edges: Vec<Vec<i32>>, max_moves: i32, n: i32) -> i32 {
+    use std::{cmp::Reverse, collections::BinaryHeap};
+    let n = n as usize;
+    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
+        let [a, b] = [0, 1].map(|i| e[i] as usize);
+        acc[a].push((b, e[2]));
+        acc[b].push((a, e[2]));
+        acc
+    });
+    let mut heap = BinaryHeap::from([(Reverse(0), 0)]);
+    let mut seen = vec![i32::MAX; n];
+    seen[0] = 0;
+    let mut moves_left = vec![vec![0; n]; n];
+    let mut res = 0;
+    while let Some((Reverse(dist), node)) = heap.pop() {
+        if dist > seen[node] {
+            continue;
+        }
+        res += 1;
+        for &(next, cnt) in &adj[node] {
+            let nd = dist + 1 + cnt;
+            moves_left[node][next] = cnt.min(max_moves - dist);
+            if nd < seen[next].min(1 + max_moves) {
+                // reachable
+                seen[next] = nd;
+                heap.push((Reverse(nd), next));
+            }
+        }
     }
-    (left % 1_000_000_007) as i32
-}
-
-const fn lcm(a: i64, b: i64) -> i64 {
-    a / gcd(a, b) * b
-}
-
-const fn gcd(a: i64, b: i64) -> i64 {
-    if a == 0 { b } else { gcd(b % a, a) }
+    res += edges
+        .iter()
+        .map(|e| {
+            let [a, b] = [0, 1].map(|i| e[i] as usize);
+            (moves_left[a][b] + moves_left[b][a]).min(e[2])
+        })
+        .sum::<i32>();
+    res
 }
 
 #[cfg(test)]
