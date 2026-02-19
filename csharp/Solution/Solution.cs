@@ -8,21 +8,21 @@ namespace Solution;
 
 public class Solution
 {
-    public string DecodeAtIndex(string s, int k)
+    public int CountBinarySubstrings(string s)
     {
-        long len = 0;
-        foreach (var c in s)
+        int res = 0;
+        int prev = 0;
+        int streak = 1;
+        for (int i = 1; i < s.Length; i++)
         {
-            if (char.IsAsciiDigit(c)) { len *= c - '0'; }
-            else { len += 1; }
+            if (s[i] == s[i - 1]) { streak += 1; }
+            else
+            {
+                res += int.Min(prev, streak);
+                prev = streak;
+                streak = 1;
+            }
         }
-        for (int i = s.Length - 1; i >= 0; i -= 1)
-        {
-            k = (int)(k % len);
-            if (k == 0 && char.IsAsciiLetter(s[i])) { return s[i].ToString(); }
-            if (char.IsAsciiDigit(s[i])) { len /= s[i] - '0'; }
-            else { len -= 1; }
-        }
-        return "";
+        return res + int.Min(prev, streak);
     }
 }
