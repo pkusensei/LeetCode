@@ -8,33 +8,34 @@ mod trie;
 
 #[allow(unused_imports)]
 use helper::*;
-use itertools::Itertools;
 
-pub fn make_largest_special(s: String) -> String {
-    String::from_utf8(dfs(s.as_bytes())).unwrap()
-}
-
-fn dfs(s: &[u8]) -> Vec<u8> {
-    if s.is_empty() {
-        return vec![];
-    }
-    let mut open = 0;
-    let mut left = 0;
-    let mut res = vec![];
-    for (idx, &b) in s.iter().enumerate() {
-        open += if b == b'1' { 1 } else { -1 };
-        if open == 0 {
-            let mut curr = vec![b'1'];
-            curr.extend(dfs(&s[1 + left..idx]));
-            curr.push(b'0');
-            res.push(curr);
-            left = 1 + idx;
+pub fn spiral_matrix_iii(rows: i32, cols: i32, r_start: i32, c_start: i32) -> Vec<Vec<i32>> {
+    const DIRS: [[i32; 2]; 4] = [[0, 1], [1, 0], [0, -1], [-1, 0]];
+    const MAX_TURN: i32 = 2;
+    let mut curr = [r_start, c_start];
+    let mut res = vec![curr.to_vec()];
+    let mut idx = 0;
+    let mut max_len = 1;
+    let mut running = 0;
+    let mut turns = 0;
+    while res.len() < (rows * cols) as usize {
+        curr[0] += DIRS[idx][0];
+        curr[1] += DIRS[idx][1];
+        if (0..rows).contains(&curr[0]) && (0..cols).contains(&curr[1]) {
+            res.push(curr.to_vec());
+        }
+        running += 1;
+        if running == max_len {
+            running = 0;
+            turns += 1;
+            idx = (1 + idx) % 4;
+            if turns == MAX_TURN {
+                max_len += 1;
+                turns = 0;
+            }
         }
     }
-    res.into_iter()
-        .sorted_unstable_by(|a, b| b.cmp(a))
-        .flatten()
-        .collect()
+    res
 }
 
 #[cfg(test)]
