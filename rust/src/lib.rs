@@ -8,44 +8,33 @@ mod trie;
 
 #[allow(unused_imports)]
 use helper::*;
+use itertools::Itertools;
 
-pub fn reachable_nodes(edges: Vec<Vec<i32>>, max_moves: i32, n: i32) -> i32 {
-    use std::{cmp::Reverse, collections::BinaryHeap};
-    let n = n as usize;
-    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
-        let [a, b] = [0, 1].map(|i| e[i] as usize);
-        acc[a].push((b, e[2]));
-        acc[b].push((a, e[2]));
-        acc
-    });
-    let mut heap = BinaryHeap::from([(Reverse(0), 0)]);
-    let mut seen = vec![i32::MAX; n];
-    seen[0] = 0;
-    let mut moves_left = vec![vec![0; n]; n];
-    let mut res = 0;
-    while let Some((Reverse(dist), node)) = heap.pop() {
-        if dist > seen[node] {
-            continue;
-        }
-        res += 1;
-        for &(next, cnt) in &adj[node] {
-            let nd = dist + 1 + cnt;
-            moves_left[node][next] = cnt.min(max_moves - dist);
-            if nd < seen[next].min(1 + max_moves) {
-                // reachable
-                seen[next] = nd;
-                heap.push((Reverse(nd), next));
-            }
+pub fn make_largest_special(s: String) -> String {
+    String::from_utf8(dfs(s.as_bytes())).unwrap()
+}
+
+fn dfs(s: &[u8]) -> Vec<u8> {
+    if s.is_empty() {
+        return vec![];
+    }
+    let mut open = 0;
+    let mut left = 0;
+    let mut res = vec![];
+    for (idx, &b) in s.iter().enumerate() {
+        open += if b == b'1' { 1 } else { -1 };
+        if open == 0 {
+            let mut curr = vec![b'1'];
+            curr.extend(dfs(&s[1 + left..idx]));
+            curr.push(b'0');
+            res.push(curr);
+            left = 1 + idx;
         }
     }
-    res += edges
-        .iter()
-        .map(|e| {
-            let [a, b] = [0, 1].map(|i| e[i] as usize);
-            (moves_left[a][b] + moves_left[b][a]).min(e[2])
-        })
-        .sum::<i32>();
-    res
+    res.into_iter()
+        .sorted_unstable_by(|a, b| b.cmp(a))
+        .flatten()
+        .collect()
 }
 
 #[cfg(test)]
