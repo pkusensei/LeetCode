@@ -9,33 +9,54 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn spiral_matrix_iii(rows: i32, cols: i32, r_start: i32, c_start: i32) -> Vec<Vec<i32>> {
-    const DIRS: [[i32; 2]; 4] = [[0, 1], [1, 0], [0, -1], [-1, 0]];
-    const MAX_TURN: i32 = 2;
-    let mut curr = [r_start, c_start];
-    let mut res = vec![curr.to_vec()];
-    let mut idx = 0;
-    let mut max_len = 1;
-    let mut running = 0;
-    let mut turns = 0;
-    while res.len() < (rows * cols) as usize {
-        curr[0] += DIRS[idx][0];
-        curr[1] += DIRS[idx][1];
-        if (0..rows).contains(&curr[0]) && (0..cols).contains(&curr[1]) {
-            res.push(curr.to_vec());
-        }
-        running += 1;
-        if running == max_len {
-            running = 0;
-            turns += 1;
-            idx = (1 + idx) % 4;
-            if turns == MAX_TURN {
-                max_len += 1;
-                turns = 0;
-            }
+pub fn possible_bipartition(n: i32, dislikes: Vec<Vec<i32>>) -> bool {
+    let n = n as usize;
+    let mut dsu = DSU::new(2 * n);
+    for e in dislikes.iter() {
+        let [a, b] = [0, 1].map(|i| e[i] as usize - 1);
+        dsu.union(a, b + n);
+        dsu.union(a + n, b);
+        if dsu.find(a) == dsu.find(b) {
+            return false;
         }
     }
-    res
+    true
+}
+
+struct DSU {
+    parent: Vec<usize>,
+    rank: Vec<i32>,
+}
+
+impl DSU {
+    fn new(n: usize) -> Self {
+        Self {
+            parent: (0..n).collect(),
+            rank: vec![0; n],
+        }
+    }
+
+    fn find(&mut self, v: usize) -> usize {
+        if self.parent[v] != v {
+            self.parent[v] = self.find(self.parent[v])
+        }
+        self.parent[v]
+    }
+
+    fn union(&mut self, x: usize, y: usize) {
+        let [rx, ry] = [x, y].map(|v| self.find(v));
+        if rx == ry {
+            return;
+        }
+        match self.rank[rx].cmp(&self.rank[ry]) {
+            std::cmp::Ordering::Less => self.parent[rx] = ry,
+            std::cmp::Ordering::Equal => {
+                self.rank[rx] += 1;
+                self.parent[ry] = rx
+            }
+            std::cmp::Ordering::Greater => self.parent[ry] = rx,
+        }
+    }
 }
 
 #[cfg(test)]
