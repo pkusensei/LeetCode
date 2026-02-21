@@ -9,54 +9,39 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn possible_bipartition(n: i32, dislikes: Vec<Vec<i32>>) -> bool {
-    let n = n as usize;
-    let mut dsu = DSU::new(2 * n);
-    for e in dislikes.iter() {
-        let [a, b] = [0, 1].map(|i| e[i] as usize - 1);
-        dsu.union(a, b + n);
-        dsu.union(a + n, b);
-        if dsu.find(a) == dsu.find(b) {
-            return false;
+pub fn super_egg_drop(k: i32, n: i32) -> i32 {
+    let k = k as usize;
+    let mut dp = vec![0; 1 + k];
+    let mut moves = 0;
+    while dp[k] < n {
+        moves += 1;
+        for kk in (1..=k).rev() {
+            dp[kk] += 1 + dp[kk - 1];
         }
     }
-    true
+    moves as i32
 }
 
-struct DSU {
-    parent: Vec<usize>,
-    rank: Vec<i32>,
-}
-
-impl DSU {
-    fn new(n: usize) -> Self {
-        Self {
-            parent: (0..n).collect(),
-            rank: vec![0; n],
+fn dfs(k: i32, n: i32) -> i32 {
+    if n < 2 || k == 1 {
+        return n;
+    }
+    let mut res = i32::MAX;
+    let mut left = 1;
+    let mut right = n;
+    while left < right {
+        let mid = left + (right - left) / 2;
+        let break_ = dfs(k - 1, mid - 1);
+        let intact = dfs(k, n - mid);
+        let curr = 1 + break_.max(intact);
+        res = res.min(curr);
+        if break_ < intact {
+            left = 1 + mid;
+        } else {
+            right = mid;
         }
     }
-
-    fn find(&mut self, v: usize) -> usize {
-        if self.parent[v] != v {
-            self.parent[v] = self.find(self.parent[v])
-        }
-        self.parent[v]
-    }
-
-    fn union(&mut self, x: usize, y: usize) {
-        let [rx, ry] = [x, y].map(|v| self.find(v));
-        if rx == ry {
-            return;
-        }
-        match self.rank[rx].cmp(&self.rank[ry]) {
-            std::cmp::Ordering::Less => self.parent[rx] = ry,
-            std::cmp::Ordering::Equal => {
-                self.rank[rx] += 1;
-                self.parent[ry] = rx
-            }
-            std::cmp::Ordering::Greater => self.parent[ry] = rx,
-        }
-    }
+    res
 }
 
 #[cfg(test)]
@@ -89,8 +74,15 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(super_egg_drop(1, 2), 2);
+        assert_eq!(super_egg_drop(2, 6), 3);
+        assert_eq!(super_egg_drop(3, 14), 4);
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(super_egg_drop(2, 1), 1);
+        assert_eq!(super_egg_drop(3, 25), 5);
+    }
 }
