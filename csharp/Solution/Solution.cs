@@ -8,21 +8,19 @@ namespace Solution;
 
 public class Solution
 {
-    public int CountBinarySubstrings(string s)
+    public int SuperEggDrop(int k, int n)
     {
-        int res = 0;
-        int prev = 0;
-        int streak = 1;
-        for (int i = 1; i < s.Length; i++)
+        int[] prev = new int[1 + k];
+        int moves = 0;
+        for (; prev[k] < n; moves += 1)
         {
-            if (s[i] == s[i - 1]) { streak += 1; }
-            else
+            int[] curr = new int[1 + k];
+            for (int kk = 1; kk <= k; kk++)
             {
-                res += int.Min(prev, streak);
-                prev = streak;
-                streak = 1;
+                curr[kk] = 1 + prev[kk - 1] + prev[kk];
             }
+            prev = curr;
         }
-        return res + int.Min(prev, streak);
+        return moves;
     }
 }
