@@ -9,36 +9,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn super_egg_drop(k: i32, n: i32) -> i32 {
-    let k = k as usize;
-    let mut dp = vec![0; 1 + k];
-    let mut moves = 0;
-    while dp[k] < n {
-        moves += 1;
-        for kk in (1..=k).rev() {
-            dp[kk] += 1 + dp[kk - 1];
-        }
-    }
-    moves as i32
-}
-
-fn dfs(k: i32, n: i32) -> i32 {
-    if n < 2 || k == 1 {
-        return n;
-    }
-    let mut res = i32::MAX;
-    let mut left = 1;
-    let mut right = n;
-    while left < right {
-        let mid = left + (right - left) / 2;
-        let break_ = dfs(k - 1, mid - 1);
-        let intact = dfs(k, n - mid);
-        let curr = 1 + break_.max(intact);
-        res = res.min(curr);
-        if break_ < intact {
-            left = 1 + mid;
-        } else {
-            right = mid;
+pub fn fair_candy_swap(alice_sizes: Vec<i32>, bob_sizes: Vec<i32>) -> Vec<i32> {
+    use std::collections::HashSet;
+    // a - (x - y) = b + (x - y)
+    // (x-y) = (a-b)/2
+    // x = y+(a-b)/2
+    let [a, b] = [&alice_sizes, &bob_sizes].map(|v| v.iter().sum::<i32>());
+    let set: HashSet<_> = alice_sizes.iter().copied().collect();
+    let mut res = vec![];
+    for y in bob_sizes {
+        let x = y + (a - b) / 2;
+        if set.contains(&x) {
+            res = vec![x, y];
+            break;
         }
     }
     res
@@ -74,15 +57,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(super_egg_drop(1, 2), 2);
-        assert_eq!(super_egg_drop(2, 6), 3);
-        assert_eq!(super_egg_drop(3, 14), 4);
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(super_egg_drop(2, 1), 1);
-        assert_eq!(super_egg_drop(3, 25), 5);
-    }
+    fn test() {}
 }
