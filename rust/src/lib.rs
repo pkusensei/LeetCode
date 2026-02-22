@@ -9,24 +9,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_xor(s: String, t: String) -> String {
-    let mut freq = t.bytes().fold([0; 2], |mut acc, b| {
-        acc[usize::from(b - b'0')] += 1;
-        acc
-    });
-    let mut res = vec![];
-    for b in s.bytes() {
-        let bit = usize::from(b - b'0');
-        let xor = 1 ^ bit;
-        if freq[xor] > 0 {
-            freq[xor] -= 1;
-            res.push(1 + b'0');
-        } else {
-            freq[bit] -= 1;
-            res.push(0 + b'0');
+pub fn count_sequences(nums: &[i32], k: i64) -> i32 {
+    use std::collections::HashMap;
+    let mut prev = HashMap::from([([k, 1], 1)]);
+    for &num in nums.iter().rev() {
+        // unchanged
+        let mut curr = prev.clone();
+        for (&[up, down], &f) in prev.iter() {
+            let a = up * i64::from(num);
+            let gcd_ = gcd(a, down);
+            *curr.entry([a / gcd_, down / gcd_]).or_insert(0) += f;
+            let b = down * i64::from(num);
+            let gcd_ = gcd(up, b);
+            *curr.entry([up / gcd_, b / gcd_]).or_insert(0) += f;
         }
+        prev = curr;
     }
-    String::from_utf8(res).unwrap()
+    *prev.get(&[1, 1]).unwrap_or(&0)
+}
+
+const fn gcd(a: i64, b: i64) -> i64 {
+    if a == 0 { b } else { gcd(b % a, a) }
 }
 
 #[cfg(test)]
@@ -62,5 +65,7 @@ mod tests {
     fn basics() {}
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(count_sequences(&[5, 5], 1,), 3);
+    }
 }
