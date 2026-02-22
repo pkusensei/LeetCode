@@ -9,26 +9,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_digitorial_permutation(n: i32) -> bool {
-    let mut sum = 0;
-    let mut x = n;
-    let mut freq = [0; 10];
-    while x > 0 {
-        let d = x % 10;
-        freq[d as usize] += 1;
-        x /= 10;
-        sum += f(d.into());
+pub fn maximum_xor(s: String, t: String) -> String {
+    let mut freq = t.bytes().fold([0; 2], |mut acc, b| {
+        acc[usize::from(b - b'0')] += 1;
+        acc
+    });
+    let mut res = vec![];
+    for b in s.bytes() {
+        let bit = usize::from(b - b'0');
+        let xor = 1 ^ bit;
+        if freq[xor] > 0 {
+            freq[xor] -= 1;
+            res.push(1 + b'0');
+        } else {
+            freq[bit] -= 1;
+            res.push(0 + b'0');
+        }
     }
-    while sum > 0 {
-        let d = sum % 10;
-        freq[d as usize] -= 1;
-        sum /= 10;
-    }
-    freq.iter().all(|&v| v == 0)
-}
-
-const fn f(v: i64) -> i64 {
-    if v <= 1 { 1 } else { v * f(v - 1) }
+    String::from_utf8(res).unwrap()
 }
 
 #[cfg(test)]
