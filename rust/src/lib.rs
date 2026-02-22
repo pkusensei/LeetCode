@@ -9,22 +9,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn fair_candy_swap(alice_sizes: Vec<i32>, bob_sizes: Vec<i32>) -> Vec<i32> {
-    use std::collections::HashSet;
-    // a - (x - y) = b + (x - y)
-    // (x-y) = (a-b)/2
-    // x = y+(a-b)/2
-    let [a, b] = [&alice_sizes, &bob_sizes].map(|v| v.iter().sum::<i32>());
-    let set: HashSet<_> = alice_sizes.iter().copied().collect();
-    let mut res = vec![];
-    for y in bob_sizes {
-        let x = y + (a - b) / 2;
-        if set.contains(&x) {
-            res = vec![x, y];
-            break;
+pub fn score_difference(nums: &[i32]) -> i32 {
+    let mut scores = [0; 2];
+    let mut active = 0;
+    for (i, &num) in nums.iter().enumerate() {
+        if num & 1 == 1 {
+            active ^= 1;
         }
+        if (1 + i) % 6 == 0 {
+            active ^= 1;
+        }
+        scores[active] += num;
     }
-    res
+    scores[0] - scores[1]
 }
 
 #[cfg(test)]
@@ -57,7 +54,9 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(score_difference(&[2, 4, 2, 1, 2, 1]), 4);
+    }
 
     #[test]
     fn test() {}
