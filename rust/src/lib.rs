@@ -9,19 +9,26 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn score_difference(nums: &[i32]) -> i32 {
-    let mut scores = [0; 2];
-    let mut active = 0;
-    for (i, &num) in nums.iter().enumerate() {
-        if num & 1 == 1 {
-            active ^= 1;
-        }
-        if (1 + i) % 6 == 0 {
-            active ^= 1;
-        }
-        scores[active] += num;
+pub fn is_digitorial_permutation(n: i32) -> bool {
+    let mut sum = 0;
+    let mut x = n;
+    let mut freq = [0; 10];
+    while x > 0 {
+        let d = x % 10;
+        freq[d as usize] += 1;
+        x /= 10;
+        sum += f(d.into());
     }
-    scores[0] - scores[1]
+    while sum > 0 {
+        let d = sum % 10;
+        freq[d as usize] -= 1;
+        sum /= 10;
+    }
+    freq.iter().all(|&v| v == 0)
+}
+
+const fn f(v: i64) -> i64 {
+    if v <= 1 { 1 } else { v * f(v - 1) }
 }
 
 #[cfg(test)]
@@ -54,9 +61,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(score_difference(&[2, 4, 2, 1, 2, 1]), 4);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
