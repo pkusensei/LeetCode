@@ -8,19 +8,37 @@ namespace Solution;
 
 public class Solution
 {
-    public int SuperEggDrop(int k, int n)
+    public TreeNode ConstructFromPrePost(int[] preorder, int[] postorder)
     {
-        int[] prev = new int[1 + k];
-        int moves = 0;
-        for (; prev[k] < n; moves += 1)
+        int n = preorder.Length;
+        Dictionary<int, int> predict = [];
+        Dictionary<int, int> postdict = [];
+        for (int i = 0; i < n; i++)
         {
-            int[] curr = new int[1 + k];
-            for (int kk = 1; kk <= k; kk++)
-            {
-                curr[kk] = 1 + prev[kk - 1] + prev[kk];
-            }
-            prev = curr;
+            predict.Add(preorder[i], i);
+            postdict.Add(postorder[i], i);
         }
-        return moves;
+        return Dfs(0, n - 1, 0, n - 1);
+
+        TreeNode Dfs(int pre_left, int pre_right, int post_left, int post_right)
+        {
+            if (pre_left > pre_right) { return null; }
+            TreeNode root = new(preorder[pre_left]);
+            if (pre_left == pre_right) { return root; }
+            int left_val = preorder[pre_left + 1];
+            int right_val = postorder[post_right - 1];
+            int left_start = 1 + pre_left;
+            int left_end = predict[right_val] - 1;
+            int right_start = post_left;
+            int right_end = postdict[left_val];
+            root.left = Dfs(left_start, left_end, right_start, right_end);
+
+            left_start = predict[right_val];
+            left_end = pre_right;
+            right_start = 1 + postdict[left_val];
+            right_end = post_right - 1;
+            root.right = Dfs(left_start, left_end, right_start, right_end);
+            return root;
+        }
     }
 }
