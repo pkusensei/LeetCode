@@ -9,27 +9,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_sequences(nums: &[i32], k: i64) -> i32 {
-    use std::collections::HashMap;
-    let mut prev = HashMap::from([([k, 1], 1)]);
-    for &num in nums.iter().rev() {
-        // unchanged
-        let mut curr = prev.clone();
-        for (&[up, down], &f) in prev.iter() {
-            let a = up * i64::from(num);
-            let gcd_ = gcd(a, down);
-            *curr.entry([a / gcd_, down / gcd_]).or_insert(0) += f;
-            let b = down * i64::from(num);
-            let gcd_ = gcd(up, b);
-            *curr.entry([up / gcd_, b / gcd_]).or_insert(0) += f;
-        }
-        prev = curr;
+pub fn has_all_codes(s: String, k: i32) -> bool {
+    use std::collections::HashSet;
+    let n = s.len();
+    let k = k as usize;
+    if n < k {
+        return false;
     }
-    *prev.get(&[1, 1]).unwrap_or(&0)
-}
-
-const fn gcd(a: i64, b: i64) -> i64 {
-    if a == 0 { b } else { gcd(b % a, a) }
+    let full = 2_u32.pow(k as u32) - 1;
+    let mut curr = u32::from_str_radix(&s[..k], 2).unwrap_or(0);
+    let mut seen = HashSet::from([curr]);
+    for b in s.as_bytes()[k..].iter() {
+        curr = (curr << 1) & full;
+        curr |= u32::from(b - b'0');
+        seen.insert(curr);
+    }
+    seen.len() == 2_usize.pow(k as u32)
 }
 
 #[cfg(test)]
@@ -65,7 +60,5 @@ mod tests {
     fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(count_sequences(&[5, 5], 1,), 3);
-    }
+    fn test() {}
 }
