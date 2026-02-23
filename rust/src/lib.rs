@@ -9,19 +9,28 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_and_replace_pattern(words: Vec<String>, pattern: String) -> Vec<String> {
-    let p = f(&pattern);
-    words.into_iter().filter(|s| f(s) == p).collect()
+pub fn sum_subseq_widths(mut nums: Vec<i32>) -> i32 {
+    let n = nums.len();
+    nums.sort_unstable();
+    let [mut as_max, mut as_min] = [0, 0];
+    for (i, &num) in nums.iter().enumerate() {
+        as_max = (as_max + i64::from(num) * mod_pow(2, i as _)) % M;
+        as_min = (as_min + i64::from(num) * mod_pow(2, (n - i - 1) as _)) % M;
+    }
+    (as_max - as_min).rem_euclid(M) as i32
 }
 
-fn f(s: &str) -> Vec<usize> {
-    let mut first = [None; 26];
-    let mut res = vec![];
-    for (i, b) in s.bytes().enumerate() {
-        let id = *first[usize::from(b - b'a')].get_or_insert(i);
-        res.push(id);
+const M: i64 = 1_000_000_007;
+
+const fn mod_pow(b: i64, p: i64) -> i64 {
+    if p == 0 {
+        return 1;
     }
-    res
+    if p & 1 == 0 {
+        mod_pow(b * b % M, p >> 1) % M
+    } else {
+        mod_pow(b * b % M, p >> 1) * b % M
+    }
 }
 
 #[cfg(test)]
