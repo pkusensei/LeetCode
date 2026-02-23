@@ -9,22 +9,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn has_all_codes(s: String, k: i32) -> bool {
-    use std::collections::HashSet;
-    let n = s.len();
-    let k = k as usize;
-    if n < k {
-        return false;
+pub fn find_and_replace_pattern(words: Vec<String>, pattern: String) -> Vec<String> {
+    let p = f(&pattern);
+    words.into_iter().filter(|s| f(s) == p).collect()
+}
+
+fn f(s: &str) -> Vec<usize> {
+    let mut first = [None; 26];
+    let mut res = vec![];
+    for (i, b) in s.bytes().enumerate() {
+        let id = *first[usize::from(b - b'a')].get_or_insert(i);
+        res.push(id);
     }
-    let full = 2_u32.pow(k as u32) - 1;
-    let mut curr = u32::from_str_radix(&s[..k], 2).unwrap_or(0);
-    let mut seen = HashSet::from([curr]);
-    for b in s.as_bytes()[k..].iter() {
-        curr = (curr << 1) & full;
-        curr |= u32::from(b - b'0');
-        seen.insert(curr);
-    }
-    seen.len() == 2_usize.pow(k as u32)
+    res
 }
 
 #[cfg(test)]
