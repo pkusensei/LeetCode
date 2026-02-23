@@ -9,22 +9,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn surface_area(grid: Vec<Vec<i32>>) -> i32 {
-    let mut res = 0;
-    for (r, row) in grid.iter().enumerate() {
-        for (c, &v) in row.iter().enumerate() {
-            if v > 0 {
-                res += 2;
-                res += 4 * v;
-                for [nr, nc] in neighbors([r, c]) {
-                    if let Some(&nv) = grid.get(nr).and_then(|rr| rr.get(nc)) {
-                        res -= nv.min(v)
-                    }
-                }
-            }
-        }
-    }
-    res
+pub fn num_special_equiv_groups(words: Vec<String>) -> i32 {
+    use std::collections::HashSet;
+    words
+        .iter()
+        .map(|s| {
+            s.bytes().enumerate().fold([0; 52], |mut acc, (i, b)| {
+                let i = usize::from(b - b'a') + 26 * (i & 1);
+                acc[i] += 1;
+                acc
+            })
+        })
+        .collect::<HashSet<_>>()
+        .len() as i32
 }
 
 #[cfg(test)]
