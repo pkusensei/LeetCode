@@ -9,28 +9,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn sum_subseq_widths(mut nums: Vec<i32>) -> i32 {
-    let n = nums.len();
-    nums.sort_unstable();
-    let [mut as_max, mut as_min] = [0, 0];
-    for (i, &num) in nums.iter().enumerate() {
-        as_max = (as_max + i64::from(num) * mod_pow(2, i as _)) % M;
-        as_min = (as_min + i64::from(num) * mod_pow(2, (n - i - 1) as _)) % M;
+pub fn surface_area(grid: Vec<Vec<i32>>) -> i32 {
+    let mut res = 0;
+    for (r, row) in grid.iter().enumerate() {
+        for (c, &v) in row.iter().enumerate() {
+            if v > 0 {
+                res += 2;
+                res += 4 * v;
+                for [nr, nc] in neighbors([r, c]) {
+                    if let Some(&nv) = grid.get(nr).and_then(|rr| rr.get(nc)) {
+                        res -= nv.min(v)
+                    }
+                }
+            }
+        }
     }
-    (as_max - as_min).rem_euclid(M) as i32
-}
-
-const M: i64 = 1_000_000_007;
-
-const fn mod_pow(b: i64, p: i64) -> i64 {
-    if p == 0 {
-        return 1;
-    }
-    if p & 1 == 0 {
-        mod_pow(b * b % M, p >> 1) % M
-    } else {
-        mod_pow(b * b % M, p >> 1) * b % M
-    }
+    res
 }
 
 #[cfg(test)]
