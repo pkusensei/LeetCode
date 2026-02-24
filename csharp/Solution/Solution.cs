@@ -8,19 +8,28 @@ namespace Solution;
 
 public class Solution
 {
-    public int SumRootToLeaf(TreeNode root)
+    public IList<TreeNode> AllPossibleFBT(int n)
     {
-        int res = 0;
-        Dfs(root, 0);
-        return res;
+        if ((n & 1) == 0) { return []; }
+        return Dfs(n);
 
-        void Dfs(TreeNode node, int curr)
+        List<TreeNode> Dfs(int n)
         {
-            if (node is null) { return; }
-            curr = (curr << 1) | node.val;
-            if (node.left is null && node.right is null) { res += curr; }
-            Dfs(node.left, curr);
-            Dfs(node.right, curr);
+            if (n == 1) { return [new()]; }
+            List<TreeNode> res = [];
+            for (int i = 1; i < n; i += 2)
+            {
+                var left = Dfs(i);
+                var right = Dfs(n - i - 1);
+                foreach (var a in left)
+                {
+                    foreach (var b in right)
+                    {
+                        res.Add(new(0, a, b));
+                    }
+                }
+            }
+            return res;
         }
     }
 }
