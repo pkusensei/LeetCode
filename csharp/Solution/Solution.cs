@@ -8,21 +8,19 @@ namespace Solution;
 
 public class Solution
 {
-    public int BinaryGap(int n)
+    public int SumRootToLeaf(TreeNode root)
     {
         int res = 0;
-        int prev = -1;
-        int i = 0;
-        while (n > 0)
-        {
-            if ((n & 1) == 1)
-            {
-                if (prev > -1) { res = int.Max(res, i - prev); }
-                prev = i;
-            }
-            i += 1;
-            n >>= 1;
-        }
+        Dfs(root, 0);
         return res;
+
+        void Dfs(TreeNode node, int curr)
+        {
+            if (node is null) { return; }
+            curr = (curr << 1) | node.val;
+            if (node.left is null && node.right is null) { res += curr; }
+            Dfs(node.left, curr);
+            Dfs(node.right, curr);
+        }
     }
 }
