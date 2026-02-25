@@ -9,19 +9,9 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_special_equiv_groups(words: Vec<String>) -> i32 {
-    use std::collections::HashSet;
-    words
-        .iter()
-        .map(|s| {
-            s.bytes().enumerate().fold([0; 52], |mut acc, (i, b)| {
-                let i = usize::from(b - b'a') + 26 * (i & 1);
-                acc[i] += 1;
-                acc
-            })
-        })
-        .collect::<HashSet<_>>()
-        .len() as i32
+pub fn sort_by_bits(mut arr: Vec<i32>) -> Vec<i32> {
+    arr.sort_unstable_by(|a, b| a.count_ones().cmp(&b.count_ones()).then(a.cmp(b)));
+    arr
 }
 
 #[cfg(test)]
