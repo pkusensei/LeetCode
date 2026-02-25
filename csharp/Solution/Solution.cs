@@ -8,28 +8,31 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<TreeNode> AllPossibleFBT(int n)
+    public TreeNode IncreasingBST(TreeNode root)
     {
-        if ((n & 1) == 0) { return []; }
-        return Dfs(n);
+        return Dfs(root).h;
 
-        List<TreeNode> Dfs(int n)
+        static (TreeNode h, TreeNode t) Dfs(TreeNode node)
         {
-            if (n == 1) { return [new()]; }
-            List<TreeNode> res = [];
-            for (int i = 1; i < n; i += 2)
+            if (node is null) { return (null, null); }
+            var a = Dfs(node.left);
+            var b = Dfs(node.right);
+            if (a.h is null)
             {
-                var left = Dfs(i);
-                var right = Dfs(n - i - 1);
-                foreach (var a in left)
-                {
-                    foreach (var b in right)
-                    {
-                        res.Add(new(0, a, b));
-                    }
-                }
+                TreeNode head = node;
+                node.right = b.h;
+                TreeNode tail = b.t is null ? node : b.t;
+                return (head, tail);
             }
-            return res;
+            else
+            {
+                TreeNode head = a.h;
+                a.t.right = node;
+                node.left = null;
+                node.right = b.h;
+                TreeNode tail = b.t is null ? node : b.t;
+                return (head, tail);
+            }
         }
     }
 }
