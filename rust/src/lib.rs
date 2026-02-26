@@ -6,31 +6,24 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::iter::repeat_n;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_steps(s: String) -> i32 {
-    let mut s = s.into_bytes();
-    let mut res = 0;
-    while s.len() > 1 {
-        while s.last().is_some_and(|&b| b == b'0') {
-            s.pop();
-            res += 1;
+pub fn subarray_bitwise_o_rs(arr: Vec<i32>) -> i32 {
+    use std::collections::HashSet;
+    let mut res = HashSet::<i32>::new();
+    let mut prev = HashSet::new();
+    for &num in arr.iter() {
+        // All subarrs ending at `num`
+        // Start with single-element subarr [num]
+        let mut curr = HashSet::from([num]);
+        for v in prev {
+            curr.insert(v | num); // BitOr on previous subarrs
         }
-        if s.len() == 1 {
-            break;
-        }
-        while s.last().is_some_and(|&b| b == b'1') {
-            s.pop();
-            res += 1; // these '1's turn into '0's to be popped
-        }
-        s.pop(); // this '0' becomes 1
-        s.push(b'1');
-        res += 1;
+        res.extend(&curr);
+        prev = curr;
     }
-    res
+    res.len() as _
 }
 
 #[cfg(test)]
@@ -63,7 +56,9 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(subarray_bitwise_o_rs(vec![1, 2, 4]), 6);
+    }
 
     #[test]
     fn test() {}
