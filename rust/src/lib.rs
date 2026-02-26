@@ -9,19 +9,36 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn orderly_queue(s: String, k: i32) -> String {
-    let mut s = s.into_bytes();
-    if k > 1 {
-        s.sort_unstable();
-    } else {
-        let mut res = s.clone();
-        for _ in 0..s.len() {
-            s.rotate_left(1);
-            res = res.min(s.clone());
-        }
-        s = res;
+struct RLEIterator {
+    inner: Vec<[i32; 2]>, // [count, val]
+}
+
+impl RLEIterator {
+    fn new(encoding: Vec<i32>) -> Self {
+        let v = encoding
+            .chunks_exact(2)
+            .rev()
+            .filter_map(|w| if w[0] > 0 { Some([w[0], w[1]]) } else { None })
+            .collect();
+        Self { inner: v }
     }
-    String::from_utf8(s).unwrap()
+
+    fn next(&mut self, mut n: i32) -> i32 {
+        while let Some(&[count, _]) = self.inner.last()
+            && count < n
+        {
+            self.inner.pop();
+            n -= count;
+        }
+        if let Some(v) = self.inner.last_mut()
+            && v[0] >= n
+        {
+            v[0] -= n;
+            v[1]
+        } else {
+            -1
+        }
+    }
 }
 
 #[cfg(test)]
