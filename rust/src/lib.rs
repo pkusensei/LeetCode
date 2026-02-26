@@ -9,21 +9,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn subarray_bitwise_o_rs(arr: Vec<i32>) -> i32 {
-    use std::collections::HashSet;
-    let mut res = HashSet::<i32>::new();
-    let mut prev = HashSet::new();
-    for &num in arr.iter() {
-        // All subarrs ending at `num`
-        // Start with single-element subarr [num]
-        let mut curr = HashSet::from([num]);
-        for v in prev {
-            curr.insert(v | num); // BitOr on previous subarrs
+pub fn orderly_queue(s: String, k: i32) -> String {
+    let mut s = s.into_bytes();
+    if k > 1 {
+        s.sort_unstable();
+    } else {
+        let mut res = s.clone();
+        for _ in 0..s.len() {
+            s.rotate_left(1);
+            res = res.min(s.clone());
         }
-        res.extend(&curr);
-        prev = curr;
+        s = res;
     }
-    res.len() as _
+    String::from_utf8(s).unwrap()
 }
 
 #[cfg(test)]
@@ -56,9 +54,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(subarray_bitwise_o_rs(vec![1, 2, 4]), 6);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
