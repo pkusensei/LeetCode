@@ -9,28 +9,48 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-#[derive(Default)]
-struct StockSpanner {
-    id: i32,
-    st: Vec<(i32, i32)>, // (val, id)
+use itertools::Itertools;
+
+pub fn at_most_n_given_digit_set(digits: &[&str], n: i32) -> i32 {
+    let digits = digits
+        .iter()
+        .map(|s| s.parse::<i32>().unwrap())
+        .collect_vec();
+    let n = n
+        .to_string()
+        .bytes()
+        .map(|b| i32::from(b - b'0'))
+        .collect_vec();
+    let len = n.len();
+    dfs(&digits, &n, 0, 1, 1, &mut vec![[[-1; 2]; 2]; len])
 }
 
-impl StockSpanner {
-    fn new() -> Self {
-        Default::default()
+fn dfs(
+    digits: &[i32],
+    n: &[i32],
+    idx: usize,
+    tight: usize,
+    leading: usize,
+    memo: &mut [[[i32; 2]; 2]],
+) -> i32 {
+    if idx >= n.len() {
+        return i32::from(leading == 0);
     }
-
-    fn next(&mut self, price: i32) -> i32 {
-        while let Some(top) = self.st.last()
-            && top.0 <= price
-        {
-            self.st.pop();
+    if memo[idx][tight][leading] > -1 {
+        return memo[idx][tight][leading];
+    }
+    let upper = if tight == 1 { n[idx] } else { 9 };
+    let mut res = 0;
+    for d in 0..=upper {
+        let ntight = tight & usize::from(d == n[idx]);
+        if leading == 1 && d == 0 {
+            res += dfs(digits, n, 1 + idx, ntight, leading, memo);
+        } else if digits.binary_search(&d).is_ok() {
+            res += dfs(digits, n, 1 + idx, ntight, 0, memo);
         }
-        let res = self.id - self.st.last().map(|top| top.1).unwrap_or(-1);
-        self.st.push((price, self.id));
-        self.id += 1;
-        res
     }
+    memo[idx][tight][leading] = res;
+    res
 }
 
 #[cfg(test)]
@@ -63,7 +83,9 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(at_most_n_given_digit_set(&["1", "3", "5", "7"], 100), 20);
+    }
 
     #[test]
     fn test() {}
