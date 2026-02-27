@@ -9,36 +9,39 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-struct RLEIterator {
-    inner: Vec<[i32; 2]>, // [count, val]
-}
-
-impl RLEIterator {
-    fn new(encoding: Vec<i32>) -> Self {
-        let v = encoding
-            .chunks_exact(2)
-            .rev()
-            .filter_map(|w| if w[0] > 0 { Some([w[0], w[1]]) } else { None })
-            .collect();
-        Self { inner: v }
-    }
-
-    fn next(&mut self, mut n: i32) -> i32 {
-        while let Some(&[count, _]) = self.inner.last()
-            && count < n
-        {
-            self.inner.pop();
-            n -= count;
-        }
-        if let Some(v) = self.inner.last_mut()
-            && v[0] >= n
-        {
-            v[0] -= n;
-            v[1]
+pub fn min_operations(s: &str, k: i32) -> i32 {
+    use std::collections::{BTreeSet, VecDeque};
+    let n = s.len();
+    let k = k as usize;
+    let zeros = s.bytes().filter(|&b| b == b'0').count();
+    let [mut odds, mut evens] = [const { BTreeSet::new() }; 2];
+    for i in (0..=n).filter(|&v| v != zeros) {
+        if i & 1 == 1 {
+            odds.insert(i);
         } else {
-            -1
+            evens.insert(i);
         }
     }
+    let mut queue = VecDeque::from([(zeros, 0)]);
+    while let Some((zeros, step)) = queue.pop_front() {
+        if zeros == 0 {
+            return step;
+        }
+        let min_ones = k.saturating_sub(zeros); // k-z
+        let max_ones = k.min(n - zeros); // min(k, n-z)
+        // z+2*ones-k
+        let [low, high] = [min_ones, max_ones].map(|v| zeros + 2 * v - k);
+        let set = if low & 1 == 1 { &mut odds } else { &mut evens };
+        let mut del = vec![];
+        for &i in set.range(low..=high) {
+            queue.push_back((i, 1 + step));
+            del.push(i);
+        }
+        for i in del {
+            set.remove(&i);
+        }
+    }
+    -1
 }
 
 #[cfg(test)]
@@ -71,7 +74,9 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(min_operations("101", 2), -1);
+    }
 
     #[test]
     fn test() {}
