@@ -9,23 +9,35 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn merge_characters(s: String, k: i32) -> String {
-    let k = k as usize;
-    let mut res = vec![];
-    let mut window = [false; 26];
-    for b in s.bytes() {
-        let bi = usize::from(b - b'a');
-        if window[bi] {
-            continue;
+pub fn make_parity_alternating(nums: Vec<i32>) -> Vec<i32> {
+    let a = f(&nums, 0);
+    let b = f(&nums, 1);
+    a.min(b)
+}
+
+fn f(nums: &[i32], mut parity: i32) -> Vec<i32> {
+    let mut res = Vec::with_capacity(nums.len());
+    let mut min = *nums.iter().min().unwrap();
+    let mut max = *nums.iter().max().unwrap();
+    let mut count = 0;
+    for &num in nums.iter() {
+        if num & 1 == parity {
+            res.push(num);
+            min = min.min(num);
+            max = max.max(num);
+        } else {
+            if num <= min {
+                res.push(1 + num);
+            } else if num >= max {
+                res.push(num - 1);
+            }
+            count += 1;
         }
-        window[bi] = true;
-        res.push(b);
-        if res.len() > k {
-            let temp = res[res.len() - k - 1];
-            window[usize::from(temp - b'a')] = false;
-        }
+        parity ^= 1;
     }
-    String::from_utf8(res).unwrap()
+    min = *res.iter().min().unwrap();
+    max = *res.iter().max().unwrap();
+    vec![count, max - min]
 }
 
 #[cfg(test)]
