@@ -9,18 +9,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_distinct_freq_pair(mut nums: Vec<i32>) -> Vec<i32> {
-    use itertools::Itertools;
-    nums.sort_unstable();
-    let chunks = nums.chunk_by(|a, b| a == b).collect_vec();
-    for (i, ch1) in chunks.iter().enumerate() {
-        for ch2 in chunks.iter().skip(1 + i) {
-            if ch1.len() != ch2.len() {
-                return vec![ch1[0], ch2[0]];
-            }
+pub fn merge_characters(s: String, k: i32) -> String {
+    let k = k as usize;
+    let mut res = vec![];
+    let mut window = [false; 26];
+    for b in s.bytes() {
+        let bi = usize::from(b - b'a');
+        if window[bi] {
+            continue;
+        }
+        window[bi] = true;
+        res.push(b);
+        if res.len() > k {
+            let temp = res[res.len() - k - 1];
+            window[usize::from(temp - b'a')] = false;
         }
     }
-    vec![-1, -1]
+    String::from_utf8(res).unwrap()
 }
 
 #[cfg(test)]
