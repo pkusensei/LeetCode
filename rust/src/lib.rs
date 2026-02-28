@@ -9,48 +9,45 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-use itertools::Itertools;
-
-pub fn at_most_n_given_digit_set(digits: &[&str], n: i32) -> i32 {
-    let digits = digits
-        .iter()
-        .map(|s| s.parse::<i32>().unwrap())
-        .collect_vec();
-    let n = n
-        .to_string()
-        .bytes()
-        .map(|b| i32::from(b - b'0'))
-        .collect_vec();
-    let len = n.len();
-    dfs(&digits, &n, 0, 1, 1, &mut vec![[[-1; 2]; 2]; len])
+pub fn solve(n: i32) -> i32 {
+    (1..=n).fold(0, |acc, num| {
+        ((acc << (32 - num.leading_zeros())) + i64::from(num)) % M
+    }) as i32
 }
 
-fn dfs(
-    digits: &[i32],
-    n: &[i32],
-    idx: usize,
-    tight: usize,
-    leading: usize,
-    memo: &mut [[[i32; 2]; 2]],
-) -> i32 {
-    if idx >= n.len() {
-        return i32::from(leading == 0);
+pub fn concatenated_binary(n: i32) -> i32 {
+    let mut res = 1;
+    for num in 2..=n {
+        let width = 1 + num.ilog2();
+        res = res * mod_pow(2, width as _) % M;
+        res = (res + f(num.into())) % M
     }
-    if memo[idx][tight][leading] > -1 {
-        return memo[idx][tight][leading];
-    }
-    let upper = if tight == 1 { n[idx] } else { 9 };
+    res as i32
+}
+
+const M: i64 = 1_000_000_007;
+
+const fn f(mut num: i64) -> i64 {
     let mut res = 0;
-    for d in 0..=upper {
-        let ntight = tight & usize::from(d == n[idx]);
-        if leading == 1 && d == 0 {
-            res += dfs(digits, n, 1 + idx, ntight, leading, memo);
-        } else if digits.binary_search(&d).is_ok() {
-            res += dfs(digits, n, 1 + idx, ntight, 0, memo);
-        }
+    let mut pow = 0;
+    while num > 0 {
+        let bit = num & 1;
+        num >>= 1;
+        res = (res + bit * mod_pow(2, pow)) % M;
+        pow += 1;
     }
-    memo[idx][tight][leading] = res;
     res
+}
+
+const fn mod_pow(b: i64, p: i64) -> i64 {
+    if p == 0 {
+        return 1;
+    }
+    if p & 1 == 0 {
+        mod_pow(b * b % M, p >> 1)
+    } else {
+        mod_pow(b * b % M, p >> 1) * b % M
+    }
 }
 
 #[cfg(test)]
@@ -83,9 +80,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(at_most_n_given_digit_set(&["1", "3", "5", "7"], 100), 20);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
