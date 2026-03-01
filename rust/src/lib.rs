@@ -9,31 +9,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_cost(n: i32) -> i32 {
-    f(n)
-}
-
-const fn f(n: i32) -> i32 {
-    if n <= 2 {
-        return n - 1;
+pub fn minimum_or(grid: &[&[i32]]) -> i32 {
+    let mut res = 0;
+    // Greedily ignore these bits
+    let mut discard = 0;
+    'out: for bit in (0..=17).rev() {
+        // Attempt to turn this bit off
+        let temp = discard | (1 << bit);
+        for row in grid.iter() {
+            // Test against all previous ignored bits
+            if row.iter().all(|&v| v & temp != 0) {
+                // Fail to turn it of
+                // Record it in `res`
+                res |= 1 << bit;
+                continue 'out;
+            }
+        }
+        // Turn this `bit` off
+        discard |= 1 << bit;
     }
-    if n == 3 {
-        return 3;
-    }
-    let a = n / 2;
-    let b = n - n / 2;
-    a * b + f(a) + f(b)
+    res
 }
-
-// 4
-// 2 2
-// 1 1 1 1
-//
-// 5
-// 2 3        6
-// 1 1 1 2    3
-//      1 1   1
-// 1 4        4
 
 #[cfg(test)]
 mod tests {
@@ -65,8 +61,14 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(minimum_or(&[&[1, 5], &[2, 4]]), 3);
+        assert_eq!(minimum_or(&[&[3, 5], &[6, 4]]), 5);
+        assert_eq!(minimum_or(&[&[7, 9, 8]]), 7);
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(minimum_or(&[&[14, 7]]), 7);
+    }
 }
