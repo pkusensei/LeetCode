@@ -8,31 +8,22 @@ namespace Solution;
 
 public class Solution
 {
-    public TreeNode IncreasingBST(TreeNode root)
+    public int TotalFruit(int[] fruits)
     {
-        return Dfs(root).h;
-
-        static (TreeNode h, TreeNode t) Dfs(TreeNode node)
+        Dictionary<int, int> freq = [];
+        int left = 0;
+        int res = 0;
+        for (int right = 0; right < fruits.Length; right++)
         {
-            if (node is null) { return (null, null); }
-            var a = Dfs(node.left);
-            var b = Dfs(node.right);
-            if (a.h is null)
+            if (!freq.TryAdd(fruits[right], 1)) { freq[fruits[right]] += 1; }
+            while (freq.Count > 2)
             {
-                TreeNode head = node;
-                node.right = b.h;
-                TreeNode tail = b.t is null ? node : b.t;
-                return (head, tail);
+                freq[fruits[left]] -= 1;
+                if (freq[fruits[left]] == 0) { freq.Remove(fruits[left]); }
+                left += 1;
             }
-            else
-            {
-                TreeNode head = a.h;
-                a.t.right = node;
-                node.left = null;
-                node.right = b.h;
-                TreeNode tail = b.t is null ? node : b.t;
-                return (head, tail);
-            }
+            res = int.Max(res, right + 1 - left);
         }
+        return res;
     }
 }
