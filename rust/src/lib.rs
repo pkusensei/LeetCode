@@ -9,32 +9,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_perms_di_sequence(s: String) -> i32 {
-    const M: i32 = 1_000_000_007;
-    let n = s.len();
-    let mut prev = vec![0; 1 + n];
-    prev[0] = 1;
-    for (i1, b) in s.bytes().enumerate() {
-        let mut curr = vec![0; 1 + n];
-        let mut prefix = 0;
-        if b == b'I' {
-            for i2 in 0..=1 + i1 {
-                if i2 > 0 {
-                    prefix = (prefix + prev[i2 - 1]) % M;
-                }
-                curr[i2] = prefix;
-            }
-        } else {
-            for i2 in (0..1 + i1).rev() {
-                if i2 <= i1 {
-                    prefix = (prefix + prev[i2]) % M;
-                }
-                curr[i2] = prefix;
-            }
-        }
-        prev = curr;
+pub fn find_kth_bit(n: i32, k: i32) -> char {
+    (f(n, k) + b'0').into()
+}
+
+const fn f(n: i32, k: i32) -> u8 {
+    if n == 1 {
+        return 0;
     }
-    prev.iter().fold(0, |acc, v| (acc + v) % M)
+    let len = (1 << n) - 1;
+    let half = (1 + len) / 2;
+    if k < half {
+        f(n - 1, k)
+    } else if k == half {
+        1
+    } else {
+        1 - f(n - 1, len - k + 1)
+    }
 }
 
 #[cfg(test)]
