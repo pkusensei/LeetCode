@@ -6,27 +6,38 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
+use std::sync::LazyLock;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_kth_bit(n: i32, k: i32) -> char {
-    (f(n, k) + b'0').into()
+pub fn superpalindromes_in_range(left: String, right: String) -> i32 {
+    let [left, right] = [left, right].map(|s| s.parse::<i64>().unwrap());
+    let a = left.isqrt();
+    let b = right.isqrt();
+    let i1 = P.partition_point(|&v| v < a);
+    let i2 = P.partition_point(|&v| v <= b);
+    (i2 - i1) as _
 }
 
-const fn f(n: i32, k: i32) -> u8 {
-    if n == 1 {
-        return 0;
+static P: LazyLock<Vec<i64>> = LazyLock::new(|| {
+    let mut res: Vec<i64> = (1..=9).collect();
+    for half in 1..10_000 {
+        let a = half.to_string();
+        let b = a.chars().rev().collect::<String>();
+        res.push(format!("{a}{b}").parse::<i64>().unwrap());
+        for d in 0..=9 {
+            res.push(format!("{a}{d}{b}").parse::<i64>().unwrap());
+        }
     }
-    let len = (1 << n) - 1;
-    let half = (1 + len) / 2;
-    if k < half {
-        f(n - 1, k)
-    } else if k == half {
-        1
-    } else {
-        1 - f(n - 1, len - k + 1)
-    }
-}
+    res.sort_unstable();
+    res.into_iter()
+        .filter(|&v| {
+            let sq = v.pow(2);
+            is_palindrome(sq.to_string().as_bytes())
+        })
+        .collect()
+});
 
 #[cfg(test)]
 mod tests {
