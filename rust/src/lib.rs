@@ -9,20 +9,33 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_special(mat: Vec<Vec<i32>>) -> i32 {
-    let [rows, cols] = get_dimensions(&mat);
-    let [mut rsum, mut csum] = [vec![0; rows], vec![0; cols]];
-    for (r, row) in mat.iter().enumerate() {
-        for (c, &v) in row.iter().enumerate() {
-            rsum[r] += v;
-            csum[c] += v;
+pub fn sum_subarray_mins(arr: Vec<i32>) -> i32 {
+    const M: i64 = 1_000_000_007;
+    let mut st = Vec::<(usize, i64)>::new();
+    // sum(subarr_min) at `i`
+    let mut dp = vec![0; arr.len()];
+    for (idx, &num) in arr.iter().enumerate() {
+        let num = i64::from(num);
+        while let Some(top) = st.last()
+            && top.1 > num
+        {
+            st.pop();
         }
+        if let Some(top) = st.last() {
+            // For all subarr ending on `idx`, i.e left..=idx
+            // Since [top]<=[idx]
+            // if left<=top.0, min(subarr) = [top], stored in dp[top]
+            // if top.0<left, min(subarr)=[idx], sum = (idx-top.0)*[idx]
+            // Thus all subarrs ending on `idx` is
+            let curr = (idx - top.0) as i64 * num % M;
+            dp[idx] = (curr + dp[top.0]) % M;
+        } else {
+            // For all 0..=idx, min(subarr) = [idx]
+            dp[idx] = (1 + idx) as i64 * num % M;
+        }
+        st.push((idx, num));
     }
-    mat.iter()
-        .enumerate()
-        .flat_map(|(r, row)| row.iter().enumerate().map(move |(c, &v)| (r, c, v)))
-        .filter(|&(r, c, v)| rsum[r] == 1 && csum[c] == 1 && v == 1)
-        .count() as i32
+    dp.iter().fold(0, |acc, v| (acc + v) % M) as i32
 }
 
 #[cfg(test)]
