@@ -6,24 +6,33 @@ using static Solution.Utils;
 
 namespace Solution;
 
-public class Solution
+public class TopVotedCandidate
 {
-    public int TotalFruit(int[] fruits)
+    int[] Times { get; }
+    int[] Leading { get; }
+    int Length { get; }
+
+    public TopVotedCandidate(int[] persons, int[] times)
     {
+        Times = times;
+        Length = times.Length;
         Dictionary<int, int> freq = [];
-        int left = 0;
-        int res = 0;
-        for (int right = 0; right < fruits.Length; right++)
+        List<int> leading = new(Length);
+        int max = 0;
+        foreach (var (person, time) in persons.Zip(times))
         {
-            if (!freq.TryAdd(fruits[right], 1)) { freq[fruits[right]] += 1; }
-            while (freq.Count > 2)
-            {
-                freq[fruits[left]] -= 1;
-                if (freq[fruits[left]] == 0) { freq.Remove(fruits[left]); }
-                left += 1;
-            }
-            res = int.Max(res, right + 1 - left);
+            if (!freq.TryAdd(person, 1)) { freq[person] += 1; }
+            max = int.Max(max, freq[person]);
+            if (max == freq[person]) { leading.Add(person); }
+            else { leading.Add(leading.Last()); }
         }
-        return res;
+        Leading = [.. leading];
+    }
+
+    public int Q(int t)
+    {
+        int i = Array.BinarySearch(Times, t);
+        if (i < 0) { i = (~i) - 1; }
+        return Leading[i];
     }
 }
