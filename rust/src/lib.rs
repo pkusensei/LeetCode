@@ -6,38 +6,24 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::sync::LazyLock;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn superpalindromes_in_range(left: String, right: String) -> i32 {
-    let [left, right] = [left, right].map(|s| s.parse::<i64>().unwrap());
-    let a = left.isqrt();
-    let b = right.isqrt();
-    let i1 = P.partition_point(|&v| v < a);
-    let i2 = P.partition_point(|&v| v <= b);
-    (i2 - i1) as _
-}
-
-static P: LazyLock<Vec<i64>> = LazyLock::new(|| {
-    let mut res: Vec<i64> = (1..=9).collect();
-    for half in 1..10_000 {
-        let a = half.to_string();
-        let b = a.chars().rev().collect::<String>();
-        res.push(format!("{a}{b}").parse::<i64>().unwrap());
-        for d in 0..=9 {
-            res.push(format!("{a}{d}{b}").parse::<i64>().unwrap());
+pub fn num_special(mat: Vec<Vec<i32>>) -> i32 {
+    let [rows, cols] = get_dimensions(&mat);
+    let [mut rsum, mut csum] = [vec![0; rows], vec![0; cols]];
+    for (r, row) in mat.iter().enumerate() {
+        for (c, &v) in row.iter().enumerate() {
+            rsum[r] += v;
+            csum[c] += v;
         }
     }
-    res.sort_unstable();
-    res.into_iter()
-        .filter(|&v| {
-            let sq = v.pow(2);
-            is_palindrome(sq.to_string().as_bytes())
-        })
-        .collect()
-});
+    mat.iter()
+        .enumerate()
+        .flat_map(|(r, row)| row.iter().enumerate().map(move |(c, &v)| (r, c, v)))
+        .filter(|&(r, c, v)| rsum[r] == 1 && csum[c] == 1 && v == 1)
+        .count() as i32
+}
 
 #[cfg(test)]
 mod tests {
