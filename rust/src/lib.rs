@@ -6,19 +6,18 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
+use std::iter::once;
+
 #[allow(unused_imports)]
 use helper::*;
+use itertools::{chain, izip};
 
-pub fn smallest_range_ii(mut nums: Vec<i32>, k: i32) -> i32 {
-    let n = nums.len();
-    nums.sort_unstable();
-    let mut res = nums[n - 1] - nums[0];
-    for i in 1..n {
-        let min = (nums[0] + k).min(nums[i] - k);
-        let max = (nums[i - 1] + k).max(nums[n - 1] - k);
-        res = res.min(max - min);
-    }
-    res
+pub fn min_operations(s: String) -> i32 {
+    let it = chain!(once(b'0'), once(b'1')).cycle();
+    izip!(s.bytes(), it.clone())
+        .filter(|(a, b)| a != b)
+        .count()
+        .min(izip!(s.bytes(), it.skip(1)).filter(|(a, b)| a != b).count()) as i32
 }
 
 #[cfg(test)]
