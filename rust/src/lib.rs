@@ -6,18 +6,21 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::iter::once;
-
 #[allow(unused_imports)]
 use helper::*;
-use itertools::{chain, izip};
 
-pub fn min_operations(s: String) -> i32 {
-    let it = chain!(once(b'0'), once(b'1')).cycle();
-    izip!(s.bytes(), it.clone())
-        .filter(|(a, b)| a != b)
-        .count()
-        .min(izip!(s.bytes(), it.skip(1)).filter(|(a, b)| a != b).count()) as i32
+pub fn check_ones_segment(s: String) -> bool {
+    let mut latest = None;
+    for (i, b) in s.bytes().enumerate() {
+        if b == b'1' {
+            let prev = latest.get_or_insert(i);
+            if *prev + 1 < i {
+                return false;
+            }
+            *prev = i;
+        }
+    }
+    true
 }
 
 #[cfg(test)]
