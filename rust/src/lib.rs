@@ -9,18 +9,26 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn check_ones_segment(s: String) -> bool {
-    let mut latest = None;
-    for (i, b) in s.bytes().enumerate() {
-        if b == b'1' {
-            let prev = latest.get_or_insert(i);
-            if *prev + 1 < i {
-                return false;
-            }
-            *prev = i;
+pub fn min_flips(s: &str) -> i32 {
+    let n = s.len();
+    let s = s.as_bytes();
+    let [mut zero_even, mut zero_odd] = [0, 0];
+    let mut res = n as i32;
+    let put_zero_on_even = |idx, b| (idx & 1) == 0 && b == b'1' || (idx & 1) == 1 && b == b'0';
+    let put_zero_on_odd = |idx, b| (idx & 1) == 0 && b == b'0' || (idx & 1) == 1 && b == b'1';
+    for (idx, &b) in s.iter().cycle().enumerate().take(2 * n) {
+        zero_even += i32::from(put_zero_on_even(idx, b));
+        zero_odd += i32::from(put_zero_on_odd(idx, b));
+        if idx >= n {
+            let i = idx - n;
+            zero_even -= i32::from(put_zero_on_even(i, s[i]));
+            zero_odd -= i32::from(put_zero_on_odd(i, s[i]));
+        }
+        if idx >= n - 1 {
+            res = res.min(zero_even).min(zero_odd)
         }
     }
-    true
+    res
 }
 
 #[cfg(test)]
@@ -53,8 +61,12 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(min_flips("010"), 0);
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(min_flips("01001001101"), 2);
+    }
 }
