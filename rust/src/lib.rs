@@ -9,15 +9,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_index(capacity: Vec<i32>, item_size: i32) -> i32 {
+pub fn smallest_balanced_index(nums: Vec<i32>) -> i32 {
+    let sum = nums.iter().map(|&v| i64::from(v)).sum();
+    let mut pref_sum: i64 = sum;
     let mut res = -1;
-    let mut prev = None;
-    for (i, &cap) in capacity.iter().enumerate() {
-        if cap >= item_size {
-            if prev.is_none_or(|v| v > cap) {
-                prev = Some(cap);
-                res = i as i32;
-            }
+    let mut suf_prod = 1;
+    for (i, &num) in nums.iter().enumerate().rev() {
+        let num = i64::from(num);
+        pref_sum -= num;
+        if pref_sum == suf_prod {
+            res = i as i32;
+            break;
+        }
+        suf_prod *= num;
+        if suf_prod > pref_sum {
+            break;
         }
     }
     res
