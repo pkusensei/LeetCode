@@ -6,39 +6,21 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::collections::HashSet;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn with_cantor(nums: &[&str]) -> String {
-    let res: Vec<_> = nums
-        .iter()
-        .enumerate()
-        .map(|(i, s)| b'0' + u8::from(s.as_bytes()[i] == b'0'))
-        .collect();
-    String::from_utf8(res).unwrap()
-}
-
-pub fn find_different_binary_string(nums: Vec<String>) -> String {
-    let n = nums.len();
-    let seen: HashSet<_> = nums
-        .iter()
-        .map(|s| i32::from_str_radix(s, 2).unwrap())
-        .collect();
-    let v = backtrack(&seen, n, 0).unwrap_or_default();
-    format!("{:0n$b}", v)
-}
-
-fn backtrack(seen: &HashSet<i32>, n: usize, curr: i32) -> Option<i32> {
-    if n == 0 {
-        return if seen.contains(&curr) {
-            None
-        } else {
-            Some(curr)
-        };
+pub fn minimum_index(capacity: Vec<i32>, item_size: i32) -> i32 {
+    let mut res = -1;
+    let mut prev = None;
+    for (i, &cap) in capacity.iter().enumerate() {
+        if cap >= item_size {
+            if prev.is_none_or(|v| v > cap) {
+                prev = Some(cap);
+                res = i as i32;
+            }
+        }
     }
-    backtrack(seen, n - 1, curr << 1).or_else(|| backtrack(seen, n - 1, (curr << 1) | 1))
+    res
 }
 
 #[cfg(test)]
