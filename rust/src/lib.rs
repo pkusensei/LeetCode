@@ -9,24 +9,32 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_operations(s: &str) -> i32 {
+pub fn min_cost(s: &str, enc_cost: i32, flat_cost: i32) -> i64 {
     let n = s.len();
-    let s = s.as_bytes();
-    if s.is_sorted() {
-        return 0;
+    let [enc_cost, flat_cost] = [enc_cost, flat_cost].map(i64::from);
+    let pref_x = s.bytes().fold(Vec::with_capacity(n), |mut acc, b| {
+        acc.push(usize::from(b == b'1') + acc.last().unwrap_or(&0));
+        acc
+    });
+    dfs(&pref_x, enc_cost, flat_cost, 0, n - 1)
+}
+
+fn dfs(pref_x: &[usize], enc_cost: i64, flat_cost: i64, left: usize, right: usize) -> i64 {
+    let x_count = pref_x[right] - if left > 0 { pref_x[left - 1] } else { 0 };
+    if x_count == 0 {
+        return flat_cost;
     }
-    if n == 2 {
-        return -1;
+    let len = 1 + right - left;
+    let mut res = len as i64 * x_count as i64 * enc_cost;
+    if len & 1 == 1 {
+        return res;
     }
-    let min = *s.iter().min().unwrap();
-    let max = *s.iter().max().unwrap();
-    if s[0] == min || s[n - 1] == max {
-        return 1;
-    }
-    if s[..n - 1].contains(&min) || s[1..].contains(&max) {
-        return 2;
-    }
-    3
+    let mid = left.midpoint(right);
+    res = res.min(
+        dfs(pref_x, enc_cost, flat_cost, left, mid)
+            + dfs(pref_x, enc_cost, flat_cost, 1 + mid, right),
+    );
+    res
 }
 
 #[cfg(test)]
@@ -59,11 +67,12 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(min_cost("1010", 2, 1), 6);
+        assert_eq!(min_cost("1010", 3, 10), 12);
+        assert_eq!(min_cost("00", 1, 2), 2);
+    }
 
     #[test]
-    fn test() {
-        assert_eq!(min_operations("edc"), 3);
-        assert_eq!(min_operations("jgg"), 2);
-    }
+    fn test() {}
 }
