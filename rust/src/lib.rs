@@ -6,29 +6,39 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
+use std::collections::HashSet;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_flips(s: &str) -> i32 {
-    let n = s.len();
-    let s = s.as_bytes();
-    let [mut zero_even, mut zero_odd] = [0, 0];
-    let mut res = n as i32;
-    let put_zero_on_even = |idx, b| (idx & 1) == 0 && b == b'1' || (idx & 1) == 1 && b == b'0';
-    let put_zero_on_odd = |idx, b| (idx & 1) == 0 && b == b'0' || (idx & 1) == 1 && b == b'1';
-    for (idx, &b) in s.iter().cycle().enumerate().take(2 * n) {
-        zero_even += i32::from(put_zero_on_even(idx, b));
-        zero_odd += i32::from(put_zero_on_odd(idx, b));
-        if idx >= n {
-            let i = idx - n;
-            zero_even -= i32::from(put_zero_on_even(i, s[i]));
-            zero_odd -= i32::from(put_zero_on_odd(i, s[i]));
-        }
-        if idx >= n - 1 {
-            res = res.min(zero_even).min(zero_odd)
-        }
+pub fn with_cantor(nums: &[&str]) -> String {
+    let res: Vec<_> = nums
+        .iter()
+        .enumerate()
+        .map(|(i, s)| b'0' + u8::from(s.as_bytes()[i] == b'0'))
+        .collect();
+    String::from_utf8(res).unwrap()
+}
+
+pub fn find_different_binary_string(nums: Vec<String>) -> String {
+    let n = nums.len();
+    let seen: HashSet<_> = nums
+        .iter()
+        .map(|s| i32::from_str_radix(s, 2).unwrap())
+        .collect();
+    let v = backtrack(&seen, n, 0).unwrap_or_default();
+    format!("{:0n$b}", v)
+}
+
+fn backtrack(seen: &HashSet<i32>, n: usize, curr: i32) -> Option<i32> {
+    if n == 0 {
+        return if seen.contains(&curr) {
+            None
+        } else {
+            Some(curr)
+        };
     }
-    res
+    backtrack(seen, n - 1, curr << 1).or_else(|| backtrack(seen, n - 1, (curr << 1) | 1))
 }
 
 #[cfg(test)]
@@ -61,12 +71,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(min_flips("010"), 0);
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(min_flips("01001001101"), 2);
-    }
+    fn test() {}
 }
