@@ -9,24 +9,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn smallest_balanced_index(nums: Vec<i32>) -> i32 {
-    let sum = nums.iter().map(|&v| i64::from(v)).sum();
-    let mut pref_sum: i64 = sum;
-    let mut res = -1;
-    let mut suf_prod = 1;
-    for (i, &num) in nums.iter().enumerate().rev() {
-        let num = i64::from(num);
-        pref_sum -= num;
-        if pref_sum == suf_prod {
-            res = i as i32;
-            break;
-        }
-        suf_prod *= num;
-        if suf_prod > pref_sum {
-            break;
-        }
+pub fn min_operations(s: &str) -> i32 {
+    let n = s.len();
+    let s = s.as_bytes();
+    if s.is_sorted() {
+        return 0;
     }
-    res
+    if n == 2 {
+        return -1;
+    }
+    let min = *s.iter().min().unwrap();
+    let max = *s.iter().max().unwrap();
+    if s[0] == min || s[n - 1] == max {
+        return 1;
+    }
+    if s[..n - 1].contains(&min) || s[1..].contains(&max) {
+        return 2;
+    }
+    3
 }
 
 #[cfg(test)]
@@ -62,5 +62,8 @@ mod tests {
     fn basics() {}
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(min_operations("edc"), 3);
+        assert_eq!(min_operations("jgg"), 2);
+    }
 }
