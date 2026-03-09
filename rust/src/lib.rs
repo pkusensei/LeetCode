@@ -9,31 +9,86 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_cost(s: &str, enc_cost: i32, flat_cost: i32) -> i64 {
-    let n = s.len();
-    let [enc_cost, flat_cost] = [enc_cost, flat_cost].map(i64::from);
-    let pref_x = s.bytes().fold(Vec::with_capacity(n), |mut acc, b| {
-        acc.push(usize::from(b == b'1') + acc.last().unwrap_or(&0));
-        acc
-    });
-    dfs(&pref_x, enc_cost, flat_cost, 0, n - 1)
+pub fn with_dp(zero: i32, one: i32, limit: i32) -> i32 {
+    let [num_zero, num_one, limit] = [zero, one, limit].map(|v| v as usize);
+    // dp0[x][y]: count of arrays using x zeros and y ones
+    let mut dp0 = vec![vec![0; 1 + num_one]; 1 + num_zero];
+    let mut dp1 = vec![vec![0; 1 + num_one]; 1 + num_zero];
+    // Base case: prefix streak of zeros
+    for i in 1..=num_zero.min(limit) {
+        dp0[i][0] = 1;
+    }
+    // Base case: prefix streak of ones
+    for i in 1..=num_one.min(limit) {
+        dp1[0][i] = 1;
+    }
+    for zero in 1..=num_zero {
+        for one in 1..=num_one {
+            // Append 0 to ..xx0 or ..xx1
+            dp0[zero][one] = (dp0[zero - 1][one] + dp1[zero - 1][one]) % M;
+            // Append 1 to ..xx0 or ..xx1
+            dp1[zero][one] = (dp0[zero][one - 1] + dp1[zero][one - 1]) % M;
+            if zero > limit {
+                // dp1[x][y] always ends in 1,
+                // dp1[zero-1-limit][one] has to add (1+limit) zeros to reach dp0[zero][one]
+                dp0[zero][one] = (dp0[zero][one] - dp1[zero - 1 - limit][one]).rem_euclid(M);
+            }
+            if one > limit {
+                dp1[zero][one] = (dp1[zero][one] - dp0[zero][one - 1 - limit]).rem_euclid(M);
+            }
+        }
+    }
+    (dp0[num_zero][num_one] + dp1[num_zero][num_one]) % M
 }
 
-fn dfs(pref_x: &[usize], enc_cost: i64, flat_cost: i64, left: usize, right: usize) -> i64 {
-    let x_count = pref_x[right] - if left > 0 { pref_x[left - 1] } else { 0 };
-    if x_count == 0 {
-        return flat_cost;
+pub fn number_of_stable_arrays(zero: i32, one: i32, limit: i32) -> i32 {
+    let [num_zero, num_one, limit] = [zero, one, limit].map(|v| v as usize);
+    let mut memo = vec![vec![vec![vec![-1; 1 + limit]; 3]; 1 + num_one]; 1 + num_zero];
+    dfs(num_zero, num_one, 2, 0, limit, &mut memo)
+}
+
+const M: i32 = 1_000_000_007;
+
+fn dfs(
+    num_zero: usize,
+    num_one: usize,
+    prev: usize,
+    streak: usize,
+    limit: usize,
+    memo: &mut [Vec<Vec<Vec<i32>>>],
+) -> i32 {
+    if num_zero == 0 && num_one == 0 {
+        return i32::from(streak <= limit);
     }
-    let len = 1 + right - left;
-    let mut res = len as i64 * x_count as i64 * enc_cost;
-    if len & 1 == 1 {
-        return res;
+    if streak > limit {
+        return 0;
     }
-    let mid = left.midpoint(right);
-    res = res.min(
-        dfs(pref_x, enc_cost, flat_cost, left, mid)
-            + dfs(pref_x, enc_cost, flat_cost, 1 + mid, right),
-    );
+    if memo[num_zero][num_one][prev][streak] > -1 {
+        return memo[num_zero][num_one][prev][streak];
+    }
+    let mut res = 0;
+    if num_zero > 0 {
+        res += dfs(
+            num_zero - 1,
+            num_one,
+            0,
+            if prev == 0 { 1 + streak } else { 1 },
+            limit,
+            memo,
+        );
+    }
+    if num_one > 0 {
+        res += dfs(
+            num_zero,
+            num_one - 1,
+            1,
+            if prev == 1 { 1 + streak } else { 1 },
+            limit,
+            memo,
+        );
+    }
+    res %= M;
+    memo[num_zero][num_one][prev][streak] = res;
     res
 }
 
@@ -67,11 +122,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(min_cost("1010", 2, 1), 6);
-        assert_eq!(min_cost("1010", 3, 10), 12);
-        assert_eq!(min_cost("00", 1, 2), 2);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
