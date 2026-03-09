@@ -6,33 +6,24 @@ using static Solution.Utils;
 
 namespace Solution;
 
-public class TopVotedCandidate
+public class Solution
 {
-    int[] Times { get; }
-    int[] Leading { get; }
-    int Length { get; }
-
-    public TopVotedCandidate(int[] persons, int[] times)
+    public int PartitionDisjoint(int[] nums)
     {
-        Times = times;
-        Length = times.Length;
-        Dictionary<int, int> freq = [];
-        List<int> leading = new(Length);
-        int max = 0;
-        foreach (var (person, time) in persons.Zip(times))
+        int n = nums.Length;
+        List<int> min_right = new(n);
+        foreach (var item in nums.Reverse())
         {
-            if (!freq.TryAdd(person, 1)) { freq[person] += 1; }
-            max = int.Max(max, freq[person]);
-            if (max == freq[person]) { leading.Add(person); }
-            else { leading.Add(leading.Last()); }
+            if (min_right.Count > 1) { min_right.Add(int.Min(item, min_right.Last())); }
+            else { min_right.Add(item); }
         }
-        Leading = [.. leading];
-    }
-
-    public int Q(int t)
-    {
-        int i = Array.BinarySearch(Times, t);
-        if (i < 0) { i = (~i) - 1; }
-        return Leading[i];
+        min_right.Reverse();
+        int pref_max = nums[0];
+        for (int i = 1; i < n; i++)
+        {
+            if (pref_max <= min_right[i]) { return i; }
+            pref_max = int.Max(pref_max, nums[i]);
+        }
+        return n;
     }
 }
