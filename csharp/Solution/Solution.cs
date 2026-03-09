@@ -8,22 +8,21 @@ namespace Solution;
 
 public class Solution
 {
-    public int PartitionDisjoint(int[] nums)
+    public int MaxSubarraySumCircular(int[] nums)
     {
-        int n = nums.Length;
-        List<int> min_right = new(n);
-        foreach (var item in nums.Reverse())
+        int min_sum = int.MaxValue;
+        int max_sum = int.MinValue;
+        int curr_min = 0;
+        int curr_max = 0;
+        int sum = 0;
+        foreach (var item in nums)
         {
-            if (min_right.Count > 1) { min_right.Add(int.Min(item, min_right.Last())); }
-            else { min_right.Add(item); }
+            curr_min = int.Min(curr_min + item, item);
+            curr_max = int.Max(curr_max + item, item);
+            min_sum = int.Min(curr_min, min_sum);
+            max_sum = int.Max(max_sum, curr_max);
+            sum += item;
         }
-        min_right.Reverse();
-        int pref_max = nums[0];
-        for (int i = 1; i < n; i++)
-        {
-            if (pref_max <= min_right[i]) { return i; }
-            pref_max = int.Max(pref_max, nums[i]);
-        }
-        return n;
+        return max_sum < 0 ? max_sum : int.Max(max_sum, sum - min_sum);
     }
 }
