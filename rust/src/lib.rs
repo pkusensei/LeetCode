@@ -6,77 +6,33 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::collections::VecDeque;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn cat_mouse_game(graph: Vec<Vec<i32>>) -> i32 {
-    let n = graph.len();
-    // degree[mouse][cat][turn]
-    let mut degree = vec![vec![[0; 2]; n]; n];
-    // for each (mouse_pos, cat_pos)
-    for mouse in 0..n {
-        for cat in 0..n {
-            degree[mouse][cat][MOUSE] = graph[mouse].len();
-            degree[mouse][cat][CAT] = graph[cat].iter().filter(|&&v| v != 0).count();
-        }
+pub fn number_of_stable_arrays(zero: i32, one: i32, limit: i32) -> i32 {
+    const M: i32 = 1_000_000_007;
+    let [num_zero, num_one, limit] = [zero, one, limit].map(|v| v as usize);
+    let mut dp0 = vec![vec![0; 1 + num_one]; 1 + num_zero];
+    let mut dp1 = vec![vec![0; 1 + num_one]; 1 + num_zero];
+    for i in 1..=num_zero.min(limit) {
+        dp0[i][0] = 1;
     }
-    // states[mouse][cat][turn]
-    let mut states = vec![vec![[DRAW; 2]; n]; n];
-    let mut queue = VecDeque::new();
-    for node in 1..n {
-        for turn in [MOUSE, CAT] {
-            states[0][node][turn] = MOUSE; // Mouse reaches 0 and wins
-            queue.push_back([0, node, turn]);
-            states[node][node][turn] = CAT; // Both reach `node` and cat wins
-            queue.push_back([node, node, turn]);
-        }
+    for i in 1..=num_one.min(limit) {
+        dp1[0][i] = 1;
     }
-    while let Some([mouse, cat, turn]) = queue.pop_front() {
-        let curr = states[mouse][cat][turn];
-        for [prev_m, prev_c, prev_t] in prev_states(&graph, mouse, cat, turn) {
-            if states[prev_m][prev_c][prev_t] != DRAW {
-                continue;
+    for zero in 1..=num_zero {
+        for one in 1..=num_one {
+            dp0[zero][one] = (dp0[zero - 1][one] + dp1[zero - 1][one]) % M;
+            dp1[zero][one] = (dp0[zero][one - 1] + dp1[zero][one - 1]) % M;
+            if zero > limit {
+                dp0[zero][one] = (dp0[zero][one] - dp1[zero - 1 - limit][one]).rem_euclid(M);
             }
-            degree[prev_m][prev_c][prev_t] -= 1;
-            let mover_winnning =
-                (curr == MOUSE && prev_t == MOUSE) || (curr == CAT && prev_t == CAT);
-            if mover_winnning || degree[prev_m][prev_c][prev_t] == 0 {
-                states[prev_m][prev_c][prev_t] = curr;
-                queue.push_back([prev_m, prev_c, prev_t]);
+            if one > limit {
+                dp1[zero][one] = (dp1[zero][one] - dp0[zero][one - 1 - limit]).rem_euclid(M);
             }
         }
     }
-    match states[1][2][MOUSE] {
-        MOUSE => 1,
-        CAT => 2,
-        _ => 0,
-    }
-}
-
-const MOUSE: usize = 0;
-const CAT: usize = 1;
-const DRAW: usize = 2;
-
-fn prev_states(graph: &[Vec<i32>], mouse: usize, cat: usize, turn: usize) -> Vec<[usize; 3]> {
-    if turn == MOUSE {
-        graph[cat]
-            .iter()
-            .filter_map(|&c| {
-                if c > 0 {
-                    Some([mouse, c as usize, CAT])
-                } else {
-                    None
-                }
-            })
-            .collect()
-    } else {
-        graph[mouse]
-            .iter()
-            .map(|&m| [m as usize, cat, MOUSE])
-            .collect()
-    }
+    (dp0[num_zero][num_one] + dp1[num_zero][num_one]) % M
 }
 
 #[cfg(test)]
