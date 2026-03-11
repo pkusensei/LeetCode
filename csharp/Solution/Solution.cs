@@ -8,21 +8,28 @@ namespace Solution;
 
 public class Solution
 {
-    public int MaxSubarraySumCircular(int[] nums)
+    public int NumMusicPlaylists(int n, int goal, int k)
     {
-        int min_sum = int.MaxValue;
-        int max_sum = int.MinValue;
-        int curr_min = 0;
-        int curr_max = 0;
-        int sum = 0;
-        foreach (var item in nums)
+        const long M = 1_000_000_007;
+        // dp[x][y] = `x` songs make up playlist of length `y`
+        long[,] dp = new long[1 + n, 1 + goal];
+        dp[0, 0] = 1;
+        for (int song = 1; song <= n; song++)
         {
-            curr_min = int.Min(curr_min + item, item);
-            curr_max = int.Max(curr_max + item, item);
-            min_sum = int.Min(curr_min, min_sum);
-            max_sum = int.Max(max_sum, curr_max);
-            sum += item;
+            for (int len = 1; len <= goal; len++)
+            {
+                // (song-1) make up (len-1)
+                // To append a song, we have (n-(song-1)) to choose from
+                dp[song, len] = dp[song - 1, len - 1] * (n - (song - 1)) % M;
+                if (song > k)
+                {
+                    // Pick a used one
+                    // The last `k` songs are banned
+                    dp[song, len] += dp[song, len - 1] * (song - k) % M;
+                }
+                dp[song, len] %= M;
+            }
         }
-        return max_sum < 0 ? max_sum : int.Max(max_sum, sum - min_sum);
+        return (int)dp[n, goal];
     }
 }
