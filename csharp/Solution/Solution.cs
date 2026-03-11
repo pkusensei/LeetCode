@@ -8,20 +8,25 @@ namespace Solution;
 
 public class Solution
 {
-    public int MinAddToMakeValid(string s)
+    public int[] SortArrayByParityII(int[] nums)
     {
-        int open = 0;
-        int res = 0;
-        foreach (var item in s)
+        int n = nums.Length;
+        int even_i = 0;
+        int odd_i = 1;
+        while (even_i < n && odd_i < n)
         {
-            if (item == '(') { open += 1; }
-            else { open -= 1; }
-            if (open < 0)
+            if ((nums[even_i] & 1) == 0)
             {
-                open = 0;
-                res += 1;
+                even_i += 2;
+                continue;
             }
+            if ((nums[odd_i] & 1) == 1)
+            {
+                odd_i += 2;
+                continue;
+            }
+            (nums[even_i], nums[odd_i]) = (nums[odd_i], nums[even_i]);
         }
-        return res + open;
+        return nums;
     }
 }
