@@ -8,28 +8,20 @@ namespace Solution;
 
 public class Solution
 {
-    public int NumMusicPlaylists(int n, int goal, int k)
+    public int MinAddToMakeValid(string s)
     {
-        const long M = 1_000_000_007;
-        // dp[x][y] = `x` songs make up playlist of length `y`
-        long[,] dp = new long[1 + n, 1 + goal];
-        dp[0, 0] = 1;
-        for (int song = 1; song <= n; song++)
+        int open = 0;
+        int res = 0;
+        foreach (var item in s)
         {
-            for (int len = 1; len <= goal; len++)
+            if (item == '(') { open += 1; }
+            else { open -= 1; }
+            if (open < 0)
             {
-                // (song-1) make up (len-1)
-                // To append a song, we have (n-(song-1)) to choose from
-                dp[song, len] = dp[song - 1, len - 1] * (n - (song - 1)) % M;
-                if (song > k)
-                {
-                    // Pick a used one
-                    // The last `k` songs are banned
-                    dp[song, len] += dp[song, len - 1] * (song - k) % M;
-                }
-                dp[song, len] %= M;
+                open = 0;
+                res += 1;
             }
         }
-        return (int)dp[n, goal];
+        return res + open;
     }
 }
