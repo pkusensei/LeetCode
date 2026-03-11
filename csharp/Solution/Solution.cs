@@ -8,38 +8,74 @@ namespace Solution;
 
 public class Solution
 {
-    public int ThreeSumMulti(int[] arr, int target)
+    public int MinMalwareSpread(int[][] graph, int[] initial)
     {
-        const long M = 1_000_000_007;
-        Dictionary<int, long> freq = [];
-        foreach (var item in arr)
+        int n = graph.Length;
+        DSU dsu = new(n);
+        for (int i1 = 0; i1 < n; i1++)
         {
-            if (!freq.TryAdd(item, 1)) { freq[item] += 1; }
-        }
-        long res = 0;
-        foreach (var (n1, f1) in freq)
-        {
-            foreach (var (n2, f2) in freq)
+            for (int i2 = 1 + i1; i2 < n; i2++)
             {
-                int n3 = target - n1 - n2;
-                if (freq.TryGetValue(n3, out long f3))
-                {
-                    if (n1 == n2 && n2 == n3)
-                    {
-                        res += f1 * (f1 - 1) * (f1 - 2) / 6 % M;
-                    }
-                    if (n1 == n2 && n2 != n3)
-                    {
-                        res += f1 * (f1 - 1) / 2 * f3 % M;
-                    }
-                    if (n1 < n2 && n2 < n3)
-                    {
-                        res += f1 * f2 * f3 % M;
-                    }
-                    res %= M;
-                }
+                if (graph[i1][i2] == 1) { dsu.Union(i1, i2); }
             }
         }
-        return (int)res;
+        Dictionary<int, List<int>> roots = [];
+        foreach (int i in initial)
+        {
+            int root = dsu.Find(i);
+            if (!roots.TryAdd(root, [i])) { roots[root].Add(i); }
+        }
+        int res = n;
+        int max_size = 0;
+        foreach (var (root, nodes) in roots)
+        {
+            if (nodes.Count > 1) { continue; }
+            int size = dsu.Size[root];
+            if (size > max_size)
+            {
+                max_size = size;
+                res = nodes[0];
+            }
+            else if (size == max_size)
+            {
+                res = int.Min(res, nodes[0]);
+            }
+        }
+        return res == n ? initial.Min() : res;
+    }
+}
+
+readonly struct DSU
+{
+    public int[] Parent { get; }
+    public int[] Size { get; }
+
+    public DSU(int n)
+    {
+        Parent = [.. Enumerable.Range(0, n)];
+        Size = [.. Enumerable.Repeat(1, n)];
+    }
+
+    public readonly int Find(int v)
+    {
+        if (Parent[v] != v) { Parent[v] = Find(Parent[v]); }
+        return Parent[v];
+    }
+
+    public readonly void Union(int x, int y)
+    {
+        int rx = Find(x);
+        int ry = Find(y);
+        if (rx == ry) { return; }
+        if (Size[rx] < Size[ry])
+        {
+            Size[ry] += Size[rx];
+            Parent[rx] = ry;
+        }
+        else
+        {
+            Size[rx] += Size[ry];
+            Parent[ry] = rx;
+        }
     }
 }
