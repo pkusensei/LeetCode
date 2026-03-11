@@ -8,25 +8,38 @@ namespace Solution;
 
 public class Solution
 {
-    public int[] SortArrayByParityII(int[] nums)
+    public int ThreeSumMulti(int[] arr, int target)
     {
-        int n = nums.Length;
-        int even_i = 0;
-        int odd_i = 1;
-        while (even_i < n && odd_i < n)
+        const long M = 1_000_000_007;
+        Dictionary<int, long> freq = [];
+        foreach (var item in arr)
         {
-            if ((nums[even_i] & 1) == 0)
-            {
-                even_i += 2;
-                continue;
-            }
-            if ((nums[odd_i] & 1) == 1)
-            {
-                odd_i += 2;
-                continue;
-            }
-            (nums[even_i], nums[odd_i]) = (nums[odd_i], nums[even_i]);
+            if (!freq.TryAdd(item, 1)) { freq[item] += 1; }
         }
-        return nums;
+        long res = 0;
+        foreach (var (n1, f1) in freq)
+        {
+            foreach (var (n2, f2) in freq)
+            {
+                int n3 = target - n1 - n2;
+                if (freq.TryGetValue(n3, out long f3))
+                {
+                    if (n1 == n2 && n2 == n3)
+                    {
+                        res += f1 * (f1 - 1) * (f1 - 2) / 6 % M;
+                    }
+                    if (n1 == n2 && n2 != n3)
+                    {
+                        res += f1 * (f1 - 1) / 2 * f3 % M;
+                    }
+                    if (n1 < n2 && n2 < n3)
+                    {
+                        res += f1 * f2 * f3 % M;
+                    }
+                    res %= M;
+                }
+            }
+        }
+        return (int)res;
     }
 }
