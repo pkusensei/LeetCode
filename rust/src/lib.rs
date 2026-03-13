@@ -9,44 +9,38 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn three_equal_parts(arr: &[i32]) -> Vec<i32> {
-    use itertools::izip;
-    let n = arr.len();
-    let mut ones = arr.iter().sum::<i32>();
-    if ones == 0 {
-        return vec![0, n as i32 - 1];
-    }
-    if ones % 3 != 0 {
-        return vec![-1, -1];
-    }
-    let mut ids = Vec::with_capacity(3);
-    let mut f = 0;
-    for (i, &v) in arr.iter().enumerate() {
-        f += v;
-        if f == ones / 3 {
-            f = 0;
-            ids.push(i);
+pub fn with_slide(nums: &[i32], goal: i32) -> i32 {
+    at_most(nums, goal) - at_most(nums, goal - 1)
+}
+
+fn at_most(nums: &[i32], goal: i32) -> i32 {
+    let mut res = 0;
+    let mut left = 0;
+    let mut sum = 0;
+    for (right, &num) in nums.iter().enumerate() {
+        sum += num;
+        while left <= right && sum > goal {
+            sum -= nums[left];
+            left += 1;
         }
+        res += 1 + right - left;
     }
-    let zero = n - ids[2] - 1;
-    let start1 = ids[0] + zero + 1;
-    let start2 = ids[1] + zero + 1;
-    for (a, b, c) in izip!(
-        arr[..start1].iter().rev(),
-        arr[start1..start2].iter().rev(),
-        arr[start2..].iter().rev()
-    ) {
-        if a == b && b == c {
-            ones -= 3 * a;
-        } else {
-            break;
+    res as i32
+}
+
+pub fn num_subarrays_with_sum(nums: Vec<i32>, goal: i32) -> i32 {
+    use std::collections::HashMap;
+    let mut map = HashMap::from([(0, 1)]);
+    let mut res = 0;
+    let mut sum = 0;
+    for &num in nums.iter() {
+        sum += num;
+        if let Some(f) = map.get(&(sum - goal)) {
+            res += f;
         }
+        *map.entry(sum).or_insert(0) += 1;
     }
-    if ones == 0 {
-        vec![start1 as i32 - 1, start2 as i32]
-    } else {
-        vec![-1, -1]
-    }
+    res
 }
 
 #[cfg(test)]
@@ -82,10 +76,5 @@ mod tests {
     fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(
-            three_equal_parts(&[1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
-            [-1, -1]
-        );
-    }
+    fn test() {}
 }
