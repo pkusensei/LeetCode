@@ -9,87 +9,40 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_stability(n: i32, edges: &[[i32; 4]], k: i32) -> i32 {
-    let n = n as usize;
-    let mut dsu = DSU::new(n);
-    let mut opt = vec![];
-    let mut right = i32::MAX >> 1;
-    for e in edges.iter() {
-        let [a, b, s, m] = e[..] else { unreachable!() };
-        let [a, b] = [a, b].map(|v| v as usize);
-        if m == 1 {
-            right = right.min(s);
-            if !dsu.union(a, b) {
-                return -1;
+pub fn min_number_of_seconds(mountain_height: i32, worker_times: &[i32]) -> i64 {
+    let mut left = 1;
+    let mut right = i64::MAX >> 2;
+    while left < right {
+        let mid = left + (right - left) / 2;
+        let mut curr = 0;
+        for &t in worker_times.iter() {
+            curr += find_height(t, mid);
+            if curr >= mountain_height {
+                break;
             }
+        }
+        if curr >= mountain_height {
+            right = mid;
         } else {
-            opt.push((a, b, s));
+            left = 1 + mid;
         }
     }
-    if dsu.n == 1 {
-        return right;
-    }
-    opt.sort_unstable_by_key(|v| std::cmp::Reverse(v.2));
-    let mut used = vec![];
-    for &(a, b, s) in &opt {
-        if dsu.union(a, b) {
-            used.push(s);
-        }
-        if dsu.n == 1 {
-            break;
-        }
-    }
-    if dsu.n > 1 {
-        return -1;
-    }
-    for v in used.iter_mut().rev().take(k as usize) {
-        *v *= 2;
-    }
-    used.into_iter()
-        .chain(std::iter::once(right))
-        .min()
-        .unwrap()
+    left
 }
 
-#[derive(Clone)]
-struct DSU {
-    parent: Vec<usize>,
-    rank: Vec<i32>,
-    n: usize,
-}
-
-impl DSU {
-    fn new(n: usize) -> Self {
-        Self {
-            parent: (0..n).collect(),
-            rank: vec![0; n],
-            n,
+fn find_height(time: i32, max: i64) -> i32 {
+    let mut left = 0;
+    let mut right = 100_001;
+    while left < right {
+        let mid = left + (1 + right - left) / 2;
+        let curr = i64::from(time) * (1 + mid) * mid / 2;
+        if curr > max {
+            right = mid - 1
+        } else {
+            left = mid;
         }
     }
-
-    fn find(&mut self, v: usize) -> usize {
-        if self.parent[v] != v {
-            self.parent[v] = self.find(self.parent[v])
-        }
-        self.parent[v]
-    }
-
-    fn union(&mut self, x: usize, y: usize) -> bool {
-        let [rx, ry] = [x, y].map(|v| self.find(v));
-        if rx == ry {
-            return false;
-        }
-        match self.rank[rx].cmp(&self.rank[ry]) {
-            std::cmp::Ordering::Less => self.parent[rx] = ry,
-            std::cmp::Ordering::Equal => {
-                self.rank[rx] += 1;
-                self.parent[ry] = rx;
-            }
-            std::cmp::Ordering::Greater => self.parent[ry] = rx,
-        }
-        self.n -= 1;
-        true
-    }
+    left as i32
 }
 
 #[cfg(test)]
@@ -123,28 +76,12 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_stability(3, &[[0, 1, 2, 1], [1, 2, 3, 0]], 1), 2);
-        assert_eq!(
-            max_stability(3, &[[0, 1, 4, 0], [1, 2, 3, 0], [0, 2, 1, 0]], 2),
-            6
-        );
+        assert_eq!(min_number_of_seconds(4, &[2, 1, 1]), 3);
     }
 
     #[test]
     fn test() {
-        assert_eq!(
-            max_stability(
-                5,
-                &[
-                    [0, 1, 96990, 0],
-                    [2, 4, 48733, 1],
-                    [0, 4, 78225, 0],
-                    [3, 4, 858, 1],
-                    [1, 4, 92483, 0]
-                ],
-                1
-            ),
-            858
-        );
+        assert_eq!(min_number_of_seconds(6, &[8]), 168);
+        assert_eq!(min_number_of_seconds(1, &[5]), 5);
     }
 }
