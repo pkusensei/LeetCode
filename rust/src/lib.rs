@@ -9,40 +9,44 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_number_of_seconds(mountain_height: i32, worker_times: &[i32]) -> i64 {
-    let mut left = 1;
-    let mut right = i64::MAX >> 2;
-    while left < right {
-        let mid = left + (right - left) / 2;
-        let mut curr = 0;
-        for &t in worker_times.iter() {
-            curr += find_height(t, mid);
-            if curr >= mountain_height {
-                break;
-            }
-        }
-        if curr >= mountain_height {
-            right = mid;
-        } else {
-            left = 1 + mid;
+pub fn three_equal_parts(arr: &[i32]) -> Vec<i32> {
+    use itertools::izip;
+    let n = arr.len();
+    let mut ones = arr.iter().sum::<i32>();
+    if ones == 0 {
+        return vec![0, n as i32 - 1];
+    }
+    if ones % 3 != 0 {
+        return vec![-1, -1];
+    }
+    let mut ids = Vec::with_capacity(3);
+    let mut f = 0;
+    for (i, &v) in arr.iter().enumerate() {
+        f += v;
+        if f == ones / 3 {
+            f = 0;
+            ids.push(i);
         }
     }
-    left
-}
-
-fn find_height(time: i32, max: i64) -> i32 {
-    let mut left = 0;
-    let mut right = 100_001;
-    while left < right {
-        let mid = left + (1 + right - left) / 2;
-        let curr = i64::from(time) * (1 + mid) * mid / 2;
-        if curr > max {
-            right = mid - 1
+    let zero = n - ids[2] - 1;
+    let start1 = ids[0] + zero + 1;
+    let start2 = ids[1] + zero + 1;
+    for (a, b, c) in izip!(
+        arr[..start1].iter().rev(),
+        arr[start1..start2].iter().rev(),
+        arr[start2..].iter().rev()
+    ) {
+        if a == b && b == c {
+            ones -= 3 * a;
         } else {
-            left = mid;
+            break;
         }
     }
-    left as i32
+    if ones == 0 {
+        vec![start1 as i32 - 1, start2 as i32]
+    } else {
+        vec![-1, -1]
+    }
 }
 
 #[cfg(test)]
@@ -75,13 +79,13 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(min_number_of_seconds(4, &[2, 1, 1]), 3);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {
-        assert_eq!(min_number_of_seconds(6, &[8]), 168);
-        assert_eq!(min_number_of_seconds(1, &[5]), 5);
+        assert_eq!(
+            three_equal_parts(&[1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
+            [-1, -1]
+        );
     }
 }
