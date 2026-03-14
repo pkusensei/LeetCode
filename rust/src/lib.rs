@@ -9,15 +9,28 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn first_unique_even(nums: Vec<i32>) -> i32 {
-    use itertools::Itertools;
-    let map = nums.iter().copied().filter(|&v| v & 1 == 0).counts();
+pub fn gcd_sum(nums: Vec<i32>) -> i64 {
+    let n = nums.len();
+    let mut prefix_gcd = Vec::with_capacity(n);
+    let mut max = 0;
     for &num in nums.iter() {
-        if map.get(&num).is_some_and(|&f| f == 1) {
-            return num;
-        }
+        max = max.max(num);
+        prefix_gcd.push(gcd(num.into(), max.into()));
     }
-    -1
+    prefix_gcd.sort_unstable();
+    let mut left = 0;
+    let mut right = n - 1;
+    let mut res = 0;
+    while left < right {
+        res += gcd(prefix_gcd[left], prefix_gcd[right]);
+        left += 1;
+        right -= 1;
+    }
+    res
+}
+
+const fn gcd(a: i64, b: i64) -> i64 {
+    if a == 0 { b } else { gcd(b % a, a) }
 }
 
 #[cfg(test)]
