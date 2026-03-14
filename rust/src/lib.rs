@@ -9,28 +9,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn gcd_sum(nums: Vec<i32>) -> i64 {
-    let n = nums.len();
-    let mut prefix_gcd = Vec::with_capacity(n);
-    let mut max = 0;
-    for &num in nums.iter() {
-        max = max.max(num);
-        prefix_gcd.push(gcd(num.into(), max.into()));
+pub fn min_cost(nums1: &[i32], nums2: &[i32]) -> i32 {
+    use itertools::{Itertools, chain, izip};
+    let map = chain!(nums1.iter().copied(), nums2.iter().copied()).counts();
+    if map.values().any(|&f| f & 1 == 1) {
+        return -1;
     }
-    prefix_gcd.sort_unstable();
-    let mut left = 0;
-    let mut right = n - 1;
+    // 1 1 2 2   1 2 1 2
+    // 3 3 4 4   3 4 3 4
+    let map1 = nums1.iter().copied().counts();
     let mut res = 0;
-    while left < right {
-        res += gcd(prefix_gcd[left], prefix_gcd[right]);
-        left += 1;
-        right -= 1;
+    for (num, f) in map {
+        let f1 = *map1.get(&num).unwrap_or(&0);
+        if 2 * f1 != f {
+            res += f.abs_diff(2 * f1) / 2
+        }
     }
-    res
-}
-
-const fn gcd(a: i64, b: i64) -> i64 {
-    if a == 0 { b } else { gcd(b % a, a) }
+    res as i32 / 2
 }
 
 #[cfg(test)]
@@ -66,5 +61,19 @@ mod tests {
     fn basics() {}
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(
+            min_cost(
+                &[
+                    18317, 39756, 32835, 66151, 32835, 67014, 33937, 76466, 55126, 36942, 46931,
+                    55126, 33937, 63692, 28632, 62469, 18255
+                ],
+                &[
+                    12430, 12430, 18255, 39756, 53076, 5307, 46931, 62469, 53076, 28632, 36942,
+                    18317, 5307, 66151, 67014, 76466, 63692
+                ]
+            ),
+            3
+        )
+    }
 }
