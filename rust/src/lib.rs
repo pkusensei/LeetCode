@@ -9,56 +9,8 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-struct Fancy {
-    data: Vec<i64>,
-    add: i64,
-    mul: i64,
-}
-
-impl Fancy {
-    fn new() -> Self {
-        Self {
-            data: vec![],
-            add: 0,
-            mul: 1,
-        }
-    }
-
-    fn append(&mut self, val: i32) {
-        let mut num = (i64::from(val) - self.add).rem_euclid(M);
-        num = (num * mod_pow(self.mul, M - 2)) % M;
-        self.data.push(num);
-    }
-
-    fn add_all(&mut self, inc: i32) {
-        self.add = (self.add + i64::from(inc)) % M;
-    }
-
-    fn mult_all(&mut self, m: i32) {
-        let m = i64::from(m);
-        self.add = (self.add * m) % M;
-        self.mul = (self.mul * m) % M;
-    }
-
-    fn get_index(&self, idx: i32) -> i32 {
-        let Some(&num) = self.data.get(idx as usize) else {
-            return -1;
-        };
-        ((num * self.mul + self.add) % M) as i32
-    }
-}
-
-const M: i64 = 1_000_000_007;
-
-const fn mod_pow(b: i64, e: i64) -> i64 {
-    if e == 0 {
-        return 1;
-    }
-    if e & 1 == 0 {
-        mod_pow(b * b % M, e >> 1)
-    } else {
-        mod_pow(b * b % M, e >> 1) * b % M
-    }
+pub fn count_commas(n: i32) -> i32 {
+    (n - 999).max(0)
 }
 
 #[cfg(test)]
