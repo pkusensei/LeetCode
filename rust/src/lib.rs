@@ -9,16 +9,49 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub const fn count_commas(n: i64) -> i64 {
-    let mut curr = 1;
-    let mut c = 0;
+pub fn longest_arithmetic(nums: &[i32]) -> i32 {
+    let n = nums.len();
+    let mut streak = 1;
+    let mut prev_d = None;
+    let mut prefix = vec![(streak, prev_d)];
     let mut res = 0;
-    while 1000 * curr <= n {
-        res += 999 * curr * c;
-        c += 1;
-        curr *= 1000;
+    for w in nums.windows(2) {
+        let d = w[1] - w[0];
+        if prev_d.is_none_or(|v| v == d) {
+            streak += 1;
+        } else {
+            streak = 2;
+        }
+        res = res.max((1 + streak).min(n as i32));
+        prev_d = Some(d);
+        prefix.push((streak, prev_d));
     }
-    res += c * (n - curr + 1);
+    streak = 1;
+    let mut suf_d = None;
+    let mut suffix = vec![(streak, suf_d)];
+    for w in nums.windows(2).rev() {
+        let d = w[1] - w[0];
+        if suf_d.is_none_or(|v| v == d) {
+            streak += 1;
+        } else {
+            streak = 2;
+        }
+        res = res.max((1 + streak).min(n as i32));
+        suf_d = Some(d);
+        suffix.push((streak, suf_d));
+    }
+    suffix.reverse();
+    for i in 1..n - 1 {
+        let curr_d = nums[1 + i] - nums[i - 1];
+        match (prefix[i - 1].1, suffix[1 + i].1) {
+            (Some(d1), Some(d2)) if d1 == d2 && d1 + d2 == curr_d => {
+                res = res.max(1 + prefix[i - 1].0 + suffix[1 + i].0)
+            }
+            (Some(d), _) if d * 2 == curr_d => res = res.max(2 + prefix[i - 1].0),
+            (_, Some(d)) if d * 2 == curr_d => res = res.max(2 + suffix[1 + i].0),
+            _ => (),
+        }
+    }
     res
 }
 
@@ -53,11 +86,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        // 1_000..=999_999
-        assert_eq!(count_commas(1_000_000), 999002);
-        assert_eq!(count_commas(2019), 1020)
+        assert_eq!(longest_arithmetic(&[9, 7, 5, 10, 1]), 5);
+        assert_eq!(longest_arithmetic(&[1, 2, 6, 7]), 3);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(
+            longest_arithmetic(&[79734, 13414, 52866, 11223, 46264, 42963]),
+            4
+        );
+    }
 }
