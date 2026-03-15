@@ -9,50 +9,71 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn longest_arithmetic(nums: &[i32]) -> i32 {
-    let n = nums.len();
-    let mut streak = 1;
-    let mut prev_d = None;
-    let mut prefix = vec![(streak, prev_d)];
-    let mut res = 0;
-    for w in nums.windows(2) {
-        let d = w[1] - w[0];
-        if prev_d.is_none_or(|v| v == d) {
-            streak += 1;
+pub fn max_activated(points: &[[i32; 2]]) -> i32 {
+    use itertools::Itertools;
+    use std::{cmp::Reverse, collections::HashMap};
+
+    let n = points.len();
+    let mut dsu = DSU::new(n);
+    let mut x_maps = HashMap::new();
+    let mut y_maps = HashMap::new();
+    for (i, p) in points.iter().enumerate() {
+        let [x, y] = p[..] else { unreachable!() };
+        let vx = x_maps.entry(x).or_insert(vec![]);
+        vx.push(i);
+        dsu.union(vx[0], i);
+        let vy = y_maps.entry(y).or_insert(vec![]);
+        vy.push(i);
+        dsu.union(vy[0], i);
+    }
+    let mut sizes = HashMap::new();
+    for i in 0..n {
+        let root = dsu.find(i);
+        let size = dsu.size[root];
+        sizes.insert(root, size);
+    }
+    if sizes.len() < 2 {
+        1 + n as i32
+    } else {
+        let mut v = sizes.into_values().collect_vec();
+        v.select_nth_unstable_by_key(1, |&v| Reverse(v));
+        1 + v[..2].iter().sum::<i32>()
+    }
+}
+
+struct DSU {
+    parent: Vec<usize>,
+    size: Vec<i32>,
+}
+
+impl DSU {
+    fn new(n: usize) -> Self {
+        Self {
+            parent: (0..n).collect(),
+            size: vec![1; n],
+        }
+    }
+
+    fn find(&mut self, v: usize) -> usize {
+        if self.parent[v] != v {
+            self.parent[v] = self.find(self.parent[v])
+        }
+        self.parent[v]
+    }
+
+    fn union(&mut self, x: usize, y: usize) {
+        let [rx, ry] = [x, y].map(|v| self.find(v));
+        if rx == ry {
+            return;
+        }
+        if self.size[rx] < self.size[ry] {
+            self.size[ry] += self.size[rx];
+            self.parent[rx] = ry;
         } else {
-            streak = 2;
-        }
-        res = res.max((1 + streak).min(n as i32));
-        prev_d = Some(d);
-        prefix.push((streak, prev_d));
-    }
-    streak = 1;
-    let mut suf_d = None;
-    let mut suffix = vec![(streak, suf_d)];
-    for w in nums.windows(2).rev() {
-        let d = w[1] - w[0];
-        if suf_d.is_none_or(|v| v == d) {
-            streak += 1;
-        } else {
-            streak = 2;
-        }
-        res = res.max((1 + streak).min(n as i32));
-        suf_d = Some(d);
-        suffix.push((streak, suf_d));
-    }
-    suffix.reverse();
-    for i in 1..n - 1 {
-        let curr_d = nums[1 + i] - nums[i - 1];
-        match (prefix[i - 1].1, suffix[1 + i].1) {
-            (Some(d1), Some(d2)) if d1 == d2 && d1 + d2 == curr_d => {
-                res = res.max(1 + prefix[i - 1].0 + suffix[1 + i].0)
-            }
-            (Some(d), _) if d * 2 == curr_d => res = res.max(2 + prefix[i - 1].0),
-            (_, Some(d)) if d * 2 == curr_d => res = res.max(2 + suffix[1 + i].0),
-            _ => (),
+            self.size[rx] += self.size[ry];
+            self.parent[ry] = rx;
         }
     }
-    res
 }
 
 #[cfg(test)]
@@ -86,15 +107,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(longest_arithmetic(&[9, 7, 5, 10, 1]), 5);
-        assert_eq!(longest_arithmetic(&[1, 2, 6, 7]), 3);
+        assert_eq!(max_activated(&[[2, 3], [2, 2], [1, 1], [4, 5]]), 4);
     }
 
     #[test]
-    fn test() {
-        assert_eq!(
-            longest_arithmetic(&[79734, 13414, 52866, 11223, 46264, 42963]),
-            4
-        );
-    }
+    fn test() {}
 }
