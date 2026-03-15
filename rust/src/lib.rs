@@ -9,8 +9,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_commas(n: i32) -> i32 {
-    (n - 999).max(0)
+pub const fn count_commas(n: i64) -> i64 {
+    let mut curr = 1;
+    let mut c = 0;
+    let mut res = 0;
+    while 1000 * curr <= n {
+        res += 999 * curr * c;
+        c += 1;
+        curr *= 1000;
+    }
+    res += c * (n - curr + 1);
+    res
 }
 
 #[cfg(test)]
@@ -43,7 +52,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        // 1_000..=999_999
+        assert_eq!(count_commas(1_000_000), 999002);
+        assert_eq!(count_commas(2019), 1020)
+    }
 
     #[test]
     fn test() {}
