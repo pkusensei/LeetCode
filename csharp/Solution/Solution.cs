@@ -8,20 +8,18 @@ namespace Solution;
 
 public class Solution
 {
-    public int MinFlipsMonoIncr(string s)
+    public int MinFallingPathSum(int[][] matrix)
     {
-        int n = s.Length;
-        List<int> pref1 = new(n);
-        foreach (var item in s)
+        int n = matrix.Length;
+        for (int r = 1; r < n; r++)
         {
-            pref1.Add((item == '1' ? 1 : 0) + pref1.LastOrDefault());
+            for (int c = 0; c < n; c++)
+            {
+                int left = int.Max(0, c - 1);
+                int right = int.Min(1 + c, n - 1);
+                matrix[r][c] += matrix[r - 1][left..(1 + right)].Min();
+            }
         }
-        List<int> suf0 = new(n);
-        foreach (var item in s.Reverse())
-        {
-            suf0.Add((item == '0' ? 1 : 0) + suf0.LastOrDefault());
-        }
-        suf0.Reverse();
-        return pref1.Zip(suf0).Select(p => p.First + p.Second - 1).Min();
+        return matrix.Last().Min();
     }
 }
