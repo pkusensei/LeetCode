@@ -8,18 +8,13 @@ namespace Solution;
 
 public class Solution
 {
-    public int MinFallingPathSum(int[][] matrix)
+    public int[] BeautifulArray(int n)
     {
-        int n = matrix.Length;
-        for (int r = 1; r < n; r++)
+        int[] res = [1];
+        while (res.Length < n)
         {
-            for (int c = 0; c < n; c++)
-            {
-                int left = int.Max(0, c - 1);
-                int right = int.Min(1 + c, n - 1);
-                matrix[r][c] += matrix[r - 1][left..(1 + right)].Min();
-            }
+            res = [.. res.Select(v => v * 2 - 1).Concat(res.Select(v => v * 2)).Where(v => v <= n)];
         }
-        return matrix.Last().Min();
+        return res;
     }
 }
