@@ -9,71 +9,34 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_activated(points: &[[i32; 2]]) -> i32 {
-    use itertools::Itertools;
-    use std::{cmp::Reverse, collections::HashMap};
-
-    let n = points.len();
-    let mut dsu = DSU::new(n);
-    let mut x_maps = HashMap::new();
-    let mut y_maps = HashMap::new();
-    for (i, p) in points.iter().enumerate() {
-        let [x, y] = p[..] else { unreachable!() };
-        let vx = x_maps.entry(x).or_insert(vec![]);
-        vx.push(i);
-        dsu.union(vx[0], i);
-        let vy = y_maps.entry(y).or_insert(vec![]);
-        vy.push(i);
-        dsu.union(vy[0], i);
-    }
-    let mut sizes = HashMap::new();
-    for i in 0..n {
-        let root = dsu.find(i);
-        let size = dsu.size[root];
-        sizes.insert(root, size);
-    }
-    if sizes.len() < 2 {
-        1 + n as i32
-    } else {
-        let mut v = sizes.into_values().collect_vec();
-        v.select_nth_unstable_by_key(1, |&v| Reverse(v));
-        1 + v[..2].iter().sum::<i32>()
-    }
-}
-
-struct DSU {
-    parent: Vec<usize>,
-    size: Vec<i32>,
-}
-
-impl DSU {
-    fn new(n: usize) -> Self {
-        Self {
-            parent: (0..n).collect(),
-            size: vec![1; n],
+pub fn get_biggest_three(grid: Vec<Vec<i32>>) -> Vec<i32> {
+    let [rows, cols] = get_dimensions(&grid);
+    let mut res = vec![];
+    for r in 0..rows {
+        for c in 0..cols {
+            res.push(grid[r][c]);
+            let max = c.min(cols - c - 1).min((rows - r - 1) / 2);
+            for width in 0..=max {
+                let curr = (0..width)
+                    .map(|w| {
+                        grid[r + w][c + w]
+                            + grid[r + width + w][c + width - w]
+                            + grid[r + 2 * width - w][c - w]
+                            + grid[r + width - w][c - width + w]
+                    })
+                    .sum::<i32>();
+                if curr > 0 {
+                    res.push(curr);
+                }
+            }
         }
     }
-
-    fn find(&mut self, v: usize) -> usize {
-        if self.parent[v] != v {
-            self.parent[v] = self.find(self.parent[v])
-        }
-        self.parent[v]
+    res.sort_unstable_by(|a, b| b.cmp(a));
+    res.dedup();
+    while res.len() > 3 {
+        res.pop();
     }
-
-    fn union(&mut self, x: usize, y: usize) {
-        let [rx, ry] = [x, y].map(|v| self.find(v));
-        if rx == ry {
-            return;
-        }
-        if self.size[rx] < self.size[ry] {
-            self.size[ry] += self.size[rx];
-            self.parent[rx] = ry;
-        } else {
-            self.size[rx] += self.size[ry];
-            self.parent[ry] = rx;
-        }
-    }
+    res
 }
 
 #[cfg(test)]
@@ -106,9 +69,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(max_activated(&[[2, 3], [2, 2], [1, 1], [4, 5]]), 4);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
