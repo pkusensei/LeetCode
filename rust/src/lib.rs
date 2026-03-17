@@ -9,33 +9,31 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn largest_submatrix(matrix: Vec<Vec<i32>>) -> i32 {
-    use itertools::Itertools;
-    let cols = matrix[0].len();
-    let mut res = 0;
-    let mut prefix = vec![0; cols];
-    for row in matrix.iter() {
-        let mut curr = row
-            .iter()
-            .zip(&prefix)
-            .map(|(a, b)| if *a > 0 { a + b } else { 0 })
-            .collect_vec();
-        prefix.copy_from_slice(&curr);
-        curr.sort_unstable_by(|a, b| b.cmp(a));
-        // let mut st = vec![];
-        // for (right, &val) in curr.iter().enumerate() {
-        //     while st.last().is_some_and(|&top| curr[top] >= val) {
-        //         st.pop();
-        //     }
-        //     let left = st.last().map(|&v| v as i32).unwrap_or(-1);
-        //     res = res.max(val * (right as i32 - left));
-        //     st.push(right);
-        // }
-        for (i, v) in curr.iter().enumerate() {
-            res = res.max(v * (1 + i as i32))
+pub fn knight_dialer(n: i32) -> i32 {
+    const M: i32 = 1_000_000_007;
+    const MOVES: [&[usize]; 10] = [
+        &[4, 6],    // 0
+        &[6, 8],    // 1
+        &[7, 9],    // 2
+        &[4, 8],    // 3
+        &[0, 3, 9], // 4
+        &[],        // 5
+        &[0, 1, 7], // 6
+        &[2, 6],    // 7
+        &[1, 3],    // 8
+        &[2, 4],    // 9
+    ];
+    let mut prev = [1; 10];
+    for _ in 1..n {
+        let mut curr = [0; 10];
+        for (i, &val) in prev.iter().enumerate() {
+            for &next in MOVES[i] {
+                curr[next] = (curr[next] + val) % M;
+            }
         }
+        prev = curr;
     }
-    res
+    prev.iter().fold(0, |acc, v| (acc + v) % M)
 }
 
 #[cfg(test)]
