@@ -9,32 +9,31 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn get_biggest_three(grid: Vec<Vec<i32>>) -> Vec<i32> {
-    let [rows, cols] = get_dimensions(&grid);
-    let mut res = vec![];
-    for r in 0..rows {
-        for c in 0..cols {
-            res.push(grid[r][c]);
-            let max = c.min(cols - c - 1).min((rows - r - 1) / 2);
-            for width in 0..=max {
-                let curr = (0..width)
-                    .map(|w| {
-                        grid[r + w][c + w]
-                            + grid[r + width + w][c + width - w]
-                            + grid[r + 2 * width - w][c - w]
-                            + grid[r + width - w][c - width + w]
-                    })
-                    .sum::<i32>();
-                if curr > 0 {
-                    res.push(curr);
-                }
-            }
+pub fn largest_submatrix(matrix: Vec<Vec<i32>>) -> i32 {
+    use itertools::Itertools;
+    let cols = matrix[0].len();
+    let mut res = 0;
+    let mut prefix = vec![0; cols];
+    for row in matrix.iter() {
+        let mut curr = row
+            .iter()
+            .zip(&prefix)
+            .map(|(a, b)| if *a > 0 { a + b } else { 0 })
+            .collect_vec();
+        prefix.copy_from_slice(&curr);
+        curr.sort_unstable_by(|a, b| b.cmp(a));
+        // let mut st = vec![];
+        // for (right, &val) in curr.iter().enumerate() {
+        //     while st.last().is_some_and(|&top| curr[top] >= val) {
+        //         st.pop();
+        //     }
+        //     let left = st.last().map(|&v| v as i32).unwrap_or(-1);
+        //     res = res.max(val * (right as i32 - left));
+        //     st.push(right);
+        // }
+        for (i, v) in curr.iter().enumerate() {
+            res = res.max(v * (1 + i as i32))
         }
-    }
-    res.sort_unstable_by(|a, b| b.cmp(a));
-    res.dedup();
-    while res.len() > 3 {
-        res.pop();
     }
     res
 }
