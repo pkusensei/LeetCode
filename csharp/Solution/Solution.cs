@@ -8,13 +8,11 @@ namespace Solution;
 
 public class Solution
 {
-    public int[] BeautifulArray(int n)
+    public int RangeSumBST(TreeNode root, int low, int high)
     {
-        int[] res = [1];
-        while (res.Length < n)
-        {
-            res = [.. res.Select(v => v * 2 - 1).Concat(res.Select(v => v * 2)).Where(v => v <= n)];
-        }
-        return res;
+        if (root is null) { return 0; }
+        if (root.val < low) { return RangeSumBST(root.right, low, high); }
+        else if (high < root.val) { return RangeSumBST(root.left, low, high); }
+        else { return root.val + RangeSumBST(root.left, low, high) + RangeSumBST(root.right, low, high); }
     }
 }
