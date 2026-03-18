@@ -9,58 +9,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn moves_to_stamp(stamp: String, target: String) -> Vec<i32> {
-    use itertools::izip;
-    use std::collections::{HashSet, VecDeque};
-
-    let [slen, tlen] = [stamp.len(), target.len()];
-    let [s, t] = [stamp.as_bytes(), target.as_bytes()];
-    let mut res = vec![];
-    let mut done = vec![false; tlen];
-    let mut queue = VecDeque::new();
-    let mut nodes = Vec::with_capacity(1 + tlen - slen);
-    for start in 0..=tlen - slen {
-        let mut fill = HashSet::new();
-        let mut todo = HashSet::new();
-        for (i, (a, b)) in izip!(s, &t[start..]).enumerate() {
-            if a == b {
-                fill.insert(start + i);
-            } else {
-                todo.insert(start + i);
-            }
+pub fn count_submatrices(grid: Vec<Vec<i32>>, k: i32) -> i32 {
+    let cols = grid[0].len();
+    let mut res = 0;
+    let mut prev = vec![0; cols];
+    for row in grid.iter() {
+        let mut curr = row.iter().fold(vec![], |mut acc, v| {
+            acc.push(v + acc.last().unwrap_or(&0));
+            acc
+        });
+        for (v, p) in curr.iter_mut().zip(&prev) {
+            *v += p;
+            res += i32::from(*v <= k);
         }
-        // This whole section is clear/lastly stamped
-        if todo.is_empty() {
-            res.push(start as i32);
-            for i in start..start + slen {
-                if !done[i] {
-                    queue.push_back(i);
-                    done[i] = true;
-                }
-            }
-        }
-        nodes.push([fill, todo]);
+        prev = curr;
     }
-    while let Some(idx) = queue.pop_front() {
-        // All possible starts that cover `idx`
-        for start in (1 + idx).saturating_sub(slen)..=idx.min(tlen - slen) {
-            if nodes[start][1].remove(&idx) && nodes[start][1].is_empty() {
-                res.push(start as i32); // Find the stamp!
-                for &i in nodes[start][0].iter() {
-                    if !done[i] {
-                        done[i] = true;
-                        queue.push_back(i);
-                    }
-                }
-            }
-        }
-    }
-    if done.iter().all(|&b| b) {
-        res.reverse();
-        res
-    } else {
-        vec![]
-    }
+    res
 }
 
 #[cfg(test)]
