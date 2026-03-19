@@ -9,18 +9,26 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_submatrices(grid: Vec<Vec<i32>>, k: i32) -> i32 {
+pub fn number_of_submatrices(grid: Vec<Vec<char>>) -> i32 {
     let cols = grid[0].len();
+    let mut prev = vec![None::<i32>; cols];
     let mut res = 0;
-    let mut prev = vec![0; cols];
     for row in grid.iter() {
-        let mut curr = row.iter().fold(vec![], |mut acc, v| {
-            acc.push(v + acc.last().unwrap_or(&0));
+        let mut curr = row.iter().fold(vec![], |mut acc, &ch| {
+            let v = acc.last().unwrap_or(&None);
+            match ch {
+                'X' => acc.push(Some(v.unwrap_or(0) + 1)),
+                'Y' => acc.push(Some(v.unwrap_or(0) - 1)),
+                _ => acc.push(v.clone()),
+            }
             acc
         });
         for (v, p) in curr.iter_mut().zip(&prev) {
-            *v += p;
-            res += i32::from(*v <= k);
+            *v = match (*v, p) {
+                (None, None) => None,
+                _ => Some(v.unwrap_or(0) + p.unwrap_or(0)),
+            };
+            res += i32::from(v.is_some_and(|num| num == 0));
         }
         prev = curr;
     }
