@@ -9,30 +9,29 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn number_of_submatrices(grid: Vec<Vec<char>>) -> i32 {
-    let cols = grid[0].len();
-    let mut prev = vec![None::<i32>; cols];
-    let mut res = 0;
-    for row in grid.iter() {
-        let mut curr = row.iter().fold(vec![], |mut acc, &ch| {
-            let v = acc.last().unwrap_or(&None);
-            match ch {
-                'X' => acc.push(Some(v.unwrap_or(0) + 1)),
-                'Y' => acc.push(Some(v.unwrap_or(0) - 1)),
-                _ => acc.push(v.clone()),
-            }
-            acc
-        });
-        for (v, p) in curr.iter_mut().zip(&prev) {
-            *v = match (*v, p) {
-                (None, None) => None,
-                _ => Some(v.unwrap_or(0) + p.unwrap_or(0)),
-            };
-            res += i32::from(v.is_some_and(|num| num == 0));
+// Suppose s = "aba"
+// idx => dp[1+idx]
+// idx = 1, previous seqs are [], "a"
+//          Without 'b' => [], "a"
+//          With 'b' => "b", "ab"
+// idx = 2, [], "a", "b", "ab"
+//          "a", "aa", "ba", "aba"
+//          Remove dupe "a" => Remove any seq ending with 'a', dp[index('a')]
+pub fn distinct_subseq_ii(s: &str) -> i32 {
+    const M: i32 = 1_000_000_007;
+    let n = s.len();
+    let mut prev = [None::<usize>; 26];
+    let mut dp = vec![0_i32; 1 + n];
+    dp[0] = 1; // empty seq
+    for (idx, b) in s.bytes().enumerate() {
+        let bi = usize::from(b - b'a');
+        dp[1 + idx] = 2 * dp[idx] % M;
+        if let Some(v) = prev[bi] {
+            dp[1 + idx] = (dp[1 + idx] - dp[v]).rem_euclid(M);
         }
-        prev = curr;
+        prev[bi] = Some(idx);
     }
-    res
+    (dp[n] - 1).rem_euclid(M)
 }
 
 #[cfg(test)]
