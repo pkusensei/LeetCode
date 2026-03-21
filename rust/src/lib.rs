@@ -9,27 +9,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_abs_diff(grid: Vec<Vec<i32>>, k: i32) -> Vec<Vec<i32>> {
-    let k = k as usize;
-    let [rows, cols] = get_dimensions(&grid);
-    if k == 0 {
-        return vec![vec![0; cols]; rows];
-    }
-    let mut res = vec![];
-    for r in 0..=rows - k {
-        let mut curr = vec![];
-        for c in 0..=cols - k {
-            let mut mat = vec![];
-            for i in 0..k {
-                mat.extend_from_slice(&grid[r + i][c..c + k]);
-            }
-            mat.sort_unstable();
-            mat.dedup();
-            curr.push(mat.windows(2).map(|w| w[1] - w[0]).min().unwrap_or(0));
+pub fn reverse_submatrix(mut grid: Vec<Vec<i32>>, x: i32, y: i32, k: i32) -> Vec<Vec<i32>> {
+    let [x, y, k] = [x, y, k].map(|v| v as usize);
+    for c in y..y + k {
+        let mut r1 = x;
+        let mut r2 = x + k - 1;
+        while r1 < r2 {
+            let temp = grid[r2][c];
+            grid[r2][c] = grid[r1][c];
+            grid[r1][c] = temp;
+            r1 += 1;
+            r2 -= 1;
         }
-        res.push(curr);
     }
-    res
+    grid
 }
 
 #[cfg(test)]
