@@ -6,44 +6,107 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-// 01
-// 10
-// 11
-pub fn min_removals(nums: &[i32], target: i32) -> i32 {
-    use std::collections::HashMap;
-    let n = nums.len();
-    let mut half = vec![0];
-    let full_mask: usize = 1 << (n / 2);
-    for mask in 1..full_mask {
-        let i = mask & mask.wrapping_neg();
-        half.push(half[mask ^ i] ^ nums[i.ilog2() as usize]);
+fn rolling_subarr(nums: &[i32]) -> i32 {
+    fn f_acc(acc: i32, val: i32) -> i32 {
+        todo!() // stub
     }
-    let mut half_map = HashMap::new();
-    for (mask, &xor) in half.iter().enumerate() {
-        let v = half_map.entry(xor).or_insert(mask.count_ones());
-        *v = (*v).max(mask.count_ones());
+    fn f_filter(val: i32) -> bool {
+        todo!() // stub
     }
-    half = vec![0];
-    let full_mask: usize = 1 << (n - n / 2);
-    let mut res = half_map.get(&target).copied();
-    for mask in 1..full_mask {
-        let i = mask & mask.wrapping_neg();
-        let curr = half[mask ^ i] ^ nums[i.ilog2() as usize + n / 2];
-        half.push(curr);
-        if let Some(v) = half_map.get(&(target ^ curr)) {
-            res = res.max(Some(v + mask.count_ones()));
+
+    let mut res = 0;
+    // All subarrs ending on previous element
+    let mut prev = HashMap::new();
+    for &num in nums.iter() {
+        let mut curr = HashMap::from([(num, 1)]);
+        if f_filter(num) {
+            res += 1; // check subarr [num]
         }
+        for (v, f) in prev {
+            let val = f_acc(v, num);
+            *curr.entry(val).or_insert(0) += f;
+            if f_filter(val) {
+                res += f;
+            }
+        }
+        prev = curr;
     }
-    if let Some(v) = res {
-        n as i32 - v as i32
-    } else if target == 0 {
-        n as i32
-    } else {
-        -1
+    res
+}
+
+pub fn count_good_subarrays(nums: Vec<i32>) -> i64 {
+    use std::collections::HashMap;
+
+    let mut prev_good = HashMap::new();
+    let mut prev_bad = HashMap::new();
+    let mut res = 0;
+    for &num in nums.iter() {
+        res += 1; // this num
+        let mut curr_good = HashMap::from([(num, 1)]);
+        let mut curr_bad = HashMap::new();
+        for (v, f) in prev_good {
+            let val = v | num;
+            if val == v || val == num {
+                *curr_good.entry(val).or_insert(0) += f;
+                res += f;
+            } else {
+                *curr_bad.entry(val).or_insert(0) += f;
+            }
+        }
+        for (v, f) in prev_bad {
+            let val = v | num;
+            if val == num {
+                res += f;
+                *curr_good.entry(val).or_insert(0) += f;
+            } else {
+                *curr_bad.entry(val).or_insert(0) += f;
+            }
+        }
+        prev_good = curr_good;
+        prev_bad = curr_bad;
     }
+    res
+}
+
+pub fn with_stack(nums: Vec<i32>) -> i64 {
+    let n = nums.len();
+    let mut st = vec![];
+    let mut right_greater = vec![n; n];
+    for (i, &num) in nums.iter().enumerate() {
+        // Try extend subarr where [top] is the max after bit_or
+        // [top] < (num|[top]) means this subarr must end
+        // Includes equal case
+        while let Some(&top) = st.last()
+            && nums[top] < num | nums[top]
+        {
+            st.pop();
+            right_greater[top] = i;
+        }
+        st.push(i);
+    }
+    st.clear();
+    let mut left_greater = vec![None; n];
+    for (i, &num) in nums.iter().enumerate().rev() {
+        // Excludes equal case
+        while let Some(&top) = st.last()
+            && (nums[top] < num | nums[top] || num == nums[top])
+        {
+            st.pop();
+            left_greater[top] = Some(i);
+        }
+        st.push(i);
+    }
+    let mut res = 0;
+    for (i, (left, right)) in left_greater.iter().zip(right_greater).enumerate() {
+        let left = left.map(|v| v as i64).unwrap_or(-1);
+        res += (right - i) as i64 * (i as i64 - left);
+    }
+    res
 }
 
 #[cfg(test)]
@@ -76,12 +139,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(min_removals(&[1, 2, 3], 2), 1);
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(min_removals(&[7, 6], 0), 2);
-    }
+    fn test() {}
 }
