@@ -9,20 +9,8 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_rotation(mut mat: Vec<Vec<i32>>, target: Vec<Vec<i32>>) -> bool {
-    let n = mat.len();
-    for _ in 0..4 {
-        mat.reverse();
-        for r in 0..n {
-            for c in 0..r {
-                (mat[r][c], mat[c][r]) = (mat[c][r], mat[r][c]);
-            }
-        }
-        if mat == target {
-            return true;
-        }
-    }
-    false
+pub fn uniform_array(nums1: Vec<i32>) -> bool {
+    true
 }
 
 #[cfg(test)]
