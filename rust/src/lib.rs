@@ -9,35 +9,41 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn uniform_array(nums1: Vec<i32>) -> bool {
-    let [mut min_odd, mut min_even] = [i32::MAX; 2];
-    for &num in nums1.iter() {
-        if num & 1 == 1 && min_odd > num {
-            min_odd = num;
-        }
-        if num & 1 == 0 && min_even > num {
-            min_even = num;
+// 01
+// 10
+// 11
+pub fn min_removals(nums: &[i32], target: i32) -> i32 {
+    use std::collections::HashMap;
+    let n = nums.len();
+    let mut half = vec![0];
+    let full_mask: usize = 1 << (n / 2);
+    for mask in 1..full_mask {
+        let i = mask & mask.wrapping_neg();
+        half.push(half[mask ^ i] ^ nums[i.ilog2() as usize]);
+    }
+    let mut half_map = HashMap::new();
+    for (mask, &xor) in half.iter().enumerate() {
+        let v = half_map.entry(xor).or_insert(mask.count_ones());
+        *v = (*v).max(mask.count_ones());
+    }
+    half = vec![0];
+    let full_mask: usize = 1 << (n - n / 2);
+    let mut res = half_map.get(&target).copied();
+    for mask in 1..full_mask {
+        let i = mask & mask.wrapping_neg();
+        let curr = half[mask ^ i] ^ nums[i.ilog2() as usize + n / 2];
+        half.push(curr);
+        if let Some(v) = half_map.get(&(target ^ curr)) {
+            res = res.max(Some(v + mask.count_ones()));
         }
     }
-    let min = min_odd.min(min_even);
-    let par = min & 1;
-    for &num in nums1.iter() {
-        if num & 1 == par {
-            continue;
-        }
-        if par == 1 {
-            // num is even
-            if num < min_odd {
-                return false;
-            }
-        } else {
-            // num is odd
-            if num - min_odd < 2 {
-                return false;
-            }
-        }
+    if let Some(v) = res {
+        n as i32 - v as i32
+    } else if target == 0 {
+        n as i32
+    } else {
+        -1
     }
-    true
 }
 
 #[cfg(test)]
@@ -70,8 +76,12 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(min_removals(&[1, 2, 3], 2), 1);
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(min_removals(&[7, 6], 0), 2);
+    }
 }
