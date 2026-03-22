@@ -9,20 +9,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn reverse_submatrix(mut grid: Vec<Vec<i32>>, x: i32, y: i32, k: i32) -> Vec<Vec<i32>> {
-    let [x, y, k] = [x, y, k].map(|v| v as usize);
-    for c in y..y + k {
-        let mut r1 = x;
-        let mut r2 = x + k - 1;
-        while r1 < r2 {
-            let temp = grid[r2][c];
-            grid[r2][c] = grid[r1][c];
-            grid[r1][c] = temp;
-            r1 += 1;
-            r2 -= 1;
+pub fn find_rotation(mut mat: Vec<Vec<i32>>, target: Vec<Vec<i32>>) -> bool {
+    let n = mat.len();
+    for _ in 0..4 {
+        mat.reverse();
+        for r in 0..n {
+            for c in 0..r {
+                (mat[r][c], mat[c][r]) = (mat[c][r], mat[r][c]);
+            }
+        }
+        if mat == target {
+            return true;
         }
     }
-    grid
+    false
 }
 
 #[cfg(test)]
