@@ -9,34 +9,28 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_product_path(grid: Vec<Vec<i32>>) -> i32 {
+pub fn construct_product_matrix(grid: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
+    const M: i64 = 12345;
     let [rows, cols] = get_dimensions(&grid);
-    let mut dp_max = vec![vec![i64::MIN; cols]; rows];
-    let mut dp_min = vec![vec![i64::MAX; cols]; rows];
-    dp_max[0][0] = grid[0][0].into();
-    dp_min[0][0] = grid[0][0].into();
+    let f = |mut acc: Vec<i64>, &v| {
+        acc.push(i64::from(v) * acc.last().unwrap_or(&1) % M);
+        acc
+    };
+    let prefix = grid.iter().flatten().take(rows * cols - 1).fold(vec![1], f);
+    let mut suffix = grid
+        .iter()
+        .flatten()
+        .rev()
+        .take(rows * cols - 1)
+        .fold(vec![1], f);
+    suffix.reverse();
+    let mut res = vec![vec![0; cols]; rows];
     for r in 0..rows {
         for c in 0..cols {
-            let curr = i64::from(grid[r][c]);
-            if r > 0 {
-                dp_max[r][c] = dp_max[r][c]
-                    .max(curr * dp_max[r - 1][c])
-                    .max(curr * dp_min[r - 1][c]);
-                dp_min[r][c] = dp_min[r][c]
-                    .min(curr * dp_max[r - 1][c])
-                    .min(curr * dp_min[r - 1][c]);
-            }
-            if c > 0 {
-                dp_max[r][c] = dp_max[r][c]
-                    .max(curr * dp_max[r][c - 1])
-                    .max(curr * dp_min[r][c - 1]);
-                dp_min[r][c] = dp_min[r][c]
-                    .min(curr * dp_max[r][c - 1])
-                    .min(curr * dp_min[r][c - 1]);
-            }
+            res[r][c] = (prefix[r * cols + c] * suffix[r * cols + c] % M) as i32
         }
     }
-    (dp_max[rows - 1][cols - 1] % 1_000_000_007).max(-1) as i32
+    res
 }
 
 #[cfg(test)]
