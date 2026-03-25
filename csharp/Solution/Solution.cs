@@ -8,21 +8,12 @@ namespace Solution;
 
 public class Solution
 {
-    public int[] DeckRevealedIncreasing(int[] deck)
+    public bool FlipEquiv(TreeNode root1, TreeNode root2)
     {
-        int n = deck.Length;
-        Array.Sort(deck);
-        List<int> res = new(n);
-        for (int i = n - 1; i >= 0; i -= 1)
-        {
-            if (res.Count > 0)
-            {
-                int temp = res[^1];
-                res.RemoveAt(res.Count - 1);
-                res.Insert(0, temp);
-            }
-            res.Insert(0, deck[i]);
-        }
-        return [.. res];
+        if (root1 is null) { return root2 is null; }
+        if (root2 is null) { return false; }
+        return root1.val == root2.val
+            && ((FlipEquiv(root1.left, root2.right) && FlipEquiv(root1.right, root2.left))
+                || (FlipEquiv(root1.left, root2.left) && FlipEquiv(root1.right, root2.right)));
     }
 }
