@@ -8,11 +8,20 @@ namespace Solution;
 
 public class Solution
 {
-    public int RangeSumBST(TreeNode root, int low, int high)
+    public bool ValidateStackSequences(int[] pushed, int[] popped)
     {
-        if (root is null) { return 0; }
-        if (root.val < low) { return RangeSumBST(root.right, low, high); }
-        else if (high < root.val) { return RangeSumBST(root.left, low, high); }
-        else { return root.val + RangeSumBST(root.left, low, high) + RangeSumBST(root.right, low, high); }
+        int n = pushed.Length;
+        Stack<int> st = [];
+        int i = 0;
+        foreach (var item in pushed)
+        {
+            st.Push(item);
+            while (st.TryPeek(out int top) && top == popped[i])
+            {
+                st.Pop();
+                i += 1;
+            }
+        }
+        return st.Count == 0 && i == n;
     }
 }
