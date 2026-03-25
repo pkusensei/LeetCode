@@ -9,15 +9,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_increment_for_unique(mut nums: Vec<i32>) -> i32 {
-    nums.sort_unstable();
-    let mut min = 0;
-    let mut res = 0;
-    for &num in nums.iter() {
-        res += min.max(num) - num;
-        min = (1 + min).max(1 + num);
+pub fn can_partition_grid(grid: Vec<Vec<i32>>) -> bool {
+    let [rows, cols] = get_dimensions(&grid);
+    let mut prefix = Vec::with_capacity(rows);
+    for (r, row) in grid.iter().enumerate() {
+        let mut curr = row.iter().fold(vec![], |mut acc, &v| {
+            acc.push(i64::from(v) + acc.last().unwrap_or(&0));
+            acc
+        });
+        if r > 0 {
+            for (c, p) in curr.iter_mut().zip(&prefix[r - 1]) {
+                *c += p;
+            }
+        }
+        prefix.push(curr);
     }
-    res
+    let total = prefix[rows - 1][cols - 1];
+    prefix.iter().any(|row| row[cols - 1] * 2 == total)
+        || prefix[rows - 1].iter().any(|&v| v * 2 == total)
 }
 
 #[cfg(test)]
