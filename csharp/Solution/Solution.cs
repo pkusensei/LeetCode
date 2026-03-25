@@ -8,35 +8,21 @@ namespace Solution;
 
 public class Solution
 {
-    public int BagOfTokensScore(int[] tokens, int power)
+    public int[] DeckRevealedIncreasing(int[] deck)
     {
-        int n = tokens.Length;
-        if (n == 0) { return 0; }
-        Array.Sort(tokens);
-        int left = 0;
-        int right = n - 1;
-        int score = 0;
-        int res = 0;
-        while (left <= right)
+        int n = deck.Length;
+        Array.Sort(deck);
+        List<int> res = new(n);
+        for (int i = n - 1; i >= 0; i -= 1)
         {
-            bool moved = false;
-            while (left <= right && power >= tokens[left])
+            if (res.Count > 0)
             {
-                power -= tokens[left];
-                score += 1;
-                left += 1;
-                moved = true;
+                int temp = res[^1];
+                res.RemoveAt(res.Count - 1);
+                res.Insert(0, temp);
             }
-            res = int.Max(res, score);
-            if (left <= right && score > 0)
-            {
-                score -= 1;
-                power += tokens[right];
-                right -= 1;
-                moved = true;
-            }
-            if (!moved) { break; }
+            res.Insert(0, deck[i]);
         }
-        return res;
+        return [.. res];
     }
 }
