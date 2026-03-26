@@ -6,84 +6,43 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::sync::LazyLock;
+use std::collections::HashMap;
 
 #[allow(unused_imports)]
 use helper::*;
+use itertools::Itertools;
 
-pub fn largest_component_size(nums: Vec<i32>) -> i32 {
-    let mut groups = vec![None; 1 + MAX_P];
-    let mut dsu = DSU::new(nums.len());
-    for (i, &num) in nums.iter().enumerate() {
-        for &p in P.iter() {
-            if (num as usize) % p == 0 {
-                let v = groups[p].get_or_insert(i);
-                dsu.union(*v, i);
-            }
-            if p >= num as usize {
-                break;
-            }
+pub fn can_reorder_doubled(arr: Vec<i32>) -> bool {
+    let [mut pos, mut neg] = [HashMap::new(), HashMap::new()];
+    let mut zero = 0;
+    for num in arr {
+        match num.cmp(&0) {
+            std::cmp::Ordering::Less => *neg.entry(-num).or_insert(0) += 1,
+            std::cmp::Ordering::Equal => zero += 1,
+            std::cmp::Ordering::Greater => *pos.entry(num).or_insert(0) += 1,
         }
     }
-    dsu.max
+    zero & 1 == 0 && f(pos) && f(neg)
 }
 
-const MAX_P: usize = 100_000;
-
-static P: LazyLock<Vec<usize>> = LazyLock::new(|| {
-    let mut sieve = vec![true; 1 + MAX_P];
-    sieve[..2].fill(false);
-    for p in 2..=MAX_P {
-        if sieve[p] {
-            for v in (p * p..=MAX_P).step_by(p) {
-                sieve[v] = false;
-            }
+fn f(mut map: HashMap<i32, i32>) -> bool {
+    let nums = map.keys().copied().sorted_unstable().collect_vec();
+    for num in nums {
+        let Some(f) = map.remove(&num) else {
+            return false;
+        };
+        if f == 0 {
+            continue;
+        }
+        let Some(big) = map.get_mut(&(2 * num)) else {
+            return false;
+        };
+        *big -= f;
+        if *big < 0 {
+            return false;
         }
     }
-    sieve
-        .into_iter()
-        .enumerate()
-        .filter_map(|(p, b)| if b { Some(p) } else { None })
-        .collect()
-});
-
-struct DSU {
-    parent: Vec<usize>,
-    size: Vec<i32>,
-    max: i32,
-}
-
-impl DSU {
-    fn new(n: usize) -> Self {
-        Self {
-            parent: (0..n).collect(),
-            size: vec![1; n],
-            max: 1,
-        }
-    }
-
-    fn find(&mut self, v: usize) -> usize {
-        if self.parent[v] != v {
-            self.parent[v] = self.find(self.parent[v])
-        }
-        self.parent[v]
-    }
-
-    fn union(&mut self, x: usize, y: usize) {
-        let [rx, ry] = [x, y].map(|v| self.find(v));
-        if rx == ry {
-            return;
-        }
-        if self.size[rx] < self.size[ry] {
-            self.size[ry] += self.size[rx];
-            self.parent[rx] = ry;
-            self.max = self.max.max(self.size[ry])
-        } else {
-            self.size[rx] += self.size[ry];
-            self.parent[ry] = rx;
-            self.max = self.max.max(self.size[rx])
-        }
-    }
+    true
 }
 
 #[cfg(test)]
