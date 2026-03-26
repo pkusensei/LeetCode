@@ -9,74 +9,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-//   0
-// 1 x 2
-//   3
-pub fn regions_by_slashes(grid: Vec<String>) -> i32 {
-    use itertools::Itertools;
-    let n = grid.len();
-    let mut dsu = DSU::new(4 * n * n);
-    for (r, s) in grid.iter().enumerate() {
-        for (c, b) in s.bytes().enumerate() {
-            let i = (r * n + c) * 4;
-            match b {
-                b'/' => {
-                    dsu.union(i, i + 1);
-                    dsu.union(i + 2, i + 3);
-                }
-                b'\\' => {
-                    dsu.union(i, i + 2);
-                    dsu.union(i + 1, i + 3);
-                }
-                _ => {
-                    dsu.union(i, i + 1);
-                    dsu.union(i, i + 2);
-                    dsu.union(i, i + 3);
-                }
-            }
-            if r > 0 {
-                dsu.union(((r - 1) * n + c) * 4 + 3, i);
-            }
-            if c > 0 {
-                dsu.union((r * n + c - 1) * 4 + 2, i + 1);
+pub fn min_deletion_size(strs: Vec<String>) -> i32 {
+    let cols = strs[0].len();
+    let mut dp = vec![1; cols];
+    let mut res = 1;
+    for right in 1..cols {
+        for left in 0..right {
+            if strs
+                .iter()
+                .all(|s| s.as_bytes()[left] <= s.as_bytes()[right])
+            {
+                dp[right] = dp[right].max(1 + dp[left]);
+                res = res.max(dp[right]);
             }
         }
     }
-    (0..4 * n * n).map(|v| dsu.find(v)).unique().count() as i32
-}
-
-struct DSU {
-    parent: Vec<usize>,
-    rank: Vec<i32>,
-}
-
-impl DSU {
-    fn new(n: usize) -> Self {
-        Self {
-            parent: (0..n).collect(),
-            rank: vec![0; n],
-        }
-    }
-
-    fn find(&mut self, v: usize) -> usize {
-        if self.parent[v] != v {
-            self.parent[v] = self.find(self.parent[v])
-        }
-        self.parent[v]
-    }
-
-    fn union(&mut self, x: usize, y: usize) {
-        let [rx, ry] = [x, y].map(|v| self.find(v));
-        if rx == ry {
-            return;
-        }
-        if self.rank[rx] < self.rank[ry] {
-            self.parent[rx] = ry
-        } else {
-            self.rank[rx] += 1;
-            self.parent[ry] = rx;
-        }
-    }
+    (cols - res) as i32
 }
 
 #[cfg(test)]
@@ -109,9 +57,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(tallest_billboard(&[3, 3]), 3);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
