@@ -6,27 +6,64 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
+use std::collections::HashSet;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn can_partition_grid(grid: Vec<Vec<i32>>) -> bool {
-    let [rows, cols] = get_dimensions(&grid);
-    let mut prefix = Vec::with_capacity(rows);
-    for (r, row) in grid.iter().enumerate() {
-        let mut curr = row.iter().fold(vec![], |mut acc, &v| {
-            acc.push(i64::from(v) + acc.last().unwrap_or(&0));
-            acc
-        });
-        if r > 0 {
-            for (c, p) in curr.iter_mut().zip(&prefix[r - 1]) {
-                *c += p;
-            }
-        }
-        prefix.push(curr);
+pub fn can_partition_grid(mut grid: Vec<Vec<i32>>) -> bool {
+    let sum = grid.iter().flatten().fold(0, |acc, &v| acc + i64::from(v));
+    if f(&grid, sum) {
+        return true;
     }
-    let total = prefix[rows - 1][cols - 1];
-    prefix.iter().any(|row| row[cols - 1] * 2 == total)
-        || prefix[rows - 1].iter().any(|&v| v * 2 == total)
+    let mut tr = transpose(&grid);
+    if f(&tr, sum) {
+        return true;
+    }
+    grid.reverse();
+    tr.reverse();
+    f(&grid, sum) || f(&tr, sum)
+}
+
+fn f(grid: &[Vec<i32>], sum: i64) -> bool {
+    let mut seen = HashSet::new();
+    let mut up = 0;
+    for (r, row) in grid.iter().enumerate() {
+        for &v in row {
+            up += i64::from(v);
+            seen.insert(i64::from(v));
+        }
+        let diff = up - (sum - up);
+        // 1 ..
+        // 2 ..
+        // 1 ..
+        if diff == 0 || diff == i64::from(row[0]) {
+            return true;
+        }
+        // 2 1 ..
+        // 1 ..
+        if i64::from(grid[0][0]) == diff {
+            return true;
+        }
+        // 1 ..
+        // 1 2 ..
+        // 1 ..
+        if grid[0].len() > 1 && r > 0 && seen.contains(&diff) {
+            return true;
+        }
+    }
+    false
+}
+
+fn transpose(grid: &[Vec<i32>]) -> Vec<Vec<i32>> {
+    let [rows, cols] = get_dimensions(&grid);
+    let mut res = vec![vec![0; rows]; cols];
+    for (r, row) in grid.iter().enumerate() {
+        for (c, &v) in row.iter().enumerate() {
+            res[c][r] = v
+        }
+    }
+    res
 }
 
 #[cfg(test)]
