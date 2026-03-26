@@ -9,37 +9,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_deletion_size(strs: Vec<String>) -> i32 {
-    let [rows, cols] = get_dimensions(&strs);
-    if rows <= 1 {
-        return 0;
-    }
-    let mut states = vec![State::None; rows - 1];
-    let mut res = 0;
-    'out: for c in 0..cols {
-        let mut curr = states.clone();
-        for (r, w) in strs.windows(2).enumerate() {
-            match w[0].as_bytes()[c].cmp(&w[1].as_bytes()[c]) {
-                std::cmp::Ordering::Less => curr[r] = curr[r].max(State::Inc),
-                std::cmp::Ordering::Equal => curr[r] = curr[r].max(State::Equal),
-                std::cmp::Ordering::Greater => {
-                    if matches!(curr[r], State::None | State::Equal) {
-                        res += 1;
-                        continue 'out;
-                    }
-                }
-            }
+pub fn tallest_billboard(rods: &[i32]) -> i32 {
+    use std::collections::HashMap;
+    let mut prev = HashMap::from([(0, 0)]);
+    for &num in rods.iter() {
+        let mut curr = prev.clone(); // skip current
+        for (diff, v) in prev {
+            let temp = curr.entry(diff + num).or_insert(v + num);
+            *temp = (*temp).max(v + num);
+            let temp = curr.entry((diff - num).abs()).or_insert(v + num);
+            *temp = (*temp).max(v + num);
         }
-        states = curr;
+        prev = curr;
     }
-    res
-}
-
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-enum State {
-    None,
-    Equal,
-    Inc,
+    prev.get(&0).map(|v| v / 2).unwrap_or(0)
 }
 
 #[cfg(test)]
@@ -72,7 +55,9 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(tallest_billboard(&[3, 3]), 3);
+    }
 
     #[test]
     fn test() {}
