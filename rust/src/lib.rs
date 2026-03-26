@@ -6,64 +6,84 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::collections::HashSet;
+use std::sync::LazyLock;
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn can_partition_grid(mut grid: Vec<Vec<i32>>) -> bool {
-    let sum = grid.iter().flatten().fold(0, |acc, &v| acc + i64::from(v));
-    if f(&grid, sum) {
-        return true;
+pub fn largest_component_size(nums: Vec<i32>) -> i32 {
+    let mut groups = vec![None; 1 + MAX_P];
+    let mut dsu = DSU::new(nums.len());
+    for (i, &num) in nums.iter().enumerate() {
+        for &p in P.iter() {
+            if (num as usize) % p == 0 {
+                let v = groups[p].get_or_insert(i);
+                dsu.union(*v, i);
+            }
+            if p >= num as usize {
+                break;
+            }
+        }
     }
-    let mut tr = transpose(&grid);
-    if f(&tr, sum) {
-        return true;
-    }
-    grid.reverse();
-    tr.reverse();
-    f(&grid, sum) || f(&tr, sum)
+    dsu.max
 }
 
-fn f(grid: &[Vec<i32>], sum: i64) -> bool {
-    let mut seen = HashSet::new();
-    let mut up = 0;
-    for (r, row) in grid.iter().enumerate() {
-        for &v in row {
-            up += i64::from(v);
-            seen.insert(i64::from(v));
-        }
-        let diff = up - (sum - up);
-        // 1 ..
-        // 2 ..
-        // 1 ..
-        if diff == 0 || diff == i64::from(row[0]) {
-            return true;
-        }
-        // 2 1 ..
-        // 1 ..
-        if i64::from(grid[0][0]) == diff {
-            return true;
-        }
-        // 1 ..
-        // 1 2 ..
-        // 1 ..
-        if grid[0].len() > 1 && r > 0 && seen.contains(&diff) {
-            return true;
+const MAX_P: usize = 100_000;
+
+static P: LazyLock<Vec<usize>> = LazyLock::new(|| {
+    let mut sieve = vec![true; 1 + MAX_P];
+    sieve[..2].fill(false);
+    for p in 2..=MAX_P {
+        if sieve[p] {
+            for v in (p * p..=MAX_P).step_by(p) {
+                sieve[v] = false;
+            }
         }
     }
-    false
+    sieve
+        .into_iter()
+        .enumerate()
+        .filter_map(|(p, b)| if b { Some(p) } else { None })
+        .collect()
+});
+
+struct DSU {
+    parent: Vec<usize>,
+    size: Vec<i32>,
+    max: i32,
 }
 
-fn transpose(grid: &[Vec<i32>]) -> Vec<Vec<i32>> {
-    let [rows, cols] = get_dimensions(&grid);
-    let mut res = vec![vec![0; rows]; cols];
-    for (r, row) in grid.iter().enumerate() {
-        for (c, &v) in row.iter().enumerate() {
-            res[c][r] = v
+impl DSU {
+    fn new(n: usize) -> Self {
+        Self {
+            parent: (0..n).collect(),
+            size: vec![1; n],
+            max: 1,
         }
     }
-    res
+
+    fn find(&mut self, v: usize) -> usize {
+        if self.parent[v] != v {
+            self.parent[v] = self.find(self.parent[v])
+        }
+        self.parent[v]
+    }
+
+    fn union(&mut self, x: usize, y: usize) {
+        let [rx, ry] = [x, y].map(|v| self.find(v));
+        if rx == ry {
+            return;
+        }
+        if self.size[rx] < self.size[ry] {
+            self.size[ry] += self.size[rx];
+            self.parent[rx] = ry;
+            self.max = self.max.max(self.size[ry])
+        } else {
+            self.size[rx] += self.size[ry];
+            self.parent[ry] = rx;
+            self.max = self.max.max(self.size[rx])
+        }
+    }
 }
 
 #[cfg(test)]
