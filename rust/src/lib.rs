@@ -6,43 +6,40 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
-use itertools::Itertools;
 
-pub fn can_reorder_doubled(arr: Vec<i32>) -> bool {
-    let [mut pos, mut neg] = [HashMap::new(), HashMap::new()];
-    let mut zero = 0;
-    for num in arr {
-        match num.cmp(&0) {
-            std::cmp::Ordering::Less => *neg.entry(-num).or_insert(0) += 1,
-            std::cmp::Ordering::Equal => zero += 1,
-            std::cmp::Ordering::Greater => *pos.entry(num).or_insert(0) += 1,
-        }
+pub fn min_deletion_size(strs: Vec<String>) -> i32 {
+    let [rows, cols] = get_dimensions(&strs);
+    if rows <= 1 {
+        return 0;
     }
-    zero & 1 == 0 && f(pos) && f(neg)
+    let mut states = vec![State::None; rows - 1];
+    let mut res = 0;
+    'out: for c in 0..cols {
+        let mut curr = states.clone();
+        for (r, w) in strs.windows(2).enumerate() {
+            match w[0].as_bytes()[c].cmp(&w[1].as_bytes()[c]) {
+                std::cmp::Ordering::Less => curr[r] = curr[r].max(State::Inc),
+                std::cmp::Ordering::Equal => curr[r] = curr[r].max(State::Equal),
+                std::cmp::Ordering::Greater => {
+                    if matches!(curr[r], State::None | State::Equal) {
+                        res += 1;
+                        continue 'out;
+                    }
+                }
+            }
+        }
+        states = curr;
+    }
+    res
 }
 
-fn f(mut map: HashMap<i32, i32>) -> bool {
-    let nums = map.keys().copied().sorted_unstable().collect_vec();
-    for num in nums {
-        let Some(f) = map.remove(&num) else {
-            return false;
-        };
-        if f == 0 {
-            continue;
-        }
-        let Some(big) = map.get_mut(&(2 * num)) else {
-            return false;
-        };
-        *big -= f;
-        if *big < 0 {
-            return false;
-        }
-    }
-    true
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+enum State {
+    None,
+    Equal,
+    Inc,
 }
 
 #[cfg(test)]
