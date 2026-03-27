@@ -9,22 +9,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_deletion_size(strs: Vec<String>) -> i32 {
-    let cols = strs[0].len();
-    let mut dp = vec![1; cols];
-    let mut res = 1;
-    for right in 1..cols {
-        for left in 0..right {
-            if strs
-                .iter()
-                .all(|s| s.as_bytes()[left] <= s.as_bytes()[right])
-            {
-                dp[right] = dp[right].max(1 + dp[left]);
-                res = res.max(dp[right]);
-            }
+pub fn are_similar(mat: Vec<Vec<i32>>, k: i32) -> bool {
+    let cols = mat[0].len();
+    let k = (k as usize) % cols;
+    let mut a = mat.clone();
+    for (r, row) in a.iter_mut().enumerate() {
+        if r & 1 == 0 {
+            row.rotate_left(k);
+        } else {
+            row.rotate_right(k);
         }
     }
-    (cols - res) as i32
+    a == mat
 }
 
 #[cfg(test)]
