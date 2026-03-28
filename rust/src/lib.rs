@@ -6,32 +6,50 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
+use std::sync::LazyLock;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_cost(grid: Vec<Vec<i32>>) -> i32 {
-    use std::collections::HashSet;
-    let [rows, cols] = get_dimensions(&grid);
-    let mut dp = vec![vec![HashSet::new(); cols]; rows];
-    dp[0][0] = HashSet::from([grid[0][0]]);
-    for r in 0..rows {
-        for c in 0..cols {
-            let mut temp = vec![];
-            if r > 0 {
-                for prev in &dp[r - 1][c] {
-                    temp.push(prev ^ grid[r][c]);
-                }
-            }
-            if c > 0 {
-                for &prev in &dp[r][c - 1] {
-                    temp.push(prev ^ grid[r][c]);
-                }
-            }
-            dp[r][c].extend(temp);
+pub fn count_arrays(digit_sum: &[i32]) -> i32 {
+    let mut prev_count = vec![1];
+    let mut prev_nums = [0].as_slice();
+    for &sum in digit_sum.iter() {
+        let Some(nums) = DSUM_NUMS.get(sum as usize) else {
+            return 0;
+        };
+        if nums.is_empty() {
+            return 0;
         }
+        let mut curr = Vec::with_capacity(nums.len());
+        for &num in nums {
+            let i = prev_nums.partition_point(|&v| v <= num);
+            curr.push(if i > 0 { prev_count[i - 1] } else { 0 });
+        }
+        for i in 0..nums.len() - 1 {
+            curr[1 + i] = (curr[1 + i] + curr[i]) % M;
+        }
+        prev_nums = nums;
+        prev_count = curr;
     }
-    *dp[rows - 1][cols - 1].iter().min().unwrap()
+    *prev_count.last().unwrap_or(&0)
 }
+
+const M: i32 = 1_000_000_007;
+const MAX: usize = 5_000;
+static DSUM_NUMS: LazyLock<[Vec<usize>; 32]> = LazyLock::new(|| {
+    let mut res = [const { vec![] }; 32];
+    for num in 0..=MAX {
+        let mut x = num;
+        let mut d = 0;
+        while x > 0 {
+            d += x % 10;
+            x /= 10;
+        }
+        res[d].push(num);
+    }
+    res
+});
 
 #[cfg(test)]
 mod tests {
@@ -63,7 +81,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(count_arrays(&[25, 1]), 6);
+        assert_eq!(count_arrays(&[1]), 4);
+        assert_eq!(count_arrays(&[2, 49, 23]), 0);
+    }
 
     #[test]
     fn test() {}
