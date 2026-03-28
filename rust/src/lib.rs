@@ -9,34 +9,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_the_string(lcp: Vec<Vec<i32>>) -> String {
-    let n = lcp.len();
-    let mut res = vec![0; n];
-    let mut byte = b'a';
-    for (r, row) in lcp.iter().enumerate() {
-        if res[r] > 0 {
-            continue;
-        }
-        for (c, &v) in row.iter().enumerate() {
-            if v > 0 {
-                if byte > b'z' {
-                    return "".to_string();
-                }
-                res[c] = byte;
-            }
-        }
-        byte += 1;
-    }
-    for r in 0..n {
-        for c in 0..n {
-            let one_after = *lcp.get(1 + r).and_then(|rr| rr.get(1 + c)).unwrap_or(&0);
-            let temp = if res[r] == res[c] { 1 + one_after } else { 0 };
-            if temp != lcp[r][c] {
-                return "".to_string();
+pub fn min_absolute_difference(nums: Vec<i32>) -> i32 {
+    let mut res = None;
+    for (i1, &a) in nums.iter().enumerate() {
+        for (i2, &b) in nums.iter().enumerate() {
+            if a == 1 && b == 2 {
+                let v = res.get_or_insert(i1.abs_diff(i2));
+                *v = (*v).min(i1.abs_diff(i2))
             }
         }
     }
-    String::from_utf8(res).unwrap()
+    res.map(|v| v as i32).unwrap_or(-1)
 }
 
 #[cfg(test)]
