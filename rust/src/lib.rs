@@ -9,17 +9,28 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_absolute_difference(nums: Vec<i32>) -> i32 {
-    let mut res = None;
-    for (i1, &a) in nums.iter().enumerate() {
-        for (i2, &b) in nums.iter().enumerate() {
-            if a == 1 && b == 2 {
-                let v = res.get_or_insert(i1.abs_diff(i2));
-                *v = (*v).min(i1.abs_diff(i2))
+pub fn min_cost(grid: Vec<Vec<i32>>) -> i32 {
+    use std::collections::HashSet;
+    let [rows, cols] = get_dimensions(&grid);
+    let mut dp = vec![vec![HashSet::new(); cols]; rows];
+    dp[0][0] = HashSet::from([grid[0][0]]);
+    for r in 0..rows {
+        for c in 0..cols {
+            let mut temp = vec![];
+            if r > 0 {
+                for prev in &dp[r - 1][c] {
+                    temp.push(prev ^ grid[r][c]);
+                }
             }
+            if c > 0 {
+                for &prev in &dp[r][c - 1] {
+                    temp.push(prev ^ grid[r][c]);
+                }
+            }
+            dp[r][c].extend(temp);
         }
     }
-    res.map(|v| v as i32).unwrap_or(-1)
+    *dp[rows - 1][cols - 1].iter().min().unwrap()
 }
 
 #[cfg(test)]
