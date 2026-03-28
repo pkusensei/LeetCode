@@ -9,18 +9,34 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn are_similar(mat: Vec<Vec<i32>>, k: i32) -> bool {
-    let cols = mat[0].len();
-    let k = (k as usize) % cols;
-    let mut a = mat.clone();
-    for (r, row) in a.iter_mut().enumerate() {
-        if r & 1 == 0 {
-            row.rotate_left(k);
-        } else {
-            row.rotate_right(k);
+pub fn find_the_string(lcp: Vec<Vec<i32>>) -> String {
+    let n = lcp.len();
+    let mut res = vec![0; n];
+    let mut byte = b'a';
+    for (r, row) in lcp.iter().enumerate() {
+        if res[r] > 0 {
+            continue;
+        }
+        for (c, &v) in row.iter().enumerate() {
+            if v > 0 {
+                if byte > b'z' {
+                    return "".to_string();
+                }
+                res[c] = byte;
+            }
+        }
+        byte += 1;
+    }
+    for r in 0..n {
+        for c in 0..n {
+            let one_after = *lcp.get(1 + r).and_then(|rr| rr.get(1 + c)).unwrap_or(&0);
+            let temp = if res[r] == res[c] { 1 + one_after } else { 0 };
+            if temp != lcp[r][c] {
+                return "".to_string();
+            }
         }
     }
-    a == mat
+    String::from_utf8(res).unwrap()
 }
 
 #[cfg(test)]
