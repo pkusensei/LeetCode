@@ -6,48 +6,71 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
+use std::i32;
+
 #[allow(unused_imports)]
 use helper::*;
+use itertools::{Itertools, izip};
 
-use std::{
-    cmp::Reverse,
-    collections::{BinaryHeap, HashMap},
-};
-#[derive(Default)]
-struct EventManager {
-    map: HashMap<i32, i32>,
-    heap: BinaryHeap<(i32, Reverse<i32>)>,
+pub fn sortable_integers(nums: &[i32]) -> i32 {
+    let n = nums.len();
+    let facts = get_factors(n);
+    if nums.is_sorted() {
+        return facts.iter().sum::<usize>() as i32;
+    }
+    let mut min = 0;
+    let mut res = 0;
+    // remove 1
+    'out: for &k in &facts[1..] {
+        for ch in nums.chunks(k) {
+            if let Some(v) = check(ch, min) {
+                min = v;
+            } else {
+                min = 0;
+                continue 'out; // skip +k
+            }
+        }
+        res += k;
+        min = 0;
+    }
+    res as i32
 }
 
-impl EventManager {
-    fn new(events: Vec<Vec<i32>>) -> Self {
-        let mut map = HashMap::new();
-        let mut heap = BinaryHeap::new();
-        for e in events {
-            let [id, p] = e[..] else { unreachable!() };
-            map.insert(id, p);
-            heap.push((p, Reverse(id)));
+fn check(nums: &[i32], min: i32) -> Option<i32> {
+    let n = nums.len();
+    let mut max = i32::MIN;
+    let mut pivot = false;
+    for (i, &num) in nums.iter().enumerate() {
+        if num < min {
+            return None;
         }
-        Self { map, heap }
-    }
-
-    fn update_priority(&mut self, event_id: i32, new_priority: i32) {
-        *self.map.entry(event_id).or_insert(new_priority) = new_priority;
-        self.heap.push((new_priority, Reverse(event_id)));
-    }
-
-    fn poll_highest(&mut self) -> i32 {
-        while let Some(&(p, Reverse(id))) = self.heap.peek()
-            && self.map.get(&id).is_none_or(|&v| v != p)
-        {
-            self.heap.pop();
+        max = max.max(num);
+        if i > 0 && nums[i - 1] > num {
+            if pivot {
+                return None;
+            };
+            pivot = true
         }
-        let Some((_, Reverse(id))) = self.heap.pop() else {
-            return -1;
-        };
-        self.map.remove(&id);
-        id
     }
+    if pivot && nums[0] < nums[n - 1] {
+        None
+    } else {
+        Some(max)
+    }
+}
+
+fn get_factors(num: usize) -> Vec<usize> {
+    let mut res = vec![];
+    for p in 1..=num.isqrt() {
+        if num % p == 0 {
+            res.push(p);
+            if p * p < num {
+                res.push(num / p);
+            }
+        }
+    }
+    res.sort_unstable();
+    res
 }
 
 #[cfg(test)]
@@ -83,5 +106,7 @@ mod tests {
     fn basics() {}
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(sortable_integers(&[2, 2, 1, 1]), 4);
+    }
 }
