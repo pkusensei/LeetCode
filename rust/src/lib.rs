@@ -9,21 +9,45 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn first_matching_index(s: String) -> i32 {
-    let (s, n) = (s.as_bytes(), s.len());
-    if n == 1 {
-        return 0;
-    }
-    let mut left = 0;
-    let mut right = n - 1;
-    while left <= right {
-        if s[left] == s[right] {
-            return left as i32;
+use std::{
+    cmp::Reverse,
+    collections::{BinaryHeap, HashMap},
+};
+#[derive(Default)]
+struct EventManager {
+    map: HashMap<i32, i32>,
+    heap: BinaryHeap<(i32, Reverse<i32>)>,
+}
+
+impl EventManager {
+    fn new(events: Vec<Vec<i32>>) -> Self {
+        let mut map = HashMap::new();
+        let mut heap = BinaryHeap::new();
+        for e in events {
+            let [id, p] = e[..] else { unreachable!() };
+            map.insert(id, p);
+            heap.push((p, Reverse(id)));
         }
-        left += 1;
-        right -= 1;
+        Self { map, heap }
     }
-    -1
+
+    fn update_priority(&mut self, event_id: i32, new_priority: i32) {
+        *self.map.entry(event_id).or_insert(new_priority) = new_priority;
+        self.heap.push((new_priority, Reverse(event_id)));
+    }
+
+    fn poll_highest(&mut self) -> i32 {
+        while let Some(&(p, Reverse(id))) = self.heap.peek()
+            && self.map.get(&id).is_none_or(|&v| v != p)
+        {
+            self.heap.pop();
+        }
+        let Some((_, Reverse(id))) = self.heap.pop() else {
+            return -1;
+        };
+        self.map.remove(&id);
+        id
+    }
 }
 
 #[cfg(test)]
