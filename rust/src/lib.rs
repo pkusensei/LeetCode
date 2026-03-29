@@ -6,71 +6,55 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::i32;
-
 #[allow(unused_imports)]
 use helper::*;
-use itertools::{Itertools, izip};
 
-pub fn sortable_integers(nums: &[i32]) -> i32 {
-    let n = nums.len();
-    let facts = get_factors(n);
-    if nums.is_sorted() {
-        return facts.iter().sum::<usize>() as i32;
-    }
-    let mut min = 0;
+pub fn number_of_edges_added(n: i32, edges: Vec<Vec<i32>>) -> i32 {
+    let n = n as usize;
+    let mut dsu = DSU::new(n);
     let mut res = 0;
-    // remove 1
-    'out: for &k in &facts[1..] {
-        for ch in nums.chunks(k) {
-            if let Some(v) = check(ch, min) {
-                min = v;
-            } else {
-                min = 0;
-                continue 'out; // skip +k
-            }
-        }
-        res += k;
-        min = 0;
-    }
-    res as i32
-}
-
-fn check(nums: &[i32], min: i32) -> Option<i32> {
-    let n = nums.len();
-    let mut max = i32::MIN;
-    let mut pivot = false;
-    for (i, &num) in nums.iter().enumerate() {
-        if num < min {
-            return None;
-        }
-        max = max.max(num);
-        if i > 0 && nums[i - 1] > num {
-            if pivot {
-                return None;
-            };
-            pivot = true
+    for e in edges {
+        let [x, y, w] = e[..] else { unreachable!() };
+        if dsu.union(x as usize, y as usize, w) {
+            res += 1;
+        } else if dsu.xor[x as usize] ^ dsu.xor[y as usize] ^ w == 0 {
+            res += 1;
         }
     }
-    if pivot && nums[0] < nums[n - 1] {
-        None
-    } else {
-        Some(max)
-    }
-}
-
-fn get_factors(num: usize) -> Vec<usize> {
-    let mut res = vec![];
-    for p in 1..=num.isqrt() {
-        if num % p == 0 {
-            res.push(p);
-            if p * p < num {
-                res.push(num / p);
-            }
-        }
-    }
-    res.sort_unstable();
     res
+}
+
+struct DSU {
+    parent: Vec<usize>,
+    xor: Vec<i32>,
+}
+
+impl DSU {
+    fn new(n: usize) -> Self {
+        Self {
+            parent: (0..n).collect(),
+            xor: vec![0; n],
+        }
+    }
+
+    fn find(&mut self, v: usize) -> usize {
+        if self.parent[v] != v {
+            let root = self.find(self.parent[v]);
+            self.xor[v] ^= self.xor[self.parent[v]];
+            self.parent[v] = root;
+        }
+        self.parent[v]
+    }
+
+    fn union(&mut self, x: usize, y: usize, w: i32) -> bool {
+        let [rx, ry] = [x, y].map(|v| self.find(v));
+        if rx == ry {
+            return false;
+        }
+        self.parent[ry] = rx;
+        self.xor[ry] = self.xor[y] ^ self.xor[x] ^ w;
+        true
+    }
 }
 
 #[cfg(test)]
@@ -106,7 +90,5 @@ mod tests {
     fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(sortable_integers(&[2, 2, 1, 1]), 4);
-    }
+    fn test() {}
 }
