@@ -6,50 +6,36 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::sync::LazyLock;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_arrays(digit_sum: &[i32]) -> i32 {
-    let mut prev_count = vec![1];
-    let mut prev_nums = [0].as_slice();
-    for &sum in digit_sum.iter() {
-        let Some(nums) = DSUM_NUMS.get(sum as usize) else {
-            return 0;
-        };
-        if nums.is_empty() {
-            return 0;
-        }
-        let mut curr = Vec::with_capacity(nums.len());
-        for &num in nums {
-            let i = prev_nums.partition_point(|&v| v <= num);
-            curr.push(if i > 0 { prev_count[i - 1] } else { 0 });
-        }
-        for i in 0..nums.len() - 1 {
-            curr[1 + i] = (curr[1 + i] + curr[i]) % M;
-        }
-        prev_nums = nums;
-        prev_count = curr;
-    }
-    *prev_count.last().unwrap_or(&0)
+pub fn count_visible_people(n: i32, _pos: i32, k: i32) -> i32 {
+    (2 * n_choose_k((n - 1).into(), k.into()) % M) as i32
 }
 
-const M: i32 = 1_000_000_007;
-const MAX: usize = 5_000;
-static DSUM_NUMS: LazyLock<[Vec<usize>; 32]> = LazyLock::new(|| {
-    let mut res = [const { vec![] }; 32];
-    for num in 0..=MAX {
-        let mut x = num;
-        let mut d = 0;
-        while x > 0 {
-            d += x % 10;
-            x /= 10;
-        }
-        res[d].push(num);
+// c! // k! // (c-k)!
+fn n_choose_k(n: i64, k: i64) -> i64 {
+    let mut res = 1;
+    let k = k.min(n - k);
+    for i in (n - k + 1)..=n {
+        res = res * i % M;
     }
-    res
-});
+    let den = (1..=k).fold(1, |acc, v| acc * v % M);
+    res * mod_pow(den, M - 2) % M
+}
+
+const M: i64 = 1_000_000_007;
+
+const fn mod_pow(b: i64, exp: i64) -> i64 {
+    if exp == 0 {
+        return 1;
+    }
+    if exp & 1 == 0 {
+        mod_pow(b * b % M, exp >> 1)
+    } else {
+        mod_pow(b * b % M, exp >> 1) * b % M
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -81,11 +67,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(count_arrays(&[25, 1]), 6);
-        assert_eq!(count_arrays(&[1]), 4);
-        assert_eq!(count_arrays(&[2, 49, 23]), 0);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
