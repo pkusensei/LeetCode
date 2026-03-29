@@ -9,32 +9,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_visible_people(n: i32, _pos: i32, k: i32) -> i32 {
-    (2 * n_choose_k((n - 1).into(), k.into()) % M) as i32
-}
-
-// c! // k! // (c-k)!
-fn n_choose_k(n: i64, k: i64) -> i64 {
-    let mut res = 1;
-    let k = k.min(n - k);
-    for i in (n - k + 1)..=n {
-        res = res * i % M;
+pub fn first_matching_index(s: String) -> i32 {
+    let (s, n) = (s.as_bytes(), s.len());
+    if n == 1 {
+        return 0;
     }
-    let den = (1..=k).fold(1, |acc, v| acc * v % M);
-    res * mod_pow(den, M - 2) % M
-}
-
-const M: i64 = 1_000_000_007;
-
-const fn mod_pow(b: i64, exp: i64) -> i64 {
-    if exp == 0 {
-        return 1;
+    let mut left = 0;
+    let mut right = n - 1;
+    while left <= right {
+        if s[left] == s[right] {
+            return left as i32;
+        }
+        left += 1;
+        right -= 1;
     }
-    if exp & 1 == 0 {
-        mod_pow(b * b % M, exp >> 1)
-    } else {
-        mod_pow(b * b % M, exp >> 1) * b % M
-    }
+    -1
 }
 
 #[cfg(test)]
