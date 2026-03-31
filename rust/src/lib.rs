@@ -8,53 +8,39 @@ mod trie;
 
 #[allow(unused_imports)]
 use helper::*;
+use itertools::izip;
 
-pub fn number_of_edges_added(n: i32, edges: Vec<Vec<i32>>) -> i32 {
-    let n = n as usize;
-    let mut dsu = DSU::new(n);
-    let mut res = 0;
-    for e in edges {
-        let [x, y, w] = e[..] else { unreachable!() };
-        if dsu.union(x as usize, y as usize, w) {
-            res += 1;
-        } else if dsu.xor[x as usize] ^ dsu.xor[y as usize] ^ w == 0 {
-            res += 1;
+pub fn generate_string(str1: &str, str2: &str) -> String {
+    let [n1, n2] = [&str1, &str2].map(|s| s.len());
+    let mut res = vec![b'#'; n1 + n2 - 1];
+    let mut used = vec![false; n1 + n2 - 1];
+    for (i, b) in str1.bytes().enumerate() {
+        if b == b'T' {
+            if izip!(&res[i..], str2.bytes()).any(|(&br, b2)| br != b'#' && br != b2) {
+                return "".to_string();
+            }
+            res[i..i + n2].copy_from_slice(str2.as_bytes());
+            used[i..i + n2].fill(true);
         }
     }
-    res
-}
-
-struct DSU {
-    parent: Vec<usize>,
-    xor: Vec<i32>,
-}
-
-impl DSU {
-    fn new(n: usize) -> Self {
-        Self {
-            parent: (0..n).collect(),
-            xor: vec![0; n],
+    for b in res.iter_mut() {
+        if *b == b'#' {
+            *b = b'a';
         }
     }
-
-    fn find(&mut self, v: usize) -> usize {
-        if self.parent[v] != v {
-            let root = self.find(self.parent[v]);
-            self.xor[v] ^= self.xor[self.parent[v]];
-            self.parent[v] = root;
+    'out: for (i, b) in str1.bytes().enumerate() {
+        if b == b'F' && &res[i..i + n2] == str2.as_bytes() {
+            for free in (i..i + n2).rev() {
+                if !used[free] {
+                    used[free] = true;
+                    res[free] = b'b';
+                    continue 'out; // skip early return
+                }
+            }
+            return "".to_string();
         }
-        self.parent[v]
     }
-
-    fn union(&mut self, x: usize, y: usize, w: i32) -> bool {
-        let [rx, ry] = [x, y].map(|v| self.find(v));
-        if rx == ry {
-            return false;
-        }
-        self.parent[ry] = rx;
-        self.xor[ry] = self.xor[y] ^ self.xor[x] ^ w;
-        true
-    }
+    String::from_utf8(res).unwrap()
 }
 
 #[cfg(test)]
@@ -87,7 +73,9 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(generate_string("TTFFT", "fff"), "");
+    }
 
     #[test]
     fn test() {}
