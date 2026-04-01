@@ -8,39 +8,44 @@ mod trie;
 
 #[allow(unused_imports)]
 use helper::*;
-use itertools::izip;
 
-pub fn generate_string(str1: &str, str2: &str) -> String {
-    let [n1, n2] = [&str1, &str2].map(|s| s.len());
-    let mut res = vec![b'#'; n1 + n2 - 1];
-    let mut used = vec![false; n1 + n2 - 1];
-    for (i, b) in str1.bytes().enumerate() {
-        if b == b'T' {
-            if izip!(&res[i..], str2.bytes()).any(|(&br, b2)| br != b'#' && br != b2) {
-                return "".to_string();
-            }
-            res[i..i + n2].copy_from_slice(str2.as_bytes());
-            used[i..i + n2].fill(true);
-        }
-    }
-    for b in res.iter_mut() {
-        if *b == b'#' {
-            *b = b'a';
-        }
-    }
-    'out: for (i, b) in str1.bytes().enumerate() {
-        if b == b'F' && &res[i..i + n2] == str2.as_bytes() {
-            for free in (i..i + n2).rev() {
-                if !used[free] {
-                    used[free] = true;
-                    res[free] = b'b';
-                    continue 'out; // skip early return
+pub fn survived_robots_healths(
+    positions: Vec<i32>,
+    healths: Vec<i32>,
+    directions: String,
+) -> Vec<i32> {
+    use itertools::{Itertools, izip};
+    // (pos, health, dir, idx)
+    let robs = izip!(positions.iter(), healths.iter(), directions.bytes())
+        .enumerate()
+        .map(|(i, (p, h, b))| (*p, *h, b, i))
+        .sorted_unstable()
+        .collect_vec();
+    // (pos, health, dir, idx)
+    let mut st = Vec::<(i32, i32, u8, usize)>::new();
+    'out: for rob in robs {
+        let mut rob = rob;
+        while let Some(top) = st.last()
+            && top.2 == b'R'
+            && rob.2 == b'L'
+        {
+            let mut top = *top;
+            st.pop();
+            match top.1.cmp(&rob.1) {
+                std::cmp::Ordering::Less => rob.1 -= 1,
+                std::cmp::Ordering::Equal => continue 'out,
+                std::cmp::Ordering::Greater => {
+                    top.1 -= 1;
+                    rob = top;
                 }
-            }
-            return "".to_string();
+            };
         }
+        st.push(rob);
     }
-    String::from_utf8(res).unwrap()
+    st.into_iter()
+        .sorted_unstable_by_key(|rob| rob.3)
+        .map(|r| r.1)
+        .collect()
 }
 
 #[cfg(test)]
@@ -73,9 +78,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(generate_string("TTFFT", "fff"), "");
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
