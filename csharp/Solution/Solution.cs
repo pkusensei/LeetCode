@@ -8,12 +8,26 @@ namespace Solution;
 
 public class Solution
 {
-    public bool FlipEquiv(TreeNode root1, TreeNode root2)
+    public int MaxWidthRamp(int[] nums)
     {
-        if (root1 is null) { return root2 is null; }
-        if (root2 is null) { return false; }
-        return root1.val == root2.val
-            && ((FlipEquiv(root1.left, root2.right) && FlipEquiv(root1.right, root2.left))
-                || (FlipEquiv(root1.left, root2.left) && FlipEquiv(root1.right, root2.right)));
+        int n = nums.Length;
+        int[] suf_max = [.. nums];
+        for (int i = n - 2; i >= 0; i -= 1)
+        {
+            suf_max[i] = int.Max(suf_max[i], suf_max[1 + i]);
+        }
+        int res = 0;
+        int left = 0;
+        int right = 0;
+        while (right < n)
+        {
+            while (left < right && nums[left] > suf_max[right])
+            {
+                left += 1;
+            }
+            res = int.Max(res, right - left);
+            right += 1;
+        }
+        return res;
     }
 }
