@@ -8,26 +8,36 @@ namespace Solution;
 
 public class Solution
 {
-    public int MaxWidthRamp(int[] nums)
+    public double MinAreaFreeRect(int[][] points)
     {
-        int n = nums.Length;
-        int[] suf_max = [.. nums];
-        for (int i = n - 2; i >= 0; i -= 1)
+        int n = points.Length;
+        Dictionary<(int x, int y, long d), List<(int x, int y)>> dict = [];
+        double res = double.MaxValue;
+        for (int i1 = 0; i1 < n; i1++)
         {
-            suf_max[i] = int.Max(suf_max[i], suf_max[1 + i]);
-        }
-        int res = 0;
-        int left = 0;
-        int right = 0;
-        while (right < n)
-        {
-            while (left < right && nums[left] > suf_max[right])
+            (int x1, int y1) = (points[i1][0], points[i1][1]);
+            for (int i2 = 1 + i1; i2 < n; i2++)
             {
-                left += 1;
+                (int x2, int y2) = (points[i2][0], points[i2][1]);
+                int x = x1 + x2;
+                int y = y1 + y2;
+                long d = (long)(Math.Pow(x1 - x2, 2) + Math.Pow(y1 - y2, 2));
+                if (dict.TryGetValue((x, y, d), out var list))
+                {
+                    foreach (var p in list)
+                    {
+                        long a = (long)(Math.Pow(p.x - x1, 2) + Math.Pow(p.y - y1, 2));
+                        long b = (long)(Math.Pow(p.x - x2, 2) + Math.Pow(p.y - y2, 2));
+                        res = double.Min(res, Math.Sqrt(a * b));
+                    }
+                    list.Add((x1, y1));
+                }
+                else
+                {
+                    dict.Add((x, y, d), [(x1, y1)]);
+                }
             }
-            res = int.Max(res, right - left);
-            right += 1;
         }
-        return res;
+        return res < double.MaxValue ? res : 0.0;
     }
 }
