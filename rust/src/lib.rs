@@ -9,55 +9,30 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_walls(robots: Vec<i32>, distance: Vec<i32>, mut walls: Vec<i32>) -> i32 {
-    use itertools::{Itertools, izip};
-    let n = robots.len();
-    // (pos, dist)
-    let robs = izip!(robots.iter().copied(), distance.iter().copied())
-        .sorted_unstable()
-        .collect_vec();
-    walls.sort_unstable();
-    // dp[i][0] turn left
-    // dp[i][1] turn right
-    let mut prev_left = find(&walls, robs[0].0 - robs[0].1, robs[0].0);
-    let mut prev_right = find(
-        &walls,
-        robs[0].0,
-        (robs[0].0 + robs[0].1).min(robs.get(1).map(|r| r.0 - 1).unwrap_or(i32::MAX >> 1)),
-    );
-    for i in 1..n {
-        let (pos, dist) = robs[i];
-        let curr_left = (prev_left + find(&walls, (pos - dist).max(1 + robs[i - 1].0), pos)).max(
-            prev_right
-                + find(
-                    &walls,
-                    (pos - dist).max(robs[i - 1].0 + robs[i - 1].1 + 1),
-                    pos,
-                ),
-        );
-        let curr_right = (prev_left
-            + find(
-                &walls,
-                pos,
-                (pos + dist).min(robs.get(1 + i).map(|r| r.0 - 1).unwrap_or(i32::MAX >> 1)),
-            ))
-        .max(
-            prev_right
-                + find(
-                    &walls,
-                    pos,
-                    (pos + dist).min(robs.get(1 + i).map(|r| r.0 - 1).unwrap_or(i32::MAX >> 1)),
-                ),
-        );
-        (prev_left, prev_right) = (curr_left, curr_right);
+pub fn decode_ciphertext(encoded_text: String, rows: i32) -> String {
+    let (s, n) = (encoded_text.as_bytes(), encoded_text.len());
+    let rows = rows as usize;
+    if rows == 1 {
+        return encoded_text;
     }
-    prev_left.max(prev_right)
-}
-
-fn find(walls: &[i32], left: i32, right: i32) -> i32 {
-    let a = walls.partition_point(|&v| v < left);
-    let b = walls.partition_point(|&v| v <= right);
-    (b - a) as i32
+    let cols = n / rows;
+    let [mut r, mut c] = [0, 0];
+    let mut col_start = 0;
+    let mut res = vec![];
+    while r < rows && c < cols {
+        res.push(s[r * cols + c]);
+        r += 1;
+        c += 1;
+        if r == rows || c == cols {
+            r = 0;
+            c = 1 + col_start;
+            col_start += 1;
+        }
+    }
+    while res.last().is_some_and(|b| b.is_ascii_whitespace()) {
+        res.pop();
+    }
+    String::from_utf8(res).unwrap()
 }
 
 #[cfg(test)]
