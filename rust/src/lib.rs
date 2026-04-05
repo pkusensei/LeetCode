@@ -9,17 +9,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn judge_circle(moves: String) -> bool {
-    let [mut a, mut b] = [0, 0];
-    for v in moves.bytes() {
-        match v {
-            b'U' => a += 1,
-            b'D' => a -= 1,
-            b'L' => b += 1,
-            _ => b -= 1,
+pub fn mirror_frequency(s: String) -> i32 {
+    use itertools::Itertools;
+    use std::collections::HashSet;
+    let freq = s.bytes().counts();
+    let mut res = 0;
+    let mut seen = HashSet::new();
+    for (&b, f) in &freq {
+        let mirror = if b.is_ascii_alphabetic() {
+            b'z' - b + b'a'
+        } else {
+            b'9' - b + b'0'
+        };
+        if seen.insert((b.min(mirror), b.max(mirror))) {
+            res += f.abs_diff(*freq.get(&mirror).unwrap_or(&0))
         }
     }
-    [a, b] == [0, 0]
+    res as i32
 }
 
 #[cfg(test)]
