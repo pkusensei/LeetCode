@@ -9,27 +9,44 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_good_integers(n: i32) -> Vec<i32> {
-    use itertools::Itertools;
-    use std::collections::HashMap;
-    let mut map = HashMap::new();
-    for a in 1..=1000_i32 {
-        if a.pow(3) > n {
-            break;
-        }
-        for b in a..=1000 {
-            let val = a.pow(3) + b.pow(3);
-            if val <= n {
-                *map.entry(val).or_insert(0) += 1;
-            } else {
-                break;
-            }
-        }
+pub fn min_increase(nums: &[i32]) -> i64 {
+    let n = nums.len();
+    if n & 1 == 1 {
+        return f(&nums, 1);
     }
-    map.into_iter()
-        .filter_map(|(v, f)| if f >= 2 { Some(v) } else { None })
-        .sorted_unstable()
-        .collect()
+    let mut memo = vec![[-1; 2]; n];
+    dfs(&nums, 1, 0, &mut memo).min(dfs(&nums, 2, 1, &mut memo))
+}
+
+fn dfs(nums: &[i32], idx: usize, skip: usize, memo: &mut Vec<[i64; 2]>) -> i64 {
+    let n = nums.len();
+    if idx >= n - 1 {
+        return 0;
+    }
+    if memo[idx][skip] > -1 {
+        return memo[idx][skip];
+    }
+    let curr = i64::from((1 + nums[idx - 1].max(nums[1 + idx])).max(nums[idx]) - nums[idx]);
+    if skip > 0 {
+        let res = curr + dfs(nums, 2 + idx, 1, memo);
+        memo[idx][skip] = res;
+        return res;
+    }
+    let skip_v = curr + dfs(nums, 3 + idx, 1, memo);
+    let take = curr + dfs(nums, 2 + idx, 0, memo);
+    memo[idx][1] = skip_v;
+    memo[idx][0] = take;
+    skip_v.min(take)
+}
+
+// (max number of indices, min ops)
+fn f(nums: &[i32], start: usize) -> i64 {
+    let mut ops = 0;
+    let n = nums.len();
+    for i in (start..n - 1).step_by(2) {
+        ops += i64::from((1 + nums[i - 1].max(nums[1 + i])).max(nums[i]) - nums[i]);
+    }
+    ops
 }
 
 #[cfg(test)]
@@ -62,8 +79,12 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(min_increase(&[2, 1, 1, 3]), 2);
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(min_increase(&[12, 23, 13, 17, 21, 3]), 0);
+    }
 }
