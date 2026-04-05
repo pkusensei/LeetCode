@@ -9,63 +9,81 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_operations(nums: &[i32], k: i32) -> i32 {
+pub fn with_greedy(nums: &[i32]) -> i64 {
     let n = nums.len();
-    let k = k as usize;
-    if k == 0 {
-        return 0;
+    let mut res = 0;
+    let mut pref_odd = vec![0; n];
+    for i in (1..n - 1).step_by(2) {
+        let curr = (1 + nums[i - 1].max(nums[1 + i]) - nums[i]).max(0);
+        res += i64::from(curr);
+        pref_odd[i] = res;
     }
-    if 2 * k > n {
-        return -1;
+    if n & 1 == 1 {
+        return res;
     }
-    let costs: Vec<i32> = nums
-        .iter()
-        .enumerate()
-        .map(|(idx, v)| {
-            let prev_i = (idx + n - 1) % n;
-            let next_i = (idx + 1) % n;
-            ((1 + nums[prev_i].max(nums[next_i])) - v).max(0)
-        })
-        .collect();
-    // f(&costs, 1, n - 1, k).min(costs[0] + f(&costs, 2, n - 2, k - 1))
-    with_dp(&costs, 1, n - 1, k).min(costs[0] + with_dp(&costs, 2, n - 2, k - 1))
+    let mut suf_even = vec![0; n];
+    let mut temp = 0;
+    for i in (2..n - 1).rev().step_by(2) {
+        let curr = (1 + nums[i - 1].max(nums[1 + i]) - nums[i]).max(0);
+        temp += i64::from(curr);
+        suf_even[i] = temp;
+    }
+    res = res.min(temp);
+    for i in (2..n - 2).step_by(2) {
+        res = res.min(pref_odd[i - 1] + suf_even[2 + i]);
+    }
+    res
 }
 
-fn with_dp(costs: &[i32], start: usize, end: usize, k: usize) -> i32 {
-    let n = costs.len();
-    let mut dp = vec![vec![i32::MAX >> 1; 1 + k]; 2 + n];
-    dp[start][0] = 0;
-    for i in start..=end {
-        for k_ in 0..=k {
-            dp[1 + i][k_] = dp[i][k_]; // skip
-            if k_ > 0 {
-                dp[2 + i][k_] = dp[2 + i][k_].min(costs[i] + dp[i][k_ - 1]);
-            }
+pub fn min_increase(nums: &[i32]) -> i64 {
+    let n = nums.len();
+    if n & 1 == 1 {
+        return f(&nums, 1);
+    }
+    // let mut memo = vec![[-1; 2]; n];
+    // dfs(&nums, 1, 0, &mut memo)
+    with_dp(&nums)
+}
+
+fn with_dp(nums: &[i32]) -> i64 {
+    let n = nums.len();
+    let mut dp = vec![[i64::MAX >> 2; 2]; n];
+    dp[n - 1].fill(0);
+    for i in (1..n - 1).rev() {
+        let curr = i64::from((1 + nums[i - 1].max(nums[1 + i]) - nums[i]).max(0));
+        for skip in [0, 1] {
+            dp[i][skip] = dp[i][skip].min(curr + dp.get(2 + i).map(|v| v[skip]).unwrap_or(0));
         }
+        dp[i][0] = dp[i][0].min(dp[1 + i][1]);
     }
-    dp[1 + end][k].min(dp[2 + end][k])
+    dp[1][0].min(dp[1][1])
 }
 
-fn f(costs: &[i32], start: usize, end: usize, k: usize) -> i32 {
-    let n = costs.len();
-    let mut memo = vec![vec![-1; 1 + k]; n];
-    dfs(&costs, start, end, k, &mut memo)
-}
-
-fn dfs(costs: &[i32], idx: usize, end: usize, k: usize, memo: &mut [Vec<i32>]) -> i32 {
-    if k == 0 {
+fn dfs(nums: &[i32], idx: usize, skip: usize, memo: &mut [[i64; 2]]) -> i64 {
+    let n = nums.len();
+    if idx >= n - 1 {
         return 0;
     }
-    if idx > end {
-        return i32::MAX >> 1;
+    if memo[idx][skip] > -1 {
+        return memo[idx][skip];
     }
-    if memo[idx][k] > -1 {
-        return memo[idx][k];
+    let curr = i64::from((1 + nums[idx - 1].max(nums[1 + idx]) - nums[idx]).max(0));
+    // take
+    let mut res = curr + dfs(nums, 2 + idx, skip, memo);
+    if skip == 0 {
+        res = res.min(dfs(nums, 1 + idx, 1, memo));
     }
-    let pick = costs[idx] + dfs(costs, 2 + idx, end, k - 1, memo);
-    let skip = dfs(costs, 1 + idx, end, k, memo);
-    memo[idx][k] = pick.min(skip);
-    memo[idx][k]
+    memo[idx][skip] = res;
+    res
+}
+
+fn f(nums: &[i32], start: usize) -> i64 {
+    let mut ops = 0;
+    let n = nums.len();
+    for i in (start..n - 1).step_by(2) {
+        ops += i64::from((1 + nums[i - 1].max(nums[1 + i])).max(nums[i]) - nums[i]);
+    }
+    ops
 }
 
 #[cfg(test)]
@@ -102,6 +120,10 @@ mod tests {
 
     #[test]
     fn test() {
-        assert_eq!(min_operations(&[6, -7, 11, 13], 2), 11);
+        assert_eq!(min_increase(&[12, 23, 13, 17, 21, 3]), 0);
+        assert_eq!(min_increase(&[21, 12, 18, 19]), 2);
+
+        assert_eq!(with_greedy(&[12, 23, 13, 17, 21, 3]), 0);
+        assert_eq!(with_greedy(&[21, 12, 18, 19]), 2);
     }
 }
