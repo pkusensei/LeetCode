@@ -9,30 +9,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn decode_ciphertext(encoded_text: String, rows: i32) -> String {
-    let (s, n) = (encoded_text.as_bytes(), encoded_text.len());
-    let rows = rows as usize;
-    if rows == 1 {
-        return encoded_text;
-    }
-    let cols = n / rows;
-    let [mut r, mut c] = [0, 0];
-    let mut col_start = 0;
-    let mut res = vec![];
-    while r < rows && c < cols {
-        res.push(s[r * cols + c]);
-        r += 1;
-        c += 1;
-        if r == rows || c == cols {
-            r = 0;
-            c = 1 + col_start;
-            col_start += 1;
+pub fn judge_circle(moves: String) -> bool {
+    let [mut a, mut b] = [0, 0];
+    for v in moves.bytes() {
+        match v {
+            b'U' => a += 1,
+            b'D' => a -= 1,
+            b'L' => b += 1,
+            _ => b -= 1,
         }
     }
-    while res.last().is_some_and(|b| b.is_ascii_whitespace()) {
-        res.pop();
-    }
-    String::from_utf8(res).unwrap()
+    [a, b] == [0, 0]
 }
 
 #[cfg(test)]
