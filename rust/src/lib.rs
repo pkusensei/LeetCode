@@ -9,23 +9,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn mirror_frequency(s: String) -> i32 {
+pub fn find_good_integers(n: i32) -> Vec<i32> {
     use itertools::Itertools;
-    use std::collections::HashSet;
-    let freq = s.bytes().counts();
-    let mut res = 0;
-    let mut seen = HashSet::new();
-    for (&b, f) in &freq {
-        let mirror = if b.is_ascii_alphabetic() {
-            b'z' - b + b'a'
-        } else {
-            b'9' - b + b'0'
-        };
-        if seen.insert((b.min(mirror), b.max(mirror))) {
-            res += f.abs_diff(*freq.get(&mirror).unwrap_or(&0))
+    use std::collections::HashMap;
+    let mut map = HashMap::new();
+    for a in 1..=1000_i32 {
+        if a.pow(3) > n {
+            break;
+        }
+        for b in a..=1000 {
+            let val = a.pow(3) + b.pow(3);
+            if val <= n {
+                *map.entry(val).or_insert(0) += 1;
+            } else {
+                break;
+            }
         }
     }
-    res as i32
+    map.into_iter()
+        .filter_map(|(v, f)| if f >= 2 { Some(v) } else { None })
+        .sorted_unstable()
+        .collect()
 }
 
 #[cfg(test)]
