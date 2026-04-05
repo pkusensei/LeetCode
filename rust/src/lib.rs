@@ -27,7 +27,23 @@ pub fn min_operations(nums: &[i32], k: i32) -> i32 {
             ((1 + nums[prev_i].max(nums[next_i])) - v).max(0)
         })
         .collect();
-    f(&costs, 1, n - 1, k).min(costs[0] + f(&costs, 2, n - 2, k - 1))
+    // f(&costs, 1, n - 1, k).min(costs[0] + f(&costs, 2, n - 2, k - 1))
+    with_dp(&costs, 1, n - 1, k).min(costs[0] + with_dp(&costs, 2, n - 2, k - 1))
+}
+
+fn with_dp(costs: &[i32], start: usize, end: usize, k: usize) -> i32 {
+    let n = costs.len();
+    let mut dp = vec![vec![i32::MAX >> 1; 1 + k]; 2 + n];
+    dp[start][0] = 0;
+    for i in start..=end {
+        for k_ in 0..=k {
+            dp[1 + i][k_] = dp[i][k_]; // skip
+            if k_ > 0 {
+                dp[2 + i][k_] = dp[2 + i][k_].min(costs[i] + dp[i][k_ - 1]);
+            }
+        }
+    }
+    dp[1 + end][k].min(dp[2 + end][k])
 }
 
 fn f(costs: &[i32], start: usize, end: usize, k: usize) -> i32 {
