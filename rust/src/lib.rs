@@ -9,44 +9,47 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_increase(nums: &[i32]) -> i64 {
+pub fn min_operations(nums: &[i32], k: i32) -> i32 {
     let n = nums.len();
-    if n & 1 == 1 {
-        return f(&nums, 1);
-    }
-    let mut memo = vec![[-1; 2]; n];
-    dfs(&nums, 1, 0, &mut memo).min(dfs(&nums, 2, 1, &mut memo))
-}
-
-fn dfs(nums: &[i32], idx: usize, skip: usize, memo: &mut Vec<[i64; 2]>) -> i64 {
-    let n = nums.len();
-    if idx >= n - 1 {
+    let k = k as usize;
+    if k == 0 {
         return 0;
     }
-    if memo[idx][skip] > -1 {
-        return memo[idx][skip];
+    if 2 * k > n {
+        return -1;
     }
-    let curr = i64::from((1 + nums[idx - 1].max(nums[1 + idx])).max(nums[idx]) - nums[idx]);
-    if skip > 0 {
-        let res = curr + dfs(nums, 2 + idx, 1, memo);
-        memo[idx][skip] = res;
-        return res;
-    }
-    let skip_v = curr + dfs(nums, 3 + idx, 1, memo);
-    let take = curr + dfs(nums, 2 + idx, 0, memo);
-    memo[idx][1] = skip_v;
-    memo[idx][0] = take;
-    skip_v.min(take)
+    let costs: Vec<i32> = nums
+        .iter()
+        .enumerate()
+        .map(|(idx, v)| {
+            let prev_i = (idx + n - 1) % n;
+            let next_i = (idx + 1) % n;
+            ((1 + nums[prev_i].max(nums[next_i])) - v).max(0)
+        })
+        .collect();
+    f(&costs, 1, n - 1, k).min(costs[0] + f(&costs, 2, n - 2, k - 1))
 }
 
-// (max number of indices, min ops)
-fn f(nums: &[i32], start: usize) -> i64 {
-    let mut ops = 0;
-    let n = nums.len();
-    for i in (start..n - 1).step_by(2) {
-        ops += i64::from((1 + nums[i - 1].max(nums[1 + i])).max(nums[i]) - nums[i]);
+fn f(costs: &[i32], start: usize, end: usize, k: usize) -> i32 {
+    let n = costs.len();
+    let mut memo = vec![vec![-1; 1 + k]; n];
+    dfs(&costs, start, end, k, &mut memo)
+}
+
+fn dfs(costs: &[i32], idx: usize, end: usize, k: usize, memo: &mut [Vec<i32>]) -> i32 {
+    if k == 0 {
+        return 0;
     }
-    ops
+    if idx > end {
+        return i32::MAX >> 1;
+    }
+    if memo[idx][k] > -1 {
+        return memo[idx][k];
+    }
+    let pick = costs[idx] + dfs(costs, 2 + idx, end, k - 1, memo);
+    let skip = dfs(costs, 1 + idx, end, k, memo);
+    memo[idx][k] = pick.min(skip);
+    memo[idx][k]
 }
 
 #[cfg(test)]
@@ -79,12 +82,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(min_increase(&[2, 1, 1, 3]), 2);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {
-        assert_eq!(min_increase(&[12, 23, 13, 17, 21, 3]), 0);
+        assert_eq!(min_operations(&[6, -7, 11, 13], 2), 11);
     }
 }
