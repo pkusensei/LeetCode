@@ -9,34 +9,45 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn robot_sim(commands: Vec<i32>, obstacles: Vec<Vec<i32>>) -> i32 {
-    use std::collections::HashSet;
+struct Robot {
+    pos: Vec<(i32, i32, u8)>,
+    idx: usize,
+}
 
-    const D: [[i32; 2]; 4] = [[0, 1], [1, 0], [0, -1], [-1, 0]];
-    let obs: HashSet<_> = obstacles.iter().map(|v| [v[0], v[1]]).collect();
-    let mut dir = 0;
-    let [mut x, mut y] = [0, 0];
-    let mut res = 0;
-    for k in commands {
-        match k {
-            -2 => dir = (dir + 3) % 4,
-            -1 => dir = (dir + 1) % 4,
-            _ => {
-                let [dx, dy] = D[dir];
-                for _ in 0..k {
-                    let nx = x + dx;
-                    let ny = y + dy;
-                    if obs.contains(&[nx, ny]) {
-                        break;
-                    }
-                    x = nx;
-                    y = ny;
-                }
-                res = res.max(x.pow(2) + y.pow(2));
-            }
-        }
+impl Robot {
+    fn new(width: i32, height: i32) -> Self {
+        let mut pos = vec![(0, 0, 3)];
+        pos.extend((1..width).map(|x| (x, 0, 0)));
+        pos.extend((1..height).map(|y| (width - 1, y, 1)));
+        pos.extend((0..width - 1).map(|x| (x, height - 1, 2)).rev());
+        pos.extend((1..height - 1).map(|y| (0, y, 3)).rev());
+        Self { pos, idx: 0 }
     }
-    res
+
+    fn step(&mut self, num: i32) {
+        self.idx += num as usize
+    }
+
+    fn get_pos(&self) -> Vec<i32> {
+        let i = self.idx % self.pos.len();
+        let v = self.pos[i];
+        vec![v.0, v.1]
+    }
+
+    fn get_dir(&self) -> String {
+        if self.idx == 0 {
+            return "East".to_string();
+        }
+        let i = self.idx % self.pos.len();
+        let dir = self.pos[i].2;
+        match dir {
+            0 => "East",
+            1 => "North",
+            2 => "West",
+            _ => "South",
+        }
+        .to_string()
+    }
 }
 
 #[cfg(test)]
