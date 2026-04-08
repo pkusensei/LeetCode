@@ -8,30 +8,22 @@ namespace Solution;
 
 public class Solution
 {
-    public int[] NumsSameConsecDiff(int n, int k)
+    public int MinCameraCover(TreeNode root)
     {
-        Queue<(int val, int len)> queue = [];
-        List<int> res = [];
-        for (int i = 1; i < 10; i++)
+        HashSet<TreeNode> seen = [null];
+        return Dfs(root, null);
+
+        int Dfs(TreeNode node, TreeNode parent)
         {
-            queue.Enqueue((i, 1));
-        }
-        while (queue.TryDequeue(out var item))
-        {
-            if (item.len == n)
+            if (node is null) { return 0; }
+            int res = Dfs(node.left, node) + Dfs(node.right, node);
+            if (!seen.Contains(node.left) || !seen.Contains(node.right)
+            || (!seen.Contains(node) && parent is null))
             {
-                res.Add(item.val);
-                continue;
+                seen.UnionWith([node.left, node.right, node, parent]);
+                res += 1;
             }
-            int prev = item.val % 10;
-            for (int d = 0; d < 10; d++)
-            {
-                if (int.Abs(prev - d) == k)
-                {
-                    queue.Enqueue((10 * item.val + d, 1 + item.len));
-                }
-            }
+            return res;
         }
-        return [.. res];
     }
 }
