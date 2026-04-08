@@ -9,45 +9,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-struct Robot {
-    pos: Vec<(i32, i32, u8)>,
-    idx: usize,
-}
-
-impl Robot {
-    fn new(width: i32, height: i32) -> Self {
-        let mut pos = vec![(0, 0, 3)];
-        pos.extend((1..width).map(|x| (x, 0, 0)));
-        pos.extend((1..height).map(|y| (width - 1, y, 1)));
-        pos.extend((0..width - 1).map(|x| (x, height - 1, 2)).rev());
-        pos.extend((1..height - 1).map(|y| (0, y, 3)).rev());
-        Self { pos, idx: 0 }
-    }
-
-    fn step(&mut self, num: i32) {
-        self.idx += num as usize
-    }
-
-    fn get_pos(&self) -> Vec<i32> {
-        let i = self.idx % self.pos.len();
-        let v = self.pos[i];
-        vec![v.0, v.1]
-    }
-
-    fn get_dir(&self) -> String {
-        if self.idx == 0 {
-            return "East".to_string();
+pub fn xor_after_queries(nums: Vec<i32>, queries: Vec<Vec<i32>>) -> i32 {
+    const M: i64 = 1_000_000_007;
+    let mut nums: Vec<_> = nums.iter().map(|&v| i64::from(v)).collect();
+    for q in queries {
+        let [l, r, k, v] = q[..] else { unreachable!() };
+        let mut idx = l;
+        while idx <= r {
+            nums[idx as usize] = (nums[idx as usize] * i64::from(v)) % M;
+            idx += k;
         }
-        let i = self.idx % self.pos.len();
-        let dir = self.pos[i].2;
-        match dir {
-            0 => "East",
-            1 => "North",
-            2 => "West",
-            _ => "South",
-        }
-        .to_string()
     }
+    nums.iter().fold(0, |acc, v| acc ^ v) as i32
 }
 
 #[cfg(test)]
