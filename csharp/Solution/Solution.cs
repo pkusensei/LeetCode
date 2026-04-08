@@ -8,36 +8,31 @@ namespace Solution;
 
 public class Solution
 {
-    public double MinAreaFreeRect(int[][] points)
+    public int LeastOpsExpressTarget(int x, int target)
     {
-        int n = points.Length;
-        Dictionary<(int x, int y, long d), List<(int x, int y)>> dict = [];
-        double res = double.MaxValue;
-        for (int i1 = 0; i1 < n; i1++)
+        Dictionary<long, int> memo = [];
+        return Dfs(x, target);
+
+        int Dfs(int x, long target)
         {
-            (int x1, int y1) = (points[i1][0], points[i1][1]);
-            for (int i2 = 1 + i1; i2 < n; i2++)
+            if (target < x) { return (int)long.Min(2 * target - 1, 2 * (x - target)); }
+            if (memo.TryGetValue(target, out int res)) { return res; }
+            int p = (int)Math.Log(target, x);
+            long big = (long)Math.Pow(x, 1 + p);
+            if (big == target)
             {
-                (int x2, int y2) = (points[i2][0], points[i2][1]);
-                int x = x1 + x2;
-                int y = y1 + y2;
-                long d = (long)(Math.Pow(x1 - x2, 2) + Math.Pow(y1 - y2, 2));
-                if (dict.TryGetValue((x, y, d), out var list))
+                res = p;
+            }
+            else
+            {
+                res = p + Dfs(x, target - big / x);
+                if (big - target < target)
                 {
-                    foreach (var p in list)
-                    {
-                        long a = (long)(Math.Pow(p.x - x1, 2) + Math.Pow(p.y - y1, 2));
-                        long b = (long)(Math.Pow(p.x - x2, 2) + Math.Pow(p.y - y2, 2));
-                        res = double.Min(res, Math.Sqrt(a * b));
-                    }
-                    list.Add((x1, y1));
-                }
-                else
-                {
-                    dict.Add((x, y, d), [(x1, y1)]);
+                    res = int.Min(res, 1 + p + Dfs(x, big - target));
                 }
             }
+            memo.Add(target, res);
+            return res;
         }
-        return res < double.MaxValue ? res : 0.0;
     }
 }
