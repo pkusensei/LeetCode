@@ -9,6 +9,85 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
+pub fn precompute(arr: &[i32]) -> Vec<i32> {
+    let n = arr.len();
+    let b = n.isqrt(); // block size
+    let mut blocks = vec![0; 1 + b];
+    let mut lazy = vec![0; 1 + b];
+    for (i, num) in arr.iter().enumerate() {
+        blocks[i / b] += num;
+    }
+    blocks
+}
+
+pub fn query_sum(arr: &[i32], blocks: &[i32], mut left: usize, right: usize) -> i32 {
+    let n = arr.len();
+    let b = n.isqrt(); // block size
+    let mut res = 0;
+    while left <= right {
+        if left % b == 0 && left + b - 1 <= right {
+            // Taking whole block
+            res += blocks[left / b];
+            left += b;
+        } else {
+            // Partial block
+            res += arr[left];
+            left += 1
+        }
+    }
+    res
+}
+
+pub fn update(arr: &mut [i32], blocks: &mut [i32], i: usize, val: i32) {
+    let b = arr.len().isqrt();
+    blocks[i / b] += val - arr[i];
+    arr[i] = val;
+}
+
+pub fn range_update(
+    arr: &mut [i32],
+    blocks: &mut [i32],
+    lazy: &mut [i32],
+    mut left: usize,
+    right: usize,
+    val: i32,
+) {
+    let b = arr.len().isqrt();
+    while left <= right {
+        if left % b == 0 && left + b - 1 <= right {
+            lazy[left / b] += val;
+            left += b
+        } else {
+            blocks[left / b] += val;
+            arr[left] += val;
+            left += 1;
+        }
+    }
+}
+
+pub fn range_query(
+    arr: &[i32],
+    blocks: &[i32],
+    lazy: &[i32],
+    mut left: usize,
+    right: usize,
+) -> i32 {
+    let b = arr.len().isqrt(); // block size
+    let mut res = 0;
+    while left <= right {
+        if left % b == 0 && left + b - 1 <= right {
+            // Whole block - lazy on everything
+            res += blocks[left / b] + lazy[left / b] * b as i32;
+            left += b;
+        } else {
+            // Partial block - apply lazy on the fly
+            res += arr[left] + lazy[left / b];
+            left += 1
+        }
+    }
+    res
+}
+
 pub fn xor_after_queries(nums: &[i32], queries: &[[i32; 4]]) -> i32 {
     let n = nums.len();
     let root = 1 + n.isqrt();
