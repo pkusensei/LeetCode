@@ -9,141 +9,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn precompute(arr: &[i32]) -> Vec<i32> {
-    let n = arr.len();
-    let b = n.isqrt(); // block size
-    let mut blocks = vec![0; 1 + b];
-    let mut lazy = vec![0; 1 + b];
-    for (i, num) in arr.iter().enumerate() {
-        blocks[i / b] += num;
+pub fn minimum_distance(nums: Vec<i32>) -> i32 {
+    use std::collections::HashMap;
+    let mut map = HashMap::<_, Vec<_>>::new();
+    for (i, &num) in nums.iter().enumerate() {
+        map.entry(num).or_default().push(i);
     }
-    blocks
-}
-
-pub fn query_sum(arr: &[i32], blocks: &[i32], mut left: usize, right: usize) -> i32 {
-    let n = arr.len();
-    let b = n.isqrt(); // block size
-    let mut res = 0;
-    while left <= right {
-        if left % b == 0 && left + b - 1 <= right {
-            // Taking whole block
-            res += blocks[left / b];
-            left += b;
-        } else {
-            // Partial block
-            res += arr[left];
-            left += 1
-        }
-    }
-    res
-}
-
-pub fn update(arr: &mut [i32], blocks: &mut [i32], i: usize, val: i32) {
-    let b = arr.len().isqrt();
-    blocks[i / b] += val - arr[i];
-    arr[i] = val;
-}
-
-pub fn range_update(
-    arr: &mut [i32],
-    blocks: &mut [i32],
-    lazy: &mut [i32],
-    mut left: usize,
-    right: usize,
-    val: i32,
-) {
-    let b = arr.len().isqrt();
-    while left <= right {
-        if left % b == 0 && left + b - 1 <= right {
-            lazy[left / b] += val;
-            left += b
-        } else {
-            blocks[left / b] += val;
-            arr[left] += val;
-            left += 1;
-        }
-    }
-}
-
-pub fn range_query(
-    arr: &[i32],
-    blocks: &[i32],
-    lazy: &[i32],
-    mut left: usize,
-    right: usize,
-) -> i32 {
-    let b = arr.len().isqrt(); // block size
-    let mut res = 0;
-    while left <= right {
-        if left % b == 0 && left + b - 1 <= right {
-            // Whole block - lazy on everything
-            res += blocks[left / b] + lazy[left / b] * b as i32;
-            left += b;
-        } else {
-            // Partial block - apply lazy on the fly
-            res += arr[left] + lazy[left / b];
-            left += 1
-        }
-    }
-    res
-}
-
-pub fn xor_after_queries(nums: &[i32], queries: &[[i32; 4]]) -> i32 {
-    let n = nums.len();
-    let root = 1 + n.isqrt();
-    let mut nums: Vec<_> = nums.iter().map(|v| i64::from(*v)).collect();
-    // diffs[k] diff array with step size k
-    let mut diffs = vec![vec![]; root];
-    for q in queries {
-        let [l, r, k, v] = q[..] else { unreachable!() };
-        let [left, right, k] = [l, r, k].map(|v| v as usize);
-        let v = i64::from(v);
-        if k < root {
-            let group = {
-                if diffs[k].is_empty() {
-                    diffs[k] = vec![1; n]; // init here to skip never-seen `k`s
-                }
-                &mut diffs[k]
-            };
-            // [left] *= v
-            group[left] = group[left] * v % M;
-            let right = right + k - (right - left) % k;
-            // [right] /= v
-            if let Some(v_) = group.get_mut(right) {
-                *v_ = (*v_) * mod_pow(v, M - 2) % M;
-            }
-        } else {
-            for idx in (left..=right).step_by(k) {
-                nums[idx] = nums[idx] * v % M;
-            }
-        }
-    }
-    for (k, diff) in diffs.iter().enumerate() {
-        if diff.is_empty() {
-            continue;
-        }
-        for start in 0..k {
-            let mut prefix = 1;
-            for i in (start..n).step_by(k) {
-                prefix = prefix * diff[i] % M;
-                nums[i] = nums[i] * prefix % M;
-            }
-        }
-    }
-    nums.iter().fold(0, |acc, v| acc ^ v) as i32
-}
-
-const M: i64 = 1_000_000_007;
-
-const fn mod_pow(b: i64, exp: i64) -> i64 {
-    if exp == 0 {
-        return 1;
-    }
-    if exp & 1 == 0 {
-        mod_pow(b * b % M, exp >> 1)
-    } else {
-        mod_pow(b * b % M, exp >> 1) * b % M
-    }
+    map.values()
+        .flat_map(|v| {
+            v.windows(3)
+                .map(|w| w[0].abs_diff(w[1]) + w[1].abs_diff(w[2]) + w[0].abs_diff(w[2]))
+        })
+        .min()
+        .map(|v| v as i32)
+        .unwrap_or(-1)
 }
 
 #[cfg(test)]
