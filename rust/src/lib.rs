@@ -12,14 +12,11 @@ use helper::*;
 pub fn minimum_distance(nums: Vec<i32>) -> i32 {
     use std::collections::HashMap;
     let mut map = HashMap::<_, Vec<_>>::new();
-    for (i, &num) in nums.iter().enumerate() {
-        map.entry(num).or_default().push(i);
+    for (i, num) in nums.iter().enumerate() {
+        map.entry(*num).or_default().push(i);
     }
     map.values()
-        .flat_map(|v| {
-            v.windows(3)
-                .map(|w| w[0].abs_diff(w[1]) + w[1].abs_diff(w[2]) + w[0].abs_diff(w[2]))
-        })
+        .flat_map(|v| v.windows(3).map(|w| 2 * (w[2] - w[0])))
         .min()
         .map(|v| v as i32)
         .unwrap_or(-1)
