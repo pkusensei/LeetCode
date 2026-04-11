@@ -9,17 +9,14 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_distance(nums: Vec<i32>) -> i32 {
-    use std::collections::HashMap;
-    let mut map = HashMap::<_, Vec<_>>::new();
-    for (i, num) in nums.iter().enumerate() {
-        map.entry(*num).or_default().push(i);
+pub fn traffic_signal(timer: i32) -> String {
+    match timer {
+        0 => "Green",
+        30 => "Orange",
+        x if (31..=90).contains(&x) => "Red",
+        _ => "Invalid",
     }
-    map.values()
-        .flat_map(|v| v.windows(3).map(|w| 2 * (w[2] - w[0])))
-        .min()
-        .map(|v| v as i32)
-        .unwrap_or(-1)
+    .to_string()
 }
 
 #[cfg(test)]
