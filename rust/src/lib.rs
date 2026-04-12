@@ -6,46 +6,47 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::sync::LazyLock;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_operations(nums: Vec<i32>) -> i32 {
-    let mut res = 0;
-    for (idx, &num) in nums.iter().enumerate() {
-        if idx & 1 == 0 {
-            let i = P.partition_point(|&v| v < num);
-            res += P[i] - num;
-        } else {
-            if num == 2 {
-                res += 2
-            } else if P.binary_search(&num).is_ok() {
-                res += 1
+pub fn minimum_distance(word: String) -> i32 {
+    let n = word.len();
+    let s = word.as_bytes();
+    // dp[finger1][finger2][typed_count]
+    let mut dp = vec![vec![vec![i32::MAX >> 1; n]; 26]; 26];
+    for i in 0..26 {
+        let first = usize::from(s[0] - b'A');
+        dp[first][i][0] = 0;
+        dp[i][first][0] = 0;
+    }
+    for i in 1..n {
+        let curr = usize::from(s[i] - b'A');
+        for f1 in 0..26 {
+            for f2 in 0..26 {
+                dp[curr][f2][i] = dp[curr][f2][i].min(dist(f1, curr) + dp[f1][f2][i - 1]);
+                dp[f1][curr][i] = dp[f1][curr][i].min(dist(f2, curr) + dp[f1][f2][i - 1]);
             }
+        }
+    }
+    let mut res = i32::MAX;
+    for f1 in 0..26 {
+        for f2 in 0..26 {
+            res = res.min(dp[f1][f2][n - 1])
         }
     }
     res
 }
 
-const MAX: usize = 100_003;
+const fn dist(a: usize, b: usize) -> i32 {
+    let [ar, ac] = pos(a);
+    let [br, bc] = pos(b);
+    (ar.abs_diff(br) + ac.abs_diff(bc)) as i32
+}
 
-static P: LazyLock<Vec<i32>> = LazyLock::new(|| {
-    let mut sieve = vec![true; 1 + MAX];
-    sieve[..2].fill(false);
-    for p in 2..=MAX {
-        if sieve[p] {
-            for val in (p * p..=MAX).step_by(p) {
-                sieve[val] = false;
-            }
-        }
-    }
-    sieve
-        .iter()
-        .enumerate()
-        .filter_map(|(i, &b)| if b { Some(i as i32) } else { None })
-        .collect()
-});
+// letter -> [row, col]
+const fn pos(val: usize) -> [usize; 2] {
+    [val / 6, val % 6]
+}
 
 #[cfg(test)]
 mod tests {
