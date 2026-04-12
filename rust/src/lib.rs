@@ -6,46 +6,50 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
+use std::cmp::Reverse;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_distance(word: String) -> i32 {
-    let n = word.len();
-    let s = word.as_bytes();
-    // dp[finger1][finger2][typed_count]
-    let mut dp = vec![vec![vec![i32::MAX >> 1; n]; 26]; 26];
-    for i in 0..26 {
-        let first = usize::from(s[0] - b'A');
-        dp[first][i][0] = 0;
-        dp[i][first][0] = 0;
-    }
-    for i in 1..n {
-        let curr = usize::from(s[i] - b'A');
-        for f1 in 0..26 {
-            for f2 in 0..26 {
-                dp[curr][f2][i] = dp[curr][f2][i].min(dist(f1, curr) + dp[f1][f2][i - 1]);
-                dp[f1][curr][i] = dp[f1][curr][i].min(dist(f2, curr) + dp[f1][f2][i - 1]);
-            }
+use itertools::{Itertools, chain, izip};
+
+pub fn max_value(nums1: &[i32], nums0: &[i32]) -> i32 {
+    let mut ones = 0;
+    let mut sorted = vec![];
+    for (&f1, &f0) in izip!(nums1.iter(), nums0.iter()) {
+        if f0 == 0 {
+            ones += f1
+        } else {
+            sorted.push([f1, f0]);
         }
     }
-    let mut res = i32::MAX;
-    for f1 in 0..26 {
-        for f2 in 0..26 {
-            res = res.min(dp[f1][f2][n - 1])
-        }
+    sorted.sort_unstable_by_key(|&[f1, f0]| (Reverse(f1), f0));
+    let mut res = (mod_pow(2, ones.into()) - 1).rem_euclid(M);
+    for [f1, f0] in sorted {
+        let p1 = mod_pow(2, f1.into());
+        let p2 = mod_pow(2, f0.into());
+        res = res * p1 % M;
+        res = (res + p1 - 1).rem_euclid(M); // geometric seq
+        res = res * p2 % M;
     }
-    res
+    res as i32
 }
 
-const fn dist(a: usize, b: usize) -> i32 {
-    let [ar, ac] = pos(a);
-    let [br, bc] = pos(b);
-    (ar.abs_diff(br) + ac.abs_diff(bc)) as i32
+fn concat(a: &[u8], b: &[u8]) -> Vec<u8> {
+    chain!(a.iter().copied(), b.iter().copied()).collect()
 }
 
-// letter -> [row, col]
-const fn pos(val: usize) -> [usize; 2] {
-    [val / 6, val % 6]
+const M: i64 = 1_000_000_007;
+
+const fn mod_pow(b: i64, exp: i64) -> i64 {
+    if exp == 0 {
+        return 1;
+    }
+    if exp & 1 == 0 {
+        mod_pow(b * b % M, exp >> 1)
+    } else {
+        mod_pow(b * b % M, exp >> 1) * b % M
+    }
 }
 
 #[cfg(test)]
