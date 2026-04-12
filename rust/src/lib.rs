@@ -9,21 +9,64 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn internal_angles(mut sides: Vec<i32>) -> Vec<f64> {
-    sides.sort_unstable();
-    let [a, b, c] = sides[..] else { return vec![] };
-    if a + b <= c {
-        return vec![];
+pub fn longest_balanced(s: String) -> i32 {
+    use std::collections::HashMap;
+    let n = s.len();
+    let [mut pref_ones, mut pref_zeros] = [const { vec![] }; 2];
+    for b in s.bytes() {
+        pref_ones.push(i32::from(b == b'1') + pref_ones.last().unwrap_or(&0));
+        pref_zeros.push(i32::from(b == b'0') + pref_zeros.last().unwrap_or(&0));
     }
-    let v1 = f64::acos(f64::from(a.pow(2) + b.pow(2) - c.pow(2)) / f64::from(2 * a * b)) * 180.0
-        / std::f64::consts::PI;
-    let v2 = f64::acos(f64::from(a.pow(2) + c.pow(2) - b.pow(2)) / f64::from(2 * a * c)) * 180.0
-        / std::f64::consts::PI;
-    let v3 = f64::acos(f64::from(c.pow(2) + b.pow(2) - a.pow(2)) / f64::from(2 * c * b)) * 180.0
-        / std::f64::consts::PI;
-    let mut res = vec![v1, v2, v3];
-    res.sort_unstable_by(|a, b| a.total_cmp(b));
-    res
+    let mut sum = 0;
+    // sum=0
+    let mut prefix = HashMap::from([(0, -1)]);
+    let mut pref_has0 = HashMap::new();
+    let mut pref_has1 = HashMap::new();
+    let mut res = 0;
+    // 1 1 1 0 1 0
+    // 1 2 3 2 3 2
+    for (idx, b) in s.bytes().enumerate() {
+        sum += if b == b'1' { 1 } else { -1 };
+        if let Some(prev) = prefix.get(&sum) {
+            res = res.max(idx as i32 - prev);
+        }
+        // need 0's
+        if let Some(&prev) = prefix.get(&(sum - 2)) {
+            let window0 = pref_zeros[idx]
+                - if prev >= 0 {
+                    pref_zeros[prev as usize]
+                } else {
+                    0
+                };
+            if pref_zeros[n - 1] > window0 {
+                res = res.max(idx as i32 - prev);
+            } else if let Some(v) = pref_has0.get(&(sum - 2)) {
+                res = res.max(idx as i32 - v);
+            }
+        }
+        // need 1's
+        if let Some(&prev) = prefix.get(&(sum + 2)) {
+            let window1 = pref_ones[idx]
+                - if prev >= 0 {
+                    pref_ones[prev as usize]
+                } else {
+                    0
+                };
+            if pref_ones[n - 1] > window1 {
+                res = res.max(idx as i32 - prev);
+            } else if let Some(v) = pref_has1.get(&(sum + 2)) {
+                res = res.max(idx as i32 - v);
+            }
+        }
+        prefix.entry(sum).or_insert(idx as i32);
+        if pref_zeros[idx] > 0 {
+            pref_has0.entry(sum).or_insert(idx as i32);
+        }
+        if pref_ones[idx] > 0 {
+            pref_has1.entry(sum).or_insert(idx as i32);
+        }
+    }
+    res as i32
 }
 
 #[cfg(test)]
