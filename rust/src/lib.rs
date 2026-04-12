@@ -9,8 +9,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_degrees(matrix: Vec<Vec<i32>>) -> Vec<i32> {
-    matrix.iter().map(|r| r.iter().sum()).collect()
+pub fn internal_angles(mut sides: Vec<i32>) -> Vec<f64> {
+    sides.sort_unstable();
+    let [a, b, c] = sides[..] else { return vec![] };
+    if a + b <= c {
+        return vec![];
+    }
+    let v1 = f64::acos(f64::from(a.pow(2) + b.pow(2) - c.pow(2)) / f64::from(2 * a * b)) * 180.0
+        / std::f64::consts::PI;
+    let v2 = f64::acos(f64::from(a.pow(2) + c.pow(2) - b.pow(2)) / f64::from(2 * a * c)) * 180.0
+        / std::f64::consts::PI;
+    let v3 = f64::acos(f64::from(c.pow(2) + b.pow(2) - a.pow(2)) / f64::from(2 * c * b)) * 180.0
+        / std::f64::consts::PI;
+    let mut res = vec![v1, v2, v3];
+    res.sort_unstable_by(|a, b| a.total_cmp(b));
+    res
 }
 
 #[cfg(test)]
