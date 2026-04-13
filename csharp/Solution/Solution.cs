@@ -8,22 +8,31 @@ namespace Solution;
 
 public class Solution
 {
-    public int MinCameraCover(TreeNode root)
+    public IList<int> PancakeSort(int[] arr)
     {
-        HashSet<TreeNode> seen = [null];
-        return Dfs(root, null);
-
-        int Dfs(TreeNode node, TreeNode parent)
+        int n = arr.Length;
+        List<int> res = [];
+        for (int right = n - 1; right >= 0; right -= 1)
         {
-            if (node is null) { return 0; }
-            int res = Dfs(node.left, node) + Dfs(node.right, node);
-            if (!seen.Contains(node.left) || !seen.Contains(node.right)
-            || (!seen.Contains(node) && parent is null))
+            int max = arr[right];
+            int max_i = right;
+            for (int i = right - 1; i >= 0; i -= 1)
             {
-                seen.UnionWith([node.left, node.right, node, parent]);
-                res += 1;
+                if (arr[i] > max)
+                {
+                    max = arr[i];
+                    max_i = i;
+                }
             }
-            return res;
+            if (max_i == right) { continue; }
+            else if (max_i > 0)
+            {
+                res.Add(1 + max_i);
+                Array.Reverse(arr, 0, 1 + max_i);
+            }
+            res.Add(1 + right);
+            Array.Reverse(arr, 0, 1 + right);
         }
+        return res;
     }
 }
