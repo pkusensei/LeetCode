@@ -8,32 +8,29 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<int> PowerfulIntegers(int x, int y, int bound)
+    public IList<int> FlipMatchVoyage(TreeNode root, int[] voyage)
     {
-        if (bound < 2) { return []; }
-        if (x == 1 && y == 1) { return [2]; }
-        if (x == 1 || y == 1)
+        List<int> res = [];
+        return Dfs(root, voyage) ? res : [-1];
+
+        bool Dfs(TreeNode node, ReadOnlySpan<int> arr)
         {
-            int num = int.Max(x, y);
-            List<int> v = [];
-            for (int p = 1; 1 + p <= bound; p *= num)
+            if (node is null) { return arr.IsEmpty; }
+            if (arr.IsEmpty || node.val != arr[0]) { return false; }
+            if (node.left is null) { return Dfs(node.right, arr[1..]); }
+            if (node.right is null) { return Dfs(node.left, arr[1..]); }
+            if (arr.Length < 2) { return false; }
+            if (arr[1] == node.left.val)
             {
-                v.Add(1 + p);
+                int right = arr.IndexOf(node.right.val);
+                return right >= 2 && Dfs(node.left, arr[1..right]) && Dfs(node.right, arr[right..]);
             }
-            return v;
-        }
-        double px = Math.Log(bound, x);
-        double py = Math.Log(bound, y);
-        HashSet<int> res = [];
-        for (int ix = 0; ix <= px; ix++)
-        {
-            for (int iy = 0; iy <= py; iy++)
+            else
             {
-                int v = (int)(Math.Pow(x, ix) + Math.Pow(y, iy));
-                if (v <= bound) { res.Add(v); }
-                else { break; }
+                res.Add(node.val);
+                int left = arr.IndexOf(node.left.val);
+                return left >= 2 && Dfs(node.right, arr[1..left]) && Dfs(node.left, arr[left..]);
             }
         }
-        return [.. res];
     }
 }
