@@ -8,31 +8,32 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<int> PancakeSort(int[] arr)
+    public IList<int> PowerfulIntegers(int x, int y, int bound)
     {
-        int n = arr.Length;
-        List<int> res = [];
-        for (int right = n - 1; right >= 0; right -= 1)
+        if (bound < 2) { return []; }
+        if (x == 1 && y == 1) { return [2]; }
+        if (x == 1 || y == 1)
         {
-            int max = arr[right];
-            int max_i = right;
-            for (int i = right - 1; i >= 0; i -= 1)
+            int num = int.Max(x, y);
+            List<int> v = [];
+            for (int p = 1; 1 + p <= bound; p *= num)
             {
-                if (arr[i] > max)
-                {
-                    max = arr[i];
-                    max_i = i;
-                }
+                v.Add(1 + p);
             }
-            if (max_i == right) { continue; }
-            else if (max_i > 0)
-            {
-                res.Add(1 + max_i);
-                Array.Reverse(arr, 0, 1 + max_i);
-            }
-            res.Add(1 + right);
-            Array.Reverse(arr, 0, 1 + right);
+            return v;
         }
-        return res;
+        double px = Math.Log(bound, x);
+        double py = Math.Log(bound, y);
+        HashSet<int> res = [];
+        for (int ix = 0; ix <= px; ix++)
+        {
+            for (int iy = 0; iy <= py; iy++)
+            {
+                int v = (int)(Math.Pow(x, ix) + Math.Pow(y, iy));
+                if (v <= bound) { res.Add(v); }
+                else { break; }
+            }
+        }
+        return [.. res];
     }
 }
