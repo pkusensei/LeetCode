@@ -6,31 +6,73 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-pub fn min_mirror_pair_distance(nums: Vec<i32>) -> i32 {
-    use std::collections::HashMap;
-
-    let mut res = i32::MAX;
-    let mut map = HashMap::new();
-    for (i, &num) in nums.iter().enumerate() {
-        let rev = {
-            let mut v = 0;
-            let mut x = num;
-            while x > 0 {
-                v = 10 * v + x % 10;
-                x /= 10;
-            }
-            v
-        };
-        if let Some(v) = map.get(&num) {
-            res = res.min(i as i32 - v)
-        }
-        *map.entry(rev).or_insert(i as i32) = i as i32;
-    }
-    if res == i32::MAX { -1 } else { res }
-}
-
 #[allow(unused_imports)]
 use helper::*;
+
+pub fn is_rational_equal(s: String, t: String) -> bool {
+    let Some((a, b)) = Rational::new(&s).zip(Rational::new(&t)) else {
+        return false;
+    };
+    a == b
+}
+
+#[derive(PartialEq, Eq)]
+struct Rational {
+    int: i32,
+    dec: Vec<u8>,
+}
+
+impl Rational {
+    fn new(s: &str) -> Option<Rational> {
+        if let Some((a, b)) = s.split_once('.') {
+            let int = a.parse().ok()?;
+            if b.is_empty() {
+                return Some(Self {
+                    int,
+                    dec: vec![b'0'; 8],
+                });
+            }
+            let mut it = b.split(['(', ')']);
+            let mut dec = it.next().map(|v| v.as_bytes().to_vec())?;
+            if let Some(repeat) = it.next() {
+                if repeat.bytes().all(|b| b == b'9') {
+                    if let Some(i) = dec.iter().rposition(|&b| b != b'9') {
+                        dec[i] += 1;
+                        dec[1 + i..].fill(b'0');
+                        while dec.len() < 8 {
+                            dec.push(b'0');
+                        }
+                        return Some(Self { int, dec });
+                    } else {
+                        return Some(Self {
+                            int: 1 + int,
+                            dec: vec![b'0'; 8],
+                        });
+                    }
+                }
+                for b in repeat.bytes().cycle() {
+                    if dec.len() < 8 {
+                        dec.push(b);
+                    } else {
+                        break;
+                    }
+                }
+                Some(Self { int, dec })
+            } else {
+                while dec.len() < 8 {
+                    dec.push(b'0');
+                }
+                Some(Self { int, dec })
+            }
+        } else {
+            let int = s.parse().ok()?;
+            Some(Self {
+                int,
+                dec: vec![b'0'; 8],
+            })
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {
