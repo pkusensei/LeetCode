@@ -6,35 +6,27 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-pub fn solve_queries(nums: Vec<i32>, queries: Vec<i32>) -> Vec<i32> {
+pub fn min_mirror_pair_distance(nums: Vec<i32>) -> i32 {
     use std::collections::HashMap;
 
-    let len = nums.len();
-    let map = nums
-        .iter()
-        .enumerate()
-        .fold(HashMap::<_, Vec<_>>::new(), |mut acc, (i, &v)| {
-            acc.entry(v).or_default().push(i);
-            acc
-        });
-    let mut res = vec![];
-    for &q in queries.iter() {
-        let q = q as usize;
-        let val = nums[q];
-        let arr = &map[&val];
-        let n = arr.len();
-        if n == 1 {
-            res.push(-1);
-        } else {
-            let pos = arr.binary_search(&q).unwrap();
-            let a = (q.abs_diff(arr[(1 + pos) % n])).min(len - q.abs_diff(arr[(1 + pos) % n]));
-            let b =
-                (q.abs_diff(arr[(pos + n - 1) % n])).min(len - q.abs_diff(arr[(pos + n - 1) % n]));
-            let curr = a.min(b);
-            res.push(curr as i32);
+    let mut res = i32::MAX;
+    let mut map = HashMap::new();
+    for (i, &num) in nums.iter().enumerate() {
+        let rev = {
+            let mut v = 0;
+            let mut x = num;
+            while x > 0 {
+                v = 10 * v + x % 10;
+                x /= 10;
+            }
+            v
+        };
+        if let Some(v) = map.get(&num) {
+            res = res.min(i as i32 - v)
         }
+        *map.entry(rev).or_insert(i as i32) = i as i32;
     }
-    res
+    if res == i32::MAX { -1 } else { res }
 }
 
 #[allow(unused_imports)]
