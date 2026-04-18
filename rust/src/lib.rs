@@ -9,17 +9,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn subarrays_div_by_k(nums: Vec<i32>, k: i32) -> i32 {
-    use std::collections::HashMap;
-    let mut map = HashMap::from([(0, 1)]);
-    let mut sum = 0;
-    let mut res = 0;
-    for num in nums.iter() {
-        sum += num;
-        res += map.get(&sum.rem_euclid(k)).unwrap_or(&0);
-        *map.entry(sum.rem_euclid(k)).or_insert(0) += 1;
-    }
-    res
+pub const fn mirror_distance(n: i32) -> i32 {
+    let mirror = {
+        let mut x = n;
+        let mut v = 0;
+        while x > 0 {
+            v = v * 10 + x % 10;
+            x /= 10;
+        }
+        v
+    };
+    (n - mirror).abs()
 }
 
 #[cfg(test)]
