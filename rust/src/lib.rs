@@ -9,22 +9,36 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn first_stable_index(nums: Vec<i32>, k: i32) -> i32 {
-    let n = nums.len();
-    let mut pref = nums.to_vec();
-    for i in 1..n {
-        pref[i] = pref[i].max(pref[i - 1])
+pub fn color_grid(n: i32, m: i32, mut sources: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
+    use std::cmp::Reverse;
+    use std::collections::VecDeque;
+
+    let [rows, cols] = [n, m].map(|v| v as usize);
+    sources.sort_unstable_by_key(|v| Reverse(v[2]));
+    let mut queue = VecDeque::new();
+    let mut res = vec![vec![0; cols]; rows];
+    for s in sources.iter() {
+        let [r, c, val] = s[..] else { unreachable!() };
+        let [r, c] = [r, c].map(|v| v as usize);
+        res[r][c] = val;
+        queue.push_back((r, c, val));
     }
-    let mut suf = nums.to_vec();
-    for i in (0..n - 1).rev() {
-        suf[i] = suf[i].min(suf[1 + i]);
-    }
-    for i in 0..n {
-        if pref[i] - suf[i] <= k {
-            return i as i32;
+    while !queue.is_empty() {
+        let len = queue.len();
+        for _ in 0..len {
+            let (r, c, val) = queue.pop_front().unwrap();
+            for [nr, nc] in neighbors([r, c]) {
+                if res
+                    .get(nr)
+                    .is_some_and(|row| row.get(nc).is_some_and(|&v| v == 0))
+                {
+                    res[nr][nc] = res[nr][nc].max(val);
+                    queue.push_back((nr, nc, val));
+                }
+            }
         }
     }
-    -1
+    res
 }
 
 #[cfg(test)]
