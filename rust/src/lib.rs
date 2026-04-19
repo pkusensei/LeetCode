@@ -9,35 +9,50 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn color_grid(n: i32, m: i32, mut sources: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
-    use std::cmp::Reverse;
-    use std::collections::VecDeque;
-
-    let [rows, cols] = [n, m].map(|v| v as usize);
-    sources.sort_unstable_by_key(|v| Reverse(v[2]));
-    let mut queue = VecDeque::new();
-    let mut res = vec![vec![0; cols]; rows];
-    for s in sources.iter() {
-        let [r, c, val] = s[..] else { unreachable!() };
-        let [r, c] = [r, c].map(|v| v as usize);
-        res[r][c] = val;
-        queue.push_back((r, c, val));
+pub fn count_good_integers_on_path(l: i64, r: i64, directions: &str) -> i64 {
+    let mut path = [false; 16];
+    let mut i = 0;
+    for d in directions.bytes() {
+        path[i] = true;
+        i += if d == b'D' { 4 } else { 1 };
     }
-    while !queue.is_empty() {
-        let len = queue.len();
-        for _ in 0..len {
-            let (r, c, val) = queue.pop_front().unwrap();
-            for [nr, nc] in neighbors([r, c]) {
-                if res
-                    .get(nr)
-                    .is_some_and(|row| row.get(nc).is_some_and(|&v| v == 0))
-                {
-                    res[nr][nc] = res[nr][nc].max(val);
-                    queue.push_back((nr, nc, val));
-                }
+    path[i] = true;
+    f(r, &path) - f(l - 1, &path)
+}
+
+fn f(num: i64, path: &[bool]) -> i64 {
+    let s = format!("{:016}", num);
+    let mut memo = [[[-1; 10]; 2]; 16];
+    dfs(s.as_bytes(), path, 0, true, b'0', &mut memo)
+}
+
+fn dfs(
+    s: &[u8],
+    path: &[bool],
+    idx: usize,
+    tight: bool,
+    prev: u8,
+    memo: &mut [[[i64; 10]; 2]; 16],
+) -> i64 {
+    if idx >= 16 {
+        return 1;
+    }
+    if memo[idx][usize::from(tight)][usize::from(prev - b'0')] > -1 {
+        return memo[idx][usize::from(tight)][usize::from(prev - b'0')];
+    }
+    let upper = if tight { s[idx] } else { b'9' };
+    let mut res = 0;
+    for digit in b'0'..=upper {
+        let ntight = tight && digit == upper;
+        if path[idx] {
+            if digit >= prev {
+                res += dfs(s, path, 1 + idx, ntight, digit, memo)
             }
+        } else {
+            res += dfs(s, path, 1 + idx, ntight, prev, memo)
         }
     }
+    memo[idx][usize::from(tight)][usize::from(prev - b'0')] = res;
     res
 }
 
@@ -71,8 +86,20 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(count_good_integers_on_path(8, 10, "DDDRRR"), 2);
+        assert_eq!(
+            count_good_integers_on_path(123456789, 123456790, "DDRRDR"),
+            1
+        );
+        assert_eq!(
+            count_good_integers_on_path(1288561398769758, 1288561398769758, "RRRDDD"),
+            0
+        );
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(count_good_integers_on_path(9, 789, "DRDRDR"), 430);
+    }
 }
