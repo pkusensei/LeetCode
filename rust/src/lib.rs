@@ -9,17 +9,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub const fn mirror_distance(n: i32) -> i32 {
-    let mirror = {
-        let mut x = n;
-        let mut v = 0;
-        while x > 0 {
-            v = v * 10 + x % 10;
-            x /= 10;
+pub fn max_distance(nums1: Vec<i32>, nums2: Vec<i32>) -> i32 {
+    let mut res = 0;
+    let mut i2 = 0;
+    for (i1, &num1) in nums1.iter().enumerate() {
+        i2 = i2.max(i1);
+        while nums2.get(i2).is_some_and(|&v| v >= num1) {
+            i2 += 1;
         }
-        v
-    };
-    (n - mirror).abs()
+        if i2 > i1 && nums2.get(i2 - 1).is_some_and(|&v| v >= num1) {
+            res = res.max((i2 - i1 - 1) as i32)
+        }
+    }
+    res
 }
 
 #[cfg(test)]
