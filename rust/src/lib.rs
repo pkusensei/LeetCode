@@ -9,19 +9,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_distance(nums1: Vec<i32>, nums2: Vec<i32>) -> i32 {
-    let mut res = 0;
-    let mut i2 = 0;
-    for (i1, &num1) in nums1.iter().enumerate() {
-        i2 = i2.max(i1);
-        while nums2.get(i2).is_some_and(|&v| v >= num1) {
-            i2 += 1;
-        }
-        if i2 > i1 && nums2.get(i2 - 1).is_some_and(|&v| v >= num1) {
-            res = res.max((i2 - i1 - 1) as i32)
+pub fn first_stable_index(nums: Vec<i32>, k: i32) -> i32 {
+    let n = nums.len();
+    let mut pref = nums.to_vec();
+    for i in 1..n {
+        pref[i] = pref[i].max(pref[i - 1])
+    }
+    let mut suf = nums.to_vec();
+    for i in (0..n - 1).rev() {
+        suf[i] = suf[i].min(suf[1 + i]);
+    }
+    for i in 0..n {
+        if pref[i] - suf[i] <= k {
+            return i as i32;
         }
     }
-    res
+    -1
 }
 
 #[cfg(test)]
