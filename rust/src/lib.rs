@@ -9,51 +9,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_good_integers_on_path(l: i64, r: i64, directions: &str) -> i64 {
-    let mut path = [false; 16];
-    let mut i = 0;
-    for d in directions.bytes() {
-        path[i] = true;
-        i += if d == b'D' { 4 } else { 1 };
+pub fn max_distance(colors: Vec<i32>) -> i32 {
+    let mut min_idx = [None; 101];
+    let mut max_idx = [None; 101];
+    for (i, &c) in colors.iter().enumerate() {
+        min_idx[c as usize].get_or_insert(i);
+        max_idx[c as usize] = Some(i);
     }
-    path[i] = true;
-    f(r, &path) - f(l - 1, &path)
-}
-
-fn f(num: i64, path: &[bool]) -> i64 {
-    let s = format!("{:016}", num);
-    let mut memo = [[[-1; 10]; 2]; 16];
-    dfs(s.as_bytes(), path, 0, true, b'0', &mut memo)
-}
-
-fn dfs(
-    s: &[u8],
-    path: &[bool],
-    idx: usize,
-    tight: bool,
-    prev: u8,
-    memo: &mut [[[i64; 10]; 2]; 16],
-) -> i64 {
-    if idx >= 16 {
-        return 1;
-    }
-    if memo[idx][usize::from(tight)][usize::from(prev - b'0')] > -1 {
-        return memo[idx][usize::from(tight)][usize::from(prev - b'0')];
-    }
-    let upper = if tight { s[idx] } else { b'9' };
     let mut res = 0;
-    for digit in b'0'..=upper {
-        let ntight = tight && digit == upper;
-        if path[idx] {
-            if digit >= prev {
-                res += dfs(s, path, 1 + idx, ntight, digit, memo)
+    for (c1, i1) in min_idx.iter().enumerate() {
+        let Some(i1) = i1 else {
+            continue;
+        };
+        for (c2, i2) in max_idx.iter().enumerate() {
+            if let Some(i2) = i2
+                && c1 != c2
+            {
+                res = res.max(i2.abs_diff(*i1));
             }
-        } else {
-            res += dfs(s, path, 1 + idx, ntight, prev, memo)
         }
     }
-    memo[idx][usize::from(tight)][usize::from(prev - b'0')] = res;
-    res
+    res as i32
 }
 
 #[cfg(test)]
@@ -86,20 +62,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(count_good_integers_on_path(8, 10, "DDDRRR"), 2);
-        assert_eq!(
-            count_good_integers_on_path(123456789, 123456790, "DDRRDR"),
-            1
-        );
-        assert_eq!(
-            count_good_integers_on_path(1288561398769758, 1288561398769758, "RRRDDD"),
-            0
-        );
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(count_good_integers_on_path(9, 789, "DRDRDR"), 430);
-    }
+    fn test() {}
 }
