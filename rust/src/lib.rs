@@ -6,30 +6,69 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_distance(colors: Vec<i32>) -> i32 {
-    let mut min_idx = [None; 101];
-    let mut max_idx = [None; 101];
-    for (i, &c) in colors.iter().enumerate() {
-        min_idx[c as usize].get_or_insert(i);
-        max_idx[c as usize] = Some(i);
+pub fn minimum_hamming_distance(
+    source: Vec<i32>,
+    target: Vec<i32>,
+    allowed_swaps: Vec<Vec<i32>>,
+) -> i32 {
+    let n = source.len();
+    let mut dsu = DSU::new(n);
+    for s in allowed_swaps.iter() {
+        dsu.union(s[0] as usize, s[1] as usize);
     }
-    let mut res = 0;
-    for (c1, i1) in min_idx.iter().enumerate() {
-        let Some(i1) = i1 else {
-            continue;
-        };
-        for (c2, i2) in max_idx.iter().enumerate() {
-            if let Some(i2) = i2
-                && c1 != c2
-            {
-                res = res.max(i2.abs_diff(*i1));
-            }
+    let mut map = HashMap::<_, HashMap<_, i32>>::new();
+    for (i, &num) in source.iter().enumerate() {
+        let root = dsu.find(i);
+        *map.entry(root).or_default().entry(num).or_insert(0) += 1;
+    }
+    for (i, &num) in target.iter().enumerate() {
+        let root = dsu.find(i);
+        *map.entry(root).or_default().entry(num).or_insert(0) -= 1;
+    }
+    map.iter()
+        .flat_map(|(_, m)| m.values().map(|v| v.abs()))
+        .sum::<i32>()
+        / 2
+}
+
+struct DSU {
+    parent: Vec<usize>,
+    size: Vec<i32>,
+}
+
+impl DSU {
+    fn new(n: usize) -> Self {
+        Self {
+            parent: (0..n).collect(),
+            size: vec![1; n],
         }
     }
-    res as i32
+
+    fn find(&mut self, v: usize) -> usize {
+        if self.parent[v] != v {
+            self.parent[v] = self.find(self.parent[v]);
+        }
+        self.parent[v]
+    }
+
+    fn union(&mut self, x: usize, y: usize) {
+        let [rx, ry] = [x, y].map(|v| self.find(v));
+        if rx == ry {
+            return;
+        }
+        if self.size[rx] < self.size[ry] {
+            self.parent[rx] = ry;
+            self.size[ry] += self.size[rx]
+        } else {
+            self.parent[ry] = rx;
+            self.size[rx] += self.size[ry];
+        }
+    }
 }
 
 #[cfg(test)]
