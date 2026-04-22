@@ -6,68 +6,55 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_hamming_distance(
-    source: Vec<i32>,
-    target: Vec<i32>,
-    allowed_swaps: Vec<Vec<i32>>,
-) -> i32 {
-    let n = source.len();
-    let mut dsu = DSU::new(n);
-    for s in allowed_swaps.iter() {
-        dsu.union(s[0] as usize, s[1] as usize);
+pub fn two_edit_words(queries: Vec<String>, dictionary: Vec<String>) -> Vec<String> {
+    let mut trie = Trie::default();
+    for d in dictionary.iter() {
+        trie.insert(d.bytes());
     }
-    let mut map = HashMap::<_, HashMap<_, i32>>::new();
-    for (i, &num) in source.iter().enumerate() {
-        let root = dsu.find(i);
-        *map.entry(root).or_default().entry(num).or_insert(0) += 1;
-    }
-    for (i, &num) in target.iter().enumerate() {
-        let root = dsu.find(i);
-        *map.entry(root).or_default().entry(num).or_insert(0) -= 1;
-    }
-    map.iter()
-        .flat_map(|(_, m)| m.values().map(|v| v.abs()))
-        .sum::<i32>()
-        / 2
+    queries
+        .into_iter()
+        .filter(|s| trie.find(s.as_bytes(), 2))
+        .collect()
 }
 
-struct DSU {
-    parent: Vec<usize>,
-    size: Vec<i32>,
+#[derive(Default)]
+struct Trie {
+    nodes: [Option<Box<Trie>>; 26],
+    end: bool,
 }
 
-impl DSU {
-    fn new(n: usize) -> Self {
-        Self {
-            parent: (0..n).collect(),
-            size: vec![1; n],
+impl Trie {
+    fn insert(&mut self, it: impl Iterator<Item = u8>) {
+        let mut curr = self;
+        for b in it {
+            let i = usize::from(b - b'a');
+            curr = curr.nodes[i].get_or_insert_default();
         }
+        curr.end = true;
     }
 
-    fn find(&mut self, v: usize) -> usize {
-        if self.parent[v] != v {
-            self.parent[v] = self.find(self.parent[v]);
+    fn find(&self, it: &[u8], count: i32) -> bool {
+        if it.is_empty() {
+            return self.end && count >= 0;
         }
-        self.parent[v]
-    }
-
-    fn union(&mut self, x: usize, y: usize) {
-        let [rx, ry] = [x, y].map(|v| self.find(v));
-        if rx == ry {
-            return;
+        if count < 0 {
+            return false;
         }
-        if self.size[rx] < self.size[ry] {
-            self.parent[rx] = ry;
-            self.size[ry] += self.size[rx]
-        } else {
-            self.parent[ry] = rx;
-            self.size[rx] += self.size[ry];
+        let bi = usize::from(it[0] - b'a');
+        let mut res = false;
+        for (i, node) in self.nodes.iter().enumerate() {
+            if let Some(v) = node {
+                if i == bi {
+                    res |= v.find(&it[1..], count)
+                } else {
+                    res |= v.find(&it[1..], count - 1)
+                }
+            }
         }
+        res
     }
 }
 
