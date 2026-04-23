@@ -9,53 +9,30 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn two_edit_words(queries: Vec<String>, dictionary: Vec<String>) -> Vec<String> {
-    let mut trie = Trie::default();
-    for d in dictionary.iter() {
-        trie.insert(d.bytes());
+pub fn distance(nums: Vec<i32>) -> Vec<i64> {
+    use std::collections::HashMap;
+    let n = nums.len();
+    let mut map = HashMap::<_, Vec<_>>::new();
+    for (i, &num) in nums.iter().enumerate() {
+        map.entry(num).or_default().push(i);
     }
-    queries
-        .into_iter()
-        .filter(|s| trie.find(s.as_bytes(), 2))
-        .collect()
-}
-
-#[derive(Default)]
-struct Trie {
-    nodes: [Option<Box<Trie>>; 26],
-    end: bool,
-}
-
-impl Trie {
-    fn insert(&mut self, it: impl Iterator<Item = u8>) {
-        let mut curr = self;
-        for b in it {
-            let i = usize::from(b - b'a');
-            curr = curr.nodes[i].get_or_insert_default();
+    let mut res = vec![0; n];
+    for ids in map.into_values() {
+        if ids.len() <= 1 {
+            continue;
         }
-        curr.end = true;
+        let pref = ids.iter().fold(vec![], |mut acc, v| {
+            acc.push(v + acc.last().unwrap_or(&0));
+            acc
+        });
+        for (pos, i) in ids.into_iter().enumerate() {
+            let left = if pos > 0 { pref[pos - 1] } else { 0 };
+            let right = pref.last().unwrap() - pref[pos];
+            let val = i * pos - left + right - (pref.len() - pos - 1) * i;
+            res[i] = val as i64;
+        }
     }
-
-    fn find(&self, it: &[u8], count: i32) -> bool {
-        if it.is_empty() {
-            return self.end && count >= 0;
-        }
-        if count < 0 {
-            return false;
-        }
-        let bi = usize::from(it[0] - b'a');
-        let mut res = false;
-        for (i, node) in self.nodes.iter().enumerate() {
-            if let Some(v) = node {
-                if i == bi {
-                    res |= v.find(&it[1..], count)
-                } else {
-                    res |= v.find(&it[1..], count - 1)
-                }
-            }
-        }
-        res
-    }
+    res
 }
 
 #[cfg(test)]
