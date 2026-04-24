@@ -9,30 +9,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn distance(nums: Vec<i32>) -> Vec<i64> {
-    use std::collections::HashMap;
-    let n = nums.len();
-    let mut map = HashMap::<_, Vec<_>>::new();
-    for (i, &num) in nums.iter().enumerate() {
-        map.entry(num).or_default().push(i);
-    }
-    let mut res = vec![0; n];
-    for ids in map.into_values() {
-        if ids.len() <= 1 {
-            continue;
-        }
-        let pref = ids.iter().fold(vec![], |mut acc, v| {
-            acc.push(v + acc.last().unwrap_or(&0));
-            acc
-        });
-        for (pos, i) in ids.into_iter().enumerate() {
-            let left = if pos > 0 { pref[pos - 1] } else { 0 };
-            let right = pref.last().unwrap() - pref[pos];
-            let val = i * pos - left + right - (pref.len() - pos - 1) * i;
-            res[i] = val as i64;
+pub fn furthest_distance_from_origin(moves: String) -> i32 {
+    let mut res = 0_i32;
+    let mut count = 0;
+    for b in moves.bytes() {
+        match b {
+            b'L' => res += 1,
+            b'R' => res -= 1,
+            _ => count += 1,
         }
     }
-    res
+    res.abs() + count
 }
 
 #[cfg(test)]
