@@ -9,10 +9,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn valid_digit(n: i32, x: i32) -> bool {
-    let s = n.to_string();
-    let s = s.as_bytes();
-    s[0] != x as u8 + b'0' && s[1..].contains(&(x as u8 + b'0'))
+pub fn compare_bitonic_sums(nums: Vec<i32>) -> i32 {
+    let mut pivot = 0;
+    let mut left = 0;
+    let mut right = 0;
+    for &num in nums.iter() {
+        if pivot < num {
+            left += i64::from(num);
+            pivot = num;
+        } else {
+            right += i64::from(num)
+        }
+    }
+    right += i64::from(pivot);
+    match left.cmp(&right) {
+        std::cmp::Ordering::Less => 1,
+        std::cmp::Ordering::Equal => -1,
+        std::cmp::Ordering::Greater => 0,
+    }
 }
 
 #[cfg(test)]
