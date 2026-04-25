@@ -6,27 +6,55 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
+use std::collections::VecDeque;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn compare_bitonic_sums(nums: Vec<i32>) -> i32 {
-    let mut pivot = 0;
-    let mut left = 0;
-    let mut right = 0;
-    for &num in nums.iter() {
-        if pivot < num {
-            left += i64::from(num);
-            pivot = num;
-        } else {
-            right += i64::from(num)
+pub fn even_sum_subgraphs(nums: &[i32], edges: &[[i32; 2]]) -> i32 {
+    let n = nums.len();
+    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
+        acc[e[0] as usize].push(e[1] as usize);
+        acc[e[1] as usize].push(e[0] as usize);
+        acc
+    });
+    let full = 1 << n;
+    let mut res = 0;
+    for mask in 1..full {
+        res += i32::from(f(&nums, &adj, mask))
+    }
+    res
+}
+
+fn f(nums: &[i32], adj: &[Vec<usize>], mask: i32) -> bool {
+    let n = nums.len();
+    let mut queue = VecDeque::new();
+    let mut sum = 0;
+    let mut curr = 0;
+    for bit in 0..n {
+        if mask & (1 << bit) > 0 {
+            sum ^= nums[bit];
+            if queue.is_empty() {
+                curr |= 1 << bit;
+                queue.push_back(bit);
+            }
         }
     }
-    right += i64::from(pivot);
-    match left.cmp(&right) {
-        std::cmp::Ordering::Less => 1,
-        std::cmp::Ordering::Equal => -1,
-        std::cmp::Ordering::Greater => 0,
+    if sum & 1 == 1 {
+        return false;
     }
+    while let Some(node) = queue.pop_front() {
+        if curr == mask as usize {
+            break;
+        }
+        for &next in &adj[node] {
+            if mask & (1 << next) > 0 && curr & (1 << next) == 0 {
+                curr |= 1 << next;
+                queue.push_back(next);
+            }
+        }
+    }
+    curr == mask as usize
 }
 
 #[cfg(test)]
@@ -59,7 +87,9 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(even_sum_subgraphs(&[1, 0, 1], &[[0, 1], [1, 2]]), 2);
+    }
 
     #[test]
     fn test() {}
