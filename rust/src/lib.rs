@@ -6,30 +6,33 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
+use std::iter::repeat_n;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_valid_elements(nums: &[i32]) -> Vec<i32> {
-    let n = nums.len();
-    let mut pref_max = nums.to_vec();
-    for i in 1..n {
-        pref_max[i] = pref_max[i].max(pref_max[i - 1])
-    }
-    let mut suf_max = nums.to_vec();
-    for i in (0..n - 1).rev() {
-        suf_max[i] = suf_max[i].max(suf_max[1 + i]);
-    }
-    let mut res = vec![];
-    for (i, &num) in nums.iter().enumerate() {
-        if i == 0 || i == n - 1 {
-            res.push(num);
-            continue;
-        }
-        if num > pref_max[i - 1] || num > suf_max[1 + i] {
-            res.push(num);
+pub fn sort_vowels(s: String) -> String {
+    use itertools::Itertools;
+    use std::{cmp::Reverse, collections::HashMap};
+    let mut freq = HashMap::<_, (_, _)>::new();
+    for (i, b) in s.bytes().enumerate() {
+        if b"aeiou".contains(&b) {
+            let v = freq.entry(b).or_insert((i, 0));
+            v.1 += 1;
         }
     }
-    res
+    let mut arr = freq
+        .into_iter()
+        .map(|(k, (i, f))| (f, i, k))
+        .sorted_unstable_by_key(|&(f, i, _byte)| (Reverse(f), i))
+        .flat_map(|(f, _i, byte)| repeat_n(byte, f as usize));
+    let mut s = s.into_bytes();
+    for b in s.iter_mut() {
+        if b"aeiou".contains(b) {
+            *b = arr.next().unwrap();
+        }
+    }
+    String::from_utf8(s).unwrap()
 }
 
 #[cfg(test)]
@@ -62,9 +65,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(find_valid_elements(&[2, 2, 1, 1, 2]), [2, 2]);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
