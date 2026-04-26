@@ -6,33 +6,19 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::iter::repeat_n;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn sort_vowels(s: String) -> String {
-    use itertools::Itertools;
-    use std::{cmp::Reverse, collections::HashMap};
-    let mut freq = HashMap::<_, (_, _)>::new();
-    for (i, b) in s.bytes().enumerate() {
-        if b"aeiou".contains(&b) {
-            let v = freq.entry(b).or_insert((i, 0));
-            v.1 += 1;
-        }
-    }
-    let mut arr = freq
-        .into_iter()
-        .map(|(k, (i, f))| (f, i, k))
-        .sorted_unstable_by_key(|&(f, i, _byte)| (Reverse(f), i))
-        .flat_map(|(f, _i, byte)| repeat_n(byte, f as usize));
-    let mut s = s.into_bytes();
-    for b in s.iter_mut() {
-        if b"aeiou".contains(b) {
-            *b = arr.next().unwrap();
-        }
-    }
-    String::from_utf8(s).unwrap()
+pub fn min_operations(nums: &[i32]) -> i64 {
+    nums.windows(2)
+        .filter_map(|w| {
+            if w[0] > w[1] {
+                Some(i64::from(w[0] - w[1]))
+            } else {
+                None
+            }
+        })
+        .sum()
 }
 
 #[cfg(test)]
@@ -68,5 +54,7 @@ mod tests {
     fn basics() {}
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(min_operations(&[18, 12, 7, 4, 30]), 14);
+    }
 }
