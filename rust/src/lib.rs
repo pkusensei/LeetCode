@@ -9,106 +9,78 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_alternating_sum(nums: &[i32], k: i32) -> i64 {
-    let n = nums.len();
-    let k = k as usize;
-    let max = *nums.iter().max().unwrap_or(&0) as usize;
-    let mut tree_inc = SegTree::new(1 + max);
-    let mut tree_dec = SegTree::new(1 + max);
-    let mut dp_inc = vec![0; n];
-    let mut dp_dec = vec![0; n];
-    let mut res = 0;
-    for idx in (0..n).rev() {
-        if idx + k < n {
-            tree_inc.update(nums[idx + k] as usize, dp_inc[idx + k]);
-            tree_dec.update(nums[idx + k] as usize, dp_dec[idx + k]);
+pub fn has_valid_path(grid: Vec<Vec<i32>>) -> bool {
+    let [rows, cols] = get_dimensions(&grid);
+    let mut dsu = DSU::new(rows * cols);
+    for (r, row) in grid.iter().enumerate() {
+        for (c, &val) in row.iter().enumerate() {
+            let dir = DIR[val as usize - 1];
+            for (i, &[dr, dc]) in dir.iter().enumerate() {
+                let nr = r as i32 + dr;
+                let nc = c as i32 + dc;
+                if (0..rows as i32).contains(&nr)
+                    && (0..cols as i32).contains(&nc)
+                    && NEI[val as usize - 1][i].contains(&grid[nr as usize][nc as usize])
+                {
+                    dsu.union(r * cols + c, nr as usize * cols + nc as usize);
+                }
+            }
         }
-        dp_inc[idx] = i64::from(nums[idx]) + tree_dec.query(1 + nums[idx] as usize, max);
-        dp_dec[idx] = i64::from(nums[idx]) + tree_inc.query(1, nums[idx] as usize - 1);
-        res = res.max(dp_inc[idx]).max(dp_dec[idx]);
     }
-    res
-    // let mut memo = vec![vec![[-1; 2]; 1 + n]; n];
-    // dfs(&nums, k, 0, n, 0, &mut memo).max(dfs(&nums, k, 0, n, 1, &mut memo))
+    dsu.find(0) == dsu.find(rows * cols - 1)
 }
 
-// prev - prev picked value
-fn dfs(
-    nums: &[i32],
-    k: usize,
-    idx: usize,
-    prev: usize,
-    dir: usize,
-    memo: &mut [Vec<[i64; 2]>],
-) -> i64 {
-    if idx >= nums.len() {
-        return 0;
-    }
-    if memo[idx][prev][dir] > -1 {
-        return memo[idx][prev][dir];
-    }
-    let skip = dfs(nums, k, 1 + idx, prev, dir, memo);
-    let take = if dir == 0 && nums.get(prev).is_none_or(|&v| v < nums[idx]) {
-        i64::from(nums[idx]) + dfs(nums, k, k + idx, idx, 1 - dir, memo)
-    } else if dir == 1 && nums.get(prev).is_none_or(|&v| v > nums[idx]) {
-        i64::from(nums[idx]) + dfs(nums, k, k + idx, idx, 1 - dir, memo)
-    } else {
-        0
-    };
-    memo[idx][prev][dir] = skip.max(take);
-    memo[idx][prev][dir]
+const DIR: [[[i32; 2]; 2]; 6] = [
+    [[0, -1], [0, 1]],
+    [[1, 0], [-1, 0]],
+    [[0, -1], [1, 0]],
+    [[0, 1], [1, 0]],
+    [[0, -1], [-1, 0]],
+    [[0, 1], [-1, 0]],
+];
+
+const NEI: [[[i32; 3]; 2]; 6] = [
+    [[1, 4, 6], [1, 3, 5]],
+    [[2, 5, 6], [2, 3, 4]],
+    [[1, 4, 6], [2, 5, 6]],
+    [[1, 3, 5], [2, 5, 6]],
+    [[1, 4, 6], [2, 3, 4]],
+    [[1, 3, 5], [2, 3, 4]],
+];
+
+struct DSU {
+    parent: Vec<usize>,
+    rank: Vec<i32>,
 }
 
-struct SegTree {
-    tree: Vec<i64>,
-    n: usize,
-}
-
-impl SegTree {
+impl DSU {
     fn new(n: usize) -> Self {
         Self {
-            tree: vec![0; 4 * n],
-            n,
+            parent: (0..n).collect(),
+            rank: vec![0; n],
         }
     }
 
-    fn update(&mut self, idx: usize, val: i64) {
-        self._update(1, 0, self.n - 1, idx, val);
+    fn find(&mut self, v: usize) -> usize {
+        if self.parent[v] != v {
+            self.parent[v] = self.find(self.parent[v])
+        }
+        self.parent[v]
     }
 
-    fn _update(&mut self, node: usize, left: usize, right: usize, idx: usize, val: i64) {
-        if left == right {
-            self.tree[node] = self.tree[node].max(val);
+    fn union(&mut self, x: usize, y: usize) {
+        let [rx, ry] = [x, y].map(|v| self.find(v));
+        if rx == ry {
             return;
         }
-        let mid = left.midpoint(right);
-        if idx <= mid {
-            self._update(2 * node, left, mid, idx, val);
-        } else {
-            self._update(2 * node + 1, 1 + mid, right, idx, val);
+        match self.rank[rx].cmp(&self.rank[ry]) {
+            std::cmp::Ordering::Less => self.parent[rx] = ry,
+            std::cmp::Ordering::Equal => {
+                self.parent[ry] = rx;
+                self.rank[rx] += 1;
+            }
+            std::cmp::Ordering::Greater => self.parent[ry] = rx,
         }
-        self.tree[node] = self.tree[2 * node].max(self.tree[2 * node + 1])
-    }
-
-    fn query(&self, ql: usize, qr: usize) -> i64 {
-        self._query(1, 0, self.n - 1, ql, qr)
-    }
-
-    fn _query(&self, node: usize, left: usize, right: usize, ql: usize, qr: usize) -> i64 {
-        if qr < left || right < ql {
-            return 0;
-        }
-        if ql <= left && right <= qr {
-            return self.tree[node];
-        }
-        let mid = left.midpoint(right);
-        self._query(2 * node, left, mid, ql, qr).max(self._query(
-            2 * node + 1,
-            1 + mid,
-            right,
-            ql,
-            qr,
-        ))
     }
 }
 
@@ -142,11 +114,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(max_alternating_sum(&[5, 4, 2], 2), 7);
-        assert_eq!(max_alternating_sum(&[3, 5, 4, 2, 4], 1), 14);
-        assert_eq!(max_alternating_sum(&[5], 1), 5);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
