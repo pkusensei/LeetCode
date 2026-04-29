@@ -8,21 +8,51 @@ mod trie;
 
 #[allow(unused_imports)]
 use helper::*;
-use itertools::Itertools;
 
-pub fn min_operations(grid: Vec<Vec<i32>>, x: i32) -> i32 {
-    let nums = grid
-        .iter()
-        .flatten()
-        .copied()
-        .sorted_unstable()
-        .collect_vec();
-    let med = nums[nums.len() / 2];
-    let mut res = 0;
-    for num in nums {
-        let v = (num - med).abs();
-        if v % x == 0 { res += v / x } else { return -1 }
+pub fn maximum_score(grid: Vec<Vec<i32>>) -> i64 {
+    let n = grid.len();
+    let mut memo = vec![vec![vec![-1; 1 + n]; 1 + n]; 1 + n];
+    dfs(&grid, 0, 0, 0, &mut memo)
+}
+
+fn dfs(
+    grid: &[Vec<i32>],
+    idx: usize,
+    height: usize,
+    prev_height: usize,
+    memo: &mut [Vec<Vec<i64>>],
+) -> i64 {
+    let n = grid.len();
+    if idx >= n {
+        return 0;
     }
+    if memo[idx][height][prev_height] > -1 {
+        return memo[idx][height][prev_height];
+    }
+    let mut from_p = (0..prev_height)
+        .map(|i| i64::from(grid[i][idx]))
+        .sum::<i64>();
+    // Option 1: Nothing on this col is blocked
+    // We take everything that prev col allows
+    let mut res = from_p + dfs(grid, 1 + idx, 0, height, memo);
+    // Option 2: Take one cell at a time and block it
+    if 1 + idx < n {
+        let mut sum = 0;
+        for h in height..n {
+            sum += i64::from(grid[h][idx]);
+            // This `h` is blocked, prev_height=0 to next col
+            res = res.max(sum + dfs(grid, 1 + idx, 1 + h, 0, memo));
+        }
+    }
+    // Option 3: Block cell one by one
+    for h in 0..n {
+        if h < prev_height {
+            // Remove contribution allowed by prev col
+            from_p -= i64::from(grid[h][idx]);
+        }
+        res = res.max(from_p + dfs(grid, 1 + idx, 0, 1 + h, memo));
+    }
+    memo[idx][height][prev_height] = res;
     res
 }
 
