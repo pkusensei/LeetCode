@@ -9,50 +9,88 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_score(grid: Vec<Vec<i32>>) -> i64 {
+pub fn maximum_score(grid: &[&[i32]]) -> i64 {
     let n = grid.len();
-    let mut memo = vec![vec![vec![-1; 1 + n]; 1 + n]; 1 + n];
-    dfs(&grid, 0, 0, 0, &mut memo)
+    let mut prefix = vec![vec![0; n]; 1 + n];
+    for c in 0..n {
+        for r in 1..=n {
+            prefix[r][c] = prefix[r - 1][c] + i64::from(grid[r - 1][c]);
+        }
+    }
+    let mut memo = vec![vec![[-1; 2]; 1 + n]; n];
+    dfs(&prefix, 0, 0, false, &mut memo)
+    // let mut memo = vec![vec![vec![-1; 1 + n]; 1 + n]; n];
+    // dfs1(&prefix, 0, 0, 0, &mut memo)
 }
 
 fn dfs(
-    grid: &[Vec<i32>],
+    prefix: &[Vec<i64>],
     idx: usize,
-    height: usize,
-    prev_height: usize,
-    memo: &mut [Vec<Vec<i64>>],
+    last_h: usize,
+    taken: bool,
+    memo: &mut [Vec<[i64; 2]>],
 ) -> i64 {
-    let n = grid.len();
+    let n = prefix.len() - 1;
     if idx >= n {
         return 0;
     }
-    if memo[idx][height][prev_height] > -1 {
-        return memo[idx][height][prev_height];
+    if memo[idx][last_h][usize::from(taken)] > -1 {
+        return memo[idx][last_h][usize::from(taken)];
     }
-    let mut from_p = (0..prev_height)
-        .map(|i| i64::from(grid[i][idx]))
-        .sum::<i64>();
-    // Option 1: Nothing on this col is blocked
-    // We take everything that prev col allows
-    let mut res = from_p + dfs(grid, 1 + idx, 0, height, memo);
-    // Option 2: Take one cell at a time and block it
-    if 1 + idx < n {
-        let mut sum = 0;
-        for h in height..n {
-            sum += i64::from(grid[h][idx]);
-            // This `h` is blocked, prev_height=0 to next col
-            res = res.max(sum + dfs(grid, 1 + idx, 1 + h, 0, memo));
+    let mut res = 0;
+    for h in 0..=n {
+        if h <= last_h {
+            let curr = prefix[last_h][idx] - prefix[h][idx];
+            // Take [h..=last_h] points on current col
+            res = res.max(curr + dfs(prefix, 1 + idx, h, true, memo));
+            // Skip these points
+            res = res.max(dfs(prefix, 1 + idx, h, false, memo));
+        } else {
+            // h > last_h
+            // No point on current col is available
+            if !taken {
+                // These points are on prev col
+                // They are only available if not taken previously
+                let mut curr = 0;
+                if idx > 0 {
+                    curr = prefix[h][idx - 1] - prefix[last_h][idx - 1];
+                }
+                res = res.max(curr + dfs(prefix, 1 + idx, h, false, memo))
+            } else {
+                res = res.max(dfs(prefix, 1 + idx, h, false, memo))
+            }
         }
     }
-    // Option 3: Block cell one by one
-    for h in 0..n {
-        if h < prev_height {
-            // Remove contribution allowed by prev col
-            from_p -= i64::from(grid[h][idx]);
-        }
-        res = res.max(from_p + dfs(grid, 1 + idx, 0, 1 + h, memo));
+    memo[idx][last_h][usize::from(taken)] = res;
+    res
+}
+
+fn dfs1(
+    prefix: &[Vec<i64>],
+    idx: usize,
+    last1: usize,
+    last2: usize,
+    memo: &mut [Vec<Vec<i64>>],
+) -> i64 {
+    let n = prefix.len() - 1;
+    if idx >= n {
+        return 0;
     }
-    memo[idx][height][prev_height] = res;
+    if memo[idx][last1][last2] > -1 {
+        return memo[idx][last1][last2];
+    }
+    let mut res = 0;
+    for h in 0..=n {
+        let mut curr = 0;
+        if h < last1 {
+            curr = prefix[last1][idx] - prefix[h][idx];
+        } else if h > last1 && idx > 0 {
+            let max_last = last1.max(last2);
+            curr = (prefix[h][idx - 1] - prefix[max_last][idx - 1]).max(0);
+        }
+        res = res.max(curr + dfs1(prefix, 1 + idx, h, last1, memo))
+    }
+    memo[idx][last1][last2] = res;
     res
 }
 
@@ -86,7 +124,28 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(
+            maximum_score(&[
+                &[0, 0, 0, 0, 0],
+                &[0, 0, 3, 0, 0],
+                &[0, 1, 0, 0, 0],
+                &[5, 0, 0, 3, 0],
+                &[0, 0, 0, 0, 2]
+            ]),
+            11
+        );
+        assert_eq!(
+            maximum_score(&[
+                &[10, 9, 0, 0, 15],
+                &[7, 1, 0, 8, 0],
+                &[5, 20, 0, 11, 0],
+                &[0, 0, 0, 1, 2],
+                &[8, 12, 1, 10, 3]
+            ]),
+            94
+        );
+    }
 
     #[test]
     fn test() {}
