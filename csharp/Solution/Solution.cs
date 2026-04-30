@@ -42,6 +42,25 @@ public class Solution
             }
             st.Push(idx);
         }
+        int[,] dp = new int[n, 2];
+        for (int i = 0; i < n; i++)
+        {
+            dp[i, 1] = 1;
+        }
+        for (int i = 0; i < n; i++)
+        {
+            if (odd_jumps[i] >= 0)
+            {
+                dp[odd_jumps[i], 0] += dp[i, 1];
+            }
+            if (even_jumps[i] >= 0)
+            {
+                dp[even_jumps[i], 1] += dp[i, 0];
+            }
+        }
+        return dp[n - 1, 1] + dp[n - 1, 0];
+
+        int res = 0;
         int[,] memo = new int[n, 2];
         for (int i = 0; i < n; i++)
         {
@@ -50,7 +69,6 @@ public class Solution
                 memo[i, odd] = -1;
             }
         }
-        int res = 0;
         for (int i = 0; i < n; i++)
         {
             res += Dfs(i, 1);
