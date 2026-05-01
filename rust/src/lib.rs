@@ -9,20 +9,31 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_rotate_function(nums: Vec<i32>) -> i32 {
+pub fn sorted_squares(nums: Vec<i32>) -> Vec<i32> {
     let n = nums.len();
-    let sum: i32 = nums.iter().sum();
-    let mut curr: i32 = nums
-        .iter()
-        .enumerate()
-        .map(|(i, &num)| i as i32 * num)
-        .sum();
-    let mut res = curr;
-    for i in 1..n {
-        curr -= nums[n - i - 1] * n as i32;
-        curr += sum;
-        res = res.max(curr);
+    let mut res = Vec::with_capacity(n);
+    let mut right = nums.partition_point(|&v| v < 0);
+    if right == 0 {
+        return nums.iter().map(|v| v.pow(2)).collect();
     }
+    let mut left = right - 1;
+    while right < n {
+        if nums[left].abs() < nums[right] {
+            res.push(nums[left].pow(2));
+            let Some(v) = left.checked_sub(1) else {
+                left = n;
+                break;
+            };
+            left = v;
+        } else {
+            res.push(nums[right].pow(2));
+            right += 1;
+        }
+    }
+    if left < n {
+        res.extend(nums[..=left].iter().rev().map(|v| v.pow(2)));
+    }
+    res.extend(nums[right..].iter().map(|v| v.pow(2)));
     res
 }
 
