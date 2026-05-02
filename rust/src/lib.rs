@@ -9,31 +9,31 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn sorted_squares(nums: Vec<i32>) -> Vec<i32> {
-    let n = nums.len();
-    let mut res = Vec::with_capacity(n);
-    let mut right = nums.partition_point(|&v| v < 0);
-    if right == 0 {
-        return nums.iter().map(|v| v.pow(2)).collect();
+pub fn rotated_digits(n: i32) -> i32 {
+    let s = n.to_string().into_bytes();
+    let n = s.len();
+    let mut memo = vec![[[-1; 2]; 2]; n];
+    dfs(&s, 0, true, false, &mut memo)
+}
+
+fn dfs(s: &[u8], idx: usize, tight: bool, rotate: bool, memo: &mut [[[i32; 2]; 2]]) -> i32 {
+    if idx >= s.len() {
+        return i32::from(rotate);
     }
-    let mut left = right - 1;
-    while right < n {
-        if nums[left].abs() < nums[right] {
-            res.push(nums[left].pow(2));
-            let Some(v) = left.checked_sub(1) else {
-                left = n;
-                break;
-            };
-            left = v;
-        } else {
-            res.push(nums[right].pow(2));
-            right += 1;
+    if memo[idx][usize::from(tight)][usize::from(rotate)] > -1 {
+        return memo[idx][usize::from(tight)][usize::from(rotate)];
+    }
+    let upper = if tight { s[idx] } else { b'9' };
+    let mut res = 0;
+    for b in b'0'..=upper {
+        let ntight = tight && b == upper;
+        if matches!(b, b'0' | b'1' | b'8') {
+            res += dfs(s, 1 + idx, ntight, rotate, memo)
+        } else if matches!(b, b'2' | b'5' | b'6' | b'9') {
+            res += dfs(s, 1 + idx, ntight, true, memo)
         }
     }
-    if left < n {
-        res.extend(nums[..=left].iter().rev().map(|v| v.pow(2)));
-    }
-    res.extend(nums[right..].iter().map(|v| v.pow(2)));
+    memo[idx][usize::from(tight)][usize::from(rotate)] = res;
     res
 }
 
