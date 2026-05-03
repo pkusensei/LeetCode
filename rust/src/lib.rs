@@ -6,41 +6,64 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::sync::LazyLock;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn sum_of_primes_in_range(n: i32) -> i32 {
-    let rev: i32 = n
-        .to_string()
-        .chars()
-        .rev()
-        .collect::<String>()
-        .parse()
-        .unwrap();
-    let a = P.partition_point(|&v| v < rev.min(n));
-    let b = P.partition_point(|&v| v <= rev.max(n));
-    P[a..b].iter().sum()
-}
-
-const MAX: usize = 1_000;
-static P: LazyLock<Vec<i32>> = LazyLock::new(|| {
-    let mut sieve = vec![true; 1 + MAX];
-    sieve[..2].fill(false);
-    for p in 2..=MAX {
-        if sieve[p] {
-            for val in (p * p..=MAX).step_by(p) {
-                sieve[val] = false
+pub fn min_cost(nums: &[i32], queries: &[[i32; 2]]) -> Vec<i32> {
+    let n = nums.len();
+    let mut closest = Vec::with_capacity(n);
+    for i in 0..n {
+        if i == 0 {
+            closest.push(1);
+        } else if i == n - 1 {
+            closest.push(n - 2);
+        } else {
+            if nums[i].abs_diff(nums[i - 1]) <= nums[i].abs_diff(nums[1 + i]) {
+                closest.push(i - 1);
+            } else {
+                closest.push(1 + i);
             }
         }
     }
-    sieve
-        .iter()
-        .enumerate()
-        .filter_map(|(i, &v)| if v { Some(i as i32) } else { None })
-        .collect()
-});
+    let mut fore_arr = vec![0; n];
+    let mut prefix_fore = 0;
+    for i in (0..n - 1).rev() {
+        if closest[i] == 1 + i {
+            prefix_fore += 1;
+        } else {
+            prefix_fore += (nums[i] - (nums[1 + i])).abs();
+        }
+        fore_arr[i] = prefix_fore;
+    }
+    let mut back_arr = vec![0; n];
+    let mut prefix_back = 0;
+    for i in 1..n {
+        if closest[i] == i - 1 {
+            prefix_back += 1;
+        } else {
+            prefix_back += nums[i] - nums[i - 1];
+        }
+        back_arr[i] = prefix_back;
+    }
+    let mut res = vec![];
+    for q in queries {
+        let [left, right] = [0, 1].map(|i| q[i] as usize);
+        match left.cmp(&right) {
+            std::cmp::Ordering::Equal => res.push(0),
+            std::cmp::Ordering::Less => {
+                let v1 = fore_arr[left] - fore_arr[right];
+                let v2 = nums[right] - nums[left];
+                res.push(v1.min(v2));
+            }
+            std::cmp::Ordering::Greater => {
+                let v1 = back_arr[left] - back_arr[right];
+                let v2 = nums[left] - nums[right];
+                res.push(v1.min(v2));
+            }
+        }
+    }
+    res
+}
 
 #[cfg(test)]
 mod tests {
@@ -73,10 +96,15 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(sum_of_primes_in_range(10), 17);
-        assert_eq!(sum_of_primes_in_range(8), 0);
+        assert_eq!(min_cost(&[-5, -2, 3], &[[0, 2], [2, 0], [1, 2]]), [6, 2, 5]);
+        assert_eq!(
+            min_cost(&[0, 2, 3, 9], &[[3, 0], [1, 2], [2, 0]]),
+            [4, 1, 3]
+        )
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(min_cost(&[-12, -4, 17, 24], &[[2, 0], [0, 2]]), [22, 22]);
+    }
 }
