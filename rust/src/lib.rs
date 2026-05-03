@@ -9,32 +9,41 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn rotated_digits(n: i32) -> i32 {
-    let s = n.to_string().into_bytes();
-    let n = s.len();
-    let mut memo = vec![[[-1; 2]; 2]; n];
-    dfs(&s, 0, true, false, &mut memo)
+pub fn rotate_string(s: String, goal: String) -> bool {
+    s.len() == goal.len() && search(format!("{s}{s}").as_bytes(), goal.as_bytes())
 }
 
-fn dfs(s: &[u8], idx: usize, tight: bool, rotate: bool, memo: &mut [[[i32; 2]; 2]]) -> i32 {
-    if idx >= s.len() {
-        return i32::from(rotate);
-    }
-    if memo[idx][usize::from(tight)][usize::from(rotate)] > -1 {
-        return memo[idx][usize::from(tight)][usize::from(rotate)];
-    }
-    let upper = if tight { s[idx] } else { b'9' };
-    let mut res = 0;
-    for b in b'0'..=upper {
-        let ntight = tight && b == upper;
-        if matches!(b, b'0' | b'1' | b'8') {
-            res += dfs(s, 1 + idx, ntight, rotate, memo)
-        } else if matches!(b, b'2' | b'5' | b'6' | b'9') {
-            res += dfs(s, 1 + idx, ntight, true, memo)
+fn search(hay: &[u8], needle: &[u8]) -> bool {
+    let lps = compute_lps(needle);
+    let mut len = 0;
+    for &val in hay {
+        while len > 0 && needle[len] != val {
+            len = lps[len - 1]
+        }
+        if needle.get(len).is_some_and(|&b| b == val) {
+            len += 1;
+        }
+        if len == needle.len() {
+            break;
         }
     }
-    memo[idx][usize::from(tight)][usize::from(rotate)] = res;
-    res
+    len == needle.len()
+}
+
+fn compute_lps(needle: &[u8]) -> Vec<usize> {
+    let n = needle.len();
+    let mut lps = vec![0; n];
+    let mut len = 0;
+    for idx in 1..n {
+        while len > 0 && needle[idx] != needle[len] {
+            len = lps[len - 1];
+        }
+        if needle[idx] == needle[len] {
+            len += 1
+        }
+        lps[idx] = len;
+    }
+    lps
 }
 
 #[cfg(test)]
@@ -67,7 +76,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(compute_lps(b"ababb"), [0, 0, 1, 2, 0]);
+        assert_eq!(compute_lps(b"ababc"), [0, 0, 1, 2, 0]);
+        assert_eq!(compute_lps(b"abab"), [0, 0, 1, 2])
+    }
 
     #[test]
     fn test() {}
