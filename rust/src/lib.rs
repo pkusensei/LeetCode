@@ -6,25 +6,41 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
+use std::sync::LazyLock;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_opposite_parity(nums: Vec<i32>) -> Vec<i32> {
-    let mut odd = 0;
-    let mut even = 0;
-    let mut res = vec![];
-    for &num in nums.iter().rev() {
-        if num & 1 == 1 {
-            odd += 1;
-            res.push(even);
-        } else {
-            even += 1;
-            res.push(odd);
+pub fn sum_of_primes_in_range(n: i32) -> i32 {
+    let rev: i32 = n
+        .to_string()
+        .chars()
+        .rev()
+        .collect::<String>()
+        .parse()
+        .unwrap();
+    let a = P.partition_point(|&v| v < rev.min(n));
+    let b = P.partition_point(|&v| v <= rev.max(n));
+    P[a..b].iter().sum()
+}
+
+const MAX: usize = 1_000;
+static P: LazyLock<Vec<i32>> = LazyLock::new(|| {
+    let mut sieve = vec![true; 1 + MAX];
+    sieve[..2].fill(false);
+    for p in 2..=MAX {
+        if sieve[p] {
+            for val in (p * p..=MAX).step_by(p) {
+                sieve[val] = false
+            }
         }
     }
-    res.reverse();
-    res
-}
+    sieve
+        .iter()
+        .enumerate()
+        .filter_map(|(i, &v)| if v { Some(i as i32) } else { None })
+        .collect()
+});
 
 #[cfg(test)]
 mod tests {
@@ -56,7 +72,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(sum_of_primes_in_range(10), 17);
+        assert_eq!(sum_of_primes_in_range(8), 0);
+    }
 
     #[test]
     fn test() {}
