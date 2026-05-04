@@ -9,24 +9,14 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_fixed_points(nums: &[i32]) -> i32 {
-    let mut arr = vec![];
-    for (i, &num) in nums.iter().enumerate() {
-        if i as i32 >= num {
-            arr.push([i as i32 - num, num]);
+pub fn rotate(mat: &mut Vec<Vec<i32>>) {
+    let n = mat.len();
+    mat.reverse();
+    for r in 0..n {
+        for c in 0..r {
+            (mat[r][c], mat[c][r]) = (mat[c][r], mat[r][c]);
         }
     }
-    arr.sort_unstable();
-    let mut lis = vec![];
-    for [_, val] in arr {
-        let i = lis.partition_point(|&v| v < val);
-        if i == lis.len() {
-            lis.push(val);
-        } else {
-            lis[i] = val
-        }
-    }
-    lis.len() as i32
 }
 
 #[cfg(test)]
@@ -59,13 +49,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(max_fixed_points(&[3, 1, 2]), 2);
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(max_fixed_points(&[1, 1, 0]), 1);
-        assert_eq!(max_fixed_points(&[2, 0, 0]), 1);
-    }
+    fn test() {}
 }
