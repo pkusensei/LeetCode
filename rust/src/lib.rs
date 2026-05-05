@@ -9,14 +9,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn rotate(mat: &mut Vec<Vec<i32>>) {
-    let n = mat.len();
-    mat.reverse();
-    for r in 0..n {
-        for c in 0..r {
-            (mat[r][c], mat[c][r]) = (mat[c][r], mat[r][c]);
+pub fn max_turbulence_size(arr: Vec<i32>) -> i32 {
+    let n = arr.len();
+    let mut res = 1;
+    let mut start = 0;
+    for i in 1..n {
+        let d = (arr[i] - arr[i - 1]).signum();
+        if d == 0 {
+            start = i;
+        } else if i == n - 1 || d * (arr[1 + i] - arr[i]).signum() != -1 {
+            res = res.max(i - start + 1);
+            start = i;
         }
     }
+    res as i32
 }
 
 #[cfg(test)]
