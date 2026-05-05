@@ -8,27 +8,21 @@ namespace Solution;
 
 public class Solution
 {
-    public ListNode RotateRight(ListNode head, int k)
+    public int DistributeCoins(TreeNode root)
     {
-        if (head is null || head.next is null || k == 0) { return head; }
-        int len = 1;
-        ListNode tail = head;
-        while (tail.next is not null)
+        int res = 0;
+        Dfs(root);
+        return res;
+
+        (int sum, int count) Dfs(TreeNode node)
         {
-            tail = tail.next;
-            len += 1;
+            if (node is null) { return (0, 0); }
+            var left = Dfs(node.left);
+            var right = Dfs(node.right);
+            int sum = left.sum + right.sum + node.val;
+            int count = left.count + right.count + 1;
+            res += int.Abs(sum - count);
+            return (sum, count);
         }
-        k %= len;
-        if (k == 0) { return head; }
-        int left_len = len - k;
-        ListNode new_tail = head;
-        for (int _ = 0; _ < left_len - 1; _++)
-        {
-            new_tail = new_tail.next;
-        }
-        ListNode new_head = new_tail.next;
-        new_tail.next = null;
-        tail.next = head;
-        return new_head;
     }
 }
