@@ -8,27 +8,18 @@ namespace Solution;
 
 public class Solution
 {
-    public int MincostTickets(int[] days, int[] costs)
+    public int[] SumEvenAfterQueries(int[] nums, int[][] queries)
     {
-        ReadOnlySpan<int> diffs = [1, 7, 30];
-        int max = days[^1];
-        int[] dp = new int[1 + max];
-        Array.Fill(dp, int.MaxValue, 1, max);
-        for (int d = 1; d <= max; d++)
+        List<int> res = new(queries.Length);
+        int sum = nums.Where(v => (v & 1) == 0).Sum();
+        foreach (var q in queries)
         {
-            if (Array.BinarySearch(days, d) >= 0)
-            {
-                for (int i = 0; i < 3; i++)
-                {
-                    int prev = int.Max(d - diffs[i], 0);
-                    dp[d] = int.Min(dp[d], dp[prev] + costs[i]);
-                }
-            }
-            else
-            {
-                dp[d] = dp[d - 1];
-            }
+            int prev = nums[q[1]];
+            if ((prev & 1) == 0) { sum -= prev; }
+            nums[q[1]] += q[0];
+            if ((nums[q[1]] & 1) == 0) { sum += nums[q[1]]; }
+            res.Add(sum);
         }
-        return dp[^1];
+        return [.. res];
     }
 }
