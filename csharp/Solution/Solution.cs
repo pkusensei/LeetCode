@@ -8,24 +8,27 @@ namespace Solution;
 
 public class Solution
 {
-    public int CountTriplets(int[] nums)
+    public int MincostTickets(int[] days, int[] costs)
     {
-        Dictionary<int, int> dict = [];
-        foreach (var a in nums)
+        ReadOnlySpan<int> diffs = [1, 7, 30];
+        int max = days[^1];
+        int[] dp = new int[1 + max];
+        Array.Fill(dp, int.MaxValue, 1, max);
+        for (int d = 1; d <= max; d++)
         {
-            foreach (var b in nums)
+            if (Array.BinarySearch(days, d) >= 0)
             {
-                if (!dict.TryAdd(a & b, 1)) { dict[a & b] += 1; }
+                for (int i = 0; i < 3; i++)
+                {
+                    int prev = int.Max(d - diffs[i], 0);
+                    dp[d] = int.Min(dp[d], dp[prev] + costs[i]);
+                }
+            }
+            else
+            {
+                dp[d] = dp[d - 1];
             }
         }
-        int res = 0;
-        foreach (var c in nums)
-        {
-            foreach (var (k, v) in dict)
-            {
-                if ((c & k) == 0) { res += v; }
-            }
-        }
-        return res;
+        return dp[^1];
     }
 }
