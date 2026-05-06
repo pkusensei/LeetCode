@@ -8,21 +8,24 @@ namespace Solution;
 
 public class Solution
 {
-    public int DistributeCoins(TreeNode root)
+    public int CountTriplets(int[] nums)
     {
-        int res = 0;
-        Dfs(root);
-        return res;
-
-        (int sum, int count) Dfs(TreeNode node)
+        Dictionary<int, int> dict = [];
+        foreach (var a in nums)
         {
-            if (node is null) { return (0, 0); }
-            var left = Dfs(node.left);
-            var right = Dfs(node.right);
-            int sum = left.sum + right.sum + node.val;
-            int count = left.count + right.count + 1;
-            res += int.Abs(sum - count);
-            return (sum, count);
+            foreach (var b in nums)
+            {
+                if (!dict.TryAdd(a & b, 1)) { dict[a & b] += 1; }
+            }
         }
+        int res = 0;
+        foreach (var c in nums)
+        {
+            foreach (var (k, v) in dict)
+            {
+                if ((c & k) == 0) { res += v; }
+            }
+        }
+        return res;
     }
 }
