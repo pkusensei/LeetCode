@@ -9,32 +9,37 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn rotate_the_box(mut grid: Vec<Vec<char>>) -> Vec<Vec<char>> {
+pub fn unique_paths_iii(mut grid: Vec<Vec<i32>>) -> i32 {
     let [rows, cols] = get_dimensions(&grid);
-    for row in grid.iter_mut() {
-        let mut prefix = 0;
-        for c in 0..cols {
-            if row[c] == '#' {
-                row[c] = '.';
-                prefix += 1;
-            }
-            if row[c] == '*' {
-                for i in 1..=prefix {
-                    row[c - i] = '#';
-                }
-                prefix = 0;
-            }
-        }
-        for i in 1..=prefix {
-            row[cols - i] = '#';
-        }
-    }
-    let mut res = vec![vec![' '; rows]; cols];
+    let mut start = [0, 0];
+    let mut ban = 0;
     for (r, row) in grid.iter().enumerate() {
-        for (c, &val) in row.iter().enumerate() {
-            res[c][rows - 1 - r] = val;
+        for (c, &v) in row.iter().enumerate() {
+            match v {
+                1 => start = [r, c],
+                -1 => ban += 1,
+                _ => (),
+            }
         }
     }
+    dfs(&mut grid, start[0], start[1], (rows * cols) as i32 - ban)
+}
+
+fn dfs(grid: &mut [Vec<i32>], row: usize, col: usize, count: i32) -> i32 {
+    if grid[row][col] == 2 {
+        return (count == 1).into();
+    }
+    let mut res = 0;
+    grid[row][col] = -1;
+    for [nr, nc] in neighbors([row, col]) {
+        if grid
+            .get(nr)
+            .is_some_and(|r| r.get(nc).is_some_and(|&v| v >= 0))
+        {
+            res += dfs(grid, nr, nc, count - 1)
+        }
+    }
+    grid[row][col] = 0;
     res
 }
 
@@ -68,7 +73,12 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(
+            unique_paths_iii(vec![vec![1, 0, 0, 0], vec![0, 0, 0, 0], vec![0, 0, 2, -1]]),
+            2
+        );
+    }
 
     #[test]
     fn test() {}
