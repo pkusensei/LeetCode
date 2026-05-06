@@ -9,20 +9,33 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_turbulence_size(arr: Vec<i32>) -> i32 {
-    let n = arr.len();
-    let mut res = 1;
-    let mut start = 0;
-    for i in 1..n {
-        let d = (arr[i] - arr[i - 1]).signum();
-        if d == 0 {
-            start = i;
-        } else if i == n - 1 || d * (arr[1 + i] - arr[i]).signum() != -1 {
-            res = res.max(i - start + 1);
-            start = i;
+pub fn rotate_the_box(mut grid: Vec<Vec<char>>) -> Vec<Vec<char>> {
+    let [rows, cols] = get_dimensions(&grid);
+    for row in grid.iter_mut() {
+        let mut prefix = 0;
+        for c in 0..cols {
+            if row[c] == '#' {
+                row[c] = '.';
+                prefix += 1;
+            }
+            if row[c] == '*' {
+                for i in 1..=prefix {
+                    row[c - i] = '#';
+                }
+                prefix = 0;
+            }
+        }
+        for i in 1..=prefix {
+            row[cols - i] = '#';
         }
     }
-    res as i32
+    let mut res = vec![vec![' '; rows]; cols];
+    for (r, row) in grid.iter().enumerate() {
+        for (c, &val) in row.iter().enumerate() {
+            res[c][rows - 1 - r] = val;
+        }
+    }
+    res
 }
 
 #[cfg(test)]
