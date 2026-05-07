@@ -6,35 +6,61 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-struct TimeMap {
-    map: HashMap<String, Vec<(i32, String)>>,
+pub fn max_value(nums: Vec<i32>) -> Vec<i32> {
+    let n = nums.len();
+    let mut pref_max = nums.to_vec();
+    for i in 1..n {
+        pref_max[i] = pref_max[i].max(pref_max[i - 1])
+    }
+    let mut suf_min = nums.to_vec();
+    for i in (0..n - 1).rev() {
+        suf_min[i] = suf_min[i].min(suf_min[1 + i]);
+    }
+    let mut dsu = DSU::new(nums);
+    for i in 0..n - 1 {
+        if pref_max[i] > suf_min[1 + i] {
+            dsu.union(i, 1 + i);
+        }
+    }
+    (0..n)
+        .map(|i| {
+            let root = dsu.find(i);
+            dsu.nums[root]
+        })
+        .collect()
 }
 
-impl TimeMap {
-    fn new() -> Self {
+struct DSU {
+    parent: Vec<usize>,
+    nums: Vec<i32>,
+}
+
+impl DSU {
+    fn new(nums: Vec<i32>) -> Self {
+        let n = nums.len();
         Self {
-            map: HashMap::new(),
+            parent: (0..n).collect(),
+            nums,
         }
     }
 
-    fn set(&mut self, key: String, value: String, timestamp: i32) {
-        self.map.entry(key).or_default().push((timestamp, value));
+    fn find(&mut self, v: usize) -> usize {
+        if self.parent[v] != v {
+            self.parent[v] = self.find(self.parent[v]);
+        }
+        self.parent[v]
     }
 
-    fn get(&self, key: String, timestamp: i32) -> String {
-        let Some(v) = self.map.get(&key) else {
-            return "".to_string();
-        };
-        let i = v.partition_point(|v| v.0 <= timestamp);
-        if i == 0 {
-            return "".to_string();
+    fn union(&mut self, x: usize, y: usize) {
+        let [rx, ry] = [x, y].map(|v| self.find(v));
+        if self.nums[rx] >= self.nums[ry] {
+            self.parent[ry] = rx
+        } else {
+            self.parent[rx] = ry;
         }
-        v[i - 1].1.to_owned()
     }
 }
 
@@ -68,12 +94,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(
-            unique_paths_iii(vec![vec![1, 0, 0, 0], vec![0, 0, 0, 0], vec![0, 0, 2, -1]]),
-            2
-        );
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
