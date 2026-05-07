@@ -10,10 +10,11 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow(11, new[] { 1, 4, 6, 7, 8, 20 }, new[] { 2, 7, 15 })]
-    public void TestMethod1(int exp, int[] days, int[] costs)
+    [DataRow("dba", new[] { 0, 1, 2, 3, 4, 3, 4 })]
+    public void TestMethod1(string exp, int[] v)
     {
-        Assert.AreEqual(exp, sol.MincostTickets(days, costs));
+        TreeNode t = TreeNode.MakeInt(v);
+        Assert.AreEqual(exp, sol.SmallestFromLeaf(t));
     }
 
     [TestMethod]
