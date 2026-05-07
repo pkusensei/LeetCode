@@ -19,18 +19,32 @@ pub fn max_value(nums: Vec<i32>) -> Vec<i32> {
     for i in (0..n - 1).rev() {
         suf_min[i] = suf_min[i].min(suf_min[1 + i]);
     }
-    let mut dsu = DSU::new(nums);
+    let mut res = Vec::with_capacity(n);
+    let mut start = 0;
     for i in 0..n - 1 {
-        if pref_max[i] > suf_min[1 + i] {
-            dsu.union(i, 1 + i);
+        if pref_max[i] <= suf_min[1 + i] {
+            for _ in start..=i {
+                res.push(pref_max[i]);
+            }
+            start = 1 + i;
         }
     }
-    (0..n)
-        .map(|i| {
-            let root = dsu.find(i);
-            dsu.nums[root]
-        })
-        .collect()
+    for _ in start..n {
+        res.push(pref_max[n - 1]);
+    }
+    res
+    // let mut dsu = DSU::new(nums);
+    // for i in 0..n - 1 {
+    //     if pref_max[i] > suf_min[1 + i] {
+    //         dsu.union(i, 1 + i);
+    //     }
+    // }
+    // (0..n)
+    //     .map(|i| {
+    //         let root = dsu.find(i);
+    //         dsu.nums[root]
+    //     })
+    //     .collect()
 }
 
 struct DSU {
