@@ -6,28 +6,78 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
+use std::{
+    collections::{HashMap, VecDeque},
+    sync::LazyLock,
+};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn interval_intersection(first_list: &[[i32; 2]], second_list: &[[i32; 2]]) -> Vec<Vec<i32>> {
-    let n1 = first_list.len();
-    let n2 = second_list.len();
-    let [mut i1, mut i2] = [0, 0];
-    let mut res = vec![];
-    while i1 < n1 && i2 < n2 {
-        let a = first_list[i1][0].max(second_list[i2][0]);
-        let b = first_list[i1][1].min(second_list[i2][1]);
-        if a <= b {
-            res.push(vec![a, b]);
+pub fn min_jumps(nums: Vec<i32>) -> i32 {
+    let n = nums.len();
+    let mut prime_indices = HashMap::<_, Vec<_>>::new();
+    for (idx, &num) in nums.iter().enumerate() {
+        let mut num = num;
+        for &p in P.iter() {
+            if p * p > num {
+                break;
+            }
+            if num % p == 0 {
+                prime_indices.entry(p).or_default().push(idx);
+                while num % p == 0 {
+                    num /= p;
+                }
+            }
         }
-        if first_list[i1][1] <= second_list[i2][1] {
-            i1 += 1
-        } else {
-            i2 += 1
+        if num > 1 {
+            prime_indices.entry(num).or_default().push(idx);
         }
     }
-    res
+    let mut queue = VecDeque::from([(0, 0)]);
+    let mut seen = vec![false; n];
+    seen[0] = true;
+    while let Some((node, step)) = queue.pop_front() {
+        if node == n - 1 {
+            return step;
+        }
+        if node > 0 && !seen[node - 1] {
+            seen[node - 1] = true;
+            queue.push_back((node - 1, 1 + step));
+        }
+        if 1 + node < n && !seen[1 + node] {
+            seen[1 + node] = true;
+            queue.push_back((1 + node, 1 + step));
+        }
+        if let Some(v) = prime_indices.remove(&nums[node]) {
+            for i in v {
+                if !seen[i] {
+                    seen[i] = true;
+                    queue.push_back((i, 1 + step));
+                }
+            }
+        }
+    }
+    -1
 }
+
+const MAX: usize = 1_000_000;
+static P: LazyLock<Vec<i32>> = LazyLock::new(|| {
+    let mut sieve = vec![true; 1 + MAX];
+    sieve[..2].fill(false);
+    for p in 2..=MAX.isqrt() {
+        if sieve[p] {
+            for val in (p * p..=MAX).step_by(p) {
+                sieve[val] = false
+            }
+        }
+    }
+    sieve
+        .into_iter()
+        .enumerate()
+        .filter_map(|(i, v)| if v { Some(i as i32) } else { None })
+        .collect()
+});
 
 #[cfg(test)]
 mod tests {
