@@ -6,78 +6,67 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::{
-    collections::{HashMap, VecDeque},
-    sync::LazyLock,
-};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_jumps(nums: Vec<i32>) -> i32 {
-    let n = nums.len();
-    let mut prime_indices = HashMap::<_, Vec<_>>::new();
-    for (idx, &num) in nums.iter().enumerate() {
-        let mut num = num;
-        for &p in P.iter() {
-            if p * p > num {
-                break;
-            }
-            if num % p == 0 {
-                prime_indices.entry(p).or_default().push(idx);
-                while num % p == 0 {
-                    num /= p;
-                }
-            }
-        }
-        if num > 1 {
-            prime_indices.entry(num).or_default().push(idx);
+pub fn equations_possible(equations: Vec<String>) -> bool {
+    let mut dsu = DSU::new();
+    for eq in equations.iter() {
+        if let Some((a, b)) = eq.split_once("==") {
+            let [a, b] = [a, b].map(|s| usize::from(s.as_bytes()[0] - b'a'));
+            dsu.union(a, b);
         }
     }
-    let mut queue = VecDeque::from([(0, 0)]);
-    let mut seen = vec![false; n];
-    seen[0] = true;
-    while let Some((node, step)) = queue.pop_front() {
-        if node == n - 1 {
-            return step;
-        }
-        if node > 0 && !seen[node - 1] {
-            seen[node - 1] = true;
-            queue.push_back((node - 1, 1 + step));
-        }
-        if 1 + node < n && !seen[1 + node] {
-            seen[1 + node] = true;
-            queue.push_back((1 + node, 1 + step));
-        }
-        if let Some(v) = prime_indices.remove(&nums[node]) {
-            for i in v {
-                if !seen[i] {
-                    seen[i] = true;
-                    queue.push_back((i, 1 + step));
-                }
+    for eq in equations.iter() {
+        if let Some((a, b)) = eq.split_once("!=") {
+            let [a, b] = [a, b].map(|s| usize::from(s.as_bytes()[0] - b'a'));
+            if dsu.find(a) == dsu.find(b) {
+                return false;
             }
         }
     }
-    -1
+    true
 }
 
-const MAX: usize = 1_000_000;
-static P: LazyLock<Vec<i32>> = LazyLock::new(|| {
-    let mut sieve = vec![true; 1 + MAX];
-    sieve[..2].fill(false);
-    for p in 2..=MAX.isqrt() {
-        if sieve[p] {
-            for val in (p * p..=MAX).step_by(p) {
-                sieve[val] = false
-            }
+struct DSU {
+    parent: [usize; 26],
+    rank: [i32; 26],
+}
+
+impl DSU {
+    fn new() -> Self {
+        let mut parent = [0; 26];
+        for (i, v) in parent.iter_mut().enumerate() {
+            *v = i
+        }
+        Self {
+            parent,
+            rank: [0; 26],
         }
     }
-    sieve
-        .into_iter()
-        .enumerate()
-        .filter_map(|(i, v)| if v { Some(i as i32) } else { None })
-        .collect()
-});
+
+    fn find(&mut self, v: usize) -> usize {
+        if self.parent[v] != v {
+            self.parent[v] = self.find(self.parent[v])
+        }
+        self.parent[v]
+    }
+
+    fn union(&mut self, x: usize, y: usize) {
+        let [rx, ry] = [x, y].map(|v| self.find(v));
+        if rx == ry {
+            return;
+        }
+        match self.rank[rx].cmp(&self.rank[ry]) {
+            std::cmp::Ordering::Less => self.parent[rx] = ry,
+            std::cmp::Ordering::Equal => {
+                self.parent[ry] = rx;
+                self.rank[rx] += 1
+            }
+            std::cmp::Ordering::Greater => self.parent[ry] = rx,
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -109,15 +98,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(
-            interval_intersection(
-                &[[0, 2], [5, 10], [13, 23], [24, 25]],
-                &[[1, 5], [8, 12], [15, 24], [25, 26]]
-            ),
-            [[1, 2], [5, 5], [8, 10], [15, 23], [24, 24], [25, 25]]
-        );
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
