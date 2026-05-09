@@ -9,22 +9,33 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_flips(s: String) -> i32 {
-    let n = s.len();
-    if n < 3 {
-        return 0;
+pub fn min_generations(points: Vec<Vec<i32>>, target: Vec<i32>) -> i32 {
+    use std::collections::HashSet;
+    let mut set = points
+        .iter()
+        .map(|v| [v[0], v[1], v[2]])
+        .collect::<HashSet<_>>();
+    let target = [0, 1, 2].map(|i| target[i]);
+    let mut k = 0;
+    'out: while set.contains(&target) {
+        k += 1;
+        let mut curr = vec![];
+        for (i, a) in set.iter().enumerate() {
+            for b in set.iter().skip(1 + i) {
+                let c = [0, 1, 2].map(|i| (a[i] + b[i]) / 2);
+                if c == target {
+                    break 'out;
+                }
+                curr.push(c);
+            }
+        }
+        let n1 = set.len();
+        set.extend(curr);
+        if n1 == set.len() {
+            return -1;
+        }
     }
-    let [mut zero, mut one] = [0, 0];
-    for &b in s.as_bytes()[1..n - 1].iter() {
-        if b == b'0' { zero += 1 } else { one += 1 }
-    }
-    let first_one = s.starts_with('1');
-    let last_one = s.ends_with('1');
-    let all_zero = one + i32::from(first_one) + i32::from(last_one);
-    let all_one = zero + i32::from(!first_one) + i32::from(!last_one);
-    let single_one = (one + i32::from(first_one) + i32::from(last_one) - 1).max(0);
-    let se = i32::from(!first_one) + i32::from(!last_one) + one;
-    all_zero.min(all_one).min(single_one).min(se)
+    k
 }
 
 #[cfg(test)]
