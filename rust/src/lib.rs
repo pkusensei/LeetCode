@@ -9,63 +9,41 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn equations_possible(equations: Vec<String>) -> bool {
-    let mut dsu = DSU::new();
-    for eq in equations.iter() {
-        if let Some((a, b)) = eq.split_once("==") {
-            let [a, b] = [a, b].map(|s| usize::from(s.as_bytes()[0] - b'a'));
-            dsu.union(a, b);
+pub fn rotate_grid(mut grid: Vec<Vec<i32>>, k: i32) -> Vec<Vec<i32>> {
+    let [rows, cols] = get_dimensions(&grid);
+    let layers = rows.min(cols) / 2;
+    for lay in 0..layers {
+        let mut curr = grid[lay][lay..cols - lay - 1].to_vec();
+        for r in lay..rows - lay - 1 {
+            curr.push(grid[r][cols - lay - 1]);
+        }
+        for c in (1 + lay..cols - lay).rev() {
+            curr.push(grid[rows - lay - 1][c]);
+        }
+        for r in (1 + lay..rows - lay).rev() {
+            curr.push(grid[r][lay]);
+        }
+        let k = k as usize % curr.len();
+        curr.rotate_left(k);
+        let mut idx = 0;
+        for c in lay..cols - lay - 1 {
+            grid[lay][c] = curr[idx];
+            idx += 1;
+        }
+        for r in lay..(rows - lay - 1) {
+            grid[r][cols - lay - 1] = curr[idx];
+            idx += 1;
+        }
+        for c in (1 + lay..cols - lay).rev() {
+            grid[rows - lay - 1][c] = curr[idx];
+            idx += 1;
+        }
+        for r in (1 + lay..rows - lay).rev() {
+            grid[r][lay] = curr[idx];
+            idx += 1;
         }
     }
-    for eq in equations.iter() {
-        if let Some((a, b)) = eq.split_once("!=") {
-            let [a, b] = [a, b].map(|s| usize::from(s.as_bytes()[0] - b'a'));
-            if dsu.find(a) == dsu.find(b) {
-                return false;
-            }
-        }
-    }
-    true
-}
-
-struct DSU {
-    parent: [usize; 26],
-    rank: [i32; 26],
-}
-
-impl DSU {
-    fn new() -> Self {
-        let mut parent = [0; 26];
-        for (i, v) in parent.iter_mut().enumerate() {
-            *v = i
-        }
-        Self {
-            parent,
-            rank: [0; 26],
-        }
-    }
-
-    fn find(&mut self, v: usize) -> usize {
-        if self.parent[v] != v {
-            self.parent[v] = self.find(self.parent[v])
-        }
-        self.parent[v]
-    }
-
-    fn union(&mut self, x: usize, y: usize) {
-        let [rx, ry] = [x, y].map(|v| self.find(v));
-        if rx == ry {
-            return;
-        }
-        match self.rank[rx].cmp(&self.rank[ry]) {
-            std::cmp::Ordering::Less => self.parent[rx] = ry,
-            std::cmp::Ordering::Equal => {
-                self.parent[ry] = rx;
-                self.rank[rx] += 1
-            }
-            std::cmp::Ordering::Greater => self.parent[ry] = rx,
-        }
-    }
+    grid
 }
 
 #[cfg(test)]
