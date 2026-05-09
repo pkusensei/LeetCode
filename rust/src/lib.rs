@@ -9,20 +9,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn score_validator(events: Vec<String>) -> Vec<i32> {
-    let [mut score, mut counter] = [0, 0];
-    for e in events.iter() {
-        match e.as_str() {
-            "0" | "1" | "2" | "3" | "4" | "6" => score += e.parse::<i32>().unwrap_or(0),
-            "W" => counter += 1,
-            "WD" | "NB" => score += 1,
-            _ => (),
-        }
-        if counter == 10 {
-            break;
-        }
+pub fn min_flips(s: String) -> i32 {
+    let n = s.len();
+    if n < 3 {
+        return 0;
     }
-    [score, counter].to_vec()
+    let [mut zero, mut one] = [0, 0];
+    for &b in s.as_bytes()[1..n - 1].iter() {
+        if b == b'0' { zero += 1 } else { one += 1 }
+    }
+    let first_one = s.starts_with('1');
+    let last_one = s.ends_with('1');
+    let all_zero = one + i32::from(first_one) + i32::from(last_one);
+    let all_one = zero + i32::from(!first_one) + i32::from(!last_one);
+    let single_one = (one + i32::from(first_one) + i32::from(last_one) - 1).max(0);
+    let se = i32::from(!first_one) + i32::from(!last_one) + one;
+    all_zero.min(all_one).min(single_one).min(se)
 }
 
 #[cfg(test)]
