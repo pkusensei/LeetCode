@@ -6,51 +6,35 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::{cmp::Reverse, collections::BinaryHeap};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_cost(n: i32, prices: Vec<i32>, roads: Vec<Vec<i32>>) -> Vec<i32> {
-    let n = n as usize;
-    let adj = roads.iter().fold(vec![vec![]; n], |mut acc, e| {
-        let [a, b] = [0, 1].map(|i| e[i] as usize);
-        acc[a].push((b, i64::from(e[2]), i64::from(e[2]) * i64::from(e[3])));
-        acc[b].push((a, i64::from(e[2]), i64::from(e[2]) * i64::from(e[3])));
-        acc
-    });
-    let mut res = Vec::with_capacity(n);
-    for start in 0..n {
-        let empty = f(&adj, start, true);
-        let full = f(&adj, start, false);
-        let mut val = i64::from(prices[start]);
-        for goal in (0..n).filter(|&v| v != start) {
-            let curr = empty[goal] + full[goal] + i64::from(prices[goal]);
-            val = val.min(curr);
+pub fn min_array_sum(mut nums: Vec<i32>) -> i64 {
+    let n = nums.len();
+    let mut min = i32::MAX;
+    let mut max = 0;
+    for &num in nums.iter() {
+        min = min.min(num);
+        max = max.max(num);
+    }
+    if min == 1 {
+        return n as i64;
+    }
+    let mut small = vec![None; 1 + max as usize];
+    nums.sort_unstable();
+    let mut res = 0;
+    for num in nums {
+        if let Some(p) = small[num as usize] {
+            res += i64::from(p)
+        } else {
+            let p = num as usize;
+            for val in (p..=max as usize).step_by(p) {
+                small[val].get_or_insert(num);
+            }
+            res += i64::from(num);
         }
-        res.push(val as i32);
     }
     res
-}
-
-fn f(adj: &[Vec<(usize, i64, i64)>], start: usize, empty: bool) -> Vec<i64> {
-    let n = adj.len();
-    let mut heap = BinaryHeap::from([(Reverse(0), start)]);
-    let mut costs = vec![i64::MAX >> 2; n];
-    costs[start] = 0;
-    while let Some((Reverse(cost), node)) = heap.pop() {
-        if cost > costs[node] {
-            continue;
-        }
-        for &(next, c, taxi) in &adj[node] {
-            let nc = cost + if empty { c } else { taxi };
-            if nc < costs[next] {
-                costs[next] = nc;
-                heap.push((Reverse(nc), next));
-            }
-        }
-    }
-    costs
 }
 
 #[cfg(test)]
