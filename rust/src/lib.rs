@@ -6,31 +6,51 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::collections::HashSet;
+use std::{cmp::Reverse, collections::BinaryHeap};
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_array_sum(nums: Vec<i32>) -> i64 {
-    let set: HashSet<_> = nums.iter().copied().collect();
-    let mut res = 0;
-    for &num in nums.iter() {
-        let mut curr = num;
-        for div in 1..=num.isqrt() {
-            if num % div == 0 {
-                if set.contains(&div) {
-                    curr = div;
-                    break;
-                }
-                let v = num / div;
-                if set.contains(&v) {
-                    curr = curr.min(v);
-                }
-            }
+pub fn min_cost(n: i32, prices: Vec<i32>, roads: Vec<Vec<i32>>) -> Vec<i32> {
+    let n = n as usize;
+    let adj = roads.iter().fold(vec![vec![]; n], |mut acc, e| {
+        let [a, b] = [0, 1].map(|i| e[i] as usize);
+        acc[a].push((b, i64::from(e[2]), i64::from(e[2]) * i64::from(e[3])));
+        acc[b].push((a, i64::from(e[2]), i64::from(e[2]) * i64::from(e[3])));
+        acc
+    });
+    let mut res = Vec::with_capacity(n);
+    for start in 0..n {
+        let empty = f(&adj, start, true);
+        let full = f(&adj, start, false);
+        let mut val = i64::from(prices[start]);
+        for goal in (0..n).filter(|&v| v != start) {
+            let curr = empty[goal] + full[goal] + i64::from(prices[goal]);
+            val = val.min(curr);
         }
-        res += i64::from(curr);
+        res.push(val as i32);
     }
     res
+}
+
+fn f(adj: &[Vec<(usize, i64, i64)>], start: usize, empty: bool) -> Vec<i64> {
+    let n = adj.len();
+    let mut heap = BinaryHeap::from([(Reverse(0), start)]);
+    let mut costs = vec![i64::MAX >> 2; n];
+    costs[start] = 0;
+    while let Some((Reverse(cost), node)) = heap.pop() {
+        if cost > costs[node] {
+            continue;
+        }
+        for &(next, c, taxi) in &adj[node] {
+            let nc = cost + if empty { c } else { taxi };
+            if nc < costs[next] {
+                costs[next] = nc;
+                heap.push((Reverse(nc), next));
+            }
+        }
+    }
+    costs
 }
 
 #[cfg(test)]
