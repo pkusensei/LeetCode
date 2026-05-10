@@ -9,18 +9,14 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_jumps(nums: Vec<i32>, target: i32) -> i32 {
+pub fn concat_with_reverse(nums: Vec<i32>) -> Vec<i32> {
     let n = nums.len();
-    let mut dp = vec![-1; n];
-    dp[0] = 0;
-    for right in 1..n {
-        for left in 0..right {
-            if nums[right].abs_diff(nums[left]) <= target as u32 && dp[left] > -1 {
-                dp[right] = dp[right].max(1 + dp[left]);
-            }
-        }
+    let mut res = vec![0; 2 * n];
+    for i in 0..n {
+        res[i] = nums[i];
+        res[i + n] = nums[n - i - 1]
     }
-    dp[n - 1]
+    res
 }
 
 #[cfg(test)]
