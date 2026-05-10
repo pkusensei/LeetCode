@@ -6,40 +6,31 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::collections::HashMap;
+use std::collections::HashSet;
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_word_occurrences(chunks: &[&str], queries: &[&str]) -> Vec<i32> {
-    let s = chunks.join("").into_bytes();
-    let n = s.len();
-    let mut words = HashMap::new();
-    let mut left = 0;
-    for (right, &b) in s.iter().enumerate() {
-        if b.is_ascii_lowercase() {
-            continue;
+pub fn min_array_sum(nums: Vec<i32>) -> i64 {
+    let set: HashSet<_> = nums.iter().copied().collect();
+    let mut res = 0;
+    for &num in nums.iter() {
+        let mut curr = num;
+        for div in 1..=num.isqrt() {
+            if num % div == 0 {
+                if set.contains(&div) {
+                    curr = div;
+                    break;
+                }
+                let v = num / div;
+                if set.contains(&v) {
+                    curr = curr.min(v);
+                }
+            }
         }
-        if b == b'-'
-            && right > 0
-            && s[right - 1].is_ascii_lowercase()
-            && right < n - 1
-            && s[1 + right].is_ascii_lowercase()
-        {
-            continue;
-        }
-        if left < right {
-            *words.entry(&s[left..right]).or_insert(0) += 1;
-        }
-        left = 1 + right;
+        res += i64::from(curr);
     }
-    if left < n {
-        *words.entry(&s[left..]).or_insert(0) += 1;
-    }
-    queries
-        .iter()
-        .map(|q| *words.get(q.as_bytes()).unwrap_or(&0))
-        .collect()
+    res
 }
 
 #[cfg(test)]
@@ -72,18 +63,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(
-            count_word_occurrences(&["a--b a-", "-c"], &["a", "b", "c"]),
-            [2, 1, 1]
-        );
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(
-            count_word_occurrences(&["m  cq-i "], &["m", "cq-i", "nm"]),
-            [1, 1, 0]
-        )
-    }
+    fn test() {}
 }
