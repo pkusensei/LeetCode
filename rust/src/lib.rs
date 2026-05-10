@@ -6,17 +6,40 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn concat_with_reverse(nums: Vec<i32>) -> Vec<i32> {
-    let n = nums.len();
-    let mut res = vec![0; 2 * n];
-    for i in 0..n {
-        res[i] = nums[i];
-        res[i + n] = nums[n - i - 1]
+pub fn count_word_occurrences(chunks: &[&str], queries: &[&str]) -> Vec<i32> {
+    let s = chunks.join("").into_bytes();
+    let n = s.len();
+    let mut words = HashMap::new();
+    let mut left = 0;
+    for (right, &b) in s.iter().enumerate() {
+        if b.is_ascii_lowercase() {
+            continue;
+        }
+        if b == b'-'
+            && right > 0
+            && s[right - 1].is_ascii_lowercase()
+            && right < n - 1
+            && s[1 + right].is_ascii_lowercase()
+        {
+            continue;
+        }
+        if left < right {
+            *words.entry(&s[left..right]).or_insert(0) += 1;
+        }
+        left = 1 + right;
     }
-    res
+    if left < n {
+        *words.entry(&s[left..]).or_insert(0) += 1;
+    }
+    queries
+        .iter()
+        .map(|q| *words.get(q.as_bytes()).unwrap_or(&0))
+        .collect()
 }
 
 #[cfg(test)]
@@ -49,8 +72,18 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(
+            count_word_occurrences(&["a--b a-", "-c"], &["a", "b", "c"]),
+            [2, 1, 1]
+        );
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(
+            count_word_occurrences(&["m  cq-i "], &["m", "cq-i", "nm"]),
+            [1, 1, 0]
+        )
+    }
 }
