@@ -9,30 +9,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_array_sum(mut nums: Vec<i32>) -> i64 {
-    let n = nums.len();
-    let mut min = i32::MAX;
-    let mut max = 0;
-    for &num in nums.iter() {
-        min = min.min(num);
-        max = max.max(num);
-    }
-    if min == 1 {
-        return n as i64;
-    }
-    let mut small = vec![None; 1 + max as usize];
-    nums.sort_unstable();
-    let mut res = 0;
-    for num in nums {
-        if let Some(p) = small[num as usize] {
-            res += i64::from(p)
-        } else {
-            let p = num as usize;
-            for val in (p..=max as usize).step_by(p) {
-                small[val].get_or_insert(num);
-            }
-            res += i64::from(num);
-        }
+pub fn minimum_effort(mut tasks: Vec<[i32; 2]>) -> i32 {
+    // [actual, start]
+    // sort_by(Reverse(start - actual))
+    // sort_by(actual - start)
+    tasks.sort_unstable_by_key(|v| v[0] - v[1]);
+    let mut curr = tasks[0][1];
+    let mut res = curr;
+    for t in &tasks {
+        let [actual, start] = t[..] else {
+            unreachable!()
+        };
+        res += (start - curr).max(0);
+        curr = curr.max(start) - actual;
     }
     res
 }
@@ -67,7 +56,12 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(
+            minimum_effort(vec![[1, 3], [2, 4], [10, 11], [10, 12], [8, 9]]),
+            32
+        );
+    }
 
     #[test]
     fn test() {}
