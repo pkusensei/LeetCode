@@ -6,107 +6,37 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::{
-    cmp::Reverse,
-    collections::{BinaryHeap, VecDeque},
-};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_threshold(n: i32, edges: &[[i32; 3]], source: i32, target: i32, k: i32) -> i32 {
-    let n = n as usize;
-    let mut adj = vec![vec![]; n];
-    for e in edges {
-        let [a, b] = [0, 1].map(|i| e[i] as usize);
-        adj[a].push((b, e[2]));
-        adj[b].push((a, e[2]));
+pub fn min_moves(nums: Vec<i32>, limit: i32) -> i32 {
+    let n = nums.len();
+    let limit = limit as usize;
+    let mut diff = vec![0; 2 + 2 * limit];
+    for i in 0..n / 2 {
+        let a = nums[i].min(nums[n - i - 1]) as usize;
+        let b = nums[i].max(nums[n - i - 1]) as usize;
+        // change both `a` and `b` to 1
+        diff[2] += 2;
+        // 2 < sum <= a requires 2 changes
+        // What happens if a == b == 1?
+        // Removing the impact on `[1+a]` and `[a+b]` offsets earlier `2`
+        diff[a + 1] -= 1;
+        // 1+a <= sum < a+b requires 1 change
+        // sum == a+b is no change
+        diff[a + b] -= 1;
+        // a+b < sum <= b+limit requires 1 change
+        diff[a + b + 1] += 1;
+        // b+limit < sum
+        diff[b + limit + 1] += 1;
     }
-    let mut left = 0;
-    let mut right = 1_000_000_001;
-    let mut possible = false;
-    while left < right {
-        let mid = left + (right - left) / 2;
-        if bfs(&adj, source as usize, target as usize, k, mid) {
-            possible = true;
-            right = mid
-        } else {
-            left = 1 + mid
-        }
+    let mut res = n as i32;
+    let mut prefix = 0;
+    for sum in 2..=2 * limit {
+        prefix += diff[sum];
+        res = res.min(prefix);
     }
-    if possible { left } else { -1 }
-}
-
-pub fn bfs_01(adj: &[Vec<(usize, i32)>], start: usize, goal: usize) -> i32 {
-    let n = adj.len();
-    let mut queue = VecDeque::from([(start, 0)]);
-    let mut dists = vec![i32::MAX >> 1; n];
-    dists[start] = 0;
-    while let Some((node, dist)) = queue.pop_front() {
-        if node == goal {
-            return dist;
-        }
-        for &(next, d) in &adj[node] {
-            let nd = dist + d;
-            if dists[next] > nd {
-                dists[next] = nd;
-                if d == 0 {
-                    queue.push_front((next, nd));
-                } else {
-                    queue.push_back((next, nd));
-                }
-            }
-        }
-    }
-    // This could be sentinel value
-    dists[goal]
-}
-
-fn bfs(adj: &[Vec<(usize, i32)>], source: usize, target: usize, k: i32, thr: i32) -> bool {
-    let n = adj.len();
-    let mut queue = VecDeque::from([(source, 0)]);
-    let mut costs = vec![1 + k; n];
-    costs[source] = 0;
-    while let Some((node, cost)) = queue.pop_front() {
-        if node == target {
-            return cost <= k;
-        }
-        for &(next, w) in &adj[node] {
-            let nc = cost + i32::from(w > thr);
-            if costs[next] > nc {
-                costs[next] = nc;
-                if w > thr {
-                    queue.push_back((next, nc));
-                } else {
-                    queue.push_front((next, nc));
-                }
-            }
-        }
-    }
-    costs[target] <= k
-}
-
-fn dijkstra(adj: &[Vec<(usize, i32)>], source: usize, target: usize, k: i32, thr: i32) -> bool {
-    let n = adj.len();
-    let mut dists = vec![i32::MAX >> 1; n];
-    dists[source] = 0;
-    let mut heap = BinaryHeap::from([(Reverse(0), source)]);
-    while let Some((Reverse(dist), node)) = heap.pop() {
-        if node == target {
-            return dist <= k;
-        }
-        if dist > dists[node] {
-            continue;
-        }
-        for &(next, w) in adj[node].iter() {
-            let nd = dist + i32::from(w > thr);
-            if dists[next] > nd {
-                dists[next] = nd;
-                heap.push((Reverse(nd), next));
-            }
-        }
-    }
-    dists[target] <= k
+    res
 }
 
 #[cfg(test)]
@@ -139,18 +69,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(
-            minimum_threshold(
-                6,
-                &[[0, 1, 5], [1, 2, 3], [3, 4, 4], [4, 5, 1], [1, 4, 2]],
-                0,
-                3,
-                1
-            ),
-            4
-        );
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
