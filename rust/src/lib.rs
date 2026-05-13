@@ -39,6 +39,32 @@ pub fn min_moves(nums: Vec<i32>, limit: i32) -> i32 {
     res
 }
 
+pub fn with_binary_search(nums: Vec<i32>, limit: i32) -> i32 {
+    use std::collections::HashMap;
+
+    let n = nums.len();
+    let mut sum_freq = HashMap::new();
+    let mut mins = Vec::with_capacity(n / 2);
+    let mut maxs = Vec::with_capacity(n / 2);
+    for i in 0..n / 2 {
+        let a = nums[i].min(nums[n - i - 1]);
+        let b = nums[i].max(nums[n - i - 1]);
+        *sum_freq.entry(a + b).or_insert(0) += 1;
+        mins.push(a);
+        maxs.push(b);
+    }
+    mins.sort_unstable();
+    maxs.sort_unstable();
+    let mut res = n;
+    for sum in 2..=2 * limit {
+        let add_left = n / 2 - mins.partition_point(|&v| v < sum);
+        let add_right = maxs.partition_point(|&v| v < sum - limit);
+        let curr = n / 2 + add_left + add_right - sum_freq.get(&sum).unwrap_or(&0);
+        res = res.min(curr);
+    }
+    res as i32
+}
+
 #[cfg(test)]
 mod tests {
 
