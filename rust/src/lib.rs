@@ -9,19 +9,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_good(nums: &[i32]) -> bool {
-    let n = nums.len() - 1;
-    if n == 0 {
-        return false;
-    }
-    let mut freq = vec![0; 1 + n];
-    for &num in nums.iter() {
-        if num as usize > n {
-            return false;
+pub fn broken_calc(start: i32, mut target: i32) -> i32 {
+    let mut res = 0;
+    while start < target {
+        if target & 1 == 0 {
+            target /= 2;
+        } else {
+            target += 1;
         }
-        freq[num as usize] += 1;
+        res += 1;
     }
-    freq[1..n].iter().all(|&v| v == 1) && freq[n] == 2
+    res + start - target
 }
 
 #[cfg(test)]
