@@ -6,66 +6,21 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn subarrays_with_k_distinct(nums: Vec<i32>, k: i32) -> i32 {
-    at_most(&nums, k) - at_most(&nums, k - 1)
-}
-
-fn at_most(nums: &[i32], k: i32) -> i32 {
-    let mut freq = HashMap::new();
+pub fn find_min(nums: Vec<i32>) -> i32 {
     let mut left = 0;
-    let mut res = 0;
-    for (right, &num) in nums.iter().enumerate() {
-        *freq.entry(num).or_insert(0) += 1;
-        while freq.len() > k as usize {
-            let Some(v) = freq.get_mut(&nums[left]) else {
-                unreachable!()
-            };
-            *v -= 1;
-            if *v == 0 {
-                freq.remove(&nums[left]);
-            }
-            left += 1;
-        }
-        res += right + 1 - left;
-    }
-    res as i32
-}
-
-pub fn single_pass(nums: &[i32], k: i32) -> i32 {
-    let k = k as usize;
-    let mut freq = HashMap::new();
-    let mut res = 0;
-    let mut left = 0;
-    let mut mid = 0;
-    for (_right, &num) in nums.iter().enumerate() {
-        *freq.entry(num).or_insert(0) += 1;
-        while freq.len() > k {
-            let v = freq.entry(nums[mid]).or_insert(0);
-            *v -= 1;
-            if *v == 0 {
-                freq.remove(&nums[mid]);
-            }
-            mid += 1;
-            left = mid;
-        }
-        if freq.len() == k {
-            while freq.len() == k {
-                let v = freq.entry(nums[mid]).or_insert(0);
-                if *v == 1 {
-                    break;
-                }
-                *v -= 1;
-                mid += 1;
-            }
-            res += 1 + mid - left;
+    let mut right = nums.len() - 1;
+    while left < right {
+        let mid = left + (right - left) / 2;
+        if nums[mid] < nums[right] {
+            right = mid;
+        } else if nums[right] < nums[mid] {
+            left = 1 + mid;
         }
     }
-    res as i32
+    nums[left]
 }
 
 #[cfg(test)]
@@ -98,9 +53,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert!(is_good(&[1, 3, 3, 2]));
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
