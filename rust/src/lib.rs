@@ -6,21 +6,34 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
+use std::collections::VecDeque;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_min(nums: &[i32]) -> i32 {
-    let mut left = 0;
-    let mut right = nums.len() - 1;
-    while left < right {
-        let mid = left + (right - left) / 2;
-        match nums[mid].cmp(&nums[right]) {
-            std::cmp::Ordering::Less => right = mid,
-            std::cmp::Ordering::Equal => right -= 1,
-            std::cmp::Ordering::Greater => left = 1 + mid,
+pub fn min_k_bit_flips(nums: Vec<i32>, k: i32) -> i32 {
+    let n = nums.len();
+    let k = k as usize;
+    let mut res = 0;
+    let mut queue = VecDeque::new();
+    for (idx, &num) in nums.iter().enumerate() {
+        while let Some(&prev_end) = queue.front()
+            && prev_end < idx
+        {
+            queue.pop_front();
+        }
+        // num==1, even flips => no op
+        // num==0, even flips => op
+        if num == (queue.len() & 1) as i32 {
+            if idx + k <= n {
+                res += 1;
+                queue.push_back(idx + k - 1);
+            } else {
+                return -1;
+            }
         }
     }
-    nums[left]
+    res
 }
 
 #[cfg(test)]
@@ -53,9 +66,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(find_min(&[3, 3, 3, 0, 1, 3]), 0);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
