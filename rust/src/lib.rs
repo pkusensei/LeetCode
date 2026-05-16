@@ -9,15 +9,15 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_min(nums: Vec<i32>) -> i32 {
+pub fn find_min(nums: &[i32]) -> i32 {
     let mut left = 0;
     let mut right = nums.len() - 1;
     while left < right {
         let mid = left + (right - left) / 2;
-        if nums[mid] < nums[right] {
-            right = mid;
-        } else if nums[right] < nums[mid] {
-            left = 1 + mid;
+        match nums[mid].cmp(&nums[right]) {
+            std::cmp::Ordering::Less => right = mid,
+            std::cmp::Ordering::Equal => right -= 1,
+            std::cmp::Ordering::Greater => left = 1 + mid,
         }
     }
     nums[left]
@@ -53,7 +53,9 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(find_min(&[3, 3, 3, 0, 1, 3]), 0);
+    }
 
     #[test]
     fn test() {}
