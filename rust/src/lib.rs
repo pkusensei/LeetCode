@@ -6,34 +6,33 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::collections::VecDeque;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_k_bit_flips(nums: Vec<i32>, k: i32) -> i32 {
-    let n = nums.len();
-    let k = k as usize;
-    let mut res = 0;
-    let mut queue = VecDeque::new();
-    for (idx, &num) in nums.iter().enumerate() {
-        while let Some(&prev_end) = queue.front()
-            && prev_end < idx
-        {
-            queue.pop_front();
+pub fn can_reach(arr: Vec<i32>, start: i32) -> bool {
+    use std::collections::VecDeque;
+    let n = arr.len();
+    let mut queue = VecDeque::from([start as usize]);
+    let mut seen = vec![false; n];
+    seen[start as usize] = true;
+    while let Some(node) = queue.pop_front() {
+        if arr[node] == 0 {
+            return true;
         }
-        // num==1, even flips => no op
-        // num==0, even flips => op
-        if num == (queue.len() & 1) as i32 {
-            if idx + k <= n {
-                res += 1;
-                queue.push_back(idx + k - 1);
-            } else {
-                return -1;
+        for v in [
+            node.checked_sub(arr[node] as usize),
+            node.checked_add(arr[node] as usize),
+        ] {
+            if let Some(v) = v
+                && v < n
+                && !seen[v]
+            {
+                seen[v] = true;
+                queue.push_back(v);
             }
         }
     }
-    res
+    false
 }
 
 #[cfg(test)]
