@@ -9,30 +9,8 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn can_reach(arr: Vec<i32>, start: i32) -> bool {
-    use std::collections::VecDeque;
-    let n = arr.len();
-    let mut queue = VecDeque::from([start as usize]);
-    let mut seen = vec![false; n];
-    seen[start as usize] = true;
-    while let Some(node) = queue.pop_front() {
-        if arr[node] == 0 {
-            return true;
-        }
-        for v in [
-            node.checked_sub(arr[node] as usize),
-            node.checked_add(arr[node] as usize),
-        ] {
-            if let Some(v) = v
-                && v < n
-                && !seen[v]
-            {
-                seen[v] = true;
-                queue.push_back(v);
-            }
-        }
-    }
-    false
+pub fn is_adjacent_diff_at_most_two(s: String) -> bool {
+    s.as_bytes().windows(2).all(|w| w[0].abs_diff(w[1]) <= 2)
 }
 
 #[cfg(test)]
