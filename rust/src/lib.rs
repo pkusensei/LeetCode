@@ -8,32 +8,99 @@ mod trie;
 
 #[allow(unused_imports)]
 use helper::*;
+use itertools::Itertools;
 
-pub fn count_kth_roots(l: i32, r: i32, k: i32) -> i32 {
-    if k == 1 {
-        return if l == 0 { 1 + r } else { r - l.max(1) + 1 };
+pub fn count_local_maximums(matrix: &[&[i32]]) -> i32 {
+    let [rows, cols] = get_dimensions(&matrix);
+    let trees = matrix.iter().map(|row| SegTree::new(row)).collect_vec();
+    let mut res = 0;
+    for (r, row) in matrix.iter().enumerate() {
+        for (c, &val) in row.iter().enumerate() {
+            if val > 0
+                && val
+                    == trees[r].query(
+                        c.saturating_sub(val as usize),
+                        (c + val as usize).min(cols - 1),
+                    )
+            {
+                let mut flag = true;
+                for d in 0..val {
+                    let ql = if d == val - 1 {
+                        c.saturating_sub(val as usize - 1)
+                    } else {
+                        c.saturating_sub(val as usize)
+                    };
+                    let qr = if d == val - 1 {
+                        (c + val as usize - 1).min(cols - 1)
+                    } else {
+                        (c + val as usize).min(cols - 1)
+                    };
+                    if r >= 1 + d as usize && val < trees[r - 1 - d as usize].query(ql, qr) {
+                        flag = false;
+                        break;
+                    }
+                    if (r + 1 + d as usize) < rows && val < trees[r + 1 + d as usize].query(ql, qr)
+                    {
+                        flag = false;
+                        break;
+                    }
+                }
+                if flag {
+                    res += 1;
+                }
+            }
+        }
     }
-    if l == 0 {
-        f(r, k) + 1
-    } else {
-        f(r, k) - f(l - 1, k)
-    }
+    res
 }
 
-fn f(num: i32, k: i32) -> i32 {
-    if num < 0 {
-        return 0;
+struct SegTree {
+    tree: Vec<i32>,
+    n: usize,
+}
+
+impl SegTree {
+    fn new(row: &[i32]) -> Self {
+        let n = row.len();
+        let mut s = Self {
+            tree: vec![0; 4 * n],
+            n,
+        };
+        s.build(1, 0, n - 1, row);
+        s
     }
-    let mut root = num.isqrt();
-    let mut kk = k / 2;
-    while kk > 2 {
-        kk /= 2;
-        root = root.isqrt();
+
+    fn build(&mut self, node: usize, left: usize, right: usize, row: &[i32]) {
+        if left == right {
+            self.tree[node] = row[left];
+            return;
+        }
+        let mid = left.midpoint(right);
+        self.build(2 * node, left, mid, row);
+        self.build(2 * node + 1, 1 + mid, right, row);
+        self.tree[node] = self.tree[2 * node].max(self.tree[2 * node + 1])
     }
-    while root.checked_pow(k as u32).is_none_or(|v| v > num) {
-        root -= 1;
+
+    fn query(&self, ql: usize, qr: usize) -> i32 {
+        self._query(1, 0, self.n - 1, ql, qr)
     }
-    root
+
+    fn _query(&self, node: usize, left: usize, right: usize, ql: usize, qr: usize) -> i32 {
+        if qr < left || right < ql {
+            return 0;
+        }
+        if ql <= left && right <= qr {
+            return self.tree[node];
+        }
+        let mid = left.midpoint(right);
+        self._query(2 * node, left, mid, ql, qr).max(self._query(
+            2 * node + 1,
+            1 + mid,
+            right,
+            ql,
+            qr,
+        ))
+    }
 }
 
 #[cfg(test)]
@@ -67,10 +134,22 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(count_kth_roots(1, 9, 3), 2);
-        assert_eq!(count_kth_roots(8, 30, 2), 3);
+        assert_eq!(
+            count_local_maximums(&[
+                &[0, 0, 0, 0, 0, 0, 0],
+                &[0, 0, 0, 0, 0, 0, 0],
+                &[0, 0, 0, 0, 0, 0, 0],
+                &[0, 0, 0, 2, 0, 0, 0],
+                &[0, 0, 0, 0, 0, 0, 0],
+                &[0, 0, 0, 0, 0, 0, 0],
+                &[0, 0, 0, 0, 0, 0, 0]
+            ]),
+            1
+        );
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(count_local_maximums(&[&[0, 2, 1], &[1, 1, 0]]), 2)
+    }
 }
