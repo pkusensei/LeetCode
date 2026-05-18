@@ -6,41 +6,51 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn smallest_unique_subarray(nums: &[i32]) -> i32 {
-    let mut left = 1;
-    let mut right = nums.len();
-    while left < right {
-        let mid = left + (right - left) / 2;
-        if check(&nums, mid) {
-            right = mid;
+pub fn min_jumps(arr: Vec<i32>) -> i32 {
+    use std::collections::{HashMap, VecDeque};
+    let n = arr.len();
+    let mut map = HashMap::<_, Vec<_>>::new();
+    let mut idx = 0;
+    for ch in arr.chunk_by(|a, b| a == b) {
+        let len = ch.len();
+        if len == 1 {
+            map.entry(ch[0]).or_default().push(idx);
         } else {
-            left = 1 + mid;
+            map.entry(ch[0]).or_default().push(idx);
+            map.entry(ch[0]).or_default().push(idx + len - 1);
+        }
+        idx += len;
+    }
+    let mut queue = VecDeque::from([(0, 0)]);
+    let mut seen = vec![false; n];
+    seen[0] = true;
+    while let Some((node, dist)) = queue.pop_front() {
+        if node == n - 1 {
+            return dist;
+        }
+        if let Some(v) = node.checked_sub(1)
+            && !seen[v]
+        {
+            seen[v] = true;
+            queue.push_back((v, 1 + dist));
+        }
+        if 1 + node < n && !seen[1 + node] {
+            seen[1 + node] = true;
+            queue.push_back((1 + node, 1 + dist));
+        }
+        if let Some(v) = map.remove(&arr[node]) {
+            for next in v {
+                if !seen[next] {
+                    seen[next] = true;
+                    queue.push_back((next, 1 + dist));
+                }
+            }
         }
     }
-    left as i32
-}
-
-fn check(nums: &[i32], mid: usize) -> bool {
-    const M: i64 = 1_000_000_007;
-    const BASE: i64 = 215215;
-    let mut freq = HashMap::new();
-    let mut val = 0;
-    let mut pow = 1;
-    for &num in &nums[..mid] {
-        val = (val * BASE + i64::from(num)) % M;
-        pow = pow * BASE % M;
-    }
-    freq.insert(val, 1);
-    for i in mid..nums.len() {
-        val = (val * BASE + i64::from(nums[i]) - i64::from(nums[i - mid]) * pow % M).rem_euclid(M);
-        *freq.entry(val).or_insert(0) += 1;
-    }
-    freq.into_values().any(|f| f == 1)
+    -1
 }
 
 #[cfg(test)]
