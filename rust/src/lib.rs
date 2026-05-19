@@ -9,45 +9,15 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_jumps(arr: Vec<i32>) -> i32 {
-    use std::collections::{HashMap, VecDeque};
-    let n = arr.len();
-    let mut map = HashMap::<_, Vec<_>>::new();
-    let mut idx = 0;
-    for ch in arr.chunk_by(|a, b| a == b) {
-        let len = ch.len();
-        if len == 1 {
-            map.entry(ch[0]).or_default().push(idx);
-        } else {
-            map.entry(ch[0]).or_default().push(idx);
-            map.entry(ch[0]).or_default().push(idx + len - 1);
-        }
-        idx += len;
-    }
-    let mut queue = VecDeque::from([(0, 0)]);
-    let mut seen = vec![false; n];
-    seen[0] = true;
-    while let Some((node, dist)) = queue.pop_front() {
-        if node == n - 1 {
-            return dist;
-        }
-        if let Some(v) = node.checked_sub(1)
-            && !seen[v]
-        {
-            seen[v] = true;
-            queue.push_back((v, 1 + dist));
-        }
-        if 1 + node < n && !seen[1 + node] {
-            seen[1 + node] = true;
-            queue.push_back((1 + node, 1 + dist));
-        }
-        if let Some(v) = map.remove(&arr[node]) {
-            for next in v {
-                if !seen[next] {
-                    seen[next] = true;
-                    queue.push_back((next, 1 + dist));
-                }
-            }
+pub fn get_common(nums1: Vec<i32>, nums2: Vec<i32>) -> i32 {
+    let [mut i1, mut i2] = [0, 0];
+    while let Some(&v1) = nums1.get(i1)
+        && let Some(&v2) = nums2.get(i2)
+    {
+        match v1.cmp(&v2) {
+            std::cmp::Ordering::Less => i1 += 1,
+            std::cmp::Ordering::Equal => return v1,
+            std::cmp::Ordering::Greater => i2 += 1,
         }
     }
     -1
@@ -83,10 +53,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(smallest_unique_subarray(&[3, 3, 3]), 3);
-        assert_eq!(smallest_unique_subarray(&[1, 1, 2, 2, 1]), 2);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
