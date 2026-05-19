@@ -8,28 +8,27 @@ namespace Solution;
 
 public class Solution
 {
-    public string SmallestFromLeaf(TreeNode root)
+    public TreeNode InsertIntoMaxTree(TreeNode root, int val)
     {
-        StringBuilder sb = new();
-        string res = null;
-        Dfs(root);
-        return res;
+        TreeNode dummy = new(-1, null, root);
+        dummy.right = Dfs(root, val);
+        return dummy.right;
 
-        void Dfs(TreeNode node)
+        static TreeNode Dfs(TreeNode node, int val)
         {
-            if (node is null) { return; }
-            sb.Insert(0, (char)(node.val + 'a'));
-            if (node.left is null && node.right is null)
+            if (node is null) { return new(val); }
+            if (node.val < val)
             {
-                string s = sb.ToString();
-                if (string.IsNullOrEmpty(res) || string.Compare(s, res) < 0)
-                {
-                    res = s;
-                }
+                TreeNode temp = new(val);
+                temp.left = node;
+                return temp;
             }
-            Dfs(node.left);
-            Dfs(node.right);
-            sb.Remove(0, 1);
+            else
+            {
+                node.right = Dfs(node.right, val);
+                return node;
+            }
         }
     }
 }
+
