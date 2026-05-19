@@ -9,18 +9,35 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn get_common(nums1: Vec<i32>, nums2: Vec<i32>) -> i32 {
-    let [mut i1, mut i2] = [0, 0];
-    while let Some(&v1) = nums1.get(i1)
-        && let Some(&v2) = nums2.get(i2)
-    {
-        match v1.cmp(&v2) {
-            std::cmp::Ordering::Less => i1 += 1,
-            std::cmp::Ordering::Equal => return v1,
-            std::cmp::Ordering::Greater => i2 += 1,
+pub fn num_squareful_perms(mut nums: Vec<i32>) -> i32 {
+    let n = nums.len();
+    nums.sort_unstable();
+    backtrack(&nums, 0, None)
+}
+
+fn backtrack(nums: &[i32], mask: i32, prev: Option<i32>) -> i32 {
+    let n = nums.len();
+    if mask == (1 << n) - 1 {
+        return 1;
+    }
+    let mut res = 0;
+    for i in 0..n {
+        if (mask >> i) & 1 == 1 {
+            continue;
+        }
+        if i > 0 && nums[i] == nums[i - 1] && (mask >> (i - 1)) & 1 == 1 {
+            continue;
+        }
+        if let Some(p) = prev {
+            let v = i64::from(p) + i64::from(nums[i]);
+            if v.isqrt().pow(2) == v {
+                res += backtrack(nums, mask | (1 << i), Some(nums[i]));
+            }
+        } else {
+            res += backtrack(nums, 1 << i, Some(nums[i]));
         }
     }
-    -1
+    res
 }
 
 #[cfg(test)]
