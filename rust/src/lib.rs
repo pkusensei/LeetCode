@@ -9,33 +9,14 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_squareful_perms(mut nums: Vec<i32>) -> i32 {
-    let n = nums.len();
-    nums.sort_unstable();
-    backtrack(&nums, 0, None)
-}
-
-fn backtrack(nums: &[i32], mask: i32, prev: Option<i32>) -> i32 {
-    let n = nums.len();
-    if mask == (1 << n) - 1 {
-        return 1;
-    }
-    let mut res = 0;
-    for i in 0..n {
-        if (mask >> i) & 1 == 1 {
-            continue;
-        }
-        if i > 0 && nums[i] == nums[i - 1] && (mask >> (i - 1)) & 1 == 1 {
-            continue;
-        }
-        if let Some(p) = prev {
-            let v = i64::from(p) + i64::from(nums[i]);
-            if v.isqrt().pow(2) == v {
-                res += backtrack(nums, mask | (1 << i), Some(nums[i]));
-            }
-        } else {
-            res += backtrack(nums, 1 << i, Some(nums[i]));
-        }
+pub fn find_the_prefix_common_array(a: Vec<i32>, b: Vec<i32>) -> Vec<i32> {
+    let n = a.len();
+    let mut res = Vec::with_capacity(n);
+    let [mut maska, mut maskb] = [0_i64, 0];
+    for (&aa, &bb) in a.iter().zip(&b) {
+        maska |= 1 << aa;
+        maskb |= 1 << bb;
+        res.push((maska & maskb).count_ones() as i32);
     }
     res
 }
