@@ -9,16 +9,46 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_the_prefix_common_array(a: Vec<i32>, b: Vec<i32>) -> Vec<i32> {
-    let n = a.len();
-    let mut res = Vec::with_capacity(n);
-    let [mut maska, mut maskb] = [0_i64, 0];
-    for (&aa, &bb) in a.iter().zip(&b) {
-        maska |= 1 << aa;
-        maskb |= 1 << bb;
-        res.push((maska & maskb).count_ones() as i32);
+pub fn longest_common_prefix(arr1: Vec<i32>, arr2: Vec<i32>) -> i32 {
+    let mut trie = Trie::default();
+    for v in arr1 {
+        trie.insert(v.to_string().bytes());
     }
-    res
+    arr2.iter()
+        .map(|v| trie.find(v.to_string().bytes()))
+        .max()
+        .unwrap_or(0)
+}
+
+#[derive(Default)]
+struct Trie {
+    nodes: [Option<Box<Trie>>; 10],
+    len: i32,
+}
+
+impl Trie {
+    fn insert(&mut self, it: impl Iterator<Item = u8>) {
+        let mut curr = self;
+        let mut len = 0;
+        for b in it {
+            let i = usize::from(b - b'0');
+            len += 1;
+            curr = curr.nodes[i].get_or_insert_default();
+            curr.len = len;
+        }
+    }
+
+    fn find(&self, it: impl Iterator<Item = u8>) -> i32 {
+        let mut curr = self;
+        for b in it {
+            let i = usize::from(b - b'0');
+            let Some(v) = curr.nodes[i].as_ref() else {
+                break;
+            };
+            curr = v;
+        }
+        curr.len
+    }
 }
 
 #[cfg(test)]
