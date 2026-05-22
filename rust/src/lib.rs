@@ -11,30 +11,34 @@ use helper::*;
 
 pub fn search(nums: &[i32], target: i32) -> i32 {
     let n = nums.len();
-    if n == 1 {
-        return if nums[0] == target { 0 } else { -1 };
-    }
-    if nums[0] < nums[n - 1] {
-        return nums.binary_search(&target).map(|i| i as i32).unwrap_or(-1);
-    }
     let mut left = 0;
     let mut right = n - 1;
     while left < right {
-        let mid = left + (right - left) / 2;
-        if nums[mid] < nums[right] {
-            right = mid
+        let mid = left + (1 + right - left) / 2;
+        if nums[mid] == target {
+            return mid as i32;
+        } else if nums[left] <= nums[mid] {
+            // `mid` falls in first half
+            if (nums[left]..nums[mid]).contains(&target) {
+                // `target` falls here
+                right = mid - 1
+            } else {
+                // `target` is to the right
+                left = mid
+            }
         } else {
-            left = 1 + mid;
+            if (nums[mid]..=nums[right]).contains(&target) {
+                left = mid
+            } else {
+                right = mid - 1
+            }
         }
     }
-    let min = left;
-    if nums[0] <= target {
-        nums[..min].binary_search(&target)
+    if nums[left] == target {
+        left as i32
     } else {
-        nums[min..].binary_search(&target).map(|i| i + min)
+        -1
     }
-    .map(|i| i as i32)
-    .unwrap_or(-1)
 }
 
 #[cfg(test)]
