@@ -9,46 +9,32 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn longest_common_prefix(arr1: Vec<i32>, arr2: Vec<i32>) -> i32 {
-    let mut trie = Trie::default();
-    for v in arr1 {
-        trie.insert(v.to_string().bytes());
+pub fn search(nums: &[i32], target: i32) -> i32 {
+    let n = nums.len();
+    if n == 1 {
+        return if nums[0] == target { 0 } else { -1 };
     }
-    arr2.iter()
-        .map(|v| trie.find(v.to_string().bytes()))
-        .max()
-        .unwrap_or(0)
-}
-
-#[derive(Default)]
-struct Trie {
-    nodes: [Option<Box<Trie>>; 10],
-    len: i32,
-}
-
-impl Trie {
-    fn insert(&mut self, it: impl Iterator<Item = u8>) {
-        let mut curr = self;
-        let mut len = 0;
-        for b in it {
-            let i = usize::from(b - b'0');
-            len += 1;
-            curr = curr.nodes[i].get_or_insert_default();
-            curr.len = len;
+    if nums[0] < nums[n - 1] {
+        return nums.binary_search(&target).map(|i| i as i32).unwrap_or(-1);
+    }
+    let mut left = 0;
+    let mut right = n - 1;
+    while left < right {
+        let mid = left + (right - left) / 2;
+        if nums[mid] < nums[right] {
+            right = mid
+        } else {
+            left = 1 + mid;
         }
     }
-
-    fn find(&self, it: impl Iterator<Item = u8>) -> i32 {
-        let mut curr = self;
-        for b in it {
-            let i = usize::from(b - b'0');
-            let Some(v) = curr.nodes[i].as_ref() else {
-                break;
-            };
-            curr = v;
-        }
-        curr.len
+    let min = left;
+    if nums[0] <= target {
+        nums[..min].binary_search(&target)
+    } else {
+        nums[min..].binary_search(&target).map(|i| i + min)
     }
+    .map(|i| i as i32)
+    .unwrap_or(-1)
 }
 
 #[cfg(test)]
@@ -81,8 +67,13 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(search(&[4, 5, 6, 7, 0, 1, 2], 0), 4);
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(search(&[1], 1), 0);
+        assert_eq!(search(&[3, 1], 3), 0);
+    }
 }
