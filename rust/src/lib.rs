@@ -9,20 +9,34 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_operations(nums: &[i32], k: i32) -> i32 {
-    let mut res = i32::MAX;
-    for x in 0..k {
-        for y in 0..k {
-            if x == y {
-                continue;
+pub fn max_score(grid: Vec<Vec<i32>>) -> i32 {
+    let [rows, cols] = get_dimensions(&grid);
+    let single = grid[1..rows - 1].iter().flat_map(|r| &r[1..cols - 1]).max();
+    let mut res = single.copied().unwrap_or(i32::MIN >> 1);
+    for row in grid.iter() {
+        let mut min = 0;
+        let mut prefix = vec![];
+        for (i, &num) in row.iter().enumerate() {
+            prefix.push(num + prefix.last().unwrap_or(&0));
+            if i >= 2 {
+                min = min.min(prefix[i - 2]);
             }
-            let mut curr = 0;
-            for (i, &num) in nums.iter().enumerate() {
-                let val = if i & 1 == 0 { x } else { y };
-                let d = (num % k - val).abs();
-                curr += d.min(k - d);
+            if i >= 1 {
+                res = res.max(prefix[i] - min);
             }
-            res = res.min(curr);
+        }
+    }
+    for c in 0..cols {
+        let mut min = 0;
+        let mut prefix = vec![];
+        for r in 0..rows {
+            prefix.push(grid[r][c] + prefix.last().unwrap_or(&0));
+            if r >= 2 {
+                min = min.min(prefix[r - 2]);
+            }
+            if r >= 1 {
+                res = res.max(prefix[r] - min);
+            }
         }
     }
     res
@@ -61,7 +75,5 @@ mod tests {
     fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(min_operations(&[63, 36, 77, 19], 4), 3)
-    }
+    fn test() {}
 }
