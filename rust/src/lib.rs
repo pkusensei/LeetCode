@@ -9,28 +9,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn check(nums: &[i32]) -> bool {
-    let n = nums.len();
-    let mut right = n - 1;
-    while right > 0 && nums[right] == nums[0] {
-        right -= 1;
-    }
-    if right == 0 {
-        return true;
-    }
-    if nums[0] <= nums[right] {
-        return nums[..=right].is_sorted();
-    }
-    let mut seen_dec = false;
-    for w in nums[..=right].windows(2) {
-        if w[0] > w[1] {
-            if seen_dec {
-                return false;
-            }
-            seen_dec = true
+pub fn minimum_swaps(nums: Vec<i32>) -> i32 {
+    let mut left = 0;
+    let mut right = nums.len() - 1;
+    let mut res = 0;
+    while left < right {
+        while left < right && nums[right] == 0 {
+            right -= 1;
+        }
+        while left < right && nums[left] != 0 {
+            left += 1;
+        }
+        if left < right {
+            res += 1;
+            left += 1;
+            right -= 1;
         }
     }
-    true
+    res
 }
 
 #[cfg(test)]
@@ -63,9 +59,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert!(!check(&[5, 1, 5, 1]));
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
