@@ -9,36 +9,28 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn search(nums: &[i32], target: i32) -> i32 {
+pub fn check(nums: &[i32]) -> bool {
     let n = nums.len();
-    let mut left = 0;
     let mut right = n - 1;
-    while left < right {
-        let mid = left + (1 + right - left) / 2;
-        if nums[mid] == target {
-            return mid as i32;
-        } else if nums[left] <= nums[mid] {
-            // `mid` falls in first half
-            if (nums[left]..nums[mid]).contains(&target) {
-                // `target` falls here
-                right = mid - 1
-            } else {
-                // `target` is to the right
-                left = mid
+    while right > 0 && nums[right] == nums[0] {
+        right -= 1;
+    }
+    if right == 0 {
+        return true;
+    }
+    if nums[0] <= nums[right] {
+        return nums[..=right].is_sorted();
+    }
+    let mut seen_dec = false;
+    for w in nums[..=right].windows(2) {
+        if w[0] > w[1] {
+            if seen_dec {
+                return false;
             }
-        } else {
-            if (nums[mid]..=nums[right]).contains(&target) {
-                left = mid
-            } else {
-                right = mid - 1
-            }
+            seen_dec = true
         }
     }
-    if nums[left] == target {
-        left as i32
-    } else {
-        -1
-    }
+    true
 }
 
 #[cfg(test)]
@@ -72,12 +64,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(search(&[4, 5, 6, 7, 0, 1, 2], 0), 4);
+        assert!(!check(&[5, 1, 5, 1]));
     }
 
     #[test]
-    fn test() {
-        assert_eq!(search(&[1], 1), 0);
-        assert_eq!(search(&[3, 1], 3), 0);
-    }
+    fn test() {}
 }
