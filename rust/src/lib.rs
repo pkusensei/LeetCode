@@ -9,21 +9,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_swaps(nums: Vec<i32>) -> i32 {
-    let mut left = 0;
-    let mut right = nums.len() - 1;
-    let mut res = 0;
-    while left < right {
-        while left < right && nums[right] == 0 {
-            right -= 1;
-        }
-        while left < right && nums[left] != 0 {
-            left += 1;
-        }
-        if left < right {
-            res += 1;
-            left += 1;
-            right -= 1;
+pub fn min_operations(nums: &[i32], k: i32) -> i32 {
+    let mut res = i32::MAX;
+    for x in 0..k {
+        for y in 0..k {
+            if x == y {
+                continue;
+            }
+            let mut curr = 0;
+            for (i, &num) in nums.iter().enumerate() {
+                let val = if i & 1 == 0 { x } else { y };
+                let d = (num % k - val).abs();
+                curr += d.min(k - d);
+            }
+            res = res.min(curr);
         }
     }
     res
@@ -62,5 +61,7 @@ mod tests {
     fn basics() {}
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(min_operations(&[63, 36, 77, 19], 4), 3)
+    }
 }
