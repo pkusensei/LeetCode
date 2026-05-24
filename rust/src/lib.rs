@@ -9,50 +9,11 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_jumps(arr: &[i32], d: i32) -> i32 {
-    use itertools::Itertools;
-    use std::cmp::Reverse;
-
-    let n = arr.len();
-    let mut suf_greater = (0..n).map(|v| (1 + v + d as usize).min(n)).collect_vec();
-    let mut st: Vec<usize> = vec![];
-    for (idx, &num) in arr.iter().enumerate() {
-        while let Some(&top) = st.last()
-            && arr[top] <= num
-        {
-            st.pop();
-            suf_greater[top] = suf_greater[top].min(idx);
-        }
-        st.push(idx);
-    }
-    st.clear();
-    let mut pref_greater = (0..n).map(|v| v.saturating_sub(d as usize)).collect_vec();
-    for (idx, &num) in arr.iter().enumerate().rev() {
-        while let Some(&top) = st.last()
-            && arr[top] <= num
-        {
-            st.pop();
-            pref_greater[top] = pref_greater[top].max(1 + idx);
-        }
-        st.push(idx);
-    }
-    let nums = (0..n)
-        .sorted_unstable_by_key(|i| Reverse(arr[*i]))
-        .collect_vec();
-    let mut dp = vec![1; n];
-    let mut res = 1;
-    for idx in nums {
-        let left = pref_greater[idx];
-        let right = suf_greater[idx];
-        for i in left..right {
-            if i == idx {
-                continue;
-            }
-            dp[i] = dp[i].max(1 + dp[idx]);
-            res = res.max(dp[i]);
-        }
-    }
-    res
+pub fn limit_occurrences(nums: Vec<i32>, k: i32) -> Vec<i32> {
+    nums.chunk_by(|a, b| a == b)
+        .flat_map(|ch| ch.iter().take(k as usize))
+        .copied()
+        .collect()
 }
 
 #[cfg(test)]
@@ -85,9 +46,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(max_jumps(&[7, 6, 5, 4, 3, 2, 1], 1), 7);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
