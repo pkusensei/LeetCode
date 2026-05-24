@@ -9,46 +9,50 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_valid_subsets(parent: &[i32], nums: &[i32], k: i32) -> i32 {
-    let n = nums.len();
-    let adj = parent
-        .iter()
-        .enumerate()
-        .fold(vec![vec![]; n], |mut acc, (node, &p)| {
-            if p >= 0 {
-                acc[p as usize].push(node);
-            }
-            acc
-        });
-    let [skip, take] = dfs(&adj, &nums, k, 0);
-    // remove empty subset
-    (skip[0] + take[0] - 1).rem_euclid(M) as i32
-}
+pub fn max_jumps(arr: &[i32], d: i32) -> i32 {
+    use itertools::Itertools;
+    use std::cmp::Reverse;
 
-const M: i64 = 1_000_000_007;
-fn dfs(adj: &[Vec<usize>], nums: &[i32], k: i32, node: usize) -> [Vec<i64>; 2] {
-    let num = (nums[node] % k) as usize;
-    let mut skip = vec![0; k as usize];
-    let mut take = vec![0; k as usize];
-    skip[0] = 1;
-    take[num] = 1;
-    for &next in &adj[node] {
-        let mut temp_skip = vec![0; k as usize];
-        let mut temp_take = vec![0; k as usize];
-        let [next_skip, next_take] = dfs(adj, nums, k, next);
-        let k = k as usize;
-        for a in 0..k {
-            for b in 0..k {
-                let rem = (a + b) % k;
-                let count = (next_skip[b] + next_take[b]) % M;
-                temp_skip[rem] = (temp_skip[rem] + skip[a] * count % M) % M;
-                temp_take[rem] = (temp_take[rem] + take[a] * next_skip[b] % M) % M
-            }
+    let n = arr.len();
+    let mut suf_greater = (0..n).map(|v| (1 + v + d as usize).min(n)).collect_vec();
+    let mut st: Vec<usize> = vec![];
+    for (idx, &num) in arr.iter().enumerate() {
+        while let Some(&top) = st.last()
+            && arr[top] <= num
+        {
+            st.pop();
+            suf_greater[top] = suf_greater[top].min(idx);
         }
-        skip = temp_skip;
-        take = temp_take;
+        st.push(idx);
     }
-    [skip, take]
+    st.clear();
+    let mut pref_greater = (0..n).map(|v| v.saturating_sub(d as usize)).collect_vec();
+    for (idx, &num) in arr.iter().enumerate().rev() {
+        while let Some(&top) = st.last()
+            && arr[top] <= num
+        {
+            st.pop();
+            pref_greater[top] = pref_greater[top].max(1 + idx);
+        }
+        st.push(idx);
+    }
+    let nums = (0..n)
+        .sorted_unstable_by_key(|i| Reverse(arr[*i]))
+        .collect_vec();
+    let mut dp = vec![1; n];
+    let mut res = 1;
+    for idx in nums {
+        let left = pref_greater[idx];
+        let right = suf_greater[idx];
+        for i in left..right {
+            if i == idx {
+                continue;
+            }
+            dp[i] = dp[i].max(1 + dp[idx]);
+            res = res.max(dp[i]);
+        }
+    }
+    res
 }
 
 #[cfg(test)]
@@ -82,8 +86,7 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(count_valid_subsets(&[-1, 0, 1], &[1, 2, 3], 3), 1);
-        assert_eq!(count_valid_subsets(&[-1, 0, 0, 0], &[2, 1, 2, 1], 3), 2);
+        assert_eq!(max_jumps(&[7, 6, 5, 4, 3, 2, 1], 1), 7);
     }
 
     #[test]
