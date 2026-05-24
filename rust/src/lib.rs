@@ -9,11 +9,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn limit_occurrences(nums: Vec<i32>, k: i32) -> Vec<i32> {
-    nums.chunk_by(|a, b| a == b)
-        .flat_map(|ch| ch.iter().take(k as usize))
-        .copied()
-        .collect()
+pub fn password_strength(password: &str) -> i32 {
+    use std::collections::HashSet;
+    let mut res = 0;
+    let mut seen = HashSet::new();
+    for b in password.bytes() {
+        if seen.insert(b) {
+            if b.is_ascii_lowercase() {
+                res += 1
+            }
+            if b.is_ascii_uppercase() {
+                res += 2
+            }
+            if b.is_ascii_digit() {
+                res += 3
+            }
+            if b"!@#$".contains(&b) {
+                res += 5
+            }
+        }
+    }
+    res
 }
 
 #[cfg(test)]
@@ -46,7 +62,9 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(password_strength("vqztn2Z"), 10);
+    }
 
     #[test]
     fn test() {}
