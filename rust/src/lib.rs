@@ -9,29 +9,79 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn can_reach(s: &str, min_jump: i32, max_jump: i32) -> bool {
-    use std::collections::VecDeque;
-    let (s, n) = (s.as_bytes(), s.len());
-    if s[n - 1] == b'1' {
-        return false;
+pub fn merge_stones(stones: &[i32], k: i32) -> i32 {
+    let n = stones.len();
+    let k = k as usize;
+    // To merge `n` into `1`
+    // `1` has to merge with ( `n-1` merge into `k-1` )
+    if (n - 1) % (k - 1) > 0 {
+        return -1;
     }
-    let [minj, maxj] = [min_jump, max_jump].map(|v| v as usize);
-    let mut queue = VecDeque::from([0]);
-    let mut prev = 0;
-    while let Some(node) = queue.pop_front() {
-        if node == n - 1 {
-            return true;
+    let prefix = stones.iter().fold(vec![], |mut acc, v| {
+        acc.push(v + acc.last().unwrap_or(&0));
+        acc
+    });
+    tabulation(&prefix, k)
+    // let mut memo = vec![vec![vec![-1; 1 + k]; n]; n];
+    // dfs(&prefix, k, 0, n - 1, 1, &mut memo)
+}
+
+fn dfs(
+    prefix: &[i32],
+    k: usize,
+    left: usize,
+    right: usize,
+    target: usize,
+    memo: &mut [Vec<Vec<i32>>],
+) -> i32 {
+    if left == right {
+        return if target == 1 { 0 } else { i32::MAX >> 2 };
+    }
+    if memo[left][right][target] > -1 {
+        return memo[left][right][target];
+    }
+    let res = if target == 1 {
+        dfs(prefix, k, left, right, k, memo)
+            + (prefix[right] - if left > 0 { prefix[left - 1] } else { 0 })
+    } else {
+        let mut res = i32::MAX;
+        for mid in left..right {
+            res = res.min(
+                dfs(prefix, k, left, mid, 1, memo)
+                    + dfs(prefix, k, 1 + mid, right, target - 1, memo),
+            )
         }
-        let left = node + minj;
-        let right = (node + maxj).min(n - 1);
-        for i in left.max(1 + prev)..=right {
-            if s[i] == b'0' {
-                queue.push_back(i);
+        res
+    };
+    memo[left][right][target] = res;
+    res
+}
+
+fn tabulation(prefix: &[i32], k: usize) -> i32 {
+    const INF: i32 = i32::MAX >> 2;
+    let n = prefix.len();
+    let mut dp = vec![vec![vec![INF; 1 + k]; n]; n];
+    for i in 0..n {
+        dp[i][i][1] = 0;
+    }
+    for len in 2..=n {
+        for left in 0..=n - len {
+            for target in (1..=k).rev() {
+                let right = left + len - 1;
+                dp[left][right][target] = if target == 1 {
+                    let cost = prefix[right] - if left > 0 { prefix[left - 1] } else { 0 };
+                    (dp[left][right][k] + cost).min(INF) // prevents overflow
+                } else {
+                    let mut curr = INF;
+                    for mid in left..right {
+                        curr = curr.min(dp[left][mid][1] + dp[1 + mid][right][target - 1]);
+                    }
+                    curr
+                };
             }
         }
-        prev = prev.max(right);
     }
-    false
+    dp[0][n - 1][1]
 }
 
 #[cfg(test)]
@@ -64,9 +114,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert!(!can_reach("00111010", 3, 5));
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
