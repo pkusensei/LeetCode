@@ -9,32 +9,29 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_operations(nums: Vec<i32>) -> i32 {
-    let n = nums.len();
-    let pos = nums.iter().position(|&v| v == 0).unwrap_or(0);
-    let inc_sorted = (0..n).all(|i| nums[(pos + i) % n] == i as i32);
-    let mut res = usize::MAX >> 1;
-    if inc_sorted {
-        let a = pos;
-        let b = 2 + n - pos;
-        res = res.min(a).min(b);
+pub fn can_reach(s: &str, min_jump: i32, max_jump: i32) -> bool {
+    use std::collections::VecDeque;
+    let (s, n) = (s.as_bytes(), s.len());
+    if s[n - 1] == b'1' {
+        return false;
     }
-    let dec_sorted = (0..n).all(|i| {
-        let curr = nums[i] as usize;
-        let next = nums[(1 + i) % n] as usize;
-        (next - curr + n) % n == n - 1
-    });
-    if dec_sorted {
-        let k = n - 1 - pos;
-        let a = 1 + k;
-        let b = 1 + n - k;
-        res = res.min(a).min(b);
+    let [minj, maxj] = [min_jump, max_jump].map(|v| v as usize);
+    let mut queue = VecDeque::from([0]);
+    let mut prev = 0;
+    while let Some(node) = queue.pop_front() {
+        if node == n - 1 {
+            return true;
+        }
+        let left = node + minj;
+        let right = (node + maxj).min(n - 1);
+        for i in left.max(1 + prev)..=right {
+            if s[i] == b'0' {
+                queue.push_back(i);
+            }
+        }
+        prev = prev.max(right);
     }
-    if res == usize::MAX >> 1 {
-        -1
-    } else {
-        res as i32
-    }
+    false
 }
 
 #[cfg(test)]
@@ -67,7 +64,9 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert!(!can_reach("00111010", 3, 5));
+    }
 
     #[test]
     fn test() {}
