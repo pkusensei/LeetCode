@@ -10,15 +10,18 @@ mod trie;
 use helper::*;
 
 pub fn number_of_special_chars(word: &str) -> i32 {
-    let [mut low, mut up] = [0_i32, 0];
-    for b in word.bytes() {
+    let [mut low, mut up] = [[None; 26]; 2];
+    for (i, b) in word.bytes().enumerate() {
         if b.is_ascii_lowercase() {
-            low |= 1 << i32::from(b - b'a')
+            low[usize::from(b - b'a')] = Some(i)
         } else if b.is_ascii_uppercase() {
-            up |= 1 << i32::from(b - b'A')
+            up[usize::from(b - b'A')].get_or_insert(i);
         }
     }
-    (low & up).count_ones() as i32
+    low.iter()
+        .zip(up)
+        .filter(|(a, b)| a.zip(*b).is_some_and(|(a, b)| a < b))
+        .count() as i32
 }
 
 #[cfg(test)]
