@@ -9,51 +9,43 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn string_indices(words_container: &[&str], words_query: &[&str]) -> Vec<i32> {
-    let mut t = Trie::default();
-    for (i, s) in words_container.iter().enumerate() {
-        t.insert(s.bytes().rev(), s.len(), i);
-    }
-    words_query
-        .iter()
-        .map(|s| t.find(s.bytes().rev()) as i32)
-        .collect()
-}
-
-#[derive(Default)]
-struct Trie {
-    nodes: [Option<Box<Trie>>; 26],
-    min_len: usize,
-    idx: usize,
-}
-
-impl Trie {
-    fn insert(&mut self, it: impl Iterator<Item = u8>, len: usize, idx: usize) {
-        let mut curr = self;
-        for b in it {
-            if curr.min_len == 0 || curr.min_len > len {
-                curr.min_len = len;
-                curr.idx = idx;
-            }
-            curr = curr.nodes[usize::from(b - b'a')].get_or_insert_default();
-        }
-        if curr.min_len == 0 || curr.min_len > len {
-            curr.min_len = len;
-            curr.idx = idx;
+pub fn grid_illumination(_n: i32, lamps: Vec<Vec<i32>>, queries: Vec<Vec<i32>>) -> Vec<i32> {
+    use std::collections::{HashMap, HashSet};
+    let mut set = HashSet::new();
+    let [mut rows, mut cols, mut diag1, mut diag2] = [0; 4].map(|_| HashMap::new());
+    for v in lamps {
+        let [r, c] = v[..] else { unreachable!() };
+        if set.insert([r, c]) {
+            *rows.entry(r).or_insert(0) += 1;
+            *cols.entry(c).or_insert(0) += 1;
+            // diag /
+            *diag1.entry(r + c).or_insert(0) += 1;
+            // diag \
+            *diag2.entry(r - c).or_insert(0) += 1;
         }
     }
-
-    fn find(&self, it: impl Iterator<Item = u8>) -> usize {
-        let mut curr = self;
-        for b in it {
-            if let Some(ref v) = curr.nodes[usize::from(b - b'a')] {
-                curr = v
-            } else {
-                break;
+    let mut res = vec![];
+    for q in queries {
+        let [r, c] = q[..] else { unreachable!() };
+        let is_on = rows.get(&r).is_some_and(|&v| v > 0)
+            || cols.get(&c).is_some_and(|&v| v > 0)
+            || diag1.get(&(r + c)).is_some_and(|&v| v > 0)
+            || diag2.get(&(r - c)).is_some_and(|&v| v > 0);
+        res.push(i32::from(is_on));
+        for [dr, dc] in ALL_DIRS.into_iter().chain([[0, 0]]) {
+            let nr = r + dr;
+            let nc = c + dc;
+            if set.remove(&[nr, nc]) {
+                *rows.entry(nr).or_insert(0) -= 1;
+                *cols.entry(nc).or_insert(0) -= 1;
+                // diag /
+                *diag1.entry(nr + nc).or_insert(0) -= 1;
+                // diag \
+                *diag2.entry(nr - nc).or_insert(0) -= 1;
             }
         }
-        curr.idx
     }
+    res
 }
 
 #[cfg(test)]
@@ -86,12 +78,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(
-            string_indices(&["abcd", "bcd", "xbcd"], &["cd", "bcd", "xyz"]),
-            [1, 1, 1]
-        );
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
