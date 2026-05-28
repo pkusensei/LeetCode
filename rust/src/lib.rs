@@ -9,19 +9,51 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn number_of_special_chars(word: &str) -> i32 {
-    let [mut low, mut up] = [[None; 26]; 2];
-    for (i, b) in word.bytes().enumerate() {
-        if b.is_ascii_lowercase() {
-            low[usize::from(b - b'a')] = Some(i)
-        } else if b.is_ascii_uppercase() {
-            up[usize::from(b - b'A')].get_or_insert(i);
+pub fn string_indices(words_container: &[&str], words_query: &[&str]) -> Vec<i32> {
+    let mut t = Trie::default();
+    for (i, s) in words_container.iter().enumerate() {
+        t.insert(s.bytes().rev(), s.len(), i);
+    }
+    words_query
+        .iter()
+        .map(|s| t.find(s.bytes().rev()) as i32)
+        .collect()
+}
+
+#[derive(Default)]
+struct Trie {
+    nodes: [Option<Box<Trie>>; 26],
+    min_len: usize,
+    idx: usize,
+}
+
+impl Trie {
+    fn insert(&mut self, it: impl Iterator<Item = u8>, len: usize, idx: usize) {
+        let mut curr = self;
+        for b in it {
+            if curr.min_len == 0 || curr.min_len > len {
+                curr.min_len = len;
+                curr.idx = idx;
+            }
+            curr = curr.nodes[usize::from(b - b'a')].get_or_insert_default();
+        }
+        if curr.min_len == 0 || curr.min_len > len {
+            curr.min_len = len;
+            curr.idx = idx;
         }
     }
-    low.iter()
-        .zip(up)
-        .filter(|(a, b)| a.zip(*b).is_some_and(|(a, b)| a < b))
-        .count() as i32
+
+    fn find(&self, it: impl Iterator<Item = u8>) -> usize {
+        let mut curr = self;
+        for b in it {
+            if let Some(ref v) = curr.nodes[usize::from(b - b'a')] {
+                curr = v
+            } else {
+                break;
+            }
+        }
+        curr.idx
+    }
 }
 
 #[cfg(test)]
@@ -55,7 +87,10 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(number_of_special_chars("aaAbcBC"), 3);
+        assert_eq!(
+            string_indices(&["abcd", "bcd", "xbcd"], &["cd", "bcd", "xyz"]),
+            [1, 1, 1]
+        );
     }
 
     #[test]
