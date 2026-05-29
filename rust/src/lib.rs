@@ -9,17 +9,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_valid(s: &str) -> bool {
-    let mut st = vec![];
-    for b in s.bytes() {
-        if b == b'c' && st.ends_with(b"ab") {
-            st.pop();
-            st.pop();
-        } else {
-            st.push(b);
-        }
-    }
-    st.is_empty()
+pub fn min_element(nums: Vec<i32>) -> i32 {
+    nums.iter()
+        .map(|v| {
+            let mut v = *v;
+            let mut res = 0;
+            while v > 0 {
+                res += v % 10;
+                v /= 10
+            }
+            res
+        })
+        .min()
+        .unwrap_or(0)
 }
 
 #[cfg(test)]
