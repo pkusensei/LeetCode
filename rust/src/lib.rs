@@ -9,19 +9,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_element(nums: Vec<i32>) -> i32 {
-    nums.iter()
-        .map(|v| {
-            let mut v = *v;
-            let mut res = 0;
-            while v > 0 {
-                res += v % 10;
-                v /= 10
-            }
-            res
-        })
-        .min()
-        .unwrap_or(0)
+pub fn longest_ones(nums: Vec<i32>, k: i32) -> i32 {
+    let mut res = 0;
+    let mut left = 0;
+    let mut zeros = 0;
+    for (right, &num) in nums.iter().enumerate() {
+        zeros += i32::from(num == 0);
+        while zeros > k {
+            zeros -= i32::from(nums[left] == 0);
+            left += 1;
+        }
+        res = res.max(1 + right - left)
+    }
+    res as i32
 }
 
 #[cfg(test)]
@@ -54,9 +54,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert!(!is_valid("abacbcabcc"));
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
