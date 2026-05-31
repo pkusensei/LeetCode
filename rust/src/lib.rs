@@ -9,14 +9,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn asteroids_destroyed(mass: i32, mut asteroids: Vec<i32>) -> bool {
-    let mut mass = i64::from(mass);
-    asteroids.sort_unstable();
-    for a in asteroids {
-        let a = i64::from(a);
-        if mass >= a { mass += a } else { return false }
-    }
-    true
+pub fn digit_frequency_score(n: i32) -> i32 {
+    n.to_string()
+        .bytes()
+        .fold([0; 10], |mut acc, b| {
+            acc[usize::from(b - b'0')] += 1;
+            acc
+        })
+        .iter()
+        .enumerate()
+        .fold(0, |acc, (i, f)| acc + i as i32 * f)
 }
 
 #[cfg(test)]
