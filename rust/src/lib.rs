@@ -9,53 +9,44 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_sale_items(items: Vec<[i32; 2]>, budget: i32) -> i32 {
-    let n = items.len();
-    let mut gains = vec![0; n];
+pub fn maximum_sale_items(items: Vec<[i32; 2]>, mut budget: i32) -> i32 {
+    use itertools::Itertools;
+    use std::collections::HashMap;
     let mut min_price = i32::MAX;
-    for i1 in 0..n {
-        min_price = min_price.min(items[i1][1]);
-        for i2 in 0..n {
-            if items[i2][0] % items[i1][0] == 0 {
-                gains[i1] += 1;
-            }
+    // Preprocessing and count factors
+    let mut max_factor = 1;
+    let mut factors = HashMap::new();
+    for item in items.iter() {
+        let [fac, p] = item[..] else { unreachable!() };
+        *factors.entry(fac).or_insert(0) += 1;
+        min_price = min_price.min(p);
+        max_factor = max_factor.max(fac);
+    }
+    // For each factor, add count(factor_multiple)
+    let mut freq = HashMap::new();
+    for &fac in factors.keys() {
+        for p in (fac..=max_factor).step_by(fac as usize) {
+            *freq.entry(fac).or_insert(0) += factors.get(&p).unwrap_or(&0);
         }
     }
-    let mut memo = vec![[-1; 1501]; n];
-    dfs(&items, &gains, min_price, 0, budget, &mut memo)
-}
-
-// [factor, price]
-fn dfs(
-    items: &[[i32; 2]],
-    gains: &[i32],
-    min_price: i32,
-    idx: usize,
-    budget: i32,
-    memo: &mut [[i32; 1501]],
-) -> i32 {
-    if idx >= items.len() {
-        return budget / min_price;
+    // Each item contributes 2*min(budget/price, freq[factor]-1)
+    // budget/price => most amount to buy
+    // freq[factor]-1 => possible free copies
+    //      -1 to remove item itself
+    // filter() remove item too expensive or non-existent
+    let arr = items
+        .iter()
+        .map(|v| (v[1], freq[&v[0]] - 1))
+        .filter(|v| v.0 < 2 * min_price && v.1 > 0)
+        .sorted_unstable();
+    let mut res = 0;
+    for item in arr {
+        let (p, f) = item;
+        let curr = f.min(budget / p);
+        res += 2 * curr;
+        budget -= curr * p;
     }
-    if memo[idx][budget as usize] != -1 {
-        return memo[idx][budget as usize];
-    }
-    let skip = dfs(items, gains, min_price, 1 + idx, budget, memo);
-    let mut take = 0;
-    if budget >= items[idx][1] {
-        take = gains[idx]
-            + dfs(
-                items,
-                gains,
-                min_price,
-                1 + idx,
-                budget - items[idx][1],
-                memo,
-            );
-    }
-    let res = skip.max(take);
-    memo[idx][budget as usize] = res;
-    res
+    res + budget / min_price
 }
 
 #[cfg(test)]
@@ -89,10 +80,10 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(maximum_sale_items(vec![[6, 2], [2, 6], [3, 4]], 9), 4);
+        assert_eq!(maximum_sale_items(vec![[1, 6], [2, 4], [3, 5]], 19), 5);
         assert_eq!(
-            maximum_sale_items(vec![[2, 4], [3, 2], [4, 1], [6, 4], [12, 4]], 8),
-            10
+            maximum_sale_items(vec![[2, 8], [1, 10], [6, 6], [4, 12], [5, 20], [5, 17]], 35),
+            7
         )
     }
 
