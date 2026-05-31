@@ -9,16 +9,53 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn digit_frequency_score(n: i32) -> i32 {
-    n.to_string()
-        .bytes()
-        .fold([0; 10], |mut acc, b| {
-            acc[usize::from(b - b'0')] += 1;
-            acc
-        })
-        .iter()
-        .enumerate()
-        .fold(0, |acc, (i, f)| acc + i as i32 * f)
+pub fn maximum_sale_items(items: Vec<[i32; 2]>, budget: i32) -> i32 {
+    let n = items.len();
+    let mut gains = vec![0; n];
+    let mut min_price = i32::MAX;
+    for i1 in 0..n {
+        min_price = min_price.min(items[i1][1]);
+        for i2 in 0..n {
+            if items[i2][0] % items[i1][0] == 0 {
+                gains[i1] += 1;
+            }
+        }
+    }
+    let mut memo = vec![[-1; 1501]; n];
+    dfs(&items, &gains, min_price, 0, budget, &mut memo)
+}
+
+// [factor, price]
+fn dfs(
+    items: &[[i32; 2]],
+    gains: &[i32],
+    min_price: i32,
+    idx: usize,
+    budget: i32,
+    memo: &mut [[i32; 1501]],
+) -> i32 {
+    if idx >= items.len() {
+        return budget / min_price;
+    }
+    if memo[idx][budget as usize] != -1 {
+        return memo[idx][budget as usize];
+    }
+    let skip = dfs(items, gains, min_price, 1 + idx, budget, memo);
+    let mut take = 0;
+    if budget >= items[idx][1] {
+        take = gains[idx]
+            + dfs(
+                items,
+                gains,
+                min_price,
+                1 + idx,
+                budget - items[idx][1],
+                memo,
+            );
+    }
+    let res = skip.max(take);
+    memo[idx][budget as usize] = res;
+    res
 }
 
 #[cfg(test)]
@@ -51,7 +88,13 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(maximum_sale_items(vec![[6, 2], [2, 6], [3, 4]], 9), 4);
+        assert_eq!(
+            maximum_sale_items(vec![[2, 4], [3, 2], [4, 1], [6, 4], [12, 4]], 8),
+            10
+        )
+    }
 
     #[test]
     fn test() {}
