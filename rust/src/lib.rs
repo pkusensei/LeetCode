@@ -8,19 +8,40 @@ mod trie;
 
 #[allow(unused_imports)]
 use helper::*;
+use itertools::Itertools;
 
-pub fn minimum_cost(mut cost: Vec<i32>) -> i32 {
-    cost.sort_unstable();
-    let mut res = 0;
-    while let Some(a) = cost.pop() {
-        res += a;
-        let Some(b) = cost.pop() else {
-            break;
-        };
-        res += b;
-        cost.pop();
+pub fn earliest_finish_time(
+    land_start_time: Vec<i32>,
+    land_duration: Vec<i32>,
+    water_start_time: Vec<i32>,
+    water_duration: Vec<i32>,
+) -> i32 {
+    let land = land_start_time
+        .iter()
+        .zip(&land_duration)
+        .map(|(st, du)| [*st, *du])
+        .sorted_unstable()
+        .collect_vec();
+    let water = water_start_time
+        .iter()
+        .zip(&water_duration)
+        .map(|(st, du)| [*st, *du])
+        .sorted_unstable()
+        .collect_vec();
+    f(&land, &water).min(f(&water, &land))
+}
+
+fn f(arr1: &[[i32; 2]], arr2: &[[i32; 2]]) -> i32 {
+    let end1 = arr1.iter().map(|v| v[0] + v[1]).min().unwrap();
+    let i = arr2.partition_point(|v| v[0] < end1);
+    let a = arr2[..i].iter().map(|v| v[1]).min();
+    let b = arr2[i..].iter().map(|v| v[0] + v[1]).min();
+    match [a, b] {
+        [None, None] => unreachable!(),
+        [None, Some(b)] => b,
+        [Some(a), None] => end1 + a,
+        [Some(a), Some(b)] => (end1 + a).min(b),
     }
-    res
 }
 
 #[cfg(test)]
