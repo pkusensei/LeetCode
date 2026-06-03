@@ -8,26 +8,46 @@ namespace Solution;
 
 public class Solution
 {
-    public TreeNode InsertIntoMaxTree(TreeNode root, int val)
+    public TreeNode BstFromPreorder(int[] preorder)
     {
-        TreeNode dummy = new(-1, null, root);
-        dummy.right = Dfs(root, val);
-        return dummy.right;
-
-        static TreeNode Dfs(TreeNode node, int val)
+        TreeNode root = new(preorder[0]);
+        Stack<TreeNode> st = [];
+        st.Push(root);
+        foreach (var num in preorder[1..])
         {
-            if (node is null) { return new(val); }
-            if (node.val < val)
+            TreeNode node = new(num);
+            TreeNode temp = null;
+            while (st.TryPeek(out var top) && top.val < num)
             {
-                TreeNode temp = new(val);
-                temp.left = node;
-                return temp;
+                temp = st.Pop();
             }
-            else
+            if (temp is not null)
             {
-                node.right = Dfs(node.right, val);
-                return node;
+                temp.right = node;
             }
+            else if (st.TryPeek(out var top_))
+            {
+                top_.left = node;
+            }
+            st.Push(node);
+        }
+        return root;
+    }
+
+    public TreeNode WithDfs(int[] preorder)
+    {
+        return Dfs(preorder);
+
+        static TreeNode Dfs(ReadOnlySpan<int> preorder)
+        {
+            if (preorder.IsEmpty) { return null; }
+            int val = preorder[0];
+            int i = 0;
+            for (; i < preorder.Length && preorder[i] <= val; i += 1)
+            { }
+            TreeNode left = Dfs(preorder[1..i]);
+            TreeNode right = Dfs(preorder[i..]);
+            return new(val, left, right);
         }
     }
 }
