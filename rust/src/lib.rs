@@ -9,15 +9,34 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_pairs_divisible_by60(time: Vec<i32>) -> i32 {
-    let mut freq = [0; 60];
-    let mut res = 0;
-    for &num in time.iter() {
-        let rem = num % 60;
-        res += freq[((60 - rem) % 60) as usize];
-        freq[rem as usize] += 1;
+pub fn ship_within_days(weights: Vec<i32>, days: i32) -> i32 {
+    let mut left = *weights.iter().max().unwrap_or(&1);
+    let mut right = weights.iter().sum();
+    while left < right {
+        let mid = left + (right - left) / 2;
+        if check(&weights, days, mid) {
+            right = mid
+        } else {
+            left = 1 + mid
+        }
     }
-    res
+    left
+}
+
+fn check(weights: &[i32], mut days: i32, mid: i32) -> bool {
+    let mut curr = 0;
+    for &w in weights {
+        if curr + w > mid {
+            curr = w;
+            days -= 1
+        } else {
+            curr += w;
+        }
+        if days <= 0 {
+            return false;
+        }
+    }
+    days >= 0
 }
 
 #[cfg(test)]
