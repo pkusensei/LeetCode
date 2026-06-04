@@ -9,34 +9,41 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn ship_within_days(weights: Vec<i32>, days: i32) -> i32 {
-    let mut left = *weights.iter().max().unwrap_or(&1);
-    let mut right = weights.iter().sum();
-    while left < right {
-        let mid = left + (right - left) / 2;
-        if check(&weights, days, mid) {
-            right = mid
-        } else {
-            left = 1 + mid
-        }
-    }
-    left
+pub fn num_dup_digits_at_most_n(n: i32) -> i32 {
+    let s = n.to_string().into_bytes();
+    let len = s.len();
+    let mut memo = vec![[[[-1; 1 << 10]; 2]; 2]; len];
+    let v = dfs(&s, 0, true, true, 0, &mut memo);
+    n - v
 }
 
-fn check(weights: &[i32], mut days: i32, mid: i32) -> bool {
-    let mut curr = 0;
-    for &w in weights {
-        if curr + w > mid {
-            curr = w;
-            days -= 1
-        } else {
-            curr += w;
-        }
-        if days <= 0 {
-            return false;
-        }
+fn dfs(
+    s: &[u8],
+    idx: usize,
+    tight: bool,
+    leading: bool,
+    mask: usize,
+    memo: &mut [[[[i32; 1 << 10]; 2]; 2]],
+) -> i32 {
+    if idx >= s.len() {
+        return i32::from(!leading);
     }
-    days >= 0
+    if memo[idx][usize::from(tight)][usize::from(leading)][mask] > -1 {
+        return memo[idx][usize::from(tight)][usize::from(leading)][mask];
+    }
+    let upper = if tight { s[idx] } else { b'9' };
+    let mut res = 0;
+    for d in b'0'..=upper {
+        if (mask >> (d - b'0')) & 1 == 1 {
+            continue;
+        }
+        let ntight = tight && d == upper;
+        let nleading = leading && d == b'0';
+        let nmask = if nleading { 0 } else { mask | 1 << (d - b'0') };
+        res += dfs(s, 1 + idx, ntight, nleading, nmask, memo);
+    }
+    memo[idx][usize::from(tight)][usize::from(leading)][mask] = res;
+    res
 }
 
 #[cfg(test)]
