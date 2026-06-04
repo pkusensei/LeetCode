@@ -9,27 +9,58 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_domino_rotations(tops: Vec<i32>, bottoms: Vec<i32>) -> i32 {
-    let a = f(tops[0], &tops, &bottoms).min(f(tops[0], &bottoms, &tops));
-    let b = f(bottoms[0], &tops, &bottoms).min(f(bottoms[0], &bottoms, &tops));
-    match [a, b] {
-        [None, None] => -1,
-        [None, Some(x)] | [Some(x), None] => x,
-        [Some(a), Some(b)] => a.min(b),
-    }
+pub fn total_waviness(num1: i32, num2: i32) -> i32 {
+    f(num2) - f(num1 - 1)
 }
 
-fn f(target: i32, a: &[i32], b: &[i32]) -> Option<i32> {
-    let mut res = 0;
-    for (&a, &b) in a.iter().zip(b) {
-        if a != target {
-            if b != target {
-                return None;
+fn f(num: i32) -> i32 {
+    if num < 101 {
+        return 0;
+    }
+    let s = num.to_string().into_bytes();
+    let n = s.len();
+    let mut memo = vec![[[[[None; 10]; 10]; 2]; 2]; n];
+    dfs(&s, 0, true, true, b'0', b'0', &mut memo)[0]
+}
+
+fn dfs(
+    s: &[u8],
+    idx: usize,
+    tight: bool,
+    leading: bool,
+    left: u8,
+    mid: u8,
+    memo: &mut [[[[[Option<[i32; 2]>; 10]; 10]; 2]; 2]],
+) -> [i32; 2] {
+    if idx >= s.len() {
+        return [0, 1];
+    }
+    if let Some(v) = memo[idx][usize::from(tight)][usize::from(leading)][usize::from(left - b'0')]
+        [usize::from(mid - b'0')]
+    {
+        return v;
+    }
+    let upper = if tight { s[idx] } else { b'9' };
+    let mut wavi = 0;
+    let mut count = 0;
+    for d in b'0'..=upper {
+        let ntight = tight && d == upper;
+        let nleading = leading && mid == b'0';
+        let temp = dfs(s, 1 + idx, ntight, nleading, mid, d, memo);
+        wavi += temp[0];
+        count += temp[1];
+        if !leading {
+            if left < mid && mid > d {
+                wavi += temp[1]
             }
-            res += 1
+            if left > mid && mid < d {
+                wavi += temp[1]
+            }
         }
     }
-    Some(res)
+    memo[idx][usize::from(tight)][usize::from(leading)][usize::from(left - b'0')]
+        [usize::from(mid - b'0')] = Some([wavi, count]);
+    [wavi, count]
 }
 
 #[cfg(test)]
