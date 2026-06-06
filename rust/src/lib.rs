@@ -9,16 +9,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn left_right_difference(nums: Vec<i32>) -> Vec<i32> {
-    let sum: i32 = nums.iter().sum();
-    let mut left = 0;
-    let mut res = vec![];
-    for &num in nums.iter() {
-        let right = sum - left - num;
-        res.push((left - right).abs());
-        left += num;
+pub const fn consecutive_set_bits(mut n: i32) -> bool {
+    let mut seen = false;
+    while n > 0 {
+        if n & 0b11 == 0b11 {
+            if !seen {
+                seen = true
+            } else {
+                return false;
+            }
+        }
+        n >>= 1
     }
-    res
+    seen
 }
 
 #[cfg(test)]
