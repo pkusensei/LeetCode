@@ -9,58 +9,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn total_waviness(num1: i64, num2: i64) -> i64 {
-    f(num2) - f(num1 - 1)
-}
-
-fn f(num: i64) -> i64 {
-    if num < 101 {
-        return 0;
+pub fn left_right_difference(nums: Vec<i32>) -> Vec<i32> {
+    let sum: i32 = nums.iter().sum();
+    let mut left = 0;
+    let mut res = vec![];
+    for &num in nums.iter() {
+        let right = sum - left - num;
+        res.push((left - right).abs());
+        left += num;
     }
-    let s = num.to_string().into_bytes();
-    let n = s.len();
-    let mut memo = vec![[[[[None; 10]; 10]; 2]; 2]; n];
-    dfs(&s, 0, true, true, b'0', b'0', &mut memo)[0]
-}
-
-fn dfs(
-    s: &[u8],
-    idx: usize,
-    tight: bool,
-    leading: bool,
-    left: u8,
-    mid: u8,
-    memo: &mut [[[[[Option<[i64; 2]>; 10]; 10]; 2]; 2]],
-) -> [i64; 2] {
-    if idx >= s.len() {
-        return [0, 1];
-    }
-    if let Some(v) = memo[idx][usize::from(tight)][usize::from(leading)][usize::from(left - b'0')]
-        [usize::from(mid - b'0')]
-    {
-        return v;
-    }
-    let upper = if tight { s[idx] } else { b'9' };
-    let mut wav = 0;
-    let mut count = 0;
-    for d in b'0'..=upper {
-        let ntight = tight && d == upper;
-        let nleading = leading && mid == b'0';
-        let [nwav, ncount] = dfs(s, 1 + idx, ntight, nleading, mid, d, memo);
-        wav += nwav;
-        count += ncount;
-        if !leading {
-            if left < mid && mid > d {
-                wav += ncount
-            }
-            if left > mid && mid < d {
-                wav += ncount
-            }
-        }
-    }
-    memo[idx][usize::from(tight)][usize::from(leading)][usize::from(left - b'0')]
-        [usize::from(mid - b'0')] = Some([wav, count]);
-    [wav, count]
+    res
 }
 
 #[cfg(test)]
