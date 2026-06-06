@@ -9,19 +9,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub const fn consecutive_set_bits(mut n: i32) -> bool {
-    let mut seen = false;
-    while n > 0 {
-        if n & 0b11 == 0b11 {
-            if !seen {
-                seen = true
-            } else {
-                return false;
-            }
+pub fn min_energy(_n: i32, brightness: i32, mut intervals: Vec<[i32; 2]>) -> i64 {
+    let count = (brightness + 2) / 3;
+    intervals.sort_unstable();
+    let mut prev_end = 0;
+    let mut time = 0;
+    for int in intervals.iter() {
+        let [start, end] = int[..] else {
+            unreachable!()
+        };
+        if end < prev_end {
+            continue;
         }
-        n >>= 1
+        time += i64::from(1 + end - prev_end.max(start));
+        prev_end = 1 + end;
     }
-    seen
+    i64::from(count) * time
 }
 
 #[cfg(test)]
@@ -54,8 +57,15 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(min_energy(4, 2, vec![[1, 3], [2, 4]]), 4);
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(
+            min_energy(15, 8, vec![[2, 4], [18, 20], [8, 20], [14, 14]]),
+            48
+        )
+    }
 }
