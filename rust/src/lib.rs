@@ -9,22 +9,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_energy(_n: i32, brightness: i32, mut intervals: Vec<[i32; 2]>) -> i64 {
-    let count = (brightness + 2) / 3;
-    intervals.sort_unstable();
-    let mut prev_end = 0;
-    let mut time = 0;
-    for int in intervals.iter() {
-        let [start, end] = int[..] else {
-            unreachable!()
-        };
-        if end < prev_end {
-            continue;
+pub fn max_total(nums: &[i32], s: &str) -> i64 {
+    let s = s.as_bytes();
+    let mut left = 0;
+    let mut res = 0;
+    for ch in s.chunk_by(|a, b| a == b) {
+        if ch[0] == b'1' {
+            let right = left + ch.len();
+            if left > 0 {
+                let sum: i64 = nums[left - 1..right].iter().map(|&v| i64::from(v)).sum();
+                let min = i64::from(*nums[left - 1..right].iter().min().unwrap_or(&0));
+                res += sum - min;
+            } else {
+                res += nums[..right].iter().map(|&v| i64::from(v)).sum::<i64>();
+            }
         }
-        time += i64::from(1 + end - prev_end.max(start));
-        prev_end = 1 + end;
+        left += ch.len();
     }
-    i64::from(count) * time
+    res
 }
 
 #[cfg(test)]
@@ -58,14 +60,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(min_energy(4, 2, vec![[1, 3], [2, 4]]), 4);
+        assert_eq!(max_total(&[9, 3, 5], "011"), 14);
     }
 
     #[test]
     fn test() {
-        assert_eq!(
-            min_energy(15, 8, vec![[2, 4], [18, 20], [8, 20], [14, 14]]),
-            48
-        )
+        assert_eq!(max_total(&[11, 2, 9], "101"), 20);
     }
 }
