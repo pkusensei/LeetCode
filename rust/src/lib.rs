@@ -9,10 +9,25 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-// -k <= n-x <= k
-// n-k<=x<=n+k
-pub fn sum_of_good_integers(n: i32, k: i32) -> i32 {
-    (n - k..=n + k).filter(|&x| x > 0 && x & n == 0).sum()
+pub fn generate_valid_strings(n: i32, k: i32) -> Vec<String> {
+    let mut res = vec![];
+    backtrack(n, k, 0, &mut String::new(), &mut res);
+    res
+}
+
+fn backtrack(n: i32, k: i32, idx: i32, curr: &mut String, res: &mut Vec<String>) {
+    if n == idx {
+        res.push(curr.clone());
+        return;
+    }
+    if k >= idx && !curr.ends_with('1') {
+        curr.push('1');
+        backtrack(n, k - idx, 1 + idx, curr, res);
+        curr.pop();
+    }
+    curr.push('0');
+    backtrack(n, k, 1 + idx, curr, res);
+    curr.pop();
 }
 
 #[cfg(test)]
