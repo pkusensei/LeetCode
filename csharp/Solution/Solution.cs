@@ -8,47 +8,31 @@ namespace Solution;
 
 public class Solution
 {
-    public TreeNode BstFromPreorder(int[] preorder)
+    public TreeNode CreateBinaryTree(int[][] descriptions)
     {
-        TreeNode root = new(preorder[0]);
-        Stack<TreeNode> st = [];
-        st.Push(root);
-        foreach (var num in preorder[1..])
+        Dictionary<int, TreeNode> dict = [];
+        HashSet<int> children = [];
+        foreach (var item in descriptions)
         {
-            TreeNode node = new(num);
-            TreeNode temp = null;
-            while (st.TryPeek(out var top) && top.val < num)
+            int parent = item[0];
+            int child = item[1];
+            bool is_left = item[2] == 1;
+            if (!dict.TryGetValue(parent, out TreeNode parent_node))
             {
-                temp = st.Pop();
+                parent_node = new(parent);
             }
-            if (temp is not null)
+            if (!dict.TryGetValue(child, out var child_node))
             {
-                temp.right = node;
+                child_node = new(child);
             }
-            else if (st.TryPeek(out var top_))
-            {
-                top_.left = node;
-            }
-            st.Push(node);
+            if (is_left) { parent_node.left = child_node; }
+            else { parent_node.right = child_node; }
+            dict.TryAdd(parent, parent_node);
+            dict.TryAdd(child, child_node);
+            children.Add(child);
         }
-        return root;
-    }
-
-    public TreeNode WithDfs(int[] preorder)
-    {
-        return Dfs(preorder);
-
-        static TreeNode Dfs(ReadOnlySpan<int> preorder)
-        {
-            if (preorder.IsEmpty) { return null; }
-            int val = preorder[0];
-            int i = 0;
-            for (; i < preorder.Length && preorder[i] <= val; i += 1)
-            { }
-            TreeNode left = Dfs(preorder[1..i]);
-            TreeNode right = Dfs(preorder[i..]);
-            return new(val, left, right);
-        }
+        int root = dict.Keys.Except(children).Single();
+        return dict[root];
     }
 }
 
