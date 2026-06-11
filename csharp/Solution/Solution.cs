@@ -8,23 +8,24 @@ namespace Solution;
 
 public class Solution
 {
-    public string BaseNeg2(int n)
+    public int[] NextLargerNodes(ListNode head)
     {
-        if (n == 0) { return "0"; }
-        List<char> res = [];
-        while (n != 0)
+        Stack<(int i, int val)> st = [];
+        List<int> res = [];
+        int idx = 0;
+        while (head is not null)
         {
-            int rem = n % -2;
-            n /= -2;
-            if (rem < 0)
+            while (st.TryPeek(out var top) && top.val < head.val)
             {
-                rem += 2;
-                n += 1;
+                st.Pop();
+                res[top.i] = head.val;
             }
-            res.Add(rem == 0 ? '0' : '1');
+            res.Add(0);
+            st.Push((idx, head.val));
+            idx += 1;
+            head = head.next;
         }
-        res.Reverse();
-        return new([.. res]);
+        return [.. res];
     }
 }
 
