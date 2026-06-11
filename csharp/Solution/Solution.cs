@@ -8,17 +8,23 @@ namespace Solution;
 
 public class Solution
 {
-    public int SmallestRepunitDivByK(int k)
+    public string BaseNeg2(int n)
     {
-        if ((k & 1) == 0 || k % 5 == 0) { return -1; }
-        int res = 1;
-        int val = 1;
-        while (val % k > 0)
+        if (n == 0) { return "0"; }
+        List<char> res = [];
+        while (n != 0)
         {
-            res += 1;
-            val = (10 * val + 1) % k;
+            int rem = n % -2;
+            n /= -2;
+            if (rem < 0)
+            {
+                rem += 2;
+                n += 1;
+            }
+            res.Add(rem == 0 ? '0' : '1');
         }
-        return res;
+        res.Reverse();
+        return new([.. res]);
     }
 }
 
