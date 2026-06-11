@@ -8,14 +8,15 @@ namespace Solution;
 
 public class Solution
 {
-    public int MaxScoreSightseeingPair(int[] values)
+    public int SmallestRepunitDivByK(int k)
     {
-        int res = 0;
-        int prev = values[0] + 0;
-        for (int i = 1; i < values.Length; i++)
+        if ((k & 1) == 0 || k % 5 == 0) { return -1; }
+        int res = 1;
+        int val = 1;
+        while (val % k > 0)
         {
-            res = int.Max(res, prev + values[i] - i);
-            prev = int.Max(prev, values[i] + i);
+            res += 1;
+            val = (10 * val + 1) % k;
         }
         return res;
     }
