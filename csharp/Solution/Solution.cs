@@ -8,24 +8,21 @@ namespace Solution;
 
 public class Solution
 {
-    public int[] NextLargerNodes(ListNode head)
+    public string RemoveOuterParentheses(string s)
     {
-        Stack<(int i, int val)> st = [];
-        List<int> res = [];
-        int idx = 0;
-        while (head is not null)
+        int open = 0;
+        int left = 0;
+        StringBuilder sb = new();
+        for (int i = 0; i < s.Length; i++)
         {
-            while (st.TryPeek(out var top) && top.val < head.val)
+            open += s[i] == '(' ? 1 : -1;
+            if (open == 0)
             {
-                st.Pop();
-                res[top.i] = head.val;
+                sb.Append(s[(1 + left)..i]);
+                left = 1 + i;
             }
-            res.Add(0);
-            st.Push((idx, head.val));
-            idx += 1;
-            head = head.next;
         }
-        return [.. res];
+        return sb.ToString();
     }
 }
 
