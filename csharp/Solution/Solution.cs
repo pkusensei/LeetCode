@@ -8,21 +8,40 @@ namespace Solution;
 
 public class Solution
 {
-    public string RemoveOuterParentheses(string s)
+    public IList<bool> CamelMatch(string[] queries, string pattern)
     {
-        int open = 0;
-        int left = 0;
-        StringBuilder sb = new();
-        for (int i = 0; i < s.Length; i++)
+        List<bool> res = new(queries.Length);
+        foreach (var q in queries)
         {
-            open += s[i] == '(' ? 1 : -1;
-            if (open == 0)
+            int i = 0;
+            bool flag = true;
+            foreach (var c in q)
             {
-                sb.Append(s[(1 + left)..i]);
-                left = 1 + i;
+                if (char.IsAsciiLetterUpper(c))
+                {
+                    if (i < pattern.Length && pattern[i] == c)
+                    {
+                        i += 1;
+                        continue;
+                    }
+                    else
+                    {
+                        flag = false;
+                        break;
+                    }
+                }
+                else
+                {
+                    if (i < pattern.Length && pattern[i] == c)
+                    {
+                        i += 1;
+                        continue;
+                    }
+                }
             }
+            res.Add(flag && i == pattern.Length);
         }
-        return sb.ToString();
+        return res;
     }
 }
 
