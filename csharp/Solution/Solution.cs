@@ -8,52 +8,12 @@ namespace Solution;
 
 public class Solution
 {
-    public TreeNode RecoverFromPreorder(string traversal)
+    public int TwoCitySchedCost(int[][] costs)
     {
-        Stack<(int level, TreeNode node)> st = [];
-        int level = 0;
-        int num = 0;
-        (int level, TreeNode node) top;
-        TreeNode node;
-        foreach (var c in traversal)
-        {
-            if (c == '-')
-            {
-                if (num > 0)
-                {
-                    node = new(num);
-                    while (st.TryPeek(out top) && top.level >= level)
-                    {
-                        st.Pop();
-                    }
-                    if (st.TryPeek(out top))
-                    {
-                        if (top.node.left is null) { top.node.left = node; }
-                        else { top.node.right = node; }
-                    }
-                    st.Push((level, node));
-                    num = 0;
-                    level = 0;
-                }
-                level += 1;
-            }
-            else
-            {
-                num = 10 * num + c - '0';
-            }
-        }
-        node = new(num);
-        while (st.TryPeek(out top) && top.level >= level)
-        {
-            st.Pop();
-        }
-        if (st.TryPeek(out top))
-        {
-            if (top.node.left is null) { top.node.left = node; }
-            else { top.node.right = node; }
-        }
-        st.Push((level, node));
-        return st.Last().node;
+        int n = costs.Length / 2;
+        // By selecting x[0], the net impact on budget x[0]-x[1]
+        Array.Sort(costs, (a, b) => (a[0] - a[1]).CompareTo(b[0] - b[1]));
+        return costs[..n].Select(v => v[0]).Sum() + costs[n..].Select(v => v[1]).Sum();
     }
 }
 
