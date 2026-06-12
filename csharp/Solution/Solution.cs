@@ -8,27 +8,52 @@ namespace Solution;
 
 public class Solution
 {
-    public int LongestArithSeqLength(int[] nums)
+    public TreeNode RecoverFromPreorder(string traversal)
     {
-        int n = nums.Length;
-        int res = 2;
-        List<Dictionary<int, int>> dp = [];
-        for (int right = 0; right < n; right++)
+        Stack<(int level, TreeNode node)> st = [];
+        int level = 0;
+        int num = 0;
+        (int level, TreeNode node) top;
+        TreeNode node;
+        foreach (var c in traversal)
         {
-            Dictionary<int, int> curr = [];
-            for (int left = 0; left < right; left++)
+            if (c == '-')
             {
-                int d = nums[right] - nums[left];
-                curr.TryAdd(d, 2);
-                if (dp[left].TryGetValue(d, out var count))
+                if (num > 0)
                 {
-                    curr[d] = int.Max(curr[d], 1 + count);
-                    res = int.Max(res, 1 + count);
+                    node = new(num);
+                    while (st.TryPeek(out top) && top.level >= level)
+                    {
+                        st.Pop();
+                    }
+                    if (st.TryPeek(out top))
+                    {
+                        if (top.node.left is null) { top.node.left = node; }
+                        else { top.node.right = node; }
+                    }
+                    st.Push((level, node));
+                    num = 0;
+                    level = 0;
                 }
+                level += 1;
             }
-            dp.Add(curr);
+            else
+            {
+                num = 10 * num + c - '0';
+            }
         }
-        return res;
+        node = new(num);
+        while (st.TryPeek(out top) && top.level >= level)
+        {
+            st.Pop();
+        }
+        if (st.TryPeek(out top))
+        {
+            if (top.node.left is null) { top.node.left = node; }
+            else { top.node.right = node; }
+        }
+        st.Push((level, node));
+        return st.Last().node;
     }
 }
 
