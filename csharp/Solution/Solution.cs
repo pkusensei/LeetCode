@@ -8,40 +8,21 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<bool> CamelMatch(string[] queries, string pattern)
+    public int VideoStitching(int[][] clips, int time)
     {
-        List<bool> res = new(queries.Length);
-        foreach (var q in queries)
+        int n = clips.Length;
+        Array.Sort(clips, (a, b) => a[0] == b[0] ? a[1].CompareTo(b[1]) : a[0].CompareTo(b[0]));
+        int[] dp = new int[1 + time];
+        Array.Fill(dp, 1 + n);
+        dp[0] = 0;
+        foreach (var item in clips)
         {
-            int i = 0;
-            bool flag = true;
-            foreach (var c in q)
+            for (int i = 1 + item[0]; i <= int.Min(time, item[1]); i++)
             {
-                if (char.IsAsciiLetterUpper(c))
-                {
-                    if (i < pattern.Length && pattern[i] == c)
-                    {
-                        i += 1;
-                        continue;
-                    }
-                    else
-                    {
-                        flag = false;
-                        break;
-                    }
-                }
-                else
-                {
-                    if (i < pattern.Length && pattern[i] == c)
-                    {
-                        i += 1;
-                        continue;
-                    }
-                }
+                dp[i] = int.Min(dp[i], 1 + dp[item[0]]);
             }
-            res.Add(flag && i == pattern.Length);
         }
-        return res;
+        return dp[^1] > n ? -1 : dp[^1];
     }
 }
 
