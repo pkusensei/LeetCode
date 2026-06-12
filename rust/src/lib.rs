@@ -9,29 +9,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn assign_edge_weights(edges: Vec<Vec<i32>>) -> i32 {
-    let n = edges.len();
+use crate::binary_lifting::BinaryLifting;
+
+pub fn assign_edge_weights(edges: &[[i32; 2]], queries: &[[i32; 2]]) -> Vec<i32> {
+    let n = 1 + edges.len();
     let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
         let [a, b] = [0, 1].map(|i| e[i] as usize - 1);
         acc[a].push(b);
         acc[b].push(a);
         acc
     });
-    let max = dfs(&adj, 0, n);
-    mod_pow(2, max - 1) as i32
-}
-
-fn dfs(adj: &[Vec<usize>], node: usize, prev: usize) -> i32 {
-    if adj[node] == [prev] {
-        return 0;
-    }
-    let mut res = 0;
-    for &next in &adj[node] {
-        if next != prev {
-            res = res.max(1 + dfs(adj, next, node))
-        }
-    }
-    res
+    let bl = BinaryLifting::new(&adj, 0);
+    queries
+        .iter()
+        .map(|q| {
+            if q[0] == q[1] {
+                return 0;
+            }
+            let dist = bl.distance(q[0] as usize - 1, q[1] as usize - 1);
+            mod_pow(2, dist - 1) as i32
+        })
+        .collect()
 }
 
 const fn mod_pow(b: i64, exp: i32) -> i64 {
@@ -76,7 +74,9 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(assign_edge_weights(&[[1, 2]], &[[1, 1], [1, 2]]), [0, 1]);
+    }
 
     #[test]
     fn test() {}
