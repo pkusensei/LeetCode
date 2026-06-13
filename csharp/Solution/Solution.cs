@@ -6,42 +6,61 @@ using static Solution.Utils;
 
 namespace Solution;
 
-public class Solution
+public class StreamChecker
 {
-    public int MaxSumTwoNoOverlap(int[] nums, int firstLen, int secondLen)
-    {
-        return int.Max(Solve(firstLen, secondLen), Solve(secondLen, firstLen));
+    readonly Trie trie;
+    readonly List<char> storage;
 
-        int Solve(int len1, int len2)
+    public StreamChecker(string[] words)
+    {
+        storage = new();
+        trie = new();
+        foreach (var s in words)
         {
-            int n = nums.Length;
-            List<int> prefix = new(n);
-            int running = 0;
-            for (int i = 0; i < n; i++)
-            {
-                running += nums[i];
-                if (i >= len1) { running -= nums[i - len1]; }
-                prefix.Add(running);
-                if (i > 0) { prefix[i] = int.Max(prefix[i], prefix[i - 1]); }
-            }
-            running = 0;
-            List<int> suffix = new(n);
-            for (int i = n - 1; i >= 0; i -= 1)
-            {
-                running += nums[i];
-                if (i + len2 < n) { running -= nums[i + len2]; }
-                suffix.Add(running);
-                if (suffix.Count >= 2) { suffix[^1] = int.Max(suffix[^1], suffix[^2]); }
-            }
-            suffix.Reverse();
-            int res = 0;
-            for (int i = len1 - 1; i + 1 + len2 <= n; i++)
-            {
-                int val = prefix[i] + suffix[1 + i];
-                res = int.Max(res, val);
-            }
-            return res;
+            trie.Insert(s);
         }
+    }
+
+    public bool Query(char letter)
+    {
+        storage.Add(letter);
+        return trie.Find(storage.AsEnumerable().Reverse());
     }
 }
 
+internal sealed class Trie
+{
+    public Trie()
+    {
+        Nodes = new Trie[26];
+        IsEnd = false;
+    }
+
+    public Trie[] Nodes { get; private init; }
+    public bool IsEnd { get; private set; }
+
+    public void Insert(string s)
+    {
+        var node = this;
+        foreach (char c in s.Reverse())
+        {
+            int i = c - 'a';
+            if (node.Nodes[i] is null) { node.Nodes[i] = new(); }
+            node = node.Nodes[i];
+        }
+        node.IsEnd = true;
+    }
+
+    public bool Find(IEnumerable<char> s)
+    {
+        var node = this;
+        foreach (char c in s)
+        {
+            int i = c - 'a';
+            if (node.Nodes[i] is null) { return false; }
+            node = node.Nodes[i];
+            if (node.IsEnd) { return true; }
+        }
+        return node.IsEnd;
+    }
+}
