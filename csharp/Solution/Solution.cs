@@ -6,61 +6,20 @@ using static Solution.Utils;
 
 namespace Solution;
 
-public class StreamChecker
+public class Solution
 {
-    readonly Trie trie;
-    readonly List<char> storage;
-
-    public StreamChecker(string[] words)
+    public int MaxUncrossedLines(int[] nums1, int[] nums2)
     {
-        storage = new();
-        trie = new();
-        foreach (var s in words)
+        int n1 = nums1.Length;
+        int n2 = nums2.Length;
+        int[,] dp = new int[1 + n1, 1 + n2];
+        for (int i1 = 0; i1 < n1; i1++)
         {
-            trie.Insert(s);
+            for (int i2 = 0; i2 < n2; i2++)
+            {
+                dp[1 + i1, 1 + i2] = nums1[i1] == nums2[i2] ? 1 + dp[i1, i2] : int.Max(dp[1 + i1, i2], dp[i1, 1 + i2]);
+            }
         }
-    }
-
-    public bool Query(char letter)
-    {
-        storage.Add(letter);
-        return trie.Find(storage.AsEnumerable().Reverse());
-    }
-}
-
-internal sealed class Trie
-{
-    public Trie()
-    {
-        Nodes = new Trie[26];
-        IsEnd = false;
-    }
-
-    public Trie[] Nodes { get; private init; }
-    public bool IsEnd { get; private set; }
-
-    public void Insert(string s)
-    {
-        var node = this;
-        foreach (char c in s.Reverse())
-        {
-            int i = c - 'a';
-            if (node.Nodes[i] is null) { node.Nodes[i] = new(); }
-            node = node.Nodes[i];
-        }
-        node.IsEnd = true;
-    }
-
-    public bool Find(IEnumerable<char> s)
-    {
-        var node = this;
-        foreach (char c in s)
-        {
-            int i = c - 'a';
-            if (node.Nodes[i] is null) { return false; }
-            node = node.Nodes[i];
-            if (node.IsEnd) { return true; }
-        }
-        return node.IsEnd;
+        return dp[n1, n2];
     }
 }
