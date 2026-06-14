@@ -9,37 +9,33 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn get_length(nums: Vec<i32>) -> i32 {
-    use std::collections::HashMap;
-    let n = nums.len();
-    let mut res = 1;
-    for left in 0..n {
-        let mut freq = HashMap::from([(nums[left], 1)]);
-        let mut max_f = 1;
-        'out: for right in 1 + left..n {
-            let v = freq.entry(nums[right]).or_insert(0);
-            *v += 1;
-            max_f = max_f.max(*v);
-            if freq.len() == 1 {
-                res = res.max(1 + right - left);
-            } else if max_f & 1 == 0 {
-                let mut seen = [false; 2];
-                for &v in freq.values() {
-                    if v == max_f {
-                        seen[0] = true
-                    } else if v == max_f / 2 {
-                        seen[1] = true
-                    } else {
-                        continue 'out;
-                    }
-                }
-                if seen[0] && seen[1] {
-                    res = res.max(1 + right - left);
-                }
-            }
+pub fn max_ratings(units: Vec<Vec<i32>>) -> i64 {
+    let cols = units[0].len();
+    if cols == 1 {
+        return units.iter().map(|v| i64::from(v[0])).sum();
+    }
+    let mut res = i32::MAX >> 1;
+    let mut arr = vec![];
+    for [min1, min2] in units.iter().map(|v| find(v)) {
+        res = res.min(min1);
+        arr.push(min2);
+    }
+    arr.sort_unstable();
+    i64::from(res) + arr[1..].iter().map(|&v| i64::from(v)).sum::<i64>()
+}
+
+// [min, second_min]
+fn find(nums: &[i32]) -> [i32; 2] {
+    let [mut min1, mut min2] = [i32::MAX >> 1; 2];
+    for &num in nums {
+        if num <= min1 {
+            min2 = min1;
+            min1 = num
+        } else if num < min2 {
+            min2 = num
         }
     }
-    res as i32
+    [min1, min2]
 }
 
 #[cfg(test)]
