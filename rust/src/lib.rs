@@ -9,39 +9,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-use crate::binary_lifting::BinaryLifting;
-
-pub fn assign_edge_weights(edges: &[[i32; 2]], queries: &[[i32; 2]]) -> Vec<i32> {
-    let n = 1 + edges.len();
-    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
-        let [a, b] = [0, 1].map(|i| e[i] as usize - 1);
-        acc[a].push(b);
-        acc[b].push(a);
-        acc
-    });
-    let bl = BinaryLifting::new(&adj, 0);
-    queries
-        .iter()
-        .map(|q| {
-            if q[0] == q[1] {
-                return 0;
-            }
-            let dist = bl.distance(q[0] as usize - 1, q[1] as usize - 1);
-            mod_pow(2, dist - 1) as i32
-        })
-        .collect()
-}
-
-const fn mod_pow(b: i64, exp: i32) -> i64 {
-    const M: i64 = 1_000_000_007;
-    if exp == 0 {
-        return 1;
+pub const fn check_good_integer(mut n: i32) -> bool {
+    let mut dsum = 0;
+    let mut ssum = 0;
+    while n > 0 {
+        let d = n % 10;
+        n /= 10;
+        dsum += d;
+        ssum += d.pow(2)
     }
-    if exp & 1 == 1 {
-        mod_pow(b * b % M, exp >> 1) * b % M
-    } else {
-        mod_pow(b * b % M, exp >> 1)
-    }
+    ssum - dsum >= 50
 }
 
 #[cfg(test)]
@@ -74,9 +51,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(assign_edge_weights(&[[1, 2]], &[[1, 1], [1, 2]]), [0, 1]);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
