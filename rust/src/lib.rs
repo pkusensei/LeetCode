@@ -9,7 +9,7 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 use itertools::Itertools;
-use std::collections::HashMap;
+use std::collections::{BinaryHeap, HashMap};
 
 pub fn max_sum(nums: &[i32], k: i32) -> i64 {
     let n = nums.len();
@@ -33,30 +33,21 @@ pub fn max_sum(nums: &[i32], k: i32) -> i64 {
     }
     for left in 0..n {
         let mut running = 0;
+        let mut min_sum = 0;
         let mut outside = st.clone();
-        let mut inside = SegTree::new(unique_n, false);
+        let mut heap = BinaryHeap::new();
         for right in left..n {
             running += i64::from(nums[right]);
+            min_sum += i64::from(nums[right]);
             res = res.max(running);
-            outside.update(map[&nums[right]], -1, nums[right]);
-            inside.update(map[&nums[right]], 1, nums[right]);
-            let mut low = 0;
-            let mut high = (1 + right - left)
-                .min(n - (1 + right - left))
-                .min(k as usize) as i32;
-            while low < high {
-                let mid = low + (1 + high - low) / 2;
-                let a = outside.query_num(mid as i32);
-                let b = inside.query_num(mid as i32);
-                if a > b {
-                    low = mid;
-                } else {
-                    high = mid - 1
-                }
+            heap.push(nums[right]);
+            if heap.len() > k as usize {
+                let top = heap.pop().unwrap();
+                min_sum -= i64::from(top);
+                outside.update(map[&top], -1, top);
             }
-            let a = outside.query_sum(low as i32);
-            let b = inside.query_sum(low as i32);
-            res = res.max(running + a - b);
+            let val = outside.query_sum(heap.len() as _);
+            res = res.max(running + val - min_sum)
         }
     }
     res
