@@ -8,18 +8,24 @@ namespace Solution;
 
 public class Solution
 {
-    public int MaxUncrossedLines(int[] nums1, int[] nums2)
+    public int PairSum(ListNode head)
     {
-        int n1 = nums1.Length;
-        int n2 = nums2.Length;
-        int[,] dp = new int[1 + n1, 1 + n2];
-        for (int i1 = 0; i1 < n1; i1++)
+        var slow = head;
+        var fast = head;
+        Stack<int> st = [];
+        while (fast is not null)
         {
-            for (int i2 = 0; i2 < n2; i2++)
-            {
-                dp[1 + i1, 1 + i2] = nums1[i1] == nums2[i2] ? 1 + dp[i1, i2] : int.Max(dp[1 + i1, i2], dp[i1, 1 + i2]);
-            }
+            st.Push(slow.val);
+            fast = fast.next.next;
+            slow = slow.next;
         }
-        return dp[n1, n2];
+        int res = 0;
+        while (slow is not null)
+        {
+            int top = st.Pop();
+            res = int.Max(res, top + slow.val);
+            slow = slow.next;
+        }
+        return res;
     }
 }
