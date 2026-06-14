@@ -9,16 +9,37 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub const fn check_good_integer(mut n: i32) -> bool {
-    let mut dsum = 0;
-    let mut ssum = 0;
-    while n > 0 {
-        let d = n % 10;
-        n /= 10;
-        dsum += d;
-        ssum += d.pow(2)
+pub fn get_length(nums: Vec<i32>) -> i32 {
+    use std::collections::HashMap;
+    let n = nums.len();
+    let mut res = 1;
+    for left in 0..n {
+        let mut freq = HashMap::from([(nums[left], 1)]);
+        let mut max_f = 1;
+        'out: for right in 1 + left..n {
+            let v = freq.entry(nums[right]).or_insert(0);
+            *v += 1;
+            max_f = max_f.max(*v);
+            if freq.len() == 1 {
+                res = res.max(1 + right - left);
+            } else if max_f & 1 == 0 {
+                let mut seen = [false; 2];
+                for &v in freq.values() {
+                    if v == max_f {
+                        seen[0] = true
+                    } else if v == max_f / 2 {
+                        seen[1] = true
+                    } else {
+                        continue 'out;
+                    }
+                }
+                if seen[0] && seen[1] {
+                    res = res.max(1 + right - left);
+                }
+            }
+        }
     }
-    ssum - dsum >= 50
+    res as i32
 }
 
 #[cfg(test)]
