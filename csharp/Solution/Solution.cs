@@ -8,24 +8,19 @@ namespace Solution;
 
 public class Solution
 {
-    public int PairSum(ListNode head)
+    public ListNode DeleteMiddle(ListNode head)
     {
-        var slow = head;
-        var fast = head;
-        Stack<int> st = [];
-        while (fast is not null)
+        ListNode dummy = new(0, head);
+        ListNode prev = dummy;
+        ListNode slow = head;
+        ListNode fast = head;
+        while (fast is not null && fast.next is not null)
         {
-            st.Push(slow.val);
             fast = fast.next.next;
+            prev = slow;
             slow = slow.next;
         }
-        int res = 0;
-        while (slow is not null)
-        {
-            int top = st.Pop();
-            res = int.Max(res, top + slow.val);
-            slow = slow.next;
-        }
-        return res;
+        prev.next = slow.next;
+        return dummy.next;
     }
 }

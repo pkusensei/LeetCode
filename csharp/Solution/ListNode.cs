@@ -62,7 +62,7 @@ public abstract class ListNodeBase<T> : IEnumerable<int>
     }
 }
 
-public class ListNode : ListNodeBase<ListNode>
+public sealed class ListNode : ListNodeBase<ListNode>
 {
     public ListNode(int _val = 0, ListNode _next = null)
     {
