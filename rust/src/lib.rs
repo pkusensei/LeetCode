@@ -9,39 +9,38 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn process_str(s: String, k: i64) -> char {
-    let mut len = 0_i64;
-    for b in s.bytes() {
-        match b {
-            b'*' => len = (len - 1).max(0),
-            b'#' => len *= 2,
-            b'%' => (),
-            _ => len += 1,
+pub fn min_score_triangulation(values: Vec<i32>) -> i32 {
+    let n = values.len();
+    let mut dp = vec![vec![i32::MAX; n]; n];
+    for i in 0..n {
+        dp[i][i] = 0;
+        if 1 + i < n {
+            dp[i][1 + i] = 0;
         }
     }
-    if k >= len {
-        return '.';
-    }
-    let mut k = k;
-    for b in s.bytes().rev() {
-        match b {
-            b'*' => len += 1,
-            b'#' => {
-                len /= 2;
-                if k >= len {
-                    k -= len;
-                }
-            }
-            b'%' => k = len - 1 - k,
-            _ => {
-                len -= 1;
-                if k == len {
-                    return b.into();
-                }
+    for left in (0..n).rev() {
+        for right in 2 + left..n {
+            for mid in 1 + left..right {
+                let curr = values[left] * values[right] * values[mid];
+                dp[left][right] = dp[left][right].min(curr + dp[left][mid] + dp[mid][right]);
             }
         }
     }
-    '.'
+    dp[0][n - 1]
+    // dfs(&values, 0, n - 1)
+}
+
+fn dfs(nums: &[i32], left: usize, right: usize) -> i32 {
+    if left + 2 > right {
+        return 0;
+    }
+    let mut res = i32::MAX;
+    for mid in 1 + left..right {
+        let curr =
+            nums[left] * nums[right] * nums[mid] + dfs(nums, left, mid) + dfs(nums, mid, right);
+        res = res.min(curr)
+    }
+    res
 }
 
 #[cfg(test)]
