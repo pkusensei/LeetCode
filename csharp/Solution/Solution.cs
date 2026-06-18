@@ -8,19 +8,36 @@ namespace Solution;
 
 public class Solution
 {
-    public ListNode DeleteMiddle(ListNode head)
+    public int[] GardenNoAdj(int n, int[][] paths)
     {
-        ListNode dummy = new(0, head);
-        ListNode prev = dummy;
-        ListNode slow = head;
-        ListNode fast = head;
-        while (fast is not null && fast.next is not null)
+        List<List<int>> adj = [.. Enumerable.Range(0, n).Select(_ => new List<int>())];
+        foreach (var item in paths)
         {
-            fast = fast.next.next;
-            prev = slow;
-            slow = slow.next;
+            adj[item[0] - 1].Add(item[1] - 1);
+            adj[item[1] - 1].Add(item[0] - 1);
         }
-        prev.next = slow.next;
-        return dummy.next;
+        int[] res = new int[n];
+        for (int i = 0; i < n; i++)
+        {
+            if (res[i] > 0) { continue; }
+            Queue<int> queue = [];
+            queue.Enqueue(i);
+            while (queue.TryDequeue(out var node))
+            {
+                for (int c = 1; c <= 4; c++)
+                {
+                    if (adj[node].All(next => res[next] != c))
+                    {
+                        res[node] = c;
+                        break;
+                    }
+                }
+                foreach (var next in adj[node])
+                {
+                    if (res[next] == 0) { queue.Enqueue(next); }
+                }
+            }
+        }
+        return [.. res];
     }
 }
