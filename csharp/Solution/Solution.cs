@@ -8,36 +8,19 @@ namespace Solution;
 
 public class Solution
 {
-    public int[] GardenNoAdj(int n, int[][] paths)
+    public int MaxSumAfterPartitioning(int[] arr, int k)
     {
-        List<List<int>> adj = [.. Enumerable.Range(0, n).Select(_ => new List<int>())];
-        foreach (var item in paths)
+        int n = arr.Length;
+        int[] dp = new int[1 + n];
+        for (int end = 1; end <= n; end++)
         {
-            adj[item[0] - 1].Add(item[1] - 1);
-            adj[item[1] - 1].Add(item[0] - 1);
-        }
-        int[] res = new int[n];
-        for (int i = 0; i < n; i++)
-        {
-            if (res[i] > 0) { continue; }
-            Queue<int> queue = [];
-            queue.Enqueue(i);
-            while (queue.TryDequeue(out var node))
+            int max = arr[end - 1];
+            for (int len = 1; len <= k && end - len >= 0; len++)
             {
-                for (int c = 1; c <= 4; c++)
-                {
-                    if (adj[node].All(next => res[next] != c))
-                    {
-                        res[node] = c;
-                        break;
-                    }
-                }
-                foreach (var next in adj[node])
-                {
-                    if (res[next] == 0) { queue.Enqueue(next); }
-                }
+                max = int.Max(max, arr[end - len]);
+                dp[end] = int.Max(dp[end], dp[end - len] + len * max);
             }
         }
-        return [.. res];
+        return dp[n];
     }
 }
