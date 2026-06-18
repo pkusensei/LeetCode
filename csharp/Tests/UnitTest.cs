@@ -7,11 +7,13 @@ namespace Tests;
 [TestClass]
 public class UnitTest
 {
-//    readonly Solution.Solution sol = new();
+    readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow("ana", "banana")]
+    public void TestMethod1(string exp, string s)
     {
+        Assert.AreEqual(exp, sol.LongestDupSubstring(s));
     }
 
     [TestMethod]
