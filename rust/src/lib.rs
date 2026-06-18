@@ -9,38 +9,13 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_score_triangulation(values: Vec<i32>) -> i32 {
-    let n = values.len();
-    let mut dp = vec![vec![i32::MAX; n]; n];
-    for i in 0..n {
-        dp[i][i] = 0;
-        if 1 + i < n {
-            dp[i][1 + i] = 0;
-        }
-    }
-    for left in (0..n).rev() {
-        for right in 2 + left..n {
-            for mid in 1 + left..right {
-                let curr = values[left] * values[right] * values[mid];
-                dp[left][right] = dp[left][right].min(curr + dp[left][mid] + dp[mid][right]);
-            }
-        }
-    }
-    dp[0][n - 1]
-    // dfs(&values, 0, n - 1)
-}
-
-fn dfs(nums: &[i32], left: usize, right: usize) -> i32 {
-    if left + 2 > right {
-        return 0;
-    }
-    let mut res = i32::MAX;
-    for mid in 1 + left..right {
-        let curr =
-            nums[left] * nums[right] * nums[mid] + dfs(nums, left, mid) + dfs(nums, mid, right);
-        res = res.min(curr)
-    }
-    res
+pub fn angle_clock(hour: i32, minutes: i32) -> f64 {
+    let [hour, minutes] = [hour, minutes].map(f64::from);
+    // m/60 * 30
+    let h = hour * 30.0 + minutes / 2.0;
+    let m = minutes * 6.0;
+    let diff = (h - m).abs();
+    diff.min(360.0 - diff)
 }
 
 #[cfg(test)]
