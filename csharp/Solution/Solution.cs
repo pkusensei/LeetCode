@@ -1,5 +1,4 @@
 ﻿using System.Collections.Frozen;
-using System.Runtime.InteropServices;
 using System.Text;
 using Solution.LList;
 using Solution.Tree;
@@ -9,25 +8,33 @@ namespace Solution;
 
 public class Solution
 {
-    public int LongestStrChain(string[] words)
+    public int LastStoneWeightII(int[] stones)
     {
-        Array.Sort(words, (a, b) => a.Length.CompareTo(b.Length));
-        Dictionary<string, int> dp = new(words.Length);
-        int res = 1;
-        foreach (var item in words)
+        int n = stones.Length;
+        int sum = stones.Sum();
+        int[] dp = new int[1 + sum];
+        for (int s = 0; s <= sum; s++)
         {
-            int curr = 1;
-            for (int i = 0; i < item.Length; i++)
-            {
-                string s = item[..i] + item[(1 + i)..];
-                if (dp.TryGetValue(s, out var prev))
-                {
-                    curr = int.Max(curr, 1 + prev);
-                }
-            }
-            res = int.Max(res, curr);
-            dp[item] = curr;
+            dp[s] = int.Abs(sum - 2 * s);
         }
-        return res;
+        foreach (var item in stones)
+        {
+            int[] curr = new int[1 + sum];
+            for (int s = 0; s <= sum; s++)
+            {
+                int pick = s + item <= sum ? dp[s + item] : int.MaxValue;
+                curr[s] = int.Min(dp[s], pick);
+            }
+            dp = curr;
+        }
+        return dp[0];
+
+        int Dfs(int i, int curr)
+        {
+            if (i >= n || 2 * curr >= sum) { return int.Abs(sum - 2 * curr); }
+            int skip = Dfs(1 + i, curr);
+            int pick = Dfs(1 + i, curr + stones[i]);
+            return int.Min(skip, pick);
+        }
     }
 }
