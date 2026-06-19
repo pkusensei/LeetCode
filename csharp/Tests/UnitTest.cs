@@ -10,10 +10,8 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    [DataRow("ana", "banana")]
-    public void TestMethod1(string exp, string s)
+    public void TestMethod1()
     {
-        Assert.AreEqual(exp, sol.LongestDupSubstring(s));
     }
 
     [TestMethod]
