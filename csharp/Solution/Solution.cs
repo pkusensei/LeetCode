@@ -8,33 +8,22 @@ namespace Solution;
 
 public class Solution
 {
-    public int LastStoneWeightII(int[] stones)
+    public int MaxSatisfied(int[] customers, int[] grumpy, int minutes)
     {
-        int n = stones.Length;
-        int sum = stones.Sum();
-        int[] dp = new int[1 + sum];
-        for (int s = 0; s <= sum; s++)
+        int curr = 0;
+        int n = customers.Length;
+        for (int i = 0; i < n; i++)
         {
-            dp[s] = int.Abs(sum - 2 * s);
+            if (i < minutes) { curr += customers[i]; }
+            else { curr += (1 - grumpy[i]) * customers[i]; }
         }
-        foreach (var item in stones)
+        int res = curr;
+        for (int i = minutes; i < n; i++)
         {
-            int[] curr = new int[1 + sum];
-            for (int s = 0; s <= sum; s++)
-            {
-                int pick = s + item <= sum ? dp[s + item] : int.MaxValue;
-                curr[s] = int.Min(dp[s], pick);
-            }
-            dp = curr;
+            curr += grumpy[i] * customers[i];
+            curr -= grumpy[i - minutes] * customers[i - minutes];
+            res = int.Max(res, curr);
         }
-        return dp[0];
-
-        int Dfs(int i, int curr)
-        {
-            if (i >= n || 2 * curr >= sum) { return int.Abs(sum - 2 * curr); }
-            int skip = Dfs(1 + i, curr);
-            int pick = Dfs(1 + i, curr + stones[i]);
-            return int.Min(skip, pick);
-        }
+        return res;
     }
 }
