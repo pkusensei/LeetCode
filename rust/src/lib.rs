@@ -9,27 +9,46 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn finish_time(n: i32, edges: Vec<Vec<i32>>, base_time: Vec<i32>) -> i64 {
-    let n = n as usize;
-    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
-        acc[e[0] as usize].push(e[1] as usize);
-        acc
-    });
-    dfs(&adj, &base_time, 0)
+pub fn good_integers(l: i64, r: i64, k: i32) -> i64 {
+    f(r, k as u8) - f(l - 1, k as u8)
 }
 
-fn dfs(adj: &[Vec<usize>], base_time: &[i32], node: usize) -> i64 {
-    let mut early = None;
-    let mut late = None;
-    for &next in &adj[node] {
-        let temp = dfs(adj, base_time, next);
-        late = late.max(Some(temp));
-        if early.is_none_or(|v| v > temp) {
-            early = Some(temp);
+fn f(num: i64, k: u8) -> i64 {
+    let s = num.to_string().into_bytes();
+    let n = s.len();
+    let mut memo = vec![[[[-1; 10]; 2]; 2]; n];
+    dfs(&s, k, 0, true, true, b'0', &mut memo)
+}
+
+fn dfs(
+    s: &[u8],
+    k: u8,
+    idx: usize,
+    tight: bool,
+    leading: bool,
+    prev: u8,
+    memo: &mut [[[[i64; 10]; 2]; 2]],
+) -> i64 {
+    if idx >= s.len() {
+        return (!leading).into();
+    }
+    if memo[idx][usize::from(tight)][usize::from(leading)][usize::from(prev - b'0')] > -1 {
+        return memo[idx][usize::from(tight)][usize::from(leading)][usize::from(prev - b'0')];
+    }
+    let upper = if tight { s[idx] } else { b'9' };
+    let mut res = 0;
+    for d in b'0'..=upper {
+        let ntight = tight && d == upper;
+        // This slot is still zero
+        let nleading = leading && d == b'0';
+        // leading represents `prev > 0`
+        // !leading means prev already started number
+        if leading || d.abs_diff(prev) <= k {
+            res += dfs(s, k, 1 + idx, ntight, nleading, d, memo);
         }
     }
-    let dur = late.zip(early).map(|(a, b)| a - b).unwrap_or(0) + i64::from(base_time[node]);
-    dur + late.unwrap_or(0)
+    memo[idx][usize::from(tight)][usize::from(leading)][usize::from(prev - b'0')] = res;
+    res
 }
 
 #[cfg(test)]
@@ -62,8 +81,13 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(good_integers(10, 15, 1), 3);
+        assert_eq!(good_integers(201, 204, 2), 2);
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(good_integers(15, 147, 7), 126);
+    }
 }
