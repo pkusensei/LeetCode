@@ -9,15 +9,40 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn create_grid(m: i32, n: i32) -> Vec<String> {
-    let [m, n] = [m, n].map(|v| v as usize);
-    let mut res = vec![String::from_utf8(vec![b'.'; n]).unwrap()];
-    for _ in 1..m {
-        let mut v = vec![b'#'; n - 1];
-        v.push(b'.');
-        res.push(String::from_utf8(v).unwrap());
+pub fn min_lights(lights: &[i32]) -> i32 {
+    let n = lights.len();
+    let mut intervals = vec![];
+    for (i, &v) in lights.iter().enumerate() {
+        if v > 0 {
+            let curr = [i.saturating_sub(v as usize), (i + v as usize).min(n - 1)];
+            intervals.push(curr);
+        }
     }
-    res
+    if intervals.is_empty() {
+        return (n as i32 + 2) / 3;
+    }
+    intervals.sort_unstable();
+    let mut arr = vec![];
+    let [mut start, mut end] = intervals[0];
+    for item in intervals[1..].iter() {
+        let [curr_s, curr_e] = *item;
+        if curr_s <= end {
+            end = end.max(curr_e);
+        } else {
+            arr.push([start, end]);
+            start = curr_s;
+            end = curr_e;
+        }
+    }
+    arr.push([start, end]);
+    let mut prev = 0;
+    let mut res = 0;
+    for [start, end] in arr {
+        res += (start - prev + 2) / 3;
+        prev = 1 + end;
+    }
+    res += (n - prev + 2) / 3;
+    res as i32
 }
 
 #[cfg(test)]
@@ -50,7 +75,9 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(min_lights(&[0, 0, 0, 2, 0]), 1);
+    }
 
     #[test]
     fn test() {}
