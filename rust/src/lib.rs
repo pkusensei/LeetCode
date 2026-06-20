@@ -9,28 +9,13 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_building(n: i32, mut restrictions: Vec<Vec<i32>>) -> i32 {
-    restrictions.extend([vec![1, 0], vec![n, n - 1]]);
-    restrictions.sort_unstable();
-    let len = restrictions.len();
-    let mut arr = vec![0; len];
-    for i in 1..len {
-        let dist = restrictions[i][0] - restrictions[i - 1][0];
-        let v = arr[i - 1] + dist;
-        arr[i] = v.min(restrictions[i][1]);
-    }
-    for i in (0..len - 1).rev() {
-        let dist = restrictions[1 + i][0] - restrictions[i][0];
-        let v = arr[1 + i] + dist;
-        arr[i] = arr[i].min(v).min(restrictions[i][1]);
-    }
-    let mut res = 0;
-    for i in 0..len - 1 {
-        let a = arr[i];
-        let b = arr[1 + i];
-        let dist = restrictions[1 + i][0] - restrictions[i][0];
-        let v = a.max(b) + (dist - (a - b).abs()) / 2;
-        res = res.max(v);
+pub fn create_grid(m: i32, n: i32) -> Vec<String> {
+    let [m, n] = [m, n].map(|v| v as usize);
+    let mut res = vec![String::from_utf8(vec![b'.'; n]).unwrap()];
+    for _ in 1..m {
+        let mut v = vec![b'#'; n - 1];
+        v.push(b'.');
+        res.push(String::from_utf8(v).unwrap());
     }
     res
 }
