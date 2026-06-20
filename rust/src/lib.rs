@@ -9,40 +9,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_lights(lights: &[i32]) -> i32 {
-    let n = lights.len();
-    let mut intervals = vec![];
-    for (i, &v) in lights.iter().enumerate() {
-        if v > 0 {
-            let curr = [i.saturating_sub(v as usize), (i + v as usize).min(n - 1)];
-            intervals.push(curr);
+pub fn finish_time(n: i32, edges: Vec<Vec<i32>>, base_time: Vec<i32>) -> i64 {
+    let n = n as usize;
+    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
+        acc[e[0] as usize].push(e[1] as usize);
+        acc
+    });
+    dfs(&adj, &base_time, 0)
+}
+
+fn dfs(adj: &[Vec<usize>], base_time: &[i32], node: usize) -> i64 {
+    let mut early = None;
+    let mut late = None;
+    for &next in &adj[node] {
+        let temp = dfs(adj, base_time, next);
+        late = late.max(Some(temp));
+        if early.is_none_or(|v| v > temp) {
+            early = Some(temp);
         }
     }
-    if intervals.is_empty() {
-        return (n as i32 + 2) / 3;
-    }
-    intervals.sort_unstable();
-    let mut arr = vec![];
-    let [mut start, mut end] = intervals[0];
-    for item in intervals[1..].iter() {
-        let [curr_s, curr_e] = *item;
-        if curr_s <= end {
-            end = end.max(curr_e);
-        } else {
-            arr.push([start, end]);
-            start = curr_s;
-            end = curr_e;
-        }
-    }
-    arr.push([start, end]);
-    let mut prev = 0;
-    let mut res = 0;
-    for [start, end] in arr {
-        res += (start - prev + 2) / 3;
-        prev = 1 + end;
-    }
-    res += (n - prev + 2) / 3;
-    res as i32
+    let dur = late.zip(early).map(|(a, b)| a - b).unwrap_or(0) + i64::from(base_time[node]);
+    dur + late.unwrap_or(0)
 }
 
 #[cfg(test)]
@@ -75,9 +62,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(min_lights(&[0, 0, 0, 2, 0]), 1);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
