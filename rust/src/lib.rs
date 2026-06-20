@@ -9,60 +9,30 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn heap_sort(nums: &mut [i32]) {
-    let n = nums.len();
-    for i in (0..=(n / 2 - 1)).rev() {
-        heapify(nums, n, i);
+pub fn max_building(n: i32, mut restrictions: Vec<Vec<i32>>) -> i32 {
+    restrictions.extend([vec![1, 0], vec![n, n - 1]]);
+    restrictions.sort_unstable();
+    let len = restrictions.len();
+    let mut arr = vec![0; len];
+    for i in 1..len {
+        let dist = restrictions[i][0] - restrictions[i - 1][0];
+        let v = arr[i - 1] + dist;
+        arr[i] = v.min(restrictions[i][1]);
     }
-    for i in (0..n).rev() {
-        nums.swap(0, i);
-        heapify(nums, i, 0);
+    for i in (0..len - 1).rev() {
+        let dist = restrictions[1 + i][0] - restrictions[i][0];
+        let v = arr[1 + i] + dist;
+        arr[i] = arr[i].min(v).min(restrictions[i][1]);
     }
-}
-
-/// Build max heap
-fn heapify(nums: &mut [i32], n: usize, idx: usize) {
-    // Assume `idx` is largest
-    let mut largest = idx;
-    let left = 2 * idx + 1;
-    let right = 2 * idx + 2;
-    if left < n && nums[left] > nums[largest] {
-        largest = left;
+    let mut res = 0;
+    for i in 0..len - 1 {
+        let a = arr[i];
+        let b = arr[1 + i];
+        let dist = restrictions[1 + i][0] - restrictions[i][0];
+        let v = a.max(b) + (dist - (a - b).abs()) / 2;
+        res = res.max(v);
     }
-    if right < n && nums[right] > nums[largest] {
-        largest = right;
-    }
-    // But `idx` has bigger child node(s)
-    if largest != idx {
-        nums.swap(idx, largest);
-        // Try the new `largest`
-        heapify(nums, n, largest);
-    }
-}
-
-pub fn radix_sort(nums: &mut [i32]) {
-    let mut max = *nums.iter().max().unwrap_or(&0);
-    let mut width = 0;
-    while max > 0 {
-        width += 1;
-        max /= 10;
-    }
-    let mut place_value = 1;
-    for _ in 0..width {
-        bucket_sort(nums, place_value);
-        place_value *= 10;
-    }
-}
-
-fn bucket_sort(nums: &mut [i32], place_value: i32) {
-    let mut buckets = [const { vec![] }; 10];
-    for &num in nums.iter() {
-        let d = num.abs() / place_value;
-        buckets[(d % 10) as usize].push(num);
-    }
-    for (slot, val) in nums.iter_mut().zip(buckets.into_iter().flatten()) {
-        *slot = val;
-    }
+    res
 }
 
 #[cfg(test)]
@@ -95,18 +65,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        {
-            let mut v = [3, 2, 4, 5, 1];
-            heap_sort(&mut v);
-            assert_eq!(v, [1, 2, 3, 4, 5])
-        }
-        {
-            let mut v = [3, 2, 4, 5, 1];
-            radix_sort(&mut v);
-            assert_eq!(v, [1, 2, 3, 4, 5])
-        }
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
