@@ -6,22 +6,49 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
+use std::{
+    cmp::Reverse,
+    collections::{BinaryHeap, HashMap},
+};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_valid_subarrays(nums: Vec<i32>, x: i32) -> i32 {
-    let n = nums.len();
-    let mut res = 0;
-    let c = x as u8 + b'0';
-    for left in 0..n {
-        let mut curr = 0;
-        for right in left..n {
-            curr += i64::from(nums[right]);
-            let s = curr.to_string().into_bytes();
-            res += i32::from(s.starts_with(&[c]) && s.ends_with(&[c]));
+pub fn shortest_path(n: i32, edges: Vec<Vec<i32>>, labels: String, k: i32) -> i32 {
+    let n = n as usize;
+    let s = labels.as_bytes();
+    let adj = edges.iter().fold(vec![HashMap::new(); n], |mut acc, e| {
+        let v = acc[e[0] as usize].entry(e[1] as usize).or_insert(e[2]);
+        *v = (*v).min(e[2]);
+        acc
+    });
+    // (total weight, streak, node)
+    let mut heap = BinaryHeap::from([(Reverse((0, 1)), 0)]);
+    let mut seen = vec![vec![i32::MAX >> 2; 1 + k as usize]; n];
+    let mut res = i32::MAX >> 2;
+    while let Some((Reverse((dist, streak)), node)) = heap.pop() {
+        if dist > seen[node][streak as usize] {
+            continue;
+        }
+        if node == n - 1 {
+            res = res.min(dist);
+            continue;
+        }
+        for (&next, &w) in &adj[node] {
+            let (nd, nstreak) = if s[next] != s[node] {
+                (dist + w, 1)
+            } else if 1 + streak <= k {
+                (dist + w, 1 + streak)
+            } else {
+                continue;
+            };
+            if nd < seen[next][nstreak as usize] {
+                seen[next][nstreak as usize] = nd;
+                heap.push((Reverse((nd, nstreak)), next));
+            }
         }
     }
-    res
+    if res >= i32::MAX >> 2 { -1 } else { res }
 }
 
 #[cfg(test)]
