@@ -6,49 +6,49 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::{
-    cmp::Reverse,
-    collections::{BinaryHeap, HashMap},
-};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn shortest_path(n: i32, edges: Vec<Vec<i32>>, labels: String, k: i32) -> i32 {
-    let n = n as usize;
-    let s = labels.as_bytes();
-    let adj = edges.iter().fold(vec![HashMap::new(); n], |mut acc, e| {
-        let v = acc[e[0] as usize].entry(e[1] as usize).or_insert(e[2]);
-        *v = (*v).min(e[2]);
-        acc
-    });
-    // (total weight, streak, node)
-    let mut heap = BinaryHeap::from([(Reverse((0, 1)), 0)]);
-    let mut seen = vec![vec![i32::MAX >> 2; 1 + k as usize]; n];
-    let mut res = i32::MAX >> 2;
-    while let Some((Reverse((dist, streak)), node)) = heap.pop() {
-        if dist > seen[node][streak as usize] {
-            continue;
-        }
-        if node == n - 1 {
-            res = res.min(dist);
-            continue;
-        }
-        for (&next, &w) in &adj[node] {
-            let (nd, nstreak) = if s[next] != s[node] {
-                (dist + w, 1)
-            } else if 1 + streak <= k {
-                (dist + w, 1 + streak)
-            } else {
-                continue;
-            };
-            if nd < seen[next][nstreak as usize] {
-                seen[next][nstreak as usize] = nd;
-                heap.push((Reverse((nd, nstreak)), next));
-            }
+pub fn max_total_value(value: &[i32], decay: &[i32], m: i32) -> i32 {
+    const M: i64 = 1_000_000_007;
+
+    let m = i64::from(m);
+    let max = i64::from(*value.iter().max().unwrap());
+    let mut left = 1;
+    let mut right = max;
+    while left < right {
+        let mid = left + (1 + right - left) / 2;
+        if find(&value, &decay, mid) >= m {
+            left = mid;
+        } else {
+            right = mid - 1;
         }
     }
-    if res >= i32::MAX >> 2 { -1 } else { res }
+    let mut res = 0;
+    for (&val, &dec) in value.iter().zip(decay.iter()) {
+        let [val, dec] = [val, dec].map(i64::from);
+        if val >= left {
+            let count = 1 + (val - left).max(0) / dec;
+            let last = val - dec * (count - 1);
+            res += i64::from(val + last) * i64::from(count) / 2 % M;
+            res %= M;
+        }
+    }
+    let f = find(&value, &decay, left);
+    res -= i64::from(f - m).max(0) * i64::from(left);
+    res.rem_euclid(M) as i32
+}
+
+fn find(value: &[i32], decay: &[i32], mid: i64) -> i64 {
+    let mut res = 0;
+    for (&val, &dec) in value.iter().zip(decay) {
+        let [val, dec] = [val, dec].map(i64::from);
+        if val >= mid {
+            res += 1;
+            res += (val - mid) / dec
+        }
+    }
+    res
 }
 
 #[cfg(test)]
@@ -81,7 +81,9 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(max_total_value(&[6, 5, 4], &[2, 1, 1], 4), 19);
+    }
 
     #[test]
     fn test() {}
