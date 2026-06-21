@@ -9,19 +9,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_distance(moves: String) -> i32 {
-    let mut free = 0;
-    let [mut x, mut y] = [0_i32, 0];
-    for b in moves.bytes() {
-        match b {
-            b'U' => y += 1,
-            b'D' => y -= 1,
-            b'L' => x -= 1,
-            b'R' => x += 1,
-            _ => free += 1,
+pub fn count_valid_subarrays(nums: Vec<i32>, x: i32) -> i32 {
+    let n = nums.len();
+    let mut res = 0;
+    let c = x as u8 + b'0';
+    for left in 0..n {
+        let mut curr = 0;
+        for right in left..n {
+            curr += i64::from(nums[right]);
+            let s = curr.to_string().into_bytes();
+            res += i32::from(s.starts_with(&[c]) && s.ends_with(&[c]));
         }
     }
-    x.abs() + y.abs() + free
+    res
 }
 
 #[cfg(test)]
