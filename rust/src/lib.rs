@@ -9,46 +9,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_total_value(value: &[i32], decay: &[i32], m: i32) -> i32 {
-    const M: i64 = 1_000_000_007;
-
-    let m = i64::from(m);
-    let max = i64::from(*value.iter().max().unwrap());
-    let mut left = 1;
-    let mut right = max;
-    while left < right {
-        let mid = left + (1 + right - left) / 2;
-        if find(&value, &decay, mid) >= m {
-            left = mid;
-        } else {
-            right = mid - 1;
-        }
+pub fn max_number_of_balloons(text: String) -> i32 {
+    let freq = text.bytes().fold([0; 26], |mut acc, b| {
+        acc[usize::from(b - b'a')] += 1;
+        acc
+    });
+    let mut res = None;
+    for &b in b"ban" {
+        let v = res.get_or_insert(freq[usize::from(b - b'a')]);
+        *v = (*v).min(freq[usize::from(b - b'a')]);
     }
-    let mut res = 0;
-    for (&val, &dec) in value.iter().zip(decay.iter()) {
-        let [val, dec] = [val, dec].map(i64::from);
-        if val >= left {
-            let count = 1 + (val - left).max(0) / dec;
-            let last = val - dec * (count - 1);
-            res += i64::from(val + last) * i64::from(count) / 2 % M;
-            res %= M;
-        }
+    for &b in b"lo" {
+        let v = res.get_or_insert(freq[usize::from(b - b'a')] / 2);
+        *v = (*v).min(freq[usize::from(b - b'a')] / 2);
     }
-    let f = find(&value, &decay, left);
-    res -= i64::from(f - m).max(0) * i64::from(left);
-    res.rem_euclid(M) as i32
-}
-
-fn find(value: &[i32], decay: &[i32], mid: i64) -> i64 {
-    let mut res = 0;
-    for (&val, &dec) in value.iter().zip(decay) {
-        let [val, dec] = [val, dec].map(i64::from);
-        if val >= mid {
-            res += 1;
-            res += (val - mid) / dec
-        }
-    }
-    res
+    res.unwrap_or(0)
 }
 
 #[cfg(test)]
@@ -81,9 +56,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(max_total_value(&[6, 5, 4], &[2, 1, 1], 4), 19);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
