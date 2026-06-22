@@ -9,21 +9,26 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_number_of_balloons(text: String) -> i32 {
-    let freq = text.bytes().fold([0; 26], |mut acc, b| {
-        acc[usize::from(b - b'a')] += 1;
-        acc
-    });
-    let mut res = None;
-    for &b in b"ban" {
-        let v = res.get_or_insert(freq[usize::from(b - b'a')]);
-        *v = (*v).min(freq[usize::from(b - b'a')]);
+pub fn prev_perm_opt1(mut arr: Vec<i32>) -> Vec<i32> {
+    let n = arr.len();
+    let mut left = n;
+    for i in (0..n - 1).rev() {
+        if arr[i] > arr[1 + i] {
+            left = i;
+            break;
+        }
     }
-    for &b in b"lo" {
-        let v = res.get_or_insert(freq[usize::from(b - b'a')] / 2);
-        *v = (*v).min(freq[usize::from(b - b'a')] / 2);
+    if left == n {
+        return arr;
     }
-    res.unwrap_or(0)
+    let mut right = 1 + left;
+    for i in 1 + left..n {
+        if arr[i] < arr[left] && arr[right] < arr[i] {
+            right = i;
+        }
+    }
+    arr.swap(left, right);
+    arr
 }
 
 #[cfg(test)]
