@@ -9,28 +9,15 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn zig_zag_arrays(n: i32, l: i32, r: i32) -> i32 {
-    const M: i32 = 1_000_000_007;
-
-    let width = (1 + r - l) as usize;
-    let mut dp_inc = vec![1; width];
-    let mut dp_dec = vec![1; width];
-    for _ in 1..n {
-        let mut curr_inc = vec![0; width];
-        let mut curr_dec = vec![0; width];
-        for i in 1..width {
-            curr_inc[i] = (curr_inc[i - 1] + dp_dec[i - 1]) % M;
-        }
-        for i in (0..width - 1).rev() {
-            curr_dec[i] = (curr_dec[1 + i] + dp_inc[1 + i]) % M;
-        }
-        dp_inc = curr_inc;
-        dp_dec = curr_dec;
+pub fn max_equal_rows_after_flips(matrix: Vec<Vec<i32>>) -> i32 {
+    use std::collections::HashMap;
+    let mut map = HashMap::new();
+    for row in matrix {
+        let flip = row.iter().map(|v| 1 - v).collect();
+        *map.entry(row).or_insert(0) += 1;
+        *map.entry(flip).or_insert(0) += 1;
     }
-    dp_inc
-        .into_iter()
-        .chain(dp_dec)
-        .fold(0, |acc, v| (acc + v) % M)
+    map.into_values().max().unwrap_or(1)
 }
 
 #[cfg(test)]
