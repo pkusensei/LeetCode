@@ -8,21 +8,27 @@ namespace Solution;
 
 public class Solution
 {
-    public TreeNode SufficientSubset(TreeNode root, int limit)
+    public string SmallestSubsequence(string s)
     {
-        return Dfs(root, 0);
-
-        TreeNode Dfs(TreeNode node, int val)
+        Span<int> freq = stackalloc int[26];
+        foreach (var item in s)
         {
-            if (node is null) { return null; }
-            val += node.val;
-            if (node.left is null && node.right is null)
-            {
-                return val < limit ? null : node;
-            }
-            node.left = Dfs(node.left, val);
-            node.right = Dfs(node.right, val);
-            return node.left is null && node.right is null ? null : node;
+            freq[item - 'a'] += 1;
         }
+        Span<bool> seen = stackalloc bool[26];
+        Stack<char> st = [];
+        foreach (var c in s)
+        {
+            freq[c - 'a'] -= 1;
+            if (seen[c - 'a']) { continue; }
+            while (st.TryPeek(out var top) && top > c && freq[top - 'a'] > 0)
+            {
+                st.Pop();
+                seen[top - 'a'] = false;
+            }
+            st.Push(c);
+            seen[c - 'a'] = true;
+        }
+        return new([.. st.Reverse()]);
     }
 }
