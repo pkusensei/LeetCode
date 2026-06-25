@@ -8,28 +8,21 @@ namespace Solution;
 
 public class Solution
 {
-    public int NumTilePossibilities(string tiles)
+    public TreeNode SufficientSubset(TreeNode root, int limit)
     {
-        HashSet<string> set = [];
-        StringBuilder sb = new();
-        Backtrack(0);
-        return set.Count - 1;
+        return Dfs(root, 0);
 
-        void Backtrack(int idx)
+        TreeNode Dfs(TreeNode node, int val)
         {
-            if (idx >= tiles.Length)
+            if (node is null) { return null; }
+            val += node.val;
+            if (node.left is null && node.right is null)
             {
-                set.Add(sb.ToString());
-                return;
+                return val < limit ? null : node;
             }
-            Backtrack(1 + idx);
-            int n = sb.Length;
-            for (int i = 0; i <= n; i++)
-            {
-                sb.Insert(i, tiles[idx]);
-                Backtrack(1 + idx);
-                sb.Remove(i, 1);
-            }
+            node.left = Dfs(node.left, val);
+            node.right = Dfs(node.right, val);
+            return node.left is null && node.right is null ? null : node;
         }
     }
 }
