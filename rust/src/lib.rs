@@ -9,31 +9,25 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_length(nums: Vec<i32>) -> i32 {
-    use itertools::Itertools;
-    let freq = nums.iter().copied().counts();
-    let mut res = freq
-        .get(&1)
-        .map(|&v| if v & 1 == 1 { v } else { v - 1 })
-        .unwrap_or(1) as i32;
-    for (&k, &v) in freq.iter() {
-        if k == 1 || v == 1 {
-            continue;
+pub fn largest_vals_from_labels(
+    values: &[i32],
+    labels: &[i32],
+    mut num_wanted: i32,
+    use_limit: i32,
+) -> i32 {
+    use itertools::{Itertools, izip};
+    let mut arr = izip!(values, labels).sorted_unstable().collect_vec();
+    let mut freq = vec![0; 20_001];
+    let mut res = 0;
+    while num_wanted > 0 {
+        let Some((val, &lab)) = arr.pop() else {
+            break;
+        };
+        if freq[lab as usize] < use_limit {
+            freq[lab as usize] += 1;
+            res += val;
+            num_wanted -= 1;
         }
-        let mut k = k;
-        let mut chain = 0;
-        while let Some(&v) = freq.get(&k) {
-            chain += 1;
-            if v > 1 {
-                let Some(kk) = k.checked_mul(k) else {
-                    break;
-                };
-                k = kk;
-            } else {
-                break;
-            }
-        }
-        res = res.max(2 * chain - 1);
     }
     res
 }
@@ -68,7 +62,12 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(
+            largest_vals_from_labels(&[5, 4, 3, 2, 1], &[1, 1, 2, 2, 3], 3, 1),
+            9
+        );
+    }
 
     #[test]
     fn test() {}
