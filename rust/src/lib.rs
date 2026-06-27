@@ -9,32 +9,35 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn add_negabinary(arr1: Vec<i32>, arr2: Vec<i32>) -> Vec<i32> {
-    let mut res = vec![];
-    let mut i1 = arr1.len();
-    let mut i2 = arr2.len();
-    let mut carry = 0;
-    while i1 > 0 || i2 > 0 {
-        if i1 > 0 {
-            carry += arr1[i1 - 1];
-            i1 -= 1;
+pub fn duplicate_zeros(arr: &mut [i32]) {
+    let mut right = arr.len() - 1;
+    let mut dups = 0;
+    let mut left = 0;
+    while left <= right - dups {
+        // First iter forwards to count zeros
+        // Until 1 past what would be last element of "new" array
+        if arr[left] == 0 {
+            // This zero stands on the end of "new" array
+            // Its dup has no place to go
+            // Thus we copy this zero directly w/o counting it
+            if left == right - dups {
+                arr[right] = 0;
+                right -= 1;
+                break;
+            }
+            dups += 1;
         }
-        if i2 > 0 {
-            carry += arr2[i2 - 1];
-            i2 -= 1;
+        left += 1;
+    }
+    for i in (0..=right - dups).rev() {
+        if arr[i] == 0 {
+            arr[i + dups] = 0;
+            dups -= 1;
+            arr[i + dups] = 0;
+        } else {
+            arr[i + dups] = arr[i]
         }
-        res.push(carry & 1);
-        carry = -(carry >> 1);
     }
-    while carry != 0 {
-        res.push(carry & 1);
-        carry = -(carry >> 1);
-    }
-    while res.last().is_some_and(|&v| v == 0) {
-        res.pop();
-    }
-    res.reverse();
-    if res.is_empty() { vec![0] } else { res }
 }
 
 #[cfg(test)]
