@@ -9,35 +9,33 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn duplicate_zeros(arr: &mut [i32]) {
-    let mut right = arr.len() - 1;
-    let mut dups = 0;
-    let mut left = 0;
-    while left <= right - dups {
-        // First iter forwards to count zeros
-        // Until 1 past what would be last element of "new" array
-        if arr[left] == 0 {
-            // This zero stands on the end of "new" array
-            // Its dup has no place to go
-            // Thus we copy this zero directly w/o counting it
-            if left == right - dups {
-                arr[right] = 0;
-                right -= 1;
+pub fn maximum_length(nums: Vec<i32>) -> i32 {
+    use itertools::Itertools;
+    let freq = nums.iter().copied().counts();
+    let mut res = freq
+        .get(&1)
+        .map(|&v| if v & 1 == 1 { v } else { v - 1 })
+        .unwrap_or(1) as i32;
+    for (&k, &v) in freq.iter() {
+        if k == 1 || v == 1 {
+            continue;
+        }
+        let mut k = k;
+        let mut chain = 0;
+        while let Some(&v) = freq.get(&k) {
+            chain += 1;
+            if v > 1 {
+                let Some(kk) = k.checked_mul(k) else {
+                    break;
+                };
+                k = kk;
+            } else {
                 break;
             }
-            dups += 1;
         }
-        left += 1;
+        res = res.max(2 * chain - 1);
     }
-    for i in (0..=right - dups).rev() {
-        if arr[i] == 0 {
-            arr[i + dups] = 0;
-            dups -= 1;
-            arr[i + dups] = 0;
-        } else {
-            arr[i + dups] = arr[i]
-        }
-    }
+    res
 }
 
 #[cfg(test)]
