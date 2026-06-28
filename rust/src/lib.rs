@@ -9,13 +9,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_element_after_decrementing_and_rearranging(mut arr: Vec<i32>) -> i32 {
-    arr.sort_unstable();
-    let mut prev = 1;
-    for &num in &arr[1..] {
-        prev = (1 + prev).min(num);
+pub fn max_sum(mut nums: Vec<i32>, k: i32, mut mul: i32) -> i64 {
+    nums.sort_unstable();
+    let mut res = 0;
+    for _ in 0..k {
+        let Some(v) = nums.pop() else {
+            break;
+        };
+        res += if mul > 0 {
+            i64::from(v) * i64::from(mul)
+        } else {
+            i64::from(v)
+        };
+        mul -= 1;
     }
-    prev
+    res
 }
 
 #[cfg(test)]
@@ -48,12 +56,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(
-            largest_vals_from_labels(&[5, 4, 3, 2, 1], &[1, 1, 2, 2, 3], 3, 1),
-            9
-        );
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
