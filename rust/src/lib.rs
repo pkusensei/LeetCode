@@ -9,27 +9,13 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn largest_vals_from_labels(
-    values: &[i32],
-    labels: &[i32],
-    mut num_wanted: i32,
-    use_limit: i32,
-) -> i32 {
-    use itertools::{Itertools, izip};
-    let mut arr = izip!(values, labels).sorted_unstable().collect_vec();
-    let mut freq = vec![0; 20_001];
-    let mut res = 0;
-    while num_wanted > 0 {
-        let Some((val, &lab)) = arr.pop() else {
-            break;
-        };
-        if freq[lab as usize] < use_limit {
-            freq[lab as usize] += 1;
-            res += val;
-            num_wanted -= 1;
-        }
+pub fn maximum_element_after_decrementing_and_rearranging(mut arr: Vec<i32>) -> i32 {
+    arr.sort_unstable();
+    let mut prev = 1;
+    for &num in &arr[1..] {
+        prev = (1 + prev).min(num);
     }
-    res
+    prev
 }
 
 #[cfg(test)]
