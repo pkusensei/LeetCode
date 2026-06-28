@@ -9,19 +9,41 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_sum(mut nums: Vec<i32>, k: i32, mut mul: i32) -> i64 {
-    nums.sort_unstable();
-    let mut res = 0;
-    for _ in 0..k {
-        let Some(v) = nums.pop() else {
-            break;
+pub fn filter_occupied_intervals(
+    mut occupied_intervals: Vec<[i32; 2]>,
+    mut free_start: i32,
+    free_end: i32,
+) -> Vec<Vec<i32>> {
+    occupied_intervals.sort_unstable();
+    let mut start = occupied_intervals[0][0];
+    let mut end = occupied_intervals[0][1];
+    let mut merged = vec![];
+    for v in &occupied_intervals[1..] {
+        let [curr_s, curr_e] = v[..] else {
+            unreachable!()
         };
-        res += if mul > 0 {
-            i64::from(v) * i64::from(mul)
+        if 1 + end >= curr_s {
+            end = end.max(curr_e)
         } else {
-            i64::from(v)
-        };
-        mul -= 1;
+            merged.push([start, end]);
+            start = curr_s;
+            end = curr_e;
+        }
+    }
+    merged.push([start, end]);
+    let mut res = vec![];
+    for v in merged {
+        let [start, end] = v;
+        if free_end < start || end < free_start {
+            res.push(vec![start, end]);
+        } else if free_start <= start && free_end < end {
+            res.push(vec![1 + free_end, end]);
+        } else if start < free_start && end <= free_end {
+            res.push(vec![start, free_start - 1]);
+        } else if start < free_end && free_end < end {
+            res.push(vec![start, free_start - 1]);
+            res.push(vec![1 + free_end, end]);
+        }
     }
     res
 }
@@ -56,8 +78,26 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(
+            filter_occupied_intervals(vec![[1, 3]], 2, 2),
+            [[1, 1], [3, 3]]
+        );
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(
+            filter_occupied_intervals(vec![[50, 77], [44, 61], [48, 50]], 71, 77),
+            [[44, 70]]
+        );
+        assert_eq!(
+            filter_occupied_intervals(
+                vec![[31, 40], [75, 92], [44, 46], [50, 51], [43, 47]],
+                45,
+                52
+            ),
+            [[31, 40], [43, 44], [75, 92]]
+        );
+    }
 }
