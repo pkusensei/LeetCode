@@ -9,14 +9,38 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn number_of_substrings(s: &str) -> i32 {
-    let mut prev = [-1; 3];
-    let mut res = 0;
-    for (idx, b) in s.bytes().enumerate() {
-        prev[usize::from(b - b'a')] = idx as i32;
-        res += 1 + prev.iter().min().unwrap_or(&-1);
+pub fn shortest_common_supersequence(str1: &str, str2: &str) -> String {
+    let [(s1, n1), (s2, n2)] = [&str1, &str2].map(|s| (s.as_bytes(), s.len()));
+    let mut dp = vec![vec![0; 1 + n2]; 1 + n1];
+    for (i1, b1) in s1.iter().enumerate() {
+        for (i2, b2) in s2.iter().enumerate() {
+            dp[1 + i1][1 + i2] = if b1 == b2 {
+                1 + dp[i1][i2]
+            } else {
+                dp[1 + i1][i2].max(dp[i1][1 + i2])
+            };
+        }
     }
-    res
+    let mut i1 = n1;
+    let mut i2 = n2;
+    let mut arr = vec![];
+    while i1 > 0 && i2 > 0 {
+        if s1[i1 - 1] == s2[i2 - 1] {
+            arr.push(s1[i1 - 1]);
+            i1 -= 1;
+            i2 -= 1;
+        } else if dp[i1 - 1][i2] > dp[i1][i2 - 1] {
+            arr.push(s1[i1 - 1]);
+            i1 -= 1
+        } else {
+            arr.push(s2[i2 - 1]);
+            i2 -= 1
+        }
+    }
+    arr.extend(s1[..i1].iter().rev());
+    arr.extend(s2[..i2].iter().rev());
+    arr.reverse();
+    String::from_utf8(arr).unwrap()
 }
 
 #[cfg(test)]
