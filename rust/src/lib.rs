@@ -9,38 +9,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn sample_stats(count: Vec<i32>) -> Vec<f64> {
-    let [mut min, mut max] = [-1; 2];
-    let mut max_f = 0;
-    let mut sum = 0;
-    let mut mode = 0;
-    let mut prefix = Vec::with_capacity(256);
-    for (i, &v) in count.iter().enumerate() {
-        if v > 0 {
-            if min == -1 {
-                min = i as i32
-            }
-            max = i as i32;
-            if v > max_f {
-                mode = i as i32;
-                max_f = v;
-            }
-            sum += i64::from(v) * i as i64;
+pub fn car_pooling(trips: &[[i32; 3]], capacity: i32) -> bool {
+    let mut arr = vec![0; 1001];
+    for t in trips {
+        let [num, from, to] = t[..] else {
+            unreachable!()
+        };
+        arr[from as usize] += num;
+        arr[to as usize] -= num;
+    }
+    let mut prefix = 0;
+    for v in arr {
+        prefix += v;
+        if prefix > capacity {
+            return false;
         }
-        prefix.push(v + prefix.last().unwrap_or(&0));
     }
-    let total = prefix[255];
-    let mean = sum as f64 / f64::from(prefix[255]);
-    let median;
-    if total & 1 == 1 {
-        let i = prefix.partition_point(|&v| v <= total / 2);
-        median = i as f64
-    } else {
-        let a = prefix.partition_point(|&v| v < total / 2);
-        let b = prefix.partition_point(|&v| v < total / 2 + 1);
-        median = (a + b) as f64 / 2.0;
-    }
-    vec![min.into(), max.into(), mean, median, mode.into()]
+    true
 }
 
 #[cfg(test)]
