@@ -9,38 +9,38 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn shortest_common_supersequence(str1: &str, str2: &str) -> String {
-    let [(s1, n1), (s2, n2)] = [&str1, &str2].map(|s| (s.as_bytes(), s.len()));
-    let mut dp = vec![vec![0; 1 + n2]; 1 + n1];
-    for (i1, b1) in s1.iter().enumerate() {
-        for (i2, b2) in s2.iter().enumerate() {
-            dp[1 + i1][1 + i2] = if b1 == b2 {
-                1 + dp[i1][i2]
-            } else {
-                dp[1 + i1][i2].max(dp[i1][1 + i2])
-            };
+pub fn sample_stats(count: Vec<i32>) -> Vec<f64> {
+    let [mut min, mut max] = [-1; 2];
+    let mut max_f = 0;
+    let mut sum = 0;
+    let mut mode = 0;
+    let mut prefix = Vec::with_capacity(256);
+    for (i, &v) in count.iter().enumerate() {
+        if v > 0 {
+            if min == -1 {
+                min = i as i32
+            }
+            max = i as i32;
+            if v > max_f {
+                mode = i as i32;
+                max_f = v;
+            }
+            sum += i64::from(v) * i as i64;
         }
+        prefix.push(v + prefix.last().unwrap_or(&0));
     }
-    let mut i1 = n1;
-    let mut i2 = n2;
-    let mut arr = vec![];
-    while i1 > 0 && i2 > 0 {
-        if s1[i1 - 1] == s2[i2 - 1] {
-            arr.push(s1[i1 - 1]);
-            i1 -= 1;
-            i2 -= 1;
-        } else if dp[i1 - 1][i2] > dp[i1][i2 - 1] {
-            arr.push(s1[i1 - 1]);
-            i1 -= 1
-        } else {
-            arr.push(s2[i2 - 1]);
-            i2 -= 1
-        }
+    let total = prefix[255];
+    let mean = sum as f64 / f64::from(prefix[255]);
+    let median;
+    if total & 1 == 1 {
+        let i = prefix.partition_point(|&v| v <= total / 2);
+        median = i as f64
+    } else {
+        let a = prefix.partition_point(|&v| v < total / 2);
+        let b = prefix.partition_point(|&v| v < total / 2 + 1);
+        median = (a + b) as f64 / 2.0;
     }
-    arr.extend(s1[..i1].iter().rev());
-    arr.extend(s2[..i2].iter().rev());
-    arr.reverse();
-    String::from_utf8(arr).unwrap()
+    vec![min.into(), max.into(), mean, median, mode.into()]
 }
 
 #[cfg(test)]
