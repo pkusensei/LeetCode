@@ -8,27 +8,47 @@ namespace Solution;
 
 public class Solution
 {
-    public string SmallestSubsequence(string s)
+    public int FindInMountainArray(int target, MountainArray mountainArr)
     {
-        Span<int> freq = stackalloc int[26];
-        foreach (var item in s)
+        int n = mountainArr.Length();
+        int left = 0;
+        int right = n - 1;
+        while (left < right)
         {
-            freq[item - 'a'] += 1;
-        }
-        Span<bool> seen = stackalloc bool[26];
-        Stack<char> st = [];
-        foreach (var c in s)
-        {
-            freq[c - 'a'] -= 1;
-            if (seen[c - 'a']) { continue; }
-            while (st.TryPeek(out var top) && top > c && freq[top - 'a'] > 0)
+            int mid = left + (right - left) / 2;
+            if (mountainArr.Get(mid) > mountainArr.Get(1 + mid))
             {
-                st.Pop();
-                seen[top - 'a'] = false;
+                right = mid;
             }
-            st.Push(c);
-            seen[c - 'a'] = true;
+            else { left = 1 + mid; }
         }
-        return new([.. st.Reverse()]);
+        int v = Find(0, left, (a, b) => a < b);
+        if (v > -1) { return v; }
+        else
+        {
+            v = Find(left, n - 1, (a, b) => a > b);
+            return v > -1 ? v : -1;
+        }
+
+        int Find(int left, int right, Func<int, int, bool> f)
+        {
+            while (left < right)
+            {
+                int mid = left + (right - left) / 2;
+                if (f(mountainArr.Get(mid), target))
+                {
+                    left = 1 + mid;
+                }
+                else { right = mid; }
+            }
+            return mountainArr.Get(left) == target ? left : -1;
+        }
     }
+}
+
+// stub
+public struct MountainArray
+{
+    public int Get(int _) => 0;
+    public int Length() => 0;
 }
