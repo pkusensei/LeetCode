@@ -8,47 +8,49 @@ namespace Solution;
 
 public class Solution
 {
-    public int FindInMountainArray(int target, MountainArray mountainArr)
+    public int FindMaxPathScore(int[][] edges, bool[] online, long k)
     {
-        int n = mountainArr.Length();
-        int left = 0;
-        int right = n - 1;
+        int n = online.Length;
+        List<(int next, int cost)>[] adj = [.. Enumerable.Range(0, n).Select(_ => new List<(int, int)>())];
+        int right = 0;
+        foreach (var item in edges)
+        {
+            if (online[item[0]] && online[item[1]])
+            {
+                adj[item[0]].Add((item[1], item[2]));
+                right = int.Max(right, item[2]);
+            }
+        }
+        int left = -1;
         while (left < right)
         {
-            int mid = left + (right - left) / 2;
-            if (mountainArr.Get(mid) > mountainArr.Get(1 + mid))
-            {
-                right = mid;
-            }
-            else { left = 1 + mid; }
+            int mid = left + (1 + right - left) / 2;
+            if (Check(mid)) { left = mid; }
+            else { right = mid - 1; }
         }
-        int v = Find(0, left, (a, b) => a < b);
-        if (v > -1) { return v; }
-        else
-        {
-            v = Find(left, n - 1, (a, b) => a > b);
-            return v > -1 ? v : -1;
-        }
+        return left;
 
-        int Find(int left, int right, Func<int, int, bool> f)
+        bool Check(int mid)
         {
-            while (left < right)
+            PriorityQueue<int, long> pq = new();
+            pq.Enqueue(0, 0);
+            long[] dists = [.. Enumerable.Range(0, n).Select(_ => long.MaxValue >> 1)];
+            dists[0] = 0;
+            while (pq.TryDequeue(out var node, out long dist))
             {
-                int mid = left + (right - left) / 2;
-                if (f(mountainArr.Get(mid), target))
+                if (node == n - 1) { break; }
+                if (dist > dists[node]) { continue; }
+                foreach (var (next, cost) in adj[node])
                 {
-                    left = 1 + mid;
+                    long ncost = cost + dist;
+                    if (cost >= mid && ncost < dists[next])
+                    {
+                        dists[next] = ncost;
+                        pq.Enqueue(next, ncost);
+                    }
                 }
-                else { right = mid; }
             }
-            return mountainArr.Get(left) == target ? left : -1;
+            return dists[^1] <= k;
         }
     }
-}
-
-// stub
-public struct MountainArray
-{
-    public int Get(int _) => 0;
-    public int Length() => 0;
 }
