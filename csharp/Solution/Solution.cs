@@ -9,43 +9,18 @@ namespace Solution;
 
 public class Solution
 {
-    public bool ParseBoolExpr(string expression)
+    public int[] CorpFlightBookings(int[][] bookings, int n)
     {
-        Stack<char> st = [];
-        foreach (var item in expression)
+        int[] diff = new int[n];
+        foreach (var item in bookings)
         {
-            switch (item)
-            {
-                case ')':
-                    List<bool> vals = [];
-                    while (st.TryPeek(out var top) && char.IsAsciiLetterLower(top))
-                    {
-                        st.Pop();
-                        vals.Add(top == 't');
-                    }
-                    switch (st.Pop())
-                    {
-                        case '!':
-                            st.Push(vals[0] ? 'f' : 't');
-                            break;
-                        case '&':
-                            st.Push(vals.All(v => v) ? 't' : 'f');
-                            break;
-                        case '|':
-                            st.Push(vals.Any(v => v) ? 't' : 'f');
-                            break;
-                        default:
-                            break;
-                    }
-                    break;
-                case ',':
-                case '(':
-                    break; // do nothing
-                default:
-                    st.Push(item);
-                    break;
-            }
+            diff[item[0] - 1] += item[2];
+            if (item[1] < n) { diff[item[1]] -= item[2]; }
         }
-        return st.Pop() == 't';
+        for (int i = 0; i < n - 1; i++)
+        {
+            diff[1 + i] += diff[i];
+        }
+        return diff;
     }
 }
