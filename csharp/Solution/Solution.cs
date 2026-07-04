@@ -9,29 +9,40 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<TreeNode> DelNodes(TreeNode root, int[] to_delete)
+    public int[] MaxDepthAfterSplit(string seq)
     {
-        List<TreeNode> res = [];
-        HashSet<int> set = [.. to_delete];
-        var v = Dfs(root);
-        if (v is not null) { res.Add(v); }
-        return res;
-
-        TreeNode Dfs(TreeNode node)
+        List<int> res = new(seq.Length);
+        int open0 = 0;
+        int open1 = 0;
+        foreach (var item in seq)
         {
-            if (node is null) { return null; }
-            node.left = Dfs(node.left);
-            node.right = Dfs(node.right);
-            if (set.Contains(node.val))
+            if (item == '(')
             {
-                if (node.left is not null) { res.Add(node.left); }
-                if (node.right is not null) { res.Add(node.right); }
-                return null;
+                if (open0 <= open1)
+                {
+                    res.Add(0);
+                    open0 += 1;
+                }
+                else
+                {
+                    res.Add(1);
+                    open1 += 1;
+                }
             }
             else
             {
-                return node;
+                if (open0 > open1)
+                {
+                    res.Add(0);
+                    open0 -= 1;
+                }
+                else
+                {
+                    res.Add(1);
+                    open1 -= 1;
+                }
             }
         }
+        return [.. res];
     }
 }
