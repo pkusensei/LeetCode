@@ -1,4 +1,5 @@
 ﻿using System.Collections.Frozen;
+using System.Linq.Expressions;
 using System.Text;
 using Solution.LList;
 using Solution.Tree;
@@ -8,26 +9,43 @@ namespace Solution;
 
 public class Solution
 {
-    public int MinHeightShelves(int[][] books, int shelfWidth)
+    public bool ParseBoolExpr(string expression)
     {
-        int n = books.Length;
-        int[] dp = new int[1 + n];
-        Array.Fill(dp, int.MaxValue >> 1, 1, n);
-        for (int right = 0; right < n; right++)
+        Stack<char> st = [];
+        foreach (var item in expression)
         {
-            int thick = books[right][0];
-            int height = books[right][1];
-            dp[1 + right] = int.Min(dp[1 + right], dp[right] + height);
-
-            int curr_thick = thick;
-            for (int left = right - 1; left >= 0; left -= 1)
+            switch (item)
             {
-                curr_thick += books[left][0];
-                if (curr_thick > shelfWidth) { break; }
-                height = int.Max(height, books[left][1]);
-                dp[1 + right] = int.Min(dp[1 + right], height + dp[left]);
+                case ')':
+                    List<bool> vals = [];
+                    while (st.TryPeek(out var top) && char.IsAsciiLetterLower(top))
+                    {
+                        st.Pop();
+                        vals.Add(top == 't');
+                    }
+                    switch (st.Pop())
+                    {
+                        case '!':
+                            st.Push(vals[0] ? 'f' : 't');
+                            break;
+                        case '&':
+                            st.Push(vals.All(v => v) ? 't' : 'f');
+                            break;
+                        case '|':
+                            st.Push(vals.Any(v => v) ? 't' : 'f');
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+                case ',':
+                case '(':
+                    break; // do nothing
+                default:
+                    st.Push(item);
+                    break;
             }
         }
-        return dp[n];
+        return st.Pop() == 't';
     }
 }

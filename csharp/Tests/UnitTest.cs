@@ -10,8 +10,10 @@ public class UnitTest
     readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow(true, "|(f,f,f,t)")]
+    public void TestMethod1(bool exp, string s)
     {
+        Assert.AreEqual(exp, sol.ParseBoolExpr(s));
     }
 
     [TestMethod]
