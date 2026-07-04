@@ -8,53 +8,18 @@ namespace Solution;
 
 public class Solution
 {
-    public int MinScore(int n, int[][] roads)
+    public IList<int> PathInZigZagTree(int label)
     {
-        DSU dsu = new(n);
-        foreach (var item in roads)
-        {
-            dsu.Union(item[0] - 1, item[1] - 1);
-        }
-        int res = int.MaxValue;
-        foreach (var item in roads)
-        {
-            if (dsu.Find(0) == dsu.Find(item[0] - 1))
-            {
-                res = int.Min(res, item[2]);
-            }
-        }
+        if (label <= 1) { return [1]; }
+        int pow = Math.ILogB(label);
+        int prev_opposite = label / 2;
+        int prev_start = (int)Math.Pow(2, pow - 1);
+        int prev_end = (int)Math.Pow(2, pow) - 1;
+        int diff = prev_opposite - prev_start;
+        int distance = prev_end - prev_start;
+        int v = prev_start + (distance - diff);
+        var res = PathInZigZagTree(v);
+        res.Add(label);
         return res;
-    }
-}
-
-public readonly struct DSU
-{
-    public DSU(int n)
-    {
-        Parent = [.. Enumerable.Range(0, n)];
-        Rank = new int[n];
-    }
-
-    public int[] Parent { get; }
-    public int[] Rank { get; }
-
-    public int Find(int v)
-    {
-        if (Parent[v] != v) { Parent[v] = Find(Parent[v]); }
-        return Parent[v];
-    }
-
-    public void Union(int x, int y)
-    {
-        int rx = Find(x);
-        int ry = Find(y);
-        if (rx == ry) { return; }
-        if (Rank[rx] < Rank[ry]) { Parent[rx] = ry; }
-        else if (Rank[rx] > Rank[ry]) { Parent[ry] = rx; }
-        else
-        {
-            Rank[rx] += 1;
-            Parent[ry] = rx;
-        }
     }
 }
