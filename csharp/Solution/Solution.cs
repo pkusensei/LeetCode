@@ -9,40 +9,40 @@ namespace Solution;
 
 public class Solution
 {
-    public int[] MaxDepthAfterSplit(string seq)
+    public int[] PathsWithMaxScore(IList<string> board)
     {
-        List<int> res = new(seq.Length);
-        int open0 = 0;
-        int open1 = 0;
-        foreach (var item in seq)
+        const int M = 1_000_000_007;
+        ReadOnlySpan<(int, int)> D = [(-1, 0), (0, -1), (-1, -1)];
+
+        int n = board.Count;
+        (int score, int count)[,] dp = new (int, int)[n, n];
+        dp[0, 0] = (0, 1);
+        for (int r = 0; r < n; r++)
         {
-            if (item == '(')
+            for (int c = 0; c < n; c++)
             {
-                if (open0 <= open1)
+                if (board[r][c] == 'E' || board[r][c] == 'X') { continue; }
+                foreach (var (dr, dc) in D)
                 {
-                    res.Add(0);
-                    open0 += 1;
+                    int pr = r + dr;
+                    int pc = c + dc;
+                    if (pr >= 0 && pc >= 0)
+                    {
+                        int prev = dp[pr, pc].score;
+                        if (dp[r, c].score < prev) { dp[r, c] = (prev, 0); }
+                        if (dp[r, c].score == prev)
+                        {
+                            dp[r, c].count = (dp[r, c].count + dp[pr, pc].count) % M;
+                        }
+                    }
                 }
-                else
+                if (char.IsAsciiDigit(board[r][c]))
                 {
-                    res.Add(1);
-                    open1 += 1;
-                }
-            }
-            else
-            {
-                if (open0 > open1)
-                {
-                    res.Add(0);
-                    open0 -= 1;
-                }
-                else
-                {
-                    res.Add(1);
-                    open1 -= 1;
+                    dp[r, c].score += board[r][c] - '0';
                 }
             }
         }
-        return [.. res];
+        (int max, int count) = dp[n - 1, n - 1];
+        return count > 0 ? [max, count] : [0, 0];
     }
 }
