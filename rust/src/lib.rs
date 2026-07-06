@@ -6,35 +6,24 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::collections::VecDeque;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_safe_walk(grid: Vec<Vec<i32>>, health: i32) -> bool {
-    let [rows, cols] = get_dimensions(&grid);
-    let mut queue = VecDeque::from([(0, 0, health - grid[0][0])]);
-    let mut seen = vec![vec![0; cols]; rows];
-    seen[0][0] = health - grid[0][0];
-    while let Some((r, c, h)) = queue.pop_front() {
-        if r == rows - 1 && c == cols - 1 {
-            break;
-        }
-        for [nr, nc] in neighbors([r, c]) {
-            if nr < rows && nc < cols {
-                let next = h - grid[nr][nc];
-                if seen[nr][nc] < next {
-                    seen[nr][nc] = next;
-                    if next == h {
-                        queue.push_front((nr, nc, next));
-                    } else {
-                        queue.push_back((nr, nc, next));
-                    }
-                }
-            }
+pub fn remove_covered_intervals(mut intervals: Vec<Vec<i32>>) -> i32 {
+    intervals.sort_unstable_by(|a, b| a[0].cmp(&b[0]).then(b[1].cmp(&a[1])));
+    let [mut start, mut end] = [0, 0];
+    let mut res = 0;
+    for v in intervals.iter() {
+        let [s, e] = v[..] else { unreachable!() };
+        if start <= s && e <= end {
+            continue;
+        } else {
+            res += 1;
+            start = s;
+            end = e;
         }
     }
-    seen[rows - 1][cols - 1] > 0
+    res
 }
 
 #[cfg(test)]
