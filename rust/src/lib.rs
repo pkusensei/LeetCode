@@ -9,16 +9,34 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_valid_pair_sum(nums: Vec<i32>, k: i32) -> i32 {
-    let n = nums.len();
-    let k = k as usize;
-    let mut pref_max = nums.to_vec();
-    for i in 1..n {
-        pref_max[i] = pref_max[i].max(pref_max[i - 1]);
+// 0  ->  1
+// 11 -> 00
+pub fn min_operations(s1: String, s2: String) -> i32 {
+    let n = s1.len();
+    if s1 == "1" && s2 == "0" {
+        return -1;
     }
-    let mut res = i32::MIN;
-    for i in k..n {
-        res = res.max(nums[i] + pref_max[i - k]);
+    let mut s1 = s1.into_bytes();
+    let s2 = s2.as_bytes();
+    let mut res = 0;
+    for i in 0..n {
+        if s1[i] == b'0' {
+            if s2[i] == b'1' {
+                res += 1;
+            }
+        } else {
+            // s1[i] == b'1'
+            if s2[i] == b'0' {
+                if let Some(b) = s1.get_mut(1 + i)
+                    && *b == b'1'
+                {
+                    *b = b'0';
+                    res += 1;
+                } else {
+                    res += 2; // flip previous idx
+                }
+            }
+        }
     }
     res
 }
