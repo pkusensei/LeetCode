@@ -9,19 +9,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_middle_element_unique(nums: Vec<i32>) -> bool {
+pub fn max_valid_pair_sum(nums: Vec<i32>, k: i32) -> i32 {
     let n = nums.len();
-    let mid = nums[n / 2];
-    let mut seen = false;
-    for &num in nums.iter() {
-        if num == mid {
-            if seen {
-                return false;
-            }
-            seen = true
-        }
+    let k = k as usize;
+    let mut pref_max = nums.to_vec();
+    for i in 1..n {
+        pref_max[i] = pref_max[i].max(pref_max[i - 1]);
     }
-    true
+    let mut res = i32::MIN;
+    for i in k..n {
+        res = res.max(nums[i] + pref_max[i - k]);
+    }
+    res
 }
 
 #[cfg(test)]
