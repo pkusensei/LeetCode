@@ -9,21 +9,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn remove_covered_intervals(mut intervals: Vec<Vec<i32>>) -> i32 {
-    intervals.sort_unstable_by(|a, b| a[0].cmp(&b[0]).then(b[1].cmp(&a[1])));
-    let [mut start, mut end] = [0, 0];
-    let mut res = 0;
-    for v in intervals.iter() {
-        let [s, e] = v[..] else { unreachable!() };
-        if start <= s && e <= end {
-            continue;
-        } else {
-            res += 1;
-            start = s;
-            end = e;
+pub fn sum_and_multiply(mut n: i32) -> i64 {
+    let mut pos = 1;
+    let mut sum = 0;
+    let mut num = 0;
+    while n > 0 {
+        let d = i64::from(n % 10);
+        n /= 10;
+        if d > 0 {
+            num += d * pos;
+            pos *= 10;
+            sum += d;
         }
     }
-    res
+    num * sum
 }
 
 #[cfg(test)]
