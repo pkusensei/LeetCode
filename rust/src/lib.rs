@@ -9,20 +9,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn sum_and_multiply(mut n: i32) -> i64 {
-    let mut pos = 1;
-    let mut sum = 0;
-    let mut num = 0;
-    while n > 0 {
-        let d = i64::from(n % 10);
-        n /= 10;
-        if d > 0 {
-            num += d * pos;
-            pos *= 10;
-            sum += d;
+pub fn is_middle_element_unique(nums: Vec<i32>) -> bool {
+    let n = nums.len();
+    let mid = nums[n / 2];
+    let mut seen = false;
+    for &num in nums.iter() {
+        if num == mid {
+            if seen {
+                return false;
+            }
+            seen = true
         }
     }
-    num * sum
+    true
 }
 
 #[cfg(test)]
