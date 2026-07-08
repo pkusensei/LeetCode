@@ -9,50 +9,28 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn sum_and_multiply(s: &str, queries: &[[i32; 2]]) -> Vec<i32> {
-    let mut pref_x = vec![];
-    let mut pref_pow = vec![];
-    let mut pref_sum = vec![];
-    let mut sum = 0;
-    let mut x = 0;
-    let mut pow = 0;
-    for b in s.bytes() {
-        let d = i64::from(b - b'0');
-        if d > 0 {
-            sum = (sum + d) % M;
-            x = (x * 10 % M + d) % M;
-            pow += 1;
+pub fn max_digit_range(nums: Vec<i32>) -> i32 {
+    let mut res = 0;
+    let mut range = 0;
+    for num in nums.iter() {
+        let mut x = *num;
+        let mut mind = 9;
+        let mut maxd = 0;
+        while x > 0 {
+            let d = x % 10;
+            x /= 10;
+            mind = mind.min(d);
+            maxd = maxd.max(d);
         }
-        pref_x.push(x);
-        pref_sum.push(sum);
-        pref_pow.push(pow);
-    }
-    let mut res = vec![];
-    for q in queries {
-        let [left, right] = [0, 1].map(|v| q[v] as usize);
-        if let Some(left) = left.checked_sub(1) {
-            let sum = (pref_sum[right] - pref_sum[left]).rem_euclid(M);
-            let pow = pref_pow[right] - pref_pow[left];
-            let x = pref_x[right] - pref_x[left] * mod_pow(10, pow) % M;
-            res.push((x.rem_euclid(M) * sum % M) as i32);
-        } else {
-            res.push((pref_x[right] * pref_sum[right] % M) as i32);
+        let curr = maxd - mind;
+        if curr > range {
+            range = curr;
+            res = *num;
+        } else if curr == range {
+            res += num;
         }
     }
     res
-}
-
-const M: i64 = 1_000_000_007;
-
-const fn mod_pow(b: i64, exp: i64) -> i64 {
-    if exp == 0 {
-        return 1;
-    }
-    if exp & 1 == 0 {
-        mod_pow(b * b % M, exp >> 1)
-    } else {
-        mod_pow(b * b % M, exp >> 1) * b % M
-    }
 }
 
 #[cfg(test)]
@@ -85,12 +63,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(
-            sum_and_multiply("10203004", &[[0, 7], [1, 3], [4, 6]]),
-            [12340, 4, 9]
-        );
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
