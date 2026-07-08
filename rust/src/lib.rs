@@ -9,74 +9,50 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn with_dp(word1: &str, word2: &str, target: &str) -> i32 {
-    let [n1, n2, n3] = [&word1, &word2, &target].map(|s| s.len());
-    let [s1, s2, target] = [&word1, &word2, &target].map(|s| s.as_bytes());
-    let mut dp = vec![vec![vec![0; 1 + n3]; 1 + n2]; 1 + n1];
-    for i1 in 1..=n1 {
-        for i2 in 1..=n2 {
-            dp[i1][i2][n3] = 1;
+pub fn sum_and_multiply(s: &str, queries: &[[i32; 2]]) -> Vec<i32> {
+    let mut pref_x = vec![];
+    let mut pref_pow = vec![];
+    let mut pref_sum = vec![];
+    let mut sum = 0;
+    let mut x = 0;
+    let mut pow = 0;
+    for b in s.bytes() {
+        let d = i64::from(b - b'0');
+        if d > 0 {
+            sum = (sum + d) % M;
+            x = (x * 10 % M + d) % M;
+            pow += 1;
+        }
+        pref_x.push(x);
+        pref_sum.push(sum);
+        pref_pow.push(pow);
+    }
+    let mut res = vec![];
+    for q in queries {
+        let [left, right] = [0, 1].map(|v| q[v] as usize);
+        if let Some(left) = left.checked_sub(1) {
+            let sum = (pref_sum[right] - pref_sum[left]).rem_euclid(M);
+            let pow = pref_pow[right] - pref_pow[left];
+            let x = pref_x[right] - pref_x[left] * mod_pow(10, pow) % M;
+            res.push((x.rem_euclid(M) * sum % M) as i32);
+        } else {
+            res.push((pref_x[right] * pref_sum[right] % M) as i32);
         }
     }
-    for i3 in (0..n3).rev() {
-        for i1 in (0..=n1).rev() {
-            for i2 in (0..=n2).rev() {
-                for ii in i1..n1 {
-                    if s1[ii] == target[i3] {
-                        dp[i1][i2][i3] = (dp[i1][i2][i3] + dp[1 + ii][i2][1 + i3]) % M;
-                    }
-                }
-                for ii in i2..n2 {
-                    if s2[ii] == target[i3] {
-                        dp[i1][i2][i3] = (dp[i1][i2][i3] + dp[i1][1 + ii][1 + i3]) % M;
-                    }
-                }
-            }
-        }
-    }
-    dp[0][0][0]
-}
-
-pub fn interleave_characters(word1: &str, word2: &str, target: &str) -> i32 {
-    let [n1, n2, n3] = [&word1, &word2, &target].map(|s| s.len());
-    let [s1, s2, target] = [&word1, &word2, &target].map(|s| s.as_bytes());
-    let mut memo = vec![vec![vec![-1; n3]; 1 + n2]; 1 + n1];
-    dfs(s1, s2, target, 0, 0, 0, &mut memo)
-}
-
-const M: i32 = 1_000_000_007;
-
-fn dfs(
-    s1: &[u8],
-    s2: &[u8],
-    target: &[u8],
-    i1: usize,
-    i2: usize,
-    i3: usize,
-    memo: &mut [Vec<Vec<i32>>],
-) -> i32 {
-    if i3 == target.len() {
-        return i32::from(i1 > 0 && i2 > 0);
-    }
-    if i1 >= s1.len() && i2 >= s2.len() {
-        return 0;
-    }
-    if memo[i1][i2][i3] > -1 {
-        return memo[i1][i2][i3];
-    }
-    let mut res = 0;
-    for ii in i1..s1.len() {
-        if s1[ii] == target[i3] {
-            res = (res + dfs(s1, s2, target, 1 + ii, i2, 1 + i3, memo)) % M
-        }
-    }
-    for ii in i2..s2.len() {
-        if s2[ii] == target[i3] {
-            res = (res + dfs(s1, s2, target, i1, 1 + ii, 1 + i3, memo)) % M;
-        }
-    }
-    memo[i1][i2][i3] = res;
     res
+}
+
+const M: i64 = 1_000_000_007;
+
+const fn mod_pow(b: i64, exp: i64) -> i64 {
+    if exp == 0 {
+        return 1;
+    }
+    if exp & 1 == 0 {
+        mod_pow(b * b % M, exp >> 1)
+    } else {
+        mod_pow(b * b % M, exp >> 1) * b % M
+    }
 }
 
 #[cfg(test)]
@@ -110,8 +86,10 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(interleave_characters("abc", "bac", "abc"), 5);
-        assert_eq!(with_dp("abc", "bac", "abc"), 5);
+        assert_eq!(
+            sum_and_multiply("10203004", &[[0, 7], [1, 3], [4, 6]]),
+            [12340, 4, 9]
+        );
     }
 
     #[test]
