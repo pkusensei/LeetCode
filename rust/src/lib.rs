@@ -6,65 +6,62 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
+use std::sync::LazyLock;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn can_make_subsequence(s: &str, t: &str) -> bool {
-    let [n1, n2] = [&s, &t].map(|v| v.len());
-    if n1 > n2 {
-        return false;
-    }
-    if n1 == 1 {
-        return true;
-    }
-    let [s, t] = [&s, &t].map(|v| v.as_bytes());
-    let mut i2 = 0;
-    let mut prefix = vec![None; n1];
-    for (i1, &b1) in s.iter().enumerate() {
-        while t.get(i2).is_some_and(|&b2| b2 != b1) {
-            i2 += 1;
-        }
-        if i2 >= n2 {
+pub fn divisible_game(nums: Vec<i32>) -> i32 {
+    const M: i64 = 1_000_000_007;
+    let max = *nums.iter().max().unwrap();
+    let mut res = i64::MIN;
+    let mut min_k = 0;
+    for &p in P.iter() {
+        if p > max {
             break;
         }
-        prefix[i1] = Some(i2);
-        i2 += 1;
-    }
-    let mut suffix = vec![None; n1];
-    let mut i2 = n2 - 1;
-    'out: for (i1, &b1) in s.iter().enumerate().rev() {
-        while t[i2] != b1 {
-            let Some(v) = i2.checked_sub(1) else {
-                break 'out;
-            };
-            i2 = v;
-        }
-        suffix[i1] = Some(i2);
-        let Some(v) = i2.checked_sub(1) else {
-            break 'out;
-        };
-        i2 = v;
-    }
-    for i in 0..n1 {
-        if i == 0 {
-            if suffix[1 + i].is_some_and(|v| v > 0) {
-                return true;
-            }
-        } else if i == n1 - 1 {
-            if prefix[i - 1].is_some_and(|v| v < n2 - 1) {
-                return true;
-            }
-        } else {
-            if prefix[i - 1]
-                .zip(suffix[1 + i])
-                .is_some_and(|(a, b)| 1 + a < b)
-            {
-                return true;
-            }
+        let curr = f(&nums, p);
+        if curr > res {
+            res = curr;
+            min_k = p;
         }
     }
-    false
+    if min_k == 0 {
+        (-2_i64).rem_euclid(M) as i32
+    } else {
+        (res * i64::from(min_k)).rem_euclid(M) as i32
+    }
 }
+
+fn f(nums: &[i32], k: i32) -> i64 {
+    let arr = nums.iter().map(|&v| if v % k == 0 { v } else { -v });
+    let mut curr = 0;
+    let mut res = i64::MIN;
+    for num in arr {
+        let num = i64::from(num);
+        curr = num.max(curr + num);
+        res = res.max(curr);
+    }
+    res
+}
+
+const MAX: usize = 1_000_000;
+static P: LazyLock<Vec<i32>> = LazyLock::new(|| {
+    let mut sieve = vec![true; 1 + MAX];
+    sieve[..2].fill(false);
+    for p in 2..=MAX.isqrt() {
+        if sieve[p] {
+            for val in (p * p..=MAX).step_by(p) {
+                sieve[val] = false
+            }
+        }
+    }
+    sieve
+        .iter()
+        .enumerate()
+        .filter_map(|(i, &v)| if v { Some(i as i32) } else { None })
+        .collect()
+});
 
 #[cfg(test)]
 mod tests {
@@ -96,15 +93,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert!(can_make_subsequence("cat", "chat"));
-        assert!(!can_make_subsequence("plane", "apple"));
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert!(!can_make_subsequence("aab", "aba"));
-        assert!(can_make_subsequence("zaaz", "zyazbz"));
-        assert!(!can_make_subsequence("bbb", "yab"));
-    }
+    fn test() {}
 }
