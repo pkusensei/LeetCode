@@ -9,28 +9,61 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_digit_range(nums: Vec<i32>) -> i32 {
-    let mut res = 0;
-    let mut range = 0;
-    for num in nums.iter() {
-        let mut x = *num;
-        let mut mind = 9;
-        let mut maxd = 0;
-        while x > 0 {
-            let d = x % 10;
-            x /= 10;
-            mind = mind.min(d);
-            maxd = maxd.max(d);
+pub fn can_make_subsequence(s: &str, t: &str) -> bool {
+    let [n1, n2] = [&s, &t].map(|v| v.len());
+    if n1 > n2 {
+        return false;
+    }
+    if n1 == 1 {
+        return true;
+    }
+    let [s, t] = [&s, &t].map(|v| v.as_bytes());
+    let mut i2 = 0;
+    let mut prefix = vec![None; n1];
+    for (i1, &b1) in s.iter().enumerate() {
+        while t.get(i2).is_some_and(|&b2| b2 != b1) {
+            i2 += 1;
         }
-        let curr = maxd - mind;
-        if curr > range {
-            range = curr;
-            res = *num;
-        } else if curr == range {
-            res += num;
+        if i2 >= n2 {
+            break;
+        }
+        prefix[i1] = Some(i2);
+        i2 += 1;
+    }
+    let mut suffix = vec![None; n1];
+    let mut i2 = n2 - 1;
+    'out: for (i1, &b1) in s.iter().enumerate().rev() {
+        while t[i2] != b1 {
+            let Some(v) = i2.checked_sub(1) else {
+                break 'out;
+            };
+            i2 = v;
+        }
+        suffix[i1] = Some(i2);
+        let Some(v) = i2.checked_sub(1) else {
+            break 'out;
+        };
+        i2 = v;
+    }
+    for i in 0..n1 {
+        if i == 0 {
+            if suffix[1 + i].is_some_and(|v| v > 0) {
+                return true;
+            }
+        } else if i == n1 - 1 {
+            if prefix[i - 1].is_some_and(|v| v < n2 - 1) {
+                return true;
+            }
+        } else {
+            if prefix[i - 1]
+                .zip(suffix[1 + i])
+                .is_some_and(|(a, b)| 1 + a < b)
+            {
+                return true;
+            }
         }
     }
-    res
+    false
 }
 
 #[cfg(test)]
@@ -63,8 +96,15 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert!(can_make_subsequence("cat", "chat"));
+        assert!(!can_make_subsequence("plane", "apple"));
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert!(!can_make_subsequence("aab", "aba"));
+        assert!(can_make_subsequence("zaaz", "zyazbz"));
+        assert!(!can_make_subsequence("bbb", "yab"));
+    }
 }
