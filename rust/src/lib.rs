@@ -7,7 +7,7 @@ mod seg_tree;
 mod trie;
 
 use std::sync::atomic::{
-    AtomicU8,
+    AtomicBool,
     Ordering::{Acquire, Release},
 };
 use std::time::Duration;
@@ -15,44 +15,45 @@ use std::time::Duration;
 #[allow(unused_imports)]
 use helper::*;
 
-struct Foo {
-    num: AtomicU8,
+struct FooBar {
+    flag: AtomicBool,
+    n: usize,
 }
 
-impl Foo {
-    fn new() -> Self {
-        Foo {
-            num: AtomicU8::new(0),
+impl FooBar {
+    fn new(n: usize) -> Self {
+        FooBar {
+            flag: AtomicBool::new(false),
+            n,
         }
     }
 
-    fn first<F>(&self, print_first: F)
+    fn foo<F>(&self, print_foo: F)
     where
-        F: FnOnce(),
+        F: Fn(),
     {
-        print_first();
-        self.num.store(1, Release);
+        for _ in 0..self.n {
+            while self.flag.load(Acquire) {
+                std::thread::sleep(Duration::from_millis(1));
+            }
+            // printFoo() outputs "foo". Do not change or remove this line.
+            print_foo();
+            self.flag.store(true, Release);
+        }
     }
 
-    fn second<F>(&self, print_second: F)
+    fn bar<F>(&self, print_bar: F)
     where
-        F: FnOnce(),
+        F: Fn(),
     {
-        while self.num.load(Acquire) != 1 {
-            std::thread::sleep(Duration::from_millis(5));
+        for _ in 0..self.n {
+            while !self.flag.load(Acquire) {
+                std::thread::sleep(Duration::from_millis(1));
+            }
+            // printBar() outputs "bar". Do not change or remove this line.
+            print_bar();
+            self.flag.store(false, Release);
         }
-        print_second();
-        self.num.store(2, Release);
-    }
-
-    fn third<F>(&self, print_third: F)
-    where
-        F: FnOnce(),
-    {
-        while self.num.load(Acquire) != 2 {
-            std::thread::sleep(Duration::from_millis(5));
-        }
-        print_third();
     }
 }
 
