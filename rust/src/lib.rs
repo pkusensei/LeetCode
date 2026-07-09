@@ -9,27 +9,49 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn can_make_subsequence(s: String, t: String) -> bool {
-    let (s, n) = (s.as_bytes(), s.len());
-    // Best length w/o change
-    let mut no_change = 0;
-    // Best length w/ only 1 change
-    let mut one_change = 0;
-    for target in t.bytes() {
-        if one_change >= n {
-            break;
+pub fn path_existence_queries(
+    n: i32,
+    nums: Vec<i32>,
+    max_diff: i32,
+    queries: Vec<Vec<i32>>,
+) -> Vec<bool> {
+    let n = n as usize;
+    let mut dsu = DSU::new(n);
+    for i in 0..n - 1 {
+        if nums[1 + i] - nums[i] <= max_diff {
+            dsu.union(i, 1 + i);
         }
-        // Option1
-        // We already changed one letter
-        // We can only extend if curr==target
-        let opt1 = one_change + usize::from(s[one_change] == target);
-        // Option2
-        // Change could happen here regardless
-        let opt2 = 1 + no_change;
-        one_change = opt1.max(opt2);
-        no_change += usize::from(s[no_change] == target);
     }
-    one_change >= n
+    queries
+        .iter()
+        .map(|q| {
+            let [a, b] = [0, 1].map(|i| q[i] as usize);
+            dsu.find(a) == dsu.find(b)
+        })
+        .collect()
+}
+
+struct DSU {
+    parent: Vec<usize>,
+}
+
+impl DSU {
+    fn new(n: usize) -> Self {
+        Self {
+            parent: (0..n).collect(),
+        }
+    }
+
+    fn find(&mut self, v: usize) -> usize {
+        if self.parent[v] != v {
+            self.parent[v] = self.find(self.parent[v]);
+        }
+        self.parent[v]
+    }
+
+    fn union(&mut self, x: usize, y: usize) {
+        self.parent[y] = x;
+    }
 }
 
 #[cfg(test)]
