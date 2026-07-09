@@ -6,51 +6,53 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
+use std::sync::atomic::{
+    AtomicU8,
+    Ordering::{Acquire, Release},
+};
+use std::time::Duration;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn path_existence_queries(
-    n: i32,
-    nums: Vec<i32>,
-    max_diff: i32,
-    queries: Vec<Vec<i32>>,
-) -> Vec<bool> {
-    let n = n as usize;
-    let mut dsu = DSU::new(n);
-    for i in 0..n - 1 {
-        if nums[1 + i] - nums[i] <= max_diff {
-            dsu.union(i, 1 + i);
-        }
-    }
-    queries
-        .iter()
-        .map(|q| {
-            let [a, b] = [0, 1].map(|i| q[i] as usize);
-            dsu.find(a) == dsu.find(b)
-        })
-        .collect()
+struct Foo {
+    num: AtomicU8,
 }
 
-struct DSU {
-    parent: Vec<usize>,
-}
-
-impl DSU {
-    fn new(n: usize) -> Self {
-        Self {
-            parent: (0..n).collect(),
+impl Foo {
+    fn new() -> Self {
+        Foo {
+            num: AtomicU8::new(0),
         }
     }
 
-    fn find(&mut self, v: usize) -> usize {
-        if self.parent[v] != v {
-            self.parent[v] = self.find(self.parent[v]);
-        }
-        self.parent[v]
+    fn first<F>(&self, print_first: F)
+    where
+        F: FnOnce(),
+    {
+        print_first();
+        self.num.store(1, Release);
     }
 
-    fn union(&mut self, x: usize, y: usize) {
-        self.parent[y] = x;
+    fn second<F>(&self, print_second: F)
+    where
+        F: FnOnce(),
+    {
+        while self.num.load(Acquire) != 1 {
+            std::thread::sleep(Duration::from_millis(5));
+        }
+        print_second();
+        self.num.store(2, Release);
+    }
+
+    fn third<F>(&self, print_third: F)
+    where
+        F: FnOnce(),
+    {
+        while self.num.load(Acquire) != 2 {
+            std::thread::sleep(Duration::from_millis(5));
+        }
+        print_third();
     }
 }
 
