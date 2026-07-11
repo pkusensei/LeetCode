@@ -7,42 +7,56 @@ using static Solution.Utils;
 
 namespace Solution;
 
-public class Solution
+public class H2O
 {
-    public int[] PathsWithMaxScore(IList<string> board)
-    {
-        const int M = 1_000_000_007;
-        ReadOnlySpan<(int, int)> D = [(-1, 0), (0, -1), (-1, -1)];
+    readonly object _lock;
+    int hyd;
+    int oxy;
 
-        int n = board.Count;
-        (int score, int count)[,] dp = new (int, int)[n, n];
-        dp[0, 0] = (0, 1);
-        for (int r = 0; r < n; r++)
+    public H2O()
+    {
+        _lock = new();
+        hyd = 0;
+        oxy = 0;
+    }
+
+    public void Hydrogen(Action releaseHydrogen)
+    {
+        lock (_lock)
         {
-            for (int c = 0; c < n; c++)
+            while (hyd == 2)
             {
-                if (board[r][c] == 'E' || board[r][c] == 'X') { continue; }
-                foreach (var (dr, dc) in D)
-                {
-                    int pr = r + dr;
-                    int pc = c + dc;
-                    if (pr >= 0 && pc >= 0)
-                    {
-                        int prev = dp[pr, pc].score;
-                        if (dp[r, c].score < prev) { dp[r, c] = (prev, 0); }
-                        if (dp[r, c].score == prev)
-                        {
-                            dp[r, c].count = (dp[r, c].count + dp[pr, pc].count) % M;
-                        }
-                    }
-                }
-                if (char.IsAsciiDigit(board[r][c]))
-                {
-                    dp[r, c].score += board[r][c] - '0';
-                }
+                Monitor.Wait(_lock);
             }
+            // releaseHydrogen() outputs "H". Do not change or remove this line.
+            releaseHydrogen();
+            hyd += 1;
+            if (oxy == 1 && hyd == 2)
+            {
+                oxy = 0;
+                hyd = 0;
+            }
+            Monitor.PulseAll(_lock);
         }
-        (int max, int count) = dp[n - 1, n - 1];
-        return count > 0 ? [max, count] : [0, 0];
+    }
+
+    public void Oxygen(Action releaseOxygen)
+    {
+        lock (_lock)
+        {
+            while (oxy == 1)
+            {
+                Monitor.Wait(_lock);
+            }
+            // releaseOxygen() outputs "O". Do not change or remove this line.
+            releaseOxygen();
+            oxy += 1;
+            if (oxy == 1 && hyd == 2)
+            {
+                oxy = 0;
+                hyd = 0;
+            }
+            Monitor.PulseAll(_lock);
+        }
     }
 }
