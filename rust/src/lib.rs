@@ -6,83 +6,25 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::iter::repeat_n;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn create_grid(m: i32, n: i32, k: i32) -> Vec<String> {
-    let [rows, cols] = [m, n].map(|v| v as usize);
-    if rows == 1 || cols == 1 {
-        if k > 1 {
-            return vec![];
+pub fn max_consistent_columns(grid: Vec<Vec<i32>>, limit: i32) -> i32 {
+    let cols = grid[0].len();
+    let mut dp = vec![1; cols];
+    let mut res = 1;
+    for right in 1..cols {
+        for left in 0..right {
+            if grid
+                .iter()
+                .all(|r| r[right].abs_diff(r[left]) <= limit as u32)
+            {
+                dp[right] = dp[right].max(1 + dp[left]);
+                res = res.max(dp[right])
+            }
         }
-        return vec![repeat_n('.', cols).collect(); rows];
     }
-    let mut res = vec![vec![b'#'; cols]; rows];
-    match k {
-        1 => {
-            for r in 0..rows - 1 {
-                res[r][0] = b'.'
-            }
-            res[rows - 1].fill(b'.');
-        }
-        2 => {
-            for r in 0..rows - 2 {
-                res[r][0] = b'.';
-            }
-            res[rows - 2].fill(b'.');
-            res[rows - 1][cols - 2..].fill(b'.');
-        }
-        3 => {
-            if rows >= 2 && cols >= 3 {
-                for r in 0..rows - 2 {
-                    res[r][0] = b'.';
-                }
-                res[rows - 2].fill(b'.');
-                res[rows - 1][cols - 3..].fill(b'.');
-            } else if rows >= 3 && cols >= 2 {
-                for r in 0..rows - 3 {
-                    res[r][0] = b'.';
-                }
-                res[rows - 3].fill(b'.');
-                res[rows - 2][cols - 2..].fill(b'.');
-                res[rows - 1][cols - 2..].fill(b'.');
-            } else {
-                res = vec![]
-            }
-        }
-        4 => {
-            if rows >= 2 && cols >= 4 {
-                for r in 0..rows - 2 {
-                    res[r][0] = b'.';
-                }
-                res[rows - 2].fill(b'.');
-                res[rows - 1][cols - 4..].fill(b'.');
-            } else if rows >= 4 && cols >= 2 {
-                for r in 0..rows - 4 {
-                    res[r][0] = b'.';
-                }
-                res[rows - 4].fill(b'.');
-                for r in rows - 3..rows {
-                    res[r][cols - 2..].fill(b'.');
-                }
-            } else if rows >= 3 && cols >= 3 {
-                for r in 0..rows - 3 {
-                    res[r][0] = b'.';
-                }
-                res[rows - 3][..cols - 1].fill(b'.');
-                res[rows - 2][cols - 3..].fill(b'.');
-                res[rows - 1][cols - 2..].fill(b'.');
-            } else {
-                res = vec![]
-            }
-        }
-        _ => unreachable!(),
-    };
-    res.into_iter()
-        .map(|v| String::from_utf8(v).unwrap())
-        .collect()
+    res
 }
 
 #[cfg(test)]
