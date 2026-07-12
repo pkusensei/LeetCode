@@ -6,31 +6,83 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
+use std::iter::repeat_n;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_cost(nums: &[i32], k: i32) -> i32 {
-    const M: i128 = 1_000_000_007;
-    let k = i128::from(k);
-    let mut curr = k;
-    let mut cost = 1;
-    let mut res = 0;
-    for &num in nums.iter() {
-        // curr + d * k >= num
-        // d*k >= num - curr
-        // d = (num-curr+k-1)/k
-        let num = i128::from(num);
-        if curr >= num {
-            curr -= num;
-        } else {
-            let d = (num - curr + k - 1) / k;
-            let last = cost + d - 1;
-            res = (res + (cost + last) * d / 2 % M) % M;
-            cost = 1 + last;
-            curr += d * k - num;
+pub fn create_grid(m: i32, n: i32, k: i32) -> Vec<String> {
+    let [rows, cols] = [m, n].map(|v| v as usize);
+    if rows == 1 || cols == 1 {
+        if k > 1 {
+            return vec![];
         }
+        return vec![repeat_n('.', cols).collect(); rows];
     }
-    res as i32
+    let mut res = vec![vec![b'#'; cols]; rows];
+    match k {
+        1 => {
+            for r in 0..rows - 1 {
+                res[r][0] = b'.'
+            }
+            res[rows - 1].fill(b'.');
+        }
+        2 => {
+            for r in 0..rows - 2 {
+                res[r][0] = b'.';
+            }
+            res[rows - 2].fill(b'.');
+            res[rows - 1][cols - 2..].fill(b'.');
+        }
+        3 => {
+            if rows >= 2 && cols >= 3 {
+                for r in 0..rows - 2 {
+                    res[r][0] = b'.';
+                }
+                res[rows - 2].fill(b'.');
+                res[rows - 1][cols - 3..].fill(b'.');
+            } else if rows >= 3 && cols >= 2 {
+                for r in 0..rows - 3 {
+                    res[r][0] = b'.';
+                }
+                res[rows - 3].fill(b'.');
+                res[rows - 2][cols - 2..].fill(b'.');
+                res[rows - 1][cols - 2..].fill(b'.');
+            } else {
+                res = vec![]
+            }
+        }
+        4 => {
+            if rows >= 2 && cols >= 4 {
+                for r in 0..rows - 2 {
+                    res[r][0] = b'.';
+                }
+                res[rows - 2].fill(b'.');
+                res[rows - 1][cols - 4..].fill(b'.');
+            } else if rows >= 4 && cols >= 2 {
+                for r in 0..rows - 4 {
+                    res[r][0] = b'.';
+                }
+                res[rows - 4].fill(b'.');
+                for r in rows - 3..rows {
+                    res[r][cols - 2..].fill(b'.');
+                }
+            } else if rows >= 3 && cols >= 3 {
+                for r in 0..rows - 3 {
+                    res[r][0] = b'.';
+                }
+                res[rows - 3][..cols - 1].fill(b'.');
+                res[rows - 2][cols - 3..].fill(b'.');
+                res[rows - 1][cols - 2..].fill(b'.');
+            } else {
+                res = vec![]
+            }
+        }
+        _ => unreachable!(),
+    };
+    res.into_iter()
+        .map(|v| String::from_utf8(v).unwrap())
+        .collect()
 }
 
 #[cfg(test)]
@@ -63,9 +115,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(minimum_cost(&[1, 2, 3, 4], 4), 3);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
