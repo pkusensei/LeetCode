@@ -9,22 +9,13 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_consistent_columns(grid: Vec<Vec<i32>>, limit: i32) -> i32 {
-    let cols = grid[0].len();
-    let mut dp = vec![1; cols];
-    let mut res = 1;
-    for right in 1..cols {
-        for left in 0..right {
-            if grid
-                .iter()
-                .all(|r| r[right].abs_diff(r[left]) <= limit as u32)
-            {
-                dp[right] = dp[right].max(1 + dp[left]);
-                res = res.max(dp[right])
-            }
-        }
-    }
-    res
+pub fn minimum_cost(nums: Vec<i32>, k: i32) -> i32 {
+    const M: i64 = 1_000_000_007;
+    let k = i64::from(k);
+    let sum: i64 = nums.iter().map(|&v| i64::from(v)).sum();
+    let d = ((sum + k - 1) / k) % M;
+    let res = d * (d - 1) / 2;
+    (res % M) as i32
 }
 
 #[cfg(test)]
