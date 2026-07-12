@@ -9,23 +9,15 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn array_rank_transform(arr: Vec<i32>) -> Vec<i32> {
-    use itertools::Itertools;
-    let vals = arr
-        .iter()
-        .enumerate()
-        .map(|(i, &v)| (v, i))
-        .sorted_unstable()
-        .collect_vec();
-    let mut res = vec![0; arr.len()];
-    let mut rank = 0;
-    let mut prev = i32::MIN;
-    for (num, i) in vals {
-        rank += i32::from(num > prev);
-        res[i] = rank;
-        prev = num;
-    }
-    res
+pub fn seconds_between_times(start_time: String, end_time: String) -> i32 {
+    f(&end_time) - f(&start_time)
+}
+
+fn f(s: &str) -> i32 {
+    let v: Vec<_> = s.split(':').collect();
+    v[0].parse::<i32>().unwrap() * 60 * 60
+        + v[1].parse::<i32>().unwrap() * 60
+        + v[2].parse::<i32>().unwrap()
 }
 
 #[cfg(test)]
