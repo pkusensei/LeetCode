@@ -6,17 +6,37 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
+use std::sync::LazyLock;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_cost(nums: Vec<i32>, k: i32) -> i32 {
-    const M: i64 = 1_000_000_007;
-    let k = i64::from(k);
-    let sum: i64 = nums.iter().map(|&v| i64::from(v)).sum();
-    let d = ((sum + k - 1) / k) % M;
-    let res = d * (d - 1) / 2;
-    (res % M) as i32
+pub fn sequential_digits(low: i32, high: i32) -> Vec<i32> {
+    let a = NUMS.partition_point(|&v| v < low);
+    let b = NUMS.partition_point(|&v| v <= high);
+    NUMS[a..b].to_vec()
 }
+
+static NUMS: LazyLock<Vec<i32>> = LazyLock::new(|| {
+    let mut res = vec![];
+    'out: for len in 2..=9 {
+        for start in 1..9 {
+            let mut curr = 0;
+            let mut d = start;
+            let mut len = len;
+            while len > 0 {
+                if d > 9 {
+                    continue 'out;
+                }
+                curr = curr * 10 + d;
+                len -= 1;
+                d += 1;
+            }
+            res.push(curr);
+        }
+    }
+    res
+});
 
 #[cfg(test)]
 mod tests {
