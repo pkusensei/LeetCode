@@ -9,39 +9,16 @@ namespace Solution;
 
 public class Solution
 {
-    public int[] SmallestSufficientTeam(string[] req_skills, IList<IList<string>> people)
+    public int NumEquivDominoPairs(int[][] dominoes)
     {
-        int n = req_skills.Length;
-        Dictionary<string, int> str_i = [];
-        for (int i = 0; i < n; i++)
+        Dictionary<int, int> freq = [];
+        foreach (var item in dominoes)
         {
-            str_i[req_skills[i]] = i;
+            int a = int.Min(item[0], item[1]);
+            int b = int.Max(item[0], item[1]);
+            int val = (a << 5) | b;
+            if (!freq.TryAdd(val, 1)) { freq[val] += 1; }
         }
-        int[] people_mask = people.Select(list =>
-        {
-            int mask = 0;
-            foreach (var item in list)
-            {
-                mask |= 1 << str_i[item];
-            }
-            return mask;
-        }).ToArray();
-        List<int>[] dp = new List<int>[1 << n];
-        dp[0] = [];
-        for (int mask = 0; mask < (1 << n) - 1; mask++)
-        {
-            if (dp[mask] is null) { continue; }
-            for (int i = 0; i < people_mask.Length; i++)
-            {
-                int nmask = mask | people_mask[i];
-                if (int.PopCount(nmask) > int.PopCount(mask) &&
-                (dp[nmask] is null || dp[nmask].Count > 1 + dp[mask].Count))
-                {
-                    dp[nmask] = [.. dp[mask]];
-                    dp[nmask].Add(i);
-                }
-            }
-        }
-        return [.. dp[^1]];
+        return freq.Values.Sum(v => v * (v - 1) / 2);
     }
 }
