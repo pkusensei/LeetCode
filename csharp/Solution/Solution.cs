@@ -7,56 +7,21 @@ using static Solution.Utils;
 
 namespace Solution;
 
-public class H2O
+public class Solution
 {
-    readonly object _lock;
-    int hyd;
-    int oxy;
-
-    public H2O()
+    public int[] RelativeSortArray(int[] arr1, int[] arr2)
     {
-        _lock = new();
-        hyd = 0;
-        oxy = 0;
-    }
-
-    public void Hydrogen(Action releaseHydrogen)
-    {
-        lock (_lock)
+        Dictionary<int, int> dict = [];
+        for (int i = 0; i < arr2.Length; i++)
         {
-            while (hyd == 2)
-            {
-                Monitor.Wait(_lock);
-            }
-            // releaseHydrogen() outputs "H". Do not change or remove this line.
-            releaseHydrogen();
-            hyd += 1;
-            if (oxy == 1 && hyd == 2)
-            {
-                oxy = 0;
-                hyd = 0;
-            }
-            Monitor.PulseAll(_lock);
+            dict[arr2[i]] = i;
         }
-    }
-
-    public void Oxygen(Action releaseOxygen)
-    {
-        lock (_lock)
+        Array.Sort(arr1, (a, b) =>
         {
-            while (oxy == 1)
-            {
-                Monitor.Wait(_lock);
-            }
-            // releaseOxygen() outputs "O". Do not change or remove this line.
-            releaseOxygen();
-            oxy += 1;
-            if (oxy == 1 && hyd == 2)
-            {
-                oxy = 0;
-                hyd = 0;
-            }
-            Monitor.PulseAll(_lock);
-        }
+            int aa = dict.GetValueOrDefault(a, a);
+            int bb = dict.GetValueOrDefault(b, b);
+            return aa.CompareTo(bb);
+        });
+        return arr1;
     }
 }
