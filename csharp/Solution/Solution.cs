@@ -9,19 +9,18 @@ namespace Solution;
 
 public class Solution
 {
-    public int[] RelativeSortArray(int[] arr1, int[] arr2)
+    public int LongestWPI(int[] hours)
     {
+        int prefix = 0;
         Dictionary<int, int> dict = [];
-        for (int i = 0; i < arr2.Length; i++)
+        int res = 0;
+        for (int i = 0; i < hours.Length; i += 1)
         {
-            dict[arr2[i]] = i;
+            prefix += hours[i] > 8 ? 1 : -1;
+            if (prefix > 0) { res = int.Max(res, 1 + i); }
+            if (dict.TryGetValue(prefix - 1, out var left)) { res = int.Max(res, 1 + i - left); }
+            dict.TryAdd(prefix, i);
         }
-        Array.Sort(arr1, (a, b) =>
-        {
-            int aa = dict.GetValueOrDefault(a, a);
-            int bb = dict.GetValueOrDefault(b, b);
-            return aa.CompareTo(bb);
-        });
-        return arr1;
+        return res;
     }
 }
