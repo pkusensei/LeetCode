@@ -6,37 +6,62 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::sync::LazyLock;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn sequential_digits(low: i32, high: i32) -> Vec<i32> {
-    let a = NUMS.partition_point(|&v| v < low);
-    let b = NUMS.partition_point(|&v| v <= high);
-    NUMS[a..b].to_vec()
+pub fn subsequence_pair_count(nums: Vec<i32>) -> i32 {
+    let n = nums.len();
+    let mut memo = vec![[[-1; 201]; 201]; n];
+    dfs(&nums, 0, 0, 0, &mut memo)
 }
 
-static NUMS: LazyLock<Vec<i32>> = LazyLock::new(|| {
-    let mut res = vec![];
-    'out: for len in 2..=9 {
-        for start in 1..9 {
-            let mut curr = 0;
-            let mut d = start;
-            let mut len = len;
-            while len > 0 {
-                if d > 9 {
-                    continue 'out;
-                }
-                curr = curr * 10 + d;
-                len -= 1;
-                d += 1;
-            }
-            res.push(curr);
-        }
+pub fn bottom_up(nums: &[i32]) -> i32 {
+    const fn gcd(a: usize, b: usize) -> usize {
+        if a == 0 { return b } else { gcd(b % a, a) }
     }
+
+    let n = nums.len();
+    let mut dp = [[0; 201]; 201];
+    dp[0][0] = 1;
+    for &num in nums.iter() {
+        let mut curr = [[0; 201]; 201];
+        let num = num as usize;
+        for a in 0..201 {
+            let gcd1 = gcd(a, num);
+            for b in 0..201 {
+                if dp[a][b] == 0 {
+                    continue;
+                }
+                let gcd2 = gcd(b, num);
+                curr[a][b] = (curr[a][b] + dp[a][b]) % M;
+                curr[gcd1][b] = (curr[gcd1][b] + dp[a][b]) % M;
+                curr[a][gcd2] = (curr[a][gcd2] + dp[a][b]) % M;
+            }
+        }
+        dp = curr;
+    }
+    (1..201).map(|i| dp[i][i]).fold(0, |acc, v| (acc + v) % M)
+}
+
+const M: i32 = 1_000_000_007;
+fn dfs(nums: &[i32], idx: usize, gcd1: i32, gcd2: i32, memo: &mut [[[i32; 201]; 201]]) -> i32 {
+    const fn gcd(a: i32, b: i32) -> i32 {
+        if a == 0 { return b } else { gcd(b % a, a) }
+    }
+
+    if idx >= nums.len() {
+        return i32::from(gcd1 == gcd2 && gcd1 > 0);
+    }
+    if memo[idx][gcd1 as usize][gcd2 as usize] > -1 {
+        return memo[idx][gcd1 as usize][gcd2 as usize];
+    }
+    let skip = dfs(nums, 1 + idx, gcd1, gcd2, memo);
+    let take1 = dfs(nums, 1 + idx, gcd(gcd1, nums[idx]), gcd2, memo);
+    let take2 = dfs(nums, 1 + idx, gcd1, gcd(gcd2, nums[idx]), memo);
+    let res = ((skip + take1) % M + take2) % M;
+    memo[idx][gcd1 as usize][gcd2 as usize] = res;
     res
-});
+}
 
 #[cfg(test)]
 mod tests {
