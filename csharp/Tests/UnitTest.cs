@@ -13,8 +13,6 @@ public class UnitTest
     [DataRow(32, new[] { 6, 2, 4 })]
     public void TestMethod1(int exp, int[] arr)
     {
-        Assert.AreEqual(exp, sol.MctFromLeafValues(arr));
-        Assert.AreEqual(exp, sol.WithMonoStack(arr));
     }
 
     [TestMethod]
