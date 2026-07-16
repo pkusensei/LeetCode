@@ -7,11 +7,14 @@ namespace Tests;
 [TestClass]
 public class UnitTest
 {
-    // readonly Solution.Solution sol = new();
+    readonly Solution.Solution sol = new();
 
     [TestMethod]
-    public void TestMethod1()
+    [DataRow(32, new[] { 6, 2, 4 })]
+    public void TestMethod1(int exp, int[] arr)
     {
+        Assert.AreEqual(exp, sol.MctFromLeafValues(arr));
+        Assert.AreEqual(exp, sol.WithMonoStack(arr));
     }
 
     [TestMethod]

@@ -9,51 +9,79 @@ namespace Solution;
 
 public class Solution
 {
-    public int[] ShortestAlternatingPaths(int n, int[][] redEdges, int[][] blueEdges)
+    public int WithMonoStack(int[] arr)
     {
-        var red_adj = Build(n, redEdges);
-        var blue_adj = Build(n, blueEdges);
-        int[,] dist = new int[2, n];
-        for (int i = 1; i < n; i++)
+        Stack<int> st = [];
+        st.Push(int.MaxValue);
+        int res = 0;
+        foreach (var right in arr)
         {
-            dist[0, i] = int.MaxValue >> 1;
-            dist[1, i] = int.MaxValue >> 1;
-        }
-        Queue<(int node, int color, int step)> queue = [];
-        for (int i = 0; i < 2; i++)
-        {
-            queue.Enqueue((0, i, 0));
-        }
-        while (queue.TryDequeue(out var item))
-        {
-            if (item.step > dist[item.color, item.node]) { continue; }
-            var nadj = item.color == 0 ? blue_adj : red_adj;
-            foreach (var next in nadj[item.node])
+            while (st.TryPeek(out int mid) && mid <= right)
             {
-                int nstep = 1 + item.step;
-                if (nstep < dist[1 - item.color, next])
+                st.Pop(); // Pop `mid` and calculate cost
+                int val = st.TryPeek(out int left) ? int.Min(left, right) : right;
+                res += mid * val;
+            }
+            st.Push(right);
+        }
+        while (st.Count > 2)
+        {
+            res += st.Pop() * st.Peek();
+        }
+        return res;
+    }
+
+    public int MctFromLeafValues(int[] arr)
+    {
+        int n = arr.Length;
+        long[,] dp = new long[n, n];
+        long[,] max = new long[n, n];
+        for (int left = 0; left < n; left++)
+        {
+            max[left, left] = arr[left];
+            for (int right = 1 + left; right < n; right++)
+            {
+                max[left, right] = long.Max(max[left, right - 1], arr[right]);
+                dp[left, right] = long.MaxValue >> 1;
+            }
+        }
+        for (int right = 0; right < n; right++)
+        {
+            for (int left = right - 1; left >= 0; left -= 1)
+            {
+                for (int mid = left; mid < right; mid++)
                 {
-                    dist[1 - item.color, next] = nstep;
-                    queue.Enqueue((next, 1 - item.color, nstep));
+                    dp[left, right] = long.Min(dp[left, right],
+                        dp[left, mid] + dp[1 + mid, right] + max[left, mid] * max[1 + mid, right]);
                 }
             }
         }
-        int[] res = new int[n];
-        for (int i = 0; i < n; i++)
+        for (int left = n - 1; left >= 0; left -= 1)
         {
-            int v = int.Min(dist[0, i], dist[1, i]);
-            res[i] = v >= (int.MaxValue >> 1) ? -1 : v;
-        }
-        return res;
-
-        static List<int>[] Build(int n, int[][] edges)
-        {
-            List<int>[] adj = [.. Enumerable.Range(0, n).Select(_ => new List<int>())];
-            foreach (var e in edges)
+            for (int right = left; right < n; right++)
             {
-                adj[e[0]].Add(e[1]);
+                for (int mid = left; mid < right; mid++)
+                {
+                    dp[left, right] = long.Min(dp[left, right],
+                        dp[left, mid] + dp[1 + mid, right] + max[left, mid] * max[1 + mid, right]);
+                }
             }
-            return adj;
+        }
+        return (int)dp[0, n - 1];
+
+        (long val, int max) Dfs(int left, int right)
+        {
+            if (left == right) { return (0, arr[left]); }
+            long res = long.MaxValue;
+            int max = arr[left];
+            for (int mid = left; mid < right; mid++)
+            {
+                (var left_val, var left_max) = Dfs(left, mid);
+                (var right_val, var right_max) = Dfs(1 + mid, right);
+                res = long.Min(res, left_val + right_val + left_max * right_max);
+                max = int.Max(max, arr[1 + mid]);
+            }
+            return (res, max);
         }
     }
 }
