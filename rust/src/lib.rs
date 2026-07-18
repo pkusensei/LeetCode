@@ -9,23 +9,14 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn rearrange_string(s: String, x: char, y: char) -> String {
-    use std::iter::repeat_n;
-    let [x, y] = [x, y].map(|v| v as u8);
-    let freq = s.bytes().fold([0; 26], |mut acc, b| {
-        acc[usize::from(b - b'a')] += 1;
-        acc
-    });
-    let mut res = Vec::with_capacity(s.len());
-    res.extend(repeat_n(y, freq[usize::from(y - b'a')]));
-    res.extend(repeat_n(x, freq[usize::from(x - b'a')]));
-    for (i, &v) in freq.iter().enumerate() {
-        let b = i as u8 + b'a';
-        if b != x && b != y {
-            res.extend(repeat_n(b, v));
-        }
+pub fn maximum_value(n: i32, s: i32, m: i32) -> i64 {
+    let [n, s, m] = [n, s, m].map(i64::from);
+    if n == 1 {
+        return s;
     }
-    String::from_utf8(res).unwrap()
+    let count = (1 + n) / 2;
+    let last = s + count * (m - 1);
+    if n & 1 == 0 { last + 1 } else { last + 2 - m }
 }
 
 #[cfg(test)]
@@ -58,7 +49,11 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(maximum_value(3, 3, 5), 8);
+        assert_eq!(maximum_value(4, 3, 5), 12);
+        assert_eq!(maximum_value(2, 4, 3), 7);
+    }
 
     #[test]
     fn test() {}
