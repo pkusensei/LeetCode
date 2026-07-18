@@ -9,14 +9,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_value(n: i32, s: i32, m: i32) -> i64 {
-    let [n, s, m] = [n, s, m].map(i64::from);
-    if n == 1 {
-        return s;
+pub fn min_adjacent_swaps(nums: Vec<i32>, a: i32, b: i32) -> i32 {
+    const M: i32 = 1_000_000_007;
+
+    let mut between = 0;
+    let mut big = 0;
+    let mut res = 0;
+    for &num in nums.iter() {
+        if num < a {
+            res = (res + between + big) % M
+        } else if b < num {
+            big += 1;
+        } else {
+            between += 1;
+            res = (res + big) % M;
+        }
     }
-    let count = (1 + n) / 2;
-    let last = s + count * (m - 1);
-    if n & 1 == 0 { last + 1 } else { last + 2 - m }
+    res
 }
 
 #[cfg(test)]
@@ -49,11 +58,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(maximum_value(3, 3, 5), 8);
-        assert_eq!(maximum_value(4, 3, 5), 12);
-        assert_eq!(maximum_value(2, 4, 3), 7);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
