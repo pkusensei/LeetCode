@@ -9,32 +9,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn gcd_values(nums: Vec<i32>, queries: Vec<i64>) -> Vec<i32> {
-    let max = *nums.iter().max().unwrap() as usize;
-    let freq = nums.iter().fold(vec![0; 1 + max], |mut acc, &num| {
-        acc[num as usize] += 1;
+pub fn rearrange_string(s: String, x: char, y: char) -> String {
+    use std::iter::repeat_n;
+    let [x, y] = [x, y].map(|v| v as u8);
+    let freq = s.bytes().fold([0; 26], |mut acc, b| {
+        acc[usize::from(b - b'a')] += 1;
         acc
     });
-    let mut gcd_freq = vec![0_i64; 1 + max];
-    for div in (1..=max).rev() {
-        let mut count = 0;
-        for v in (div..=max).step_by(div) {
-            count += i64::from(freq[v]);
-        }
-        gcd_freq[div] += count * (count - 1) / 2;
-        for v in (2 * div..=max).step_by(div) {
-            gcd_freq[div] -= gcd_freq[v];
+    let mut res = Vec::with_capacity(s.len());
+    res.extend(repeat_n(y, freq[usize::from(y - b'a')]));
+    res.extend(repeat_n(x, freq[usize::from(x - b'a')]));
+    for (i, &v) in freq.iter().enumerate() {
+        let b = i as u8 + b'a';
+        if b != x && b != y {
+            res.extend(repeat_n(b, v));
         }
     }
-    for i in 1..=max {
-        gcd_freq[i] += gcd_freq[i - 1];
-    }
-    let mut res = vec![];
-    for &q in queries.iter() {
-        let i = gcd_freq.partition_point(|&v| v <= q);
-        res.push(i as i32);
-    }
-    res
+    String::from_utf8(res).unwrap()
 }
 
 #[cfg(test)]
