@@ -9,20 +9,20 @@ namespace Solution;
 
 public class Solution
 {
-    int[] Vals
+    public int CountDominantNodes(TreeNode root)
     {
-        get
+        int res = 0;
+        Dfs(root);
+        return res;
+
+        int Dfs(TreeNode node)
         {
-            int[] vals = new int[38];
-            vals[1] = 1;
-            vals[2] = 1;
-            for (int i = 3; i < 38; i++)
-            {
-                vals[i] = vals[i - 3] + vals[i - 2] + vals[i - 1];
-            }
-            return vals;
+            if (node is null) { return 0; }
+            int left = Dfs(node.left);
+            int right = Dfs(node.right);
+            int curr = int.Max(node.val, int.Max(left, right));
+            if (curr == node.val) { res += 1; }
+            return curr;
         }
     }
-
-    public int Tribonacci(int n) => Vals[n];
 }
