@@ -9,28 +9,8 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn smallest_subsequence(s: String) -> String {
-    let last = s.bytes().enumerate().fold([0; 26], |mut acc, (i, b)| {
-        acc[usize::from(b - b'a')] = i;
-        acc
-    });
-    let mut st = vec![];
-    let mut seen = 0;
-    for (i, b) in s.bytes().enumerate() {
-        if seen & (1 << (b - b'a')) > 0 {
-            continue;
-        }
-        while let Some(&top) = st.last()
-            && top > b
-            && i < last[usize::from(top - b'a')]
-        {
-            st.pop();
-            seen ^= 1 << (top - b'a');
-        }
-        st.push(b);
-        seen |= 1 << (b - b'a');
-    }
-    String::from_utf8(st).unwrap()
+pub fn can_reach(start: Vec<i32>, target: Vec<i32>) -> bool {
+    (start[0] + start[1]) & 1 == (target[0] + target[1]) & 1
 }
 
 #[cfg(test)]
