@@ -11,7 +11,7 @@ use helper::*;
 
 pub fn minimum_groups(words: Vec<String>) -> i32 {
     use itertools::Itertools;
-    words.iter().map(|s| process(s)).unique().count() as i32
+    words.iter().map(|s| process_2(s)).unique().count() as i32
 }
 
 fn process(s: &str) -> [i64; 2] {
@@ -46,6 +46,57 @@ fn f(mut s: Vec<i64>) -> i64 {
         curr = (curr - s[i - n] * pow % M).rem_euclid(M);
         res = res.min(curr);
     }
+    res
+}
+
+fn process_2(s: &str) -> Vec<u8> {
+    let [mut odd, mut even] = [const { vec![] }; 2];
+    for (i, b) in s.bytes().enumerate() {
+        if i & 1 == 1 {
+            odd.push(b);
+        } else {
+            even.push(b);
+        }
+    }
+    let mut res = booth(odd);
+    res.push(b'#');
+    res.extend(booth(even));
+    res
+}
+
+fn booth(mut s: Vec<u8>) -> Vec<u8> {
+    let n = s.len();
+    if n < 2 {
+        return s;
+    }
+    s.extend_from_within(..);
+    let [mut i1, mut i2] = [0, 1]; // Candidate indices
+    let mut k = 0; // Number of matching elements
+    while i1 < n && i2 < n && k < n {
+        let a = s[i1 + k];
+        let b = s[i2 + k];
+        match a.cmp(&b) {
+            std::cmp::Ordering::Equal => k += 1,
+            std::cmp::Ordering::Less => {
+                i2 += 1 + k; // Rotation at i1 is better
+                if i1 == i2 {
+                    i2 += 1;
+                }
+                k = 0;
+            }
+            std::cmp::Ordering::Greater => {
+                i1 += 1 + k;
+                if i1 == i2 {
+                    i1 += 1;
+                }
+                k = 0;
+            }
+        }
+    }
+    let start = i1.min(i2);
+    // s is doubled
+    let mut res = s[start..n].to_vec();
+    res.extend_from_slice(&s[..start]);
     res
 }
 
