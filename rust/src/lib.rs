@@ -9,39 +9,28 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_cost(source: &str, target: &str, rules: &[[&str; 2]], costs: &[i32]) -> i32 {
-    use itertools::izip;
-    let n = source.len();
-    if n != target.len() {
-        return -1;
-    }
-    if source == target {
-        return 0;
-    }
-    let (s, t) = (source.as_bytes(), target.as_bytes());
-    let mut dp = vec![i32::MAX >> 1; 1 + n];
-    dp[0] = 0;
-    for si in 0..n {
-        if s[si] == t[si] {
-            dp[1 + si] = dp[1 + si].min(dp[si]);
+pub fn smallest_subsequence(s: String) -> String {
+    let last = s.bytes().enumerate().fold([0; 26], |mut acc, (i, b)| {
+        acc[usize::from(b - b'a')] = i;
+        acc
+    });
+    let mut st = vec![];
+    let mut seen = 0;
+    for (i, b) in s.bytes().enumerate() {
+        if seen & (1 << (b - b'a')) > 0 {
+            continue;
         }
-        'out: for (rule, &cost) in izip!(rules.iter(), costs.iter()) {
-            let len = rule[0].len();
-            if si + len > n {
-                continue;
-            }
-            let mut curr_cost = cost;
-            for (bi, (pat, rep)) in izip!(rule[0].bytes(), rule[1].bytes()).enumerate() {
-                if (pat == s[si + bi] || pat == b'*') && rep == t[si + bi] {
-                    curr_cost += i32::from(pat == b'*');
-                } else {
-                    continue 'out;
-                }
-            }
-            dp[si + len] = dp[si + len].min(curr_cost + dp[si]);
+        while let Some(&top) = st.last()
+            && top > b
+            && i < last[usize::from(top - b'a')]
+        {
+            st.pop();
+            seen ^= 1 << (top - b'a');
         }
+        st.push(b);
+        seen |= 1 << (b - b'a');
     }
-    if dp[n] >= i32::MAX >> 1 { -1 } else { dp[n] }
+    String::from_utf8(st).unwrap()
 }
 
 #[cfg(test)]
@@ -74,15 +63,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(min_cost("test", "next", &[["*e*t", "next"]], &[4]), 6);
-        assert_eq!(
-            min_cost("hello", "world", &[["he", "wo"], ["llo", "rld"]], &[3, 4]),
-            7
-        );
-        assert_eq!(min_cost("cat", "dog", &[["c*t", "dog"]], &[2]), 3);
-        assert_eq!(min_cost("ab", "bc", &[["a*", "bd"]], &[9]), -1);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
