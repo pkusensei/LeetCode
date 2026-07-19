@@ -8,54 +8,43 @@ mod trie;
 
 #[allow(unused_imports)]
 use helper::*;
-use itertools::izip;
 
-pub fn transform_str(s: &str, strs: &[&str]) -> Vec<bool> {
-    let pref_ones = s.bytes().fold(vec![], |mut acc, b| {
-        let curr = i32::from(b - b'0');
-        acc.push(curr + acc.last().unwrap_or(&0));
-        acc
-    });
+pub fn minimum_groups(words: Vec<String>) -> i32 {
+    use itertools::Itertools;
+    words.iter().map(|s| process(s)).unique().count() as i32
+}
+
+fn process(s: &str) -> [i64; 2] {
+    let [mut odd, mut even] = [const { vec![] }; 2];
+    for (i, b) in s.bytes().enumerate() {
+        if i & 1 == 1 {
+            odd.push(i64::from(b - b'a'));
+        } else {
+            even.push(i64::from(b - b'a'));
+        }
+    }
+    [f(odd), f(even)]
+}
+
+const M: i64 = 1_000_000_007;
+const BASE: i64 = 37;
+fn f(mut s: Vec<i64>) -> i64 {
+    if s.is_empty() {
+        return 0;
+    }
     let n = s.len();
-    let mut res = vec![];
-    'out: for target in strs.iter() {
-        let mut prefix = 0;
-        let mut wild = 0;
-        for (i, b) in target.bytes().enumerate() {
-            prefix += i32::from(b == b'1');
-            wild += i32::from(b == b'?');
-            if prefix > pref_ones[i] {
-                res.push(false);
-                continue 'out;
-            }
-        }
-        if prefix + wild < pref_ones[n - 1] {
-            res.push(false);
-            continue;
-        }
-        let need = pref_ones[n - 1] - prefix;
-        let mut t = target.as_bytes().to_vec();
-        let mut used_wild = 0;
-        for b in t.iter_mut().rev() {
-            if *b == b'?' {
-                if used_wild < need {
-                    *b = b'1';
-                    used_wild += 1;
-                } else {
-                    *b = b'0'
-                }
-            }
-        }
-        let [mut pref_s, mut pref_t] = [0, 0];
-        for (sb, &tb) in izip!(s.bytes(), t.iter()) {
-            pref_s += i32::from(sb == b'1');
-            pref_t += i32::from(tb == b'1');
-            if pref_s < pref_t {
-                res.push(false);
-                continue 'out;
-            }
-        }
-        res.push(true);
+    s.extend_from_within(..);
+    let mut curr = 0;
+    let mut pow = 1;
+    for b in s[..n].iter() {
+        curr = (curr * BASE % M + b) % M;
+        pow = pow * BASE % M;
+    }
+    let mut res = curr; // min hash
+    for i in n..2 * n {
+        curr = (curr * BASE % M + s[i]) % M;
+        curr = (curr - s[i - n] * pow % M).rem_euclid(M);
+        res = res.min(curr);
     }
     res
 }
@@ -90,15 +79,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(
-            transform_str("101", &["1?1", "0?1", "0?0"]),
-            [true, true, false]
-        );
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(transform_str("01", &["?0"]), [false]);
-    }
+    fn test() {}
 }
