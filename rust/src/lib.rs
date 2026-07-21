@@ -9,22 +9,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn shift_grid(mut grid: Vec<Vec<i32>>, k: i32) -> Vec<Vec<i32>> {
-    let mut arr: Vec<_> = grid.iter().flatten().copied().collect();
-    let k = k as usize % arr.len();
-    arr.rotate_right(k);
-    let mut i = 0;
-    let cols = grid[0].len();
-    for v in arr {
-        grid[i / cols][i % cols] = v;
-        i += 1
+pub fn max_active_sections_after_trade(s: String) -> i32 {
+    let arr: Vec<_> = s.as_bytes().chunk_by(|a, b| a == b).collect();
+    let ones = s.bytes().fold(0, |acc, b| acc + i32::from(b - b'0'));
+    let n = arr.len();
+    if n < 3 {
+        return ones;
     }
-    grid
+    let mut res = 0;
+    for i in 1..n - 1 {
+        if arr[i][0] == b'1' {
+            let d = (arr[i - 1].len() + arr[1 + i].len()) as i32;
+            res = res.max(d);
+        }
+    }
+    ones + res
 }
 
 #[cfg(test)]
 mod tests {
 
+    #[allow(unused)]
     use super::*;
 
     #[allow(unused_macros)]
