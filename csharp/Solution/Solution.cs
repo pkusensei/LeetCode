@@ -7,41 +7,38 @@ using static Solution.Utils;
 
 namespace Solution;
 
-public class SnapshotArray
+public class Solution
 {
-    public SnapshotArray(int n)
+    public int NumRollsToTarget(int n, int k, int target)
     {
-        Arr = [.. Enumerable.Range(0, n).Select(_ => new List<(int, int)> { (0, 0) })];
-        SnapId = 0;
-    }
-
-    List<(int snap, int val)>[] Arr { get; }
-    int SnapId { get; set; }
-
-    public void Set(int index, int val)
-    {
-        var arr = Arr[index];
-        if (arr[^1].snap == SnapId) { arr[^1] = (SnapId, val); }
-        else { arr.Add((SnapId, val)); }
-    }
-
-    public int Snap()
-    {
-        SnapId += 1;
-        return SnapId - 1;
-    }
-
-    public int Get(int index, int snap_id)
-    {
-        var arr = Arr[index];
-        int left = 0;
-        int right = arr.Count - 1;
-        while (left < right)
+        const int M = 1_000_000_007;
+        int[] dp = new int[1 + target];
+        dp[0] = 1;
+        for (int _ = 1; _ <= n; _++)
         {
-            int mid = left + (1 + right - left) / 2;
-            if (arr[mid].snap > snap_id) { right = mid - 1; }
-            else { left = mid; }
+            int[] curr = new int[1 + target];
+            for (int prev = 0; prev <= target; prev++)
+            {
+                for (int d = 1; d <= k && prev + d <= target; d++)
+                {
+                    curr[prev + d] = (curr[prev + d] + dp[prev]) % M;
+                }
+            }
+            dp = curr;
         }
-        return arr[left].snap <= snap_id || left == 0 ? arr[left].val : arr[left - 1].val;
+        return dp[target];
+        return Dfs(n, target);
+
+        int Dfs(int n, int total)
+        {
+            if (n == 0) { return total == 0 ? 1 : 0; }
+            if (total < 0) { return 0; }
+            int res = 0;
+            for (int i = 1; i <= k; i++)
+            {
+                res = (res + Dfs(n - 1, total - i)) % M;
+            }
+            return res;
+        }
     }
 }

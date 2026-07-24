@@ -12,10 +12,6 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
-        SnapshotArray arr = new(1);
-        arr.Snap();
-        arr.Set(0, 16);
-        Assert.AreEqual(16, arr.Get(0, 2));
     }
 
     [TestMethod]
