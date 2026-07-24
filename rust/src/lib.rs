@@ -10,18 +10,29 @@ mod trie;
 use helper::*;
 
 pub fn unique_xor_triplets(nums: Vec<i32>) -> i32 {
-    let n = nums.len();
-    if n <= 2 {
-        n as i32
-    } else {
-        let p = n.ilog2();
-        2_i32.pow(1 + p)
+    let max = *nums.iter().max().unwrap();
+    let n = 1_usize << (1 + max.ilog2());
+    let mut two = vec![false; n];
+    for (i, a) in nums.iter().enumerate() {
+        for b in &nums[i..] {
+            two[(a ^ b) as usize] = true;
+        }
     }
+    let mut three = vec![false; n];
+    for (val, &flag) in two.iter().enumerate() {
+        if flag {
+            for &num in nums.iter() {
+                three[val ^ num as usize] = true;
+            }
+        }
+    }
+    three.iter().filter(|&&v| v).count() as i32
 }
 
 #[cfg(test)]
 mod tests {
 
+    #[allow(unused_imports)]
     use super::*;
 
     #[allow(unused_macros)]
