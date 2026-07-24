@@ -9,19 +9,25 @@ namespace Solution;
 
 public class Solution
 {
-    public int MovesToMakeZigzag(int[] nums)
+    public bool BtreeGameWinningMove(TreeNode root, int n, int x)
     {
-        int n = nums.Length;
-        int a = 0;
-        int b = 0;
-        for (int i = 0; i < n; i++)
+        int leftv = 0;
+        int rightv = 0;
+        Dfs(root);
+        int p = n - leftv - rightv - 1;
+        return leftv > n / 2 || rightv > n / 2 || p > n / 2;
+
+        int Dfs(TreeNode node)
         {
-            int left = i > 0 ? nums[i - 1] : 1001;
-            int right = 1 + i < n ? nums[1 + i] : 1001;
-            int curr = nums[i] - (int.Min(left, right) - 1);
-            curr = int.Max(curr, 0);
-            if ((i & 1) == 0) { a += curr; } else { b += curr; }
+            if (node is null) { return 0; }
+            int left = Dfs(node.left);
+            int right = Dfs(node.right);
+            if (x == node.val)
+            {
+                leftv = left;
+                rightv = right;
+            }
+            return 1 + left + right;
         }
-        return int.Min(a, b);
     }
 }
