@@ -9,36 +9,46 @@ namespace Solution;
 
 public class Solution
 {
-    public int NumRollsToTarget(int n, int k, int target)
+    public int MaxRepOpt1(string text)
     {
-        const int M = 1_000_000_007;
-        int[] dp = new int[1 + target];
-        dp[0] = 1;
-        for (int _ = 1; _ <= n; _++)
+        Span<int> freq = stackalloc int[26];
+        List<(char c, int len)> chunks = [];
+        char c = '#';
+        int len = 0;
+        for (int i = 0; i < text.Length; i++)
         {
-            int[] curr = new int[1 + target];
-            for (int prev = 0; prev <= target; prev++)
+            char curr = text[i];
+            freq[curr - 'a'] += 1;
+            if (curr != c)
             {
-                for (int d = 1; d <= k && prev + d <= target; d++)
-                {
-                    curr[prev + d] = (curr[prev + d] + dp[prev]) % M;
-                }
+                if (len > 0) { chunks.Add((c, len)); }
+                c = curr;
+                len = 1;
             }
-            dp = curr;
+            else
+            {
+                len += 1;
+            }
         }
-        return dp[target];
-        return Dfs(n, target);
-
-        int Dfs(int n, int total)
+        chunks.Add((c, len));
+        int res = 1;
+        int n = chunks.Count;
+        for (int i = 0; i < n; i++)
         {
-            if (n == 0) { return total == 0 ? 1 : 0; }
-            if (total < 0) { return 0; }
-            int res = 0;
-            for (int i = 1; i <= k; i++)
+            var curr = chunks[i];
+            res = int.Max(res, curr.len);
+            if (freq[curr.c - 'a'] > curr.len)
             {
-                res = (res + Dfs(n - 1, total - i)) % M;
+                res = int.Max(res, 1 + curr.len);
             }
-            return res;
+            if (0 < i && i < n - 1 && curr.len == 1 && chunks[i - 1].c == chunks[1 + i].c)
+            {
+                int left = chunks[i - 1].c;
+                int val = chunks[i - 1].len + chunks[1 + i].len;
+                if (freq[left - 'a'] > val) { res = int.Max(res, 1 + val); }
+                else { res = int.Max(res, val); }
+            }
         }
+        return res;
     }
 }
