@@ -9,24 +9,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn unique_xor_triplets(nums: Vec<i32>) -> i32 {
-    let max = *nums.iter().max().unwrap();
-    let n = 1_usize << (1 + max.ilog2());
-    let mut two = vec![false; n];
-    for (i, a) in nums.iter().enumerate() {
-        for b in &nums[i..] {
-            two[(a ^ b) as usize] = true;
+pub const fn max_product(mut n: i32) -> i32 {
+    let [mut d1, mut d2] = [0, 0];
+    while n > 0 {
+        let d = n % 10;
+        n /= 10;
+        if d >= d1 {
+            d2 = d1;
+            d1 = d
+        } else if d > d2 {
+            d2 = d;
         }
     }
-    let mut three = vec![false; n];
-    for (val, &flag) in two.iter().enumerate() {
-        if flag {
-            for &num in nums.iter() {
-                three[val ^ num as usize] = true;
-            }
-        }
-    }
-    three.iter().filter(|&&v| v).count() as i32
+    d1 * d2
 }
 
 #[cfg(test)]
