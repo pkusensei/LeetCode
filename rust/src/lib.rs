@@ -9,12 +9,15 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_product(mut nums: Vec<i32>) -> i32 {
-    let n = nums.len();
-    nums.sort_unstable();
-    let a = nums[n - 3..].iter().product();
-    let b = nums[0] * nums[1] * nums[n - 1];
-    b.max(a)
+pub fn largest_integer(mut n: i32, mut s: i32) -> i32 {
+    let mut res = 0;
+    while n > 0 {
+        let d = s.min(9);
+        res = res * 10 + d;
+        s -= d;
+        n -= 1;
+    }
+    if s == 0 { res } else { -1 }
 }
 
 #[cfg(test)]
