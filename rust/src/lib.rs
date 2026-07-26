@@ -6,30 +6,37 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::collections::HashSet;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn aggregate_time_series(series1: Vec<Vec<i32>>, series2: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
-    let mut res = vec![];
-    let mut seen = HashSet::new();
-    for v1 in &series1 {
-        let i = series2.partition_point(|v2| v2[0] < v1[0]);
-        let curr = series2.get(i).map(|v2| v2[1]).unwrap_or(0);
-        res.push(vec![v1[0], v1[1] + curr]);
-        seen.insert(v1[0]);
+pub fn count_valid_sequences(n: i32, k: i32) -> i32 {
+    let [n, k] = [n, k].map(i64::from);
+    let a = n_choose_k(n - 1, k - 1);
+    if (n - k) & 1 == 1 {
+        a as i32
+    } else {
+        let b = n_choose_k((n + k) / 2 - 1, k - 1);
+        (a - b).rem_euclid(M) as i32
     }
-    for v2 in series2 {
-        if seen.contains(&v2[0]) {
-            continue;
-        }
-        let i = series1.partition_point(|v1| v1[0] < v2[0]);
-        let curr = series1.get(i).map(|v1| v1[1]).unwrap_or(0);
-        res.push(vec![v2[0], v2[1] + curr]);
+}
+
+const M: i64 = 1_000_000_007;
+fn n_choose_k(n: i64, k: i64) -> i64 {
+    let k = k.min(n - k);
+    let nom = (n - k + 1..=n).fold(1, |acc, v| acc * v % M);
+    let den = (1..=k).fold(1, |acc, v| acc * v % M);
+    nom * mod_pow(den, M - 2) % M
+}
+
+const fn mod_pow(b: i64, exp: i64) -> i64 {
+    if exp == 0 {
+        return 1;
     }
-    res.sort_unstable();
-    res
+    if exp & 1 == 0 {
+        mod_pow(b * b % M, exp >> 1)
+    } else {
+        mod_pow(b * b % M, exp >> 1) * b % M
+    }
 }
 
 #[cfg(test)]
