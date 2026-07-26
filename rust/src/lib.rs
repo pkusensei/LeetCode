@@ -6,37 +6,49 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
+use std::{cmp::Reverse, collections::BinaryHeap};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_valid_sequences(n: i32, k: i32) -> i32 {
-    let [n, k] = [n, k].map(i64::from);
-    let a = n_choose_k(n - 1, k - 1);
-    if (n - k) & 1 == 1 {
-        a as i32
-    } else {
-        let b = n_choose_k((n + k) / 2 - 1, k - 1);
-        (a - b).rem_euclid(M) as i32
+pub fn min_cost(m: i32, n: i32, penalty: Vec<Vec<i32>>) -> i64 {
+    let [rows, cols] = [m, n].map(|v| v as usize);
+    let mut dists = vec![vec![[i64::MAX >> 1; 2]; cols]; rows];
+    dists[0][0][0] = 1;
+    let mut heap = BinaryHeap::from([(Reverse(1), 0, 0, 0)]);
+    while let Some((Reverse(cost), row, col, parity)) = heap.pop() {
+        if row == rows - 1 && col == cols - 1 {
+            continue;
+        }
+        if cost > dists[row][col][parity] {
+            continue;
+        }
+        let nparity = parity ^ 1;
+        let pen = i64::from(penalty[row][col]);
+        for [nr, nc] in neighbors([row, col]) {
+            if nr >= rows || nc >= cols {
+                continue;
+            }
+            let ncost = cost
+                + if nparity & 1 == 1 && (nr > row || nc > col) {
+                    ((1 + nr) * (1 + nc)) as i64
+                } else if nparity & 1 == 0 && (nr < row || nc < col) {
+                    ((1 + nr) * (1 + nc)) as i64
+                } else {
+                    ((1 + nr) * (1 + nc)) as i64 + pen
+                };
+            if ncost < dists[nr][nc][nparity] {
+                dists[nr][nc][nparity] = ncost;
+                heap.push((Reverse(ncost), nr, nc, nparity));
+            }
+        }
+        let ncost = cost + pen;
+        if ncost < dists[row][col][nparity] {
+            dists[row][col][nparity] = ncost;
+            heap.push((Reverse(ncost), row, col, nparity));
+        }
     }
-}
-
-const M: i64 = 1_000_000_007;
-fn n_choose_k(n: i64, k: i64) -> i64 {
-    let k = k.min(n - k);
-    let nom = (n - k + 1..=n).fold(1, |acc, v| acc * v % M);
-    let den = (1..=k).fold(1, |acc, v| acc * v % M);
-    nom * mod_pow(den, M - 2) % M
-}
-
-const fn mod_pow(b: i64, exp: i64) -> i64 {
-    if exp == 0 {
-        return 1;
-    }
-    if exp & 1 == 0 {
-        mod_pow(b * b % M, exp >> 1)
-    } else {
-        mod_pow(b * b % M, exp >> 1) * b % M
-    }
+    dists[rows - 1][cols - 1][0].min(dists[rows - 1][cols - 1][1])
 }
 
 #[cfg(test)]
