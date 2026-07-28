@@ -6,49 +6,97 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::{cmp::Reverse, collections::BinaryHeap};
+use std::collections::HashMap;
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_cost(m: i32, n: i32, penalty: Vec<Vec<i32>>) -> i64 {
-    let [rows, cols] = [m, n].map(|v| v as usize);
-    let mut dists = vec![vec![[i64::MAX >> 1; 2]; cols]; rows];
-    dists[0][0][0] = 1;
-    let mut heap = BinaryHeap::from([(Reverse(1), 0, 0, 0)]);
-    while let Some((Reverse(cost), row, col, parity)) = heap.pop() {
-        if row == rows - 1 && col == cols - 1 {
-            continue;
-        }
-        if cost > dists[row][col][parity] {
-            continue;
-        }
-        let nparity = parity ^ 1;
-        let pen = i64::from(penalty[row][col]);
-        for [nr, nc] in neighbors([row, col]) {
-            if nr >= rows || nc >= cols {
-                continue;
-            }
-            let ncost = cost
-                + if nparity & 1 == 1 && (nr > row || nc > col) {
-                    ((1 + nr) * (1 + nc)) as i64
-                } else if nparity & 1 == 0 && (nr < row || nc < col) {
-                    ((1 + nr) * (1 + nc)) as i64
-                } else {
-                    ((1 + nr) * (1 + nc)) as i64 + pen
-                };
-            if ncost < dists[nr][nc][nparity] {
-                dists[nr][nc][nparity] = ncost;
-                heap.push((Reverse(ncost), nr, nc, nparity));
-            }
-        }
-        let ncost = cost + pen;
-        if ncost < dists[row][col][nparity] {
-            dists[row][col][nparity] = ncost;
-            heap.push((Reverse(ncost), row, col, nparity));
+struct MajorityChecker {
+    arr: Vec<i32>,
+    map: HashMap<i32, Vec<usize>>,
+    tree: Vec<Option<i32>>,
+}
+
+impl MajorityChecker {
+    fn new(arr: Vec<i32>) -> Self {
+        let map = arr
+            .iter()
+            .enumerate()
+            .fold(HashMap::<_, Vec<_>>::new(), |mut acc, (i, &v)| {
+                acc.entry(v).or_default().push(i);
+                acc
+            });
+        let n = arr.len();
+        let tree = vec![None; 4 * n];
+        let mut s = Self { arr, map, tree };
+        s.build(1, 0, n - 1);
+        s
+    }
+
+    fn query(&self, left: i32, right: i32, threshold: i32) -> i32 {
+        let n = self.arr.len();
+        if let Some([num, f]) = self._query(1, 0, n - 1, left as usize, right as usize)
+            && f >= threshold
+        {
+            num
+        } else {
+            -1
         }
     }
-    dists[rows - 1][cols - 1][0].min(dists[rows - 1][cols - 1][1])
+
+    // [num, freq]
+    fn _query(
+        &self,
+        node: usize,
+        left: usize,
+        right: usize,
+        ql: usize,
+        qr: usize,
+    ) -> Option<[i32; 2]> {
+        if qr < left || right < ql {
+            return None;
+        }
+        if ql <= left && right <= qr {
+            let num = self.tree[node]?;
+            let f = self.count(num, ql, qr);
+            return if f * 2 > (1 + qr - ql) as i32 {
+                Some([num, f])
+            } else {
+                None
+            };
+        }
+        let mid = left.midpoint(right);
+        self._query(2 * node, left, mid, ql, qr)
+            .or_else(|| self._query(1 + 2 * node, 1 + mid, right, ql, qr))
+    }
+
+    fn build(&mut self, node: usize, left: usize, right: usize) {
+        if left == right {
+            self.tree[node] = Some(self.arr[left]);
+            return;
+        }
+        let mid = left.midpoint(right);
+        self.build(2 * node, left, mid);
+        self.build(1 + 2 * node, 1 + mid, right);
+        if let Some(v) = self.tree[2 * node]
+            && self.count(v, left, right) * 2 > (right + 1 - left) as i32
+        {
+            self.tree[node] = Some(v)
+        } else if let Some(v) = self.tree[1 + 2 * node]
+            && self.count(v, left, right) * 2 > (right + 1 - left) as i32
+        {
+            self.tree[node] = Some(v)
+        }
+    }
+
+    fn count(&self, num: i32, left: usize, right: usize) -> i32 {
+        let Some(arr) = self.map.get(&num) else {
+            return 0;
+        };
+        let a = arr.partition_point(|&v| v < left);
+        let b = arr.partition_point(|&v| v <= right);
+        (b - a) as i32
+    }
 }
 
 #[cfg(test)]
@@ -85,5 +133,8 @@ mod tests {
     fn basics() {}
 
     #[test]
-    fn test() {}
+    fn test() {
+        let m = MajorityChecker::new(vec![2, 2, 1, 2, 1, 2, 2, 1, 1, 2]);
+        assert_eq!(-1, m.query(0, 5, 6));
+    }
 }
