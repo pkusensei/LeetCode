@@ -10,11 +10,11 @@ use std::collections::HashMap;
 
 #[allow(unused_imports)]
 use helper::*;
-use rand::seq::SliceRandom;
 
 struct MajorityChecker {
     arr: Vec<i32>,
     map: HashMap<i32, Vec<usize>>,
+    buckets: Vec<Option<i32>>,
 }
 
 impl MajorityChecker {
@@ -27,24 +27,77 @@ impl MajorityChecker {
                 acc
             });
         let n = arr.len();
-        Self { arr, map }
+        let b = n.isqrt();
+        let buckets = arr.chunks(b).map(vote).collect();
+        Self { arr, map, buckets }
     }
 
     fn query(&self, left: i32, right: i32, threshold: i32) -> i32 {
-        let [left, right, thr] = [left, right, threshold].map(|v| v as usize);
-        let mut rng = rand::thread_rng();
-        for _ in 0..20 {
-            if let Some(num) = self.arr[left..=right].choose(&mut rng)
-                && let Some(arr) = self.map.get(num)
+        let [left, right] = [left, right].map(|v| v as usize);
+        let b = self.arr.len().isqrt();
+        let [buc_left, buc_right] = [left, right].map(|v| v / b);
+        if buc_left == buc_right {
+            // same bucket
+            if let Some(v) = vote(&self.arr[left..=right])
+                && self.count(v, left, right) >= threshold
             {
-                let a = arr.partition_point(|&v| v < left);
-                let b = arr.partition_point(|&v| v <= right);
-                if b - a >= thr {
-                    return *num;
-                }
+                return v;
+            }
+            return -1;
+        }
+        // left partial
+        let rr = (1 + buc_left) * b - 1;
+        if let Some(v) = vote(&self.arr[left..=rr])
+            && self.count(v, left, right) >= threshold
+        {
+            return v;
+        }
+        // right partial
+        let ll = b * buc_right;
+        if let Some(v) = vote(&self.arr[ll..=right])
+            && self.count(v, left, right) >= threshold
+        {
+            return v;
+        }
+        for i in 1 + buc_left..buc_right {
+            if let Some(v) = self.buckets[i]
+                && self.count(v, left, right) >= threshold
+            {
+                return v;
             }
         }
         -1
+    }
+
+    fn count(&self, num: i32, left: usize, right: usize) -> i32 {
+        let Some(arr) = self.map.get(&num) else {
+            return 0;
+        };
+        let a = arr.partition_point(|&v| v < left);
+        let b = arr.partition_point(|&v| v <= right);
+        (b - a) as i32
+    }
+}
+
+fn vote(nums: &[i32]) -> Option<i32> {
+    let mut counter = 0;
+    let mut major = 0;
+    for &num in nums.iter() {
+        if counter == 0 {
+            major = num;
+            counter = 0;
+        }
+        if num == major {
+            counter += 1;
+        } else {
+            counter -= 1;
+        }
+    }
+    let freq = nums.iter().filter(|&&v| v == major).count();
+    if 2 * freq > nums.len() {
+        Some(major)
+    } else {
+        None
     }
 }
 
