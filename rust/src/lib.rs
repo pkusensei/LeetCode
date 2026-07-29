@@ -65,7 +65,7 @@ fn n_choose_k(n: i64, k: i64, max: i64) -> i64 {
     for i in 1..=k {
         res = res * (n - i + 1) / i;
         if res > max {
-            return 1 + max;
+            break;
         }
     }
     res
