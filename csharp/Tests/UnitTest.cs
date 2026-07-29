@@ -7,11 +7,13 @@ namespace Tests;
 [TestClass]
 public class UnitTest
 {
-    // readonly Solution.Solution sol = new();
+    readonly Solution.Solution sol = new();
 
     [TestMethod]
     public void TestMethod1()
     {
+        int[][] grid = [[1, 0, 0], [0, 0, 0], [0, 0, 0]];
+        Assert.AreEqual(4, sol.MaxDistance(grid));
     }
 
     [TestMethod]

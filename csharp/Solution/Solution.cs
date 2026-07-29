@@ -9,46 +9,44 @@ namespace Solution;
 
 public class Solution
 {
-    public int MaxRepOpt1(string text)
+    public int MaxDistance(int[][] grid)
     {
-        Span<int> freq = stackalloc int[26];
-        List<(char c, int len)> chunks = [];
-        char c = '#';
-        int len = 0;
-        for (int i = 0; i < text.Length; i++)
+        ReadOnlySpan<(int, int)> D = [(-1, 0), (1, 0), (0, -1), (0, 1)];
+        int n = grid.Length;
+        bool[,] seen = new bool[n, n];
+        Queue<(int row, int col)> queue = [];
+        for (int r = 0; r < n; r++)
         {
-            char curr = text[i];
-            freq[curr - 'a'] += 1;
-            if (curr != c)
+            for (int c = 0; c < n; c++)
             {
-                if (len > 0) { chunks.Add((c, len)); }
-                c = curr;
-                len = 1;
-            }
-            else
-            {
-                len += 1;
+                if (grid[r][c] == 1)
+                {
+                    seen[r, c] = true;
+                    queue.Enqueue((r, c));
+                }
             }
         }
-        chunks.Add((c, len));
-        int res = 1;
-        int n = chunks.Count;
-        for (int i = 0; i < n; i++)
+        if (n * n == queue.Count) { return -1; }
+        int dist = 0;
+        while (queue.Count > 0)
         {
-            var curr = chunks[i];
-            res = int.Max(res, curr.len);
-            if (freq[curr.c - 'a'] > curr.len)
+            dist += 1;
+            int len = queue.Count;
+            for (int _ = 0; _ < len; _++)
             {
-                res = int.Max(res, 1 + curr.len);
-            }
-            if (0 < i && i < n - 1 && curr.len == 1 && chunks[i - 1].c == chunks[1 + i].c)
-            {
-                int left = chunks[i - 1].c;
-                int val = chunks[i - 1].len + chunks[1 + i].len;
-                if (freq[left - 'a'] > val) { res = int.Max(res, 1 + val); }
-                else { res = int.Max(res, val); }
+                (int row, int col) = queue.Dequeue();
+                foreach (var (dr, dc) in D)
+                {
+                    int nr = row + dr;
+                    int nc = col + dc;
+                    if (0 <= nr && nr < n && 0 <= nc && nc < n && !seen[nr, nc])
+                    {
+                        seen[nr, nc] = true;
+                        queue.Enqueue((nr, nc));
+                    }
+                }
             }
         }
-        return res;
+        return dist - 1;
     }
 }
