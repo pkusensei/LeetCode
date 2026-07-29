@@ -12,8 +12,6 @@ public class UnitTest
     [TestMethod]
     public void TestMethod1()
     {
-        int[][] grid = [[1, 0, 0], [0, 0, 0], [0, 0, 0]];
-        Assert.AreEqual(4, sol.MaxDistance(grid));
     }
 
     [TestMethod]

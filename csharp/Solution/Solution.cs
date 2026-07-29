@@ -9,44 +9,30 @@ namespace Solution;
 
 public class Solution
 {
-    public int MaxDistance(int[][] grid)
+    public string LastSubstring(string s)
     {
-        ReadOnlySpan<(int, int)> D = [(-1, 0), (1, 0), (0, -1), (0, 1)];
-        int n = grid.Length;
-        bool[,] seen = new bool[n, n];
-        Queue<(int row, int col)> queue = [];
-        for (int r = 0; r < n; r++)
+        int n = s.Length;
+        int i1 = 0;
+        int i2 = 1;
+        int len = 0;
+        while (i2 + len < n)
         {
-            for (int c = 0; c < n; c++)
+            if (s[i1 + len] == s[i2 + len])
             {
-                if (grid[r][c] == 1)
-                {
-                    seen[r, c] = true;
-                    queue.Enqueue((r, c));
-                }
+                len += 1;
+                continue;
             }
-        }
-        if (n * n == queue.Count) { return -1; }
-        int dist = 0;
-        while (queue.Count > 0)
-        {
-            dist += 1;
-            int len = queue.Count;
-            for (int _ = 0; _ < len; _++)
+            if (s[i1 + len] < s[i2 + len])
             {
-                (int row, int col) = queue.Dequeue();
-                foreach (var (dr, dc) in D)
-                {
-                    int nr = row + dr;
-                    int nc = col + dc;
-                    if (0 <= nr && nr < n && 0 <= nc && nc < n && !seen[nr, nc])
-                    {
-                        seen[nr, nc] = true;
-                        queue.Enqueue((nr, nc));
-                    }
-                }
+                i1 = int.Max(i1 + 1 + len, i2);
+                i2 = 1 + i1;
             }
+            else
+            {
+                i2 += 1 + len;
+            }
+            len = 0;
         }
-        return dist - 1;
+        return s[i1..];
     }
 }
