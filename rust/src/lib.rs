@@ -9,66 +9,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn smallest_palindrome(s: String, k: i32) -> String {
-    let n = s.len();
-    let mut k = i64::from(k);
-    let mut freq = s.bytes().take(n / 2).fold([0; 26], |mut acc, b| {
-        acc[usize::from(b - b'a')] += 1;
-        acc
-    });
-    let mut res = Vec::with_capacity(n);
-    for idx in 0..n / 2 {
-        for cand in 0..26 {
-            if freq[cand] == 0 {
-                continue;
-            }
-            freq[cand] -= 1;
-            let ways = count_perm(&freq, (n / 2 - idx - 1) as i64, k);
-            if ways < k {
-                freq[cand] += 1;
-                k -= ways;
-            } else {
-                res.push(cand as u8 + b'a');
-                break;
-            }
-        }
-    }
-    if res.len() < n / 2 {
-        return "".to_string();
-    }
-    if n & 1 == 1 {
-        res.push(s.as_bytes()[n / 2]);
-    }
-    res.extend_from_within(..n / 2);
-    res[(1 + n) / 2..].reverse();
-    String::from_utf8(res).unwrap()
-}
-
-fn count_perm(freq: &[i64; 26], mut rem: i64, max: i64) -> i64 {
-    let mut res = 1;
-    for &f in freq {
-        if f == 0 {
-            continue;
-        }
-        res *= n_choose_k(rem, f, max);
-        if res > max {
-            break;
-        }
-        rem -= f;
-    }
-    res
-}
-
-fn n_choose_k(n: i64, k: i64, max: i64) -> i64 {
-    let k = k.min(n - k);
-    let mut res = 1;
-    for i in 1..=k {
-        res = res * (n - i + 1) / i;
-        if res > max {
-            break;
-        }
-    }
-    res
+pub fn minimum_pushes(word: String) -> i32 {
+    let n = word.len() as i32;
+    // Number of full 8-sets
+    let full = n / 8;
+    // Leftovers
+    let rem = n % 8;
+    rem * (1 + full) + full * (1 + full) * 4
+    // e.g "ab_c"
+    // "ab" fall in full set
+    // "c" is leftover
+    // Full sets take full * (1+full) / 2 * 8
+    // Each leftover takes (1+full) to type, total rem*(1+full)
 }
 
 #[cfg(test)]
