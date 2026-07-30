@@ -9,30 +9,29 @@ namespace Solution;
 
 public class Solution
 {
-    public string LastSubstring(string s)
+    public ListNode RemoveZeroSumSublists(ListNode head)
     {
-        int n = s.Length;
-        int i1 = 0;
-        int i2 = 1;
-        int len = 0;
-        while (i2 + len < n)
+        ListNode dummy = new(0, head);
+        ListNode curr = dummy;
+        Dictionary<int, ListNode> prefix = [];
+        int sum = 0;
+        while (curr is not null)
         {
-            if (s[i1 + len] == s[i2 + len])
-            {
-                len += 1;
-                continue;
-            }
-            if (s[i1 + len] < s[i2 + len])
-            {
-                i1 = int.Max(i1 + 1 + len, i2);
-                i2 = 1 + i1;
-            }
-            else
-            {
-                i2 += 1 + len;
-            }
-            len = 0;
+            sum += curr.val;
+            prefix[sum] = curr;
+            curr = curr.next;
         }
-        return s[i1..];
+        sum = 0;
+        curr = dummy;
+        while (curr is not null)
+        {
+            sum += curr.val;
+            if (prefix.TryGetValue(sum, out var node))
+            {
+                curr.next = node.next;
+            }
+            curr = curr.next;
+        }
+        return dummy.next;
     }
 }
