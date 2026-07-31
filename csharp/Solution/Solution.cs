@@ -9,21 +9,27 @@ namespace Solution;
 
 public class Solution
 {
-    const long M = 1_000_000_007;
-    static int[] P { get; } = [
-            0, 1, 2, 2, 3, 3, 4, 4, 4, 4, 5, 5, 6, 6, 6, 6, 7, 7, 8, 8, 8, 8, 9, 9, 9, 9, 9, 9, 10, 10,
-            11, 11, 11, 11, 11, 11, 12, 12, 12, 12, 13, 13, 14, 14, 14, 14, 15, 15, 15, 15, 15, 15, 16,
-            16, 16, 16, 16, 16, 17, 17, 18, 18, 18, 18, 18, 18, 19, 19, 19, 19, 20, 20, 21, 21, 21, 21,
-            21, 21, 22, 22, 22, 22, 23, 23, 23, 23, 23, 23, 24, 24, 24, 24, 24, 24, 24, 24, 25, 25, 25,
-            25,
-        ];
-
-
-    public int NumPrimeArrangements(int n)
+    public IList<bool> CanMakePaliQueries(string s, int[][] queries)
     {
-        int a = P[n - 1];
-        return (int)(Fact(a) * Fact(n - a) % M);
-
-        static long Fact(long n) => n <= 1 ? 1 : n * Fact(n - 1) % M;
+        int[] curr = new int[26];
+        List<int[]> prefix = new(s.Length);
+        foreach (var c in s)
+        {
+            curr[c - 'a'] += 1;
+            prefix.Add([.. curr]);
+        }
+        List<bool> res = new(queries.Length);
+        foreach (var q in queries)
+        {
+            int odd = 0;
+            for (int i = 0; i < 26; i++)
+            {
+                int val = prefix[q[1]][i] - (q[0] > 0 ? prefix[q[0] - 1][i] : 0);
+                odd += val & 1;
+            }
+            res.Add(odd <= 1 + 2 * q[2]);
+        }
+        return res;
     }
 }
+
