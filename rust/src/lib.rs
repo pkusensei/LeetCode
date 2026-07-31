@@ -10,17 +10,16 @@ mod trie;
 use helper::*;
 
 pub fn minimum_pushes(word: String) -> i32 {
-    let n = word.len() as i32;
-    // Number of full 8-sets
-    let full = n / 8;
-    // Leftovers
-    let rem = n % 8;
-    rem * (1 + full) + full * (1 + full) * 4
-    // e.g "ab_c"
-    // "ab" fall in full set
-    // "c" is leftover
-    // Full sets take full * (1+full) / 2 * 8
-    // Each leftover takes (1+full) to type, total rem*(1+full)
+    let mut freq = word.bytes().fold([0; 26], |mut acc, b| {
+        acc[usize::from(b - b'a')] += 1;
+        acc
+    });
+    freq.sort_unstable_by_key(|&v| -v);
+    let mut res = 0;
+    for (i, f) in freq.iter().enumerate() {
+        res += f * (1 + i as i32 / 8);
+    }
+    res
 }
 
 #[cfg(test)]
