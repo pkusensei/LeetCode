@@ -7,56 +7,23 @@ using static Solution.Utils;
 
 namespace Solution;
 
-public class DinnerPlates
+public class Solution
 {
+    const long M = 1_000_000_007;
+    static int[] P { get; } = [
+            0, 1, 2, 2, 3, 3, 4, 4, 4, 4, 5, 5, 6, 6, 6, 6, 7, 7, 8, 8, 8, 8, 9, 9, 9, 9, 9, 9, 10, 10,
+            11, 11, 11, 11, 11, 11, 12, 12, 12, 12, 13, 13, 14, 14, 14, 14, 15, 15, 15, 15, 15, 15, 16,
+            16, 16, 16, 16, 16, 17, 17, 18, 18, 18, 18, 18, 18, 19, 19, 19, 19, 20, 20, 21, 21, 21, 21,
+            21, 21, 22, 22, 22, 22, 23, 23, 23, 23, 23, 23, 24, 24, 24, 24, 24, 24, 24, 24, 25, 25, 25,
+            25,
+        ];
 
-    public DinnerPlates(int capacity)
+
+    public int NumPrimeArrangements(int n)
     {
-        Cap = capacity;
-        Stacks = [];
-        Free = [];
-    }
+        int a = P[n - 1];
+        return (int)(Fact(a) * Fact(n - a) % M);
 
-    int Cap { get; }
-    List<Stack<int>> Stacks { get; }
-    SortedSet<int> Free { get; }
-
-    public void Push(int val)
-    {
-        if (Free.Count > 0)
-        {
-            int i = Free.Min;
-            Stacks[i].Push(val);
-            if (Stacks[i].Count >= Cap) { Free.Remove(i); }
-        }
-        else
-        {
-            Stack<int> st = new();
-            st.Push(val);
-            Stacks.Add(st);
-            if (Cap > 1) { Free.Add(Stacks.Count - 1); }
-        }
-    }
-
-    public int Pop()
-    {
-        if (Stacks.Count == 0) { return -1; }
-        int res = Stacks[^1].Pop();
-        Free.Add(Stacks.Count - 1);
-        while (Stacks.Count > 0 && Stacks[^1].Count == 0)
-        {
-            Free.Remove(Stacks.Count - 1);
-            Stacks.RemoveAt(Stacks.Count - 1);
-        }
-        return res;
-    }
-
-    public int PopAtStack(int index)
-    {
-        if (index >= Stacks.Count || Stacks[index].Count == 0) { return -1; }
-        if (index == Stacks.Count - 1) { return Pop(); }
-        int res = Stacks[index].Pop();
-        Free.Add(index);
-        return res;
+        static long Fact(long n) => n <= 1 ? 1 : n * Fact(n - 1) % M;
     }
 }
