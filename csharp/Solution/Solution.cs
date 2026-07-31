@@ -9,27 +9,33 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<bool> CanMakePaliQueries(string s, int[][] queries)
+    public IList<int> FindNumOfValidWords(string[] words, string[] puzzles)
     {
-        int[] curr = new int[26];
-        List<int[]> prefix = new(s.Length);
-        foreach (var c in s)
+        int[] arr = [.. words.Select(s => Mask(s))];
+        List<int> res = new(puzzles.Length);
+        foreach (var q in puzzles)
         {
-            curr[c - 'a'] += 1;
-            prefix.Add([.. curr]);
-        }
-        List<bool> res = new(queries.Length);
-        foreach (var q in queries)
-        {
-            int odd = 0;
-            for (int i = 0; i < 26; i++)
+            int curr = 0;
+            int qmask = Mask(q);
+            int front = 1 << (q[0] - 'a');
+            for (int i = 0; i < words.Length; i++)
             {
-                int val = prefix[q[1]][i] - (q[0] > 0 ? prefix[q[0] - 1][i] : 0);
-                odd += val & 1;
+                int mask = arr[i];
+                if ((mask & front) == front && (qmask & mask) == mask) { curr += 1; }
             }
-            res.Add(odd <= 1 + 2 * q[2]);
+            res.Add(curr);
         }
         return res;
+
+        static int Mask(ReadOnlySpan<char> s)
+        {
+            int res = 0;
+            foreach (var c in s)
+            {
+                res |= 1 << (c - 'a');
+            }
+            return res;
+        }
     }
 }
 
