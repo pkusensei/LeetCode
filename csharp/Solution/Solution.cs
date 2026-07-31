@@ -7,31 +7,56 @@ using static Solution.Utils;
 
 namespace Solution;
 
-public class Solution
+public class DinnerPlates
 {
-    public ListNode RemoveZeroSumSublists(ListNode head)
+
+    public DinnerPlates(int capacity)
     {
-        ListNode dummy = new(0, head);
-        ListNode curr = dummy;
-        Dictionary<int, ListNode> prefix = [];
-        int sum = 0;
-        while (curr is not null)
+        Cap = capacity;
+        Stacks = [];
+        Free = [];
+    }
+
+    int Cap { get; }
+    List<Stack<int>> Stacks { get; }
+    SortedSet<int> Free { get; }
+
+    public void Push(int val)
+    {
+        if (Free.Count > 0)
         {
-            sum += curr.val;
-            prefix[sum] = curr;
-            curr = curr.next;
+            int i = Free.Min;
+            Stacks[i].Push(val);
+            if (Stacks[i].Count >= Cap) { Free.Remove(i); }
         }
-        sum = 0;
-        curr = dummy;
-        while (curr is not null)
+        else
         {
-            sum += curr.val;
-            if (prefix.TryGetValue(sum, out var node))
-            {
-                curr.next = node.next;
-            }
-            curr = curr.next;
+            Stack<int> st = new();
+            st.Push(val);
+            Stacks.Add(st);
+            if (Cap > 1) { Free.Add(Stacks.Count - 1); }
         }
-        return dummy.next;
+    }
+
+    public int Pop()
+    {
+        if (Stacks.Count == 0) { return -1; }
+        int res = Stacks[^1].Pop();
+        Free.Add(Stacks.Count - 1);
+        while (Stacks.Count > 0 && Stacks[^1].Count == 0)
+        {
+            Free.Remove(Stacks.Count - 1);
+            Stacks.RemoveAt(Stacks.Count - 1);
+        }
+        return res;
+    }
+
+    public int PopAtStack(int index)
+    {
+        if (index >= Stacks.Count || Stacks[index].Count == 0) { return -1; }
+        if (index == Stacks.Count - 1) { return Pop(); }
+        int res = Stacks[index].Pop();
+        Free.Add(index);
+        return res;
     }
 }

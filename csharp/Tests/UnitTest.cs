@@ -7,7 +7,7 @@ namespace Tests;
 [TestClass]
 public class UnitTest
 {
-    readonly Solution.Solution sol = new();
+    // readonly Solution.Solution sol = new();
 
     [TestMethod]
     public void TestMethod1()
