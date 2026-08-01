@@ -6,41 +6,93 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_initial_strength(monsters: &[i32], boosts: &[[i32; 3]]) -> i64 {
-    use itertools::izip;
-    let n = monsters.len();
-    let mut diff = vec![0; n];
-    for b in boosts {
-        let [left, right, v] = b[..] else {
-            unreachable!()
-        };
-        let v = i64::from(v);
-        diff[left as usize] += v;
-        if (1 + right as usize) < n {
-            diff[1 + right as usize] -= v;
-        }
+pub fn min_max_waiting_time(demand: &[i32], fuel: [i32; 2]) -> i32 {
+    if fuel[0] < demand[0] && fuel[1] < demand[0] {
+        return -1;
     }
-    let mut left = 0;
-    let mut right: i64 = monsters.iter().map(|&v| i64::from(v)).sum();
-    'out: while left < right {
-        let mid = left + (right - left) / 2;
-        let mut curr = mid;
-        let mut prefix = 0;
-        for (&mon, &d) in izip!(monsters.iter(), diff.iter()) {
-            let mon = i64::from(mon);
-            prefix += d;
-            if mon > curr + prefix {
-                left = 1 + mid;
-                continue 'out;
-            }
-            curr = (curr - mon).max(0);
-        }
-        right = mid;
+    let mut memo = HashMap::new();
+    dfs(
+        &demand,
+        State {
+            idx: 0,
+            fuel0: fuel[0],
+            fuel1: fuel[1],
+            wait0: 0,
+            wait1: 0,
+        },
+        &mut memo,
+    )
+    .1
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+struct State {
+    idx: usize,
+    fuel0: i32,
+    fuel1: i32,
+    wait0: i32,
+    wait1: i32,
+}
+
+// (number of cars, max wait)
+fn dfs(demand: &[i32], state: State, memo: &mut HashMap<State, (i32, i32)>) -> (i32, i32) {
+    let State {
+        idx,
+        fuel0,
+        fuel1,
+        wait0,
+        wait1,
+    } = state;
+    if idx >= demand.len() {
+        return (0, 0);
     }
-    left
+    if let Some(&v) = memo.get(&state) {
+        return v;
+    }
+    let mut res_count = [0, 0];
+    let mut res_wait = [0, 0];
+    if demand[idx] <= fuel0 {
+        let (a, b) = dfs(
+            demand,
+            State {
+                idx: 1 + idx,
+                fuel0: fuel0 - demand[idx],
+                fuel1,
+                wait0: demand[idx],
+                wait1: (wait1 - wait0).max(0),
+            },
+            memo,
+        );
+        res_count[0] = 1 + a;
+        res_wait[0] = wait0.max(b);
+    }
+    if demand[idx] <= fuel1 {
+        let (a, b) = dfs(
+            demand,
+            State {
+                idx: 1 + idx,
+                fuel0,
+                fuel1: fuel1 - demand[idx],
+                wait0: (wait0 - wait1).max(0),
+                wait1: demand[idx],
+            },
+            memo,
+        );
+        res_count[1] = 1 + a;
+        res_wait[1] = wait1.max(b);
+    }
+    let res = match res_count[0].cmp(&res_count[1]) {
+        std::cmp::Ordering::Less => (res_count[1], res_wait[1]),
+        std::cmp::Ordering::Equal => (res_count[0], res_wait[0].min(res_wait[1])),
+        std::cmp::Ordering::Greater => (res_count[0], res_wait[0]),
+    };
+    memo.insert(state, res);
+    res
 }
 
 #[cfg(test)]
@@ -75,26 +127,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            min_initial_strength(&[5, 10, 15], &[[1, 2, 10], [1, 2, 5]]),
-            5
-        );
+        assert_eq!(min_max_waiting_time(&[6, 8, 4, 6, 5], [16, 13]), 6);
     }
 
     #[test]
-    fn test() {
-        assert_eq!(
-            min_initial_strength(
-                &[738260286],
-                &[
-                    [0, 0, 779345931],
-                    [0, 0, 322031493],
-                    [0, 0, 512569541],
-                    [0, 0, 621512189],
-                    [0, 0, 322982288]
-                ]
-            ),
-            0
-        );
-    }
+    fn test() {}
 }
