@@ -9,31 +9,14 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn predict_the_winner(nums: Vec<i32>) -> bool {
-    let n = nums.len();
-    let mut dp = vec![vec![0; n]; n];
-    for i in 0..n {
-        dp[i][i] = nums[i];
+pub fn count_valid_prefixes(s: String) -> i32 {
+    let mut res = 0;
+    let mut prefix = 0_i32;
+    for b in s.bytes() {
+        prefix += if b == b'1' { 1 } else { -1 };
+        res += i32::from(prefix.abs() <= 1);
     }
-    for len in 2..=n {
-        for left in 0..=n - len {
-            let right = left + len - 1;
-            dp[left][right] =
-                (nums[left] - dp[1 + left][right]).max(nums[right] - dp[left][right - 1])
-        }
-    }
-    dp[0][n - 1] >= 0
-
-    // dfs(&nums, 0, n - 1) >= 0
-}
-
-fn dfs(nums: &[i32], left: usize, right: usize) -> i32 {
-    if left == right {
-        return nums[left];
-    }
-    let a = nums[left] - dfs(nums, 1 + left, right);
-    let b = nums[right] - dfs(nums, left, right - 1);
-    a.max(b)
+    res
 }
 
 #[cfg(test)]
