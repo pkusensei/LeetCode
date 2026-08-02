@@ -9,19 +9,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-// x/y <= a/b
-// even*b <= odd*a
-pub fn count_ratio_subarrays(nums: Vec<i32>, a: i32, b: i32) -> i32 {
-    let mut res = 0;
-    for left in 0..nums.len() {
-        let [mut even, mut odd] = [0, 0];
-        for &v in &nums[left..] {
-            if v & 1 == 1 {
-                odd += 1
-            } else {
-                even += 1
-            }
-            res += i32::from(odd > 0 && even * b <= odd * a);
+pub fn count_tasks(tasks: &[i32], shifts: &[i32]) -> Vec<i32> {
+    let n = tasks.len();
+    let prefix = tasks.iter().fold(Vec::with_capacity(n), |mut acc, &v| {
+        acc.push(i64::from(v) + acc.last().unwrap_or(&0));
+        acc
+    });
+    let mut res = Vec::with_capacity(shifts.len());
+    let mut total = 0;
+    for &shift in shifts.iter() {
+        total += i64::from(shift);
+        let i = prefix.partition_point(|&v| v <= total);
+        if i == n {
+            res.push(0);
+            total = 0;
+        } else {
+            res.push((n - i) as i32);
         }
     }
     res
@@ -58,8 +61,16 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(count_tasks(&[2, 3, 4], &[20, 4, 5]), [0, 2, 0]);
+        assert_eq!(count_tasks(&[4, 2], &[3, 6, 1]), [2, 0, 2])
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(
+            count_tasks(&[1, 1, 3, 3, 8], &[2, 9, 5, 3, 9]),
+            [3, 1, 0, 3, 1]
+        );
+    }
 }
