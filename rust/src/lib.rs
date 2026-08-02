@@ -9,19 +9,30 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_width(planks: Vec<i32>) -> i32 {
-    use itertools::Itertools;
-    use std::collections::HashMap;
-    let freq = planks.iter().copied().counts();
-    let mut map = HashMap::new();
-    for (i, (&a, &f1)) in freq.iter().enumerate() {
-        *map.entry(a).or_insert(0) += f1;
-        *map.entry(2 * a).or_insert(0) += f1 / 2;
-        for (&b, &f2) in freq.iter().skip(1 + i) {
-            *map.entry(a + b).or_insert(0) += f1.min(f2);
+pub fn stone_game(piles: Vec<i32>) -> bool {
+    let n = piles.len();
+    let mut dp = vec![vec![0; n]; n];
+    for i in 0..n {
+        dp[i][i] = piles[i];
+    }
+    for len in 2..=n {
+        for left in 0..=n - len {
+            let right = left + len - 1;
+            dp[left][right] =
+                (piles[left] - dp[1 + left][right]).max(piles[right] - dp[left][right - 1]);
         }
     }
-    map.into_values().max().unwrap() as i32
+    dp[0][n - 1] > 0
+    // dfs(&piles, 0, n - 1) > 0
+}
+
+fn dfs(nums: &[i32], left: usize, right: usize) -> i32 {
+    if left == right {
+        return nums[left];
+    }
+    let a = nums[left] - dfs(nums, 1 + left, right);
+    let b = nums[right] - dfs(nums, left, right - 1);
+    a.max(b)
 }
 
 #[cfg(test)]
