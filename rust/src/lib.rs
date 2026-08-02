@@ -15,18 +15,18 @@ use std::{cmp::Reverse, collections::HashMap};
 // even*b <= odd*a
 pub fn count_ratio_subarrays(nums: Vec<i32>, a: i32, b: i32) -> i64 {
     let prefix = nums.iter().fold(vec![0], |mut acc, v| {
-        let curr = if v & 1 == 0 { b } else { -a };
+        let curr = if v & 1 == 0 { -b } else { a };
         acc.push(i64::from(curr) + acc.last().unwrap_or(&0));
         acc
     });
-    let map = prefix.iter().sorted_unstable_by_key(|&&v| Reverse(v)).fold(
-        HashMap::new(),
-        |mut acc, &v| {
+    let map = prefix
+        .iter()
+        .sorted_unstable()
+        .fold(HashMap::new(), |mut acc, &v| {
             let i = acc.len();
             acc.entry(v).or_insert(i);
             acc
-        },
-    );
+        });
     let n = map.len();
     let mut ft = FenwickTree::new(1 + n);
     let mut res = 0;
