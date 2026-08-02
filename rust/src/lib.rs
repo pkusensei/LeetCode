@@ -9,30 +9,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn stone_game(piles: Vec<i32>) -> bool {
-    let n = piles.len();
-    let mut dp = vec![vec![0; n]; n];
-    for i in 0..n {
-        dp[i][i] = piles[i];
-    }
-    for len in 2..=n {
-        for left in 0..=n - len {
-            let right = left + len - 1;
-            dp[left][right] =
-                (piles[left] - dp[1 + left][right]).max(piles[right] - dp[left][right - 1]);
+pub fn max_pair_strength(nums: Vec<i32>) -> i64 {
+    let mut res = 0;
+    for (i, &a) in nums.iter().enumerate() {
+        for &b in &nums[1 + i..] {
+            let v = gcd(a.into(), b.into());
+            res = res.max(i64::from(a) * i64::from(b) / v.pow(2));
         }
     }
-    dp[0][n - 1] > 0
-    // dfs(&piles, 0, n - 1) > 0
+    res
 }
 
-fn dfs(nums: &[i32], left: usize, right: usize) -> i32 {
-    if left == right {
-        return nums[left];
-    }
-    let a = nums[left] - dfs(nums, 1 + left, right);
-    let b = nums[right] - dfs(nums, left, right - 1);
-    a.max(b)
+const fn gcd(a: i64, b: i64) -> i64 {
+    if a == 0 { b } else { gcd(b % a, a) }
 }
 
 #[cfg(test)]
