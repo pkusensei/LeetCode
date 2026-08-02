@@ -9,19 +9,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_pair_strength(nums: Vec<i32>) -> i64 {
+// x/y <= a/b
+// even*b <= odd*a
+pub fn count_ratio_subarrays(nums: Vec<i32>, a: i32, b: i32) -> i32 {
     let mut res = 0;
-    for (i, &a) in nums.iter().enumerate() {
-        for &b in &nums[1 + i..] {
-            let v = gcd(a.into(), b.into());
-            res = res.max(i64::from(a) * i64::from(b) / v.pow(2));
+    for left in 0..nums.len() {
+        let [mut even, mut odd] = [0, 0];
+        for &v in &nums[left..] {
+            if v & 1 == 1 {
+                odd += 1
+            } else {
+                even += 1
+            }
+            res += i32::from(odd > 0 && even * b <= odd * a);
         }
     }
     res
-}
-
-const fn gcd(a: i64, b: i64) -> i64 {
-    if a == 0 { b } else { gcd(b % a, a) }
 }
 
 #[cfg(test)]
