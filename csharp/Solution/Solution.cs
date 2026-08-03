@@ -9,33 +9,21 @@ namespace Solution;
 
 public class Solution
 {
-    public IList<int> FindNumOfValidWords(string[] words, string[] puzzles)
+    public int MaximumSum(int[] arr)
     {
-        int[] arr = [.. words.Select(s => Mask(s))];
-        List<int> res = new(puzzles.Length);
-        foreach (var q in puzzles)
+        int no_delete = 0;
+        int with_delete = 0;
+        int res = int.MinValue;
+        bool started = false;
+        foreach (var item in arr)
         {
-            int curr = 0;
-            int qmask = Mask(q);
-            int front = 1 << (q[0] - 'a');
-            for (int i = 0; i < words.Length; i++)
-            {
-                int mask = arr[i];
-                if ((mask & front) == front && (qmask & mask) == mask) { curr += 1; }
-            }
-            res.Add(curr);
+            if (started) { with_delete = int.Max(item + with_delete, no_delete); }
+            no_delete = int.Max(item, item + no_delete);
+            int curr = started ? int.Max(no_delete, with_delete) : no_delete;
+            res = int.Max(res, curr);
+            started = true;
         }
         return res;
-
-        static int Mask(ReadOnlySpan<char> s)
-        {
-            int res = 0;
-            foreach (var c in s)
-            {
-                res |= 1 << (c - 'a');
-            }
-            return res;
-        }
     }
 }
 
