@@ -9,36 +9,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn stone_game_iii(stone_value: &[i32]) -> String {
-    let n = stone_value.len();
-    let mut dp = vec![i32::MIN; n];
-    // Could push in dp[n] = 0;
-    for idx in (0..n).rev() {
-        for next in idx + 1..=(idx + 3).min(n) {
-            dp[idx] = dp[idx]
-                .max(stone_value[idx..next].iter().sum::<i32>() - dp.get(next).unwrap_or(&0));
-        }
+pub fn find_missing_elements(nums: Vec<i32>) -> Vec<i32> {
+    let mut seen = [false; 101];
+    let [mut min, mut max] = [100, 1];
+    for &num in nums.iter() {
+        min = min.min(num);
+        max = max.max(num);
+        seen[num as usize] = true;
     }
-    match dp[0].cmp(&0) {
-        // match dfs(&stone_value, 0).cmp(&0) {
-        std::cmp::Ordering::Less => "Bob",
-        std::cmp::Ordering::Equal => "Tie",
-        std::cmp::Ordering::Greater => "Alice",
-    }
-    .to_string()
-}
-
-fn dfs(nums: &[i32], idx: usize) -> i32 {
-    let n = nums.len();
-    if idx >= n {
-        return 0;
-    }
-    let mut res = i32::MIN;
-    for i in idx + 1..=(idx + 3).min(n) {
-        let curr = nums[idx..i].iter().sum::<i32>() - dfs(nums, i);
-        res = res.max(curr)
-    }
-    res
+    seen[min as usize..max as usize]
+        .iter()
+        .enumerate()
+        .filter_map(|(i, &v)| if !v { Some((i as i32 + min)) } else { None })
+        .collect()
 }
 
 #[cfg(test)]
@@ -72,9 +55,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(stone_game_iii(&[1, 2, 3, 6]), "Tie")
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
