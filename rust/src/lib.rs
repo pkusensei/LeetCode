@@ -6,22 +6,41 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
+use std::collections::VecDeque;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_missing_elements(nums: Vec<i32>) -> Vec<i32> {
-    let mut seen = [false; 101];
-    let [mut min, mut max] = [100, 1];
-    for &num in nums.iter() {
-        min = min.min(num);
-        max = max.max(num);
-        seen[num as usize] = true;
+pub fn remaining_methods(n: i32, k: i32, invocations: Vec<Vec<i32>>) -> Vec<i32> {
+    let [n, k] = [n, k].map(|v| v as usize);
+    let mut in_degs = vec![0; n];
+    let mut adj = vec![vec![]; n];
+    for inv in invocations.iter() {
+        let [a, b] = [0, 1].map(|i| inv[i] as usize);
+        in_degs[b] += 1;
+        adj[a].push(b);
     }
-    seen[min as usize..max as usize]
-        .iter()
-        .enumerate()
-        .filter_map(|(i, &v)| if !v { Some((i as i32 + min)) } else { None })
-        .collect()
+    let mut queue = VecDeque::from([k]);
+    let mut sus = vec![false; n];
+    sus[k] = true;
+    while let Some(node) = queue.pop_front() {
+        for &next in &adj[node] {
+            in_degs[next] -= 1;
+            if !sus[next] {
+                sus[next] = true;
+                queue.push_back(next);
+            }
+        }
+    }
+    let mut res = vec![];
+    for (i, &v) in sus.iter().enumerate() {
+        if v && in_degs[i] > 0 {
+            return (0..n as i32).collect();
+        } else if !v {
+            res.push(i as i32);
+        }
+    }
+    res
 }
 
 #[cfg(test)]
