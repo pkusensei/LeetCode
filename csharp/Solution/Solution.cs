@@ -31,7 +31,7 @@ public class Solution
                 if (i2 < n2)
                 {
                     int v = curr.GetValueOrDefault(arr2[i2], 1 + val);
-                    curr[arr1[i2]] = int.Min(v, 1 + val);
+                    curr[arr2[i2]] = int.Min(v, 1 + val);
                 }
             }
             dp = curr;
