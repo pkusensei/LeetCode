@@ -10,36 +10,37 @@ namespace Solution;
 
 public class Solution
 {
-    public int KConcatenationMaxSum(int[] arr, int k)
+    public IList<IList<int>> CriticalConnections(int n, IList<IList<int>> connections)
     {
-        const long M = 1_000_000_007;
-        int n = arr.Length;
-        long curr = 0;
-        long total_max = long.MinValue;
-        foreach (var item in arr)
+        List<int>[] adj = [.. Enumerable.Range(0, n).Select(_ => new List<int>())];
+        foreach (var item in connections)
         {
-            curr = long.Max(item, item + curr);
-            total_max = long.Max(total_max, curr);
+            adj[item[0]].Add(item[1]);
+            adj[item[1]].Add(item[0]);
         }
-        long res = long.Max(total_max, 0);
-        if (k == 1) { return (int)(res % M); }
-        long sum = 0;
-        long pref_max = long.MinValue;
-        for (int i = 0; i < n; i++)
+        int[] tin = new int[n];
+        int[] min_t = new int[n];
+        int time = 0;
+        List<IList<int>> res = [];
+        Dfs(0, n);
+        return res;
+
+        void Dfs(int node, int prev)
         {
-            sum += arr[i];
-            pref_max = long.Max(pref_max, sum);
+            time += 1;
+            tin[node] = time;
+            min_t[node] = time;
+            foreach (var next in adj[node])
+            {
+                if (next == prev) { continue; }
+                if (tin[next] > 0) { min_t[node] = int.Min(min_t[node], tin[next]); }
+                else
+                {
+                    Dfs(next, node);
+                    min_t[node] = int.Min(min_t[node], min_t[next]);
+                    if (min_t[next] > tin[node]) { res.Add([node, next]); }
+                }
+            }
         }
-        sum = 0;
-        long suf_max = long.MinValue;
-        for (int i = n - 1; i >= 0; i -= 1)
-        {
-            sum += arr[i];
-            suf_max = long.Max(suf_max, sum);
-        }
-        long v = long.Max(sum * k, sum * (k - 2) + pref_max + suf_max);
-        v = long.Max(v, pref_max + suf_max);
-        res = long.Max(res, v);
-        return (int)(res % M);
     }
 }
