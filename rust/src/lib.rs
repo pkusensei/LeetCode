@@ -6,70 +6,40 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::iter::repeat_n;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn smallest_number(num: String, t: i64) -> String {
-    if !check(t) {
-        return "-1".to_string();
+pub fn valid_sequence(word1: &str, word2: &str) -> Vec<i32> {
+    let (s1, s2) = (word1.as_bytes(), word2.as_bytes());
+    let (n1, n2) = (word1.len(), word2.len());
+    let mut suffix = vec![n1; n2];
+    let mut i2 = n2 - 1;
+    for (i1, &b1) in s1.iter().enumerate().rev() {
+        if s2[i2] == b1 {
+            suffix[i2] = i1;
+            let Some(v) = i2.checked_sub(1) else {
+                break;
+            };
+            i2 = v;
+        }
     }
-    let (s, n) = (num.as_bytes(), num.len());
-    let mut remaining = vec![t; 1 + n];
-    let mut zero = n - 1;
-    for (idx, &b) in s.iter().enumerate() {
-        let v = i64::from(b - b'0');
-        if v == 0 {
-            zero = idx;
+    i2 = 0;
+    let mut skipped = false;
+    let mut res = Vec::with_capacity(n2);
+    for (i1, &b1) in s1.iter().enumerate() {
+        let Some(&b2) = s2.get(i2) else {
             break;
-        }
-        remaining[1 + idx] = remaining[idx] / gcd(remaining[idx], v);
-    }
-    if remaining[n] == 1 {
-        return num;
-    }
-    for idx in (0..=zero).rev() {
-        let requirement = remaining[idx];
-        let len = n - 1 - idx;
-        let start = i64::from(1 + s[idx] - b'0');
-        for d in start..=9 {
-            let suffix = fill_in(requirement / gcd(requirement, d), len);
-            if suffix.len() <= len {
-                let mut res = s[..idx].to_vec();
-                res.push(d as u8 + b'0');
-                res.extend(suffix);
-                return String::from_utf8(res).unwrap();
-            }
+        };
+        if b1 == b2 {
+            res.push(i1 as i32);
+            i2 += 1;
+        } else if !skipped && suffix.get(1 + i2).is_none_or(|&v| v > i1 && v < n1) {
+            skipped = true;
+            res.push(i1 as i32);
+            i2 += 1;
         }
     }
-    String::from_utf8(fill_in(t, 1 + n)).unwrap()
-}
-
-fn fill_in(mut requirement: i64, len: usize) -> Vec<u8> {
-    let mut res = Vec::with_capacity(len);
-    for d in (2..=9).rev() {
-        while requirement % d == 0 {
-            res.push(d as u8 + b'0');
-            requirement /= d;
-        }
-    }
-    res.extend(repeat_n(b'1', len.saturating_sub(res.len())));
-    res.reverse();
-    res
-}
-
-fn check(mut t: i64) -> bool {
-    for p in [2, 3, 5, 7] {
-        while t % p == 0 {
-            t /= p;
-        }
-    }
-    t == 1
-}
-
-const fn gcd(a: i64, b: i64) -> i64 {
-    if a == 0 { b } else { gcd(b % a, a) }
+    if i2 >= n2 { res } else { vec![] }
 }
 
 #[cfg(test)]
@@ -103,7 +73,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(valid_sequence("abc", "ab"), [0, 1]);
+        assert_eq!(valid_sequence("b", "a"), [0]);
+    }
 
     #[test]
     fn test() {}
