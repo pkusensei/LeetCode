@@ -9,54 +9,115 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_area(mat: &[&[i32]]) -> i32 {
-    let [rows, cols] = get_dimensions(&mat);
-    let mut prefix = vec![vec![0; 1 + cols]];
-    for (r, row) in mat.iter().enumerate() {
-        let mut curr = row.iter().fold(vec![0], |mut acc, v| {
-            acc.push(v + acc.last().unwrap_or(&0));
-            acc
-        });
-        for (c, val) in curr.iter_mut().enumerate() {
-            *val += prefix[r][c];
+pub fn count_of_peaks(mut nums: Vec<i32>, queries: Vec<Vec<i32>>) -> Vec<i64> {
+    let n = nums.len();
+    let mut st = SegTree::new(n);
+    for i in 1..n - 1 {
+        if nums[i - 1] < nums[i] && nums[i] > nums[1 + i] {
+            st.update(i, 1);
         }
-        prefix.push(curr);
     }
-    if prefix[rows][cols] < 2 {
-        return 0;
-    }
-    let mut left = 1;
-    let mut right = rows.min(cols);
-    while left < right {
-        let mid = left + (1 + right - left) / 2;
-        if check(&prefix, mid) {
-            left = mid;
+    let mut res = vec![];
+    for q in queries.iter() {
+        if q[0] == 1 {
+            res.push(st.query(q[1], q[2]));
         } else {
-            right = mid - 1;
-        }
-    }
-    left.pow(2) as i32
-}
-
-fn check(prefix: &[Vec<i32>], mid: usize) -> bool {
-    let [rows, cols] = get_dimensions(&prefix);
-    let [mut minr, mut minc] = [rows, cols];
-    let [mut maxr, mut maxc] = [0, 0];
-    let mut count = 0;
-    for r in mid..rows {
-        for c in mid..cols {
-            let area =
-                prefix[r][c] - prefix[r][c - mid] - prefix[r - mid][c] + prefix[r - mid][c - mid];
-            if area == (mid as i32).pow(2) {
-                count += 1;
-                minr = minr.min(r);
-                minc = minc.min(c);
-                maxr = maxr.max(r);
-                maxc = maxc.max(c);
+            let idx = q[1] as usize;
+            nums[idx] = q[2];
+            for i in 1.max(idx.saturating_sub(1))..=(idx + 1).min(n - 2) {
+                let v = nums[i - 1] < nums[i] && nums[i] > nums[1 + i];
+                st.update(i, v.into());
             }
         }
     }
-    count >= 2 && (maxr.abs_diff(minr) >= mid || maxc.abs_diff(minc) >= mid)
+    res
+}
+
+struct SegTree {
+    tree: Vec<Node>,
+    n: usize,
+}
+
+impl SegTree {
+    fn new(n: usize) -> Self {
+        Self {
+            tree: vec![Node::default(); 4 * n],
+            n,
+        }
+    }
+
+    fn update(&mut self, idx: usize, val: i64) {
+        self._update(1, 0, self.n - 1, idx, val);
+    }
+
+    fn _update(&mut self, node: usize, left: usize, right: usize, idx: usize, val: i64) {
+        if left == right {
+            self.tree[node] = Node {
+                count: val,
+                left_peak: left as i64,
+                right_peak: left as i64,
+                peak_free: 0,
+            };
+            return;
+        }
+        let mid = left.midpoint(right);
+        if idx <= mid {
+            self._update(2 * node, left, mid, idx, val);
+        } else {
+            self._update(1 + 2 * node, 1 + mid, right, idx, val);
+        }
+        self.tree[node] = Self::merge(self.tree[2 * node], self.tree[1 + 2 * node]);
+    }
+
+    fn query(&self, ql: i32, qr: i32) -> i64 {
+        let node = self._query(1, 0, self.n - 1, 1 + ql as usize, qr as usize - 1);
+        if node.count == 0 {
+            return 0;
+        }
+        let [ql, qr] = [ql, qr].map(i64::from);
+        let len = qr - ql;
+        let left = node.left_peak;
+        let right = node.right_peak;
+        (len.pow(2) - node.peak_free - (left - ql).pow(2) - (qr - right).pow(2)) / 2
+    }
+
+    fn _query(&self, node: usize, left: usize, right: usize, ql: usize, qr: usize) -> Node {
+        if qr < left || right < ql {
+            return Node::default();
+        }
+        if ql <= left && right <= qr {
+            return self.tree[node];
+        }
+        let mid = left.midpoint(right);
+        Self::merge(
+            self._query(2 * node, left, mid, ql, qr),
+            self._query(1 + 2 * node, 1 + mid, right, ql, qr),
+        )
+    }
+
+    fn merge(a: Node, b: Node) -> Node {
+        if a.count == 0 {
+            return b;
+        }
+        if b.count == 0 {
+            return a;
+        }
+        let gap = b.left_peak - a.right_peak;
+        Node {
+            count: a.count + b.count,
+            left_peak: a.left_peak,
+            right_peak: b.right_peak,
+            peak_free: a.peak_free + b.peak_free + gap.pow(2),
+        }
+    }
+}
+
+#[derive(Clone, Copy, Default)]
+struct Node {
+    count: i64,
+    left_peak: i64,
+    right_peak: i64,
+    peak_free: i64,
 }
 
 #[cfg(test)]
@@ -90,9 +151,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(max_area(&[&[1, 1, 1, 0], &[1, 1, 1, 1], &[0, 0, 1, 1]]), 4)
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
