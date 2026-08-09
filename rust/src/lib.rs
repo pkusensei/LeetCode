@@ -9,37 +9,43 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn valid_sequence(word1: &str, word2: &str) -> Vec<i32> {
-    let (s1, s2) = (word1.as_bytes(), word2.as_bytes());
-    let (n1, n2) = (word1.len(), word2.len());
-    let mut suffix = vec![n1; n2];
-    let mut i2 = n2 - 1;
-    for (i1, &b1) in s1.iter().enumerate().rev() {
-        if s2[i2] == b1 {
-            suffix[i2] = i1;
-            let Some(v) = i2.checked_sub(1) else {
-                break;
-            };
-            i2 = v;
+pub fn stone_game_ii(piles: Vec<i32>) -> i32 {
+    let n = piles.len();
+    if n <= 2 {
+        return piles.iter().sum();
+    }
+    let mut suffix = piles.to_vec();
+    for i in (0..n - 1).rev() {
+        suffix[i] += suffix[1 + i];
+    }
+    let mut dp = vec![vec![0; n]; n];
+    for idx in (0..n).rev() {
+        for m in 1..n {
+            if idx + 2 * m >= n {
+                dp[idx][m] = suffix[idx];
+            } else {
+                for x in 1..=2 * m {
+                    let v = dp[idx + x][x.max(m)];
+                    dp[idx][m] = dp[idx][m].max(suffix[idx] - v);
+                }
+            }
         }
     }
-    i2 = 0;
-    let mut skipped = false;
-    let mut res = Vec::with_capacity(n2);
-    for (i1, &b1) in s1.iter().enumerate() {
-        let Some(&b2) = s2.get(i2) else {
-            break;
-        };
-        if b1 == b2 {
-            res.push(i1 as i32);
-            i2 += 1;
-        } else if !skipped && suffix.get(1 + i2).is_none_or(|&v| v > i1 && v < n1) {
-            skipped = true;
-            res.push(i1 as i32);
-            i2 += 1;
-        }
+    dp[0][1]
+    // dfs(&suffix, 0, 1)
+}
+
+fn dfs(nums: &[i32], idx: usize, m: usize) -> i32 {
+    let n = nums.len();
+    if idx + 2 * m >= n {
+        return nums[idx];
     }
-    if i2 >= n2 { res } else { vec![] }
+    let mut res = 0;
+    for x in 1..=2 * m {
+        let v = dfs(nums, idx + x, m.max(x));
+        res = res.max(nums[idx] - v);
+    }
+    res
 }
 
 #[cfg(test)]
@@ -73,10 +79,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(valid_sequence("abc", "ab"), [0, 1]);
-        assert_eq!(valid_sequence("b", "a"), [0]);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
