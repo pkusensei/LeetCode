@@ -9,41 +9,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn stone_game_ii(piles: Vec<i32>) -> i32 {
-    let n = piles.len();
-    if n <= 2 {
-        return piles.iter().sum();
-    }
-    let mut suffix = piles.to_vec();
-    for i in (0..n - 1).rev() {
-        suffix[i] += suffix[1 + i];
-    }
-    let mut dp = vec![vec![0; n]; n];
-    for idx in (0..n).rev() {
-        for m in 1..n {
-            if idx + 2 * m >= n {
-                dp[idx][m] = suffix[idx];
-            } else {
-                for x in 1..=2 * m {
-                    let v = dp[idx + x][x.max(m)];
-                    dp[idx][m] = dp[idx][m].max(suffix[idx] - v);
-                }
+pub fn min_price(mut prices: Vec<i32>, mut discounts: Vec<i32>) -> f64 {
+    use itertools::{EitherOrBoth, Itertools};
+    use std::cmp::Reverse;
+    prices.sort_unstable_by_key(|&v| Reverse(v));
+    discounts.sort_unstable_by_key(|&v| Reverse(v));
+    let mut res = 0.0;
+    for v in prices.iter().zip_longest(discounts) {
+        match v {
+            EitherOrBoth::Both(&p, d) => {
+                let [p, d] = [p, d].map(f64::from);
+                res += p * (100.0 - d) / 100.0;
             }
+            EitherOrBoth::Left(&p) => res += f64::from(p),
+            EitherOrBoth::Right(_) => break,
         }
-    }
-    dp[0][1]
-    // dfs(&suffix, 0, 1)
-}
-
-fn dfs(nums: &[i32], idx: usize, m: usize) -> i32 {
-    let n = nums.len();
-    if idx + 2 * m >= n {
-        return nums[idx];
-    }
-    let mut res = 0;
-    for x in 1..=2 * m {
-        let v = dfs(nums, idx + x, m.max(x));
-        res = res.max(nums[idx] - v);
     }
     res
 }
