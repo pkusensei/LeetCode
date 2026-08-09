@@ -9,21 +9,32 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_price(mut prices: Vec<i32>, mut discounts: Vec<i32>) -> f64 {
-    use itertools::{EitherOrBoth, Itertools};
-    use std::cmp::Reverse;
-    prices.sort_unstable_by_key(|&v| Reverse(v));
-    discounts.sort_unstable_by_key(|&v| Reverse(v));
-    let mut res = 0.0;
-    for v in prices.iter().zip_longest(discounts) {
-        match v {
-            EitherOrBoth::Both(&p, d) => {
-                let [p, d] = [p, d].map(f64::from);
-                res += p * (100.0 - d) / 100.0;
+pub fn weighted_sum(parent: Vec<i32>, nums: Vec<i32>) -> i64 {
+    use std::collections::VecDeque;
+    let n = parent.len();
+    let adj = parent
+        .iter()
+        .enumerate()
+        .fold(vec![vec![]; n], |mut acc, (i, &v)| {
+            if v >= 0 {
+                acc[v as usize].push(i);
             }
-            EitherOrBoth::Left(&p) => res += f64::from(p),
-            EitherOrBoth::Right(_) => break,
+            acc
+        });
+    let mut queue = VecDeque::from([(0, 1)]);
+    let mut arr = vec![0; n];
+    let mut maxd = 1;
+    while let Some((node, depth)) = queue.pop_front() {
+        arr[node] = depth;
+        maxd = maxd.max(depth);
+        for &next in &adj[node] {
+            queue.push_back((next, 1 + depth));
         }
+    }
+    let mut res = 0;
+    for (&d, &num) in arr.iter().zip(&nums) {
+        let [d, num] = [d, num].map(i64::from);
+        res += num * (i64::from(maxd) - d + 1);
     }
     res
 }
