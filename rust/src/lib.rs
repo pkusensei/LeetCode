@@ -9,34 +9,54 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn weighted_sum(parent: Vec<i32>, nums: Vec<i32>) -> i64 {
-    use std::collections::VecDeque;
-    let n = parent.len();
-    let adj = parent
-        .iter()
-        .enumerate()
-        .fold(vec![vec![]; n], |mut acc, (i, &v)| {
-            if v >= 0 {
-                acc[v as usize].push(i);
-            }
+pub fn max_area(mat: &[&[i32]]) -> i32 {
+    let [rows, cols] = get_dimensions(&mat);
+    let mut prefix = vec![vec![0; 1 + cols]];
+    for (r, row) in mat.iter().enumerate() {
+        let mut curr = row.iter().fold(vec![0], |mut acc, v| {
+            acc.push(v + acc.last().unwrap_or(&0));
             acc
         });
-    let mut queue = VecDeque::from([(0, 1)]);
-    let mut arr = vec![0; n];
-    let mut maxd = 1;
-    while let Some((node, depth)) = queue.pop_front() {
-        arr[node] = depth;
-        maxd = maxd.max(depth);
-        for &next in &adj[node] {
-            queue.push_back((next, 1 + depth));
+        for (c, val) in curr.iter_mut().enumerate() {
+            *val += prefix[r][c];
+        }
+        prefix.push(curr);
+    }
+    if prefix[rows][cols] < 2 {
+        return 0;
+    }
+    let mut left = 1;
+    let mut right = rows.min(cols);
+    while left < right {
+        let mid = left + (1 + right - left) / 2;
+        if check(&prefix, mid) {
+            left = mid;
+        } else {
+            right = mid - 1;
         }
     }
-    let mut res = 0;
-    for (&d, &num) in arr.iter().zip(&nums) {
-        let [d, num] = [d, num].map(i64::from);
-        res += num * (i64::from(maxd) - d + 1);
+    left.pow(2) as i32
+}
+
+fn check(prefix: &[Vec<i32>], mid: usize) -> bool {
+    let [rows, cols] = get_dimensions(&prefix);
+    let [mut minr, mut minc] = [rows, cols];
+    let [mut maxr, mut maxc] = [0, 0];
+    let mut count = 0;
+    for r in mid..rows {
+        for c in mid..cols {
+            let area =
+                prefix[r][c] - prefix[r][c - mid] - prefix[r - mid][c] + prefix[r - mid][c - mid];
+            if area == (mid as i32).pow(2) {
+                count += 1;
+                minr = minr.min(r);
+                minc = minc.min(c);
+                maxr = maxr.max(r);
+                maxc = maxc.max(c);
+            }
+        }
     }
-    res
+    count >= 2 && (maxr.abs_diff(minr) >= mid || maxc.abs_diff(minc) >= mid)
 }
 
 #[cfg(test)]
@@ -70,7 +90,9 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(max_area(&[&[1, 1, 1, 0], &[1, 1, 1, 1], &[0, 0, 1, 1]]), 4)
+    }
 
     #[test]
     fn test() {}
