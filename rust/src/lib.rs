@@ -9,38 +9,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn winner_square_game(n: i32) -> bool {
-    let n = n as usize;
-    let mut dp = vec![false; 1 + n];
-    for right in 1..=n {
-        let mut left = 1_usize;
-        while left.pow(2) <= right {
-            if !dp[right - left.pow(2)] {
-                dp[right] = true;
-                break;
-            }
-            left += 1
-        }
+pub fn missing_integer(mut nums: Vec<i32>) -> i32 {
+    let mut prefix = nums[0];
+    for w in nums.windows(2).take_while(|w| w[0] + 1 == w[1]) {
+        prefix += w[1];
     }
-    dp[n]
-    // dfs(n)
-}
-
-fn dfs(n: i32) -> bool {
-    if is_square(n) {
-        return true;
+    nums.sort_unstable();
+    while nums.binary_search(&prefix).is_ok() {
+        prefix += 1;
     }
-    for i in 1..=n.isqrt() {
-        if !dfs(n - i.pow(2)) {
-            return true;
-        }
-    }
-    false
-}
-
-const fn is_square(n: i32) -> bool {
-    let r = n.isqrt();
-    r.pow(2) == n
+    prefix
 }
 
 #[cfg(test)]
