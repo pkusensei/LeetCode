@@ -1,6 +1,5 @@
 ﻿using System.Collections.Frozen;
 using System.Linq.Expressions;
-using System.Net.Sockets;
 using System.Text;
 using Solution.LList;
 using Solution.Tree;
@@ -8,38 +7,97 @@ using static Solution.Utils;
 
 namespace Solution;
 
-public class Solution
+public class FizzBuzz
 {
-    public IList<IList<int>> CriticalConnections(int n, IList<IList<int>> connections)
-    {
-        List<int>[] adj = [.. Enumerable.Range(0, n).Select(_ => new List<int>())];
-        foreach (var item in connections)
-        {
-            adj[item[0]].Add(item[1]);
-            adj[item[1]].Add(item[0]);
-        }
-        int[] tin = new int[n];
-        int[] min_t = new int[n];
-        int time = 0;
-        List<IList<int>> res = [];
-        Dfs(0, n);
-        return res;
+    private readonly int n;
+    private int num = 1;
+    private readonly object _lock = new();
 
-        void Dfs(int node, int prev)
+    public FizzBuzz(int n)
+    {
+        this.n = n;
+    }
+
+    // printFizz() outputs "fizz".
+    public void Fizz(Action printFizz)
+    {
+        while (num <= n)
         {
-            time += 1;
-            tin[node] = time;
-            min_t[node] = time;
-            foreach (var next in adj[node])
+            lock (_lock)
             {
-                if (next == prev) { continue; }
-                if (tin[next] > 0) { min_t[node] = int.Min(min_t[node], tin[next]); }
-                else
+                while (num <= n && !(num % 3 == 0 && num % 5 > 0))
                 {
-                    Dfs(next, node);
-                    min_t[node] = int.Min(min_t[node], min_t[next]);
-                    if (min_t[next] > tin[node]) { res.Add([node, next]); }
+                    Monitor.Wait(_lock);
                 }
+                if (num <= n)
+                {
+                    printFizz();
+                    num += 1;
+                }
+                Monitor.PulseAll(_lock);
+            }
+        }
+    }
+
+    // printBuzzz() outputs "buzz".
+    public void Buzz(Action printBuzz)
+    {
+        while (num <= n)
+        {
+            lock (_lock)
+            {
+                while (num <= n && !(num % 5 == 0 && num % 3 > 0))
+                {
+                    Monitor.Wait(_lock);
+                }
+                if (num <= n)
+                {
+                    printBuzz();
+                    num += 1;
+                }
+                Monitor.PulseAll(_lock);
+            }
+        }
+    }
+
+    // printFizzBuzz() outputs "fizzbuzz".
+    public void Fizzbuzz(Action printFizzBuzz)
+    {
+        while (num <= n)
+        {
+            lock (_lock)
+            {
+                while (num <= n && num % 15 > 0)
+                {
+                    Monitor.Wait(_lock);
+                }
+                if (num <= n)
+                {
+                    printFizzBuzz();
+                    num += 1;
+                }
+                Monitor.PulseAll(_lock);
+            }
+        }
+    }
+
+    // printNumber(x) outputs "x", where x is an integer.
+    public void Number(Action<int> printNumber)
+    {
+        while (num <= n)
+        {
+            lock (_lock)
+            {
+                while (num <= n && !(num % 3 > 0 && num % 5 > 0))
+                {
+                    Monitor.Wait(_lock);
+                }
+                if (num <= n)
+                {
+                    printNumber(num);
+                    num += 1;
+                }
+                Monitor.PulseAll(_lock);
             }
         }
     }
