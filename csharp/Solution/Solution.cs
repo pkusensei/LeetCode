@@ -7,98 +7,35 @@ using static Solution.Utils;
 
 namespace Solution;
 
-public class FizzBuzz
+public class Solution
 {
-    private readonly int n;
-    private int num = 1;
-    private readonly object _lock = new();
-
-    public FizzBuzz(int n)
+    public int NthUglyNumber(int n, int a, int b, int c)
     {
-        this.n = n;
-    }
-
-    // printFizz() outputs "fizz".
-    public void Fizz(Action printFizz)
-    {
-        while (num <= n)
+        long ab = LCM(a, b);
+        long ac = LCM(a, c);
+        long bc = LCM(b, c);
+        long abc = LCM(a, bc);
+        long left = 1;
+        long right = 2_000_000_000;
+        while (left < right)
         {
-            lock (_lock)
-            {
-                while (num <= n && !(num % 3 == 0 && num % 5 > 0))
-                {
-                    Monitor.Wait(_lock);
-                }
-                if (num <= n)
-                {
-                    printFizz();
-                    num += 1;
-                }
-                Monitor.PulseAll(_lock);
-            }
+            long mid = left + (right - left) / 2;
+            if (Count(mid) < n) { left = 1 + mid; }
+            else { right = mid; }
         }
-    }
+        return (int)left;
 
-    // printBuzzz() outputs "buzz".
-    public void Buzz(Action printBuzz)
-    {
-        while (num <= n)
-        {
-            lock (_lock)
-            {
-                while (num <= n && !(num % 5 == 0 && num % 3 > 0))
-                {
-                    Monitor.Wait(_lock);
-                }
-                if (num <= n)
-                {
-                    printBuzz();
-                    num += 1;
-                }
-                Monitor.PulseAll(_lock);
-            }
-        }
-    }
+        long Count(long mid)
+        => mid / a + mid / b + mid / c - mid / ab - mid / ac - mid / bc + mid / abc;
 
-    // printFizzBuzz() outputs "fizzbuzz".
-    public void Fizzbuzz(Action printFizzBuzz)
-    {
-        while (num <= n)
+        static long GCD(long a, long b)
         {
-            lock (_lock)
+            while (a != 0)
             {
-                while (num <= n && num % 15 > 0)
-                {
-                    Monitor.Wait(_lock);
-                }
-                if (num <= n)
-                {
-                    printFizzBuzz();
-                    num += 1;
-                }
-                Monitor.PulseAll(_lock);
+                (a, b) = (b % a, a);
             }
+            return b;
         }
-    }
-
-    // printNumber(x) outputs "x", where x is an integer.
-    public void Number(Action<int> printNumber)
-    {
-        while (num <= n)
-        {
-            lock (_lock)
-            {
-                while (num <= n && !(num % 3 > 0 && num % 5 > 0))
-                {
-                    Monitor.Wait(_lock);
-                }
-                if (num <= n)
-                {
-                    printNumber(num);
-                    num += 1;
-                }
-                Monitor.PulseAll(_lock);
-            }
-        }
+        static long LCM(long a, long b) => a / GCD(a, b) * b;
     }
 }
