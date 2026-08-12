@@ -9,16 +9,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn missing_integer(mut nums: Vec<i32>) -> i32 {
-    let mut prefix = nums[0];
-    for w in nums.windows(2).take_while(|w| w[0] + 1 == w[1]) {
-        prefix += w[1];
+pub fn max_subarray_length(nums: Vec<i32>, k: i32) -> i32 {
+    use std::collections::HashMap;
+    let mut res = 1;
+    let mut left = 0;
+    let mut freq = HashMap::new();
+    for (right, &num) in nums.iter().enumerate() {
+        *freq.entry(num).or_insert(0) += 1;
+        while freq[&num] > k {
+            *freq.entry(nums[left]).or_insert(0) -= 1;
+            left += 1;
+        }
+        res = res.max(1 + right - left)
     }
-    nums.sort_unstable();
-    while nums.binary_search(&prefix).is_ok() {
-        prefix += 1;
-    }
-    prefix
+    res as i32
 }
 
 #[cfg(test)]
