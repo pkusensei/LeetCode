@@ -9,33 +9,68 @@ namespace Solution;
 
 public class Solution
 {
-    public int NthUglyNumber(int n, int a, int b, int c)
+public int[] SortItems(int n, int m, int[] group, IList<IList<int>> beforeItems)
+{
+    int[] indegs = new int[n];
+    List<int>[] adj = [.. Enumerable.Range(0, n).Select(_ => new List<int>())];
+    for (int i = 0; i < n; i++)
     {
-        long ab = LCM(a, b);
-        long ac = LCM(a, c);
-        long bc = LCM(b, c);
-        long abc = LCM(a, bc);
-        long left = 1;
-        long right = 2_000_000_000;
-        while (left < right)
+        indegs[i] += beforeItems[i].Count;
+        foreach (var item in beforeItems[i])
         {
-            long mid = left + (right - left) / 2;
-            if (Count(mid) < n) { left = 1 + mid; }
-            else { right = mid; }
+            adj[item].Add(i);
         }
-        return (int)left;
-
-        long Count(long mid)
-        => mid / a + mid / b + mid / c - mid / ab - mid / ac - mid / bc + mid / abc;
-
-        static long GCD(long a, long b)
-        {
-            while (a != 0)
-            {
-                (a, b) = (b % a, a);
-            }
-            return b;
-        }
-        static long LCM(long a, long b) => a / GCD(a, b) * b;
     }
+    List<int> sorted_nodes = TopoSort(adj, indegs);
+    if (sorted_nodes.Count < n) { return []; }
+    List<List<int>> group_list = [.. Enumerable.Range(0, m).Select(_ => new List<int>())];
+    foreach (var item in sorted_nodes)
+    {
+        if (group[item] >= 0) { group_list[group[item]].Add(item); }
+        else
+        {
+            group[item] = group_list.Count;
+            group_list.Add([item]);
+        }
+    }
+    List<int>[] gadj = [.. Enumerable.Range(0, group_list.Count).Select(_ => new List<int>())];
+    int[] gindegs = new int[group_list.Count];
+    for (int i = 0; i < n; i++)
+    {
+        int to = group[i];
+        foreach (var item in beforeItems[i])
+        {
+            int from = group[item];
+            if (from != to)
+            {
+                gindegs[to] += 1;
+                gadj[from].Add(to);
+            }
+        }
+    }
+    List<int> sorted_groups = TopoSort(gadj, gindegs);
+    if (sorted_groups.Count < gindegs.Length) { return []; }
+    return [.. sorted_groups.SelectMany(i => group_list[i])];
+
+    static List<int> TopoSort(List<int>[] adj, int[] indegs)
+    {
+        int n = indegs.Length;
+        List<int> res = new(n);
+        Queue<int> queue = new();
+        for (int i = 0; i < n; i++)
+        {
+            if (indegs[i] == 0) { queue.Enqueue(i); }
+        }
+        while (queue.TryDequeue(out int node))
+        {
+            res.Add(node);
+            foreach (var item in adj[node])
+            {
+                indegs[item] -= 1;
+                if (indegs[item] == 0) { queue.Enqueue(item); }
+            }
+        }
+        return res;
+    }
+}
 }
