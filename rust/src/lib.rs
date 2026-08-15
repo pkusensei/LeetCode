@@ -9,12 +9,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn elevator_requests(n: i32, requests: Vec<i32>) -> i32 {
-    let mut curr = 0;
-    let mut res = 0;
-    for &num in requests[..].iter() {
-        res += (curr - num).abs();
-        curr = num;
+pub fn min_operations(s: String) -> i32 {
+    let n = s.len();
+    let double = format!("{s}{s}").into_bytes();
+    let mut res = i32::MAX >> 1;
+    for left in 0..=n {
+        let mut b = left + n - 1;
+        let mut a = left;
+        let mut curr = left as i32;
+        while a < b {
+            let d = i32::from(double[b].abs_diff(double[a]));
+            curr += d.min(26 - d);
+            a += 1;
+            b -= 1;
+        }
+        res = res.min(curr);
     }
     res
 }
