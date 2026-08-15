@@ -9,23 +9,14 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn longest_subsequence(nums: Vec<i32>) -> i32 {
-    let n = nums.len();
-    let mut xor = 0;
-    let mut all_zero = true;
-    for &num in nums.iter() {
-        xor ^= num;
-        if num > 0 {
-            all_zero = false
-        }
+pub fn elevator_requests(n: i32, requests: Vec<i32>) -> i32 {
+    let mut curr = 0;
+    let mut res = 0;
+    for &num in requests[..].iter() {
+        res += (curr - num).abs();
+        curr = num;
     }
-    if xor > 0 {
-        n as i32
-    } else if all_zero {
-        0
-    } else {
-        n as i32 - 1
-    }
+    res
 }
 
 #[cfg(test)]
