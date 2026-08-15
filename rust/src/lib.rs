@@ -9,23 +9,57 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_operations(s: String) -> i32 {
-    let n = s.len();
-    let double = format!("{s}{s}").into_bytes();
-    let mut res = i32::MAX >> 1;
-    for left in 0..=n {
-        let mut b = left + n - 1;
-        let mut a = left;
-        let mut curr = left as i32;
-        while a < b {
-            let d = i32::from(double[b].abs_diff(double[a]));
-            curr += d.min(26 - d);
-            a += 1;
-            b -= 1;
-        }
-        res = res.min(curr);
+pub fn elevator_requests(n: i32, start: i32, mut requests: Vec<i32>) -> i64 {
+    let n = requests.len();
+    requests.sort_unstable();
+    let mut memo = vec![vec![[-1; 3]; 1 + n]; 1 + n];
+    let i = requests.partition_point(|&v| v < start);
+    dfs(&requests, start, i, i, 0, &mut memo)
+}
+
+fn dfs(
+    reqs: &[i32],
+    start: i32,
+    left: usize,
+    right: usize,
+    dir: usize,
+    memo: &mut [Vec<[i64; 3]>],
+) -> i64 {
+    let n = reqs.len();
+    if left == 0 && right >= n {
+        return 0;
     }
-    res
+    if memo[left][right][dir] > -1 {
+        return memo[left][right][dir];
+    }
+    let rem = (left + n - right) as i64;
+    let [mut a, mut b] = [i64::MAX >> 2; 2];
+    if left > 0 {
+        if dir == 0 {
+            a = i64::from(start - reqs[left - 1]).abs() * rem
+                + dfs(reqs, start, left - 1, right, 1, memo);
+        } else if dir == 1 {
+            a = i64::from(reqs[left] - reqs[left - 1]).abs() * rem
+                + dfs(reqs, start, left - 1, right, 1, memo);
+        } else {
+            a = i64::from(reqs[right - 1] - reqs[left - 1]).abs() * rem
+                + dfs(reqs, start, left - 1, right, 1, memo)
+        }
+    }
+    if right < n {
+        if dir == 0 {
+            b = i64::from(start - reqs[right]).abs() * rem
+                + dfs(reqs, start, left, 1 + right, 2, memo);
+        } else if dir == 2 {
+            b = i64::from(reqs[right] - reqs[right - 1]) * rem
+                + dfs(reqs, start, left, 1 + right, 2, memo);
+        } else {
+            b = i64::from(reqs[left] - reqs[right]).abs() * rem
+                + dfs(reqs, start, left, 1 + right, 2, memo);
+        }
+    }
+    memo[left][right][dir] = a.min(b);
+    memo[left][right][dir]
 }
 
 #[cfg(test)]
