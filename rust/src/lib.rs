@@ -9,20 +9,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_length_substring(s: String) -> i32 {
-    let s = s.as_bytes();
-    let mut freq = [0; 26];
-    let mut left = 0;
-    let mut res = 1;
-    for (right, &b) in s.iter().enumerate() {
-        freq[usize::from(b - b'a')] += 1;
-        while freq[usize::from(b - b'a')] > 2 {
-            freq[usize::from(s[left] - b'a')] -= 1;
-            left += 1;
+pub fn longest_subsequence(nums: Vec<i32>) -> i32 {
+    let n = nums.len();
+    let mut xor = 0;
+    let mut all_zero = true;
+    for &num in nums.iter() {
+        xor ^= num;
+        if num > 0 {
+            all_zero = false
         }
-        res = res.max(1 + right - left)
     }
-    res as i32
+    if xor > 0 {
+        n as i32
+    } else if all_zero {
+        0
+    } else {
+        n as i32 - 1
+    }
 }
 
 #[cfg(test)]
