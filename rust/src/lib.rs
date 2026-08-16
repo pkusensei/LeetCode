@@ -9,20 +9,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn stone_game_ix(stones: Vec<i32>) -> bool {
-    let [mut zero, mut one, mut two] = [0_i32, 0, 0];
-    for num in &stones {
-        match num % 3 {
-            0 => zero += 1,
-            1 => one += 1,
-            _ => two += 1,
+pub fn nearest_drone(drones: Vec<Vec<i32>>, target: Vec<i32>) -> i32 {
+    let mut res = -1;
+    let [tx, ty] = target[..] else { unreachable!() };
+    let mut dist = 1000;
+    for (i, drone) in drones.iter().enumerate() {
+        let [dx, dy, r] = drone[..] else {
+            unreachable!()
+        };
+        let curr = (dx - tx).abs() + (dy - ty).abs();
+        if curr <= r {
+            if res == -1 || dist > curr {
+                res = i as i32;
+                dist = curr;
+            }
         }
     }
-    if zero & 1 == 0 {
-        one > 0 && two > 0
-    } else {
-        one.abs_diff(two) > 2
-    }
+    res
 }
 
 #[cfg(test)]
