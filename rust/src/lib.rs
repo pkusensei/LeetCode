@@ -9,32 +9,36 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn maximum_gap(skill: &str, station: &str) -> i32 {
-    let (st, st_n) = (station.as_bytes(), station.len());
-    let mut st_i = 0;
-    let mut prefix = Vec::with_capacity(skill.len());
-    for sk in skill.bytes() {
-        while sk != st[st_i] {
-            st_i += 1;
+pub fn elevator_requests(_n: i32, start: i32, requests: Vec<Vec<i32>>) -> i64 {
+    let n = requests.len();
+    let full = 1 << n;
+    let mut dp = vec![vec![i64::MAX >> 2; n]; full];
+    dp[0].fill(0);
+    for mask in 1..full {
+        for i in 0..n {
+            if mask & (1 << i) == 0 {
+                continue;
+            }
+            let [arr, floor] = requests[i][..] else {
+                unreachable!()
+            };
+            let prev_mask = mask ^ (1 << i);
+            if prev_mask == 0 {
+                dp[mask][i] = i64::from(arr.max((start - floor).abs()));
+            } else {
+                for prev in 0..n {
+                    if prev_mask & (1 << prev) == 0 {
+                        continue;
+                    }
+                    let prev_val = dp[prev_mask][prev];
+                    let val =
+                        (prev_val + i64::from(requests[prev][1] - floor).abs()).max(i64::from(arr));
+                    dp[mask][i] = dp[mask][i].min(val);
+                }
+            }
         }
-        prefix.push(st_i);
-        st_i += 1;
     }
-    let mut suffix = Vec::with_capacity(skill.len());
-    st_i = st_n - 1;
-    for sk in skill.bytes().rev() {
-        while st[st_i] != sk {
-            st_i -= 1;
-        }
-        suffix.push(st_i);
-        st_i -= 1;
-    }
-    suffix.reverse();
-    let mut res = 0;
-    for i in 0..skill.len() - 1 {
-        res = res.max(suffix[1 + i] - prefix[i])
-    }
-    res as i32
+    *dp[full - 1].iter().min().unwrap()
 }
 
 #[cfg(test)]
@@ -68,9 +72,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(maximum_gap("caa", "acaa"), 1)
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
