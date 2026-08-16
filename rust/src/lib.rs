@@ -9,17 +9,32 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_penalty(period: i32, lights: Vec<i32>, arrival_time: Vec<i32>) -> i32 {
-    let max = *lights.iter().max().unwrap();
-    let mut res = None;
-    for t in arrival_time.iter() {
-        let r = t % period;
-        if r >= max {
-            let v = res.get_or_insert(period - r);
-            *v = (*v).max(period - r);
+pub fn maximum_gap(skill: &str, station: &str) -> i32 {
+    let (st, st_n) = (station.as_bytes(), station.len());
+    let mut st_i = 0;
+    let mut prefix = Vec::with_capacity(skill.len());
+    for sk in skill.bytes() {
+        while sk != st[st_i] {
+            st_i += 1;
         }
+        prefix.push(st_i);
+        st_i += 1;
     }
-    res.unwrap_or(0)
+    let mut suffix = Vec::with_capacity(skill.len());
+    st_i = st_n - 1;
+    for sk in skill.bytes().rev() {
+        while st[st_i] != sk {
+            st_i -= 1;
+        }
+        suffix.push(st_i);
+        st_i -= 1;
+    }
+    suffix.reverse();
+    let mut res = 0;
+    for i in 0..skill.len() - 1 {
+        res = res.max(suffix[1 + i] - prefix[i])
+    }
+    res as i32
 }
 
 #[cfg(test)]
@@ -53,7 +68,9 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(maximum_gap("caa", "acaa"), 1)
+    }
 
     #[test]
     fn test() {}
