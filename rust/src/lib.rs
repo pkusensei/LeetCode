@@ -9,23 +9,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn nearest_drone(drones: Vec<Vec<i32>>, target: Vec<i32>) -> i32 {
-    let mut res = -1;
-    let [tx, ty] = target[..] else { unreachable!() };
-    let mut dist = 1000;
-    for (i, drone) in drones.iter().enumerate() {
-        let [dx, dy, r] = drone[..] else {
-            unreachable!()
-        };
-        let curr = (dx - tx).abs() + (dy - ty).abs();
-        if curr <= r {
-            if res == -1 || dist > curr {
-                res = i as i32;
-                dist = curr;
-            }
+pub fn min_penalty(period: i32, lights: Vec<i32>, arrival_time: Vec<i32>) -> i32 {
+    let max = *lights.iter().max().unwrap();
+    let mut res = None;
+    for t in arrival_time.iter() {
+        let r = t % period;
+        if r >= max {
+            let v = res.get_or_insert(period - r);
+            *v = (*v).max(period - r);
         }
     }
-    res
+    res.unwrap_or(0)
 }
 
 #[cfg(test)]
