@@ -9,32 +9,32 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn largest_integer(nums: Vec<i32>, k: i32) -> i32 {
-    let n = nums.len();
-    let freq = nums.iter().fold([0; 51], |mut acc, &v| {
-        acc[v as usize] += 1;
-        acc
-    });
-    if k == 1 {
-        freq.iter()
-            .rposition(|&v| v == 1)
-            .map(|i| i as i32)
-            .unwrap_or(-1)
-    } else if k == n as i32 {
-        freq.iter()
-            .rposition(|&v| v > 0)
-            .map(|i| i as i32)
-            .unwrap_or(-1)
-    } else {
-        let a = nums[0];
-        let b = nums[n - 1];
-        match [freq[a as usize], freq[b as usize]] {
-            [1, 1] => a.max(b),
-            [1, _] => a,
-            [_, 1] => b,
-            _ => -1,
+pub fn max_number_of_families(n: i32, reserved_seats: Vec<Vec<i32>>) -> i32 {
+    use std::collections::HashMap;
+    let mut map = HashMap::new();
+    for re in reserved_seats.iter() {
+        let [row, seat] = re[..] else { unreachable!() };
+        let v = map.entry(row).or_insert(0b111_1111_111);
+        *v ^= 1 << (seat - 1);
+    }
+    let mut res = (n - map.len() as i32) * 2;
+    for v in map.into_values() {
+        const TWO: i32 = 0b011_1111_110;
+        const A: i32 = 0b000_1111_000;
+        const B: i32 = 0b011_1100_000;
+        const C: i32 = 0b000_0011_110;
+        if v & TWO == TWO {
+            res += 2
+        } else {
+            for x in [A, B, C] {
+                if v & x == x {
+                    res += 1;
+                    break;
+                }
+            }
         }
     }
+    res
 }
 
 #[cfg(test)]
