@@ -9,32 +9,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_number_of_families(n: i32, reserved_seats: Vec<Vec<i32>>) -> i32 {
-    use std::collections::HashMap;
-    let mut map = HashMap::new();
-    for re in reserved_seats.iter() {
-        let [row, seat] = re[..] else { unreachable!() };
-        let v = map.entry(row).or_insert(0b111_1111_111);
-        *v ^= 1 << (seat - 1);
-    }
-    let mut res = (n - map.len() as i32) * 2;
-    for v in map.into_values() {
-        const TWO: i32 = 0b011_1111_110;
-        const A: i32 = 0b000_1111_000;
-        const B: i32 = 0b011_1100_000;
-        const C: i32 = 0b000_0011_110;
-        if v & TWO == TWO {
-            res += 2
+pub fn result_array(nums: Vec<i32>) -> Vec<i32> {
+    let mut a = vec![nums[0]];
+    let mut b = vec![nums[1]];
+    for &v in &nums[2..] {
+        if a.last() > b.last() {
+            a.push(v);
         } else {
-            for x in [A, B, C] {
-                if v & x == x {
-                    res += 1;
-                    break;
-                }
-            }
+            b.push(v);
         }
     }
-    res
+    a.extend(b);
+    a
 }
 
 #[cfg(test)]
