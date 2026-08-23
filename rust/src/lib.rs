@@ -9,29 +9,12 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn sum_game(num: String) -> bool {
-    let n = num.len();
-    let mut sum = 0;
-    let [mut q1, mut q2] = [0, 0];
-    for (i, b) in num.bytes().enumerate() {
-        if i < n / 2 {
-            if b == b'?' {
-                q1 += 1
-            } else {
-                sum += i32::from(b - b'0')
-            }
-        } else {
-            if b == b'?' {
-                q2 += 1
-            } else {
-                sum -= i32::from(b - b'0')
-            }
-        }
+pub fn is_palindromic(s: &str) -> bool {
+    let mut res = "".to_string();
+    for b in s.bytes() {
+        res.push_str(&format!("{:0width$b}", b, width = 10)[2..]);
     }
-    if (q1 + q2) & 1 == 1 {
-        return true;
-    }
-    sum != (q2 - q1) * 9 / 2
+    is_palindrome(res.bytes())
 }
 
 #[cfg(test)]
@@ -65,7 +48,9 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert!(is_palindromic("ff"))
+    }
 
     #[test]
     fn test() {}
