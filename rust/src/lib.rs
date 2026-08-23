@@ -9,12 +9,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_palindromic(s: &str) -> bool {
-    let mut res = "".to_string();
-    for b in s.bytes() {
-        res.push_str(&format!("{:0width$b}", b, width = 10)[2..]);
+pub fn find_disappeared_numbers(mut nums: Vec<i32>, lower: i32, upper: i32) -> Vec<Vec<i32>> {
+    nums.sort_unstable();
+    let mut res = vec![];
+    let mut prev = lower;
+    for &num in nums.iter() {
+        if prev <= num - 1 && prev <= upper {
+            res.push(vec![prev, (num - 1).min(upper)]);
+        }
+        prev = (1 + num).max(prev);
     }
-    is_palindrome(res.bytes())
+    if prev <= upper {
+        res.push(vec![prev, upper]);
+    }
+    res
 }
 
 #[cfg(test)]
@@ -49,7 +57,10 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert!(is_palindromic("ff"))
+        assert_eq!(
+            find_disappeared_numbers(vec![3, 9, 7], 1, 12),
+            [[1, 2], [4, 6], [8, 8], [10, 12]]
+        );
     }
 
     #[test]
