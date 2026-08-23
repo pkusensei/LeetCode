@@ -6,78 +6,64 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
+use std::sync::LazyLock;
+
 #[allow(unused_imports)]
 use helper::*;
-use itertools::Itertools;
 
-pub fn valid_subarrays(nums: Vec<i32>, k: i32, queries: Vec<Vec<i32>>) -> Vec<bool> {
-    let n = nums.len();
-    let max = *nums.iter().max().unwrap();
-    let b = n.isqrt() as i32;
-    let qn = queries.len();
-    // (i, left, right)
-    let sorted = queries
-        .iter()
-        .enumerate()
-        .map(|(i, q)| (i, q[0], q[1]))
-        .sorted_unstable_by(|q1, q2| {
-            (q1.1 / b)
-                .cmp(&(q2.1 / b))
-                .then_with(|| (q1.2 / b).cmp(&(q2.2 / b)))
-        });
-    let mut freq = vec![0; 1 + max as usize];
-    let [mut distinct, mut odd] = [0, 0];
-    let mut p_left = 0;
-    let mut p_right = -1;
-    let mut res = vec![false; qn];
-    for (i, left, right) in sorted {
-        if (1 + right - left) & 1 == 1 {
-            continue;
+pub fn longest_subarray(nums: &[i32], k: i32) -> i32 {
+    let mut left = 0;
+    let mut res = 0;
+    let mut seen = vec![];
+    let mut freq = vec![0; 1 + M];
+    let mut distinct = 0;
+    for (right, &num) in nums.iter().enumerate() {
+        let curr = get_factors(num);
+        for &v in &curr {
+            if freq[v as usize] == 0 {
+                distinct += 1;
+            }
+            freq[v as usize] += 1;
         }
-        while left < p_left {
-            p_left -= 1;
-            add(&mut freq, nums[p_left as usize], &mut distinct, &mut odd);
+        seen.push(curr);
+        while distinct > k && left <= right {
+            for &p in &seen[left] {
+                freq[p as usize] -= 1;
+                if freq[p as usize] == 0 {
+                    distinct -= 1;
+                }
+            }
+            left += 1;
         }
-        while p_left < left {
-            remove(&mut freq, nums[p_left as usize], &mut distinct, &mut odd);
-            p_left += 1;
-        }
-        while p_right < right {
-            p_right += 1;
-            add(&mut freq, nums[p_right as usize], &mut distinct, &mut odd);
-        }
-        while right < p_right {
-            remove(&mut freq, nums[p_right as usize], &mut distinct, &mut odd);
-            p_right -= 1;
-        }
-        res[i] = distinct == k && odd == 0;
+        res = res.max(1 + right - left);
     }
-    res
+    res as i32
 }
 
-fn add(freq: &mut [i32], num: i32, distinct: &mut i32, odd: &mut i32) {
-    freq[num as usize] += 1;
-    if freq[num as usize] == 1 {
-        *distinct += 1
+fn get_factors(mut num: i32) -> Vec<i32> {
+    let mut curr = vec![];
+    while num > 1 {
+        let p = SPF[num as usize];
+        curr.push(p);
+        while num % p == 0 {
+            num /= p;
+        }
     }
-    if freq[num as usize] & 1 == 1 {
-        *odd += 1
-    } else {
-        *odd -= 1
-    }
+    curr
 }
 
-fn remove(freq: &mut [i32], num: i32, distinct: &mut i32, odd: &mut i32) {
-    freq[num as usize] -= 1;
-    if freq[num as usize] == 0 {
-        *distinct -= 1
+const M: usize = 100_000;
+static SPF: LazyLock<Vec<i32>> = LazyLock::new(|| {
+    let mut spf: Vec<_> = (0..=M as i32).collect();
+    for p in 2..=M.isqrt() {
+        if spf[p as usize] == p as i32 {
+            for val in (p * p..=M).step_by(p) {
+                spf[val as usize] = p as i32;
+            }
+        }
     }
-    if freq[num as usize] & 1 == 1 {
-        *odd += 1
-    } else {
-        *odd -= 1
-    }
-}
+    spf
+});
 
 #[cfg(test)]
 mod tests {
@@ -110,7 +96,9 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(longest_subarray(&[7, 6, 10, 12, 11], 3), 3);
+    }
 
     #[test]
     fn test() {}
