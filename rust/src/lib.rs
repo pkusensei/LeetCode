@@ -9,17 +9,29 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub const fn check_divisibility(n: i32) -> bool {
+pub fn sum_game(num: String) -> bool {
+    let n = num.len();
     let mut sum = 0;
-    let mut prod = 1;
-    let mut x = n;
-    while x > 0 {
-        let d = x % 10;
-        x /= 10;
-        sum += d;
-        prod *= d;
+    let [mut q1, mut q2] = [0, 0];
+    for (i, b) in num.bytes().enumerate() {
+        if i < n / 2 {
+            if b == b'?' {
+                q1 += 1
+            } else {
+                sum += i32::from(b - b'0')
+            }
+        } else {
+            if b == b'?' {
+                q2 += 1
+            } else {
+                sum -= i32::from(b - b'0')
+            }
+        }
     }
-    n % (sum + prod) == 0
+    if (q1 + q2) & 1 == 1 {
+        return true;
+    }
+    sum != (q2 - q1) * 9 / 2
 }
 
 #[cfg(test)]
