@@ -6,64 +6,40 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::sync::LazyLock;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn longest_subarray(nums: &[i32], k: i32) -> i32 {
-    let mut left = 0;
-    let mut res = 0;
-    let mut seen = vec![];
-    let mut freq = vec![0; 1 + M];
-    let mut distinct = 0;
-    for (right, &num) in nums.iter().enumerate() {
-        let curr = get_factors(num);
-        for &v in &curr {
-            if freq[v as usize] == 0 {
-                distinct += 1;
-            }
-            freq[v as usize] += 1;
-        }
-        seen.push(curr);
-        while distinct > k && left <= right {
-            for &p in &seen[left] {
-                freq[p as usize] -= 1;
-                if freq[p as usize] == 0 {
-                    distinct -= 1;
-                }
-            }
-            left += 1;
-        }
-        res = res.max(1 + right - left);
+pub fn stone_game_viii(stones: Vec<i32>) -> i32 {
+    let n = stones.len();
+    let prefix = stones.iter().fold(Vec::with_capacity(n), |mut acc, v| {
+        acc.push(v + acc.last().unwrap_or(&0));
+        acc
+    });
+    let mut dp = prefix[n - 1];
+    for idx in (0..n - 2).rev() {
+        let curr = dp.max(prefix[1 + idx] - dp);
+        dp = curr;
     }
-    res as i32
+    dp
+    // let mut dp = vec![i32::MIN >> 1; n];
+    // dp[n - 2] = prefix[n - 1];
+    // for idx in (0..n - 2).rev() {
+    //     dp[idx] = dp[1 + idx].max(prefix[1 + idx] - dp[1 + idx]);
+    // }
+    // dp[0]
+    // dfs(&prefix, 0)
 }
 
-fn get_factors(mut num: i32) -> Vec<i32> {
-    let mut curr = vec![];
-    while num > 1 {
-        let p = SPF[num as usize];
-        curr.push(p);
-        while num % p == 0 {
-            num /= p;
-        }
+fn dfs(prefix: &[i32], idx: usize) -> i32 {
+    let n = prefix.len();
+    if idx >= n - 1 {
+        return 0;
     }
-    curr
+    if idx >= n - 2 {
+        return prefix[n - 1];
+    }
+    dfs(prefix, 1 + idx).max(prefix[1 + idx] - dfs(prefix, 1 + idx))
 }
-
-const M: usize = 100_000;
-static SPF: LazyLock<Vec<i32>> = LazyLock::new(|| {
-    let mut spf: Vec<_> = (0..=M as i32).collect();
-    for p in 2..=M.isqrt() {
-        if spf[p as usize] == p as i32 {
-            for val in (p * p..=M).step_by(p) {
-                spf[val as usize] = p as i32;
-            }
-        }
-    }
-    spf
-});
 
 #[cfg(test)]
 mod tests {
@@ -96,9 +72,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(longest_subarray(&[7, 6, 10, 12, 11], 3), 3);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
