@@ -9,36 +9,14 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn stone_game_viii(stones: Vec<i32>) -> i32 {
-    let n = stones.len();
-    let prefix = stones.iter().fold(Vec::with_capacity(n), |mut acc, v| {
-        acc.push(v + acc.last().unwrap_or(&0));
-        acc
-    });
-    let mut dp = prefix[n - 1];
-    for idx in (0..n - 2).rev() {
-        let curr = dp.max(prefix[1 + idx] - dp);
-        dp = curr;
+pub fn missing_multiple(nums: Vec<i32>, k: i32) -> i32 {
+    use std::collections::HashSet;
+    let set: HashSet<_> = HashSet::from_iter(nums);
+    let mut res = k;
+    while set.contains(&res) {
+        res += k;
     }
-    dp
-    // let mut dp = vec![i32::MIN >> 1; n];
-    // dp[n - 2] = prefix[n - 1];
-    // for idx in (0..n - 2).rev() {
-    //     dp[idx] = dp[1 + idx].max(prefix[1 + idx] - dp[1 + idx]);
-    // }
-    // dp[0]
-    // dfs(&prefix, 0)
-}
-
-fn dfs(prefix: &[i32], idx: usize) -> i32 {
-    let n = prefix.len();
-    if idx >= n - 1 {
-        return 0;
-    }
-    if idx >= n - 2 {
-        return prefix[n - 1];
-    }
-    dfs(prefix, 1 + idx).max(prefix[1 + idx] - dfs(prefix, 1 + idx))
+    res
 }
 
 #[cfg(test)]
