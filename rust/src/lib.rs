@@ -9,14 +9,25 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn missing_multiple(nums: Vec<i32>, k: i32) -> i32 {
-    use std::collections::HashSet;
-    let set: HashSet<_> = HashSet::from_iter(nums);
-    let mut res = k;
-    while set.contains(&res) {
-        res += k;
+pub fn shortest_beautiful_substring(s: String, k: i32) -> String {
+    let s = s.as_bytes();
+    let mut res: &[u8] = b"";
+    let mut left = 0;
+    let mut count = 0;
+    for (right, &b) in s.iter().enumerate() {
+        count += i32::from(b - b'0');
+        while count == k {
+            let curr = &s[left..=right];
+            if res.is_empty() || curr.len() < res.len() {
+                res = curr;
+            } else if curr.len() == res.len() {
+                res = res.min(curr);
+            }
+            count -= i32::from(s[left] - b'0');
+            left += 1
+        }
     }
-    res
+    String::from_utf8(res.to_vec()).unwrap()
 }
 
 #[cfg(test)]
