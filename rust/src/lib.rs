@@ -6,28 +6,48 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
+use std::iter::repeat_n;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn shortest_beautiful_substring(s: String, k: i32) -> String {
-    let s = s.as_bytes();
-    let mut res: &[u8] = b"";
-    let mut left = 0;
-    let mut count = 0;
-    for (right, &b) in s.iter().enumerate() {
-        count += i32::from(b - b'0');
-        while count == k {
-            let curr = &s[left..=right];
-            if res.is_empty() || curr.len() < res.len() {
-                res = curr;
-            } else if curr.len() == res.len() {
-                res = res.min(curr);
+pub fn lex_greater_permutation(s: String, target: String) -> String {
+    let mut freq = s.bytes().fold([0; 26], |mut acc, b| {
+        acc[usize::from(b - b'a')] += 1;
+        acc
+    });
+    if let Some(mut v) = dfs(&mut freq, target.as_bytes(), false) {
+        v.reverse();
+        String::from_utf8(v).unwrap()
+    } else {
+        "".to_string()
+    }
+}
+
+fn dfs(freq: &mut [i32; 26], t: &[u8], bigger: bool) -> Option<Vec<u8>> {
+    if bigger {
+        let mut res = vec![];
+        for (i, &f) in freq.iter().enumerate().rev() {
+            res.extend(repeat_n(i as u8 + b'a', f as usize));
+        }
+        return Some(res);
+    }
+    if t.is_empty() {
+        return None;
+    }
+    let head = usize::from(t[0] - b'a');
+    for curr in head..26 {
+        if freq[curr] > 0 {
+            freq[curr] -= 1;
+            if let Some(mut v) = dfs(freq, &t[1..], curr > head) {
+                v.push(curr as u8 + b'a');
+                return Some(v);
+            } else {
+                freq[curr] += 1;
             }
-            count -= i32::from(s[left] - b'0');
-            left += 1
         }
     }
-    String::from_utf8(res.to_vec()).unwrap()
+    None
 }
 
 #[cfg(test)]
