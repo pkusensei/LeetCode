@@ -9,16 +9,50 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_bishop_moves(source: Vec<i32>, target: Vec<i32>) -> i32 {
-    let [sx, sy] = source[..] else { unreachable!() };
-    let [tx, ty] = target[..] else { unreachable!() };
-    if (sx + sy) & 1 != (tx + ty) & 1 {
-        -1
-    } else if sx + sy == tx + ty || sx - sy == tx - ty {
-        1
-    } else {
-        2
+pub fn max_valid_splits(nums: &[i32]) -> i32 {
+    let n = nums.len();
+    let mut res = f(nums);
+    for i in 0..n {
+        let mut arr = nums[..i].to_vec();
+        arr.extend_from_slice(&nums[1 + i..]);
+        res = res.max(f(&arr));
     }
+    res
+}
+
+fn f(arr: &[i32]) -> i32 {
+    let n = arr.len();
+    let prefix = arr.iter().fold(vec![], |mut acc, &v| {
+        if let Some(&x) = acc.last() {
+            acc.push(gcd(x, v));
+        } else {
+            acc.push(v);
+        }
+        acc
+    });
+    let mut suffix = arr.iter().rev().fold(vec![], |mut acc, &v| {
+        if let Some(&x) = acc.last() {
+            acc.push(gcd(x, v));
+        } else {
+            acc.push(v);
+        }
+        acc
+    });
+    suffix.reverse();
+    let mut res = 0;
+    for i in 0..n - 1 {
+        if prefix[i] == suffix[1 + i] {
+            res += 1
+        }
+    }
+    res
+}
+
+const fn gcd(mut a: i32, mut b: i32) -> i32 {
+    while a != 0 {
+        (a, b) = (b % a, a)
+    }
+    b
 }
 
 #[cfg(test)]
@@ -52,7 +86,9 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(max_valid_splits(&[10, 30, 15, 10]), 2);
+    }
 
     #[test]
     fn test() {}
