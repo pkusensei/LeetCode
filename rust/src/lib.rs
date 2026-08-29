@@ -8,71 +8,54 @@ mod trie;
 
 #[allow(unused_imports)]
 use helper::*;
+use itertools::Itertools;
+use std::collections::HashMap;
 
-pub fn lex_palindromic_permutation(s: &str, target: &str) -> String {
-    let freq = s.bytes().fold([0; 26], |mut acc, b| {
-        acc[usize::from(b - b'a')] += 1;
-        acc
-    });
-    let mut single = None;
-    for (i, f) in freq.iter().enumerate() {
-        if f & 1 == 1 {
-            if single.is_some() {
-                return "".to_string();
-            }
-            single = Some(i as u8 + b'a');
+pub fn lexicographically_smallest_array(nums: &[i32], limit: i32) -> Vec<i32> {
+    let n = nums.len();
+    let sorted = (0..n).sorted_by_key(|&i| nums[i]).collect_vec();
+    let mut dsu = DSU::new(n);
+    for w in sorted.windows(2) {
+        let [a, b] = w[..] else { unreachable!() };
+        if nums[b] - nums[a] <= limit {
+            dsu.union(a, b);
         }
     }
-    let mut half = freq.map(|v| v / 2);
-    if let Some(v) = dfs(&mut half, 0, false, single, target.as_bytes(), &mut vec![]) {
-        String::from_utf8(v).unwrap()
-    } else {
-        "".to_string()
+    let mut groups = HashMap::<usize, Vec<_>>::new();
+    for i in sorted {
+        groups.entry(dsu.find(i)).or_default().push(i);
     }
+    let mut res = vec![0; n];
+    for i in (0..n).rev() {
+        let root = dsu.find(i);
+        let group = groups.get_mut(&root).unwrap();
+        res[i] = nums[group.pop().unwrap()];
+    }
+    res
 }
 
-fn dfs(
-    freq: &mut [i32],
-    idx: usize,
-    bigger: bool,
-    single: Option<u8>,
-    target: &[u8],
-    curr: &mut Vec<u8>,
-) -> Option<Vec<u8>> {
-    use std::iter::repeat_n;
+struct DSU {
+    parent: Vec<usize>,
+}
 
-    let n = target.len();
-    if bigger || idx >= n / 2 {
-        let mut temp = curr.clone();
-        if idx < n / 2 {
-            for (i, &f) in freq.iter().enumerate() {
-                temp.extend(repeat_n(i as u8 + b'a', f as usize));
-            }
-        }
-        if let Some(v) = single {
-            temp.push(v);
-        }
-        temp.extend_from_within(..n / 2);
-        temp[(1 + n) / 2..].reverse();
-        return if bigger || temp.as_slice() > target {
-            Some(temp)
-        } else {
-            None
-        };
-    }
-    let low = usize::from(target[idx] - b'a');
-    for i in low..26 {
-        if freq[i] > 0 {
-            freq[i] -= 1;
-            curr.push(i as u8 + b'a');
-            if let Some(v) = dfs(freq, 1 + idx, i > low, single, target, curr) {
-                return Some(v);
-            }
-            curr.pop();
-            freq[i] += 1;
+impl DSU {
+    fn new(n: usize) -> Self {
+        Self {
+            parent: (0..n).collect(),
         }
     }
-    None
+
+    fn find(&mut self, v: usize) -> usize {
+        if self.parent[v] != v {
+            self.parent[v] = self.find(self.parent[v])
+        }
+        self.parent[v]
+    }
+
+    fn union(&mut self, x: usize, y: usize) {
+        let [rx, ry] = [x, y].map(|v| self.find(v));
+        self.parent[ry] = rx;
+    }
 }
 
 #[cfg(test)]
@@ -107,7 +90,10 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(lex_palindromic_permutation("baba", "abba"), "baab")
+        assert_eq!(
+            lexicographically_smallest_array(&[1, 5, 3, 9, 8], 2),
+            [1, 3, 5, 8, 9]
+        );
     }
 
     #[test]
