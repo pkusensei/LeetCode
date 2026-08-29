@@ -9,50 +9,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_valid_splits(nums: &[i32]) -> i32 {
-    let n = nums.len();
-    let mut res = f(nums);
-    for i in 0..n {
-        let mut arr = nums[..i].to_vec();
-        arr.extend_from_slice(&nums[1 + i..]);
-        res = res.max(f(&arr));
-    }
-    res
-}
-
-fn f(arr: &[i32]) -> i32 {
-    let n = arr.len();
-    let prefix = arr.iter().fold(vec![], |mut acc, &v| {
-        if let Some(&x) = acc.last() {
-            acc.push(gcd(x, v));
-        } else {
-            acc.push(v);
-        }
-        acc
-    });
-    let mut suffix = arr.iter().rev().fold(vec![], |mut acc, &v| {
-        if let Some(&x) = acc.last() {
-            acc.push(gcd(x, v));
-        } else {
-            acc.push(v);
-        }
-        acc
-    });
-    suffix.reverse();
-    let mut res = 0;
-    for i in 0..n - 1 {
-        if prefix[i] == suffix[1 + i] {
-            res += 1
-        }
-    }
-    res
-}
-
-const fn gcd(mut a: i32, mut b: i32) -> i32 {
-    while a != 0 {
-        (a, b) = (b % a, a)
-    }
-    b
+pub fn largest_string(nums: Vec<i32>) -> Vec<String> {
+    nums.iter()
+        .map(|&x| {
+            let mut x = x;
+            let mut s = vec![];
+            for p in (0..26).rev() {
+                while x >= 1 << p {
+                    s.push(p + b'a');
+                    x -= 1 << p;
+                }
+            }
+            String::from_utf8(s).unwrap()
+        })
+        .collect()
 }
 
 #[cfg(test)]
@@ -86,9 +56,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(max_valid_splits(&[10, 30, 15, 10]), 2);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
