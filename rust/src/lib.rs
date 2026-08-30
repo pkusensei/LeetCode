@@ -6,6 +6,8 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
+use std::sync::LazyLock;
+
 #[allow(unused_imports)]
 use helper::*;
 
@@ -28,25 +30,52 @@ fn dfs(nums: &[i32], idx: usize, sum: i32, memo: &mut [Vec<i32>]) -> i32 {
     }
     let mut res = dfs(nums, 1 + idx, sum, memo);
     let mut curr = nums[idx];
-    res = res.min(dfs(nums, 1 + idx, sum - nums[idx], memo));
-    for v in 1.. {
-        curr *= 2;
-        if curr > sum {
-            break;
-        }
-        res = res.min(v + dfs(nums, 1 + idx, sum - curr, memo));
-    }
-    curr = nums[idx];
-    for v in 1.. {
-        curr /= 2;
+    for div in 0.. {
         if curr < 1 {
             break;
         }
-        res = res.min(v + dfs(nums, 1 + idx, sum - curr, memo));
+        let mut temp = curr;
+        for mul in 0.. {
+            if temp > sum {
+                break;
+            }
+            res = res.min(div + mul + dfs(nums, 1 + idx, sum - temp, memo));
+            temp *= 2;
+        }
+        curr /= 2;
     }
     memo[idx][sum as usize] = res;
     res
 }
+
+static OP_COUNT: LazyLock<Vec<[i32; 5001]>> = LazyLock::new(|| {
+    let mut res = vec![[-1; 5001]; 501];
+    for num in 1..=500 {
+        res[num as usize][num as usize] = 0;
+        let mut curr = num;
+        for v in 1.. {
+            curr *= 2;
+            if curr > 5000 {
+                break;
+            }
+            res[num as usize][curr as usize] = v;
+        }
+        curr = num;
+        for v in 1.. {
+            curr /= 2;
+            if curr < 1 {
+                break;
+            }
+            res[num as usize][curr as usize] = v;
+            let mut temp = 2 * curr;
+            while temp <= 5000 && res[num as usize][temp as usize] == -1 {
+                res[num as usize][temp as usize] = 1 + res[num as usize][temp as usize / 2];
+                temp *= 2;
+            }
+        }
+    }
+    res
+});
 
 #[cfg(test)]
 mod tests {
