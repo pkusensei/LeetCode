@@ -9,28 +9,43 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn sum_decoded(nums: Vec<i64>) -> i32 {
-    nums.iter()
-        .map(|num| {
-            let width = num % 10;
-            let d = (num / 10).to_string();
-            let x = d[..width as usize].parse::<i64>().unwrap();
-            let y = d[width as usize..].parse::<i64>().unwrap();
-            mod_pow(x, y)
-        })
-        .fold(0, |acc, v| (acc + v) % M) as i32
+pub fn min_operations(nums: Vec<i32>, sum: i32) -> i32 {
+    let n = nums.len();
+    let mut memo = vec![vec![-1; 1 + sum as usize]; n];
+    let v = dfs(&nums, 0, sum, &mut memo);
+    if v >= i32::MAX >> 1 { -1 } else { v }
 }
 
-const M: i64 = 1_000_000_007;
-const fn mod_pow(base: i64, exp: i64) -> i64 {
-    if exp == 0 {
-        return 1;
+fn dfs(nums: &[i32], idx: usize, sum: i32, memo: &mut [Vec<i32>]) -> i32 {
+    if sum == 0 {
+        return 0;
     }
-    if exp & 1 == 0 {
-        mod_pow(base * base % M, exp >> 1)
-    } else {
-        mod_pow(base * base % M, exp >> 1) * base % M
+    if sum < 0 || idx >= nums.len() {
+        return i32::MAX >> 1;
     }
+    if memo[idx][sum as usize] > -1 {
+        return memo[idx][sum as usize];
+    }
+    let mut res = dfs(nums, 1 + idx, sum, memo);
+    let mut curr = nums[idx];
+    res = res.min(dfs(nums, 1 + idx, sum - nums[idx], memo));
+    for v in 1.. {
+        curr *= 2;
+        if curr > sum {
+            break;
+        }
+        res = res.min(v + dfs(nums, 1 + idx, sum - curr, memo));
+    }
+    curr = nums[idx];
+    for v in 1.. {
+        curr /= 2;
+        if curr < 1 {
+            break;
+        }
+        res = res.min(v + dfs(nums, 1 + idx, sum - curr, memo));
+    }
+    memo[idx][sum as usize] = res;
+    res
 }
 
 #[cfg(test)]
