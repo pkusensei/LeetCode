@@ -9,20 +9,28 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_special_integers(nums: Vec<i32>) -> i32 {
-    let mut seen = vec![0; 101];
-    let mut res = 0;
-    for w in nums.chunk_by(|a, b| a == b) {
-        let i = w[0] as usize;
-        seen[i] += 1;
-        if seen[i] == 1 {
-            res += 1;
-        }
-        if seen[i] == 2 {
-            res -= 1
-        }
+pub fn sum_decoded(nums: Vec<i64>) -> i32 {
+    nums.iter()
+        .map(|num| {
+            let width = num % 10;
+            let d = (num / 10).to_string();
+            let x = d[..width as usize].parse::<i64>().unwrap();
+            let y = d[width as usize..].parse::<i64>().unwrap();
+            mod_pow(x, y)
+        })
+        .fold(0, |acc, v| (acc + v) % M) as i32
+}
+
+const M: i64 = 1_000_000_007;
+const fn mod_pow(base: i64, exp: i64) -> i64 {
+    if exp == 0 {
+        return 1;
     }
-    res
+    if exp & 1 == 0 {
+        mod_pow(base * base % M, exp >> 1)
+    } else {
+        mod_pow(base * base % M, exp >> 1) * base % M
+    }
 }
 
 #[cfg(test)]
