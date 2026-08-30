@@ -9,73 +9,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_valid_splits(nums: &[i32]) -> i32 {
-    let n = nums.len();
-    let prefix = nums.iter().fold(Vec::with_capacity(n), build);
-    let mut suffix = nums.iter().rev().fold(Vec::with_capacity(n), build);
-    suffix.reverse();
-    let mut res = (0..n - 1).filter(|&i| prefix[i] == suffix[1 + i]).count() as i32;
-    for i in 0..n - 1 {
-        if prefix[i] != prefix[1 + i] {
-            res = res.max(solve(&nums, 1 + i));
-        }
-    }
-    for i in (0..n - 1).rev() {
-        if suffix[i] != suffix[1 + i] {
-            res = res.max(solve(&nums, i));
-        }
-    }
-    res
-}
-
-fn build(mut acc: Vec<i32>, v: &i32) -> Vec<i32> {
-    if let Some(&x) = acc.last() {
-        acc.push(gcd(x, *v));
-    } else {
-        acc.push(*v);
-    }
-    acc
-}
-
-fn solve(nums: &[i32], skip: usize) -> i32 {
-    let n = nums.len();
-    let mut prefix = Vec::with_capacity(n);
+pub fn minimum_deletions(nums: Vec<i32>) -> i32 {
+    let [mut min, mut max] = [i32::MAX, i32::MIN];
+    let [mut mini, mut maxi] = [0, 0];
     for (i, &num) in nums.iter().enumerate() {
-        if i == skip {
-            continue;
+        if num < min {
+            min = num;
+            mini = i;
         }
-        if let Some(&x) = prefix.last() {
-            prefix.push(gcd(x, num));
-        } else {
-            prefix.push(num);
-        }
-    }
-    let mut suffix = Vec::with_capacity(n);
-    for (i, &num) in nums.iter().enumerate().rev() {
-        if i == skip {
-            continue;
-        }
-        if let Some(&x) = suffix.last() {
-            suffix.push(gcd(x, num));
-        } else {
-            suffix.push(num);
+        if max < num {
+            max = num;
+            maxi = i;
         }
     }
-    suffix.reverse();
-    let mut res = 0;
-    for i in 0..n - 2 {
-        if prefix[i] == suffix[1 + i] {
-            res += 1
-        }
-    }
-    res
-}
-
-const fn gcd(mut a: i32, mut b: i32) -> i32 {
-    while a != 0 {
-        (a, b) = (b % a, a)
-    }
-    b
+    let n = nums.len();
+    let [a, b] = [mini.min(maxi), mini.max(maxi)];
+    (1 + b).min(n - a).min(1 + a + n - b) as i32
 }
 
 #[cfg(test)]
@@ -109,9 +58,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(max_valid_splits(&[10, 30, 15, 10]), 2);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
