@@ -9,22 +9,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_deletions(nums: Vec<i32>) -> i32 {
-    let [mut min, mut max] = [i32::MAX, i32::MIN];
-    let [mut mini, mut maxi] = [0, 0];
-    for (i, &num) in nums.iter().enumerate() {
-        if num < min {
-            min = num;
-            mini = i;
+pub fn count_special_integers(nums: Vec<i32>) -> i32 {
+    let mut seen = vec![0; 101];
+    let mut res = 0;
+    for w in nums.chunk_by(|a, b| a == b) {
+        let i = w[0] as usize;
+        seen[i] += 1;
+        if seen[i] == 1 {
+            res += 1;
         }
-        if max < num {
-            max = num;
-            maxi = i;
+        if seen[i] == 2 {
+            res -= 1
         }
     }
-    let n = nums.len();
-    let [a, b] = [mini.min(maxi), mini.max(maxi)];
-    (1 + b).min(n - a).min(1 + a + n - b) as i32
+    res
 }
 
 #[cfg(test)]
