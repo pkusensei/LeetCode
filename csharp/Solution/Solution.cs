@@ -7,90 +7,35 @@ using static Solution.Utils;
 
 namespace Solution;
 
-public class Skiplist
+public class Solution
 {
-    public Skiplist()
+    public int[] NodesBetweenCriticalPoints(ListNode head)
     {
-        Head = new(-1);
-        Rng = new();
-    }
-
-    public Node Head { get; private set; }
-    public Random Rng { get; }
-
-    public bool Search(int target)
-    {
-        Node curr = Head;
+        int prev_idx = -1;
+        int idx = 0;
+        int first_idx = -1;
+        int prev_val = -1;
+        ListNode curr = head;
+        int min = -1;
+        int max = -1;
         while (curr is not null)
         {
-            while (curr.Next is not null && curr.Next.Val < target)
+            idx += 1;
+            if (prev_val > 0 && curr.next is ListNode next_node &&
+            (prev_val > curr.val && curr.val < next_node.val
+            || prev_val < curr.val && curr.val > next_node.val)
+            )
             {
-                curr = curr.Next;
+                if (min == -1 && prev_idx > 0) { min = idx - prev_idx; }
+                else { min = int.Min(min, idx - prev_idx); }
+                if (first_idx == -1) { first_idx = idx; }
+                else { max = int.Max(max, idx - first_idx); }
+                prev_idx = idx;
             }
-            if (curr.Next is not null && curr.Next.Val == target)
-            {
-                return true;
-            }
-            curr = curr.Down;
+            prev_val = curr.val;
+            curr = curr.next;
         }
-        return false;
-    }
-
-    public void Add(int num)
-    {
-        Stack<Node> st = [];
-        Node curr = Head;
-        while (curr is not null)
-        {
-            while (curr.Next is not null && curr.Next.Val < num)
-            {
-                curr = curr.Next;
-            }
-            st.Push(curr);
-            curr = curr.Down;
-        }
-        bool insert = true;
-        Node down = null;
-        while (insert && st.TryPop(out curr))
-        {
-            curr.Next = new(num, curr.Next, down);
-            down = curr.Next;
-            insert = Rng.NextDouble() < 0.5;
-        }
-        if (insert) { Head = new(-1, null, Head); }
-    }
-
-    public bool Erase(int num)
-    {
-        Node curr = Head;
-        bool found = false;
-        while (curr is not null)
-        {
-            while (curr.Next is not null && curr.Next.Val < num)
-            {
-                curr = curr.Next;
-            }
-            if (curr.Next is not null && curr.Next.Val == num)
-            {
-                curr.Next = curr.Next.Next;
-                found = true;
-            }
-            curr = curr.Down;
-        }
-        return found;
+        return [min, max];
     }
 }
 
-public sealed class Node
-{
-    public Node(int val, Node next = null, Node down = null)
-    {
-        Val = val;
-        Next = next;
-        Down = down;
-    }
-
-    public int Val { get; }
-    public Node Next { get; set; }
-    public Node Down { get; set; }
-}
