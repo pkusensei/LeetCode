@@ -6,76 +6,76 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::sync::LazyLock;
+use std::collections::VecDeque;
 
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_operations(nums: Vec<i32>, sum: i32) -> i32 {
-    let n = nums.len();
-    let mut memo = vec![vec![-1; 1 + sum as usize]; n];
-    let v = dfs(&nums, 0, sum, &mut memo);
-    if v >= i32::MAX >> 1 { -1 } else { v }
-}
-
-fn dfs(nums: &[i32], idx: usize, sum: i32, memo: &mut [Vec<i32>]) -> i32 {
-    if sum == 0 {
+pub fn min_moves(classroom: Vec<String>, energy: i32) -> i32 {
+    let [rows, cols] = get_dimensions(&classroom);
+    let mut start = [0, 0];
+    let mut litters = Vec::with_capacity(10);
+    for (r, row) in classroom.iter().enumerate() {
+        for (c, b) in row.bytes().enumerate() {
+            if b == b'S' {
+                start = [r, c];
+            }
+            if b == b'L' {
+                litters.push([r, c]);
+            }
+        }
+    }
+    if litters.is_empty() {
         return 0;
     }
-    if sum < 0 || idx >= nums.len() {
-        return i32::MAX >> 1;
-    }
-    if memo[idx][sum as usize] > -1 {
-        return memo[idx][sum as usize];
-    }
-    let mut res = dfs(nums, 1 + idx, sum, memo);
-    let mut curr = nums[idx];
-    for div in 0.. {
-        if curr < 1 {
-            break;
+    litters.sort_unstable();
+    let n = litters.len();
+    let full = 1 << n;
+    let mut best = vec![vec![vec![0; full]; cols]; rows];
+    best[start[0]][start[1]][0] = energy;
+    let mut queue = VecDeque::from([(start, 0, energy, 0)]);
+    while let Some(([r, c], mask, e, step)) = queue.pop_front() {
+        if mask == full - 1 {
+            return step;
         }
-        let mut temp = curr;
-        for mul in 0.. {
-            if temp > sum {
-                break;
+        if e < best[r][c][mask] {
+            continue;
+        }
+        for [nr, nc] in neighbors([r, c]) {
+            if let Some(&v) = classroom.get(nr).and_then(|row| row.as_bytes().get(nc)) {
+                match v {
+                    b'S' | b'.' => {
+                        let ne = e - 1;
+                        if ne > best[nr][nc][mask] {
+                            best[nr][nc][mask] = ne;
+                            queue.push_back(([nr, nc], mask, ne, 1 + step));
+                        }
+                    }
+                    b'R' => {
+                        let ne = energy;
+                        if energy > best[nr][nc][mask] {
+                            best[nr][nc][mask] = ne;
+                            queue.push_back(([nr, nc], mask, ne, 1 + step));
+                        }
+                    }
+                    b'L' => {
+                        let i = litters.partition_point(|&v| v < [nr, nc]);
+                        let nmask = mask | 1 << i;
+                        let ne = e - 1;
+                        if nmask == full - 1 {
+                            queue.push_back(([nr, nc], nmask, ne, 1 + step));
+                        } else if ne > best[nr][nc][nmask] {
+                            best[nr][nc][nmask] = ne;
+                            queue.push_back(([nr, nc], nmask, ne, 1 + step));
+                        }
+                    }
+                    _ => continue,
+                }
             }
-            res = res.min(div + mul + dfs(nums, 1 + idx, sum - temp, memo));
-            temp *= 2;
         }
-        curr /= 2;
     }
-    memo[idx][sum as usize] = res;
-    res
+    -1
 }
-
-static OP_COUNT: LazyLock<Vec<[i32; 5001]>> = LazyLock::new(|| {
-    let mut res = vec![[-1; 5001]; 501];
-    for num in 1..=500 {
-        res[num as usize][num as usize] = 0;
-        let mut curr = num;
-        for v in 1.. {
-            curr *= 2;
-            if curr > 5000 {
-                break;
-            }
-            res[num as usize][curr as usize] = v;
-        }
-        curr = num;
-        for v in 1.. {
-            curr /= 2;
-            if curr < 1 {
-                break;
-            }
-            res[num as usize][curr as usize] = v;
-            let mut temp = 2 * curr;
-            while temp <= 5000 && res[num as usize][temp as usize] == -1 {
-                res[num as usize][temp as usize] = 1 + res[num as usize][temp as usize / 2];
-                temp *= 2;
-            }
-        }
-    }
-    res
-});
 
 #[cfg(test)]
 mod tests {
