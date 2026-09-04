@@ -9,14 +9,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn uniform_array(nums1: Vec<i32>) -> bool {
-    let mut min = i32::MAX;
-    let mut has_odd = false;
-    for &num in nums1.iter() {
-        min = min.min(num);
-        has_odd |= num & 1 == 1;
+pub fn first_stable_index(nums: Vec<i32>, k: i32) -> i32 {
+    let n = nums.len();
+    let mut suf_min = nums.to_vec();
+    for i in (0..n - 1).rev() {
+        suf_min[i] = suf_min[i].min(suf_min[1 + i]);
     }
-    if min & 1 == 1 { true } else { !has_odd }
+    let mut pref_max = i32::MIN;
+    for i in 0..n {
+        pref_max = pref_max.max(nums[i]);
+        if pref_max - suf_min[i] <= k {
+            return i as i32;
+        }
+    }
+    -1
 }
 
 #[cfg(test)]
