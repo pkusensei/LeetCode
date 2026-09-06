@@ -9,20 +9,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn first_stable_index(nums: Vec<i32>, k: i32) -> i32 {
-    let n = nums.len();
-    let mut suf_min = nums.to_vec();
-    for i in (0..n - 1).rev() {
-        suf_min[i] = suf_min[i].min(suf_min[1 + i]);
-    }
-    let mut pref_max = i32::MIN;
-    for i in 0..n {
-        pref_max = pref_max.max(nums[i]);
-        if pref_max - suf_min[i] <= k {
-            return i as i32;
+pub fn num_distinct(s: String, t: String) -> i32 {
+    let n2 = t.len();
+    let mut dp = vec![0; 1 + n2];
+    dp[0] = 1;
+    for b1 in s.bytes() {
+        let mut curr = dp.clone();
+        for (i2, b2) in t.bytes().enumerate() {
+            if b1 == b2 {
+                curr[1 + i2] += dp[i2]
+            }
         }
+        dp = curr;
     }
-    -1
+    dp[n2]
 }
 
 #[cfg(test)]
