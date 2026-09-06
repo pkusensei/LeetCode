@@ -9,20 +9,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_distinct(s: String, t: String) -> i32 {
-    let n2 = t.len();
-    let mut dp = vec![0; 1 + n2];
-    dp[0] = 1;
-    for b1 in s.bytes() {
-        let mut curr = dp.clone();
-        for (i2, b2) in t.bytes().enumerate() {
-            if b1 == b2 {
-                curr[1 + i2] += dp[i2]
-            }
-        }
-        dp = curr;
+pub fn count_rotations(s: String, k: i32) -> i32 {
+    let n = s.len();
+    let mut s = s.into_bytes();
+    let mut res = 0;
+    for _len in 0..n {
+        s.rotate_left(1);
+        let curr = s.windows(2).filter(|w| w[0] == w[1]).count();
+        res += i32::from(curr as i32 == k);
     }
-    dp[n2]
+    res
 }
 
 #[cfg(test)]
