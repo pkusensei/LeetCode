@@ -9,22 +9,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_good_rotations(mut nums: Vec<i32>) -> i32 {
-    let n = nums.len();
-    let sum: i64 = nums.iter().map(|&v| i64::from(v)).sum();
-    nums.extend_from_within(..n / 2 - 1);
-    let mut res = 0;
-    let mut half = 0;
-    for (i, &num) in nums.iter().enumerate() {
-        half += i64::from(num);
-        if i >= n / 2 {
-            half -= i64::from(nums[i - n / 2]);
+pub fn count_groups(position: &[i32], speed: &[i32], distance: i32) -> i32 {
+    let mut st1: Vec<(i32, i32)> = vec![];
+    for (&pos, &spd) in position.iter().zip(speed.iter()) {
+        while st1.last().is_some_and(|v| v.0 + distance >= pos) {
+            st1.pop();
         }
-        if i >= n / 2 - 1 {
-            res += i32::from(2 * half > sum)
-        }
+        st1.push((pos, spd));
     }
-    res
+    let mut st2 = vec![];
+    for &(_, spd) in st1.iter() {
+        while st2.last().is_some_and(|&v| v > spd) {
+            st2.pop();
+        }
+        st2.push(spd);
+    }
+    st2.len() as i32
 }
 
 #[cfg(test)]
@@ -59,11 +59,9 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(count_good_rotations(vec![1, 2, 3, 4, 5, 6]), 3)
+        assert_eq!(count_groups(&[657, 686], &[139, 284], 77), 1);
     }
 
     #[test]
-    fn test() {
-        assert_eq!(count_good_rotations(vec![10, 6]), 1);
-    }
+    fn test() {}
 }
