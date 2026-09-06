@@ -9,14 +9,20 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_rotations(s: String, k: i32) -> i32 {
-    let n = s.len();
-    let mut s = s.into_bytes();
+pub fn count_good_rotations(mut nums: Vec<i32>) -> i32 {
+    let n = nums.len();
+    let sum: i64 = nums.iter().map(|&v| i64::from(v)).sum();
+    nums.extend_from_within(..n / 2 - 1);
     let mut res = 0;
-    for _len in 0..n {
-        s.rotate_left(1);
-        let curr = s.windows(2).filter(|w| w[0] == w[1]).count();
-        res += i32::from(curr as i32 == k);
+    let mut half = 0;
+    for (i, &num) in nums.iter().enumerate() {
+        half += i64::from(num);
+        if i >= n / 2 {
+            half -= i64::from(nums[i - n / 2]);
+        }
+        if i >= n / 2 - 1 {
+            res += i32::from(2 * half > sum)
+        }
     }
     res
 }
@@ -52,8 +58,12 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(count_good_rotations(vec![1, 2, 3, 4, 5, 6]), 3)
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(count_good_rotations(vec![10, 6]), 1);
+    }
 }
