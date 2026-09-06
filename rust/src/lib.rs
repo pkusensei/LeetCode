@@ -6,26 +6,55 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
+use std::{cmp::Reverse, collections::BinaryHeap};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_groups(position: &[i32], speed: &[i32], distance: i32) -> i32 {
-    let mut st1: Vec<(i32, i32)> = vec![];
-    for (&pos, &spd) in position.iter().zip(speed.iter()) {
-        while st1.last().is_some_and(|v| v.0 + distance >= pos) {
-            st1.pop();
+pub fn min_cost(grid: &[&[i32]], k: i32) -> i32 {
+    let [rows, cols] = get_dimensions(&grid);
+    let k = k as usize;
+    let mut queue = BinaryHeap::new();
+    let mut max_costs = vec![vec![vec![[i32::MAX >> 1; 4]; 1 + k]; cols]; rows];
+    queue.push((Reverse(grid[0][0]), 0, 0, k, 1));
+    max_costs[0][0][k][1] = grid[0][0];
+    queue.push((Reverse(grid[0][0]), 0, 0, k, 3));
+    max_costs[0][0][k][3] = grid[0][0];
+    while let Some((Reverse(cost), r, c, turn, dir)) = queue.pop() {
+        if r == rows - 1 && c == cols - 1 {
+            return cost;
         }
-        st1.push((pos, spd));
-    }
-    let mut st2 = vec![];
-    for &(_, spd) in st1.iter() {
-        while st2.last().is_some_and(|&v| v > spd) {
-            st2.pop();
+        if cost > max_costs[r][c][turn][dir] {
+            continue;
         }
-        st2.push(spd);
+        for (&didx, [dr, dc]) in DIDX.iter().zip(DIRS) {
+            if didx == dir || turn > 0 {
+                let nr = r as i32 + dr;
+                let nc = c as i32 + dc;
+                if let Some([nr, nc]) = check(rows, cols, nr, nc) {
+                    let ncost = grid[nr][nc] + cost;
+                    let nturn = turn - usize::from(didx != dir);
+                    if max_costs[nr][nc][nturn][didx] > ncost {
+                        max_costs[nr][nc][nturn][didx] = ncost;
+                        queue.push((Reverse(ncost), nr, nc, nturn, didx));
+                    }
+                }
+            }
+        }
     }
-    st2.len() as i32
+    -1
 }
+
+const fn check(rows: usize, cols: usize, r: i32, c: i32) -> Option<[usize; 2]> {
+    if 0 <= r && r < rows as i32 && 0 <= c && c < cols as i32 {
+        Some([r as usize, c as usize])
+    } else {
+        None
+    }
+}
+
+const DIDX: [usize; 4] = [0, 1, 2, 3];
+const DIRS: [[i32; 2]; 4] = [[-1, 0], [1, 0], [0, -1], [0, 1]];
 
 #[cfg(test)]
 mod tests {
@@ -59,7 +88,7 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(count_groups(&[657, 686], &[139, 284], 77), 1);
+        assert_eq!(min_cost(&[&[2, 7, 3], &[1, 4, 5]], 1), 12);
     }
 
     #[test]
