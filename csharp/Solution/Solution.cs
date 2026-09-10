@@ -7,94 +7,22 @@ using static Solution.Utils;
 
 namespace Solution;
 
-public class Skiplist
+public class Solution
 {
-    public Skiplist()
+    public int AverageOfSubtree(TreeNode root)
     {
-        Head = new(-1);
-        Rng = new();
-    }
+        return Dfs(root).res;
 
-    public Node Head { get; private set; }
-    public Random Rng { get; }
-
-    public bool Search(int target)
-    {
-        Node curr = Head;
-        while (curr is not null)
+        static (int sum, int count, int res) Dfs(TreeNode node)
         {
-            while (curr.Next is not null && curr.Next.Val < target)
-            {
-                curr = curr.Next;
-            }
-            if (curr.Next is not null && curr.Next.Val == target)
-            {
-                return true;
-            }
-            curr = curr.Down;
+            if (node is null) { return (0, 0, 0); }
+            var left = Dfs(node.left);
+            var right = Dfs(node.right);
+            int sum = node.val + left.sum + right.sum;
+            int count = 1 + left.count + right.count;
+            int res = left.res + right.res;
+            res += sum / count == node.val ? 1 : 0;
+            return (sum, count, res);
         }
-        return false;
     }
-
-    public void Add(int num)
-    {
-        Stack<Node> st = [];
-        Node curr = Head;
-        while (curr is not null)
-        {
-            while (curr.Next is not null && curr.Next.Val < num)
-            {
-                curr = curr.Next;
-            }
-            st.Push(curr);
-            curr = curr.Down;
-        }
-        bool insert = true;
-        Node down = null;
-        while (insert && st.TryPop(out curr))
-        {
-            curr.Next = new(num, curr.Next, down);
-            down = curr.Next;
-            insert = Rng.NextDouble() < 0.5;
-        }
-        if (insert) { Head = new(-1, null, Head); }
-    }
-
-    public bool Erase(int num)
-    {
-        Node curr = Head;
-        bool found = false;
-        while (curr is not null)
-        {
-            while (curr.Next is not null && curr.Next.Val < num)
-            {
-                curr = curr.Next;
-            }
-            if (curr.Next is not null && curr.Next.Val == num)
-            {
-                curr.Next = curr.Next.Next;
-                found = true;
-            }
-            curr = curr.Down;
-        }
-        while (Head.Down is not null && Head.Next is null)
-        {
-            Head = Head.Down;
-        }
-        return found;
-    }
-}
-
-public sealed class Node
-{
-    public Node(int val, Node next = null, Node down = null)
-    {
-        Val = val;
-        Next = next;
-        Down = down;
-    }
-
-    public int Val { get; }
-    public Node Next { get; set; }
-    public Node Down { get; set; }
 }
