@@ -9,41 +9,68 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_days(n: i32) -> i32 {
-    let mut memo = vec![-1; 1 + n as usize];
-    dfs(n, &mut memo)
+pub fn distant_subarrays(nums: Vec<i32>, goal: i32, k: i32) -> i64 {
+    let n = nums.len();
+    if k == 0 {
+        return (n * (1 + n) / 2) as i64;
+    }
+    let [goal, k] = [goal, k].map(i64::from);
+    let prefix = nums.iter().fold(vec![0], |mut acc, &v| {
+        acc.push(i64::from(v) + acc.last().unwrap_or(&0));
+        acc
+    });
+    let mut sorted = prefix.clone();
+    sorted.sort_unstable();
+    sorted.dedup();
+    let mut ft = Fenwick::new(sorted.len());
+    let mut res = 0;
+    let mut total = 0;
+    for &sum in &prefix {
+        // goal-k ..= goal+k
+        // sum-v >= goal+k
+        // find all v <= sum-goal-k
+        let i = sorted.partition_point(|&v| v <= sum - goal - k);
+        res += ft.query(i);
+        // sum - v <= goal-k
+        // find all v >= sum-goal+k
+        let i = sorted.partition_point(|&v| v < sum - goal + k);
+        res += total - ft.query(i);
+        let i = sorted.partition_point(|&v| v < sum);
+        ft.update(1 + i);
+        total += 1;
+    }
+    res as i64
 }
 
-fn dfs(n: i32, memo: &mut [i32]) -> i32 {
-    if let Ok(i) = SUMS.binary_search(&n) {
-        return i as i32;
-    }
-    if memo[n as usize] > -1 {
-        return memo[n as usize];
-    }
-    let i = SUMS.partition_point(|&v| v < n);
-    let mut res = i32::MAX;
-    for d in 1..i {
-        let delta = n - d as i32 * (1 + d as i32) / 2;
-        res = res.min(d as i32 + 1 + dfs(delta, memo));
-    }
-    memo[n as usize] = res;
-    res
+struct Fenwick {
+    tree: Vec<i64>,
+    n: usize,
 }
 
-// 447*448/2 = 100_128
-const SUMS: [i32; 448] = f();
-const fn f() -> [i32; 448] {
-    let mut res = [0; 448];
-    let mut i = 1;
-    while i <= 447 {
-        res[i] = i as i32 * (1 + i as i32) / 2;
-        i += 1;
+impl Fenwick {
+    fn new(n: usize) -> Self {
+        Self {
+            tree: vec![0; 1 + n],
+            n,
+        }
     }
-    res
-}
 
-// n(1+n)/2
+    fn update(&mut self, mut idx: usize) {
+        while idx <= self.n {
+            self.tree[idx] += 1;
+            idx += idx & idx.wrapping_neg();
+        }
+    }
+
+    fn query(&self, mut idx: usize) -> i64 {
+        let mut res = 0;
+        while idx > 0 {
+            res += self.tree[idx];
+            idx -= idx & idx.wrapping_neg();
+        }
+        res
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -76,12 +103,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(min_days(2), 3);
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(min_days(7), 5);
-    }
+    fn test() {}
 }
