@@ -17,7 +17,7 @@ pub fn count_special_integers(nums: Vec<i32>) -> i32 {
         v.push(i);
     }
     map.into_values()
-        .filter(|v| v.len() == 3 && v[1] - v[0] == v[2] - v[1])
+        .filter(|v| v.len() >= 3 && v.windows(2).all(|w| w[1] - w[0] == v[1] - v[0]))
         .count() as i32
 }
 
