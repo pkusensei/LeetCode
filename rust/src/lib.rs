@@ -9,67 +9,72 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn distant_subarrays(nums: Vec<i32>, goal: i32, k: i32) -> i64 {
-    let n = nums.len();
-    if k == 0 {
-        return (n * (1 + n) / 2) as i64;
+pub fn with_dp(n: i32) -> i32 {
+    let n = n as usize;
+    let mut dp = vec![i32::MAX; 1 + n];
+    dp[0] = 0;
+    // for idx in 1..=n {
+    //     let mut d = 1;
+    //     while d * (1 + d) / 2 <= idx as i32 {
+    //         let delta = idx as i32 - d * (1 + d) / 2;
+    //         if delta > 0 {
+    //             dp[idx] = dp[idx].min(1 + d as i32 + dp[delta as usize])
+    //         } else if delta == 0 {
+    //             dp[idx] = dp[idx].min(d);
+    //         }
+    //         d += 1;
+    //     }
+    // }
+    let mut idx = 1;
+    let mut streak = 1;
+    while idx <= n {
+        dp[idx] = streak;
+        for right in (1 + idx)..=n.min(2 * idx) {
+            dp[right] = dp[right].min(dp[right - idx] + 1 + streak);
+        }
+        streak += 1;
+        idx += streak as usize;
     }
-    let [goal, k] = [goal, k].map(i64::from);
-    let prefix = nums.iter().fold(vec![0], |mut acc, &v| {
-        acc.push(i64::from(v) + acc.last().unwrap_or(&0));
-        acc
-    });
-    let mut sorted = prefix.clone();
-    sorted.sort_unstable();
-    sorted.dedup();
-    let mut ft = Fenwick::new(sorted.len());
-    let mut res = 0;
-    let mut total = 0;
-    for &sum in &prefix {
-        // goal-k ..= goal+k
-        // sum-v >= goal+k
-        // find all v <= sum-goal-k
-        let i = sorted.partition_point(|&v| v <= sum - goal - k);
-        res += ft.query(i);
-        // sum - v <= goal-k
-        // find all v >= sum-goal+k
-        let i = sorted.partition_point(|&v| v < sum - goal + k);
-        res += total - ft.query(i);
-        let i = sorted.partition_point(|&v| v < sum);
-        ft.update(1 + i);
-        total += 1;
-    }
-    res as i64
+    dp[n]
 }
 
-struct Fenwick {
-    tree: Vec<i64>,
-    n: usize,
+pub fn min_days(n: i32) -> i32 {
+    let mut memo = vec![-1; 1 + n as usize];
+    dfs(n, &mut memo)
 }
 
-impl Fenwick {
-    fn new(n: usize) -> Self {
-        Self {
-            tree: vec![0; 1 + n],
-            n,
-        }
+fn dfs(n: i32, memo: &mut [i32]) -> i32 {
+    if n == 0 {
+        return 0;
     }
+    if memo[n as usize] > -1 {
+        return memo[n as usize];
+    }
+    let mut res = i32::MAX;
+    let mut i = 1;
+    while i * (1 + i) / 2 <= n {
+        let delta = n - i * (1 + i) / 2;
+        if delta > 0 {
+            res = res.min(i + 1 + dfs(delta, memo))
+        } else if delta == 0 {
+            res = res.min(i);
+        }
+        i += 1
+    }
+    memo[n as usize] = res;
+    res
+}
 
-    fn update(&mut self, mut idx: usize) {
-        while idx <= self.n {
-            self.tree[idx] += 1;
-            idx += idx & idx.wrapping_neg();
-        }
+// 447*448/2 = 100_128
+const SUMS: [i32; 448] = f();
+const fn f() -> [i32; 448] {
+    let mut res = [0; 448];
+    let mut i = 1;
+    while i <= 447 {
+        res[i] = i as i32 * (1 + i as i32) / 2;
+        i += 1;
     }
-
-    fn query(&self, mut idx: usize) -> i64 {
-        let mut res = 0;
-        while idx > 0 {
-            res += self.tree[idx];
-            idx -= idx & idx.wrapping_neg();
-        }
-        res
-    }
+    res
 }
 
 #[cfg(test)]
@@ -103,8 +108,18 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(with_dp(3), 2);
+        assert_eq!(with_dp(9), 6);
+
+        assert_eq!(min_days(3), 2);
+        assert_eq!(min_days(9), 6);
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(with_dp(15), 5);
+
+        assert_eq!(min_days(15), 5);
+    }
 }
