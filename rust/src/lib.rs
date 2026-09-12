@@ -9,17 +9,41 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_special_integers(nums: Vec<i32>) -> i32 {
-    use std::collections::HashMap;
-    let mut map = HashMap::new();
-    for (i, &num) in nums.iter().enumerate() {
-        let v = map.entry(num).or_insert(vec![]);
-        v.push(i);
-    }
-    map.into_values()
-        .filter(|v| v.len() >= 3 && v.windows(2).all(|w| w[1] - w[0] == v[1] - v[0]))
-        .count() as i32
+pub fn min_days(n: i32) -> i32 {
+    let mut memo = vec![-1; 1 + n as usize];
+    dfs(n, &mut memo)
 }
+
+fn dfs(n: i32, memo: &mut [i32]) -> i32 {
+    if let Ok(i) = SUMS.binary_search(&n) {
+        return i as i32;
+    }
+    if memo[n as usize] > -1 {
+        return memo[n as usize];
+    }
+    let i = SUMS.partition_point(|&v| v < n);
+    let mut res = i32::MAX;
+    for d in 1..i {
+        let delta = n - d as i32 * (1 + d as i32) / 2;
+        res = res.min(d as i32 + 1 + dfs(delta, memo));
+    }
+    memo[n as usize] = res;
+    res
+}
+
+// 447*448/2 = 100_128
+const SUMS: [i32; 448] = f();
+const fn f() -> [i32; 448] {
+    let mut res = [0; 448];
+    let mut i = 1;
+    while i <= 447 {
+        res[i] = i as i32 * (1 + i as i32) / 2;
+        i += 1;
+    }
+    res
+}
+
+// n(1+n)/2
 
 #[cfg(test)]
 mod tests {
@@ -52,8 +76,12 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(min_days(2), 3);
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(min_days(7), 5);
+    }
 }
