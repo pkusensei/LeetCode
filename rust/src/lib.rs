@@ -6,28 +6,67 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
+use std::{iter, sync::LazyLock};
+
 #[allow(unused_imports)]
 use helper::*;
+use itertools::{Itertools, chain};
 
-pub fn cyclic_shift(
-    n: i32,
-    mut grid: Vec<Vec<i32>>,
-    row_shift: &[i32],
-    col_shift: &[i32],
-) -> Vec<Vec<i32>> {
-    let n = n as usize;
-    for (r, &v) in row_shift.iter().enumerate() {
-        let v = v as usize % n;
-        grid[r].rotate_left(v);
+pub fn min_operations(nums: Vec<i32>) -> i64 {
+    let mut res = 0;
+    for &num in nums.iter() {
+        if num < 10 {
+            continue;
+        }
+        let num = i64::from(num);
+        let vals = if num & 1 == 1 { &NUMS.0 } else { &NUMS.1 };
+        let i = vals.partition_point(|&v| v < num);
+        let mut curr = (vals[i] - num).abs() / 2;
+        if i > 0 {
+            curr = curr.min((vals[i - 1] - num).abs() / 2)
+        }
+        res += curr;
     }
-    for (c, &v) in col_shift.iter().enumerate() {
-        let v = v as usize % n;
-        let a: Vec<i32> = (0..n).map(|i| grid[i][c]).collect();
-        for i in 0..n {
-            grid[(i + n - v) % n][c] = a[i];
+    res
+}
+
+static NUMS: LazyLock<(Vec<i64>, Vec<i64>)> = LazyLock::new(|| {
+    let mut odds = vec![];
+    for b in (b'1'..=b'9').step_by(2) {
+        odds.push(i64::from(b - b'0'));
+        odds.extend(precompute(&mut vec![b]));
+    }
+    let mut evens = vec![];
+    for b in (b'2'..=b'8').step_by(2) {
+        evens.push(i64::from(b - b'0'));
+        evens.extend(precompute(&mut vec![b]));
+    }
+    odds.sort_unstable();
+    evens.sort_unstable();
+    (odds, evens)
+});
+
+fn precompute(left: &mut Vec<u8>) -> Vec<i64> {
+    if left.len() > 6 {
+        return vec![];
+    }
+    let mut res = vec![];
+    let right: Vec<_> = left.iter().copied().rev().collect();
+    let s: Vec<_> = left.iter().chain(&right).copied().collect();
+    res.push(String::from_utf8(s).unwrap().parse().unwrap());
+    if left.len() < 5 {
+        for b in b'0'..=b'9' {
+            let s =
+                chain!(left.iter().copied(), iter::once(b), right.iter().copied()).collect_vec();
+            res.push(String::from_utf8(s).unwrap().parse().unwrap());
         }
     }
-    grid
+    for b in b'0'..=b'9' {
+        left.push(b);
+        res.extend(precompute(left));
+        left.pop();
+    }
+    res
 }
 
 #[cfg(test)]
@@ -61,21 +100,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(
-            cyclic_shift(
-                3,
-                vec![vec![1, 2, 3], vec![4, 5, 6], vec![7, 8, 9]],
-                &[1, 2, 0],
-                &[2, 2, 1]
-            ),
-            [[7, 8, 5], [2, 3, 9], [6, 4, 1]]
-        );
-        assert_eq!(
-            cyclic_shift(2, vec![vec![1, 2], vec![3, 4]], &[1, 0], &[0, 1]),
-            [[2, 4], [3, 1]]
-        )
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
