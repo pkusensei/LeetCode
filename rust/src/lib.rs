@@ -6,65 +6,27 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::{iter, sync::LazyLock};
+use std::collections::HashMap;
 
 #[allow(unused_imports)]
 use helper::*;
-use itertools::{Itertools, chain};
 
-pub fn min_operations(nums: Vec<i32>) -> i64 {
+// i < k < j
+// [i] < [j] && [i] <= [k]
+pub fn shadow_pairs(nums: Vec<i32>) -> i64 {
+    let mut st = vec![];
+    let mut freq = HashMap::new();
     let mut res = 0;
-    for &num in nums.iter() {
-        if num < 10 {
-            continue;
+    for (i, &num) in nums.iter().enumerate() {
+        while let Some(&top) = st.last()
+            && nums[top] > num
+        {
+            st.pop();
+            *freq.entry(nums[top]).or_insert(0) -= 1;
         }
-        let num = i64::from(num);
-        let vals = if num & 1 == 1 { &NUMS.0 } else { &NUMS.1 };
-        let i = vals.partition_point(|&v| v < num);
-        let mut curr = (vals[i] - num).abs() / 2;
-        if i > 0 {
-            curr = curr.min((vals[i - 1] - num).abs() / 2)
-        }
-        res += curr;
-    }
-    res
-}
-
-static NUMS: LazyLock<(Vec<i64>, Vec<i64>)> = LazyLock::new(|| {
-    let mut odds = vec![];
-    for b in (b'1'..=b'9').step_by(2) {
-        odds.push(i64::from(b - b'0'));
-        odds.extend(precompute(&mut vec![b]));
-    }
-    let mut evens = vec![];
-    for b in (b'2'..=b'8').step_by(2) {
-        evens.push(i64::from(b - b'0'));
-        evens.extend(precompute(&mut vec![b]));
-    }
-    odds.sort_unstable();
-    evens.sort_unstable();
-    (odds, evens)
-});
-
-fn precompute(left: &mut Vec<u8>) -> Vec<i64> {
-    if left.len() > 6 {
-        return vec![];
-    }
-    let mut res = vec![];
-    let right: Vec<_> = left.iter().copied().rev().collect();
-    let s: Vec<_> = left.iter().chain(&right).copied().collect();
-    res.push(String::from_utf8(s).unwrap().parse().unwrap());
-    if left.len() < 5 {
-        for b in b'0'..=b'9' {
-            let s =
-                chain!(left.iter().copied(), iter::once(b), right.iter().copied()).collect_vec();
-            res.push(String::from_utf8(s).unwrap().parse().unwrap());
-        }
-    }
-    for b in b'0'..=b'9' {
-        left.push(b);
-        res.extend(precompute(left));
-        left.pop();
+        res += st.len() as i64 - freq.get(&num).unwrap_or(&0);
+        *freq.entry(num).or_insert(0) += 1;
+        st.push(i);
     }
     res
 }
