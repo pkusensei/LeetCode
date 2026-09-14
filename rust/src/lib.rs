@@ -6,29 +6,57 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
+use itertools::Itertools;
 
-// i < k < j
-// [i] < [j] && [i] <= [k]
-pub fn shadow_pairs(nums: Vec<i32>) -> i64 {
-    let mut st = vec![];
-    let mut freq = HashMap::new();
-    let mut res = 0;
-    for (i, &num) in nums.iter().enumerate() {
-        while let Some(&top) = st.last()
-            && nums[top] > num
-        {
-            st.pop();
-            *freq.entry(nums[top]).or_insert(0) -= 1;
-        }
-        res += st.len() as i64 - freq.get(&num).unwrap_or(&0);
-        *freq.entry(num).or_insert(0) += 1;
-        st.push(i);
+pub fn shadow_pairs(mut nums: Vec<i32>) -> i32 {
+    let sorted = nums.iter().copied().sorted_unstable().dedup().collect_vec();
+    for num in nums.iter_mut() {
+        let x = *num;
+        let i = sorted.partition_point(|&v| v < x);
+        *num = i as i32;
     }
-    res
+    dfs(&nums, 0, sorted.len() - 1)
+}
+
+fn dfs(nums: &[i32], left: usize, right: usize) -> i32 {
+    if nums.len() <= 1 || left == right {
+        return 0;
+    }
+    // inc stack
+    // loose-dec stack
+    let [mut inc_st, mut dec_st] = [const { vec![] }; 2];
+    let [mut low, mut high] = [const { vec![] }; 2];
+    let mid = left.midpoint(right);
+    let mut res = 0;
+    for (idx, &num) in nums.iter().enumerate() {
+        if num <= mid as i32 {
+            while let Some(&top) = dec_st.last()
+                && nums[top] < num
+            {
+                // [top] < num; top cannot be [i]
+                dec_st.pop();
+            }
+            dec_st.push(idx);
+            low.push(num);
+        } else {
+            while let Some(&top) = inc_st.last()
+                && nums[top] >= num
+            {
+                // Pop all big [top]
+                // Effectively find closest [k] < [j]
+                inc_st.pop();
+            }
+            res += dec_st.len() as i32;
+            if let Some(&top) = inc_st.last() {
+                res -= dec_st.partition_point(|&v| v < top) as i32;
+            }
+            inc_st.push(idx);
+            high.push(num);
+        }
+    }
+    res + dfs(&low, left, mid) + dfs(&high, 1 + mid, right)
 }
 
 #[cfg(test)]
