@@ -17,21 +17,21 @@ pub fn shadow_pairs(mut nums: Vec<i32>) -> i32 {
         let i = sorted.partition_point(|&v| v < x);
         *num = i as i32;
     }
-    dfs(&nums, 0, sorted.len() - 1)
+    dfs(&nums, 0, sorted.len() as i32 - 1)
 }
 
-fn dfs(nums: &[i32], left: usize, right: usize) -> i32 {
-    if nums.len() <= 1 || left == right {
+fn dfs(nums: &[i32], low: i32, high: i32) -> i32 {
+    if nums.len() <= 1 || low == high {
         return 0;
     }
     // inc stack
     // loose-dec stack
     let [mut inc_st, mut dec_st] = [const { vec![] }; 2];
-    let [mut low, mut high] = [const { vec![] }; 2];
-    let mid = left.midpoint(right);
+    let [mut small, mut big] = [const { vec![] }; 2];
+    let mid = low.midpoint(high);
     let mut res = 0;
     for (idx, &num) in nums.iter().enumerate() {
-        if num <= mid as i32 {
+        if num <= mid {
             while let Some(&top) = dec_st.last()
                 && nums[top] < num
             {
@@ -39,7 +39,7 @@ fn dfs(nums: &[i32], left: usize, right: usize) -> i32 {
                 dec_st.pop();
             }
             dec_st.push(idx);
-            low.push(num);
+            small.push(num);
         } else {
             while let Some(&top) = inc_st.last()
                 && nums[top] >= num
@@ -53,10 +53,10 @@ fn dfs(nums: &[i32], left: usize, right: usize) -> i32 {
                 res -= dec_st.partition_point(|&v| v < top) as i32;
             }
             inc_st.push(idx);
-            high.push(num);
+            big.push(num);
         }
     }
-    res + dfs(&low, left, mid) + dfs(&high, 1 + mid, right)
+    res + dfs(&small, low, mid) + dfs(&big, 1 + mid, high)
 }
 
 #[cfg(test)]
