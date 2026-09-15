@@ -8,55 +8,31 @@ mod trie;
 
 #[allow(unused_imports)]
 use helper::*;
-use itertools::Itertools;
 
-pub fn shadow_pairs(mut nums: Vec<i32>) -> i32 {
-    let sorted = nums.iter().copied().sorted_unstable().dedup().collect_vec();
-    for num in nums.iter_mut() {
-        let x = *num;
-        let i = sorted.partition_point(|&v| v < x);
-        *num = i as i32;
+pub fn max_palindromes(s: String, k: i32) -> i32 {
+    let (n, s) = (s.len(), s.as_bytes());
+    if k == 1 {
+        return n as i32;
     }
-    dfs(&nums, 0, sorted.len() as i32 - 1)
-}
-
-fn dfs(nums: &[i32], low: i32, high: i32) -> i32 {
-    if nums.len() <= 1 || low == high {
-        return 0;
-    }
-    // inc stack
-    // loose-dec stack
-    let [mut inc_st, mut dec_st] = [const { vec![] }; 2];
-    let [mut small, mut big] = [const { vec![] }; 2];
-    let mid = low.midpoint(high);
+    let k = k as usize;
+    let mut left = 0;
     let mut res = 0;
-    for (idx, &num) in nums.iter().enumerate() {
-        if num <= mid {
-            while let Some(&top) = dec_st.last()
-                && nums[top] < num
-            {
-                // [top] < num; top cannot be [i]
-                dec_st.pop();
-            }
-            dec_st.push(idx);
-            small.push(num);
-        } else {
-            while let Some(&top) = inc_st.last()
-                && nums[top] >= num
-            {
-                // Pop all big [top]
-                // Effectively find closest [k] < [j]
-                inc_st.pop();
-            }
-            res += dec_st.len() as i32;
-            if let Some(&top) = inc_st.last() {
-                res -= dec_st.partition_point(|&v| v < top) as i32;
-            }
-            inc_st.push(idx);
-            big.push(num);
+    while left < n {
+        let right = left + k;
+        if right <= n && is_palindrome(&s[left..right]) {
+            res += 1;
+            left = right;
+            continue;
         }
+        let right = left + k + 1;
+        if right <= n && is_palindrome(&s[left..right]) {
+            res += 1;
+            left = right;
+            continue;
+        }
+        left += 1;
     }
-    res + dfs(&small, low, mid) + dfs(&big, 1 + mid, high)
+    res
 }
 
 #[cfg(test)]
