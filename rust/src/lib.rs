@@ -9,6 +9,22 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
+pub fn with_dp(n: i32, k: i32) -> i32 {
+    let [n, k] = [n, k].map(|v| v as usize);
+    let mut dp = vec![vec![0; 1 + k]; n];
+    for i in 0..n {
+        dp[i][0] = 1;
+    }
+    for k in 1..=k {
+        let mut pref = 0;
+        for i in 1..n {
+            pref = (pref + dp[i - 1][k - 1]) % M;
+            dp[i][k] = (dp[i - 1][k] + pref) % M;
+        }
+    }
+    dp[n - 1][k] as i32
+}
+
 pub fn number_of_sets(n: i32, k: i32) -> i32 {
     let [n, k] = [n, k].map(i64::from);
     let mut nom = 1;
