@@ -9,30 +9,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_palindromes(s: String, k: i32) -> i32 {
-    let (n, s) = (s.len(), s.as_bytes());
-    if k == 1 {
-        return n as i32;
+pub fn number_of_sets(n: i32, k: i32) -> i32 {
+    let [n, k] = [n, k].map(i64::from);
+    let mut nom = 1;
+    let mut den = 1;
+    for i in 1..=2 * k {
+        nom = nom * (n + k - i) % M;
+        den = den * i % M;
     }
-    let k = k as usize;
-    let mut left = 0;
-    let mut res = 0;
-    while left < n {
-        let right = left + k;
-        if right <= n && is_palindrome(&s[left..right]) {
-            res += 1;
-            left = right;
-            continue;
-        }
-        let right = left + k + 1;
-        if right <= n && is_palindrome(&s[left..right]) {
-            res += 1;
-            left = right;
-            continue;
-        }
-        left += 1;
+    (nom * mod_pow(den, M - 2) % M) as i32
+}
+
+const M: i64 = 1_000_000_007;
+const fn mod_pow(base: i64, exp: i64) -> i64 {
+    if exp == 0 {
+        return 1;
     }
-    res
+    if exp & 1 == 0 {
+        mod_pow(base * base % M, exp >> 1)
+    } else {
+        mod_pow(base * base % M, exp >> 1) * base % M
+    }
 }
 
 #[cfg(test)]
