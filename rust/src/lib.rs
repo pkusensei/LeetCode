@@ -9,26 +9,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn equal_substring(s: String, t: String, max_cost: i32) -> i32 {
-    let arr: Vec<_> = s
-        .bytes()
-        .zip(t.bytes())
-        .map(|(a, b)| i32::from(a.abs_diff(b)))
-        .collect();
-    let mut res = None;
-    let mut sum = 0;
-    let mut left = 0;
-    for (right, &num) in arr.iter().enumerate() {
-        sum += num;
-        while sum > max_cost {
-            sum -= arr[left];
-            left += 1;
+pub fn remove_duplicates(s: String, k: i32) -> String {
+    let mut st: Vec<(u8, usize)> = vec![];
+    for b in s.bytes() {
+        if let Some(v) = st.last_mut()
+            && v.0 == b
+        {
+            v.1 += 1;
+            if v.1 == k as usize {
+                st.pop();
+            }
+        } else {
+            st.push((b, 1));
         }
-        res = res.max(Some(1 + right - left))
     }
-    res.map(|v| v as i32).unwrap_or(0)
+    st.iter()
+        .flat_map(|v| std::iter::repeat_n(char::from(v.0), v.1))
+        .collect()
 }
-
 #[cfg(test)]
 mod tests {
 
