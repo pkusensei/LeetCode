@@ -9,12 +9,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_cost_to_move_chips(position: Vec<i32>) -> i32 {
-    let [mut odd, mut even] = [0, 0];
-    for v in position.iter() {
-        if v & 1 == 1 { odd += 1 } else { even += 1 }
-    }
-    odd.min(even)
+pub fn longest_subsequence(arr: Vec<i32>, difference: i32) -> i32 {
+        use std::collections::HashMap;
+        let mut map = HashMap::new();
+        let mut res = 1;
+        for &num in arr.iter() {
+            if let Some(v) = map.get(&(num - difference)) {
+                res = res.max(1 + v);
+                map.insert(num, 1 + v);
+            } else {
+                map.insert(num, 1);
+            }
+        }
+        res
 }
 
 #[cfg(test)]
