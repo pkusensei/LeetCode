@@ -11,6 +11,36 @@ use std::collections::HashMap;
 #[allow(unused_imports)]
 use helper::*;
 
+pub fn with_dp(arr: &[i32], target: i32) -> i32 {
+    let n = arr.len();
+    let mut dp = vec![None; n];
+    let mut left = 0;
+    let mut res = None;
+    let mut min_len = None;
+    let mut sum = 0;
+    for (right, &num) in arr.iter().enumerate() {
+        sum += num;
+        while sum > target {
+            sum -= arr[left];
+            left += 1;
+        }
+        if sum == target {
+            let curr = 1 + right - left;
+            let v = min_len.get_or_insert(curr);
+            *v = (*v).min(curr);
+            if let Some(left) = left.checked_sub(1)
+                && let Some(v) = dp[left]
+            {
+                let curr = (curr + v) as i32;
+                let v = res.get_or_insert(curr);
+                *v = (*v).min(curr);
+            }
+        }
+        dp[right] = min_len;
+    }
+    res.unwrap_or(-1)
+}
+
 pub fn min_sum_of_lengths(arr: Vec<i32>, target: i32) -> i32 {
     let n = arr.len();
     let mut prefix = vec![1 + n as i32; n];
