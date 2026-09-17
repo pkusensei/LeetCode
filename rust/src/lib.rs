@@ -6,46 +6,50 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn with_dp(n: i32, k: i32) -> i32 {
-    let [n, k] = [n, k].map(|v| v as usize);
-    let mut dp = vec![vec![0; 1 + k]; n];
-    for i in 0..n {
-        dp[i][0] = 1;
+pub fn min_sum_of_lengths(arr: Vec<i32>, target: i32) -> i32 {
+    let n = arr.len();
+    let mut prefix = vec![1 + n as i32; n];
+    let mut map = HashMap::from([(0, -1)]);
+    let mut sum = 0;
+    for (right, &num) in arr.iter().enumerate() {
+        sum += num;
+        if let Some(prev) = map.get(&(sum - target)) {
+            let curr = right as i32 - prev;
+            prefix[right] = curr;
+        }
+        if right > 0 {
+            prefix[right] = prefix[right].min(prefix[right - 1]);
+        }
+        map.insert(sum, right as i32);
     }
-    for k in 1..=k {
-        let mut pref = 0;
-        for i in 1..n {
-            pref = (pref + dp[i - 1][k - 1]) % M;
-            dp[i][k] = (dp[i - 1][k] + pref) % M;
+    map = HashMap::from([(0, n as i32)]);
+    sum = 0;
+    let mut suffix = vec![1 + n as i32; n];
+    for (left, &num) in arr.iter().enumerate().rev() {
+        sum += num;
+        if let Some(prev) = map.get(&(sum - target)) {
+            let curr = prev - left as i32;
+            suffix[left] = curr;
+        }
+        if 1 + left < n {
+            suffix[left] = suffix[left].min(suffix[1 + left]);
+        }
+        map.insert(sum, left as i32);
+    }
+    let mut res = None;
+    for i in 0..n - 1 {
+        if prefix[i] <= n as i32 && suffix[1 + i] <= n as i32 {
+            let curr = prefix[i] + suffix[1 + i];
+            let v = res.get_or_insert(curr);
+            *v = (*v).min(curr);
         }
     }
-    dp[n - 1][k] as i32
-}
-
-pub fn number_of_sets(n: i32, k: i32) -> i32 {
-    let [n, k] = [n, k].map(i64::from);
-    let mut nom = 1;
-    let mut den = 1;
-    for i in 1..=2 * k {
-        nom = nom * (n + k - i) % M;
-        den = den * i % M;
-    }
-    (nom * mod_pow(den, M - 2) % M) as i32
-}
-
-const M: i64 = 1_000_000_007;
-const fn mod_pow(base: i64, exp: i64) -> i64 {
-    if exp == 0 {
-        return 1;
-    }
-    if exp & 1 == 0 {
-        mod_pow(base * base % M, exp >> 1)
-    } else {
-        mod_pow(base * base % M, exp >> 1) * base % M
-    }
+    res.unwrap_or(-1)
 }
 
 #[cfg(test)]
