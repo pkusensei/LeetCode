@@ -9,15 +9,13 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_intersecting_intervals(intervals: Vec<Vec<i32>>) -> i32 {
+pub fn count_intersecting_intervals(mut intervals: Vec<[i32; 2]>) -> i64 {
+    intervals.sort_unstable();
     let mut res = 0;
-    for (i, a) in intervals.iter().enumerate() {
-        for b in &intervals[1 + i..] {
-            if a[1] < b[0] || b[1] < a[0] {
-                continue;
-            }
-            res += 1
-        }
+    for (idx, v) in intervals.iter().enumerate() {
+        let end = v[1];
+        let i = intervals.partition_point(|v| v[0] <= end);
+        res += (i - idx - 1) as i64
     }
     res
 }
@@ -53,7 +51,12 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(
+            count_intersecting_intervals(vec![[1, 2], [2, 3], [3, 4]]),
+            2
+        );
+    }
 
     #[test]
     fn test() {}
