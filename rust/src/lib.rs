@@ -9,15 +9,28 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_intersecting_intervals(mut intervals: Vec<[i32; 2]>) -> i64 {
-    intervals.sort_unstable();
-    let mut res = 0;
-    for (idx, v) in intervals.iter().enumerate() {
-        let end = v[1];
-        let i = intervals.partition_point(|v| v[0] <= end);
-        res += (i - idx - 1) as i64
+// a - b + c - d
+// (a c d b) a - c + d - b
+// (a b d c) a - b + d - c
+// (a c b d) a - c + b - d
+pub fn max_value(nums: &[i32]) -> i64 {
+    let mut pulse = 0;
+    let mut max_even = 0;
+    let mut max_odd = i64::MIN >> 2;
+    let mut min = i64::MAX;
+    for (i, &num) in nums.iter().enumerate() {
+        if i & 1 == 0 {
+            pulse += i64::from(num);
+            // length is odd
+            min = min.min(pulse - max_odd);
+            max_odd = max_odd.max(pulse);
+        } else {
+            pulse -= i64::from(num);
+            min = min.min(pulse - max_even);
+            max_even = max_even.max(pulse);
+        };
     }
-    res
+    pulse.max(pulse - 2 * min)
 }
 
 #[cfg(test)]
@@ -52,10 +65,7 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            count_intersecting_intervals(vec![[1, 2], [2, 3], [3, 4]]),
-            2
-        );
+        assert_eq!(max_value(&[9, 7]), 2);
     }
 
     #[test]
