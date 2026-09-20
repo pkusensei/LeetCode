@@ -9,31 +9,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn check_overlap(
-    radius: i32,
-    x_center: i32,
-    y_center: i32,
-    x1: i32,
-    y1: i32,
-    x2: i32,
-    y2: i32,
-) -> bool {
-    // let tx = find(x_center, x1, x2);
-    // let ty = find(y_center, y1, y2);
-    let tx = x_center.clamp(x1, x2);
-    let ty = y_center.clamp(y1, y2);
-    let d = (tx - x_center).pow(2) + (ty - y_center).pow(2);
-    d <= radius.pow(2)
-}
-
-const fn find(center: i32, a: i32, b: i32) -> i32 {
-    if center < a {
-        a
-    } else if a <= center && center <= b {
-        center
-    } else {
-        b
+pub fn count_intersecting_intervals(intervals: Vec<Vec<i32>>) -> i32 {
+    let mut res = 0;
+    for (i, a) in intervals.iter().enumerate() {
+        for b in &intervals[1 + i..] {
+            if a[1] < b[0] || b[1] < a[0] {
+                continue;
+            }
+            res += 1
+        }
     }
+    res
 }
 
 #[cfg(test)]
