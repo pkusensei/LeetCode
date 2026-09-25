@@ -6,33 +6,67 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
+use std::collections::BTreeSet;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_operations(nums: Vec<i32>, x: i32) -> i32 {
-    let n = nums.len();
-    let sum: i32 = nums.iter().sum();
-    if sum == x {
-        return n as i32;
-    }
+pub fn brace_expansion_ii(expression: String) -> Vec<String> {
+    dfs(expression.as_bytes())
+        .into_iter()
+        .map(|v| String::from_utf8(v).unwrap())
+        .collect()
+}
+
+fn dfs(s: &[u8]) -> BTreeSet<Vec<u8>> {
     let mut left = 0;
-    let mut res = None;
-    let mut curr = 0;
-    for (right, &num) in nums.iter().enumerate() {
-        curr += num;
-        while left <= right && curr > sum - x {
-            curr -= nums[left];
-            left += 1;
-        }
-        if curr == sum - x {
-            res = res.max(Some(1 + right - left))
+    let mut open = 0;
+    let mut block = vec![];
+    let mut res = BTreeSet::new();
+    for (right, &b) in s.iter().enumerate() {
+        match b {
+            b'{' => {
+                open += 1;
+                if open == 1 {
+                    left = 1 + right;
+                }
+            }
+            b'}' => {
+                open -= 1;
+                if open == 0 {
+                    block.push(dfs(&s[left..right]));
+                }
+            }
+            // {...},{...}
+            // Left and right are unioned
+            b',' if open == 0 => {
+                res.extend(process(block));
+                block = vec![];
+            }
+            // a, b, c
+            _ if open == 0 => {
+                block.push(BTreeSet::from([vec![b]]));
+            }
+            _ => (),
         }
     }
-    if let Some(v) = res {
-        (n - v) as i32
-    } else {
-        -1
+    res.extend(process(block));
+    res
+}
+
+fn process(block: Vec<BTreeSet<Vec<u8>>>) -> Vec<Vec<u8>> {
+    use itertools::Itertools;
+
+    let mut res = vec![vec![]];
+    for set in block {
+        let temp = res.iter().cartesian_product(set.iter()).map(|(a, b)| {
+            let mut a = a.to_vec();
+            a.extend_from_slice(b);
+            a
+        });
+        res = temp.collect();
     }
+    res
 }
 
 #[cfg(test)]
