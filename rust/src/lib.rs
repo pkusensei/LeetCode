@@ -9,31 +9,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn evaluate(s: &str, knowledge: &[[&str; 2]]) -> String {
-    use std::collections::HashMap;
-    let n = s.len();
-    let map: HashMap<_, _> = knowledge
-        .iter()
-        .map(|v| (v[0].as_bytes(), v[1].as_bytes()))
-        .collect();
-    let mut res = vec![];
-    let mut prev = n;
-    for (idx, b) in s.bytes().enumerate() {
-        match b {
-            b'(' => prev = idx,
-            b')' => {
-                if let Some(v) = map.get(&s.as_bytes()[1 + prev..idx]) {
-                    res.extend_from_slice(v);
-                } else {
-                    res.push(b'?');
-                }
-                prev = n;
-            }
-            _ if prev == n => res.push(b),
-            _ => (),
-        }
+pub fn min_queen_moves(source: Vec<i32>, target: Vec<i32>) -> i32 {
+    let [sr, sc] = source[..] else { unreachable!() };
+    let [tr, tc] = target[..] else { unreachable!() };
+    if sr == tr && sc == tc {
+        0
+    } else if sr == tr || sc == tc || sr + sc == tr + tc || sr - sc == tr - tc {
+        1
+    } else {
+        2
     }
-    String::from_utf8(res).unwrap()
 }
 
 #[cfg(test)]
@@ -67,12 +52,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(
-            evaluate("(name)is(age)yearsold", &[["name", "bob"], ["age", "two"]]),
-            "bobistwoyearsold"
-        );
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
