@@ -6,67 +6,34 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::collections::BTreeSet;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn brace_expansion_ii(expression: String) -> Vec<String> {
-    dfs(expression.as_bytes())
-        .into_iter()
-        .map(|v| String::from_utf8(v).unwrap())
-        .collect()
-}
-
-fn dfs(s: &[u8]) -> BTreeSet<Vec<u8>> {
-    let mut left = 0;
-    let mut open = 0;
-    let mut block = vec![];
-    let mut res = BTreeSet::new();
-    for (right, &b) in s.iter().enumerate() {
+pub fn evaluate(s: &str, knowledge: &[[&str; 2]]) -> String {
+    use std::collections::HashMap;
+    let n = s.len();
+    let map: HashMap<_, _> = knowledge
+        .iter()
+        .map(|v| (v[0].as_bytes(), v[1].as_bytes()))
+        .collect();
+    let mut res = vec![];
+    let mut prev = n;
+    for (idx, b) in s.bytes().enumerate() {
         match b {
-            b'{' => {
-                open += 1;
-                if open == 1 {
-                    left = 1 + right;
+            b'(' => prev = idx,
+            b')' => {
+                if let Some(v) = map.get(&s.as_bytes()[1 + prev..idx]) {
+                    res.extend_from_slice(v);
+                } else {
+                    res.push(b'?');
                 }
+                prev = n;
             }
-            b'}' => {
-                open -= 1;
-                if open == 0 {
-                    block.push(dfs(&s[left..right]));
-                }
-            }
-            // {...},{...}
-            // Left and right are unioned
-            b',' if open == 0 => {
-                res.extend(process(block));
-                block = vec![];
-            }
-            // a, b, c
-            _ if open == 0 => {
-                block.push(BTreeSet::from([vec![b]]));
-            }
+            _ if prev == n => res.push(b),
             _ => (),
         }
     }
-    res.extend(process(block));
-    res
-}
-
-fn process(block: Vec<BTreeSet<Vec<u8>>>) -> Vec<Vec<u8>> {
-    use itertools::Itertools;
-
-    let mut res = vec![vec![]];
-    for set in block {
-        let temp = res.iter().cartesian_product(set.iter()).map(|(a, b)| {
-            let mut a = a.to_vec();
-            a.extend_from_slice(b);
-            a
-        });
-        res = temp.collect();
-    }
-    res
+    String::from_utf8(res).unwrap()
 }
 
 #[cfg(test)]
@@ -100,7 +67,12 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(
+            evaluate("(name)is(age)yearsold", &[["name", "bob"], ["age", "two"]]),
+            "bobistwoyearsold"
+        );
+    }
 
     #[test]
     fn test() {}
