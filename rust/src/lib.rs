@@ -9,16 +9,12 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_queen_moves(source: Vec<i32>, target: Vec<i32>) -> i32 {
-    let [sr, sc] = source[..] else { unreachable!() };
-    let [tr, tc] = target[..] else { unreachable!() };
-    if sr == tr && sc == tc {
-        0
-    } else if sr == tr || sc == tc || sr + sc == tr + tc || sr - sc == tr - tc {
-        1
-    } else {
-        2
-    }
+pub fn can_transform(source: Vec<i32>, target: Vec<i32>) -> bool {
+    f(&source) == f(&target)
+}
+
+fn f(v: &[i32]) -> i64 {
+    v.iter().map(|&v| i64::from(v)).sum()
 }
 
 #[cfg(test)]
