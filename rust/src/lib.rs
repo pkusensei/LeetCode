@@ -6,32 +6,37 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
 // negate = sum + 2(-x)
 // sum+(-2x).rem_euclid(k) = prev_sum%k
 pub fn longest_subarray(nums: &[i32], k: i32) -> i32 {
-    let mut prev_sum = HashMap::from([(0, -1)]);
-    let mut prev_nums = HashMap::new();
+    let n = nums.len();
+    let k = i64::from(k);
+    let mut prev_sum = vec![n as i32; k as usize];
+    prev_sum[0] = -1;
+    let mut prev_nums = vec![-1; k as usize];
     let mut sum = 0;
     let mut res = 0;
     for (idx, &num) in nums.iter().enumerate() {
-        sum = (sum + num).rem_euclid(k);
-        prev_nums.insert((-2 * num).rem_euclid(k), idx as i32);
-        if let Some(&prev) = prev_sum.get(&sum) {
-            res = res.max(idx as i32 - prev);
+        sum = (sum + i64::from(num)).rem_euclid(k);
+        prev_nums[(-2 * i64::from(num)).rem_euclid(k) as usize] = idx as i32;
+        if prev_sum[sum as usize] < n as i32 {
+            res = res.max(idx as i32 - prev_sum[sum as usize]);
         }
-        for (rem, &v) in prev_nums.iter() {
-            if let Some(&prev) = prev_sum.get(&((sum + rem) % k))
-                && prev < v
-            {
+        for (rem, &v) in prev_nums.iter().enumerate() {
+            if v == -1 {
+                continue; // !!! important prune !!!
+            }
+            let prev = prev_sum[((sum + rem as i64) % k) as usize];
+            if prev < v {
                 res = res.max(idx as i32 - prev)
             }
         }
-        prev_sum.entry(sum).or_insert(idx as i32);
+        if prev_sum[sum as usize] == n as i32 {
+            prev_sum[sum as usize] = idx as i32;
+        }
     }
     res
 }
