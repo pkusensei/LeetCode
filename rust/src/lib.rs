@@ -6,63 +6,43 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_subarray(nums: &[i32]) -> i32 {
-    let n = nums.len();
-    let mut map = HashMap::new();
-    let mut res = 2.min(n);
-    let mut left = 0;
-    for (right, &num) in nums.iter().enumerate() {
-        while f(&map, num) {
-            let v = map.entry(nums[left]).or_insert(0);
-            *v -= 1;
-            if *v == 0 {
-                map.remove(&nums[left]);
-            }
-            left += 1;
-        }
-        *map.entry(num).or_insert(0) += 1;
-        res = res.max(1 + right - left);
-    }
-    res as i32
-
-    // let mut left = 2;
-    // let mut right = n;
-    // while left < right {
-    //     let mid = left + (right - left) / 2;
-    // }
-    // left as i32
+pub fn max_earnings(mut meetings: Vec<Vec<i32>>) -> i64 {
+    let n = meetings.len();
+    meetings.sort_unstable();
+    let mut memo = vec![[-1; 2]; n];
+    dfs(&meetings, 0, 0, &mut memo)
 }
 
-fn f(map: &HashMap<i32, i32>, num: i32) -> bool {
-    for (k, v) in map.iter() {
-        if map.contains_key(&(k + num)) {
-            return true;
-        }
-        let d = k.abs_diff(num) as i32;
-        if d == *k {
-            if *v > 1 {
-                return true;
-            }
-        } else if map.contains_key(&d) {
-            return true;
-        }
+fn dfs(meets: &[Vec<i32>], idx: usize, started: usize, memo: &mut [[i64; 2]]) -> i64 {
+    let n = meets.len();
+    if idx >= n {
+        return 0;
     }
-    false
+    if memo[idx][started] > -1 {
+        return memo[idx][started];
+    }
+    let i = meets.partition_point(|v| v[0] < meets[idx][1]);
+    let take = {
+        let mut v = i64::from(meets[idx][2]) + dfs(meets, i, 1, memo);
+        if i < n {
+            v += i64::from(meets[i][0] - meets[idx][1])
+        }
+        v
+    };
+    let skip = {
+        let mut v = dfs(meets, 1 + idx, started, memo);
+        if 1 + idx < n && started == 1 {
+            v += i64::from(meets[1 + idx][0] - meets[idx][0])
+        }
+        v
+    };
+    let res = skip.max(take);
+    memo[idx][started] = res;
+    res
 }
-
-// fn f(nums: &[i32], mid: usize) -> bool {
-//     let mut map = HashMap::new();
-//     for (idx, &num) in nums.iter().enumerate() {
-//         if idx >= mid - 1 {}
-//         if idx >= mid {}
-//     }
-//     true
-// }
 
 #[cfg(test)]
 mod tests {
@@ -96,11 +76,13 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(max_subarray(&[3, 4, 5, 6]), 4);
+        assert_eq!(
+            max_earnings(vec![vec![3, 5, 4], vec![4, 7, 8], vec![8, 10, 3]]),
+            12
+        );
+        assert_eq!(max_earnings(vec![vec![2, 5, 4], vec![6, 8, 3]]), 8);
     }
 
     #[test]
-    fn test() {
-        assert_eq!(max_subarray(&[19, 28, 30, 19, 12, 5, 11, 22, 17, 1, 21]), 6);
-    }
+    fn test() {}
 }
