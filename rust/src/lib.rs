@@ -9,21 +9,36 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn rearrange_array(nums: Vec<i32>) -> Vec<i32> {
-    use std::collections::BTreeMap;
+pub fn max_equal_adjacent_pairs(nums: Vec<i32>) -> i32 {
+    use std::collections::HashMap;
     let n = nums.len();
-    let mut map = BTreeMap::new();
-    for &num in nums.iter() {
-        *map.entry(num).or_insert(0) += 1;
+    let noop = nums.windows(2).filter(|w| w[0] == w[1]).count() as i32;
+    let mut res = noop;
+    let mut val_ids = HashMap::<_, Vec<_>>::new();
+    for (idx, &num) in nums.iter().enumerate() {
+        val_ids.entry(num).or_default().push(idx);
     }
-    let mut res = Vec::with_capacity(n);
-    while res.len() < n {
-        for (k, v) in map.iter_mut() {
-            if *v > 0 {
-                res.push(*k);
-                *v -= 1;
+    for (&target, ids) in val_ids.iter() {
+        let mut freq = HashMap::new();
+        for &i in ids {
+            if i == 0 {
+                if nums[1 + i] != target {
+                    *freq.entry(nums[1 + i]).or_insert(0) += 1;
+                }
+            } else if i == n - 1 {
+                if nums[i - 1] != target {
+                    *freq.entry(nums[i - 1]).or_insert(0) += 1;
+                }
+            } else {
+                if nums[1 + i] != target {
+                    *freq.entry(nums[1 + i]).or_insert(0) += 1;
+                }
+                if nums[i - 1] != target {
+                    *freq.entry(nums[i - 1]).or_insert(0) += 1;
+                }
             }
         }
+        res = res.max(noop + freq.values().max().unwrap_or(&0))
     }
     res
 }
