@@ -6,42 +6,63 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_equal_adjacent_pairs(nums: Vec<i32>) -> i32 {
-    use std::collections::HashMap;
+pub fn max_subarray(nums: &[i32]) -> i32 {
     let n = nums.len();
-    let noop = nums.windows(2).filter(|w| w[0] == w[1]).count() as i32;
-    let mut res = noop;
-    let mut val_ids = HashMap::<_, Vec<_>>::new();
-    for (idx, &num) in nums.iter().enumerate() {
-        val_ids.entry(num).or_default().push(idx);
-    }
-    for (&target, ids) in val_ids.iter() {
-        let mut freq = HashMap::new();
-        for &i in ids {
-            if i == 0 {
-                if nums[1 + i] != target {
-                    *freq.entry(nums[1 + i]).or_insert(0) += 1;
-                }
-            } else if i == n - 1 {
-                if nums[i - 1] != target {
-                    *freq.entry(nums[i - 1]).or_insert(0) += 1;
-                }
-            } else {
-                if nums[1 + i] != target {
-                    *freq.entry(nums[1 + i]).or_insert(0) += 1;
-                }
-                if nums[i - 1] != target {
-                    *freq.entry(nums[i - 1]).or_insert(0) += 1;
-                }
+    let mut map = HashMap::new();
+    let mut res = 2.min(n);
+    let mut left = 0;
+    for (right, &num) in nums.iter().enumerate() {
+        while f(&map, num) {
+            let v = map.entry(nums[left]).or_insert(0);
+            *v -= 1;
+            if *v == 0 {
+                map.remove(&nums[left]);
             }
+            left += 1;
         }
-        res = res.max(noop + freq.values().max().unwrap_or(&0))
+        *map.entry(num).or_insert(0) += 1;
+        res = res.max(1 + right - left);
     }
-    res
+    res as i32
+
+    // let mut left = 2;
+    // let mut right = n;
+    // while left < right {
+    //     let mid = left + (right - left) / 2;
+    // }
+    // left as i32
 }
+
+fn f(map: &HashMap<i32, i32>, num: i32) -> bool {
+    for (k, v) in map.iter() {
+        if map.contains_key(&(k + num)) {
+            return true;
+        }
+        let d = k.abs_diff(num) as i32;
+        if d == *k {
+            if *v > 1 {
+                return true;
+            }
+        } else if map.contains_key(&d) {
+            return true;
+        }
+    }
+    false
+}
+
+// fn f(nums: &[i32], mid: usize) -> bool {
+//     let mut map = HashMap::new();
+//     for (idx, &num) in nums.iter().enumerate() {
+//         if idx >= mid - 1 {}
+//         if idx >= mid {}
+//     }
+//     true
+// }
 
 #[cfg(test)]
 mod tests {
@@ -74,8 +95,12 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(max_subarray(&[3, 4, 5, 6]), 4);
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(max_subarray(&[19, 28, 30, 19, 12, 5, 11, 22, 17, 1, 21]), 6);
+    }
 }
