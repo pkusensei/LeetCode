@@ -9,36 +9,48 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-// negate = sum + 2(-x)
-// sum+(-2x).rem_euclid(k) = prev_sum%k
-pub fn longest_subarray(nums: &[i32], k: i32) -> i32 {
-    let n = nums.len();
-    let k = i64::from(k);
-    let mut prev_sum = vec![n as i32; k as usize];
-    prev_sum[0] = -1;
-    let mut prev_nums = vec![-1; k as usize];
-    let mut sum = 0;
-    let mut res = 0;
-    for (idx, &num) in nums.iter().enumerate() {
-        sum = (sum + i64::from(num)).rem_euclid(k);
-        prev_nums[(-2 * i64::from(num)).rem_euclid(k) as usize] = idx as i32;
-        if prev_sum[sum as usize] < n as i32 {
-            res = res.max(idx as i32 - prev_sum[sum as usize]);
-        }
-        for (rem, &v) in prev_nums.iter().enumerate() {
-            if v == -1 {
-                continue; // !!! important prune !!!
+pub fn reverse_parentheses(s: String) -> String {
+    let mut st = vec![];
+    let mut res = vec![];
+    for b in s.bytes() {
+        match b {
+            b'(' => st.push(res.len()),
+            b')' => {
+                let top = st.pop().unwrap();
+                res[top..].reverse();
             }
-            let prev = prev_sum[((sum + rem as i64) % k) as usize];
-            if prev < v {
-                res = res.max(idx as i32 - prev)
-            }
-        }
-        if prev_sum[sum as usize] == n as i32 {
-            prev_sum[sum as usize] = idx as i32;
+            _ => res.push(b),
         }
     }
-    res
+    String::from_utf8(res).unwrap()
+}
+
+pub fn teleport(s: &str) -> String {
+    let (s, n) = (s.as_bytes(), s.len());
+    let mut pairs = vec![0; n];
+    let mut st = vec![];
+    for (idx, &b) in s.iter().enumerate() {
+        if b == b'(' {
+            st.push(idx);
+        } else if b == b')' {
+            let top = st.pop().unwrap();
+            pairs[top] = idx;
+            pairs[idx] = top;
+        }
+    }
+    let mut idx = 0;
+    let mut dir = true;
+    let mut res = vec![];
+    while idx < n {
+        if s[idx].is_ascii_alphabetic() {
+            res.push(s[idx]);
+        } else {
+            idx = pairs[idx];
+            dir = !dir;
+        }
+        idx = if dir { 1 + idx } else { idx - 1 };
+    }
+    String::from_utf8(res).unwrap()
 }
 
 #[cfg(test)]
@@ -72,10 +84,10 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(teleport("(d(bc)a)"), "abcd")
+    }
 
     #[test]
-    fn test() {
-        assert_eq!(longest_subarray(&[9, -12], 4), 1);
-    }
+    fn test() {}
 }
