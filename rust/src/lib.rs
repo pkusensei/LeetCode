@@ -9,48 +9,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn reverse_parentheses(s: String) -> String {
-    let mut st = vec![];
-    let mut res = vec![];
-    for b in s.bytes() {
-        match b {
-            b'(' => st.push(res.len()),
-            b')' => {
-                let top = st.pop().unwrap();
-                res[top..].reverse();
+pub fn rearrange_array(nums: Vec<i32>) -> Vec<i32> {
+    use std::collections::BTreeMap;
+    let n = nums.len();
+    let mut map = BTreeMap::new();
+    for &num in nums.iter() {
+        *map.entry(num).or_insert(0) += 1;
+    }
+    let mut res = Vec::with_capacity(n);
+    while res.len() < n {
+        for (k, v) in map.iter_mut() {
+            if *v > 0 {
+                res.push(*k);
+                *v -= 1;
             }
-            _ => res.push(b),
         }
     }
-    String::from_utf8(res).unwrap()
-}
-
-pub fn teleport(s: &str) -> String {
-    let (s, n) = (s.as_bytes(), s.len());
-    let mut pairs = vec![0; n];
-    let mut st = vec![];
-    for (idx, &b) in s.iter().enumerate() {
-        if b == b'(' {
-            st.push(idx);
-        } else if b == b')' {
-            let top = st.pop().unwrap();
-            pairs[top] = idx;
-            pairs[idx] = top;
-        }
-    }
-    let mut idx = 0;
-    let mut dir = true;
-    let mut res = vec![];
-    while idx < n {
-        if s[idx].is_ascii_alphabetic() {
-            res.push(s[idx]);
-        } else {
-            idx = pairs[idx];
-            dir = !dir;
-        }
-        idx = if dir { 1 + idx } else { idx - 1 };
-    }
-    String::from_utf8(res).unwrap()
+    res
 }
 
 #[cfg(test)]
@@ -84,9 +59,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(teleport("(d(bc)a)"), "abcd")
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
