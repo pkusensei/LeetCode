@@ -9,38 +9,43 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_earnings(mut meetings: Vec<Vec<i32>>) -> i64 {
-    let n = meetings.len();
-    meetings.sort_unstable();
-    let mut memo = vec![[-1; 2]; n];
-    dfs(&meetings, 0, 0, &mut memo)
-}
-
-fn dfs(meets: &[Vec<i32>], idx: usize, started: usize, memo: &mut [[i64; 2]]) -> i64 {
-    let n = meets.len();
-    if idx >= n {
-        return 0;
+// sum + (-2x)%k == prefix
+// prefix + 2x%k == sum
+pub fn longest_subarray(nums: &[i32], k: i32) -> i32 {
+    let n = nums.len();
+    let k = i64::from(k);
+    let mut sum = 0;
+    let mut first = vec![n as i32; k as usize];
+    first[0] = -1;
+    let mut last = vec![-1; k as usize];
+    let mut double_pos = vec![vec![]; k as usize];
+    let mut res = 0;
+    for (idx, &num) in nums.iter().enumerate() {
+        let num = i64::from(num);
+        sum = (sum + num).rem_euclid(k);
+        let i = sum as usize;
+        // default to no negation
+        res = res.max(idx as i32 - first[i]);
+        first[i] = first[i].min(idx as i32);
+        last[i] = idx as i32;
+        double_pos[(2 * num).rem_euclid(k) as usize].push(idx as i32);
     }
-    if memo[idx][started] > -1 {
-        return memo[idx][started];
+    for (rem, &left) in first.iter().enumerate() {
+        if left == n as i32 {
+            continue;
+        }
+        for (d, pos) in double_pos.iter().enumerate() {
+            let right = last[(rem + d) % k as usize];
+            if right == -1 || pos.is_empty() {
+                continue;
+            }
+            let i = pos.partition_point(|&v| v <= left);
+            if pos.get(i).is_none_or(|&v| right < v) {
+                continue;
+            }
+            res = res.max(right - left);
+        }
     }
-    let i = meets.partition_point(|v| v[0] < meets[idx][1]);
-    let take = {
-        let mut v = i64::from(meets[idx][2]) + dfs(meets, i, 1, memo);
-        if i < n {
-            v += i64::from(meets[i][0] - meets[idx][1])
-        }
-        v
-    };
-    let skip = {
-        let mut v = dfs(meets, 1 + idx, started, memo);
-        if 1 + idx < n && started == 1 {
-            v += i64::from(meets[1 + idx][0] - meets[idx][0])
-        }
-        v
-    };
-    let res = skip.max(take);
-    memo[idx][started] = res;
     res
 }
 
@@ -76,13 +81,11 @@ mod tests {
 
     #[test]
     fn basics() {
-        assert_eq!(
-            max_earnings(vec![vec![3, 5, 4], vec![4, 7, 8], vec![8, 10, 3]]),
-            12
-        );
-        assert_eq!(max_earnings(vec![vec![2, 5, 4], vec![6, 8, 3]]), 8);
+        assert_eq!(longest_subarray(&[4, 1, 2], 3), 3);
     }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(longest_subarray(&[9, 13, 10], 5), 1);
+    }
 }
