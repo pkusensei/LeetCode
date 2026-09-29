@@ -9,44 +9,38 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-// sum + (-2x)%k == prefix
-// prefix + 2x%k == sum
-pub fn longest_subarray(nums: &[i32], k: i32) -> i32 {
-    let n = nums.len();
-    let k = i64::from(k);
-    let mut sum = 0;
-    let mut first = vec![n as i32; k as usize];
-    first[0] = -1;
-    let mut last = vec![-1; k as usize];
-    let mut double_pos = vec![vec![]; k as usize];
-    let mut res = 0;
-    for (idx, &num) in nums.iter().enumerate() {
-        let num = i64::from(num);
-        sum = (sum + num).rem_euclid(k);
-        let i = sum as usize;
-        // default to no negation
-        res = res.max(idx as i32 - first[i]);
-        first[i] = first[i].min(idx as i32);
-        last[i] = idx as i32;
-        double_pos[(2 * num).rem_euclid(k) as usize].push(idx as i32);
+pub fn has_valid_path(grid: Vec<Vec<char>>) -> bool {
+    use std::collections::VecDeque;
+    let [rows, cols] = get_dimensions(&grid);
+    if (rows + cols - 1) & 1 == 1 || grid[0][0] == ')' {
+        return false;
     }
-    for (rem, &left) in first.iter().enumerate() {
-        if left == n as i32 {
-            continue;
+    let max = (rows + cols) / 2;
+    let mut seen = vec![vec![vec![false; 1 + max]; cols]; rows];
+    seen[0][0].fill(true);
+    let mut queue = VecDeque::from([(0, 0, 1)]);
+    while let Some((r, c, open)) = queue.pop_front() {
+        if r == rows - 1 && c == cols - 1 && open == 0 {
+            return true;
         }
-        for (d, pos) in double_pos.iter().enumerate() {
-            let right = last[(rem + d) % k as usize];
-            if right == -1 || pos.is_empty() {
-                continue;
+        let nr = 1 + r;
+        if nr < rows {
+            let nopen = open + if grid[nr][c] == '(' { 1 } else { -1 };
+            if (0..=max as i32).contains(&nopen) && !seen[nr][c][nopen as usize] {
+                seen[nr][c][nopen as usize] = true;
+                queue.push_back((nr, c, nopen));
             }
-            let i = pos.partition_point(|&v| v <= left);
-            if pos.get(i).is_none_or(|&v| right < v) {
-                continue;
+        }
+        let nc = 1 + c;
+        if nc < cols {
+            let nopen = open + if grid[r][nc] == '(' { 1 } else { -1 };
+            if (0..=max as i32).contains(&nopen) && !seen[r][nc][nopen as usize] {
+                seen[r][nc][nopen as usize] = true;
+                queue.push_back((r, nc, nopen));
             }
-            res = res.max(right - left);
         }
     }
-    res
+    false
 }
 
 #[cfg(test)]
@@ -80,12 +74,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(longest_subarray(&[4, 1, 2], 3), 3);
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(longest_subarray(&[9, 13, 10], 5), 1);
-    }
+    fn test() {}
 }
