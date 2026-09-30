@@ -9,38 +9,29 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn has_valid_path(grid: Vec<Vec<char>>) -> bool {
-    use std::collections::VecDeque;
-    let [rows, cols] = get_dimensions(&grid);
-    if (rows + cols - 1) & 1 == 1 || grid[0][0] == ')' {
-        return false;
-    }
-    let max = (rows + cols) / 2;
-    let mut seen = vec![vec![vec![false; 1 + max]; cols]; rows];
-    seen[0][0].fill(true);
-    let mut queue = VecDeque::from([(0, 0, 1)]);
-    while let Some((r, c, open)) = queue.pop_front() {
-        if r == rows - 1 && c == cols - 1 && open == 0 {
-            return true;
-        }
-        let nr = 1 + r;
-        if nr < rows {
-            let nopen = open + if grid[nr][c] == '(' { 1 } else { -1 };
-            if (0..=max as i32).contains(&nopen) && !seen[nr][c][nopen as usize] {
-                seen[nr][c][nopen as usize] = true;
-                queue.push_back((nr, c, nopen));
+pub fn max_depth_after_split(seq: String) -> Vec<i32> {
+    let [mut open0, mut open1] = [0, 0];
+    let mut res = Vec::with_capacity(seq.len());
+    for b in seq.bytes() {
+        if b == b'(' {
+            if open0 >= open1 {
+                res.push(1);
+                open1 += 1;
+            } else {
+                res.push(0);
+                open0 += 1;
             }
-        }
-        let nc = 1 + c;
-        if nc < cols {
-            let nopen = open + if grid[r][nc] == '(' { 1 } else { -1 };
-            if (0..=max as i32).contains(&nopen) && !seen[r][nc][nopen as usize] {
-                seen[r][nc][nopen as usize] = true;
-                queue.push_back((r, nc, nopen));
+        } else {
+            if open0 < open1 {
+                open1 -= 1;
+                res.push(1);
+            } else {
+                open0 -= 1;
+                res.push(0);
             }
         }
     }
-    false
+    res
 }
 
 #[cfg(test)]
