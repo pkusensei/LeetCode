@@ -9,21 +9,28 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn is_valid(s: String) -> bool {
-    let mut st = vec![];
-    for b in s.bytes() {
-        match b {
-            b'(' | b'[' | b'{' => st.push(b),
-            _ => {
-                let Some(v) = st.pop() else { return false };
-                match &[v, b] {
-                    b"()" | b"[]" | b"{}" => continue,
-                    _ => return false,
-                }
+pub fn max_earnings(mut meetings: Vec<Vec<i32>>) -> i64 {
+    let n = meetings.len();
+    meetings.sort_unstable_by_key(|v| v[0]);
+    let mut dp = vec![[0; 2]; 1 + n];
+    for (idx, curr) in meetings.iter().enumerate().rev() {
+        let [start, end, val] = curr[..] else {
+            unreachable!()
+        };
+        let i = meetings.partition_point(|v| v[0] < end);
+        for started in [0, 1] {
+            // dp[next] + curr_val + gap
+            let take = dp[i][1]
+                + i64::from(val)
+                + meetings.get(i).map(|v| i64::from(v[0] - end)).unwrap_or(0);
+            let mut skip = dp[1 + idx][started];
+            if 1 + idx < n && started == 1 {
+                skip += i64::from(meetings[1 + idx][0] - start);
             }
+            dp[idx][started] = dp[idx][started].max(take).max(skip);
         }
     }
-    st.is_empty()
+    dp[0][0]
 }
 
 #[cfg(test)]
