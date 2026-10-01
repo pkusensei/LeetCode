@@ -9,29 +9,21 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_depth_after_split(seq: String) -> Vec<i32> {
-    let [mut open0, mut open1] = [0, 0];
-    let mut res = Vec::with_capacity(seq.len());
-    for b in seq.bytes() {
-        if b == b'(' {
-            if open0 >= open1 {
-                res.push(1);
-                open1 += 1;
-            } else {
-                res.push(0);
-                open0 += 1;
-            }
-        } else {
-            if open0 < open1 {
-                open1 -= 1;
-                res.push(1);
-            } else {
-                open0 -= 1;
-                res.push(0);
+pub fn is_valid(s: String) -> bool {
+    let mut st = vec![];
+    for b in s.bytes() {
+        match b {
+            b'(' | b'[' | b'{' => st.push(b),
+            _ => {
+                let Some(v) = st.pop() else { return false };
+                match &[v, b] {
+                    b"()" | b"[]" | b"{}" => continue,
+                    _ => return false,
+                }
             }
         }
     }
-    res
+    st.is_empty()
 }
 
 #[cfg(test)]
