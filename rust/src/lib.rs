@@ -9,28 +9,31 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_earnings(mut meetings: Vec<Vec<i32>>) -> i64 {
-    let n = meetings.len();
-    meetings.sort_unstable_by_key(|v| v[0]);
-    let mut dp = vec![[0; 2]; 1 + n];
-    for (idx, curr) in meetings.iter().enumerate().rev() {
-        let [start, end, val] = curr[..] else {
-            unreachable!()
-        };
-        let i = meetings.partition_point(|v| v[0] < end);
-        for started in [0, 1] {
-            // dp[next] + curr_val + gap
-            let take = dp[i][1]
-                + i64::from(val)
-                + meetings.get(i).map(|v| i64::from(v[0] - end)).unwrap_or(0);
-            let mut skip = dp[1 + idx][started];
-            if 1 + idx < n && started == 1 {
-                skip += i64::from(meetings[1 + idx][0] - start);
-            }
-            dp[idx][started] = dp[idx][started].max(take).max(skip);
+pub fn generate_parenthesis(n: i32) -> Vec<String> {
+    let mut res = vec![];
+    dfs(n, 0, 0, &mut vec![], &mut res);
+    res
+}
+
+fn dfs(n: i32, open: i32, close: i32, curr: &mut Vec<u8>, res: &mut Vec<String>) {
+    if open == n {
+        if close == n {
+            res.push(String::from_utf8(curr.clone()).unwrap());
+            return;
         }
+        curr.push(b')');
+        dfs(n, open, 1 + close, curr, res);
+        curr.pop();
+    } else {
+        if open > close {
+            curr.push(b')');
+            dfs(n, open, 1 + close, curr, res);
+            curr.pop();
+        }
+        curr.push(b'(');
+        dfs(n, 1 + open, close, curr, res);
+        curr.pop();
     }
-    dp[0][0]
 }
 
 #[cfg(test)]
