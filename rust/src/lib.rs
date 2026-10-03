@@ -9,31 +9,30 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn generate_parenthesis(n: i32) -> Vec<String> {
-    let mut res = vec![];
-    dfs(n, 0, 0, &mut vec![], &mut res);
-    res
-}
-
-fn dfs(n: i32, open: i32, close: i32, curr: &mut Vec<u8>, res: &mut Vec<String>) {
-    if open == n {
-        if close == n {
-            res.push(String::from_utf8(curr.clone()).unwrap());
-            return;
+pub fn longest_valid_parentheses(s: String) -> i32 {
+    let (s, n) = (s.as_bytes(), s.len());
+    let mut pairs = vec![false; n];
+    let mut st = vec![];
+    for (idx, &b) in s.iter().enumerate() {
+        if let Some(&top) = st.last()
+            && s[top] == b'('
+            && b == b')'
+        {
+            pairs[top] = true;
+            pairs[idx] = true;
+            st.pop();
+        } else {
+            st.push(idx);
         }
-        curr.push(b')');
-        dfs(n, open, 1 + close, curr, res);
-        curr.pop();
-    } else {
-        if open > close {
-            curr.push(b')');
-            dfs(n, open, 1 + close, curr, res);
-            curr.pop();
-        }
-        curr.push(b'(');
-        dfs(n, 1 + open, close, curr, res);
-        curr.pop();
     }
+    pairs
+        .chunk_by(|a, b| *a && *b)
+        .filter_map(|w| {
+            let v = w.len() as i32;
+            if v & 1 == 0 { Some(v) } else { None }
+        })
+        .max()
+        .unwrap_or(0)
 }
 
 #[cfg(test)]
