@@ -9,52 +9,35 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_alternating_sum(nums: &[i32]) -> i64 {
-    let n = nums.len();
-    let mut memo = vec![[[[i64::MIN >> 1; 2]; 2]; 2]; n];
-    dfs(&nums, 0, 0, 0, 0, &mut memo)
+pub fn count_good_strings(n: i64) -> i32 {
+    let mat = mat_pow([[1, 1], [1, 0]], n);
+    (mat[0][1] * 2 % M) as i32
 }
 
-fn dfs(
-    nums: &[i32],
-    idx: usize,
-    parity: usize,
-    deleted: usize,
-    started: usize,
-    memo: &mut [[[[i64; 2]; 2]; 2]],
-) -> i64 {
-    if idx >= nums.len() {
-        return if started == 1 { 0 } else { i64::MIN >> 1 };
+type MAT = [[i64; 2]; 2];
+const M: i64 = 1_000_000_007;
+
+fn mat_mul(a: MAT, b: MAT) -> MAT {
+    let mut res = MAT::default();
+    for i1 in 0..2 {
+        for i2 in 0..2 {
+            for i3 in 0..2 {
+                res[i1][i2] = (res[i1][i2] + a[i1][i3] * b[i3][i2]) % M;
+            }
+        }
     }
-    if memo[idx][parity][deleted][started] > i64::MIN >> 1 {
-        return memo[idx][parity][deleted][started];
+    res
+}
+
+fn mat_pow(mut mat: MAT, mut pow: i64) -> MAT {
+    let mut res = [[1, 0], [0, 1]];
+    while pow > 0 {
+        if pow & 1 == 1 {
+            res = mat_mul(res, mat);
+        }
+        pow >>= 1;
+        mat = mat_mul(mat, mat);
     }
-    let sign = if parity == 0 { 1 } else { -1 };
-    let val = sign * i64::from(nums[idx]);
-    let res = match [deleted, started] {
-        [0, 0] => {
-            let v1 = dfs(nums, 1 + idx, 0, deleted, started, memo);
-            let v2 = dfs(nums, 1 + idx, parity, 1, started, memo);
-            let v3 = val + dfs(nums, 1 + idx, 1 - parity, deleted, 1, memo);
-            v1.max(v2).max(v3)
-        }
-        [1, 0] => {
-            let v1 = dfs(nums, 1 + idx, 0, deleted, started, memo);
-            let v3 = val + dfs(nums, 1 + idx, 1 - parity, deleted, 1, memo);
-            v1.max(v3)
-        }
-        [0, 1] => {
-            let v1 = val + dfs(nums, 1 + idx, 1 - parity, deleted, started, memo);
-            let v2 = dfs(nums, 1 + idx, parity, 1, started, memo);
-            v1.max(v2).max(0)
-        }
-        [1, 1] => {
-            let v1 = val + dfs(nums, 1 + idx, 1 - parity, deleted, started, memo);
-            v1.max(0)
-        }
-        _ => unreachable!(),
-    };
-    memo[idx][parity][deleted][started] = res;
     res
 }
 
@@ -92,7 +75,5 @@ mod tests {
     fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(max_alternating_sum(&[-41, -75]), 34)
-    }
+    fn test() {}
 }
