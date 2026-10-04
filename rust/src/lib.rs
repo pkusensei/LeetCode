@@ -9,27 +9,52 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_rotations(s: String) -> i32 {
-    let mut prev = 0;
-    let mut res = 0;
-    for b in s.bytes() {
-        let d = i32::from(b - b'0');
-        let diff = (d - prev).abs();
-        res += diff.min(10 - diff);
-        prev = d;
+pub fn max_alternating_sum(nums: &[i32]) -> i64 {
+    let n = nums.len();
+    let mut memo = vec![[[[i64::MIN >> 1; 2]; 2]; 2]; n];
+    dfs(&nums, 0, 0, 0, 0, &mut memo)
+}
+
+fn dfs(
+    nums: &[i32],
+    idx: usize,
+    parity: usize,
+    deleted: usize,
+    started: usize,
+    memo: &mut [[[[i64; 2]; 2]; 2]],
+) -> i64 {
+    if idx >= nums.len() {
+        return if started == 1 { 0 } else { i64::MIN >> 1 };
     }
-    prev = 0;
-    let noop = res;
-    let (s, n) = (s.as_bytes(), s.len());
-    let last = i32::from(s[n - 1] - b'0');
-    for &b in s.iter() {
-        let d = i32::from(b - b'0');
-        let diff1 = (d - prev).abs();
-        let diff2 = (last - prev).abs();
-        let curr = noop + diff2.min(10 - diff2) - diff1.min(10 - diff1);
-        res = res.min(curr);
-        prev = d;
+    if memo[idx][parity][deleted][started] > i64::MIN >> 1 {
+        return memo[idx][parity][deleted][started];
     }
+    let sign = if parity == 0 { 1 } else { -1 };
+    let val = sign * i64::from(nums[idx]);
+    let res = match [deleted, started] {
+        [0, 0] => {
+            let v1 = dfs(nums, 1 + idx, 0, deleted, started, memo);
+            let v2 = dfs(nums, 1 + idx, parity, 1, started, memo);
+            let v3 = val + dfs(nums, 1 + idx, 1 - parity, deleted, 1, memo);
+            v1.max(v2).max(v3)
+        }
+        [1, 0] => {
+            let v1 = dfs(nums, 1 + idx, 0, deleted, started, memo);
+            let v3 = val + dfs(nums, 1 + idx, 1 - parity, deleted, 1, memo);
+            v1.max(v3)
+        }
+        [0, 1] => {
+            let v1 = val + dfs(nums, 1 + idx, 1 - parity, deleted, started, memo);
+            let v2 = dfs(nums, 1 + idx, parity, 1, started, memo);
+            v1.max(v2).max(0)
+        }
+        [1, 1] => {
+            let v1 = val + dfs(nums, 1 + idx, 1 - parity, deleted, started, memo);
+            v1.max(0)
+        }
+        _ => unreachable!(),
+    };
+    memo[idx][parity][deleted][started] = res;
     res
 }
 
@@ -67,5 +92,7 @@ mod tests {
     fn basics() {}
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(max_alternating_sum(&[-41, -75]), 34)
+    }
 }
