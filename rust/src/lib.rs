@@ -9,30 +9,26 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn longest_valid_parentheses(s: String) -> i32 {
-    let (s, n) = (s.as_bytes(), s.len());
-    let mut pairs = vec![false; n];
-    let mut st = vec![];
-    for (idx, &b) in s.iter().enumerate() {
-        if let Some(&top) = st.last()
-            && s[top] == b'('
-            && b == b')'
-        {
-            pairs[top] = true;
-            pairs[idx] = true;
-            st.pop();
-        } else {
-            st.push(idx);
+pub fn check_valid_string(s: String) -> bool {
+    let mut opens = vec![];
+    let mut wilds = vec![];
+    for (idx, b) in s.bytes().enumerate() {
+        match b {
+            b'(' => opens.push(idx),
+            b'*' => wilds.push(idx),
+            _ => {
+                if opens.pop().is_none() && wilds.pop().is_none() {
+                    return false;
+                }
+            }
         }
     }
-    pairs
-        .chunk_by(|a, b| *a && *b)
-        .filter_map(|w| {
-            let v = w.len() as i32;
-            if v & 1 == 0 { Some(v) } else { None }
-        })
-        .max()
-        .unwrap_or(0)
+    while let Some(top) = opens.pop() {
+        if wilds.pop().is_none_or(|v| v < top) {
+            return false;
+        }
+    }
+    opens.is_empty()
 }
 
 #[cfg(test)]
