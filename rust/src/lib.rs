@@ -10,13 +10,25 @@ mod trie;
 use helper::*;
 
 pub fn min_rotations(s: String) -> i32 {
-    let mut curr = 0;
+    let mut prev = 0;
     let mut res = 0;
     for b in s.bytes() {
         let d = i32::from(b - b'0');
-        let diff = (d - curr).abs();
+        let diff = (d - prev).abs();
         res += diff.min(10 - diff);
-        curr = d;
+        prev = d;
+    }
+    prev = 0;
+    let noop = res;
+    let (s, n) = (s.as_bytes(), s.len());
+    let last = i32::from(s[n - 1] - b'0');
+    for &b in s.iter() {
+        let d = i32::from(b - b'0');
+        let diff1 = (d - prev).abs();
+        let diff2 = (last - prev).abs();
+        let curr = noop + diff2.min(10 - diff2) - diff1.min(10 - diff1);
+        res = res.min(curr);
+        prev = d;
     }
     res
 }
