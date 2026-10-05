@@ -9,36 +9,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_good_strings(n: i64) -> i32 {
-    let mat = mat_pow([[1, 1], [1, 0]], n);
-    (mat[0][1] * 2 % M) as i32
+pub fn score_of_parentheses(s: String) -> i32 {
+    f(s.as_bytes())
 }
 
-type MAT = [[i64; 2]; 2];
-const M: i64 = 1_000_000_007;
-
-fn mat_mul(a: MAT, b: MAT) -> MAT {
-    let mut res = MAT::default();
-    for i1 in 0..2 {
-        for i2 in 0..2 {
-            for i3 in 0..2 {
-                res[i1][i2] = (res[i1][i2] + a[i1][i3] * b[i3][i2]) % M;
+fn f(s: &[u8]) -> i32 {
+    if s == b"()" {
+        return 1;
+    }
+    let n = s.len();
+    let mut open = 0;
+    for (i, &b) in s.iter().enumerate() {
+        open += if b == b'(' { 1 } else { -1 };
+        if open == 0 {
+            if i == n - 1 {
+                return 2 * f(&s[1..n - 1]);
+            } else {
+                return f(&s[..=i]) + f(&s[1 + i..]);
             }
         }
     }
-    res
-}
-
-fn mat_pow(mut mat: MAT, mut pow: i64) -> MAT {
-    let mut res = [[1, 0], [0, 1]];
-    while pow > 0 {
-        if pow & 1 == 1 {
-            res = mat_mul(res, mat);
-        }
-        pow >>= 1;
-        mat = mat_mul(mat, mat);
-    }
-    res
+    0
 }
 
 #[cfg(test)]
