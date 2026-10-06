@@ -9,27 +9,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn score_of_parentheses(s: String) -> i32 {
-    f(s.as_bytes())
-}
-
-fn f(s: &[u8]) -> i32 {
-    if s == b"()" {
-        return 1;
-    }
-    let n = s.len();
+pub fn min_add_to_make_valid(s: String) -> i32 {
     let mut open = 0;
-    for (i, &b) in s.iter().enumerate() {
+    let mut res = 0;
+    for b in s.bytes() {
         open += if b == b'(' { 1 } else { -1 };
-        if open == 0 {
-            if i == n - 1 {
-                return 2 * f(&s[1..n - 1]);
-            } else {
-                return f(&s[..=i]) + f(&s[1 + i..]);
-            }
+        if open < 0 {
+            res += 1;
+            open = 0;
         }
     }
-    0
+    res + open.max(0)
 }
 
 #[cfg(test)]
