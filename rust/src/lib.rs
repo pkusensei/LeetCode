@@ -6,20 +6,54 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
+use std::collections::{HashSet, VecDeque};
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_add_to_make_valid(s: String) -> i32 {
-    let mut open = 0;
-    let mut res = 0;
-    for b in s.bytes() {
-        open += if b == b'(' { 1 } else { -1 };
-        if open < 0 {
-            res += 1;
-            open = 0;
+pub fn remove_invalid_parentheses(s: String) -> Vec<String> {
+    if check(s.as_bytes()) {
+        return vec![s];
+    }
+    let mut queue = VecDeque::from([s.clone().into_bytes()]);
+    let mut seen = HashSet::from([s.into_bytes()]);
+    let mut res = vec![];
+    let mut done = false;
+    while let Some(s) = queue.pop_front() {
+        if check(&s) {
+            res.push(String::from_utf8(s.clone()).unwrap());
+            done = true;
+        }
+        if done {
+            continue;
+        }
+        for (i, b) in s.iter().enumerate() {
+            if matches!(b, b'(' | b')') {
+                let mut curr = s[..i].to_vec();
+                curr.extend_from_slice(&s[1 + i..]);
+                if seen.insert(curr.clone()) {
+                    queue.push_back(curr);
+                }
+            }
         }
     }
-    res + open.max(0)
+    res
+}
+
+fn check(s: &[u8]) -> bool {
+    let mut open = 0;
+    for &b in s {
+        if b == b'(' {
+            open += 1
+        }
+        if b == b')' {
+            open -= 1;
+            if open < 0 {
+                return false;
+            }
+        }
+    }
+    open == 0
 }
 
 #[cfg(test)]
