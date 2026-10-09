@@ -6,54 +6,39 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::collections::{HashSet, VecDeque};
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn remove_invalid_parentheses(s: String) -> Vec<String> {
-    if check(s.as_bytes()) {
-        return vec![s];
-    }
-    let mut queue = VecDeque::from([s.clone().into_bytes()]);
-    let mut seen = HashSet::from([s.into_bytes()]);
-    let mut res = vec![];
-    let mut done = false;
-    while let Some(s) = queue.pop_front() {
-        if check(&s) {
-            res.push(String::from_utf8(s.clone()).unwrap());
-            done = true;
-        }
-        if done {
-            continue;
-        }
-        for (i, b) in s.iter().enumerate() {
-            if matches!(b, b'(' | b')') {
-                let mut curr = s[..i].to_vec();
-                curr.extend_from_slice(&s[1 + i..]);
-                if seen.insert(curr.clone()) {
-                    queue.push_back(curr);
+pub fn min_insertions(s: &str) -> i32 {
+    let (s, n) = (s.as_bytes(), s.len());
+    let mut open = 0;
+    let mut i = 0;
+    let mut res = 0;
+    while i < n {
+        if s[i] == b'(' {
+            open += 1;
+        } else {
+            if open > 0 {
+                open -= 1;
+                if s.get(1 + i).is_some_and(|&v| v == b')') {
+                    i += 2;
+                    continue;
+                } else {
+                    res += 1;
+                }
+            } else {
+                res += 1;
+                if s.get(1 + i).is_some_and(|&v| v == b')') {
+                    i += 2;
+                    continue;
+                } else {
+                    res += 1;
                 }
             }
         }
+        i += 1;
     }
-    res
-}
-
-fn check(s: &[u8]) -> bool {
-    let mut open = 0;
-    for &b in s {
-        if b == b'(' {
-            open += 1
-        }
-        if b == b')' {
-            open -= 1;
-            if open < 0 {
-                return false;
-            }
-        }
-    }
-    open == 0
+    res + 2 * open
 }
 
 #[cfg(test)]
@@ -87,7 +72,9 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(min_insertions("(()))"), 1);
+    }
 
     #[test]
     fn test() {}
