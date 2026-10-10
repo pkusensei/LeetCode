@@ -9,7 +9,6 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-// len->0 (rem*x)%k == 0
 pub fn resilient_subarray(nums: &[i32], k: i32) -> i32 {
     let mut res = 1;
     for ch in nums.chunk_by(|a, b| a % k == b % k) {
