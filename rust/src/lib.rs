@@ -8,37 +8,23 @@ mod trie;
 
 #[allow(unused_imports)]
 use helper::*;
-use itertools::{Itertools, izip};
-use std::collections::BinaryHeap;
 
-pub fn min_sum_square_diff(nums1: Vec<i32>, nums2: Vec<i32>, k1: i32, k2: i32) -> i64 {
-    let mut k = i64::from(k1 + k2);
-    let mut heap = izip!(nums1.iter(), nums2.iter())
-        .map(|(a, b)| i64::from((a - b).abs()))
-        .filter(|v| *v > 0)
-        .counts()
-        .into_iter()
-        .collect::<BinaryHeap<_>>();
-    while let Some((val, mut f)) = heap.pop() {
-        let d = (f as i64).min(k);
-        f -= d as usize;
-        if f > 0 {
-            heap.push((val, f));
-        }
-        if let Some(&(v, ff)) = heap.peek()
-            && v == val - 1
-        {
-            heap.pop();
-            heap.push((v, ff + d as usize));
-        } else if val > 1 {
-            heap.push((val - 1, d as usize));
-        }
-        k -= d;
-        if k == 0 {
-            break;
+pub fn max_product_pair(nums: Vec<i32>, target: i32) -> Vec<i32> {
+    let mut max = i32::MIN;
+    let mut res = vec![-1, -1];
+    for (i1, &num1) in nums.iter().enumerate() {
+        for (i2, &num2) in nums.iter().enumerate() {
+            if i1 == i2 || num1 <= num2 || num1 + num2 != target {
+                continue;
+            }
+            let v = num1 * num2;
+            max = max.max(v);
+            if v == max {
+                res = vec![i1 as i32, i2 as i32]
+            }
         }
     }
-    heap.into_iter().map(|(v, f)| v.pow(2) * f as i64).sum()
+    res
 }
 
 #[cfg(test)]
@@ -72,9 +58,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(min_insertions("(()))"), 1);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
