@@ -9,18 +9,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_product_pair(nums: Vec<i32>, target: i32) -> Vec<i32> {
-    let mut max = i32::MIN;
-    let mut res = vec![-1, -1];
-    for (i1, &num1) in nums.iter().enumerate() {
-        for (i2, &num2) in nums.iter().enumerate() {
-            if i1 == i2 || num1 <= num2 || num1 + num2 != target {
-                continue;
-            }
-            let v = num1 * num2;
-            max = max.max(v);
-            if v == max {
-                res = vec![i1 as i32, i2 as i32]
+// len->0 (rem*x)%k == 0
+pub fn resilient_subarray(nums: &[i32], k: i32) -> i32 {
+    let mut res = 1;
+    for ch in nums.chunk_by(|a, b| a % k == b % k) {
+        let len = ch.len() as i32;
+        let rem = ch[0] % k;
+        let sum = len * rem;
+        if (sum - rem).rem_euclid(k) == 0 {
+            res = res.max(len);
+        } else {
+            let mut sum = sum;
+            for i in (0..len).rev() {
+                sum -= rem;
+                if sum.rem_euclid(k) == 0 {
+                    res = res.max(1 + i);
+                    break;
+                }
             }
         }
     }
@@ -61,5 +66,8 @@ mod tests {
     fn basics() {}
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(resilient_subarray(&[27, 9, 45, 63, 63, 63, 24, 18], 18), 5);
+        assert_eq!(resilient_subarray(&[5, 5], 8), 1);
+    }
 }
