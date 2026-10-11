@@ -6,41 +6,66 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::sync::LazyLock;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_primes(n: i32, s: i32) -> Vec<i32> {
-    let mut sum = s;
-    let mut res = vec![];
-    for &p in P.iter() {
-        if sum < p || n < p {
-            break;
-        }
-        res.push(p);
-        sum -= p;
-    }
-    res
+#[derive(Clone, Copy, Default)]
+struct Seat {
+    window: i32,
+    middle: i32,
 }
 
-const M: usize = 1_000_000;
-static P: LazyLock<Vec<i32>> = LazyLock::new(|| {
-    let mut sieve = vec![true; 1 + M];
-    sieve[..2].fill(false);
-    for p in 2..=M.isqrt() {
-        if sieve[p] {
-            for val in (p * p..=M).step_by(p) {
-                sieve[val] = false
+// AB CD
+struct BusBooking {
+    inner: Vec<[Seat; 2]>,
+    total: i32,
+}
+
+impl BusBooking {
+    fn new(n: i32) -> Self {
+        Self {
+            inner: vec![[Seat::default(); 2]; 1 + n as usize],
+            total: 0,
+        }
+    }
+
+    fn toggle(&mut self, seat: String) {
+        let row: usize = seat[1..].parse().unwrap();
+        let s = seat.as_bytes();
+        let is_window = matches!(s[0], b'A' | b'D');
+        let slot = usize::from(s[0] > b'B'); // AB -> 0; CD -> 1
+        let seat = &mut self.inner[row][slot];
+        if is_window {
+            if seat.window > 0 {
+                self.total -= seat.window;
+                seat.window = 0;
+            } else {
+                let val = if seat.middle > 0 { 3 } else { 1 };
+                seat.window = val;
+                self.total += val;
+            }
+        } else {
+            if seat.middle > 0 {
+                self.total -= seat.middle;
+                seat.middle = 0;
+            } else {
+                seat.middle = 1;
+                self.total += 1;
             }
         }
     }
-    sieve
-        .into_iter()
-        .enumerate()
-        .filter_map(|(i, v)| if v { Some(i as i32) } else { None })
-        .collect()
-});
+
+    fn get_total_time(&self) -> i32 {
+        self.total
+    }
+
+    fn get_min_time(&self) -> i32 {
+        self.inner
+            .iter()
+            .flat_map(|v| v.iter().map(|s| s.middle + i32::from(s.window > 0)))
+            .sum()
+    }
+}
 
 #[cfg(test)]
 mod tests {
