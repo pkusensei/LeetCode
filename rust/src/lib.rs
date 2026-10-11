@@ -6,20 +6,41 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
+use std::sync::LazyLock;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub const fn three_fibonacci_sum(n: i32) -> bool {
-    if n & 1 == 1 {
-        return false;
+pub fn max_primes(n: i32, s: i32) -> Vec<i32> {
+    let mut sum = s;
+    let mut res = vec![];
+    for &p in P.iter() {
+        if sum < p || n < p {
+            break;
+        }
+        res.push(p);
+        sum -= p;
     }
-    let num = n / 2;
-    let [mut a, mut b] = [0, 1];
-    while a + b < num {
-        [a, b] = [b, a + b];
-    }
-    a + b == num
+    res
 }
+
+const M: usize = 1_000_000;
+static P: LazyLock<Vec<i32>> = LazyLock::new(|| {
+    let mut sieve = vec![true; 1 + M];
+    sieve[..2].fill(false);
+    for p in 2..=M.isqrt() {
+        if sieve[p] {
+            for val in (p * p..=M).step_by(p) {
+                sieve[val] = false
+            }
+        }
+    }
+    sieve
+        .into_iter()
+        .enumerate()
+        .filter_map(|(i, v)| if v { Some(i as i32) } else { None })
+        .collect()
+});
 
 #[cfg(test)]
 mod tests {
