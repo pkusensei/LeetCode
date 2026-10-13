@@ -9,28 +9,15 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_sum(nums: Vec<i32>, k: i32) -> i32 {
-    let mut freq = [0; 32];
-    for &num in nums.iter() {
-        for bit in 0..32 {
-            if num & (1 << bit) > 0 {
-                freq[bit] += 1;
-            }
-        }
-    }
+pub fn max_alternating_sum(mut nums: Vec<i32>) -> i64 {
+    let n = nums.len();
+    nums.sort_unstable_by_key(|v| v.abs());
     let mut res = 0;
-    for _ in 0..k {
-        let mut curr = 0_i64;
-        for bit in (0..32).rev() {
-            if freq[bit] > 0 {
-                freq[bit] -= 1;
-                curr |= 1 << bit;
-            }
-        }
-        res += curr.pow(2);
-        res %= 1_000_000_007
+    for (i, &v) in nums.iter().enumerate() {
+        let v = i64::from(v).pow(2);
+        if i < n / 2 { res -= v } else { res += v }
     }
-    res as i32
+    res
 }
 
 #[cfg(test)]
