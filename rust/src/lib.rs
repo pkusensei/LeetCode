@@ -9,15 +9,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_alternating_sum(mut nums: Vec<i32>) -> i64 {
-    let n = nums.len();
-    nums.sort_unstable_by_key(|v| v.abs());
-    let mut res = 0;
-    for (i, &v) in nums.iter().enumerate() {
-        let v = i64::from(v).pow(2);
-        if i < n / 2 { res -= v } else { res += v }
+pub fn max_sum_of_squares(num: i32, sum: i32) -> String {
+    use std::iter::repeat_n;
+    if 9 * num < sum {
+        return "".to_string();
     }
-    res
+    let mut sum = sum;
+    let cap = num as usize;
+    let mut res = Vec::with_capacity(cap);
+    while sum > 0 {
+        let d = 9.min(sum);
+        sum -= d;
+        res.push(d as u8 + b'0');
+    }
+    let n = res.len();
+    if n < cap {
+        res.extend(repeat_n(b'0', cap - n));
+    }
+    String::from_utf8(res).unwrap()
 }
 
 #[cfg(test)]
