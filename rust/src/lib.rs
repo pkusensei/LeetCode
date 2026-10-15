@@ -9,24 +9,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_sum_of_squares(num: i32, sum: i32) -> String {
-    use std::iter::repeat_n;
-    if 9 * num < sum {
-        return "".to_string();
+pub fn sum_counts(nums: Vec<i32>) -> i32 {
+    use std::collections::HashSet;
+    let n = nums.len();
+    let mut res = 0;
+    for i in 0..n {
+        let mut set = HashSet::new();
+        for &num in &nums[i..] {
+            set.insert(num);
+            res += set.len().pow(2);
+        }
     }
-    let mut sum = sum;
-    let cap = num as usize;
-    let mut res = Vec::with_capacity(cap);
-    while sum > 0 {
-        let d = 9.min(sum);
-        sum -= d;
-        res.push(d as u8 + b'0');
-    }
-    let n = res.len();
-    if n < cap {
-        res.extend(repeat_n(b'0', cap - n));
-    }
-    String::from_utf8(res).unwrap()
+    res as i32
 }
 
 #[cfg(test)]
