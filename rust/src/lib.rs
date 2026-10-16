@@ -13,12 +13,15 @@ pub fn sum_counts(nums: Vec<i32>) -> i32 {
     use std::collections::HashMap;
     let n = nums.len();
     let mut seen = HashMap::new();
-    let mut st = SegTree::new(n);
+    let mut ft = Fenwick::new(n);
     let mut res = 0;
+    let mut curr = 0;
     for (idx, &num) in nums.iter().enumerate() {
-        let ql = seen.insert(num, idx).map(|v| 1 + v).unwrap_or(0);
-        st.insert(ql, idx);
-        res = (res + st.sq[1]) % M;
+        let left = seen.insert(num, idx).map(|v| 1 + v).unwrap_or(0);
+        let v = ft.query(left, idx);
+        curr = (curr + 2 * v + (1 + idx - left) as i64) % M;
+        res = (res + curr) % M;
+        ft.add(left, idx);
     }
     res as i32
 }
@@ -76,6 +79,57 @@ impl SegTree {
         self.sum[node] = sum;
         self.sq[node] = sq;
         self.lazy[node] = 0;
+    }
+}
+
+struct Fenwick {
+    n: usize,
+    tree1: Vec<i64>,
+    tree2: Vec<i64>,
+}
+
+impl Fenwick {
+    fn new(n: usize) -> Self {
+        Self {
+            n,
+            tree1: vec![0; 2 + n],
+            tree2: vec![0; 2 + n],
+        }
+    }
+
+    fn add(&mut self, left: usize, right: usize) {
+        self.update(left, 1);
+        self.update(1 + right, -1);
+    }
+
+    fn update(&mut self, mut idx: usize, val: i64) {
+        idx += 1;
+        let raw = idx as i64;
+        while idx <= self.n {
+            self.tree1[idx] += val;
+            self.tree2[idx] += raw * val;
+            idx += idx & idx.wrapping_neg();
+        }
+    }
+
+    fn query(&self, left: usize, right: usize) -> i64 {
+        // left.saturating_sub(1) is not fit
+        // Here we do not count anything if `left == 0`
+        // But left.saturating_sub(1) would take that 0 into `_query()`
+        // and increment `idx` to 1 and yield a number.
+        self._query(right) - if left == 0 { 0 } else { self._query(left - 1) }
+    }
+
+    fn _query(&self, mut idx: usize) -> i64 {
+        idx += 1;
+        let raw = 1 + idx as i64;
+        idx = idx.min(self.n);
+        let mut res = 0;
+        while idx > 0 {
+            res += raw * self.tree1[idx] - self.tree2[idx];
+            idx -= idx & idx.wrapping_neg();
+        }
+        res
     }
 }
 
