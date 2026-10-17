@@ -9,29 +9,41 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_alternating_sum(nums: Vec<i32>) -> i64 {
-    let [
-        mut res,
-        mut pos_no_del,
-        mut neg_no_del,
-        mut pos_del,
-        mut neg_del,
-    ] = [i64::MIN >> 1; 5];
-    for &num in nums.iter() {
-        let num = i64::from(num);
-        let new_pos_del = pos_no_del.max(num + neg_del);
-        neg_del = neg_no_del.max(pos_del - num);
-        pos_del = new_pos_del;
-        let new_pos_no_del = num.max(neg_no_del + num);
-        neg_no_del = pos_no_del - num;
-        pos_no_del = new_pos_no_del;
-        res = res
-            .max(pos_no_del)
-            .max(neg_no_del)
-            .max(pos_del)
-            .max(neg_del);
+pub fn min_swaps(nums: Vec<i32>) -> i32 {
+    use itertools::Itertools;
+    let n = nums.len();
+    let indices = nums
+        .iter()
+        .enumerate()
+        .map(|(i, &v)| {
+            let mut x = v;
+            let mut sum = 0;
+            while x > 0 {
+                sum += x % 10;
+                x /= 10;
+            }
+            (sum, v, i)
+        })
+        .sorted_unstable()
+        .map(|(_, _, i)| i)
+        .collect_vec();
+    let mut target = vec![0; n];
+    for (target_idx, &nums_idx) in indices.iter().enumerate() {
+        target[nums_idx] = target_idx;
     }
-    res
+    let mut seen = vec![false; n];
+    let mut cycles = 0;
+    for idx in 0..n {
+        if !seen[idx] {
+            cycles += 1;
+            let mut i = idx;
+            while !seen[i] {
+                seen[i] = true;
+                i = target[i];
+            }
+        }
+    }
+    (n - cycles) as i32
 }
 
 #[cfg(test)]
