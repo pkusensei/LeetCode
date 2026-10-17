@@ -6,45 +6,74 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
+use std::sync::LazyLock;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_swaps(nums: Vec<i32>) -> i32 {
-    use itertools::Itertools;
-    let n = nums.len();
-    let indices = nums
-        .iter()
-        .enumerate()
-        .map(|(i, &v)| {
-            let mut x = v;
-            let mut sum = 0;
-            while x > 0 {
-                sum += x % 10;
-                x /= 10;
-            }
-            (sum, v, i)
-        })
-        .sorted_unstable()
-        .map(|(_, _, i)| i)
-        .collect_vec();
-    let mut target = vec![0; n];
-    for (target_idx, &nums_idx) in indices.iter().enumerate() {
-        target[nums_idx] = target_idx;
+pub fn max_prime_subset(n: i32, s: i32) -> Vec<i32> {
+    let i = P.partition_point(|&v| v <= n.min(s));
+    let nums = &P[..i];
+    let n = i; // nums.len();
+    let mut memo = vec![vec![-1; 1 + s as usize]; 1 + n];
+    let mut s = s;
+    let mut count = i32::MAX >> 1;
+    while s >= 0 {
+        count = dfs(nums, 0, s, &mut memo);
+        if count < i32::MAX >> 1 {
+            break;
+        }
+        s -= 1;
     }
-    let mut seen = vec![false; n];
-    let mut cycles = 0;
-    for idx in 0..n {
-        if !seen[idx] {
-            cycles += 1;
-            let mut i = idx;
-            while !seen[i] {
-                seen[i] = true;
-                i = target[i];
+    let mut res = Vec::with_capacity(count as usize);
+    for (idx, &num) in nums.iter().enumerate() {
+        if s >= num && dfs(nums, 1 + idx, s - num, &mut memo) == count - 1 {
+            res.push(num);
+            s -= num;
+            count -= 1;
+        }
+    }
+    res
+}
+
+fn dfs(nums: &[i32], idx: usize, s: i32, memo: &mut [Vec<i32>]) -> i32 {
+    if s <= 0 {
+        return 0;
+    }
+    if idx >= nums.len() {
+        return i32::MAX >> 1;
+    }
+    if memo[idx][s as usize] > -1 {
+        return memo[idx][s as usize];
+    }
+    let mut res = dfs(nums, 1 + idx, s, memo);
+    if nums[idx] <= s {
+        let take = dfs(nums, 1 + idx, s - nums[idx], memo);
+        if take < i32::MAX >> 1 {
+            res = res.min(1 + take);
+        }
+    }
+    memo[idx][s as usize] = res;
+    res
+}
+
+const M: usize = 1_000;
+static P: LazyLock<Vec<i32>> = LazyLock::new(|| {
+    let mut sieve = [true; 1 + M];
+    sieve[..2].fill(false);
+    for p in 2..=M.isqrt() {
+        if sieve[p] {
+            for val in (p * p..=M).step_by(p) {
+                sieve[val] = false
             }
         }
     }
-    (n - cycles) as i32
-}
+    sieve
+        .into_iter()
+        .enumerate()
+        .filter_map(|(i, v)| if v { Some(i as i32) } else { None })
+        .collect()
+});
 
 #[cfg(test)]
 mod tests {
