@@ -9,10 +9,41 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_deletions(nums: Vec<i32>) -> i32 {
-    nums.chunk_by(|a, b| a == b)
-        .map(|w| w.len() as i32 - 1)
-        .sum()
+pub fn last_visited_cell(grid: Vec<Vec<char>>) -> Vec<i32> {
+    let [rows, cols] = get_dimensions(&grid);
+    let mut seen = vec![vec![false; cols]; rows];
+    seen[0][0] = true;
+    let [mut row, mut col] = [0, 0];
+    loop {
+        let mut nr = row;
+        let mut nc = col;
+        match grid[row][col] {
+            'L' => {
+                if nc == 0 {
+                    break;
+                } else {
+                    nc -= 1
+                }
+            }
+            'R' => nc += 1,
+            'U' => {
+                if nr == 0 {
+                    break;
+                } else {
+                    nr -= 1
+                }
+            }
+            'D' => nr += 1,
+            _ => unreachable!(),
+        }
+        if nr >= rows || nc >= cols || seen[nr][nc] {
+            break;
+        }
+        row = nr;
+        col = nc;
+        seen[row][col] = true;
+    }
+    vec![row as i32, col as i32]
 }
 
 #[cfg(test)]
