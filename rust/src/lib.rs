@@ -9,37 +9,65 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_colored_root(edges: Vec<Vec<i32>>, colors: String) -> i32 {
-    let (n, s) = (colors.len(), colors.as_bytes());
-    let [mut indegs, mut outdegs] = [vec![0; n], vec![0; n]];
-    for e in edges.iter() {
-        let [a, b] = [0, 1].map(|i| e[i] as usize);
-        match &[s[a], s[b]] {
-            b"RB" | b"BW" | b"WR" => {
-                indegs[b] += 1;
-                outdegs[a] += 1;
-            }
-            b"BR" | b"WB" | b"RW" => {
-                indegs[a] += 1;
-                outdegs[b] += 1;
-            }
-            _ => return -1,
+pub fn min_selection(
+    mut available_intervals: Vec<[i32; 2]>,
+    mut target_intervals: Vec<[i32; 2]>,
+) -> i32 {
+    target_intervals.sort_unstable();
+    let mut target = vec![];
+    let [mut start, mut end] = [target_intervals[0][0], target_intervals[0][1]];
+    for v in &target_intervals[1..] {
+        let [s, e] = v[..] else { unreachable!() };
+        if s <= end {
+            end = end.max(e)
+        } else {
+            target.push([start, end]);
+            start = s;
+            end = e;
         }
     }
-    let mut root = None;
-    for i in 0..n {
-        if indegs[i] > 1 || outdegs[i] > 2 {
-            return -1;
-        }
-        if indegs[i] == 0 {
-            if root.is_some() {
-                return -1;
+    target.push([start, end]);
+    let n = available_intervals.len();
+    available_intervals.sort_unstable();
+    let mut res = 0;
+    let mut idx = 0; // idx in available
+    let mut prev_end = 0;
+    for [start, end] in target {
+        if start == end {
+            if prev_end < start {
+                let mut rightmost = 0;
+                while idx < n && available_intervals[idx][0] <= start {
+                    rightmost = rightmost.max(available_intervals[idx][1]);
+                    idx += 1;
+                }
+                if rightmost < start {
+                    return -1;
+                }
+                prev_end = rightmost;
+                res += 1;
             }
-            root = Some(i)
+        } else {
+            let mut curr = prev_end.max(start);
+            while curr < end {
+                let mut rightmost = curr;
+                while idx < n && available_intervals[idx][0] <= curr {
+                    rightmost = rightmost.max(available_intervals[idx][1]);
+                    idx += 1
+                }
+                if rightmost <= curr {
+                    return -1;
+                }
+                curr = rightmost;
+                res += 1;
+            }
+            prev_end = prev_end.max(curr);
         }
     }
-    root.map(|v| v as i32).unwrap_or(-1)
+    res
 }
+
+// 1 2 3 4
+//     3 4
 
 #[cfg(test)]
 mod tests {
@@ -72,7 +100,15 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(
+            min_selection(
+                vec![[1, 4], [1, 7], [3, 9], [5, 10], [10, 15]],
+                vec![[1, 3], [2, 5], [7, 8], [10, 13], [11, 15], [12, 13]]
+            ),
+            3
+        );
+    }
 
     #[test]
     fn test() {}
