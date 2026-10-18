@@ -9,41 +9,36 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn last_visited_cell(grid: Vec<Vec<char>>) -> Vec<i32> {
-    let [rows, cols] = get_dimensions(&grid);
-    let mut seen = vec![vec![false; cols]; rows];
-    seen[0][0] = true;
-    let [mut row, mut col] = [0, 0];
-    loop {
-        let mut nr = row;
-        let mut nc = col;
-        match grid[row][col] {
-            'L' => {
-                if nc == 0 {
-                    break;
-                } else {
-                    nc -= 1
-                }
+pub fn find_colored_root(edges: Vec<Vec<i32>>, colors: String) -> i32 {
+    let (n, s) = (colors.len(), colors.as_bytes());
+    let [mut indegs, mut outdegs] = [vec![0; n], vec![0; n]];
+    for e in edges.iter() {
+        let [a, b] = [0, 1].map(|i| e[i] as usize);
+        match &[s[a], s[b]] {
+            b"RB" | b"BW" | b"WR" => {
+                indegs[b] += 1;
+                outdegs[a] += 1;
             }
-            'R' => nc += 1,
-            'U' => {
-                if nr == 0 {
-                    break;
-                } else {
-                    nr -= 1
-                }
+            b"BR" | b"WB" | b"RW" => {
+                indegs[a] += 1;
+                outdegs[b] += 1;
             }
-            'D' => nr += 1,
-            _ => unreachable!(),
+            _ => return -1,
         }
-        if nr >= rows || nc >= cols || seen[nr][nc] {
-            break;
-        }
-        row = nr;
-        col = nc;
-        seen[row][col] = true;
     }
-    vec![row as i32, col as i32]
+    let mut root = None;
+    for i in 0..n {
+        if indegs[i] > 1 || outdegs[i] > 2 {
+            return -1;
+        }
+        if indegs[i] == 0 {
+            if root.is_some() {
+                return -1;
+            }
+            root = Some(i)
+        }
+    }
+    root.map(|v| v as i32).unwrap_or(-1)
 }
 
 #[cfg(test)]
