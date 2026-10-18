@@ -11,68 +11,41 @@ use std::sync::LazyLock;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_prime_subset(n: i32, s: i32) -> Vec<i32> {
-    let i = P.partition_point(|&v| v <= n.min(s));
-    let nums = &P[..i];
-    let n = i; // nums.len();
-    let mut memo = vec![vec![-1; 1 + s as usize]; 1 + n];
-    let mut s = s;
-    let mut count = i32::MAX >> 1;
-    while s >= 0 {
-        count = dfs(nums, 0, s, &mut memo);
-        if count < i32::MAX >> 1 {
-            break;
-        }
-        s -= 1;
-    }
-    let mut res = Vec::with_capacity(count as usize);
-    for (idx, &num) in nums.iter().enumerate() {
-        if s >= num && dfs(nums, 1 + idx, s - num, &mut memo) == count - 1 {
-            res.push(num);
-            s -= num;
-            count -= 1;
-        }
-    }
-    res
+pub fn num_of_ways(nums: Vec<i32>) -> i32 {
+    dfs(&nums) as i32 - 1
 }
 
-fn dfs(nums: &[i32], idx: usize, s: i32, memo: &mut [Vec<i32>]) -> i32 {
-    if s <= 0 {
-        return 0;
+const M: i64 = 1_000_000_007;
+fn dfs(nums: &[i32]) -> i64 {
+    let n = nums.len();
+    if n <= 2 {
+        return 1;
     }
-    if idx >= nums.len() {
-        return i32::MAX >> 1;
-    }
-    if memo[idx][s as usize] > -1 {
-        return memo[idx][s as usize];
-    }
-    let mut res = dfs(nums, 1 + idx, s, memo);
-    if nums[idx] <= s {
-        let take = dfs(nums, 1 + idx, s - nums[idx], memo);
-        if take < i32::MAX >> 1 {
-            res = res.min(1 + take);
+    let root = nums[0];
+    let [mut small, mut big] = [vec![], vec![]];
+    for &num in &nums[1..] {
+        if num < root {
+            small.push(num);
+        } else {
+            big.push(num);
         }
     }
-    memo[idx][s as usize] = res;
-    res
+    dfs(&small) * dfs(&big) % M * C[n - 1][small.len()] % M
 }
 
-const M: usize = 1_000;
-static P: LazyLock<Vec<i32>> = LazyLock::new(|| {
-    let mut sieve = [true; 1 + M];
-    sieve[..2].fill(false);
-    for p in 2..=M.isqrt() {
-        if sieve[p] {
-            for val in (p * p..=M).step_by(p) {
-                sieve[val] = false
-            }
+const N: usize = 1_001;
+static C: LazyLock<Vec<Vec<i64>>> = LazyLock::new(|| {
+    let mut res = Vec::with_capacity(N);
+    res.push(vec![1]);
+    for row in 1..N {
+        let mut curr = Vec::with_capacity(1 + row);
+        curr.push(1);
+        for col in 1..=row {
+            curr.push((res[row - 1][col - 1] + res[row - 1].get(col).unwrap_or(&0)) % M);
         }
+        res.push(curr);
     }
-    sieve
-        .into_iter()
-        .enumerate()
-        .filter_map(|(i, v)| if v { Some(i as i32) } else { None })
-        .collect()
+    res
 });
 
 #[cfg(test)]
