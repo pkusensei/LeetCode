@@ -9,65 +9,63 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_selection(
-    mut available_intervals: Vec<[i32; 2]>,
-    mut target_intervals: Vec<[i32; 2]>,
-) -> i32 {
-    target_intervals.sort_unstable();
-    let mut target = vec![];
-    let [mut start, mut end] = [target_intervals[0][0], target_intervals[0][1]];
-    for v in &target_intervals[1..] {
-        let [s, e] = v[..] else { unreachable!() };
-        if s <= end {
-            end = end.max(e)
-        } else {
-            target.push([start, end]);
-            start = s;
-            end = e;
-        }
+pub fn sortable_integers(nums: Vec<i32>) -> i32 {
+    let n = nums.len();
+    let fs = factors(n);
+    if nums.is_sorted() {
+        return fs.iter().sum::<usize>() as i32;
     }
-    target.push([start, end]);
-    let n = available_intervals.len();
-    available_intervals.sort_unstable();
     let mut res = 0;
-    let mut idx = 0; // idx in available
-    let mut prev_end = 0;
-    for [start, end] in target {
-        if start == end {
-            if prev_end < start {
-                let mut rightmost = 0;
-                while idx < n && available_intervals[idx][0] <= start {
-                    rightmost = rightmost.max(available_intervals[idx][1]);
-                    idx += 1;
-                }
-                if rightmost < start {
-                    return -1;
-                }
-                prev_end = rightmost;
-                res += 1;
+    'out: for &k in &fs[1..] {
+        let mut prev = 0;
+        for w in nums.chunks(k) {
+            if let Some(v) = is_sortable(w, prev) {
+                prev = v;
+            } else {
+                continue 'out;
             }
-        } else {
-            let mut curr = prev_end.max(start);
-            while curr < end {
-                let mut rightmost = curr;
-                while idx < n && available_intervals[idx][0] <= curr {
-                    rightmost = rightmost.max(available_intervals[idx][1]);
-                    idx += 1
-                }
-                if rightmost <= curr {
-                    return -1;
-                }
-                curr = rightmost;
-                res += 1;
-            }
-            prev_end = prev_end.max(curr);
         }
+        res += k as i32
     }
     res
 }
 
-// 1 2 3 4
-//     3 4
+fn is_sortable(nums: &[i32], prev_min: i32) -> Option<i32> {
+    let n = nums.len();
+    let mut max = 0;
+    let mut peak = false;
+    for (i, &num) in nums.iter().enumerate() {
+        if num < prev_min {
+            return None;
+        }
+        max = max.max(num);
+        if i < n - 1 && num > nums[1 + i] {
+            if peak {
+                return None;
+            }
+            peak = true
+        }
+    }
+    if peak && nums[0] < nums[n - 1] {
+        None
+    } else {
+        Some(max)
+    }
+}
+
+fn factors(n: usize) -> Vec<usize> {
+    let mut res = vec![];
+    for f in 1..=n.isqrt() {
+        if n % f == 0 {
+            res.push(f);
+            if f.pow(2) != n {
+                res.push(n / f);
+            }
+        }
+    }
+    res.sort_unstable();
+    res
+}
 
 #[cfg(test)]
 mod tests {
@@ -100,15 +98,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(
-            min_selection(
-                vec![[1, 4], [1, 7], [3, 9], [5, 10], [10, 15]],
-                vec![[1, 3], [2, 5], [7, 8], [10, 13], [11, 15], [12, 13]]
-            ),
-            3
-        );
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
