@@ -8,26 +8,55 @@ mod trie;
 
 #[allow(unused_imports)]
 use helper::*;
+use itertools::Itertools;
 
-pub fn sortable_integers(nums: Vec<i32>) -> i32 {
+pub fn sortable_integers(nums: &[i32]) -> i32 {
     let n = nums.len();
     let fs = factors(n);
     if nums.is_sorted() {
         return fs.iter().sum::<usize>() as i32;
     }
+    let sorted = nums.iter().copied().sorted_unstable().collect_vec();
     let mut res = 0;
     'out: for &k in &fs[1..] {
-        let mut prev = 0;
-        for w in nums.chunks(k) {
-            if let Some(v) = is_sortable(w, prev) {
-                prev = v;
-            } else {
+        // let mut prev = 0;
+        // for w in nums.chunks(k) {
+        //     if let Some(v) = is_sortable(w, prev) {
+        //         prev = v;
+        //     } else {
+        //         continue 'out;
+        //     }
+        // }
+        for (sc, nc) in sorted.chunks(k).zip(nums.chunks(k)) {
+            if !check(&sc, &nc) {
                 continue 'out;
             }
         }
         res += k as i32
     }
     res
+}
+
+fn check(sorted: &[i32], nums: &[i32]) -> bool {
+    let n = sorted.len();
+    let mut arr = Vec::with_capacity(n);
+    let min = sorted[0];
+    let Some(i) = nums.iter().position(|&v| v == min) else {
+        return false;
+    };
+    arr.extend_from_slice(&nums[i..]);
+    arr.extend_from_slice(&nums[..i]);
+    if arr == sorted {
+        return true;
+    }
+    arr.clear();
+    let max = sorted[n - 1];
+    let Some(i) = nums.iter().rposition(|&v| v == max) else {
+        return false;
+    };
+    arr.extend_from_slice(&nums[1 + i..]);
+    arr.extend_from_slice(&nums[..=i]);
+    sorted == arr
 }
 
 fn is_sortable(nums: &[i32], prev_min: i32) -> Option<i32> {
@@ -98,7 +127,9 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(sortable_integers(&[2, 1, 2]), 3);
+    }
 
     #[test]
     fn test() {}
