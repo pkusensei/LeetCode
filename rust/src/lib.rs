@@ -9,24 +9,38 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_operations(s: String) -> i32 {
-    let (s, n) = (s.as_bytes(), s.len());
-    if s.is_sorted() {
-        return 0;
+pub fn min_operations(nums: Vec<i32>) -> i32 {
+    let n = nums.len();
+    let mut res = 2 * n;
+    if let Some(zero) = check(&nums) {
+        let a = zero;
+        let b = 2 + n - zero;
+        res = res.min(a).min(b);
     }
-    if n == 2 {
-        return -1;
+    let reversed: Vec<i32> = nums.iter().rev().copied().collect();
+    if let Some(rev_zero) = check(&reversed) {
+        let zero = n - rev_zero - 1;
+        let rotate = n - zero - 1;
+        let a = 1 + rotate;
+        let b = 1 + n - rotate;
+        res = res.min(a).min(b);
     }
-    let min = *s.iter().min().unwrap();
-    let max = *s.iter().max().unwrap();
-    if s[0] == min || s[n - 1] == max {
-        return 1;
+    if res < 2 * n { res as i32 } else { -1 }
+}
+
+fn check(nums: &[i32]) -> Option<usize> {
+    let n = nums.len();
+    let Some(zero) = nums.iter().position(|&v| v == 0) else {
+        return None;
+    };
+    let mut sorted = true;
+    for i in 0..n {
+        if nums[(i + zero) % n] as usize != i {
+            sorted = false;
+            break;
+        }
     }
-    if s[..n - 1].contains(&min) || s[1..].contains(&max) {
-        2
-    } else {
-        3
-    }
+    if sorted { Some(zero) } else { None }
 }
 
 #[cfg(test)]
