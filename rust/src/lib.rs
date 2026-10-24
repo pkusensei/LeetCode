@@ -9,19 +9,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn peak_valley_difference(nums: Vec<i32>) -> i32 {
-    let n = nums.len();
-    let mut peak = 0;
-    let mut valley = 0;
-    for i in 1..n - 1 {
-        if nums[i - 1] < nums[i] && nums[i] > nums[1 + i] {
-            peak += nums[i]
+pub fn count_subarrays(nums: Vec<i32>, min_k: i32, max_k: i32) -> i64 {
+    let mut res = 0;
+    let mut left = 0;
+    let mut res = 0;
+    for (right, &num) in nums.iter().enumerate() {
+        if num < min_k || num > max_k {
+            left = 1 + right;
+            continue;
         }
-        if nums[i - 1] > nums[i] && nums[i] < nums[1 + i] {
-            valley += nums[i];
-        }
+        res += (1 + right - left) as i64
     }
-    peak - valley
+    res
 }
 
 #[cfg(test)]
