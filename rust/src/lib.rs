@@ -9,38 +9,32 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_operations(nums: Vec<i32>) -> i32 {
-    let n = nums.len();
-    let mut res = 2 * n;
-    if let Some(zero) = check(&nums) {
-        let a = zero;
-        let b = 2 + n - zero;
-        res = res.min(a).min(b);
-    }
-    let reversed: Vec<i32> = nums.iter().rev().copied().collect();
-    if let Some(rev_zero) = check(&reversed) {
-        let zero = n - rev_zero - 1;
-        let rotate = n - zero - 1;
-        let a = 1 + rotate;
-        let b = 1 + n - rotate;
-        res = res.min(a).min(b);
-    }
-    if res < 2 * n { res as i32 } else { -1 }
+pub fn count_days_together(
+    arrive_alice: &str,
+    leave_alice: &str,
+    arrive_bob: &str,
+    leave_bob: &str,
+) -> i32 {
+    let [a1, a2] = [&arrive_alice, &leave_alice].map(|s| parse(s));
+    let [b1, b2] = [&arrive_bob, &leave_bob].map(|s| parse(s));
+    (1 + a2.min(b2) - a1.max(b1)).max(0)
 }
 
-fn check(nums: &[i32]) -> Option<usize> {
-    let n = nums.len();
-    let Some(zero) = nums.iter().position(|&v| v == 0) else {
-        return None;
-    };
-    let mut sorted = true;
-    for i in 0..n {
-        if nums[(i + zero) % n] as usize != i {
-            sorted = false;
-            break;
+fn parse(s: &str) -> i32 {
+    const D: [i32; 13] = {
+        let mut d = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+        let mut i = 1;
+        while i <= 12 {
+            d[i] += d[i - 1];
+            i += 1;
         }
-    }
-    if sorted { Some(zero) } else { None }
+        d
+    };
+    let Some((m, d)) = s.split_once('-') else {
+        return 0;
+    };
+    let [m, d] = [m, d].map(|s| s.parse::<usize>().unwrap());
+    D[m - 1] + d as i32
 }
 
 #[cfg(test)]
@@ -74,7 +68,9 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(count_days_together("10-01", "10-31", "11-01", "12-31"), 0);
+    }
 
     #[test]
     fn test() {}
