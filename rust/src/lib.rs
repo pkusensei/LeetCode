@@ -9,16 +9,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_subarrays(nums: Vec<i32>, min_k: i32, max_k: i32) -> i64 {
-    let mut res = 0;
-    let mut left = 0;
-    let mut res = 0;
-    for (right, &num) in nums.iter().enumerate() {
-        if num < min_k || num > max_k {
-            left = 1 + right;
-            continue;
+pub fn count_magical_pairs(s: &str) -> i32 {
+    let (s, n) = (s.as_bytes(), s.len());
+    let mut masks = vec![vec![0; n]; n];
+    for left in 0..n {
+        let mut mask = 0_i32;
+        for right in left..n {
+            mask |= 1 << (s[right] - b'a');
+            masks[left][right] = mask.count_ones();
         }
-        res += (1 + right - left) as i64
+    }
+    let mut res = 0;
+    for left in 0..n {
+        for mid in left..n {
+            for right in 1 + mid..n {
+                if masks[left][mid] == masks[1 + mid][right] {
+                    res += 1
+                } else if masks[left][mid] < masks[1 + mid][right] {
+                    break;
+                }
+            }
+        }
     }
     res
 }
@@ -54,7 +65,9 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(count_magical_pairs("aba"), 2)
+    }
 
     #[test]
     fn test() {}
