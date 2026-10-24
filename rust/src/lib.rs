@@ -9,32 +9,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_days_together(
-    arrive_alice: &str,
-    leave_alice: &str,
-    arrive_bob: &str,
-    leave_bob: &str,
-) -> i32 {
-    let [a1, a2] = [&arrive_alice, &leave_alice].map(|s| parse(s));
-    let [b1, b2] = [&arrive_bob, &leave_bob].map(|s| parse(s));
-    (1 + a2.min(b2) - a1.max(b1)).max(0)
-}
-
-fn parse(s: &str) -> i32 {
-    const D: [i32; 13] = {
-        let mut d = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-        let mut i = 1;
-        while i <= 12 {
-            d[i] += d[i - 1];
-            i += 1;
+pub fn peak_valley_difference(nums: Vec<i32>) -> i32 {
+    let n = nums.len();
+    let mut peak = 0;
+    let mut valley = 0;
+    for i in 1..n - 1 {
+        if nums[i - 1] < nums[i] && nums[i] > nums[1 + i] {
+            peak += nums[i]
         }
-        d
-    };
-    let Some((m, d)) = s.split_once('-') else {
-        return 0;
-    };
-    let [m, d] = [m, d].map(|s| s.parse::<usize>().unwrap());
-    D[m - 1] + d as i32
+        if nums[i - 1] > nums[i] && nums[i] < nums[1 + i] {
+            valley += nums[i];
+        }
+    }
+    peak - valley
 }
 
 #[cfg(test)]
@@ -68,9 +55,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(count_days_together("10-01", "10-31", "11-01", "12-31"), 0);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
