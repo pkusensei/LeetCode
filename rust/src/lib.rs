@@ -8,10 +8,24 @@ mod trie;
 
 #[allow(unused_imports)]
 use helper::*;
+use itertools::Itertools;
 
-pub fn calculate_score(a: i32, b: i32) -> i32 {
-    let [s1, s2] = [a, b].map(|v| v.count_ones() as i32);
-    if s1 >= s2 { s1 * s2 } else { s2 / s1 }
+pub fn maximize_sum(nums: Vec<i32>, k: i32) -> i64 {
+    let sum: i64 = nums.iter().map(|&v| v as i64).sum();
+    let d: i64 = nums
+        .iter()
+        .map(|&v| delta(v))
+        .sorted_unstable_by(|a, b| b.cmp(a))
+        .take(k as usize)
+        .sum();
+    sum + d
+}
+
+fn delta(num: i32) -> i64 {
+    let mut s = num.to_string().into_bytes();
+    s.sort_unstable_by(|a, b| b.cmp(a));
+    let big: i64 = String::from_utf8(s).unwrap().parse().unwrap();
+    big - i64::from(num)
 }
 
 #[cfg(test)]
