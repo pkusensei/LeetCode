@@ -6,53 +6,57 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::collections::HashMap;
-
 #[allow(unused_imports)]
 use helper::*;
 
-// (1+55)*55/2 = 1540
+// (1+316)*316/2 = 50086
 pub fn count_staircase(nums: &[i32]) -> i32 {
     let n = nums.len();
-    (0..n).map(|i| f(&nums[i..])).sum()
+    let max = *nums.iter().max().unwrap();
+    let mut freq = vec![0; 1 + max as usize];
+    let mut required = vec![0; 1 + max as usize];
+    (0..n)
+        .map(|i| f(&nums[i..], &mut freq, &mut required))
+        .sum()
 }
 
-const LENGTHS: [usize; 55] = {
-    let mut v = [0; 55];
+const LENGTHS: [usize; 316] = {
+    let mut v = [0; 316];
     let mut idx = 0;
-    while idx < 55 {
+    while idx < 316 {
         v[idx] = (1 + idx) * (2 + idx) / 2;
         idx += 1;
     }
     v
 };
 
-fn f(nums: &[i32]) -> i32 {
+fn f(nums: &[i32], freq: &mut [i32], required: &mut [i32]) -> i32 {
     let n = nums.len();
     let mut res = 0;
-    let mut order = vec![];
-    let mut seen = vec![false; 100_001];
-    let mut freq = HashMap::new();
-    let mut idx = 0;
-    'out: for len in LENGTHS {
-        if len > n {
+    let mut distinct = 0;
+    let mut matched = 0;
+    let mut right = 0;
+    for (_i, &num) in nums.iter().enumerate() {
+        let val = num as usize;
+        if freq[val] == 0 {
+            distinct += 1;
+            if distinct * (1 + distinct) / 2 > n as i32 {
+                break;
+            }
+            required[val] = distinct;
+        }
+        freq[val] += 1;
+        right = _i;
+        if freq[val] > required[val] {
             break;
         }
-        while idx < len {
-            let val = nums[idx];
-            if !seen[val as usize] {
-                seen[val as usize] = true;
-                order.push(val);
-            }
-            *freq.entry(val).or_insert(0) += 1;
-            idx += 1;
+        if freq[val] == required[val] {
+            matched += 1;
         }
-        for (i, val) in order.iter().enumerate() {
-            if freq.get(val).is_none_or(|&f| f != 1 + i) {
-                continue 'out;
-            }
-        }
-        res += 1;
+        res += i32::from(matched == distinct);
+    }
+    for &num in nums[..=right].iter() {
+        freq[num as usize] = 0;
     }
     res
 }
