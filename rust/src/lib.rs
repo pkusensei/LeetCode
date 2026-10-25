@@ -6,57 +6,60 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
+use std::collections::{HashMap, HashSet};
+
 #[allow(unused_imports)]
 use helper::*;
 
 // (1+316)*316/2 = 50086
 pub fn count_staircase(nums: &[i32]) -> i32 {
     let n = nums.len();
-    let max = *nums.iter().max().unwrap();
-    let mut freq = vec![0; 1 + max as usize];
-    let mut required = vec![0; 1 + max as usize];
-    (0..n)
-        .map(|i| f(&nums[i..], &mut freq, &mut required))
-        .sum()
+    // num -> [indices]
+    let mut occurs = HashMap::<_, Vec<_>>::new();
+    // indice -> pos in array of same num
+    let mut pos_in_occ = Vec::with_capacity(n);
+    for (idx, &num) in nums.iter().enumerate() {
+        let v = occurs.entry(num).or_default();
+        pos_in_occ.push(v.len());
+        v.push(idx);
+    }
+    (0..n).map(|i| f(&nums, i, &occurs, &pos_in_occ)).sum()
 }
 
-const LENGTHS: [usize; 316] = {
-    let mut v = [0; 316];
-    let mut idx = 0;
-    while idx < 316 {
-        v[idx] = (1 + idx) * (2 + idx) / 2;
-        idx += 1;
-    }
-    v
-};
-
-fn f(nums: &[i32], freq: &mut [i32], required: &mut [i32]) -> i32 {
+fn f(nums: &[i32], start: usize, occurs: &HashMap<i32, Vec<usize>>, pos_in_occ: &[usize]) -> i32 {
     let n = nums.len();
+    let mut seen = HashSet::new();
+    // Smallest right end of subarr
+    let mut range_left = 0;
+    // Biggest right end
+    let mut range_right = n - 1;
     let mut res = 0;
-    let mut distinct = 0;
-    let mut matched = 0;
-    let mut right = 0;
-    for (_i, &num) in nums.iter().enumerate() {
-        let val = num as usize;
-        if freq[val] == 0 {
-            distinct += 1;
-            if distinct * (1 + distinct) / 2 > n as i32 {
-                break;
-            }
-            required[val] = distinct;
-        }
-        freq[val] += 1;
-        right = _i;
-        if freq[val] > required[val] {
+    for (right, &num) in nums.iter().enumerate().skip(start) {
+        if right > range_right {
             break;
         }
-        if freq[val] == required[val] {
-            matched += 1;
+        if !seen.insert(num) {
+            continue; // care only first timers
         }
-        res += i32::from(matched == distinct);
-    }
-    for &num in nums[..=right].iter() {
-        freq[num as usize] = 0;
+        let k = seen.len();
+        let occur = &occurs[&num];
+        if pos_in_occ[right] + k - 1 >= occur.len() {
+            break; // too few
+        }
+        let new_left = occur[pos_in_occ[right] + k - 1];
+        let new_right = if pos_in_occ[right] + k < occur.len() {
+            occur[pos_in_occ[right] + k]
+        } else {
+            n - 1 // depleted; default to end of array
+        };
+        range_left = range_left.max(new_left);
+        range_right = range_right.min(new_right);
+        if range_left > range_right {
+            break;
+        };
+        let len = k * (1 + k) / 2;
+        let last = start + len - 1;
+        res += i32::from((range_left..=range_right).contains(&last));
     }
     res
 }
