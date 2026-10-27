@@ -6,39 +6,17 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::collections::VecDeque;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_islands(mut grid: Vec<Vec<i32>>, k: i32) -> i32 {
-    let mut res = 0;
-    let [rows, cols] = get_dimensions(&grid);
-    for r in 0..rows {
-        for c in 0..cols {
-            if grid[r][c] > 0 {
-                let v = bfs(&mut grid, r, c);
-                res += i32::from(v % i64::from(k) == 0);
-            }
-        }
-    }
-    res
-}
-
-fn bfs(grid: &mut [Vec<i32>], r: usize, c: usize) -> i64 {
-    let [rows, cols] = get_dimensions(grid);
-    let mut res = 0;
-    let mut queue = VecDeque::from([[r, c]]);
-    res += i64::from(grid[r][c]);
-    grid[r][c] = 0;
-    while let Some([r, c]) = queue.pop_front() {
-        for [nr, nc] in neighbors([r, c]) {
-            if nr < rows && nc < cols && grid[nr][nc] > 0 {
-                res += i64::from(grid[nr][nc]);
-                grid[nr][nc] = 0;
-                queue.push_back([nr, nc]);
-            }
-        }
+pub fn create_grid(m: i32, n: i32) -> Vec<String> {
+    use std::iter::repeat_n;
+    let mut res = Vec::with_capacity(m as usize);
+    res.push(repeat_n('.', n as usize).collect());
+    for _ in 0..m - 1 {
+        let mut v: String = repeat_n('#', n as usize - 1).collect();
+        v.push('.');
+        res.push(v);
     }
     res
 }
