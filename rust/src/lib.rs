@@ -9,16 +9,29 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn create_grid(m: i32, n: i32) -> Vec<String> {
-    use std::iter::repeat_n;
-    let mut res = Vec::with_capacity(m as usize);
-    res.push(repeat_n('.', n as usize).collect());
-    for _ in 0..m - 1 {
-        let mut v: String = repeat_n('#', n as usize - 1).collect();
-        v.push('.');
-        res.push(v);
+pub fn min_cost(grid: Vec<Vec<i32>>) -> i32 {
+    let [rows, cols] = get_dimensions(&grid);
+    let mut dp = vec![vec![[false; 1024]; cols]; rows];
+    dp[0][0][grid[0][0] as usize] = true;
+    for r in 0..rows {
+        for c in 0..cols {
+            let num = grid[r][c] as usize;
+            for i in 0..1024 {
+                if r > 0 && dp[r - 1][c][i] {
+                    dp[r][c][i ^ num] = true;
+                }
+                if c > 0 && dp[r][c - 1][i] {
+                    dp[r][c][i ^ num] = true;
+                }
+            }
+        }
     }
-    res
+    dp[rows - 1][cols - 1]
+        .iter()
+        .enumerate()
+        .filter_map(|(i, &v)| if v { Some(i as i32) } else { None })
+        .min()
+        .unwrap()
 }
 
 #[cfg(test)]
