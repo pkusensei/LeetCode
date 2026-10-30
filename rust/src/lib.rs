@@ -9,29 +9,44 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_cost(grid: Vec<Vec<i32>>) -> i32 {
-    let [rows, cols] = get_dimensions(&grid);
-    let mut dp = vec![vec![[false; 1024]; cols]; rows];
-    dp[0][0][grid[0][0] as usize] = true;
-    for r in 0..rows {
-        for c in 0..cols {
-            let num = grid[r][c] as usize;
-            for i in 0..1024 {
-                if r > 0 && dp[r - 1][c][i] {
-                    dp[r][c][i ^ num] = true;
-                }
-                if c > 0 && dp[r][c - 1][i] {
-                    dp[r][c][i ^ num] = true;
-                }
+pub fn shortest_path(n: i32, edges: Vec<Vec<i32>>, labels: String, k: i32) -> i32 {
+    use std::{
+        cmp::Reverse,
+        collections::{BinaryHeap, HashMap},
+    };
+    let n = n as usize;
+    let adj = edges.iter().fold(vec![HashMap::new(); n], |mut acc, e| {
+        let v = acc[e[0] as usize].entry(e[1] as usize).or_insert(e[2]);
+        *v = (*v).min(e[2]);
+        acc
+    });
+    let s = labels.as_bytes();
+    let mut heap = BinaryHeap::from([(Reverse(0), 0, 1)]);
+    let mut weights = vec![vec![i32::MAX >> 1; 1 + k as usize]; n];
+    let mut res = i32::MAX >> 1;
+    while let Some((Reverse(weight), node, streak)) = heap.pop() {
+        if node == n - 1 {
+            res = res.min(weight);
+            continue;
+        }
+        if weight > weights[node][streak] {
+            continue;
+        }
+        for (&next, &w) in adj[node].iter() {
+            let (nw, ns) = if s[next] != s[node] {
+                (weight + w, 1)
+            } else if 1 + streak <= k as usize {
+                (weight + w, 1 + streak)
+            } else {
+                continue;
+            };
+            if nw < weights[next][ns] {
+                weights[next][ns] = nw;
+                heap.push((Reverse(nw), next, ns));
             }
         }
     }
-    dp[rows - 1][cols - 1]
-        .iter()
-        .enumerate()
-        .filter_map(|(i, &v)| if v { Some(i as i32) } else { None })
-        .min()
-        .unwrap()
+    if res >= i32::MAX >> 1 { -1 } else { res }
 }
 
 #[cfg(test)]
