@@ -9,44 +9,33 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn shortest_path(n: i32, edges: Vec<Vec<i32>>, labels: String, k: i32) -> i32 {
-    use std::{
-        cmp::Reverse,
-        collections::{BinaryHeap, HashMap},
-    };
-    let n = n as usize;
-    let adj = edges.iter().fold(vec![HashMap::new(); n], |mut acc, e| {
-        let v = acc[e[0] as usize].entry(e[1] as usize).or_insert(e[2]);
-        *v = (*v).min(e[2]);
-        acc
-    });
-    let s = labels.as_bytes();
-    let mut heap = BinaryHeap::from([(Reverse(0), 0, 1)]);
-    let mut weights = vec![vec![i32::MAX >> 1; 1 + k as usize]; n];
-    let mut res = i32::MAX >> 1;
-    while let Some((Reverse(weight), node, streak)) = heap.pop() {
-        if node == n - 1 {
-            res = res.min(weight);
-            continue;
-        }
-        if weight > weights[node][streak] {
-            continue;
-        }
-        for (&next, &w) in adj[node].iter() {
-            let (nw, ns) = if s[next] != s[node] {
-                (weight + w, 1)
-            } else if 1 + streak <= k as usize {
-                (weight + w, 1 + streak)
-            } else {
-                continue;
-            };
-            if nw < weights[next][ns] {
-                weights[next][ns] = nw;
-                heap.push((Reverse(nw), next, ns));
-            }
-        }
+pub fn unique_paths(grid: Vec<Vec<i32>>) -> i32 {
+    let [rows, cols] = get_dimensions(&grid);
+    let mut memo = vec![vec![[-1; 2]; cols]; rows];
+    dfs(&grid, 0, 0, 0, &mut memo)
+}
+
+const M: i32 = 1_000_000_007;
+fn dfs(grid: &[Vec<i32>], r: usize, c: usize, dir: usize, memo: &mut [Vec<[i32; 2]>]) -> i32 {
+    let [rows, cols] = get_dimensions(grid);
+    if r == rows - 1 && c == cols - 1 {
+        return 1;
     }
-    if res >= i32::MAX >> 1 { -1 } else { res }
+    if r >= rows || c >= cols {
+        return 0;
+    }
+    if memo[r][c][dir] > -1 {
+        return memo[r][c][dir];
+    }
+    let res = if grid[r][c] == 0 {
+        dfs(grid, 1 + r, c, 1, memo) + dfs(grid, r, 1 + c, 0, memo)
+    } else if dir == 0 {
+        dfs(grid, 1 + r, c, 1, memo)
+    } else {
+        dfs(grid, r, 1 + c, 0, memo)
+    } % M;
+    memo[r][c][dir] = res;
+    res
 }
 
 #[cfg(test)]
