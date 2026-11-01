@@ -9,11 +9,44 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_merged_integer(nums: Vec<i32>) -> i32 {
-    nums.chunks(2)
-        .map(|ch| format!("{}{}", ch[0], ch[1]).parse().unwrap())
-        .min()
-        .unwrap()
+// ... value ...
+//       ^
+//     index
+pub fn minimum_max_value(n: i32, index: i32, value: i32) -> i64 {
+    let [n, index, value] = [n, index, value].map(i64::from);
+    let mut factor = -1;
+    for p in 2..=value.isqrt() {
+        if value % p == 0 {
+            factor = p;
+            break;
+        }
+    }
+    if factor == -1 && index == 0 {
+        factor = value;
+    }
+    let left = prev(value, factor);
+    if factor < 2 || left < 1 + index {
+        return -1;
+    }
+    if index == n - 1 {
+        return value;
+    }
+    let mut n = n - index - 1;
+    let mut res = value;
+    while res & 1 == 1 && n > 0 {
+        res += factor;
+        n -= 1;
+    }
+    res + 2 * n.max(0)
+}
+
+const fn prev(mut value: i64, f: i64) -> i64 {
+    let mut res = 0;
+    while value & 1 == 1 {
+        value -= f;
+        res += 1;
+    }
+    res + value / 2
 }
 
 #[cfg(test)]
