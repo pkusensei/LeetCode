@@ -9,9 +9,11 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_moves(nums: Vec<i32>) -> i32 {
-    let min = nums.iter().min().unwrap();
-    nums.iter().map(|v| v - min).sum()
+pub fn min_merged_integer(nums: Vec<i32>) -> i32 {
+    nums.chunks(2)
+        .map(|ch| format!("{}{}", ch[0], ch[1]).parse().unwrap())
+        .min()
+        .unwrap()
 }
 
 #[cfg(test)]
