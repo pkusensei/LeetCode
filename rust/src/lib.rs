@@ -6,48 +6,61 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
+use std::collections::HashMap;
+
 #[allow(unused_imports)]
 use helper::*;
 
-// ... value ...
-//       ^
-//     index
-pub fn minimum_max_value(n: i32, index: i32, value: i32) -> i64 {
-    let [n, index, value] = [n, index, value].map(i64::from);
-    let mut factor = -1;
-    for p in 2..=value.isqrt() {
-        if value % p == 0 {
-            factor = p;
-            break;
-        }
-    }
-    if factor == -1 && index == 0 {
-        factor = value;
-    }
-    let left = prev(value, factor);
-    if factor < 2 || left < 1 + index {
-        return -1;
-    }
-    if index == n - 1 {
-        return value;
-    }
-    let mut n = n - index - 1;
-    let mut res = value;
-    while res & 1 == 1 && n > 0 {
-        res += factor;
-        n -= 1;
-    }
-    res + 2 * n.max(0)
+pub fn min_activation_cost(edges: &[[i32; 3]], values: &[i32]) -> i32 {
+    let n = values.len();
+    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
+        let [a, b] = [0, 1].map(|i| e[i] as usize);
+        acc[a].push((b, i64::from(e[2])));
+        acc[b].push((a, i64::from(e[2])));
+        acc
+    });
+    let v = dfs(&adj, &values, 0, n).1;
+    i32::try_from(v).unwrap_or(-1)
 }
 
-const fn prev(mut value: i64, f: i64) -> i64 {
-    let mut res = 0;
-    while value & 1 == 1 {
-        value -= f;
-        res += 1;
+fn dfs(
+    adj: &[Vec<(usize, i64)>],
+    values: &[i32],
+    node: usize,
+    prev: usize,
+) -> (HashMap<i32, i64>, i64) {
+    let mut subtree = HashMap::new();
+    let mut min_cost = i64::MAX >> 1;
+    for &(next, cost) in &adj[node] {
+        if next != prev {
+            let _v = dfs(adj, values, next, node);
+            min_cost = min_cost.min(_v.1);
+            for (mask, c) in _v.0.iter() {
+                for (prev_mask, prev_cost) in subtree.iter() {
+                    let nmask = prev_mask ^ mask;
+                    if nmask.count_ones() & 1 == 0 {
+                        min_cost = min_cost.min(prev_cost + c + cost);
+                    }
+                }
+            }
+            for (mask, c) in _v.0 {
+                let ncost = cost + c;
+                let nmask = mask ^ values[node];
+                if nmask.count_ones() & 1 == 0 {
+                    min_cost = min_cost.min(ncost);
+                }
+                let v = subtree.entry(nmask).or_insert(ncost);
+                *v = (*v).min(ncost);
+            }
+        }
     }
-    res + value / 2
+    subtree.insert(values[node], 0);
+    (subtree, min_cost)
 }
+
+//     0
+//    1
+//   2 3
 
 #[cfg(test)]
 mod tests {
@@ -80,8 +93,22 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(
+            min_activation_cost(
+                &[[0, 1, 4], [0, 2, 6], [0, 3, 3], [3, 4, 5]],
+                &[3, 1, 7, 1, 3]
+            ),
+            7
+        );
+        assert_eq!(min_activation_cost(&[[0, 1, 5], [1, 2, 10]], &[1, 7, 3]), 5);
+    }
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(
+            min_activation_cost(&[[1, 0, 6], [2, 1, 6], [3, 1, 4]], &[5, 7, 10, 10]),
+            -1
+        );
+    }
 }
