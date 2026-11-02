@@ -9,34 +9,14 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_operations(nums: Vec<i32>, locked: Vec<i32>, k: i32) -> i32 {
+pub fn min_moves2(mut nums: Vec<i32>) -> i32 {
     let n = nums.len();
-    let mut pref_max = 0;
-    let mut unlock = 0;
-    for (i, &num) in nums.iter().enumerate() {
-        pref_max = pref_max.max(num);
-        if locked[i] == 1 && !(1 + i == num as usize && num == pref_max) {
-            unlock += 1;
-            if unlock > k {
-                return -1;
-            }
-        }
+    if n < 2 {
+        return 0;
     }
-    let mut swap = 0;
-    let mut arr = Vec::with_capacity(n);
-    for &num in nums.iter() {
-        let i = arr.partition_point(|&v| v <= num);
-        swap += (arr.len() - i) as i32;
-        arr.insert(i, num);
-    }
-    // for left in 0..n {
-    //     for right in 1 + left..n {
-    //         if nums[left] > nums[right] {
-    //             swap += 1;
-    //         }
-    //     }
-    // }
-    swap + unlock
+    let (_, med, _) = nums.select_nth_unstable(n / 2);
+    let med = *med;
+    nums.iter().map(|v| (v - med).abs()).sum()
 }
 
 #[cfg(test)]
