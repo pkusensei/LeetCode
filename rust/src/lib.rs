@@ -9,42 +9,23 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_servers(n: i32, mut logs: Vec<Vec<i32>>, x: i32, queries: Vec<i32>) -> Vec<i32> {
-    use itertools::Itertools;
-    use std::collections::HashMap;
-
-    logs.sort_unstable_by_key(|v| v[1]);
-    let q_sorted = queries
-        .iter()
-        .enumerate()
-        .map(|(i, &v)| (i, v))
-        .sorted_unstable_by_key(|v| v.1)
-        .collect_vec();
-    let mut res = vec![0; queries.len()];
-    let mut freq = HashMap::new();
-    let mut left = 0;
-    let mut right = 0;
-    for (qi, q) in q_sorted {
-        let start = q - x;
-        while let Some(v) = logs.get(right)
-            && v[1] <= q
-        {
-            *freq.entry(v[0]).or_insert(0) += 1;
-            right += 1;
+pub fn min_activation_cost(edges: Vec<Vec<i32>>, values: Vec<i32>) -> i32 {
+    let n = values.len();
+    let mut min_edge = vec![i64::MAX >> 2; n];
+    let mut res = i64::MAX >> 2;
+    for e in edges.iter() {
+        let [a, b] = [0, 1].map(|i| e[i] as usize);
+        let [pa, pb] = [a, b].map(|i| values[i].count_ones() & 1);
+        let cost = i64::from(e[2]);
+        if pa == pb {
+            res = res.min(cost);
+        } else {
+            let zero = if pa == 0 { a } else { b };
+            res = res.min(min_edge[zero] + cost);
+            min_edge[zero] = min_edge[zero].min(cost);
         }
-        while let Some(v) = logs.get(left)
-            && v[1] < start
-        {
-            let f = freq.entry(v[0]).or_insert(0);
-            *f -= 1;
-            if *f == 0 {
-                freq.remove(&v[0]);
-            }
-            left += 1;
-        }
-        res[qi] = n - freq.len() as i32;
     }
-    res
+    i32::try_from(res).unwrap_or(-1)
 }
 
 #[cfg(test)]
