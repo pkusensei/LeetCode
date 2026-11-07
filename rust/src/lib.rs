@@ -9,31 +9,26 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn assign_tasks(servers: Vec<i32>, tasks: Vec<i32>) -> Vec<i32> {
-    use std::{cmp::Reverse, collections::BinaryHeap};
-    let mut free: BinaryHeap<_> = servers
-        .iter()
-        .enumerate()
-        .map(|(i, &w)| Reverse((w, i, 0)))
-        .collect();
-    let mut busy = BinaryHeap::new();
-    let mut res = Vec::with_capacity(tasks.len());
-    for (ti, &task) in tasks.iter().enumerate() {
-        while let Some(&Reverse((time, w, i))) = busy.peek()
-            && time <= ti as i32
-        {
-            free.push(Reverse((w, i, time)));
-            busy.pop();
+pub fn can_remove_all(types: Vec<i32>, colors: Vec<i32>, group_size: Vec<i32>) -> bool {
+    let mut st: Vec<(i32, i32, i32)> = vec![];
+    for (&t, &c) in types.iter().zip(colors.iter()) {
+        if group_size[t as usize] == 1 {
+            continue;
         }
-        if let Some(Reverse((w, i, time))) = free.pop() {
-            res.push(i as i32);
-            busy.push(Reverse((time.max(ti as i32) + task, w, i)));
-        } else if let Some(Reverse((time, w, i))) = busy.pop() {
-            res.push(i as i32);
-            busy.push(Reverse((time.max(ti as i32) + task, w, i)));
+        if let Some((top_t, top_c, top_count)) = st.last_mut()
+            && *top_t == t
+            && *top_c == c
+        {
+            if *top_count == group_size[t as usize] - 1 {
+                st.pop();
+            } else {
+                *top_count += 1;
+            }
+        } else {
+            st.push((t, c, 1));
         }
     }
-    res
+    st.is_empty()
 }
 
 #[cfg(test)]
