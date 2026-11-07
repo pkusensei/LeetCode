@@ -9,23 +9,31 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_activation_cost(edges: Vec<Vec<i32>>, values: Vec<i32>) -> i32 {
-    let n = values.len();
-    let mut min_edge = vec![i64::MAX >> 2; n];
-    let mut res = i64::MAX >> 2;
-    for e in edges.iter() {
-        let [a, b] = [0, 1].map(|i| e[i] as usize);
-        let [pa, pb] = [a, b].map(|i| values[i].count_ones() & 1);
-        let cost = i64::from(e[2]);
-        if pa == pb {
-            res = res.min(cost);
-        } else {
-            let zero = if pa == 0 { a } else { b };
-            res = res.min(min_edge[zero] + cost);
-            min_edge[zero] = min_edge[zero].min(cost);
+pub fn assign_tasks(servers: Vec<i32>, tasks: Vec<i32>) -> Vec<i32> {
+    use std::{cmp::Reverse, collections::BinaryHeap};
+    let mut free: BinaryHeap<_> = servers
+        .iter()
+        .enumerate()
+        .map(|(i, &w)| Reverse((w, i, 0)))
+        .collect();
+    let mut busy = BinaryHeap::new();
+    let mut res = Vec::with_capacity(tasks.len());
+    for (ti, &task) in tasks.iter().enumerate() {
+        while let Some(&Reverse((time, w, i))) = busy.peek()
+            && time <= ti as i32
+        {
+            free.push(Reverse((w, i, time)));
+            busy.pop();
+        }
+        if let Some(Reverse((w, i, time))) = free.pop() {
+            res.push(i as i32);
+            busy.push(Reverse((time.max(ti as i32) + task, w, i)));
+        } else if let Some(Reverse((time, w, i))) = busy.pop() {
+            res.push(i as i32);
+            busy.push(Reverse((time.max(ti as i32) + task, w, i)));
         }
     }
-    i32::try_from(res).unwrap_or(-1)
+    res
 }
 
 #[cfg(test)]
