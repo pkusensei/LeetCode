@@ -9,18 +9,26 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_valid_substrings(s: &str) -> i64 {
-    let [mut last_a, mut last_ab, mut last_abc] = [-1; 3];
-    let mut res = 0;
-    for (i, b) in s.bytes().enumerate() {
-        match b {
-            b'a' => last_a = i as i64,
-            b'b' => last_ab = last_a,
-            _ => last_abc = last_ab,
-        }
-        res += i as i64 - last_abc;
+pub fn repeated_string_match(a: &str, b: &str, x: i32, y: i32) -> bool {
+    let [a, b] = [&a, &b].map(|s| s.as_bytes());
+    let [na, nb] = [a, b].map(|s| s.len());
+    let [x, y] = [x, y].map(|v| v as usize);
+    let tot_a = na * x;
+    let tot_b = nb * y;
+    if tot_a < tot_b {
+        return false;
     }
-    res
+    let len = tot_b.min(na + nb);
+    for start in 0..na {
+        if start + tot_b > tot_a {
+            return false;
+        }
+        let possible = (0..len).all(|i| b[i % nb] == a[(start + i) % na]);
+        if possible {
+            return true;
+        }
+    }
+    false
 }
 
 #[cfg(test)]
