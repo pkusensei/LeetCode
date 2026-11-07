@@ -9,26 +9,32 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn can_remove_all(types: Vec<i32>, colors: Vec<i32>, group_size: Vec<i32>) -> bool {
-    let mut st: Vec<(i32, i32, i32)> = vec![];
-    for (&t, &c) in types.iter().zip(colors.iter()) {
-        if group_size[t as usize] == 1 {
-            continue;
+pub fn count_valid_substrings(s: &str) -> i64 {
+    let n = s.len();
+    let mut res = 0;
+    let mut prev = 0;
+    for i in 0..n {
+        if 2 <= i && &s[i - 2..=i] == "abc" {
+            prev = i - 1;
         }
-        if let Some((top_t, top_c, top_count)) = st.last_mut()
-            && *top_t == t
-            && *top_c == c
-        {
-            if *top_count == group_size[t as usize] - 1 {
-                st.pop();
-            } else {
-                *top_count += 1;
-            }
-        } else {
-            st.push((t, c, 1));
+        res += i - prev + 1;
+    }
+    res as i64
+}
+
+pub fn with_split(s: &str) -> i64 {
+    let n = s.len();
+    let mut res = 0;
+    let mut len = 0;
+    for i in 0..n {
+        len += 1;
+        if 2 <= i && &s[i - 2..=i] == "abc" {
+            // double counted middle 'b'
+            res += (len - 1) * len / 2 - 1;
+            len = 2;
         }
     }
-    st.is_empty()
+    res + len * (1 + len) / 2
 }
 
 #[cfg(test)]
@@ -65,5 +71,8 @@ mod tests {
     fn basics() {}
 
     #[test]
-    fn test() {}
+    fn test() {
+        assert_eq!(count_valid_substrings("babccc"), 15);
+        assert_eq!(count_valid_substrings("abca"), 8);
+    }
 }
