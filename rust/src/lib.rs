@@ -6,36 +6,60 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::cmp::Reverse;
-
 #[allow(unused_imports)]
 use helper::*;
 
-// 1 3 2 4
-// 1 2 3 4
-pub fn count_suffix(mut nums: Vec<i32>, target: Vec<i32>) -> i32 {
-    let n = nums.len();
-    if n == 1 {
-        return i32::from(nums[0] == target[0]);
-    }
-    let mut start = 0;
-    while start < n && nums[start] == target[start] {
-        start += 1;
-    }
-    nums[start..].sort_unstable_by_key(|&v| Reverse(v));
-    let mut res = 0;
-    if nums == target {
-        res += 1;
-        let right = start.min(n - 1);
-        for w in nums[..=right].windows(2).rev() {
-            if w[0] >= w[1] {
-                res += 1
-            } else {
-                break;
-            }
+pub fn min_cost(n: i32, colors: String, edges: Vec<Vec<i32>>) -> i64 {
+    let n = n as usize;
+    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
+        let [a, b] = [0, 1].map(|i| e[i] as usize);
+        acc[a].push(b);
+        acc[b].push(a);
+        acc
+    });
+    let curr = dfs(&adj, colors.as_bytes(), 0, n);
+    curr.blue_tree.min(curr.red_root).min(curr.single_red_child)
+}
+
+fn dfs(adj: &[Vec<usize>], colors: &[u8], node: usize, prev: usize) -> State {
+    let mut curr = State::default();
+    for &next in &adj[node] {
+        if next != prev {
+            let sub = dfs(adj, colors, next, node);
+            curr.blue_tree += sub.blue_tree;
+            curr.red_root += sub.blue_tree.min(sub.red_root);
+            curr.single_red_child = curr
+                .single_red_child
+                .min(sub.red_root.min(sub.single_red_child) - sub.blue_tree);
+            curr.size += sub.size;
         }
     }
-    res
+    if colors[node] == b'B' {
+        curr.red_root += curr.size;
+    } else {
+        curr.blue_tree += curr.size;
+    }
+    curr.single_red_child += curr.blue_tree;
+    curr
+}
+
+#[derive(Clone, Copy)]
+struct State {
+    blue_tree: i64,
+    red_root: i64,
+    single_red_child: i64,
+    size: i64,
+}
+
+impl Default for State {
+    fn default() -> Self {
+        Self {
+            blue_tree: 0,
+            red_root: 0,
+            single_red_child: i64::MAX >> 2,
+            size: 1,
+        }
+    }
 }
 
 #[cfg(test)]
@@ -69,14 +93,8 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(count_suffix(vec![1, 5, 6, 4, 6], vec![1, 5, 6, 6, 4]), 2);
-        assert_eq!(count_suffix(vec![1, 2, 3], vec![3, 2, 1]), 1);
-    }
+    fn basics() {}
 
     #[test]
-    fn test() {
-        assert_eq!(count_suffix(vec![3, 1, 5, 1], vec![3, 5, 1, 1]), 1);
-        assert_eq!(count_suffix(vec![3, 1, 2], vec![1, 3, 2]), 0);
-    }
+    fn test() {}
 }
