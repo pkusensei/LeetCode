@@ -9,70 +9,31 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_servers(grid: &[&[i32]]) -> i32 {
-    let [rows, cols] = get_dimensions(&grid);
-    let mut r_roots = vec![None; rows];
-    let mut c_roots = vec![None; cols];
-    let mut dsu = DSU::new(rows * cols);
-    let mut id = 0;
-    for (r, row) in grid.iter().enumerate() {
-        for (c, &v) in row.iter().enumerate() {
-            if v == 1 {
-                if let Some(prev) = r_roots[r] {
-                    dsu.union(prev, id);
-                } else {
-                    r_roots[r] = Some(id);
-                }
-                if let Some(prev) = c_roots[c] {
-                    dsu.union(prev, id);
-                } else {
-                    c_roots[c] = Some(id);
-                }
-                id += 1;
+pub fn find_mismatched_segments(s1: String, s2: String) -> Vec<Vec<String>> {
+    let mut res = vec![];
+    let [mut v1, mut v2] = [const { vec![] }; 2];
+    for (b1, b2) in s1.bytes().zip(s2.bytes()) {
+        if b1 == b2 {
+            if !v1.is_empty() {
+                res.push(vec![
+                    String::from_utf8(v1).unwrap(),
+                    String::from_utf8(v2).unwrap(),
+                ]);
+                v1 = vec![];
+                v2 = vec![];
             }
-        }
-    }
-    (0..id)
-        .filter(|&v| {
-            let root = dsu.find(v);
-            dsu.size[root] > 1
-        })
-        .count() as i32
-}
-
-struct DSU {
-    parent: Vec<usize>,
-    size: Vec<i32>,
-}
-
-impl DSU {
-    fn new(n: usize) -> Self {
-        Self {
-            parent: (0..n).collect(),
-            size: vec![1; n],
-        }
-    }
-
-    fn find(&mut self, v: usize) -> usize {
-        if self.parent[v] != v {
-            self.parent[v] = self.find(self.parent[v])
-        }
-        self.parent[v]
-    }
-
-    fn union(&mut self, x: usize, y: usize) {
-        let [rx, ry] = [x, y].map(|v| self.find(v));
-        if rx == ry {
-            return;
-        }
-        if self.size[rx] < self.size[ry] {
-            self.size[ry] += self.size[rx];
-            self.parent[rx] = ry;
         } else {
-            self.size[rx] += self.size[ry];
-            self.parent[ry] = rx;
+            v1.push(b1);
+            v2.push(b2);
         }
     }
+    if !v1.is_empty() {
+        res.push(vec![
+            String::from_utf8(v1).unwrap(),
+            String::from_utf8(v2).unwrap(),
+        ]);
+    }
+    res
 }
 
 #[cfg(test)]
@@ -106,9 +67,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        assert_eq!(count_servers(&[&[1, 0], &[0, 1]]), 0);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
