@@ -9,26 +9,70 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn repeated_string_match(a: &str, b: &str, x: i32, y: i32) -> bool {
-    let [a, b] = [&a, &b].map(|s| s.as_bytes());
-    let [na, nb] = [a, b].map(|s| s.len());
-    let [x, y] = [x, y].map(|v| v as usize);
-    let tot_a = na * x;
-    let tot_b = nb * y;
-    if tot_a < tot_b {
-        return false;
-    }
-    let len = tot_b.min(na + nb);
-    for start in 0..na {
-        if start + tot_b > tot_a {
-            return false;
+pub fn count_servers(grid: &[&[i32]]) -> i32 {
+    let [rows, cols] = get_dimensions(&grid);
+    let mut r_roots = vec![None; rows];
+    let mut c_roots = vec![None; cols];
+    let mut dsu = DSU::new(rows * cols);
+    let mut id = 0;
+    for (r, row) in grid.iter().enumerate() {
+        for (c, &v) in row.iter().enumerate() {
+            if v == 1 {
+                if let Some(prev) = r_roots[r] {
+                    dsu.union(prev, id);
+                } else {
+                    r_roots[r] = Some(id);
+                }
+                if let Some(prev) = c_roots[c] {
+                    dsu.union(prev, id);
+                } else {
+                    c_roots[c] = Some(id);
+                }
+                id += 1;
+            }
         }
-        let possible = (0..len).all(|i| b[i % nb] == a[(start + i) % na]);
-        if possible {
-            return true;
+    }
+    (0..id)
+        .filter(|&v| {
+            let root = dsu.find(v);
+            dsu.size[root] > 1
+        })
+        .count() as i32
+}
+
+struct DSU {
+    parent: Vec<usize>,
+    size: Vec<i32>,
+}
+
+impl DSU {
+    fn new(n: usize) -> Self {
+        Self {
+            parent: (0..n).collect(),
+            size: vec![1; n],
         }
     }
-    false
+
+    fn find(&mut self, v: usize) -> usize {
+        if self.parent[v] != v {
+            self.parent[v] = self.find(self.parent[v])
+        }
+        self.parent[v]
+    }
+
+    fn union(&mut self, x: usize, y: usize) {
+        let [rx, ry] = [x, y].map(|v| self.find(v));
+        if rx == ry {
+            return;
+        }
+        if self.size[rx] < self.size[ry] {
+            self.size[ry] += self.size[rx];
+            self.parent[rx] = ry;
+        } else {
+            self.size[rx] += self.size[ry];
+            self.parent[ry] = rx;
+        }
+    }
 }
 
 #[cfg(test)]
@@ -62,7 +106,9 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        assert_eq!(count_servers(&[&[1, 0], &[0, 1]]), 0);
+    }
 
     #[test]
     fn test() {}
