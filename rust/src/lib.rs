@@ -9,57 +9,41 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_cost(n: i32, colors: String, edges: Vec<Vec<i32>>) -> i64 {
-    let n = n as usize;
-    let adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
-        let [a, b] = [0, 1].map(|i| e[i] as usize);
-        acc[a].push(b);
-        acc[b].push(a);
-        acc
-    });
-    let curr = dfs(&adj, colors.as_bytes(), 0, n);
-    curr.blue_tree.min(curr.red_root).min(curr.single_red_child)
-}
-
-fn dfs(adj: &[Vec<usize>], colors: &[u8], node: usize, prev: usize) -> State {
-    let mut curr = State::default();
-    for &next in &adj[node] {
-        if next != prev {
-            let sub = dfs(adj, colors, next, node);
-            curr.blue_tree += sub.blue_tree;
-            curr.red_root += sub.blue_tree.min(sub.red_root);
-            curr.single_red_child = curr
-                .single_red_child
-                .min(sub.red_root.min(sub.single_red_child) - sub.blue_tree);
-            curr.size += sub.size;
+pub fn busiest_servers(k: i32, arrival: Vec<i32>, load: Vec<i32>) -> Vec<i32> {
+    use itertools::izip;
+    use std::{
+        cmp::Reverse,
+        collections::{BTreeMap, BinaryHeap},
+    };
+    // server - (time, count)
+    let mut free: BTreeMap<_, _> = (0..k).map(|i| (i, (0, 0))).collect();
+    let mut busy: BinaryHeap<(Reverse<i32>, i32, i32)> = BinaryHeap::new();
+    let mut max = 0;
+    for (i, (&arr, &loa)) in izip!(arrival.iter(), load.iter()).enumerate() {
+        while let Some(&(Reverse(time), server, count)) = busy.peek()
+            && time <= arr
+        {
+            free.insert(server, (time, count));
+            busy.pop();
         }
+        let Some((&server, &(_time, count))) = free
+            .range(i as i32 % k..)
+            .next()
+            .or_else(|| free.iter().next())
+        else {
+            continue; // empty
+        };
+        free.remove(&server);
+        max = max.max(1 + count);
+        busy.push((Reverse(arr + loa), server, 1 + count));
     }
-    if colors[node] == b'B' {
-        curr.red_root += curr.size;
-    } else {
-        curr.blue_tree += curr.size;
+    while let Some((Reverse(time), server, count)) = busy.pop() {
+        free.insert(server, (time, count));
+        max = max.max(count);
     }
-    curr.single_red_child += curr.blue_tree;
-    curr
-}
-
-#[derive(Clone, Copy)]
-struct State {
-    blue_tree: i64,
-    red_root: i64,
-    single_red_child: i64,
-    size: i64,
-}
-
-impl Default for State {
-    fn default() -> Self {
-        Self {
-            blue_tree: 0,
-            red_root: 0,
-            single_red_child: i64::MAX >> 2,
-            size: 1,
-        }
-    }
+    free.into_iter()
+        .filter_map(|(server, (_, count))| if count == max { Some(server) } else { None })
+        .collect()
 }
 
 #[cfg(test)]
