@@ -9,41 +9,19 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn busiest_servers(k: i32, arrival: Vec<i32>, load: Vec<i32>) -> Vec<i32> {
-    use itertools::izip;
-    use std::{
-        cmp::Reverse,
-        collections::{BTreeMap, BinaryHeap},
-    };
-    // server - (time, count)
-    let mut free: BTreeMap<_, _> = (0..k).map(|i| (i, (0, 0))).collect();
-    let mut busy: BinaryHeap<(Reverse<i32>, i32, i32)> = BinaryHeap::new();
-    let mut max = 0;
-    for (i, (&arr, &loa)) in izip!(arrival.iter(), load.iter()).enumerate() {
-        while let Some(&(Reverse(time), server, count)) = busy.peek()
-            && time <= arr
-        {
-            free.insert(server, (time, count));
-            busy.pop();
+pub fn climb_stairs(n: i32, costs: Vec<i32>) -> i32 {
+    let n = n as usize;
+    let mut dp = vec![i64::MAX >> 2; 1 + n];
+    dp[0] = 0;
+    for left in 0..n {
+        for d in 1..=3 {
+            let right = left + d;
+            if right <= n {
+                dp[right] = dp[right].min(dp[left] + i64::from(costs[right - 1]) + d.pow(2) as i64);
+            }
         }
-        let Some((&server, &(_time, count))) = free
-            .range(i as i32 % k..)
-            .next()
-            .or_else(|| free.iter().next())
-        else {
-            continue; // empty
-        };
-        free.remove(&server);
-        max = max.max(1 + count);
-        busy.push((Reverse(arr + loa), server, 1 + count));
     }
-    while let Some((Reverse(time), server, count)) = busy.pop() {
-        free.insert(server, (time, count));
-        max = max.max(count);
-    }
-    free.into_iter()
-        .filter_map(|(server, (_, count))| if count == max { Some(server) } else { None })
-        .collect()
+    dp[n] as i32
 }
 
 #[cfg(test)]
