@@ -9,19 +9,13 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn climb_stairs(n: i32, costs: Vec<i32>) -> i32 {
-    let n = n as usize;
-    let mut dp = vec![i64::MAX >> 2; 1 + n];
-    dp[0] = 0;
-    for left in 0..n {
-        for d in 1..=3 {
-            let right = left + d;
-            if right <= n {
-                dp[right] = dp[right].min(dp[left] + i64::from(costs[right - 1]) + d.pow(2) as i64);
-            }
-        }
-    }
-    dp[n] as i32
+pub fn minimum_cost(cost1: i32, cost2: i32, cost_both: i32, need1: i32, need2: i32) -> i64 {
+    let min_both = cost_both.min(cost1 + cost2);
+    let min1 = cost1.min(cost_both);
+    let min2 = cost2.min(cost_both);
+    i64::from(need1.min(need2)) * i64::from(min_both)
+        + i64::from(min1) * i64::from(need1 - need1.min(need2))
+        + i64::from(min2) * i64::from(need2 - need1.min(need2))
 }
 
 #[cfg(test)]
