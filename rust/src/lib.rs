@@ -9,89 +9,40 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_suffix(nums: Vec<i32>, target: Vec<i32>) -> Vec<i32> {
-    let [n1, n2] = [&nums, &target].map(|v| v.len());
-    let mut freq = vec![0; 100_001];
-    let mut diff = 0;
-    for &num in nums.iter() {
-        diff = update(&mut freq, num, 1, diff);
-    }
-    for &num in target[..n1].iter() {
-        diff = update(&mut freq, num, -1, diff);
-    }
-    let lcp = build_lcp(&nums, &target);
-    let last_bad = build_last_bad(&target);
-    let len = 1 + n2 - n1;
-    let mut res = vec![0; len];
-    for k in 0..len {
-        if diff == 0 {
-            let mut lower = 0;
-            if n1 > 1 {
-                if let Some(last) = last_bad[k + n1 - 1]
-                    && last >= k
-                {
-                    lower = 1 + (last - k) as i32;
-                }
+// 3 2 1
+// 3 3 3
+pub fn count_non_decreasing_subarrays(nums: Vec<i32>, k: i32) -> i64 {
+    use std::collections::VecDeque;
+
+    let n = nums.len();
+    let mut k = i64::from(k);
+    let mut right = n - 1;
+    let mut queue = VecDeque::from([(nums[right], 1)]);
+    let mut res = 1;
+    for (left, &num) in nums[..n - 1].iter().enumerate().rev() {
+        let mut count = 1;
+        while let Some(&(f_num, f_c)) = queue.front()
+            && f_num < num
+        {
+            queue.pop_front();
+            k -= i64::from(num - f_num) * f_c;
+            count += f_c;
+        }
+        queue.push_front((num, count));
+        while k < 0 {
+            let Some((b_num, mut b_c)) = queue.pop_back() else {
+                break;
+            };
+            k += i64::from(b_num - nums[right]);
+            right -= 1;
+            b_c -= 1;
+            if b_c > 0 {
+                queue.push_back((b_num, b_c));
             }
-            let upper = lcp[k].min(n1 - 1) as i32;
-            res[k] = (1 + upper - lower).max(0);
         }
-        if k + n1 < n2 {
-            diff = update(&mut freq, target[k], 1, diff);
-            diff = update(&mut freq, target[k + n1], -1, diff);
-        }
+        res += 1 + right - left
     }
-    res
-}
-
-fn update(freq: &mut [i32], num: i32, val: i32, mut diff: i32) -> i32 {
-    let num = num as usize;
-    diff += i32::from(freq[num] == 0);
-    freq[num] += val;
-    diff -= i32::from(freq[num] == 0);
-    diff
-}
-
-fn build_lcp(nums: &[i32], target: &[i32]) -> Vec<usize> {
-    use itertools::{Itertools, chain};
-    let combined = chain!(nums, std::iter::once(&0), target)
-        .copied()
-        .collect_vec();
-    let z = z_func(&combined);
-    let [n1, n2] = [nums, target].map(|v| v.len());
-    let _n = 1 + n2 - n1;
-    (0.._n).map(|k| n1.min(z[n1 + k + 1])).collect()
-}
-
-fn z_func(arr: &[i32]) -> Vec<usize> {
-    let n = arr.len();
-    let mut z = vec![0; n];
-    let [mut left, mut right] = [0, 0];
-    for i in 1..n {
-        if i <= right {
-            z[i] = (1 + right - i).min(z[i - left]);
-        }
-        while i + z[i] < n && arr[z[i]] == arr[i + z[i]] {
-            z[i] += 1;
-        }
-        if i + z[i] - 1 > right {
-            left = i;
-            right = i + z[i] - 1;
-        }
-    }
-    z
-}
-
-fn build_last_bad(target: &[i32]) -> Vec<Option<usize>> {
-    let n = target.len();
-    let mut last = vec![None; n];
-    for i in 1..n {
-        last[i] = last[i - 1];
-        if target[i - 1] < target[i] {
-            last[i] = Some(i - 1);
-        }
-    }
-    last
+    res as i64
 }
 
 #[cfg(test)]
