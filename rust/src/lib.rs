@@ -9,40 +9,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-// 3 2 1
-// 3 3 3
-pub fn count_non_decreasing_subarrays(nums: Vec<i32>, k: i32) -> i64 {
-    use std::collections::VecDeque;
-
+pub fn minimum_sum_subarray(nums: Vec<i32>, l: i32, r: i32) -> i32 {
     let n = nums.len();
-    let mut k = i64::from(k);
-    let mut right = n - 1;
-    let mut queue = VecDeque::from([(nums[right], 1)]);
-    let mut res = 1;
-    for (left, &num) in nums[..n - 1].iter().enumerate().rev() {
-        let mut count = 1;
-        while let Some(&(f_num, f_c)) = queue.front()
-            && f_num < num
-        {
-            queue.pop_front();
-            k -= i64::from(num - f_num) * f_c;
-            count += f_c;
+    let [low, high] = [l, r].map(|v| v as usize);
+    let mut res = i32::MAX;
+    for len in low..=high {
+        let mut sum = nums[..len].iter().sum();
+        if sum > 0 {
+            res = res.min(sum)
         }
-        queue.push_front((num, count));
-        while k < 0 {
-            let Some((b_num, mut b_c)) = queue.pop_back() else {
-                break;
-            };
-            k += i64::from(b_num - nums[right]);
-            right -= 1;
-            b_c -= 1;
-            if b_c > 0 {
-                queue.push_back((b_num, b_c));
+        let [mut left, mut right] = [0, len];
+        while right < n {
+            sum += nums[right];
+            sum -= nums[left];
+            left += 1;
+            right += 1;
+            if sum > 0 {
+                res = res.min(sum)
             }
         }
-        res += 1 + right - left
     }
-    res as i64
+    if res < i32::MAX { res } else { -1 }
 }
 
 #[cfg(test)]
