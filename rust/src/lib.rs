@@ -9,27 +9,18 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_sum_subarray(nums: Vec<i32>, l: i32, r: i32) -> i32 {
-    let n = nums.len();
-    let [low, high] = [l, r].map(|v| v as usize);
-    let mut res = i32::MAX;
-    for len in low..=high {
-        let mut sum = nums[..len].iter().sum();
-        if sum > 0 {
-            res = res.min(sum)
-        }
-        let [mut left, mut right] = [0, len];
-        while right < n {
-            sum += nums[right];
-            sum -= nums[left];
-            left += 1;
-            right += 1;
-            if sum > 0 {
-                res = res.min(sum)
-            }
-        }
+pub fn num_of_subarrays(arr: Vec<i32>) -> i32 {
+    const M: i32 = 1_000_000_007;
+    let mut freq = [1, 0];
+    let mut res = 0;
+    let mut xor = 0;
+    for num in arr.iter() {
+        let curr = num & 1;
+        xor ^= curr;
+        res = (res + freq[(1 ^ xor) as usize]) % M;
+        freq[xor as usize] = (1 + freq[xor as usize]) % M;
     }
-    if res < i32::MAX { res } else { -1 }
+    res
 }
 
 #[cfg(test)]
