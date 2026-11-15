@@ -9,36 +9,35 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_difference(nums: Vec<i32>) -> i64 {
+pub fn count_consistent(nums: Vec<i32>) -> i64 {
     let n = nums.len();
-    dfs(&nums, &mut vec![None; 1 + n])
-}
-
-fn dfs(nums: &[i32], memo: &mut [Option<i64>]) -> i64 {
-    let n = nums.len();
-    if n == 0 {
-        return 0;
+    let mut left_end = vec![-1; n];
+    let mut st: Vec<usize> = vec![];
+    for (idx, &num) in nums.iter().enumerate() {
+        while let Some(&top) = st.last()
+            && nums[top] > num
+            && nums[top] & num == num
+        {
+            st.pop();
+        }
+        if let Some(&v) = st.last() {
+            left_end[idx] = v as i64;
+        }
+        st.push(idx);
     }
-    if n == 1 {
-        return i64::from(nums[0]);
+    st.clear();
+    let mut res = 0;
+    for (idx, &num) in nums.iter().enumerate().rev() {
+        while let Some(&top) = st.last()
+            && nums[top] & num == num
+        {
+            st.pop();
+        }
+        let right = st.last().map(|&v| v).unwrap_or(n) as i64;
+        st.push(idx);
+        let i = idx as i64;
+        res += (i - left_end[idx]) * (right - i);
     }
-    if let Some(v) = memo[n] {
-        return v;
-    }
-    let mut sum = i64::from(nums[0]);
-    let a = if sum % 3 == 0 {
-        sum - dfs(&nums[1..], memo)
-    } else {
-        sum + dfs(&nums[1..], memo)
-    };
-    sum += i64::from(nums[1]);
-    let b = if sum % 3 == 0 {
-        sum - dfs(&nums[2..], memo)
-    } else {
-        sum + dfs(&nums[2..], memo)
-    };
-    let res = a.max(b);
-    memo[n] = Some(res);
     res
 }
 
