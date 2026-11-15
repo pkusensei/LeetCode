@@ -9,16 +9,17 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn num_of_subarrays(arr: Vec<i32>) -> i32 {
-    const M: i32 = 1_000_000_007;
-    let mut freq = [1, 0];
+pub fn count_consistent(nums: Vec<i32>) -> i32 {
+    let n = nums.len();
     let mut res = 0;
-    let mut xor = 0;
-    for num in arr.iter() {
-        let curr = num & 1;
-        xor ^= curr;
-        res = (res + freq[(1 ^ xor) as usize]) % M;
-        freq[xor as usize] = (1 + freq[xor as usize]) % M;
+    for left in 0..n {
+        let mut bit_and = nums[left];
+        let mut min = nums[left];
+        for right in left..n {
+            bit_and &= nums[right];
+            min = min.min(nums[right]);
+            res += i32::from(min == bit_and);
+        }
     }
     res
 }
