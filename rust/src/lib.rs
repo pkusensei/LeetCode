@@ -9,35 +9,69 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_consistent(nums: Vec<i32>) -> i64 {
-    let n = nums.len();
-    let mut left_end = vec![-1; n];
-    let mut st: Vec<usize> = vec![];
-    for (idx, &num) in nums.iter().enumerate() {
-        while let Some(&top) = st.last()
-            && nums[top] > num
-            && nums[top] & num == num
-        {
-            st.pop();
+pub fn minimum_changes(s: String, k: i32) -> i32 {
+    let n = s.len();
+    let k = k as usize;
+    let mut facts = vec![vec![1]; 1 + n];
+    for d in 2..n {
+        for val in ((d + d)..=n).step_by(d) {
+            facts[val].push(d);
         }
-        if let Some(&v) = st.last() {
-            left_end[idx] = v as i64;
-        }
-        st.push(idx);
     }
-    st.clear();
-    let mut res = 0;
-    for (idx, &num) in nums.iter().enumerate().rev() {
-        while let Some(&top) = st.last()
-            && nums[top] & num == num
-        {
-            st.pop();
-        }
-        let right = st.last().map(|&v| v).unwrap_or(n) as i64;
-        st.push(idx);
-        let i = idx as i64;
-        res += (i - left_end[idx]) * (right - i);
+    let mut memo = vec![vec![-1; 1 + n]; 1 + k];
+    let mut min_costs = vec![vec![vec![-1; n]; 1 + n]; 1 + n];
+    dfs(s.as_bytes(), k, &facts, n, &mut memo, &mut min_costs)
+}
+
+fn count(s: &[u8], left: usize, right: usize, d: usize, costs: &mut [Vec<Vec<i32>>]) -> i32 {
+    if left >= right {
+        return 0;
     }
+    if costs[left][right][d] > -1 {
+        return costs[left][right][d];
+    }
+    let mut res = count(s, left + d, right - d, d, costs);
+    for i in 0..d {
+        res += i32::from(s[left + i] != s[right + i - d]);
+    }
+    res
+}
+
+fn make_semi(
+    s: &[u8],
+    facts: &[Vec<usize>],
+    left: usize,
+    right: usize,
+    min_costs: &mut [Vec<Vec<i32>>],
+) -> i32 {
+    let mut res = i32::MAX >> 1;
+    for &d in &facts[right - left] {
+        res = res.min(count(s, left, right, d, min_costs));
+    }
+    res
+}
+
+fn dfs(
+    s: &[u8],
+    k: usize,
+    facts: &[Vec<usize>],
+    end: usize,
+    memo: &mut [Vec<i32>],
+    min_costs: &mut [Vec<Vec<i32>>],
+) -> i32 {
+    if k == 1 {
+        return make_semi(s, facts, 0, end, min_costs);
+    }
+    if memo[k][end] > -1 {
+        return memo[k][end];
+    }
+    let mut res = i32::MAX >> 1;
+    for left in 2 * (k - 1)..end - 1 {
+        let mut curr = make_semi(s, facts, left, end, min_costs);
+        curr += dfs(s, k - 1, facts, left, memo, min_costs);
+        res = res.min(curr);
+    }
+    memo[k][end] = res;
     res
 }
 
