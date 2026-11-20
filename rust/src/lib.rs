@@ -9,69 +9,27 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn minimum_changes(s: String, k: i32) -> i32 {
-    let n = s.len();
-    let k = k as usize;
-    let mut facts = vec![vec![1]; 1 + n];
-    for d in 2..n {
-        for val in ((d + d)..=n).step_by(d) {
-            facts[val].push(d);
+pub fn max_selected_elements(mut nums: Vec<i32>) -> i32 {
+    nums.sort_unstable();
+    let mut dp = [1, 1]; // [no_inc, inc]
+    let mut res = 1;
+    for w in nums.windows(2) {
+        let mut curr = [1, 1];
+        match w[1] - w[0] {
+            0 => {
+                curr[0] = curr[0].max(dp[0]);
+                curr[1] = curr[1].max(dp[1]).max(1 + dp[0]);
+            }
+            1 => {
+                curr[0] = curr[0].max(1 + dp[0]);
+                curr[1] = curr[1].max(1 + dp[1]);
+            }
+            2 => curr[0] = curr[0].max(1 + dp[1]),
+            _ => (),
         }
+        res = res.max(curr[0]).max(curr[1]);
+        dp = curr;
     }
-    let mut memo = vec![vec![-1; 1 + n]; 1 + k];
-    let mut min_costs = vec![vec![vec![-1; n]; 1 + n]; 1 + n];
-    dfs(s.as_bytes(), k, &facts, n, &mut memo, &mut min_costs)
-}
-
-fn count(s: &[u8], left: usize, right: usize, d: usize, costs: &mut [Vec<Vec<i32>>]) -> i32 {
-    if left >= right {
-        return 0;
-    }
-    if costs[left][right][d] > -1 {
-        return costs[left][right][d];
-    }
-    let mut res = count(s, left + d, right - d, d, costs);
-    for i in 0..d {
-        res += i32::from(s[left + i] != s[right + i - d]);
-    }
-    res
-}
-
-fn make_semi(
-    s: &[u8],
-    facts: &[Vec<usize>],
-    left: usize,
-    right: usize,
-    min_costs: &mut [Vec<Vec<i32>>],
-) -> i32 {
-    let mut res = i32::MAX >> 1;
-    for &d in &facts[right - left] {
-        res = res.min(count(s, left, right, d, min_costs));
-    }
-    res
-}
-
-fn dfs(
-    s: &[u8],
-    k: usize,
-    facts: &[Vec<usize>],
-    end: usize,
-    memo: &mut [Vec<i32>],
-    min_costs: &mut [Vec<Vec<i32>>],
-) -> i32 {
-    if k == 1 {
-        return make_semi(s, facts, 0, end, min_costs);
-    }
-    if memo[k][end] > -1 {
-        return memo[k][end];
-    }
-    let mut res = i32::MAX >> 1;
-    for left in 2 * (k - 1)..end - 1 {
-        let mut curr = make_semi(s, facts, left, end, min_costs);
-        curr += dfs(s, k - 1, facts, left, memo, min_costs);
-        res = res.min(curr);
-    }
-    memo[k][end] = res;
     res
 }
 
@@ -109,5 +67,10 @@ mod tests {
     fn basics() {}
 
     #[test]
-    fn test() {}
+    fn test() {
+        {
+            let nums = vec![4, 12, 8, 14, 14, 12, 11, 20, 17, 17, 4, 10, 10, 18, 1, 16];
+            assert_eq!(max_selected_elements(nums), 12);
+        }
+    }
 }
