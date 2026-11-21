@@ -6,38 +6,52 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
+use std::collections::HashSet;
+
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_operations(nums: Vec<i32>) -> i32 {
-    let n = nums.len();
-    if n < 3 {
-        return -1;
+pub fn min_set_bits(nums: Vec<i32>, k: i32) -> i32 {
+    const B: usize = 17;
+    let k = k as usize;
+    let mut freq = [0; 17];
+    let mut xs = HashSet::new();
+    for (idx, &num) in nums.iter().enumerate() {
+        for bit in 0..B {
+            if num & (1 << bit) > 0 {
+                freq[bit] += 1;
+            }
+        }
+        if idx >= k {
+            for bit in 0..B {
+                if nums[idx - k] & (1 << bit) > 0 {
+                    freq[bit] -= 1;
+                }
+            }
+        }
+        if idx >= k - 1 {
+            let mut bit_and = 0;
+            for (bit, &f) in freq.iter().enumerate() {
+                if f == k {
+                    bit_and |= 1 << bit;
+                }
+            }
+            if bit_and == 0 {
+                return -1;
+            }
+            xs.insert(bit_and);
+        }
     }
-    let max = n + *nums.iter().max().unwrap() as usize;
-    let left = dp(&nums, max);
-    let rev: Vec<i32> = nums.iter().copied().rev().collect();
-    let right = dp(&rev, max);
-    let mut res = i32::MAX >> 1;
-    for i in 1..n - 1 {
-        for v in 1..=max {
-            let curr = left[i - 1][v - 1] + right[n - i - 2][v - 1] + (nums[i] - v as i32).abs();
-            res = res.min(curr);
+    let mut res = B as i32;
+    for y in 1_i32..(1 << B) {
+        if y.count_ones() as i32 >= res {
+            continue;
+        }
+        if xs.iter().all(|&x| x & y > 0) {
+            res = y.count_ones() as i32;
         }
     }
     res
-}
-
-fn dp(nums: &[i32], max: usize) -> Vec<Vec<i32>> {
-    let n = nums.len();
-    let mut dp = vec![vec![i32::MAX >> 2; 1 + max]; n];
-    for (idx, &num) in nums.iter().enumerate() {
-        for val in 1..=max {
-            let curr = (num - val as i32).abs() + if idx > 0 { dp[idx - 1][val - 1] } else { 0 };
-            dp[idx][val] = dp[idx][val - 1].min(curr);
-        }
-    }
-    dp
 }
 
 #[cfg(test)]
