@@ -9,28 +9,46 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn max_selected_elements(mut nums: Vec<i32>) -> i32 {
-    nums.sort_unstable();
-    let mut dp = [1, 1]; // [no_inc, inc]
-    let mut res = 1;
-    for w in nums.windows(2) {
-        let mut curr = [1, 1];
-        match w[1] - w[0] {
-            0 => {
-                curr[0] = curr[0].max(dp[0]);
-                curr[1] = curr[1].max(dp[1]).max(1 + dp[0]);
+pub fn find_subtree_sizes(parent: Vec<i32>, s: String) -> Vec<i32> {
+    let (s, n) = (s.as_bytes(), s.len());
+    let adj = parent
+        .iter()
+        .enumerate()
+        .fold(vec![vec![]; n], |mut acc, (i, &v)| {
+            if v >= 0 {
+                acc[v as usize].push(i);
             }
-            1 => {
-                curr[0] = curr[0].max(1 + dp[0]);
-                curr[1] = curr[1].max(1 + dp[1]);
-            }
-            2 => curr[0] = curr[0].max(1 + dp[1]),
-            _ => (),
-        }
-        res = res.max(curr[0]).max(curr[1]);
-        dp = curr;
-    }
+            acc
+        });
+    let mut seen = [n; 26];
+    let mut res = vec![1; n];
+    dfs(&adj, s, 0, n, &mut seen, &mut res);
     res
+}
+
+fn dfs(
+    adj: &[Vec<usize>],
+    s: &[u8],
+    node: usize,
+    prev: usize,
+    seen: &mut [usize; 26],
+    res: &mut [i32],
+) -> i32 {
+    let n = s.len();
+    let bi = usize::from(s[node] - b'a');
+    let temp = seen[bi];
+    seen[bi] = node;
+    for &next in &adj[node] {
+        if next != prev {
+            res[node] += dfs(adj, s, next, node, seen, res);
+        }
+    }
+    if temp < n && prev < n {
+        res[prev] -= res[node];
+        res[temp] += res[node];
+    }
+    seen[bi] = temp;
+    res[node]
 }
 
 #[cfg(test)]
