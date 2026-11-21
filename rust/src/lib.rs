@@ -9,24 +9,11 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn assign_umbrella(rain: Vec<i32>) -> Vec<String> {
-    let n = rain.len();
-    let mut res = vec![];
-    let [mut ali, mut bob] = [0, 0];
-    for (i, &v) in rain.iter().enumerate() {
-        if v == 1 {
-            if i < n - 1 && rain[1 + i] == 1 && ali <= bob {
-                res.push("Alice".to_string());
-                ali += 1;
-            } else {
-                res.push("Bob".to_string());
-                bob += 1;
-            }
-        } else {
-            res.push("None".to_string());
-        }
-    }
-    res
+pub fn min_range(a: i32, b: i32, c: i32) -> i32 {
+    let mut arr = [a, b, c];
+    arr.sort_unstable();
+    let [a, b, c] = arr;
+    (c - a).min(b)
 }
 
 #[cfg(test)]
