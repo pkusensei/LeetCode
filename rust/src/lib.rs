@@ -9,46 +9,24 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn find_subtree_sizes(parent: Vec<i32>, s: String) -> Vec<i32> {
-    let (s, n) = (s.as_bytes(), s.len());
-    let adj = parent
-        .iter()
-        .enumerate()
-        .fold(vec![vec![]; n], |mut acc, (i, &v)| {
-            if v >= 0 {
-                acc[v as usize].push(i);
+pub fn assign_umbrella(rain: Vec<i32>) -> Vec<String> {
+    let n = rain.len();
+    let mut res = vec![];
+    let [mut ali, mut bob] = [0, 0];
+    for (i, &v) in rain.iter().enumerate() {
+        if v == 1 {
+            if i < n - 1 && rain[1 + i] == 1 && ali <= bob {
+                res.push("Alice".to_string());
+                ali += 1;
+            } else {
+                res.push("Bob".to_string());
+                bob += 1;
             }
-            acc
-        });
-    let mut seen = [n; 26];
-    let mut res = vec![1; n];
-    dfs(&adj, s, 0, n, &mut seen, &mut res);
-    res
-}
-
-fn dfs(
-    adj: &[Vec<usize>],
-    s: &[u8],
-    node: usize,
-    prev: usize,
-    seen: &mut [usize; 26],
-    res: &mut [i32],
-) -> i32 {
-    let n = s.len();
-    let bi = usize::from(s[node] - b'a');
-    let temp = seen[bi];
-    seen[bi] = node;
-    for &next in &adj[node] {
-        if next != prev {
-            res[node] += dfs(adj, s, next, node, seen, res);
+        } else {
+            res.push("None".to_string());
         }
     }
-    if temp < n && prev < n {
-        res[prev] -= res[node];
-        res[temp] += res[node];
-    }
-    seen[bi] = temp;
-    res[node]
+    res
 }
 
 #[cfg(test)]
@@ -85,10 +63,5 @@ mod tests {
     fn basics() {}
 
     #[test]
-    fn test() {
-        {
-            let nums = vec![4, 12, 8, 14, 14, 12, 11, 20, 17, 17, 4, 10, 10, 18, 1, 16];
-            assert_eq!(max_selected_elements(nums), 12);
-        }
-    }
+    fn test() {}
 }
