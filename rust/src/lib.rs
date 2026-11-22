@@ -9,36 +9,16 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn earliest_activation_times(
-    n: i32,
-    edges: Vec<Vec<i32>>,
-    mut required_signals: Vec<i32>,
-) -> Vec<i64> {
-    use std::{cmp::Reverse, collections::BinaryHeap};
-    let n = n as usize;
-    // (target, delay)
-    let mut adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
-        let [a, b] = [0, 1].map(|i| e[i] as usize);
-        acc[a].push((b, i64::from(e[2])));
-        acc
-    });
-    // (R(time), node)
-    let mut heap = BinaryHeap::from([(Reverse(0), 0)]);
-    let mut res = vec![-1; n];
-    required_signals[0] = 1;
-    while let Some((Reverse(time), node)) = heap.pop() {
-        if res[node] != -1 && res[node] <= time {
-            continue;
-        }
-        required_signals[node] -= 1;
-        if required_signals[node] <= 0 {
-            res[node] = time;
-            for (next, delay) in adj[node].drain(..) {
-                heap.push((Reverse(time + delay), next));
-            }
-        }
+pub fn min_cost(nums: Vec<i32>) -> i64 {
+    let n = nums.len();
+    let [mut even, mut odd] = [0, i64::MAX >> 2];
+    for &num in &nums[1..n - 1] {
+        let num = i64::from(num);
+        let new_even = even.min(odd + num);
+        let new_odd = odd.min(even + num);
+        [even, odd] = [new_even, new_odd];
     }
-    res
+    even + i64::from(nums[0]) + i64::from(nums[n - 1])
 }
 
 #[cfg(test)]
