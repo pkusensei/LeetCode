@@ -9,26 +9,26 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn count_dominant_elements(nums: Vec<i32>) -> i32 {
+pub fn min_cost(nums: Vec<i32>) -> i64 {
     let n = nums.len();
-    if n <= 1 {
-        return 1;
-    }
-    let mut res = 0;
-    for (i, &num) in nums.iter().enumerate() {
-        if i == 0 {
-            if num >= nums[1] {
-                res += 1
+    let mut left = 0;
+    let mut res = i64::MAX;
+    for ch in nums.chunk_by(|a, b| a == b) {
+        let len = ch.len();
+        let right = left + len - 1;
+        if (1..n - 1).contains(&left) || (1..n - 1).contains(&right) {
+            let num = i64::from(ch[0]);
+            if left == 0 {
+                res = res.min(num * (n - right - 1) as i64)
+            } else if right == n - 1 {
+                res = res.min(num * left as i64);
+            } else {
+                res = res.min(num * (n - len) as i64);
             }
-        } else if i == n - 1 {
-            if nums[n - 2] <= num {
-                res += 1
-            }
-        } else if 2 * num >= nums[i - 1] + nums[1 + i] {
-            res += 1
         }
+        left += len;
     }
-    res
+    if res == i64::MAX { 0 } else { res }
 }
 
 #[cfg(test)]
@@ -62,7 +62,13 @@ mod tests {
     }
 
     #[test]
-    fn basics() {}
+    fn basics() {
+        let nums: Vec<i32> = vec![1, 2, 3];
+        assert_eq!(min_cost(nums), 4);
+
+        let nums: Vec<i32> = vec![3, 3, 3, 6, 3, 3];
+        assert_eq!(min_cost(nums), 9);
+    }
 
     #[test]
     fn test() {}
