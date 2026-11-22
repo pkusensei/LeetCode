@@ -6,49 +6,26 @@ mod matrix;
 mod seg_tree;
 mod trie;
 
-use std::collections::HashSet;
-
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_set_bits(nums: Vec<i32>, k: i32) -> i32 {
-    const B: usize = 17;
-    let k = k as usize;
-    let mut freq = [0; 17];
-    let mut xs = HashSet::new();
-    for (idx, &num) in nums.iter().enumerate() {
-        for bit in 0..B {
-            if num & (1 << bit) > 0 {
-                freq[bit] += 1;
-            }
-        }
-        if idx >= k {
-            for bit in 0..B {
-                if nums[idx - k] & (1 << bit) > 0 {
-                    freq[bit] -= 1;
-                }
-            }
-        }
-        if idx >= k - 1 {
-            let mut bit_and = 0;
-            for (bit, &f) in freq.iter().enumerate() {
-                if f == k {
-                    bit_and |= 1 << bit;
-                }
-            }
-            if bit_and == 0 {
-                return -1;
-            }
-            xs.insert(bit_and);
-        }
+pub fn count_dominant_elements(nums: Vec<i32>) -> i32 {
+    let n = nums.len();
+    if n <= 1 {
+        return 1;
     }
-    let mut res = B as i32;
-    for y in 1_i32..(1 << B) {
-        if y.count_ones() as i32 >= res {
-            continue;
-        }
-        if xs.iter().all(|&x| x & y > 0) {
-            res = y.count_ones() as i32;
+    let mut res = 0;
+    for (i, &num) in nums.iter().enumerate() {
+        if i == 0 {
+            if num >= nums[1] {
+                res += 1
+            }
+        } else if i == n - 1 {
+            if nums[n - 2] <= num {
+                res += 1
+            }
+        } else if 2 * num >= nums[i - 1] + nums[1 + i] {
+            res += 1
         }
     }
     res
