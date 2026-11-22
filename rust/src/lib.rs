@@ -9,26 +9,36 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_cost(nums: Vec<i32>) -> i64 {
-    let n = nums.len();
-    let mut left = 0;
-    let mut res = i64::MAX;
-    for ch in nums.chunk_by(|a, b| a == b) {
-        let len = ch.len();
-        let right = left + len - 1;
-        if (1..n - 1).contains(&left) || (1..n - 1).contains(&right) {
-            let num = i64::from(ch[0]);
-            if left == 0 {
-                res = res.min(num * (n - right - 1) as i64)
-            } else if right == n - 1 {
-                res = res.min(num * left as i64);
-            } else {
-                res = res.min(num * (n - len) as i64);
+pub fn earliest_activation_times(
+    n: i32,
+    edges: Vec<Vec<i32>>,
+    mut required_signals: Vec<i32>,
+) -> Vec<i64> {
+    use std::{cmp::Reverse, collections::BinaryHeap};
+    let n = n as usize;
+    // (target, delay)
+    let mut adj = edges.iter().fold(vec![vec![]; n], |mut acc, e| {
+        let [a, b] = [0, 1].map(|i| e[i] as usize);
+        acc[a].push((b, i64::from(e[2])));
+        acc
+    });
+    // (R(time), node)
+    let mut heap = BinaryHeap::from([(Reverse(0), 0)]);
+    let mut res = vec![-1; n];
+    required_signals[0] = 1;
+    while let Some((Reverse(time), node)) = heap.pop() {
+        if res[node] != -1 && res[node] <= time {
+            continue;
+        }
+        required_signals[node] -= 1;
+        if required_signals[node] <= 0 {
+            res[node] = time;
+            for (next, delay) in adj[node].drain(..) {
+                heap.push((Reverse(time + delay), next));
             }
         }
-        left += len;
     }
-    if res == i64::MAX { 0 } else { res }
+    res
 }
 
 #[cfg(test)]
@@ -62,13 +72,7 @@ mod tests {
     }
 
     #[test]
-    fn basics() {
-        let nums: Vec<i32> = vec![1, 2, 3];
-        assert_eq!(min_cost(nums), 4);
-
-        let nums: Vec<i32> = vec![3, 3, 3, 6, 3, 3];
-        assert_eq!(min_cost(nums), 9);
-    }
+    fn basics() {}
 
     #[test]
     fn test() {}
