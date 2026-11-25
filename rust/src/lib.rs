@@ -9,16 +9,41 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn min_cost(nums: Vec<i32>) -> i64 {
+pub fn smallest_unique_subarray(nums: Vec<i32>) -> i32 {
     let n = nums.len();
-    let [mut even, mut odd] = [0, i64::MAX >> 2];
-    for &num in &nums[1..n - 1] {
-        let num = i64::from(num);
-        let new_even = even.min(odd + num);
-        let new_odd = odd.min(even + num);
-        [even, odd] = [new_even, new_odd];
+    let mut hash = vec![0; 1 + n];
+    let mut pows = vec![1; 1 + n];
+    for (i, &num) in nums.iter().enumerate() {
+        hash[1 + i] = (hash[i] * B % M + i64::from(num)) % M;
+        pows[1 + i] = pows[i] * B % M;
     }
-    even + i64::from(nums[0]) + i64::from(nums[n - 1])
+    let mut left = 1;
+    let mut right = n;
+    while left < right {
+        let mid = left + (right - left) / 2;
+        if check(&hash, &pows, mid) {
+            right = mid;
+        } else {
+            left = 1 + mid;
+        }
+    }
+    left as i32
+}
+
+const M: i64 = 1_000_000_007;
+const B: i64 = 215215;
+
+fn check(hash: &[i64], pows: &[i64], mid: usize) -> bool {
+    use std::collections::HashMap;
+
+    let n = hash.len() - 1;
+    let mut freq = HashMap::new();
+    for left in 0..=(n - mid) {
+        let right = left + mid;
+        let h = (hash[right] - hash[left] * pows[mid] % M).rem_euclid(M);
+        *freq.entry(h).or_insert(0) += 1;
+    }
+    freq.into_values().any(|f| f == 1)
 }
 
 #[cfg(test)]
