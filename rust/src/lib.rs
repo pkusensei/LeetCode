@@ -9,41 +9,43 @@ mod trie;
 #[allow(unused_imports)]
 use helper::*;
 
-pub fn smallest_unique_subarray(nums: Vec<i32>) -> i32 {
-    let n = nums.len();
-    let mut hash = vec![0; 1 + n];
-    let mut pows = vec![1; 1 + n];
-    for (i, &num) in nums.iter().enumerate() {
-        hash[1 + i] = (hash[i] * B % M + i64::from(num)) % M;
-        pows[1 + i] = pows[i] * B % M;
-    }
-    let mut left = 1;
-    let mut right = n;
-    while left < right {
-        let mid = left + (right - left) / 2;
-        if check(&hash, &pows, mid) {
-            right = mid;
-        } else {
-            left = 1 + mid;
+pub fn maximum_sale_items(items: Vec<Vec<i32>>, budget: i32) -> i32 {
+    let n = items.len();
+    let mut copies = vec![0; n];
+    let mut min = i32::MAX >> 1;
+    for buy in 0..n {
+        min = min.min(items[buy][1]);
+        for other in 0..n {
+            if items[other][0] % items[buy][0] == 0 {
+                copies[buy] += 1;
+            }
         }
     }
-    left as i32
+    let mut memo = vec![[-1; 1501]; n];
+    dfs(&items, &copies, min, 0, budget, &mut memo)
 }
 
-const M: i64 = 1_000_000_007;
-const B: i64 = 215215;
-
-fn check(hash: &[i64], pows: &[i64], mid: usize) -> bool {
-    use std::collections::HashMap;
-
-    let n = hash.len() - 1;
-    let mut freq = HashMap::new();
-    for left in 0..=(n - mid) {
-        let right = left + mid;
-        let h = (hash[right] - hash[left] * pows[mid] % M).rem_euclid(M);
-        *freq.entry(h).or_insert(0) += 1;
+fn dfs(
+    items: &[Vec<i32>],
+    copies: &[i32],
+    min: i32,
+    idx: usize,
+    budget: i32,
+    memo: &mut [[i32; 1501]],
+) -> i32 {
+    if idx >= items.len() {
+        return budget / min;
     }
-    freq.into_values().any(|f| f == 1)
+    if memo[idx][budget as usize] > -1 {
+        return memo[idx][budget as usize];
+    }
+    let mut res = dfs(items, copies, min, 1 + idx, budget, memo);
+    if budget >= items[idx][1] {
+        let curr = copies[idx] + dfs(items, copies, min, 1 + idx, budget - items[idx][1], memo);
+        res = res.max(curr);
+    }
+    memo[idx][budget as usize] = res;
+    res
 }
 
 #[cfg(test)]
