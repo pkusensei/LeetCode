@@ -10,42 +10,39 @@ mod trie;
 use helper::*;
 
 pub fn maximum_sale_items(items: Vec<Vec<i32>>, budget: i32) -> i32 {
-    let n = items.len();
-    let mut copies = vec![0; n];
-    let mut min = i32::MAX >> 1;
-    for buy in 0..n {
-        min = min.min(items[buy][1]);
-        for other in 0..n {
-            if items[other][0] % items[buy][0] == 0 {
-                copies[buy] += 1;
-            }
+    use std::collections::HashMap;
+
+    let mut factors = HashMap::new();
+    let mut max_factor = 1;
+    let mut min_price = i32::MAX;
+    for item in items.iter() {
+        let [factor, price] = item[..] else {
+            unreachable!()
+        };
+        *factors.entry(factor).or_insert(0) += 1;
+        max_factor = max_factor.max(factor);
+        min_price = min_price.min(price);
+    }
+    let mut freq = HashMap::new();
+    for &factor in factors.keys() {
+        for f in (factor..=max_factor).step_by(factor as usize) {
+            *freq.entry(factor).or_insert(0) += factors.get(&f).unwrap_or(&0);
         }
     }
-    let mut memo = vec![[-1; 1501]; n];
-    dfs(&items, &copies, min, 0, budget, &mut memo)
-}
-
-fn dfs(
-    items: &[Vec<i32>],
-    copies: &[i32],
-    min: i32,
-    idx: usize,
-    budget: i32,
-    memo: &mut [[i32; 1501]],
-) -> i32 {
-    if idx >= items.len() {
-        return budget / min;
+    let mut to_buy: Vec<_> = items
+        .iter()
+        .map(|v| (v[1], freq[&v[0]] - 1))
+        .filter(|&(price, free)| price < 2 * min_price && free > 0)
+        .collect();
+    to_buy.sort_unstable();
+    let mut res = 0;
+    let mut budget = budget;
+    for (price, free) in to_buy {
+        let curr = free.min(budget / price);
+        res += 2 * curr;
+        budget -= curr * price;
     }
-    if memo[idx][budget as usize] > -1 {
-        return memo[idx][budget as usize];
-    }
-    let mut res = dfs(items, copies, min, 1 + idx, budget, memo);
-    if budget >= items[idx][1] {
-        let curr = copies[idx] + dfs(items, copies, min, 1 + idx, budget - items[idx][1], memo);
-        res = res.max(curr);
-    }
-    memo[idx][budget as usize] = res;
-    res
+    res + budget / min_price
 }
 
 #[cfg(test)]
